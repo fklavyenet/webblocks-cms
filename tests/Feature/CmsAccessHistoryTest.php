@@ -6,6 +6,7 @@ use App\Models\User;
 use DOMDocument;
 use DOMXPath;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Actions\Access\WriteCmsAccess;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
@@ -14,6 +15,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Queries\Access\CmsRoleQuery;
 use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
 class CmsAccessHistoryTest extends TestCase
@@ -32,6 +34,9 @@ class CmsAccessHistoryTest extends TestCase
   protected function setUp(): void
   {
     parent::setUp();
+    if (! class_exists(User::class)) {
+      class_alias(MaintenanceTestUser::class, User::class);
+    }
     $this->withoutMiddleware([RedirectIfNotInstalled::class]);
     $this->actingAs($this->user('Administrator', 'super_admin'));
   }
@@ -50,6 +55,79 @@ class CmsAccessHistoryTest extends TestCase
   {
     $this->get(route('admin.access.roles.index', $filters))->assertOk()
       ->assertViewHas('history', fn ($history) => $history->pluck('id')->all() === array_reverse($ids) && $history->total() === count($ids));
+  }
+
+  #[Test]
+  public function new_accounts_record_absent_previous_states_and_failed_changes_leave_no_events(): void
+  {
+    $writer = app(WriteCmsAccess::class);
+    $account = (new User)->mergeFillable(['name', 'email', 'password']);
+    $subject = $writer->user(auth()->user(), $account, ['name' => 'New account', 'email' => 'new-account@example.test', 'password' => 'unused', 'role' => 'editor', 'is_active' => true, 'site_ids' => []]);
+    foreach (['user.activity.changed' => 'active', 'user.system_role.changed' => 'site_roles'] as $action => $state) {
+      $event = DB::table('wbcms_acl_events')->where('user_id', $subject->id)->where('action', $action)->sole();
+      $this->assertNull($event->before_value);
+      $this->assertSame($state, $event->after_value);
+    }
+    $before = DB::table('wbcms_acl_events')->count();
+    $actor = auth()->user();
+    try {
+      $writer->user($actor, $actor, ['name' => $actor->name, 'email' => $actor->email, 'role' => 'super_admin', 'is_active' => false]);
+      $this->fail('The last active administrator cannot be disabled.');
+    } catch (ValidationException) {
+      $this->assertSame($before, DB::table('wbcms_acl_events')->count());
+      $this->assertTrue((bool) $actor->fresh()->is_active);
+      $this->assertDatabaseHas('wbcms_acl_system_administrators', ['user_id' => $actor->id]);
+    }
+  }
+
+  #[Test]
+  public function account_and_system_membership_transitions_have_filterable_before_and_after_values(): void
+  {
+    $subject = $this->user('Subject');
+    $write = app(WriteCmsAccess::class);
+    $data = ['name' => $subject->name, 'email' => $subject->email, 'role' => 'editor', 'is_active' => true, 'site_ids' => []];
+    $write->user(auth()->user(), $subject, [...$data, 'is_active' => false]);
+    $write->user(auth()->user(), $subject, $data);
+    $write->user(auth()->user(), $subject, [...$data, 'role' => 'super_admin']);
+    $write->user(auth()->user(), $subject, $data);
+    $activity = DB::table('wbcms_acl_events')->where('action', 'user.activity.changed')->orderBy('id')->get();
+    $system = DB::table('wbcms_acl_events')->where('action', 'user.system_role.changed')->orderBy('id')->get();
+    $this->assertSame([['active', 'inactive'], ['inactive', 'active']], $activity->map(fn ($row) => [$row->before_value, $row->after_value])->all());
+    $this->assertSame([['site_roles', 'super_admin'], ['super_admin', 'site_roles']], $system->map(fn ($row) => [$row->before_value, $row->after_value])->all());
+    $this->assertHistory(['history_user' => $subject->id, 'history_action' => 'user.activity.changed'], $activity->pluck('id')->all());
+    $this->assertHistory(['history_action' => 'user.system_role.changed'], $system->pluck('id')->all());
+    $before = DB::table('wbcms_acl_events')->count();
+    $write->user(auth()->user(), $subject, $data);
+    $this->assertSame($before + 1, DB::table('wbcms_acl_events')->count(), 'Unchanged states must not emit transition events.');
+    foreach (['en', 'de', 'es', 'fr', 'it', 'tr'] as $locale) {
+      config()->set('app.locale', $locale);
+      $this->get(route('admin.access.roles.index', ['history_action' => 'user.activity.changed']))->assertOk()
+        ->assertSee(trans('webblocks-cms::acl.events.user_activity_changed', [], $locale))
+        ->assertSee(trans('webblocks-cms::acl.event_values.inactive', [], $locale))
+        ->assertDontSee('webblocks-cms::acl.', false);
+    }
+    $this->expectException(ValidationException::class);
+    $root = auth()->user();
+    $write->user($root, $root, ['name' => $root->name, 'email' => $root->email, 'role' => 'editor', 'is_active' => true]);
+  }
+
+  #[Test]
+  public function missing_site_validation_is_translated_on_both_user_write_routes(): void
+  {
+    $subject = $this->user('Subject');
+    foreach (['en', 'de', 'tr', 'es', 'it', 'fr'] as $locale) {
+      config()->set('app.locale', $locale);
+      foreach (['editor', 'site_admin'] as $role) {
+        $data = ['name' => 'Fixture', 'email' => 'new@example.test', 'password' => 'FixtureOnly987!', 'password_confirmation' => 'FixtureOnly987!', 'role' => $role, 'is_active' => true, 'site_ids' => []];
+        $expected = trans('webblocks-cms::acl.site_required', [], $locale);
+        if ($locale !== 'en') {
+          $this->assertNotSame(trans('webblocks-cms::acl.site_required', [], 'en'), $expected);
+        }
+        $this->postJson(route('admin.users.store'), $data)->assertUnprocessable()->assertJsonPath('errors.site_ids.0', $expected);
+        $this->putJson(route('admin.users.update', $subject), [...$data, 'email' => $subject->email])->assertUnprocessable()->assertJsonPath('errors.site_ids.0', $expected);
+      }
+    }
+    $this->assertDatabaseCount('users', 2);
   }
 
   #[Test]

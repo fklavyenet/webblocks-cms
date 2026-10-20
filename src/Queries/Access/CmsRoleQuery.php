@@ -10,7 +10,7 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 
 final class CmsRoleQuery
 {
-  public const HISTORY_ACTIONS = ['role.saved', 'permission.granted', 'permission.revoked', 'role.deleted', 'assignment.changed', 'user.access.saved', 'user.deleted'];
+  public const HISTORY_ACTIONS = ['role.saved', 'permission.granted', 'permission.revoked', 'role.deleted', 'assignment.changed', 'user.access.saved', 'user.activity.changed', 'user.system_role.changed', 'user.deleted'];
 
   public function listing(array $filters = [])
   {

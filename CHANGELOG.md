@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.105.8
+
+- Reduce repeated queries in effective-permission inspection by loading the selected site role and grants once per inspection, preserving current plugin defaults and immediate access revocation on subsequent requests.
+- Record account activation and Super Admin membership changes as distinct access-history events with previous/new values, localized labels and action filters.
+- Translate missing-site validation for user creation and updates in all six panel languages.
+- Accept Audio Media Library assignments in content plans and incremental block writes with shared audio MIME validation; retain staged-source isolation and reject incompatible media.
+
 ## 1.105.7
 
 - Add an optional private preview beside existing draft and staged page settings and supported page-owned block forms, including block modals and Rich Text focus mode.

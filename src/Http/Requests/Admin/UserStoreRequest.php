@@ -50,7 +50,7 @@ class UserStoreRequest extends FormRequest
   {
     return [function (Validator $validator): void {
       if (in_array($this->input('role'), [User::ROLE_SITE_ADMIN, User::ROLE_EDITOR], true) && count($this->input('site_ids', [])) === 0) {
-        $validator->errors()->add('site_ids', 'Select at least one site for site admins and editors.');
+        $validator->errors()->add('site_ids', __('webblocks-cms::acl.site_required'));
       }
     }];
   }

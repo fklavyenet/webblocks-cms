@@ -2320,7 +2320,7 @@ class InternalContentPlanService
 
         if (! $media) {
           $errors[] = $this->error($path.'.media_id', 'Media Library record must exist.');
-        } elseif (! in_array($media->kind, InternalContentApiOperations::DIRECT_MEDIA_KIND_RULES[$blockType->slug], true)) {
+        } elseif (! InternalContentApiOperations::acceptsDirectMedia($blockType->slug, $media)) {
           $errors[] = $this->error($path.'.media_id', 'Media Library record kind is not compatible with this block type.');
         } else {
           $payload['media_id'] = (int) $media->id;

@@ -8,7 +8,7 @@
             <div class="wb-table-wrap">
                 <table class="wb-table wb-table-striped"><tbody>
                     @foreach (['time' => $eventTime, 'actor' => $eventActor, 'action' => $eventAction, 'role' => $event->role_name, 'user' => $event->user_name, 'site' => $event->site_name, 'permission' => $event->permission, 'before' => $event->before_value, 'after' => $event->after_value] as $label => $value)
-                        <tr><th scope="row" class="wb-table-key">{{ __('webblocks-cms::acl.'.$label) }}</th><td>{{ $value ?? '—' }}</td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ __('webblocks-cms::acl.'.$label) }}</th><td>{{ in_array($label, ['before', 'after'], true) && in_array($event->action, ['user.access.saved', 'user.activity.changed', 'user.system_role.changed'], true) && in_array($value, ['active', 'inactive', 'super_admin', 'site_roles'], true) ? __('webblocks-cms::acl.event_values.'.$value) : ($value ?? '—') }}</td></tr>
                     @endforeach
                 </tbody></table>
             </div>

@@ -1,6 +1,8 @@
 <?php
 
 return [
+  'site_required' => 'Sélectionnez au moins un site pour les administrateurs de site et les rédacteurs.',
+  'event_values' => ['active' => 'Actif', 'inactive' => 'Inactif', 'super_admin' => 'Super administrateur', 'site_roles' => 'Rôles par site'],
   'permission_search_placeholder' => 'Rechercher des noms, identifiants ou groupes d’autorisations',
   'permission_status' => 'Statut de l’autorisation',
   'all_permissions' => 'Toutes les autorisations',
@@ -32,14 +34,14 @@ return [
   'history_filters_help' => 'L’utilisateur peut être l’auteur ou l’utilisateur concerné. Le rôle peut être le rôle modifié ou l’ancien ou le nouveau rôle du site. Les filtres s’appliquent ensemble ; les choix incluent les références conservées dans l’historique.',
   'history_no_matches' => 'Aucune modification d’accès ne correspond à ces filtres',
   'history_no_matches_help' => 'Modifiez ou effacez les filtres pour voir d’autres modifications d’accès.',
-  'history_description' => 'Modifications des rôles, autorisations et attributions par site, de la plus récente à la plus ancienne.',
-  'history_empty' => 'Aucune modification d’accès pour le moment', 'history_empty_help' => 'Les modifications des rôles, autorisations et attributions par site apparaîtront ici.',
+  'history_description' => 'Modifications des comptes, rôles système, autorisations et attributions par site, de la plus récente à la plus ancienne.',
+  'history_empty' => 'Aucune modification d’accès pour le moment', 'history_empty_help' => 'Les modifications des comptes, rôles, autorisations et attributions par site apparaîtront ici.',
   'history_context' => 'Contexte', 'history_view' => 'Voir la modification', 'history_details' => 'Modification d’accès',
   'role' => 'Rôle', 'permission' => 'Autorisation', 'before' => 'Valeur précédente', 'after' => 'Nouvelle valeur',
   'unknown_actor' => 'Auteur inconnu', 'no_context' => 'Aucun rôle, utilisateur ou site associé',
   'roles_pagination' => 'Pagination des rôles', 'history_pagination' => 'Pagination de l’historique des accès',
   'edit_locked' => 'Votre rôle ne permet pas de modifier cette page dans son état actuel.',
-  'events' => ['role_saved' => 'Rôle enregistré', 'permission_granted' => 'Autorisation accordée', 'permission_revoked' => 'Autorisation retirée', 'role_deleted' => 'Rôle supprimé', 'assignment_changed' => 'Rôle du site modifié', 'user_access_saved' => 'Accès utilisateur enregistré', 'user_deleted' => 'Utilisateur supprimé'],
+  'events' => ['user_activity_changed' => 'État du compte modifié', 'user_system_role_changed' => 'Rôle système modifié', 'role_saved' => 'Rôle enregistré', 'permission_granted' => 'Autorisation accordée', 'permission_revoked' => 'Autorisation retirée', 'role_deleted' => 'Rôle supprimé', 'assignment_changed' => 'Rôle du site modifié', 'user_access_saved' => 'Accès utilisateur enregistré', 'user_deleted' => 'Utilisateur supprimé'],
   'site_roles' => 'Rôles par site',
   'title' => 'Rôles et autorisations', 'description' => 'Attribuez un rôle pour chaque site. Les modifications affectent toutes les attributions utilisant ce rôle.',
   'new' => 'Créer un rôle', 'copy' => 'Copier le rôle', 'edit' => 'Modifier', 'name' => 'Nom', 'details' => 'Description',

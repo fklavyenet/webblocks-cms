@@ -129,7 +129,14 @@ class InternalContentApiOperations
     'download' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
     'file' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
     'video' => [Media::KIND_VIDEO],
+    'audio' => [Media::KIND_OTHER],
   ];
+
+  public static function acceptsDirectMedia(string $type, Media $media): bool
+  {
+    return in_array($media->kind, self::DIRECT_MEDIA_KIND_RULES[$type] ?? [], true)
+      && ($type !== 'audio' || preg_match('/\Aaudio\/[a-z0-9][a-z0-9!#$&^_.+\-]*\z/i', (string) $media->mime_type) === 1);
+  }
 
   public function __construct(
     private readonly BlockPayloadWriter $blockPayloadWriter,
@@ -987,7 +994,7 @@ class InternalContentApiOperations
 
         if (! $media) {
           $errors[] = $this->error($path.'.media_id', 'Media Library record must exist.');
-        } elseif (! in_array($media->kind, self::DIRECT_MEDIA_KIND_RULES[$blockType->slug], true)) {
+        } elseif (! self::acceptsDirectMedia($blockType->slug, $media)) {
           $errors[] = $this->error($path.'.media_id', 'Media Library record kind is not compatible with this block type.');
         } else {
           $payload['media_id'] = (int) $media->id;

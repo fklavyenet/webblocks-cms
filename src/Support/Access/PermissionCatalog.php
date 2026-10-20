@@ -23,7 +23,7 @@ final class PermissionCatalog
     'personal-tokens' => ['manage'],
   ];
 
-  public function editable(): array
+  public function editable(?array $pluginPermissions = null): array
   {
     $permissions = [];
     foreach (self::GROUPS as $group => $actions) {
@@ -31,8 +31,8 @@ final class PermissionCatalog
         $permissions['cms.'.$group.'.'.$action] = ['group' => $group, 'label' => __('webblocks-cms::acl.permissions.'.$group.'.'.$action)];
       }
     }
-    if (app()->bound(PluginRegistry::class)) {
-      foreach (app(PluginRegistry::class)->permissions(enabledOnly: true) as $items) {
+    if ($pluginPermissions !== null || app()->bound(PluginRegistry::class)) {
+      foreach ($pluginPermissions ?? app(PluginRegistry::class)->permissions(enabledOnly: true) as $items) {
         foreach ($items as $permission) {
           if ($permission->isSiteDelegable()) {
             $permissions[$permission->name()] = ['group' => 'plugins', 'label' => $permission->labelText()];

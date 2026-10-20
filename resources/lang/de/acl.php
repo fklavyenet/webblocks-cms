@@ -1,6 +1,8 @@
 <?php
 
 return [
+  'site_required' => 'Wählen Sie mindestens eine Website für Website-Administratoren und Redakteure aus.',
+  'event_values' => ['active' => 'Aktiv', 'inactive' => 'Inaktiv', 'super_admin' => 'Super-Admin', 'site_roles' => 'Websitebezogene Rollen'],
   'permission_search_placeholder' => 'Berechtigungsnamen, Kennungen oder Gruppen durchsuchen',
   'permission_status' => 'Berechtigungsstatus',
   'all_permissions' => 'Alle Berechtigungen',
@@ -32,14 +34,14 @@ return [
   'history_filters_help' => 'Der Benutzer kann die handelnde oder die betroffene Person sein. Die Rolle kann die geänderte Rolle oder die vorherige oder neue Website-Rolle sein. Filter gelten gemeinsam; die Auswahl enthält im Verlauf erhaltene Verweise.',
   'history_no_matches' => 'Keine Zugriffsänderungen entsprechen diesen Filtern',
   'history_no_matches_help' => 'Ändern oder löschen Sie die Filter, um andere Zugriffsänderungen zu sehen.',
-  'history_description' => 'Änderungen an Rollen, Berechtigungen und Website-Zuweisungen, neueste zuerst.',
-  'history_empty' => 'Noch keine Zugriffsänderungen', 'history_empty_help' => 'Änderungen an Rollen, Berechtigungen und Website-Zuweisungen werden hier angezeigt.',
+  'history_description' => 'Änderungen an Konten, Systemrollen, Berechtigungen und Website-Zuweisungen, neueste zuerst.',
+  'history_empty' => 'Noch keine Zugriffsänderungen', 'history_empty_help' => 'Änderungen an Konten, Rollen, Berechtigungen und Website-Zuweisungen werden hier angezeigt.',
   'history_context' => 'Kontext', 'history_view' => 'Änderung anzeigen', 'history_details' => 'Zugriffsänderung',
   'role' => 'Rolle', 'permission' => 'Berechtigung', 'before' => 'Vorheriger Wert', 'after' => 'Neuer Wert',
   'unknown_actor' => 'Unbekannter Benutzer', 'no_context' => 'Keine verknüpfte Rolle, kein Benutzer und keine Website',
   'roles_pagination' => 'Seitennavigation der Rollen', 'history_pagination' => 'Seitennavigation des Zugriffsverlaufs',
   'edit_locked' => 'Ihre Rolle erlaubt es nicht, diese Seite in ihrem aktuellen Status zu bearbeiten.',
-  'events' => ['role_saved' => 'Rolle gespeichert', 'permission_granted' => 'Berechtigung erteilt', 'permission_revoked' => 'Berechtigung entfernt', 'role_deleted' => 'Rolle gelöscht', 'assignment_changed' => 'Website-Rolle geändert', 'user_access_saved' => 'Benutzerzugriff gespeichert', 'user_deleted' => 'Benutzer gelöscht'],
+  'events' => ['user_activity_changed' => 'Kontostatus geändert', 'user_system_role_changed' => 'Systemrolle geändert', 'role_saved' => 'Rolle gespeichert', 'permission_granted' => 'Berechtigung erteilt', 'permission_revoked' => 'Berechtigung entfernt', 'role_deleted' => 'Rolle gelöscht', 'assignment_changed' => 'Website-Rolle geändert', 'user_access_saved' => 'Benutzerzugriff gespeichert', 'user_deleted' => 'Benutzer gelöscht'],
   'site_roles' => 'Rollen pro Website',
   'title' => 'Rollen und Berechtigungen', 'description' => 'Weisen Sie jeder Website eine Rolle zu. Änderungen betreffen alle Zuweisungen dieser Rolle.',
   'new' => 'Rolle erstellen', 'copy' => 'Rolle kopieren', 'edit' => 'Bearbeiten', 'name' => 'Name', 'details' => 'Beschreibung',

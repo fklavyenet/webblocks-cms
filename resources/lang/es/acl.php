@@ -1,6 +1,8 @@
 <?php
 
 return [
+  'site_required' => 'Seleccione al menos un sitio para los administradores del sitio y los editores.',
+  'event_values' => ['active' => 'Activa', 'inactive' => 'Inactiva', 'super_admin' => 'Superadministrador', 'site_roles' => 'Roles por sitio'],
   'permission_search_placeholder' => 'Buscar nombres, identificadores o grupos de permisos',
   'permission_status' => 'Estado del permiso',
   'all_permissions' => 'Todos los permisos',
@@ -32,14 +34,14 @@ return [
   'history_filters_help' => 'El usuario puede ser el autor o el usuario afectado. El rol puede ser el rol modificado o el rol anterior o nuevo del sitio. Los filtros se aplican juntos; las opciones incluyen las referencias conservadas en el historial.',
   'history_no_matches' => 'Ningún cambio de acceso coincide con estos filtros',
   'history_no_matches_help' => 'Cambie o borre los filtros para ver otros cambios de acceso.',
-  'history_description' => 'Cambios en roles, permisos y asignaciones de sitio, del más reciente al más antiguo.',
-  'history_empty' => 'Aún no hay cambios de acceso', 'history_empty_help' => 'Los cambios en roles, permisos y asignaciones de sitio aparecerán aquí.',
+  'history_description' => 'Cambios en cuentas, roles del sistema, permisos y asignaciones de sitio, del más reciente al más antiguo.',
+  'history_empty' => 'Aún no hay cambios de acceso', 'history_empty_help' => 'Los cambios en cuentas, roles, permisos y asignaciones de sitio aparecerán aquí.',
   'history_context' => 'Contexto', 'history_view' => 'Ver cambio', 'history_details' => 'Cambio de acceso',
   'role' => 'Rol', 'permission' => 'Permiso', 'before' => 'Valor anterior', 'after' => 'Valor nuevo',
   'unknown_actor' => 'Autor desconocido', 'no_context' => 'Sin rol, usuario o sitio vinculado',
   'roles_pagination' => 'Paginación de roles', 'history_pagination' => 'Paginación del historial de acceso',
   'edit_locked' => 'Tu rol no permite editar esta página en su estado actual.',
-  'events' => ['role_saved' => 'Rol guardado', 'permission_granted' => 'Permiso concedido', 'permission_revoked' => 'Permiso retirado', 'role_deleted' => 'Rol eliminado', 'assignment_changed' => 'Rol del sitio cambiado', 'user_access_saved' => 'Acceso del usuario guardado', 'user_deleted' => 'Usuario eliminado'],
+  'events' => ['user_activity_changed' => 'Estado de la cuenta cambiado', 'user_system_role_changed' => 'Rol del sistema cambiado', 'role_saved' => 'Rol guardado', 'permission_granted' => 'Permiso concedido', 'permission_revoked' => 'Permiso retirado', 'role_deleted' => 'Rol eliminado', 'assignment_changed' => 'Rol del sitio cambiado', 'user_access_saved' => 'Acceso del usuario guardado', 'user_deleted' => 'Usuario eliminado'],
   'site_roles' => 'Roles por sitio',
   'title' => 'Roles y permisos', 'description' => 'Asigna un rol para cada sitio. Los cambios afectan a todas las asignaciones que usan ese rol.',
   'new' => 'Crear rol', 'copy' => 'Copiar rol', 'edit' => 'Editar', 'name' => 'Nombre', 'details' => 'Descripción',

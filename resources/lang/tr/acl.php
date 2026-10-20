@@ -1,6 +1,8 @@
 <?php
 
 return [
+  'site_required' => 'Site yöneticileri ve editörler için en az bir site seçin.',
+  'event_values' => ['active' => 'Etkin', 'inactive' => 'Devre dışı', 'super_admin' => 'Süper Yönetici', 'site_roles' => 'Siteye özel roller'],
   'permission_search_placeholder' => 'İzin adlarında, anahtarlarında veya gruplarında ara',
   'permission_status' => 'İzin durumu',
   'all_permissions' => 'Tüm izinler',
@@ -32,14 +34,14 @@ return [
   'history_filters_help' => 'Kullanıcı, işlemi yapan veya işlemden etkilenen kişidir. Rol, değiştirilen rol ya da önceki veya yeni site rolüdür. Filtreler birlikte uygulanır; seçenekler geçmişte korunan referansları içerir.',
   'history_no_matches' => 'Bu filtrelerle eşleşen erişim değişikliği yok',
   'history_no_matches_help' => 'Diğer erişim değişikliklerini görmek için filtreleri değiştirin veya temizleyin.',
-  'history_description' => 'Rol, izin ve site ataması değişiklikleri, en yeniden eskiye.',
-  'history_empty' => 'Henüz erişim değişikliği yok', 'history_empty_help' => 'Rol, izin ve site ataması değişiklikleri burada görünecek.',
+  'history_description' => 'Hesap, sistem rolü, izin ve site ataması değişiklikleri, en yeniden eskiye.',
+  'history_empty' => 'Henüz erişim değişikliği yok', 'history_empty_help' => 'Hesap, rol, izin ve site ataması değişiklikleri burada görünecek.',
   'history_context' => 'Bağlam', 'history_view' => 'Değişikliği görüntüle', 'history_details' => 'Erişim değişikliği',
   'role' => 'Rol', 'permission' => 'İzin', 'before' => 'Önceki değer', 'after' => 'Yeni değer',
   'unknown_actor' => 'Bilinmeyen kullanıcı', 'no_context' => 'Bağlı rol, kullanıcı veya site yok',
   'roles_pagination' => 'Rol sayfaları', 'history_pagination' => 'Erişim geçmişi sayfaları',
   'edit_locked' => 'Rolünüz bu sayfayı mevcut durumunda düzenlemeye izin vermiyor.',
-  'events' => ['role_saved' => 'Rol kaydedildi', 'permission_granted' => 'İzin verildi', 'permission_revoked' => 'İzin kaldırıldı', 'role_deleted' => 'Rol silindi', 'assignment_changed' => 'Site rolü değiştirildi', 'user_access_saved' => 'Kullanıcı erişimi kaydedildi', 'user_deleted' => 'Kullanıcı silindi'],
+  'events' => ['user_activity_changed' => 'Hesap etkinliği değiştirildi', 'user_system_role_changed' => 'Sistem rolü değiştirildi', 'role_saved' => 'Rol kaydedildi', 'permission_granted' => 'İzin verildi', 'permission_revoked' => 'İzin kaldırıldı', 'role_deleted' => 'Rol silindi', 'assignment_changed' => 'Site rolü değiştirildi', 'user_access_saved' => 'Kullanıcı erişimi kaydedildi', 'user_deleted' => 'Kullanıcı silindi'],
   'site_roles' => 'Site bazlı roller',
   'title' => 'Roller ve izinler', 'description' => 'Her site için bir rol atayın. Değişiklikler, bu rolün kullanıldığı tüm atamaları etkiler.',
   'new' => 'Rol oluştur', 'copy' => 'Rolü kopyala', 'edit' => 'Düzenle', 'name' => 'Ad', 'details' => 'Açıklama',

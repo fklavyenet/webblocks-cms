@@ -53,6 +53,13 @@ class PluginAccessResolver
       || in_array($acl->legacyRole($user, $siteId), $definition->roleNames(), true))->values();
   }
 
+  public function allowsInSiteContext(PluginPermission $definition, bool $hasPanelAccess, bool $superAdmin, bool $hasGrant, ?string $protectedRole): bool
+  {
+    return $hasPanelAccess && ($superAdmin
+      || ($definition->isSiteDelegable() && $hasGrant)
+      || in_array($protectedRole, $definition->roleNames(), true));
+  }
+
   public function isSuperAdmin(?Authenticatable $user): bool
   {
     if ($user === null || ! ($user->is_active ?? true)) {

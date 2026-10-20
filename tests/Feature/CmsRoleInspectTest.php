@@ -12,11 +12,15 @@ use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Queries\Access\CmsPermissionQuery;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
+use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginPermission;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
 class CmsRoleInspectTest extends TestCase
@@ -43,6 +47,9 @@ class CmsRoleInspectTest extends TestCase
   protected function setUp(): void
   {
     parent::setUp();
+    if (! class_exists(User::class)) {
+      class_alias(MaintenanceTestUser::class, User::class);
+    }
     $this->withoutMiddleware([RedirectIfNotInstalled::class]);
     $this->administrator = User::forceCreate(['name' => 'Synthetic administrator', 'email' => 'admin@example.test', 'password' => 'unused', 'role' => 'super_admin', 'is_active' => true]);
     $this->subject = User::forceCreate(['name' => 'Synthetic publisher', 'email' => 'publisher@example.test', 'password' => 'unused', 'role' => 'editor', 'is_active' => true]);
@@ -78,6 +85,78 @@ class CmsRoleInspectTest extends TestCase
     @$document->loadHTML('<?xml encoding="UTF-8">'.$html);
 
     return new DOMXPath($document);
+  }
+
+  #[Test]
+  public function live_plugin_catalog_queries_do_not_grow_per_permission_or_survive_a_disable(): void
+  {
+    $registry = new PluginRegistry(useLiveConfig: true);
+    $permissions = array_map(fn ($index) => PluginPermission::make('audit-catalog.permission-'.$index)->siteDelegable(), range(1, 40));
+    $registry->register(PluginDefinition::make('audit-catalog')->permissions($permissions));
+    config()->set('webblocks-plugins.enabled.audit-catalog', true);
+    $this->app->instance(PluginRegistry::class, $registry);
+    DB::table('wbcms_acl_role_permissions')->insert(['role_id' => $this->role->id, 'permission' => 'audit-catalog.permission-1']);
+    $query = app(CmsPermissionQuery::class);
+    DB::enableQueryLog();
+    DB::flushQueryLog();
+    try {
+      $result = $query->inspect($this->subject, $this->site, ['q' => 'audit-catalog', 'status' => '']);
+      $count = count(DB::getQueryLog());
+    } finally {
+      DB::disableQueryLog();
+    }
+    $this->assertLessThanOrEqual(20, $count, 'Live plugin discovery must be resolved once for the entire inspection.');
+    $this->assertSame(40, $result['filteredCount']);
+    $this->assertTrue($result['permissionGroups']['plugins']['audit-catalog.permission-1']['allowed']);
+    config()->set('webblocks-plugins.enabled.audit-catalog', false);
+    $this->assertSame(0, $query->inspect($this->subject, $this->site, ['q' => 'audit-catalog', 'status' => ''])['filteredCount']);
+  }
+
+  #[Test]
+  public function inspection_bulk_reads_have_a_constant_query_budget_and_match_authorization(): void
+  {
+    $registry = new PluginRegistry(['appointments' => true]);
+    $registry->register(PluginDefinition::make('appointments')->permissions([
+      PluginPermission::make('appointments.view')->siteDelegable()->roles(['site_admin']),
+      PluginPermission::make('appointments.system')->roles(['site_admin']),
+    ]));
+    $this->app->instance(PluginRegistry::class, $registry);
+    $query = app(CmsPermissionQuery::class);
+    $acl = app(CmsAuthorization::class);
+    $plugins = app(PluginAccessResolver::class);
+    $catalog = app(PermissionCatalog::class)->editable();
+    foreach ([$this->role, CmsRole::where('handle', 'site_admin')->firstOrFail()] as $role) {
+      $this->subject->sites()->updateExistingPivot($this->site->id, ['role_id' => $role->id]);
+      foreach ([$this->subject, $this->administrator] as $subject) {
+        foreach (['', 'no-match-query-budget'] as $needle) {
+          DB::enableQueryLog();
+          DB::flushQueryLog();
+          try {
+            $result = $query->inspect($subject, $this->site, ['q' => $needle, 'status' => '']);
+            $count = count(DB::getQueryLog());
+          } finally {
+            DB::disableQueryLog();
+          }
+          $this->assertLessThanOrEqual(16, $count, 'Inspection must not query per permission.');
+          if ($needle !== '') {
+            $this->assertSame(0, $result['filteredCount']);
+
+            continue;
+          }
+          $decisions = $result['permissionGroups']->collapse();
+          foreach ($catalog as $key => $definition) {
+            $expected = $definition['group'] === 'plugins'
+              ? $plugins->permittedSiteIds($subject, $key)->contains($this->site->id)
+              : $acl->allows($subject, $key, $this->site->id);
+            $this->assertSame($expected, $decisions[$key]['allowed'], $key);
+          }
+        }
+      }
+    }
+    // A stored operation grant without panel access still grants nothing.
+    $this->subject->sites()->updateExistingPivot($this->site->id, ['role_id' => $this->role->id]);
+    DB::table('wbcms_acl_role_permissions')->where('role_id', $this->role->id)->where('permission', 'cms.panel.access')->delete();
+    $this->assertSame(0, $query->inspect($this->subject, $this->site, ['q' => '', 'status' => ''])['grantedCount']);
   }
 
   #[Test]

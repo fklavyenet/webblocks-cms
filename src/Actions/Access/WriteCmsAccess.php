@@ -81,6 +81,8 @@ final class WriteCmsAccess
       if ($user->exists) {
       $user = $user->newQuery()->lockForUpdate()->findOrFail($user->id);
       }
+      $wasActive = $user->exists ? (bool) $user->is_active : null;
+      $previousSystemRole = $user->exists ? (app(CmsAuthorization::class)->isSuperAdmin($user) ? 'super_admin' : 'site_roles') : null;
       $root = ($data['role'] ?? '') === 'super_admin';
       if ($user->exists && $this->lastAdmin($user) && (! $root || ! ($data['is_active'] ?? false))) {
         throw ValidationException::withMessages(['role' => __('webblocks-cms::acl.last_admin')]);
@@ -112,7 +114,14 @@ final class WriteCmsAccess
         $this->event($actor, 'assignment.changed', userId: $user->id, siteId: $siteId, before: isset($old[$siteId]) ? (string) $old[$siteId] : null, after: $next === null ? null : (string) $next);
         }
       }
-      $this->event($actor, 'user.access.saved', userId: $user->id, after: $root ? 'super_admin' : 'site_roles');
+      $systemRole = $root ? 'super_admin' : 'site_roles';
+      if ($wasActive !== (bool) $user->is_active) {
+        $this->event($actor, 'user.activity.changed', userId: $user->id, before: $wasActive === null ? null : ($wasActive ? 'active' : 'inactive'), after: $user->is_active ? 'active' : 'inactive');
+      }
+      if ($previousSystemRole !== $systemRole) {
+        $this->event($actor, 'user.system_role.changed', userId: $user->id, before: $previousSystemRole, after: $systemRole);
+      }
+      $this->event($actor, 'user.access.saved', userId: $user->id, before: $previousSystemRole, after: $systemRole);
 
       return $user;
     });

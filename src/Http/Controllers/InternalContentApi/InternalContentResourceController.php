@@ -1298,7 +1298,7 @@ class InternalContentResourceController extends Controller
         return $this->validationError('media_id', 'This existing block update endpoint does not support direct media assignment for this block type.');
       }
 
-      if ($media && ! in_array($media->kind, $allowedKinds, true)) {
+      if ($media && ! InternalContentApiOperations::acceptsDirectMedia($type, $media)) {
         return $this->validationError('media_id', 'Selected media kind is not compatible with this block type.');
       }
     }
@@ -1820,13 +1820,7 @@ class InternalContentResourceController extends Controller
 
   private function directMediaKindsForBlockType(string $type): array
   {
-    return match ($type) {
-      'image', 'navbar-brand', 'sidebar-brand' => [Media::KIND_IMAGE],
-      'hero', 'section', 'card', 'cta', 'content_header', 'slide' => [Media::KIND_IMAGE],
-      'download', 'file' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
-      'video' => [Media::KIND_VIDEO],
-      default => [],
-    };
+    return InternalContentApiOperations::DIRECT_MEDIA_KIND_RULES[$type] ?? [];
   }
 
   private function resolveLocale(Request $request): Locale

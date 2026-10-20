@@ -1,6 +1,8 @@
 <?php
 
 return [
+  'site_required' => 'Select at least one site for site admins and editors.',
+  'event_values' => ['active' => 'Active', 'inactive' => 'Inactive', 'super_admin' => 'Super Admin', 'site_roles' => 'Per-site roles'],
   'permission_search_placeholder' => 'Search permission names, identifiers or groups',
   'permission_status' => 'Permission status',
   'all_permissions' => 'All permissions',
@@ -32,14 +34,14 @@ return [
   'history_filters_help' => 'The user can be the actor or the affected user. The role can be the changed role or the previous or new site role. Filters apply together; choices include references retained in history.',
   'history_no_matches' => 'No access changes match these filters',
   'history_no_matches_help' => 'Change or clear the filters to see other access changes.',
-  'history_description' => 'Role, permission and site assignment changes, newest first.',
-  'history_empty' => 'No access changes yet', 'history_empty_help' => 'Changes to roles, permissions and site assignments will appear here.',
+  'history_description' => 'Account, system role, permission and site assignment changes, newest first.',
+  'history_empty' => 'No access changes yet', 'history_empty_help' => 'Account, role, permission and site assignment changes will appear here.',
   'history_context' => 'Context', 'history_view' => 'View change', 'history_details' => 'Access change',
   'role' => 'Role', 'permission' => 'Permission', 'before' => 'Previous value', 'after' => 'New value',
   'unknown_actor' => 'Unknown actor', 'no_context' => 'No linked role, user or site',
   'roles_pagination' => 'Roles pagination', 'history_pagination' => 'Access history pagination',
   'edit_locked' => 'Your role does not allow editing this page in its current state.',
-  'events' => ['role_saved' => 'Role saved', 'permission_granted' => 'Permission granted', 'permission_revoked' => 'Permission removed', 'role_deleted' => 'Role deleted', 'assignment_changed' => 'Site role changed', 'user_access_saved' => 'User access saved', 'user_deleted' => 'User deleted'],
+  'events' => ['user_activity_changed' => 'Account activity changed', 'user_system_role_changed' => 'System role changed', 'role_saved' => 'Role saved', 'permission_granted' => 'Permission granted', 'permission_revoked' => 'Permission removed', 'role_deleted' => 'Role deleted', 'assignment_changed' => 'Site role changed', 'user_access_saved' => 'User access saved', 'user_deleted' => 'User deleted'],
   'site_roles' => 'Per-site roles',
   'title' => 'Roles and permissions', 'description' => 'Assign a role for each site. Changes affect every assignment using that role.',
   'new' => 'Create role', 'copy' => 'Copy role', 'edit' => 'Edit', 'name' => 'Name', 'details' => 'Description',
