@@ -1,0 +1,25 @@
+<?php
+
+return [
+  'title' => 'Düzenleme önizlemesi',
+  'open' => 'Önizleme panelini aç',
+  'close' => 'Kapat',
+  'separate' => 'Kayıtlı önizlemeyi yeni sekmede aç',
+  'help' => 'Yalnızca açık form dahildir. Diğer değişiklikler ayrıca kaydedilmelidir. Dar ekranlarda kayıtlı önizlemeyi yeni sekmede kullanın.',
+  'scope' => 'Özel önizleme: bu formdaki desteklenen kaydedilmemiş değerler ve kayıtlı taslak. Bağlantılar ve etkileşimli betikler devre dışıdır; koleksiyon sayfalaması kullanılabilir.',
+  'locale' => 'İçerik dili',
+  'width' => 'Önizleme genişliği',
+  'desktop' => 'Masaüstü (1024 px)',
+  'phone' => 'Telefon (390 px)',
+  'refresh' => 'Önizlemeyi yenile',
+  'ready' => 'Hazır. Bu formu görmek için yenileyin.',
+  'pending' => 'Değişiklikler bekliyor; önizleme güncel olmayabilir.',
+  'loading' => 'Görüntüleniyor…',
+  'current' => 'Önizleme güncel.',
+  'failed' => 'Önizleme başarısız; önceki görüntü güncel değil. Formunuz korundu.',
+  'source_failed' => 'Bir içerik kaynağı hata verdi veya erişimi reddetti. Görüntü eksik; formunuz korundu.',
+  'unsupported' => 'Bu form; alt öğe oluşturucularını, galerileri, eklentileri, Gömülü Uygulamaları, dosya yüklemelerini veya blok türü, slot, üst öğe, sıra ve durum değişikliklerini önizleyemez. Önce kaydedin, ardından kayıtlı önizlemeyi kullanın.',
+  'auth_failed' => 'Oturum süresi doldu veya erişim reddedildi. Formunuz korundu. Giriş yaptıktan sonra düzenleyiciyi yeniden açın.',
+  'translation_missing' => 'Bu sayfanın seçilen dilde kayıtlı çevirisi yok.',
+  'last_render' => 'Son başarılı görüntüleme:',
+];

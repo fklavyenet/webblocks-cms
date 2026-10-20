@@ -15,6 +15,7 @@ final class BrowserFixtureServer
     'parent' => ['SlotBlockEditorFragmentSafetyTest', 'WEBBLOCKS_PARENT_FIXTURE', 'full_and_fragment_parent_options'],
     'asset-picker' => ['AssetPickerViewTest', 'WEBBLOCKS_ASSET_PICKER_FIXTURE', 'picker_results_remain_inert'],
     'rich-text' => ['RichTextEditorViewTest', 'WEBBLOCKS_RICH_TEXT_FIXTURE', 'editor_controls_and_shared_dialogs'],
+    'editor-preview' => ['EditorPreviewTest', 'WEBBLOCKS_EDITOR_PREVIEW_FIXTURE', 'editor_panel_browser_fixture'],
   ];
 
   public static function run(string $scenario): void
@@ -68,13 +69,18 @@ final class BrowserFixtureServer
     $script = match ($scenario) {
       'asset-picker' => '/cms/js/admin/asset-picker.js',
       'rich-text' => '/cms/js/admin/rich-text-editor.js',
+      'editor-preview' => '/cms/js/admin/editor-preview.js',
       default => null,
     };
     if ($script !== null) {
       $assets[] = $script;
     }
+    if ($scenario === 'editor-preview') {
+      $assets[] = '/cms/js/admin/editor-preview-frame.js';
+    }
     $file = match (true) {
       in_array($path, $assets, true) => $root.'/public'.$path,
+      $path === '/fixture.js' && $scenario === 'editor-preview' => $root.'/tests/Browser/editor-preview-fixture.js',
       in_array($path, ['/fixture.css', '/fixture.js'], true) => $root.'/tests/Browser'.$path,
       default => null,
     };
@@ -118,7 +124,11 @@ final class BrowserFixtureServer
     }
     $head .= '<script src="/cms/webblocks-ui/'.$version.'/webblocks-ui.js" defer></script>';
     if ($scenario !== 'parent') {
-      $script = $scenario === 'asset-picker' ? 'asset-picker' : 'rich-text-editor';
+      $script = match ($scenario) {
+        'asset-picker' => 'asset-picker',
+        'editor-preview' => 'editor-preview',
+        default => 'rich-text-editor',
+      };
       $head .= '<script src="/cms/js/admin/'.$script.'.js" defer></script>';
     }
     $head .= '<script src="/fixture.js" defer></script></head>';

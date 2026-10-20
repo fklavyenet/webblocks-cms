@@ -27,6 +27,8 @@ class ContentBindingResolver
     $resolverClass = $source?->resolverClass();
 
     if ($source === null || $recordKey === '' || ! isset($source->fieldDefinitions()[$sourceField])) {
+      $this->runtime->previewIssue('invalid');
+
       return $binding['fallback'] ?? $fallback;
     }
 
@@ -38,6 +40,8 @@ class ContentBindingResolver
     }
 
     if ($resolverClass === null) {
+      $this->runtime->previewIssue('unavailable');
+
       return $binding['fallback'] ?? $fallback;
     }
 
@@ -65,6 +69,8 @@ class ContentBindingResolver
       $resolver = app($resolverClass);
 
       if (! $resolver instanceof ContentSourceResolver) {
+        $this->runtime->previewIssue('invalid');
+
         return $binding['fallback'] ?? $fallback;
       }
 
@@ -79,6 +85,7 @@ class ContentBindingResolver
 
       return $value !== null && $value !== '' ? $value : ($binding['fallback'] ?? $fallback);
     } catch (Throwable $exception) {
+      $this->runtime->previewIssue('unavailable');
       report($exception);
 
       return $binding['fallback'] ?? $fallback;

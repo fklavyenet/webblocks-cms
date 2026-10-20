@@ -6,11 +6,36 @@ use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
 use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 
 class BlockPayloadWriter
 {
   public function __construct(private readonly BlockTranslationWriter $blockTranslationWriter) {}
+
+  /** Use the same normalized native payload and translation rules as save, with no persistence. */
+  public function preview(Block $source, Page $page, array $data, string $localeCode): Block
+  {
+    $block = clone $source;
+    $canonical = $this->blockTranslationWriter->canonicalPayload($data, $source, $page, $localeCode);
+    unset($canonical['_block_media'], $canonical['_block_assets'], $canonical['_gallery_items'], $canonical['locale']);
+    $block->fill($canonical);
+    $this->blockTranslationWriter->preview($block, $source, $data, $localeCode);
+    $media = Media::query()->find($block->media_id);
+    $block->setRelation('asset', $media)->setRelation('media', $media);
+    $assets = $block->blockAssets()->getRelated()->newCollection();
+    foreach ($data['_block_media'] ?? [] as $role => $ids) {
+      foreach (array_values($ids) as $position => $id) {
+        $row = new BlockMedia(['block_id' => $block->id, 'media_id' => $id, 'role' => $role, 'position' => $position]);
+        $row->setRelation('asset', Media::query()->find($id));
+        $row->setRelation('media', $row->asset);
+        $assets->push($row);
+      }
+    }
+    $block->setRelation('blockAssets', $assets)->setRelation('blockMedia', $assets);
+
+    return $block;
+  }
 
   public function save(Block $block, Page $page, array $data, ?string $localeCode = null): Block
   {

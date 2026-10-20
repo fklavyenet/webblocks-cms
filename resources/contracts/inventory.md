@@ -1642,6 +1642,52 @@ Filters and Standard view clear the view selection and custom columns; Pages
 retain their existing site-context rules. Pagination, list/grid/folder links,
 details and safe return URLs preserve the current view and column context.
 
+## Private editing preview (1.105.7)
+
+Existing editable draft and staged pages offer an optional adjacent preview on
+page settings and existing page-owned block forms, including the slot block
+modal. The explicit Refresh preview action overlays only that active supported
+form on a detached graph of the saved draft. Native FormRequest normalization,
+translation payloads, authorized media selection, PublicPagePresenter and the
+public Blade renderer remain authoritative. No editorial row, recovery record,
+revision or workflow is saved by rendering; staged identity and the published
+source remain unchanged. Published pages must enter the existing staged workflow
+first. Recovery checkpoints continue independently under their existing contract.
+
+Session/CSRF protected POST `/webadmin/pages/{page}/editor-preview` checks active
+account, current site read and draft-edit grants, page-owned block identity,
+editing-locale translation authority and enabled render locale. It rejects Shared
+Slot sources, revision candidates, published pages and foreign blocks. Encoded
+native controls are transient, limited to 512 controls and 256 KiB; sensitive
+keys remain excluded. Missing saved page translations are explicit errors rather
+than silent language fallback. Block translations retain native fallback rules;
+a form’s editing locale never becomes the selected render locale implicitly.
+Responses containing HTML are private,no-store and noindex,nofollow.
+
+The panel identifies page/workflow/block/editing locale, offers site content
+languages and 1024 px desktop/390 px phone widths, reports pending and failed
+renders and retains the last successful timestamp. It never fetches on typing or
+opening; refresh and configured collection pagination are explicit. Aborted or
+older requests cannot replace newer results, and validation/network/session
+failures retain form values and the editor position. Narrow screens retain the
+saved separate-tab preview; it does not contain unsaved form values.
+
+Configured Dynamic Content uses native bindings, query/filter/sort/limit,
+pagination and empty/error behavior. Within one editing render, provider results
+and failures are memoized in request memory, with at most 64 unique resolutions;
+no private result enters a shared cache. Incomplete, unavailable or denied sources
+mark the render incomplete without exposing exception details. No provider or
+route publication contract changes.
+
+HTML is displayed in an opaque iframe sandbox with a nonce-only script policy.
+Authored scripts, embedded frames, navigation and form submission are disabled;
+a dedicated external bridge permits only validated native collection-page keys.
+The preview is a visual render, not an interactive public application. Existing
+gallery/inline child-builder/plugin/Embedded Application forms, new blocks,
+file uploads, and changes to block type, slot, parent, order or status require
+Save and the saved preview; limitations are explained instead of silently
+presenting those edits as current. All new panel copy covers en/de/tr/es/it/fr.
+
 ## SQL roles and operation permissions
 
 The panel supports protected built-in Site Admin and Editor compatibility roles and custom SQL roles. A user has one role per assigned site; Super Admin is a separate protected system membership. Custom roles are managed only by active Super Admins through `/webadmin/access/roles`; `/webadmin/access/inspect` displays effective grants for a selected user/site. Role changes use version checks, assigned roles cannot be deleted, and grant/assignment changes are recorded as relational scalar audit rows. The last active Super Admin is guarded under a shared SQL transaction lock in CMS user mutations.

@@ -1,0 +1,25 @@
+<?php
+
+return [
+  'title' => 'Bearbeitungsvorschau',
+  'open' => 'Vorschaubereich öffnen',
+  'close' => 'Schließen',
+  'separate' => 'Gespeicherte Vorschau in neuem Tab',
+  'help' => 'Nur das aktive Formular ist enthalten. Andere Änderungen müssen separat gespeichert werden. Auf schmalen Bildschirmen die gespeicherte Vorschau in einem neuen Tab verwenden.',
+  'scope' => 'Private Vorschau: unterstützte ungespeicherte Formularwerte und gespeicherter Entwurf. Links und interaktive Skripte sind deaktiviert; Sammlungspaginierung ist verfügbar.',
+  'locale' => 'Inhaltssprache',
+  'width' => 'Vorschaubreite',
+  'desktop' => 'Desktop (1024 px)',
+  'phone' => 'Telefon (390 px)',
+  'refresh' => 'Vorschau aktualisieren',
+  'ready' => 'Bereit. Zum Anzeigen dieses Formulars aktualisieren.',
+  'pending' => 'Änderungen ausstehend; die Vorschau ist möglicherweise veraltet.',
+  'loading' => 'Wird gerendert…',
+  'current' => 'Vorschau ist aktuell.',
+  'failed' => 'Vorschau fehlgeschlagen; die vorherige Ansicht ist veraltet. Ihr Formular bleibt erhalten.',
+  'source_failed' => 'Eine Inhaltsquelle ist fehlgeschlagen oder hat den Zugriff verweigert. Diese Ansicht ist unvollständig; Ihr Formular bleibt erhalten.',
+  'unsupported' => 'Unterelement-Builder, Galerien, Plugins, eingebettete Anwendungen, Datei-Uploads und Änderungen an Blocktyp, Slot, übergeordnetem Block, Reihenfolge oder Status werden nicht unterstützt. Zuerst speichern und dann die gespeicherte Vorschau verwenden.',
+  'auth_failed' => 'Sitzung abgelaufen oder Zugriff verweigert. Ihr Formular bleibt erhalten. Nach der Anmeldung den Editor erneut öffnen.',
+  'translation_missing' => 'Für diese Seite gibt es keine gespeicherte Übersetzung in der gewählten Sprache.',
+  'last_render' => 'Letzte erfolgreiche Darstellung:',
+];

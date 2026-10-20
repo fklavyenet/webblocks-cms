@@ -1,0 +1,25 @@
+<?php
+
+return [
+  'title' => 'Aperçu de modification',
+  'open' => 'Ouvrir le panneau d’aperçu',
+  'close' => 'Fermer',
+  'separate' => 'Aperçu enregistré dans un nouvel onglet',
+  'help' => 'Seul le formulaire actif est inclus. Les autres modifications doivent être enregistrées séparément. Sur petit écran, utilisez l’aperçu enregistré dans un nouvel onglet.',
+  'scope' => 'Aperçu privé : valeurs non enregistrées prises en charge de ce formulaire et brouillon enregistré. Les liens et scripts interactifs sont désactivés ; la pagination des collections reste disponible.',
+  'locale' => 'Langue du contenu',
+  'width' => 'Largeur de l’aperçu',
+  'desktop' => 'Ordinateur (1024 px)',
+  'phone' => 'Téléphone (390 px)',
+  'refresh' => 'Actualiser l’aperçu',
+  'ready' => 'Prêt. Actualisez pour afficher ce formulaire.',
+  'pending' => 'Modifications en attente ; l’aperçu peut être obsolète.',
+  'loading' => 'Génération en cours…',
+  'current' => 'L’aperçu est à jour.',
+  'failed' => 'Échec de l’aperçu ; la vue précédente est obsolète. Votre formulaire est conservé.',
+  'source_failed' => 'Une source de contenu a échoué ou refusé l’accès. Cette vue est incomplète ; votre formulaire est conservé.',
+  'unsupported' => 'Les éditeurs d’éléments enfants, galeries, extensions, applications intégrées, fichiers à importer et changements de type, slot, parent, ordre ou statut du bloc ne sont pas pris en charge. Enregistrez d’abord puis utilisez l’aperçu enregistré.',
+  'auth_failed' => 'Session expirée ou accès refusé. Votre formulaire est conservé. Rouvrez l’éditeur après connexion.',
+  'translation_missing' => 'Cette page n’a pas de traduction enregistrée dans la langue sélectionnée.',
+  'last_render' => 'Dernier affichage réussi :',
+];

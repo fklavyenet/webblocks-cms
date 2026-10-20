@@ -17,6 +17,7 @@ final class ContentCollectionLoader
   {
     $source = $this->sources->find((string) ($configuration['source'] ?? ''));
     if (! $source?->isCollection() || ! $source->resolverClass()) {
+      $this->runtime->previewIssue('unavailable');
       throw new UnexpectedValueException('Source unavailable.');
     }
     $context = new ContentSourceContext($block->renderSite(), $block->renderPage(), $block->renderLocaleCode() ?? app()->getLocale(), $preview, auth()->user());
@@ -25,6 +26,7 @@ final class ContentCollectionLoader
     }
     $resolver = app($source->resolverClass());
     if (! $resolver instanceof ContentCollectionSourceResolver) {
+      $this->runtime->previewIssue('invalid');
       throw new UnexpectedValueException('Collection resolver unavailable.');
     }
     $limit = min(max((int) ($configuration['limit'] ?? 12), 1), 50);
@@ -44,6 +46,7 @@ final class ContentCollectionLoader
     if ($resolver instanceof QueryableContentCollectionSourceResolver) {
       $result = $this->runtime->remember($source, $context, ['query' => (array) $query, 'settings' => $settings], fn () => $resolver->queryCollection($query, $settings, $context));
       if (! $result instanceof ContentCollectionResult) {
+        $this->runtime->previewIssue('invalid');
         throw new UnexpectedValueException('Invalid collection result.');
       }
 

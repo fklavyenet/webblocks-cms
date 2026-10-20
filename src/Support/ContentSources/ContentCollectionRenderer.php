@@ -43,6 +43,8 @@ class ContentCollectionRenderer
       || ! $template instanceof Block
       || ! $this->editor->collectionTemplateIsAllowed($container, (string) $template->typeSlug())
       || $resolverClass === null) {
+      $this->runtime->previewIssue('invalid');
+
       return $children;
     }
 
@@ -57,6 +59,7 @@ class ContentCollectionRenderer
     } catch (AuthorizationException) {
       return $children;
     } catch (Throwable $exception) {
+      $this->runtime->previewIssue('unavailable');
       report($exception);
 
       return ($configuration['error_behavior'] ?? 'keep_template') === 'hide_template'

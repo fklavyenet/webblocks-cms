@@ -89,6 +89,26 @@ class BlockTranslationWriter
     $this->syncAdditionalTranslations($block, $data, $localeCode, $duplicateDefaultOnCreate, $translationSourceBlock);
   }
 
+  /** Overlay native translation payloads without writing translation rows. */
+  public function preview(Block $target, Block $source, array $data, string $localeCode): void
+  {
+    $family = $this->registry->familyFor($source);
+    if (! $family || $family === BlockTranslationRegistry::PLUGIN_FAMILY) {
+      return;
+    }
+    $locale = $this->resolveLocale($localeCode);
+    $relation = match ($family) {
+      'text' => 'textTranslations',
+      'button' => 'buttonTranslations',
+      'image' => 'imageTranslations',
+      'contact_form' => 'contactFormTranslations',
+    };
+    $rows = $source->{$relation}->map(fn ($row) => clone $row);
+    $translation = $rows->firstWhere('locale_id', $locale->id) ?? $source->{$relation}()->make(['locale_id' => $locale->id]);
+    $translation->fill($this->translationPayload($family, $data, $source, $locale->id));
+    $target->setRelation($relation, $rows->reject(fn ($row) => $row->locale_id === $locale->id)->push($translation)->values());
+  }
+
   public function normalizeCanonicalStorage(Block $block): void
   {
     $family = $this->registry->familyFor($block);

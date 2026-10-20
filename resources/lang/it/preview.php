@@ -1,0 +1,25 @@
+<?php
+
+return [
+  'title' => 'Anteprima di modifica',
+  'open' => 'Apri pannello di anteprima',
+  'close' => 'Chiudi',
+  'separate' => 'Anteprima salvata in una nuova scheda',
+  'help' => 'È incluso solo il modulo attivo. Le altre modifiche devono essere salvate separatamente. Sugli schermi stretti, usare l’anteprima salvata in una nuova scheda.',
+  'scope' => 'Anteprima privata: valori non salvati supportati di questo modulo e bozza salvata. Link e script interattivi sono disabilitati; la paginazione delle raccolte è disponibile.',
+  'locale' => 'Lingua del contenuto',
+  'width' => 'Larghezza anteprima',
+  'desktop' => 'Desktop (1024 px)',
+  'phone' => 'Telefono (390 px)',
+  'refresh' => 'Aggiorna anteprima',
+  'ready' => 'Pronto. Aggiorna per visualizzare questo modulo.',
+  'pending' => 'Modifiche in attesa; l’anteprima potrebbe non essere aggiornata.',
+  'loading' => 'Generazione in corso…',
+  'current' => 'L’anteprima è aggiornata.',
+  'failed' => 'Anteprima non riuscita; la vista precedente non è aggiornata. Il modulo è conservato.',
+  'source_failed' => 'Una fonte di contenuto non è disponibile o ha negato l’accesso. Questa vista è incompleta; il modulo è conservato.',
+  'unsupported' => 'Non sono supportati editor di elementi figli, gallerie, plugin, applicazioni incorporate, caricamenti di file o modifiche a tipo, slot, elemento padre, ordine o stato del blocco. Salvare prima e usare l’anteprima salvata.',
+  'auth_failed' => 'Sessione scaduta o accesso negato. Il modulo è conservato. Riaprire l’editor dopo l’accesso.',
+  'translation_missing' => 'Questa pagina non ha una traduzione salvata nella lingua selezionata.',
+  'last_render' => 'Ultima visualizzazione riuscita:',
+];

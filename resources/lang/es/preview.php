@@ -1,0 +1,25 @@
+<?php
+
+return [
+  'title' => 'Vista previa de edición',
+  'open' => 'Abrir panel de vista previa',
+  'close' => 'Cerrar',
+  'separate' => 'Vista guardada en una pestaña nueva',
+  'help' => 'Solo se incluye el formulario activo. Los demás cambios deben guardarse por separado. En pantallas estrechas, use la vista guardada en una pestaña nueva.',
+  'scope' => 'Vista privada: valores sin guardar compatibles de este formulario y borrador guardado. Los enlaces y scripts interactivos están desactivados; la paginación de colecciones está disponible.',
+  'locale' => 'Idioma del contenido',
+  'width' => 'Ancho de vista previa',
+  'desktop' => 'Escritorio (1024 px)',
+  'phone' => 'Teléfono (390 px)',
+  'refresh' => 'Actualizar vista previa',
+  'ready' => 'Listo. Actualice para mostrar este formulario.',
+  'pending' => 'Cambios pendientes; la vista previa puede estar desactualizada.',
+  'loading' => 'Generando vista…',
+  'current' => 'La vista previa está actualizada.',
+  'failed' => 'Error de vista previa; la vista anterior está desactualizada. El formulario se conserva.',
+  'source_failed' => 'Una fuente de contenido falló o denegó el acceso. Esta vista está incompleta; el formulario se conserva.',
+  'unsupported' => 'No se admiten constructores de elementos secundarios, galerías, plugins, aplicaciones integradas, archivos nuevos ni cambios de tipo, slot, elemento padre, orden o estado del bloque. Guarde primero y use la vista guardada.',
+  'auth_failed' => 'La sesión ha caducado o se denegó el acceso. El formulario se conserva. Abra el editor tras iniciar sesión.',
+  'translation_missing' => 'Esta página no tiene una traducción guardada en el idioma seleccionado.',
+  'last_render' => 'Última vista generada correctamente:',
+];

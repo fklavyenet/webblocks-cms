@@ -1,0 +1,25 @@
+<?php
+
+return [
+  'title' => 'Editing preview',
+  'open' => 'Open preview panel',
+  'close' => 'Close',
+  'separate' => 'Saved preview in new tab',
+  'help' => 'Only the active form is included. Other changes must be saved separately. On narrow screens, use the saved preview in a new tab.',
+  'scope' => 'Private preview: this form’s supported unsaved values plus the saved draft. Links and interactive scripts are disabled; collection pagination is available.',
+  'locale' => 'Content language',
+  'width' => 'Preview width',
+  'desktop' => 'Desktop (1024 px)',
+  'phone' => 'Phone (390 px)',
+  'refresh' => 'Refresh preview',
+  'ready' => 'Ready. Refresh to render this form.',
+  'pending' => 'Changes pending; preview may be out of date.',
+  'loading' => 'Rendering…',
+  'current' => 'Preview is current.',
+  'failed' => 'Preview failed; the previous render is out of date. Your form is unchanged.',
+  'source_failed' => 'A content source failed or denied access. This render is incomplete; your form is unchanged.',
+  'unsupported' => 'This form cannot preview child builders, galleries, plugins, Embedded Applications, file uploads or changes to block type, slot, parent, order or status. Save those changes first, then use the saved preview.',
+  'auth_failed' => 'Access expired or denied. Your form is unchanged. Reopen the editor after signing in.',
+  'translation_missing' => 'This page has no saved translation in the selected language.',
+  'last_render' => 'Last successful render:',
+];

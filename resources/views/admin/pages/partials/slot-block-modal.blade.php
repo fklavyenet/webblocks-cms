@@ -68,6 +68,7 @@
 
                     @if ($isEditMode)
                         @include('webblocks-cms::admin.partials.editor-recovery', ['recoveryPage' => $page, 'recoveryBlock' => $slotModalBlock, 'recoveryLocale' => $activeLocale->code])
+                        @include('webblocks-cms::admin.partials.editor-preview', ['previewPage' => $page, 'previewBlock' => $slotModalBlock, 'previewLocale' => $activeLocale->code])
                     @endif
                     @include('webblocks-cms::admin.blocks._form', [
                         'block' => $slotModalBlock,

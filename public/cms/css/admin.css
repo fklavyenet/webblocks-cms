@@ -1434,3 +1434,23 @@ input.wb-admin-table-grid-input:focus {
 [data-wb-editor-recovery] {
     flex-shrink: 0;
 }
+
+/* Optional private editor preview; the separate-tab link remains available at every width. */
+.wb-editor-preview-controls { margin-bottom: 1rem; }
+.wb-editor-preview-open { display: grid; grid-template-columns: minmax(340px, 1fr) minmax(340px, 1fr); align-items: start; gap: 1rem; }
+.wb-editor-preview-editor, .wb-editor-preview-panel { min-width: 0; }
+.wb-editor-preview-panel { position: sticky; top: 1rem; }
+.wb-editor-preview-panel > .wb-card-header { align-items: stretch; text-align: left; }
+.wb-editor-preview-viewport { overflow: auto; max-height: 70vh; background: var(--wb-surface, #fff); }
+.wb-editor-preview-viewport iframe { display: block; border: 0; width: 1024px; height: 720px; background: #fff; }
+.wb-editor-preview-viewport[data-width="phone"] iframe { width: 390px; height: 720px; }
+.wb-editor-preview-panel[data-preview-state="pending"] [data-preview-status],
+.wb-editor-preview-panel[data-preview-state="source_failed"] [data-preview-status] { color: var(--wb-warning, #855800); }
+.wb-editor-preview-panel[data-preview-state="failed"] [data-preview-status],
+.wb-editor-preview-panel[data-preview-state="auth_failed"] [data-preview-status] { color: var(--wb-danger, #b42318); }
+.wb-editor-preview-modal .wb-modal-dialog { width: min(96vw, 1600px); max-width: 1600px; }
+@media (max-width: 1099px) {
+    .wb-editor-preview-toggle { display: none; }
+    .wb-editor-preview-open { display: block; }
+    .wb-editor-preview-panel { display: none; }
+}

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.105.7
+
+- Add an optional private preview beside existing draft and staged page settings and supported page-owned block forms, including block modals and Rich Text focus mode.
+- Render the active form’s unsaved text, media references and supported Dynamic Content configuration through the native page renderer without saving content, creating revisions or promoting a staged update.
+- Offer explicit refresh, pending/error states, last successful render time, enabled content languages and desktop/phone widths, with the saved separate-tab preview retained on narrow screens.
+- Isolate preview HTML from the admin, disable page interactions except configured collection pagination, bound provider resolution per render and keep unsupported structural forms explicit in all six panel languages.
+
 ## 1.105.6
 
 - Save and manage private named views for Pages and Media, including existing filters, sorting, optional table column selection/order and Media list/grid mode.

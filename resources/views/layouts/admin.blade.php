@@ -18,6 +18,7 @@
         $adminJsAssets = [
             'core' => public_path('cms/js/admin/core.js'),
             'recovery' => public_path('cms/js/admin/editor-recovery.js'),
+            'preview' => public_path('cms/js/admin/editor-preview.js'),
         ];
     @endphp
 
@@ -443,6 +444,9 @@
             <script src="{{ asset('cms/js/admin/editor-recovery.js') }}?v={{ filemtime($adminJsAssets['recovery']) }}" defer></script>
         @endif
         @stack('admin-scripts')
+        @if (is_file($adminJsAssets['preview']))
+            <script src="{{ asset('cms/js/admin/editor-preview.js') }}?v={{ filemtime($adminJsAssets['preview']) }}" defer></script>
+        @endif
         @stack('scripts')
     </body>
 </html>

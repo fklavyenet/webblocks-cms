@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContac
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
 use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentAuthoringController;
 use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentController;
+use WebBlocks\Cms\Http\Controllers\Admin\EditorPreviewController;
 use WebBlocks\Cms\Http\Controllers\Admin\EditorRecoveryController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationController;
@@ -344,6 +345,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('/shared-slots/{shared_slot}/revisions/{revision}', [SharedSlotRevisionController::class, 'show'])->name('shared-slots.revisions.show')->missing($missingSharedSlotRevision);
     Route::post('/shared-slots/{shared_slot}/revisions/{revision}/restore', [SharedSlotRevisionController::class, 'restore'])->name('shared-slots.revisions.restore')->missing($missingSharedSlotRevision);
     Route::get('reports/visitors', [VisitorReportController::class, 'index'])->middleware('can:view-visitor-reports')->name('reports.visitors.index');
+    Route::post('/pages/{page}/editor-preview', EditorPreviewController::class)->middleware('throttle:20,1')->name('pages.editor.preview');
     Route::get('/pages/{page}/editor-recovery/{editingSession}', [EditorRecoveryController::class, 'show'])->whereUuid('editingSession')->name('pages.recovery.show');
     Route::put('/pages/{page}/editor-recovery/{editingSession}', [EditorRecoveryController::class, 'store'])->whereUuid('editingSession')->middleware('throttle:60,1')->name('pages.recovery.store');
     Route::delete('/pages/{page}/editor-recovery/{editingSession}', [EditorRecoveryController::class, 'destroy'])->whereUuid('editingSession')->name('pages.recovery.destroy');
