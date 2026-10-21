@@ -65,11 +65,15 @@ class BlockPatchSettingsContractTest extends TestCase
   {
     $block = $this->seedBlock('link-list');
 
-    $settings = $this->mergeSettings($block, ['row_layout' => 'sideways', 'list_frame' => 'bubbles', 'thumb_size' => 'enormous']);
-
-    $this->assertArrayNotHasKey('row_layout', $settings);
-    $this->assertArrayNotHasKey('list_frame', $settings);
-    $this->assertArrayNotHasKey('thumb_size', $settings);
+    try {
+      $this->mergeSettings($block, ['row_layout' => 'sideways', 'list_frame' => 'bubbles', 'thumb_size' => 'enormous']);
+      $this->fail('Invalid settings must be rejected without changing the block.');
+    } catch (HttpResponseException $exception) {
+      $payload = json_decode($exception->getResponse()->getContent(), true);
+      $this->assertSame(422, $exception->getResponse()->getStatusCode());
+      $this->assertSame('invalid_block_settings', $payload['code']);
+      $this->assertNotEmpty($payload['errors'][0]['path']);
+    }
   }
 
   #[Test]
@@ -198,13 +202,18 @@ class BlockPatchSettingsContractTest extends TestCase
   public function patching_an_image_rejects_an_invalid_gallery_viewer_group(): void
   {
     $block = $this->seedBlock('image');
-    $settings = $this->mergeSettings($block, [
+    try {
+      $this->mergeSettings($block, [
       'viewer_enabled' => true,
       'viewer_group' => 'Article Images!',
     ]);
-
-    $this->assertTrue($settings['viewer_enabled'] ?? false);
-    $this->assertSame('page-images', $settings['viewer_group'] ?? null);
+      $this->fail('Invalid settings must be rejected without changing the block.');
+    } catch (HttpResponseException $exception) {
+      $payload = json_decode($exception->getResponse()->getContent(), true);
+      $this->assertSame(422, $exception->getResponse()->getStatusCode());
+      $this->assertSame('invalid_block_settings', $payload['code']);
+      $this->assertNotEmpty($payload['errors'][0]['path']);
+    }
   }
 
   #[Test]
@@ -222,10 +231,15 @@ class BlockPatchSettingsContractTest extends TestCase
   {
     $block = $this->seedBlock('hero', ['layout' => 'split']);
 
-    $settings = $this->mergeSettings($block, ['layout' => 'diagonal', 'title_tag' => 'h7']);
-
-    $this->assertArrayNotHasKey('layout', $settings);
-    $this->assertArrayNotHasKey('title_tag', $settings);
+    try {
+      $this->mergeSettings($block, ['layout' => 'diagonal', 'title_tag' => 'h7']);
+      $this->fail('Invalid settings must be rejected without changing the block.');
+    } catch (HttpResponseException $exception) {
+      $payload = json_decode($exception->getResponse()->getContent(), true);
+      $this->assertSame(422, $exception->getResponse()->getStatusCode());
+      $this->assertSame('invalid_block_settings', $payload['code']);
+      $this->assertNotEmpty($payload['errors'][0]['path']);
+    }
   }
 
   #[Test]
@@ -278,11 +292,15 @@ class BlockPatchSettingsContractTest extends TestCase
   {
     $block = $this->seedBlock('grid');
 
-    $settings = $this->mergeSettings($block, ['columns' => '7', 'gap' => '99', 'alternate_start' => 'sideways']);
-
-    $this->assertArrayNotHasKey('columns', $settings);
-    $this->assertArrayNotHasKey('gap', $settings);
-    $this->assertArrayNotHasKey('alternate_start', $settings);
+    try {
+      $this->mergeSettings($block, ['columns' => '7', 'gap' => '99', 'alternate_start' => 'sideways']);
+      $this->fail('Invalid settings must be rejected without changing the block.');
+    } catch (HttpResponseException $exception) {
+      $payload = json_decode($exception->getResponse()->getContent(), true);
+      $this->assertSame(422, $exception->getResponse()->getStatusCode());
+      $this->assertSame('invalid_block_settings', $payload['code']);
+      $this->assertNotEmpty($payload['errors'][0]['path']);
+    }
   }
 
   #[Test]

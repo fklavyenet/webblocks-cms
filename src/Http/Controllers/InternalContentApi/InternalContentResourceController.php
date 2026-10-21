@@ -19,18 +19,16 @@ use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
-use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
-use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
-use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoring;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoringException;
@@ -55,7 +53,6 @@ use WebBlocks\Cms\Support\Pages\PageDeleter;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
-use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class InternalContentResourceController extends Controller
@@ -1369,6 +1366,15 @@ class InternalContentResourceController extends Controller
         $updates['variant'] = trim((string) $request->input('variant')) ?: null;
       }
 
+      $incomingSettings = $request->input('settings', []);
+      foreach (['variant' => ['card', 'header', 'hero', 'cta', 'columns', 'feature-grid', 'button_link', 'download', 'table', 'quote', 'search-form', 'gallery'],
+        'url' => ['button_link', 'image', 'file', 'download', 'video', 'audio', 'column_item', 'feature-item', 'link-list-item', 'navbar-brand', 'sidebar-brand', 'sidebar-nav-item', 'stat-card']] as $field => $types) {
+        if (is_array($incomingSettings) && array_key_exists($field, $incomingSettings) && ! $request->has($field)
+          && in_array($block->typeSlug(), $types, true) && $incomingSettings[$field] !== $block->setting($field)) {
+          $updates[$field] = $settings[$field] ?? null;
+        }
+      }
+
       if ($request->has('settings') || $request->has('content_bindings') || $request->has('content_collection')) {
         $updates['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
       }
@@ -1965,351 +1971,53 @@ class InternalContentResourceController extends Controller
     }
 
     $type = (string) $block->typeSlug();
-    $allowedSettings = ['url', 'target', 'aria_label', 'content_bindings', 'content_collection'];
-
-    if ($this->supportsBackgroundMediaBlockType($type)) {
-      $allowedSettings[] = 'background_position';
-      $allowedSettings[] = 'background_overlay';
-    }
-
-    if ($type === 'slider') {
-      $allowedSettings = [
-        ...$allowedSettings,
-        'height',
-        'min_height',
-        'aspect_ratio',
-        'transition',
-        'interval_ms',
-        'autoplay',
-        'pause_on_hover',
-        'show_arrows',
-        'show_dots',
-        'loop',
-        'swipe',
-        'keyboard',
-        'overlay',
-        'content_position',
-        'content_width',
-        'text_color',
-        'background_fit',
-      ];
-    }
-
-    if ($type === 'slide') {
-      $allowedSettings = [
-        ...$allowedSettings,
-        'content_position',
-        'content_width',
-        'text_color',
-        'background_fit',
-      ];
-    }
-
-    if ($type === 'header-actions') {
-      $allowedSettings = [
-        ...$allowedSettings,
-        'show_mode_toggle',
-        'show_accent_toggle',
-        'show_search',
-        'show_language_switcher',
-      ];
-    }
-
-    if ($type === 'application') {
-      $allowedSettings = [
-        'application_handle',
-        'application_settings',
-        'width',
-        'loading',
-        'aspect_ratio',
-        'min_height',
-        'show_loading_state',
-        'show_failure_state',
-      ];
-    }
-
-    // The gate comes from the value rules, so a field cannot be accepted without
-    // one and cannot be refused while the contract advertises it.
-    $allowedSettings = [
-      ...$allowedSettings,
-      ...array_keys(BlockSettingsPatchPolicy::rulesFor($type)),
-    ];
-
-    if (in_array($type, InternalContentApiOperations::PUBLIC_ICON_BLOCK_TYPES, true)) {
-      $allowedSettings = [
-        ...$allowedSettings,
-        'icon_slug',
-        'icon_tone',
-        'icon_size',
-      ];
-
-      if (in_array($type, InternalContentApiOperations::PUBLIC_BADGE_BLOCK_TYPES, true)) {
-        $allowedSettings[] = 'badge_tone';
-      }
-    }
-
-    $unsupported = array_values(array_diff(array_keys($incoming), $allowedSettings));
-
-    if ($unsupported !== []) {
+    $errors = [];
+    $incoming = app(BlockSettingsValidator::class)->normalize($type, $incoming, 'settings', $errors, 'patch', $settings);
+    if ($errors !== []) {
       abort(response()->json([
-        'ok' => false,
-        'code' => 'unsupported_block_settings_fields',
-        'message' => 'Existing block updates may only change supported settings fields.',
-        'blocked_fields' => array_map(fn (string $field) => 'settings.'.$field, $unsupported),
-        'warnings' => [],
-        'errors' => [
-          [
-            'path' => implode(',', array_map(fn (string $field) => 'settings.'.$field, $unsupported)),
-            'message' => 'Use discovered block contract fields such as media_id for media-backed block visuals instead of unsupported settings keys.',
-          ],
-        ],
+        'ok' => false, 'code' => $errors[0]['code'], 'message' => $errors[0]['message'],
+        'blocked_fields' => array_column($errors, 'path'), 'warnings' => [], 'errors' => $errors,
       ], 422));
     }
 
-    $safeIncoming = [];
-
-    if ($type === 'application') {
-      $handle = trim((string) ($incoming['application_handle'] ?? $settings['application_handle'] ?? ''));
-      $definition = app(ApplicationRegistry::class)->find($handle);
-
-      if (! $definition) {
-        abort(response()->json([
-          'ok' => false,
-          'code' => 'application_not_found',
-          'message' => 'Embedded Application is not registered.',
-          'warnings' => [],
-          'errors' => [['path' => 'settings.application_handle', 'message' => 'Select a handle returned by GET /webadmin/api/applications.']],
-        ], 422));
-      }
-
-      if (! $definition->isReady()) {
-        abort(response()->json([
-          'ok' => false,
-          'code' => 'application_not_ready',
-          'message' => 'Embedded Application is not ready.',
-          'warnings' => [],
-          'errors' => [['path' => 'settings.application_handle', 'message' => 'Resolve the application readiness issues before placing it.']],
-        ], 422));
-      }
-
-      $applicationErrors = [];
-      $applicationSettings = app(ApplicationSettingsValidator::class)->normalize(
-        $definition,
-        $incoming['application_settings'] ?? $settings['application_settings'] ?? [],
-        'settings.application_settings',
-        $applicationErrors,
-      );
-
-      if ($applicationErrors !== []) {
-        abort(response()->json([
-          'ok' => false,
-          'code' => $applicationErrors[0]['code'] ?? 'application_setting_invalid',
-          'message' => 'Application settings do not match the selected application schema.',
-          'warnings' => [],
-          'errors' => $applicationErrors,
-        ], 422));
-      }
-
-      $safeIncoming = [
-        'application_handle' => $definition->handle,
-        'application_settings' => $applicationSettings,
-        'width' => in_array($incoming['width'] ?? $settings['width'] ?? null, ['content', 'wide', 'full'], true) ? ($incoming['width'] ?? $settings['width']) : 'content',
-        'loading' => in_array($incoming['loading'] ?? $settings['loading'] ?? null, ['lazy', 'eager'], true) ? ($incoming['loading'] ?? $settings['loading']) : 'lazy',
-        'aspect_ratio' => in_array($incoming['aspect_ratio'] ?? $settings['aspect_ratio'] ?? null, ['auto', '16/9', '4/3', '1/1'], true) ? ($incoming['aspect_ratio'] ?? $settings['aspect_ratio']) : 'auto',
-        'min_height' => max(0, min(2000, (int) ($incoming['min_height'] ?? $settings['min_height'] ?? 0))),
-        'show_loading_state' => (bool) ($incoming['show_loading_state'] ?? $settings['show_loading_state'] ?? true),
-        'show_failure_state' => (bool) ($incoming['show_failure_state'] ?? $settings['show_failure_state'] ?? false),
-      ];
+    $operations = app(InternalContentApiOperations::class);
+    $changed = array_filter($incoming, fn ($value, $key) => ! array_key_exists($key, $settings) || $settings[$key] !== $value, ARRAY_FILTER_USE_BOTH);
+    if ($block->blockType) {
+      $changed = $operations->normalizePublicIconSlugSettings($changed, $block->blockType, 'block', $errors);
+      $changed = $operations->normalizePublicIconToneSettings($changed, $block->blockType, 'block', $errors);
+      $changed = $operations->normalizePublicIconSizeSettings($changed, $block->blockType, 'block', $errors);
     }
-
-    if (array_key_exists('url', $incoming)) {
-      $safeIncoming['url'] = $this->safeUrl($incoming['url']);
+    if ($errors !== []) {
+      abort(response()->json(['ok' => false, 'code' => 'invalid_block_settings', 'warnings' => [], 'errors' => array_map(fn ($error) => [...$error, 'path' => preg_replace('/^block\./', '', $error['path'])], $errors)], 422));
     }
-
-    if (array_key_exists('target', $incoming)) {
-      $safeIncoming['target'] = $incoming['target'] === '_blank' ? '_blank' : '_self';
-    }
-
-    if (array_key_exists('aria_label', $incoming)) {
-      $safeIncoming['aria_label'] = trim((string) $incoming['aria_label']) ?: null;
-    }
-
-    if (array_key_exists('background_position', $incoming)) {
-      $position = trim((string) $incoming['background_position']);
-      $safeIncoming['background_position'] = in_array($position, ['top', 'bottom', 'left', 'right'], true)
-        ? $position
-        : null;
-    }
-
-    if (array_key_exists('background_overlay', $incoming)) {
-      $overlay = trim((string) $incoming['background_overlay']);
-      $safeIncoming['background_overlay'] = in_array($overlay, ['none', 'medium', 'strong'], true)
-        ? $overlay
-        : null;
-    }
-
-    if ($type === 'slider') {
-      if (array_key_exists('height', $incoming)) {
-        $height = trim((string) $incoming['height']);
-        $safeIncoming['height'] = in_array($height, ['auto', 'fill', 'viewport', 'large', 'medium', 'small', 'custom'], true) ? $height : 'fill';
+    // Touch only submitted keys. Unrelated historical nulls, empty values and
+    // nested extension settings must survive exactly as stored.
+    foreach ($incoming as $key => $value) {
+      if (array_key_exists($key, $settings) && $settings[$key] === $value) {
+        continue;
       }
-
-      if (array_key_exists('min_height', $incoming)) {
-        $minHeight = trim((string) $incoming['min_height']);
-        $safeIncoming['min_height'] = preg_match('/^\d{2,4}(px|vh|svh|dvh)$/', $minHeight) === 1 ? $minHeight : null;
-      }
-
-      if (array_key_exists('aspect_ratio', $incoming)) {
-        $aspectRatio = trim((string) $incoming['aspect_ratio']);
-        $safeIncoming['aspect_ratio'] = in_array($aspectRatio, ['16/9', '4/3', '1/1'], true) ? $aspectRatio : null;
-      }
-
-      if (array_key_exists('transition', $incoming)) {
-        $safeIncoming['transition'] = 'slide';
-      }
-
-      if (array_key_exists('interval_ms', $incoming)) {
-        $safeIncoming['interval_ms'] = min(max((int) $incoming['interval_ms'], 1000), 30000);
-      }
-
-      foreach (['autoplay', 'pause_on_hover', 'show_arrows', 'show_dots', 'loop', 'swipe', 'keyboard'] as $booleanSetting) {
-        if (array_key_exists($booleanSetting, $incoming)) {
-          $safeIncoming[$booleanSetting] = filter_var($incoming[$booleanSetting], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
-        }
-      }
-
-      if (array_key_exists('overlay', $incoming)) {
-        $overlay = trim((string) $incoming['overlay']);
-        $safeIncoming['overlay'] = in_array($overlay, ['soft', 'medium', 'dark', 'strong'], true) ? $overlay : null;
+      if ($value === null || ! array_key_exists($key, $changed)) {
+        unset($settings[$key]);
+      } elseif (array_key_exists($key, $changed)) {
+        $settings[$key] = $changed[$key];
       }
     }
-
-    if (in_array($type, ['slider', 'slide'], true)) {
-      if (array_key_exists('content_position', $incoming)) {
-        $contentPosition = trim((string) $incoming['content_position']);
-        $safeIncoming['content_position'] = in_array($contentPosition, ['center-left', 'center-right', 'top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'], true)
-          ? $contentPosition
-          : null;
-      }
-
-      if (array_key_exists('content_width', $incoming)) {
-        $contentWidth = trim((string) $incoming['content_width']);
-        $safeIncoming['content_width'] = in_array($contentWidth, ['narrow', 'wide', 'full'], true) ? $contentWidth : null;
-      }
-
-      if (array_key_exists('text_color', $incoming)) {
-        $textColor = trim((string) $incoming['text_color']);
-        $safeIncoming['text_color'] = in_array($textColor, ['light', 'dark'], true) ? $textColor : null;
-      }
-
-      if (array_key_exists('background_fit', $incoming)) {
-        $safeIncoming['background_fit'] = trim((string) $incoming['background_fit']) === 'contain' ? 'contain' : null;
+    if ($type === 'application' && array_intersect(array_keys($changed), ['application_handle', 'application_settings']) !== []) {
+      $applicationKeys = array_keys(BlockSettingsPatchPolicy::rulesFor('application'));
+      $normalizedApplication = $operations->normalizeApplicationSettings(array_intersect_key($settings, array_flip($applicationKeys)), $block->blockType, 'block', $errors);
+      $settings = array_replace($settings, array_intersect_key($normalizedApplication, array_flip(['application_handle', 'application_settings'])));
+      if ($errors !== []) {
+        abort(response()->json(['ok' => false, 'code' => $errors[0]['code'] ?? 'invalid_block_settings', 'warnings' => [], 'errors' => array_map(fn ($error) => [...$error, 'path' => preg_replace('/^block\./', '', $error['path'])], $errors)], 422));
       }
     }
-
-    if ($type === 'header-actions') {
-      foreach (['show_mode_toggle', 'show_accent_toggle', 'show_search', 'show_language_switcher'] as $booleanSetting) {
-        if (array_key_exists($booleanSetting, $incoming)) {
-          $safeIncoming[$booleanSetting] = filter_var($incoming[$booleanSetting], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
-        }
-      }
+    if ($type === 'grid' && array_intersect(array_keys($changed), ['columns', 'ratio', 'alternate_media_text_sections', 'alternate_start']) !== []) {
+      $settings = $operations->normalizeCompositionDefaults($settings, $block->blockType);
+    }
+    if ($type === 'image' && array_intersect(array_keys($changed), ['viewer_enabled', 'viewer_group']) !== []) {
+      $settings = $operations->normalizeImageViewerSettings($settings, $block->blockType, 'block', $errors);
     }
 
-    if (in_array($type, InternalContentApiOperations::PUBLIC_ICON_BLOCK_TYPES, true) && $block->blockType) {
-      // Delegate to the normalizers that already own icon handling for the
-      // create path, so PATCH cannot drift into a second set of icon rules.
-      $operations = app(InternalContentApiOperations::class);
-      $iconErrors = [];
-      $iconSettings = array_intersect_key($incoming, array_flip(['icon_slug', 'icon_tone', 'icon_size']));
-      $iconSettings = $operations->normalizePublicIconSlugSettings($iconSettings, $block->blockType, 'settings', $iconErrors);
-      $iconSettings = $operations->normalizePublicIconToneSettings($iconSettings, $block->blockType, 'settings', $iconErrors);
-      $iconSettings = $operations->normalizePublicIconSizeSettings($iconSettings, $block->blockType, 'settings', $iconErrors);
-
-      if ($iconErrors !== []) {
-        abort(response()->json([
-          'ok' => false,
-          'code' => 'invalid_block_settings',
-          'message' => 'Settings values must match the block contract.',
-          'blocked_fields' => [],
-          'warnings' => [],
-          'errors' => $iconErrors,
-        ], 422));
-      }
-
-      foreach (['icon_slug', 'icon_tone', 'icon_size'] as $iconField) {
-        if (array_key_exists($iconField, $incoming)) {
-          $safeIncoming[$iconField] = $iconSettings[$iconField] ?? null;
-        }
-      }
-
-      if (in_array($type, InternalContentApiOperations::PUBLIC_BADGE_BLOCK_TYPES, true) && array_key_exists('badge_tone', $incoming)) {
-        $badgeTone = trim((string) $incoming['badge_tone']);
-        $safeIncoming['badge_tone'] = in_array($badgeTone, PublicIconPresenter::BADGE_TONES, true) ? $badgeTone : null;
-      }
-    }
-
-    if ($type !== 'application') {
-      foreach (BlockSettingsPatchPolicy::rulesFor($type) as $field => $rule) {
-        if (array_key_exists($field, $incoming)) {
-          $safeIncoming[$field] = $this->sanitizeSettingValue($incoming[$field], $rule);
-        }
-      }
-    }
-
-    $merged = array_filter([
-      ...$settings,
-      ...$safeIncoming,
-    ], fn ($value) => $value !== null && $value !== '');
-
-    if ($type === 'grid' && ($merged['alternate_media_text_sections'] ?? false) !== true) {
-      // The admin drops the alternating start whenever alternating is off, so an
-      // API write cannot leave a start behind that nothing reads.
-      unset($merged['alternate_media_text_sections'], $merged['alternate_start']);
-    }
-
-    if ($type === 'grid' && (($merged['columns'] ?? null) !== '2' || ($merged['ratio'] ?? 'equal') === 'equal')) {
-      unset($merged['ratio']);
-    }
-
-    if ($type === 'image' && ($merged['viewer_enabled'] ?? false) !== true) {
-      unset($merged['viewer_enabled'], $merged['viewer_group']);
-    }
-
-    if ($type === 'image' && ($merged['viewer_enabled'] ?? false) === true && ! isset($merged['viewer_group'])) {
-      $merged['viewer_group'] = 'page-images';
-    }
-
-    return $merged;
-  }
-
-  /**
-   * Applies one BlockSettingsPatchPolicy rule. A value the rule rejects clears
-   * the setting rather than storing something no renderer reads, which is how
-   * the admin form behaves when a select is left empty.
-   *
-   * @param  array{0: string, 1?: mixed}  $rule
-   */
-  private function sanitizeSettingValue(mixed $value, array $rule): mixed
-  {
-    return match ($rule[0]) {
-      'enum' => in_array(trim((string) $value), $rule[1], true) ? trim((string) $value) : null,
-      'bool' => filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false,
-      'text' => mb_substr(trim((string) $value), 0, $rule[1]) ?: null,
-      'int' => is_numeric($value) ? max($rule[1], min($rule[2], (int) $value)) : null,
-      'menu_key' => in_array(trim((string) $value), NavigationItem::menuKeys(), true) ? trim((string) $value) : null,
-      'anchor' => preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_:.]*$/', trim((string) $value)) === 1
-        ? trim((string) $value)
-        : null,
-      'viewer_group' => preg_match('/^[a-z0-9][a-z0-9_-]{0,63}$/', trim((string) $value)) === 1
-        ? trim((string) $value)
-        : null,
-      default => null,
-    };
-  }
-
-  private function supportsBackgroundMediaBlockType(string $type): bool
-  {
-    return in_array($type, ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true);
+    return $settings;
   }
 
   private function safeUrl(mixed $url): ?string
@@ -2400,6 +2108,7 @@ class InternalContentResourceController extends Controller
       'translation_family' => $contract['translation_family'] ?? null,
       'translation_family_fields' => $contract['translation_family_fields'] ?? [],
       'shared_settings_fields' => $contract['shared_settings_fields'] ?? [],
+      'authoring_settings_schema' => $blockTypePayload['authoring_settings_schema'],
       'renderer_root_contract' => $contract['renderer_root_contract'] ?? null,
       'owns_public_root' => (bool) ($contract['owns_public_root_helper'] ?? false),
       'documented_contract' => (bool) ($contract['documented'] ?? false),

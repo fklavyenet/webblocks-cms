@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.105.9
+
+- Add revisioned per-block authoring settings schemas to block discovery and content contracts, with typed values, enums, ranges and operation-specific write policies.
+- Validate new or changed settings consistently across content plans, slot-block creation, existing-block updates and canonical admin forms; reject unsupported fields and invalid values instead of silently clearing them.
+- Preserve historical and plugin settings on unrelated writes, keep existing plugins compatible, and support optional scalar schemas in plugin definitions and manifests.
+- Add a read-only settings compatibility audit and an additive, lossless SQL migration for comment/form settings; keep media, source, application and human-only HTML boundaries in their existing domain validators.
+
 ## 1.105.8
 
 - Reduce repeated queries in effective-permission inspection by loading the selected site role and grants once per inspection, preserving current plugin defaults and immediate access revocation on subsequent requests.

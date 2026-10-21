@@ -23,6 +23,7 @@ use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
+use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
@@ -598,6 +599,12 @@ class InternalContentApiOperations
       $settings = [];
     }
 
+    $settingsErrorCount = count($errors);
+    $settings = app(BlockSettingsValidator::class)->normalize($blockType->slug, $settings, $path.'.settings', $errors);
+    if (count($errors) > $settingsErrorCount) {
+      return null;
+    }
+
     $settings = $this->normalizeCommerceBuyButtonSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizePublicIconSlugSettings($settings, $blockType, $path, $errors);
     $settings = $this->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
@@ -768,6 +775,9 @@ class InternalContentApiOperations
     }
 
     if ($blockType->slug === 'grid') {
+      if (($settings['alternate_media_text_sections'] ?? false) !== true) {
+        unset($settings['alternate_media_text_sections'], $settings['alternate_start']);
+      }
       $ratio = $settings['ratio'] ?? null;
       if (($settings['columns'] ?? null) !== '2' || ! in_array($ratio, ['lead-left', 'lead-right'], true)) {
         unset($settings['ratio']);
@@ -1147,7 +1157,7 @@ class InternalContentApiOperations
     return $settings;
   }
 
-  private function normalizeApplicationSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
+  public function normalizeApplicationSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
   {
     if ($blockType->slug !== 'application') {
       return $settings;

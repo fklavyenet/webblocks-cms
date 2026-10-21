@@ -212,14 +212,16 @@ class StackSplitCatalogTest extends TestCase
       'type' => 'hero',
       'settings' => ['layout' => 'full-bleed'],
     ], 'block', null, $errors, $warnings);
+    $this->assertSame([], $errors);
     $unknown = $operations->normalizeBlock([
       'type' => 'hero',
       'settings' => ['layout' => 'diagonal'],
     ], 'block', null, $errors, $warnings);
 
-    $this->assertSame([], $errors);
+    $this->assertSame('invalid_block_settings', $errors[0]['code']);
+    $this->assertSame('block.settings.layout', $errors[0]['path']);
     $this->assertSame('full-bleed', $fullBleed['settings']['layout']);
-    $this->assertArrayNotHasKey('layout', $unknown['settings']);
+    $this->assertNull($unknown);
   }
 
   #[Test]
@@ -235,15 +237,17 @@ class StackSplitCatalogTest extends TestCase
       'settings' => ['flow' => 'overlap-previous'],
       'children' => [['type' => 'plain_text']],
     ], 'block', null, $errors, $warnings);
+    $this->assertSame([], $errors);
     $unknown = $operations->normalizeBlock([
       'type' => 'section',
       'settings' => ['flow' => 'absolute'],
       'children' => [['type' => 'plain_text']],
     ], 'block', null, $errors, $warnings);
 
-    $this->assertSame([], $errors);
+    $this->assertSame('invalid_block_settings', $errors[0]['code']);
+    $this->assertSame('block.settings.flow', $errors[0]['path']);
     $this->assertSame('overlap-previous', $overlap['settings']['flow']);
-    $this->assertArrayNotHasKey('flow', $unknown['settings']);
+    $this->assertNull($unknown);
   }
 
   private function layoutBlock(string $slug, array $settings, $children): Block

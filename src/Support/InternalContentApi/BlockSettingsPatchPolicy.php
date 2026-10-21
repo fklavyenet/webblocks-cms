@@ -3,22 +3,9 @@
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
 /**
- * Which settings fields an existing block accepts through the block PATCH
- * endpoint, and why the rest are refused.
- *
- * The published content contract declares the settings each block type supports.
- * The PATCH endpoint used to keep a separate hand-written allowlist, so the two
- * drifted: the contract advertised fields the endpoint then refused with
- * unsupported_block_settings_fields, which is how the Link List styles shipped
- * unwritable in 1.40.10 and why an existing block's icon still cannot be changed.
- *
- * Every contract-declared settings field must appear either as patchable here or
- * in CLOSED with a reason. BlockPatchSettingsContractTest fails when a field
- * appears in the contract and in neither list, so adding a field to the contract
- * forces the decision instead of silently landing as an API refusal.
- *
- * Being patchable is not enough on its own: the endpoint must also sanitize the
- * field, or it passes the gate and is dropped instead of stored.
+ * Stable PATCH field rules and deliberate exclusions shared by the authoring
+ * schema. BlockSettingsSchema adds the remaining creation/admin presentation
+ * rules; BlockSettingsValidator validates changed values before domain helpers.
  */
 final class BlockSettingsPatchPolicy
 {
@@ -67,15 +54,15 @@ final class BlockSettingsPatchPolicy
    * Value rules for the settings fields PATCH accepts, mapped from block type to
    * field to rule. This is the gate and the sanitizer at once: a field absent
    * here is refused, and a field present here is written only if its value
-   * satisfies the rule, otherwise the setting is cleared.
+   * satisfies the rule, otherwise the request is rejected by BlockSettingsValidator.
    *
    * Rules mirror what the admin form already allows, because a value the admin
    * cannot produce is one no renderer reads.
    *
-   *   ['enum', [...]]  one of the listed values, anything else clears
-   *   ['bool']         truthy/falsy, unparseable clears
-   *   ['text', max]    trimmed free text capped at max, empty clears
-   *   ['int', min, max] integer clamped into range, non-numeric clears
+   *   ['enum', [...]]  one of the listed values, invalid values are rejected
+   *   ['bool']         truthy/falsy, unparseable values are rejected
+   *   ['text', max]    trimmed free text bounded by max, empty clears
+   *   ['int', min, max] integer in range, invalid values are rejected
    *   ['menu_key']     one of the navigation menu keys
    *   ['anchor']       same-page anchor ID, admin's format
    *   ['viewer_group'] lowercase page-local Gallery Viewer group key

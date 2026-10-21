@@ -409,6 +409,10 @@ class InstalledPluginDefinitionFactory
         $blockType->contentCollectionTemplate(is_array($childTypes) ? $childTypes : null);
       }
 
+      if (array_key_exists('settings_schema', $item)) {
+        $blockType->settingsSchema(is_array($item['settings_schema']) ? $item['settings_schema'] : ['invalid' => null]);
+      }
+
       $translatedFields = $item['translated_fields'] ?? null;
 
       if (is_array($translatedFields)) {

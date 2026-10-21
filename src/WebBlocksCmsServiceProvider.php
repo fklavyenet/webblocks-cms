@@ -20,6 +20,7 @@ use SplFileInfo;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 use WebBlocks\Cms\Console\AdminTranslationAuditCommand;
+use WebBlocks\Cms\Console\BlockSettingsAuditCommand;
 use WebBlocks\Cms\Console\BlockTypeContractsAuditCommand;
 use WebBlocks\Cms\Console\CatalogRepairCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
@@ -813,6 +814,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const ICON_SYNC_COMMAND_NAME = 'icons:sync-webblocks-ui';
 
   public const PACKAGE_CONSOLE_COMMANDS = [
+    BlockSettingsAuditCommand::class,
     PruneEditorRecoveriesCommand::class,
     SchedulerStatusCommand::class,
     DispatchSiteNotificationsCommand::class,

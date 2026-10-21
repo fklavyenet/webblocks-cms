@@ -50,6 +50,13 @@ final class StructuredSettingsSchema
     }
     foreach (SettingDefinitions::tables() as $name => $fields) {
       if (Schema::hasTable('wbcms_'.$name)) {
+        $existingColumns = Schema::getColumnListing('wbcms_'.$name);
+        foreach ($fields as $column => $type) {
+          if (! in_array($column, $existingColumns, true)) {
+            Schema::table('wbcms_'.$name, fn (Blueprint $table) => SettingScalar::columns($table, $column, $type));
+          }
+        }
+
         continue;
       }
       Schema::create('wbcms_'.$name, function (Blueprint $table) use ($name, $fields): void {

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\BlockMobileMediaRequest;
 use WebBlocks\Cms\Models\Block;
@@ -20,6 +21,8 @@ use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
+use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
+use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoring;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoringException;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
@@ -1039,6 +1042,20 @@ class BlockRequest extends FormRequest
 
     $settings = trim((string) ($data['settings'] ?? ''));
     $data['settings'] = $settings === '' ? null : $settings;
+    if ($settings !== '') {
+      $rawSettings = json_decode($settings, true);
+      $schemaErrors = [];
+      if (! is_array($rawSettings)) {
+        throw ValidationException::withMessages(['settings' => __('webblocks-cms::block-settings.invalid')]);
+      }
+      $type = BlockType::query()->find($data['block_type_id'])?->slug ?? '';
+      $rawSettings = app(BlockSettingsValidator::class)->normalize($type, $rawSettings, 'settings', $schemaErrors, 'admin', $existingBlock?->decodedSettings() ?? []);
+      if ($schemaErrors !== []) {
+        throw ValidationException::withMessages(collect($schemaErrors)->mapWithKeys(fn ($error) => [$error['path'] => $error['message']])->all());
+      }
+      $data['settings'] = json_encode($rawSettings, JSON_UNESCAPED_SLASHES);
+    }
+
     $meta = trim((string) ($data['meta'] ?? ''));
     $data['meta'] = $meta === '' ? null : $meta;
     $data['media_id'] = $authorization->normalizeAllowedMediaId($this->user(), ! empty($data['media_id']) ? (int) $data['media_id'] : (! empty($data['asset_id']) ? (int) $data['asset_id'] : null));
@@ -1114,7 +1131,19 @@ class BlockRequest extends FormRequest
       $data['is_system'] = (bool) ($blockType?->is_system ?? false);
 
       if ($blockType?->slug !== null && app(PluginBlockCatalog::class)->isEnabledCatalogSlug($blockType->slug)) {
-        $settings = $this->sanitizePluginSettings($data['plugin_settings'] ?? []);
+        $definition = app(PluginBlockCatalog::class)->enabledDefinitionForCatalogSlug($blockType->slug);
+        $raw = $data['plugin_settings'] ?? [];
+        if ($definition?->settingRules() !== null) {
+          $copy = array_intersect_key($raw, array_flip($definition->translatedFieldNames()));
+          $errors = [];
+          $shared = app(BlockSettingsValidator::class)->normalize($blockType->slug, array_diff_key($raw, $copy), 'plugin_settings', $errors, 'admin', $existingBlock?->decodedSettings() ?? []);
+          if ($errors !== []) {
+            throw ValidationException::withMessages(collect($errors)->mapWithKeys(fn ($error) => [$error['path'] => $error['message']])->all());
+          }
+          $settings = array_replace($existingBlock?->decodedSettings() ?? [], $shared, $copy);
+        } else {
+          $settings = $this->sanitizePluginSettings($raw);
+        }
 
         $data['settings'] = $settings === []
           ? null
@@ -2608,6 +2637,18 @@ class BlockRequest extends FormRequest
       }
     }
 
+    $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
+
+    $schema = app(BlockSettingsSchema::class)->forType((string) ($data['type'] ?? ''));
+    $oldSettings = $existingBlock?->decodedSettings() ?? [];
+    $settings = array_replace(array_diff_key($oldSettings, $schema['fields']), $settings);
+    $schemaErrors = [];
+    $translatedKeys = app(PluginBlockCatalog::class)->enabledDefinitionForCatalogSlug((string) ($data['type'] ?? ''))?->translatedFieldNames() ?? [];
+    $copy = array_intersect_key($settings, array_flip($translatedKeys));
+    $settings = array_replace(app(BlockSettingsValidator::class)->normalize((string) ($data['type'] ?? ''), array_diff_key($settings, $copy), 'settings', $schemaErrors, 'admin', $oldSettings), $copy);
+    if ($schemaErrors !== []) {
+      throw ValidationException::withMessages(collect($schemaErrors)->mapWithKeys(fn ($error) => [$error['path'] => $error['message']])->all());
+    }
     $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
 
     unset($data['plugin_settings'], $data['content_binding_selection']);

@@ -10,6 +10,10 @@ class PluginBlockTypeDefinition implements PluginBlockExtension
 
   private string $label = '';
 
+  private ?array $settingRules = null;
+
+  private bool $invalidSettingRules = false;
+
   private ?string $description = null;
 
   private ?string $adminView = null;
@@ -163,6 +167,44 @@ class PluginBlockTypeDefinition implements PluginBlockExtension
   public function translatedFieldNames(): array
   {
     return $this->translatedFields;
+  }
+
+  /** Optional scalar authoring rules. Existing extensions need no new interface method. */
+  public function settingsSchema(array $rules): self
+  {
+    $this->settingRules = [];
+    $this->invalidSettingRules = count($rules) > 128;
+    foreach ($rules as $key => $rule) {
+      $kind = is_array($rule) ? ($rule[0] ?? null) : null;
+      $valid = is_string($key) && preg_match('/^[a-z][a-z0-9_]{0,79}$/', $key) === 1
+        && in_array($kind, ['bool', 'int', 'text', 'enum'], true);
+      $valid = $valid && match ($kind) {
+        'int' => isset($rule[1], $rule[2]) && is_int($rule[1]) && is_int($rule[2]) && $rule[1] <= $rule[2],
+        'text' => isset($rule[1]) && is_int($rule[1]) && $rule[1] > 0 && $rule[1] <= 65535,
+        'enum' => isset($rule[1]) && is_array($rule[1]) && count($rule[1]) > 0 && count($rule[1]) <= 128
+          && count(array_filter($rule[1], 'is_string')) === count($rule[1]),
+        'bool' => true,
+        default => false,
+      };
+      if (! $valid) {
+        $this->invalidSettingRules = true;
+
+        continue;
+      }
+      $this->settingRules[$key] = $rule;
+    }
+
+    return $this;
+  }
+
+  public function settingRules(): ?array
+  {
+    return $this->settingRules;
+  }
+
+  public function hasInvalidSettingRules(): bool
+  {
+    return $this->invalidSettingRules;
   }
 
   public function metadata(array $metadata): self

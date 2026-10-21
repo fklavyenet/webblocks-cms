@@ -30,6 +30,7 @@ use WebBlocks\Cms\Policies\CmsResourcePolicy;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
+use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PagePath;
@@ -2079,10 +2080,18 @@ class InternalContentPlanService
       $settings = [];
     }
 
+    $settingsErrorCount = count($errors);
+    $settings = app(BlockSettingsValidator::class)->normalize($blockType->slug, $settings, $path.'.settings', $errors);
+    if (count($errors) > $settingsErrorCount) {
+      return null;
+    }
+
     $settings = $this->normalizeCommerceBuyButtonSettings($settings, $blockType, $path, $errors);
     $settings = $this->operations->normalizePublicIconSlugSettings($settings, $blockType, $path, $errors);
     $settings = $this->operations->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
     $settings = $this->operations->normalizePublicIconSizeSettings($settings, $blockType, $path, $errors);
+    $settings = $this->operations->normalizeApplicationSettings($settings, $blockType, $path, $errors);
+    $settings = $this->operations->normalizeImageViewerSettings($settings, $blockType, $path, $errors);
     $settings = $this->operations->normalizeCompositionDefaults($settings, $blockType);
 
     foreach (['remote_url', 'source_url'] as $mediaKey) {

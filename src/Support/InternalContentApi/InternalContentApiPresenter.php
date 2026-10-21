@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
@@ -136,6 +137,7 @@ class InternalContentApiPresenter
       'is_container' => (bool) $blockType->is_container,
       'sort_order' => (int) $blockType->sort_order,
       'contract' => $contract,
+      'authoring_settings_schema' => app(BlockSettingsSchema::class)->forType($blockType->slug),
     ] + $this->apiAuthoringPolicy->contractFor($blockType->slug);
   }
 
