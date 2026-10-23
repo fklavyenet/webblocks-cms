@@ -106,6 +106,26 @@ class SystemUpdatesScreenTest extends TestCase
     $forms = $xpath->query('//form[@data-pc-update-form]');
     $this->assertCount(1, $forms);
     $this->assertSame(route('admin.system.updates.store'), $forms->item(0)->getAttribute('action'));
+
+    $stage = $xpath->query('//*[@data-update-stage]')->item(0);
+    $bar = $xpath->query('//*[@data-update-loading and @role="progressbar"]')->item(0);
+    $this->assertInstanceOf(DOMElement::class, $stage);
+    $this->assertInstanceOf(DOMElement::class, $bar);
+    $this->assertSame($stage->getAttribute('id'), $bar->getAttribute('aria-labelledby'));
+    $this->assertStringContainsString('wb-progress-bar-indeterminate', $bar->getAttribute('class'));
+    $this->assertFalse($bar->hasAttribute('aria-valuenow'));
+    $this->assertCount(0, $xpath->query('//*[@data-update-steps]'));
+    $this->assertCount(1, $xpath->query('//*[@data-update-elapsed and @role="timer" and @aria-live="off"]'));
+    $modal = $xpath->query('//*[@id="pc-update-progress"]')->item(0);
+    $this->assertLessThan(strpos($document->saveHTML($modal), 'data-update-loading'), strpos($document->saveHTML($modal), 'data-update-stage'));
+    $this->assertLessThan(strpos($document->saveHTML($modal), 'data-update-elapsed'), strpos($document->saveHTML($modal), 'data-update-loading'));
+
+    if ($fixture = getenv('WEBBLOCKS_UPDATE_PROGRESS_FIXTURE')) {
+      $forms->item(0)->setAttribute('action', '/update');
+      $opener->setAttribute('data-pc-health-url', '/health');
+      $xpath->query('//*[@data-update-return]')->item(0)->setAttribute('href', '#completed');
+      file_put_contents($fixture, '<!doctype html><html lang="en" data-wb-theme="light"><body>'.$document->saveHTML($forms->item(0)).$document->saveHTML($modal).$document->saveHTML($opener).'</body></html>');
+    }
   }
 
   #[Test]

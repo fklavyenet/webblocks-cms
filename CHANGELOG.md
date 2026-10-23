@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.105.15
+
+- Keep the update modal open once and its elapsed timer continuous while server admission hands over to progress monitoring.
+- Replace the growing step list with the native WebBlocks UI progress bar, showing the current step above it and elapsed time below it. The bar indicates activity without claiming an estimated percentage.
+- Hide the activity indicator when progress cannot be confirmed, preserve authenticated read-only rechecks and terminal verification, and use a fresh versioned progress asset URL.
+
 ## 1.105.14
 
 - Update the bundled WebBlocks UI runtime and icon catalog to 2.31.0.

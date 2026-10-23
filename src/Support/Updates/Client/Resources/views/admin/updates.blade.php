@@ -287,17 +287,13 @@
                 <h3 class="wb-modal-title" id="pc-update-progress-title">{{ __('publisher-client::updates.updating_title', ['version' => $modalVersion]) }}</h3>
             </div>
             <div class="wb-modal-body wb-stack wb-stack-3">
-                <div data-update-loading class="wb-loading-inline" role="status" aria-live="polite" aria-atomic="true">
-                    <span class="wb-spinner-pulse wb-spinner-pulse-lg" aria-hidden="true"><span></span><span></span><span></span></span>
-                    <div class="wb-stack wb-stack-1">
-                        <strong id="pc-update-progress-status">{{ __('publisher-client::updates.updating_body') }}</strong>
-                        <span class="wb-text-sm wb-text-muted">{{ __('publisher-client::updates.keep_open') }}</span>
-                    </div>
+                <strong data-update-stage id="pc-update-progress-stage" role="status" aria-live="polite" aria-atomic="true">{{ __('publisher-client::updates.progress.running') }}</strong>
+                <div data-update-loading class="wb-progress-bar wb-progress-bar-indeterminate" role="progressbar" aria-labelledby="pc-update-progress-stage">
+                    <div class="wb-progress-bar-fill"></div>
                 </div>
                 <p class="wb-text-sm"><span>{{ __('publisher-client::updates.elapsed') }}</span>: <span data-update-elapsed role="timer" aria-live="off">0:00</span></p>
-                <p data-update-message role="status" aria-live="polite">{{ __('publisher-client::updates.progress.running') }}</p>
-                <ol data-update-steps class="wb-stack wb-stack-2"></ol>
-                <p class="wb-text-sm wb-text-muted">{{ __('publisher-client::updates.progress.scope') }}</p>
+                <p data-update-message hidden role="status" aria-live="polite">{{ __('publisher-client::updates.progress.running') }}</p>
+                <p class="wb-text-sm wb-text-muted">{{ __('publisher-client::updates.keep_open') }}</p>
             </div>
             <div class="wb-modal-footer" data-update-footer hidden>
                 <a href="{{ $healthRoute ?? '' }}" data-update-recheck class="wb-btn wb-btn-secondary" hidden>{{ __('publisher-client::updates.progress.recheck') }}</a>

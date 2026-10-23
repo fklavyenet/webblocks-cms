@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var footer = modal.querySelector('[data-update-footer]');
     var elapsed = modal.querySelector('[data-update-elapsed]');
     var steps = modal.querySelector('[data-update-steps]');
+    var stage = modal.querySelector('[data-update-stage]');
     var recheck = modal.querySelector('[data-update-recheck]');
     var returnLink = modal.querySelector('[data-update-return]');
     var health = opener.getAttribute('data-pc-health-url');
@@ -19,7 +20,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var timer = null;
     var pollTimer = null;
     var elapsedBase = 0;
-    var sampleAt = Date.now();
+    var sampleAt = clock();
+    var localStart = false;
+    var elapsedOffset = null;
     var deadline = 0;
     var storageKey = 'publisher-client.operation:' + (health || window.location.pathname);
     var serverAdmission = opener.getAttribute('data-pc-admission') === 'server';
@@ -31,24 +34,50 @@ document.addEventListener('DOMContentLoaded', function () {
         var seconds = Math.floor(Math.max(0, Number(ms) || 0) / 1000);
         return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
     }
-    function tick() { elapsed.textContent = duration(elapsedBase + Math.max(0, Date.now() - sampleAt)); }
+    function clock() { return window.performance && window.performance.now ? window.performance.now() : Date.now(); }
+    function elapsedNow() { return elapsedBase + (timer === null ? 0 : Math.max(0, clock() - sampleAt)); }
+    function tick() { elapsed.textContent = duration(elapsedNow()); }
+    function startClock() {
+        if (timer !== null) { return; }
+        sampleAt = clock();
+        timer = setInterval(tick, 1000);
+        tick();
+    }
+    function showModal() {
+        if (!modal.classList.contains('is-open')) { opener.click(); }
+    }
+    function syncElapsed(ms) {
+        var current = elapsedNow();
+        if (elapsedOffset === null) { elapsedOffset = localStart ? Math.max(0, current - ms) : 0; }
+        elapsedBase = Math.max(current, ms + elapsedOffset);
+        sampleAt = clock();
+        tick();
+    }
     function halt(text, retry) {
         stopped = true;
+        elapsedBase = elapsedNow();
         clearInterval(timer);
+        timer = null;
+        tick();
         clearTimeout(pollTimer);
-        if (text) { message.textContent = text; }
+        if (text) { message.textContent = text; message.hidden = false; }
         recheck.hidden = !retry;
         returnLink.hidden = false;
         loading.hidden = true;
         footer.hidden = false;
     }
     function render(progress) {
-        elapsedBase = Math.max(0, Number(progress.elapsed_ms) || 0);
-        sampleAt = Date.now();
-        tick();
+        syncElapsed(Math.max(0, progress.elapsed_ms));
+        loading.hidden = false;
         message.textContent = progress.message || label('running');
-        steps.replaceChildren();
-        (progress.steps || []).forEach(function (step) {
+        message.hidden = true;
+        if (stage) {
+            var latest = progress.steps[progress.steps.length - 1];
+            stage.textContent = progress.stage_label || (latest && latest.label) || progress.message || label('running');
+        }
+        // Retain compatibility with product-owned views using the older list contract.
+        if (steps) { steps.replaceChildren(); }
+        (steps ? progress.steps : []).forEach(function (step) {
             var row = document.createElement('li');
             row.className = 'wb-cluster wb-cluster-between';
             var title = document.createElement('span');
@@ -63,7 +92,9 @@ document.addEventListener('DOMContentLoaded', function () {
             steps.appendChild(row);
         });
         if (progress.terminal === true) {
-            if ((progress.state === 'success' || progress.state === 'success_with_warnings') && progress.installed_version && progress.target_version && progress.installed_version !== progress.target_version) { return; }
+            if ((progress.state === 'success' || progress.state === 'success_with_warnings') && progress.installed_version && progress.target_version && progress.installed_version !== progress.target_version) {
+                message.textContent = label('unknown'); message.hidden = false; loading.hidden = true; return;
+            }
             halt(progress.message || label(progress.state), false);
             remember(null);
             // Completion comes only from this operation and any product health gate.
@@ -104,9 +135,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 || ['queued', 'running', 'success', 'success_with_warnings', 'failed', 'restored', 'cancelled', 'interrupted'].indexOf(progress.state) === -1) {
                 // Admission may still be starting. Never adopt another run or infer success.
                 message.textContent = label('unknown');
+                message.hidden = false;
+                loading.hidden = true;
             } else { render(progress); }
         }).catch(function () {
-            if (!stopped) { message.textContent = label('unreachable'); }
+            if (!stopped) { message.textContent = label('unreachable'); message.hidden = false; loading.hidden = true; }
         }).finally(function () { clearTimeout(timeout); retryPoll(); });
     }
     function monitor(id) {
@@ -119,10 +152,9 @@ document.addEventListener('DOMContentLoaded', function () {
         returnLink.hidden = true;
         loading.hidden = false;
         footer.hidden = true;
-        clearInterval(timer);
         clearTimeout(pollTimer);
-        timer = setInterval(tick, 1000);
-        opener.click();
+        startClock();
+        showModal();
         poll();
     }
     function uuid() {
@@ -140,13 +172,15 @@ document.addEventListener('DOMContentLoaded', function () {
             event.preventDefault();
             if (submitted) { return; }
             var id = uuid();
-            if (!id) { opener.click(); halt(label('unknown'), false); return; }
+            if (!id) { showModal(); halt(label('unknown'), false); return; }
             submitted = true;
             form.querySelectorAll('button[type="submit"]').forEach(function (button) { button.disabled = true; });
             var body = new FormData(form);
             body.set('operation_id', id);
             elapsedBase = 0;
-            sampleAt = Date.now();
+            localStart = true;
+            elapsedOffset = null;
+            startClock();
             // Poll concurrently; the update POST can take minutes or lose its connection.
             fetch(form.action, {
                 method: 'POST', body: body, redirect: 'manual', credentials: 'same-origin',
@@ -155,6 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (response.type === 'opaqueredirect' || [401, 403, 419].indexOf(response.status) !== -1) {
                     remember(null);
                     halt(label('auth'), false);
+                    return null;
                 } else if (response.status >= 400 && response.status < 500) {
                     remember(null);
                     return response.json().then(
@@ -168,12 +203,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         else { halt(label('unknown'), true); }
                     });
                 }
+                if (serverAdmission) { halt(label('unknown'), true); }
                 // HTTP health alone never confirms an update.
                 return null;
             }).catch(function () { if (serverAdmission) { halt(label('unknown'), true); } /* Never repost. */ });
             if (serverAdmission) {
-                opener.click(); message.textContent = label('running');
-                clearInterval(timer); timer = setInterval(tick, 1000);
+                showModal(); message.textContent = label('running');
             }
             else { monitor(id); }
         });

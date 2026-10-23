@@ -16,6 +16,7 @@ final class BrowserFixtureServer
     'asset-picker' => ['AssetPickerViewTest', 'WEBBLOCKS_ASSET_PICKER_FIXTURE', 'picker_results_remain_inert'],
     'rich-text' => ['RichTextEditorViewTest', 'WEBBLOCKS_RICH_TEXT_FIXTURE', 'editor_controls_and_shared_dialogs'],
     'editor-preview' => ['EditorPreviewTest', 'WEBBLOCKS_EDITOR_PREVIEW_FIXTURE', 'editor_panel_browser_fixture'],
+    'update-progress' => ['SystemUpdatesScreenTest', 'WEBBLOCKS_UPDATE_PROGRESS_FIXTURE', 'shared_progress_asset_and_server_admission'],
   ];
 
   public static function run(string $scenario): void
@@ -79,6 +80,8 @@ final class BrowserFixtureServer
       $assets[] = '/cms/js/admin/editor-preview-frame.js';
     }
     $file = match (true) {
+      $path === '/progress.js' && $scenario === 'update-progress' => $root.'/src/Support/Updates/Client/Resources/js/update-progress.js',
+      $path === '/fixture.js' && $scenario === 'update-progress' => $root.'/tests/Browser/update-progress-fixture.js',
       in_array($path, $assets, true) => $root.'/public'.$path,
       $path === '/fixture.js' && $scenario === 'editor-preview' => $root.'/tests/Browser/editor-preview-fixture.js',
       in_array($path, ['/fixture.css', '/fixture.js'], true) => $root.'/tests/Browser'.$path,
@@ -123,7 +126,7 @@ final class BrowserFixtureServer
       $head .= '<link rel="stylesheet" href="'.$css.'">';
     }
     $head .= '<script src="/cms/webblocks-ui/'.$version.'/webblocks-ui.js" defer></script>';
-    if ($scenario !== 'parent') {
+    if (! in_array($scenario, ['parent', 'update-progress'], true)) {
       $script = match ($scenario) {
         'asset-picker' => 'asset-picker',
         'editor-preview' => 'editor-preview',
@@ -132,6 +135,9 @@ final class BrowserFixtureServer
       $head .= '<script src="/cms/js/admin/'.$script.'.js" defer></script>';
     }
     $head .= '<script src="/fixture.js" defer></script></head>';
+    if ($scenario === 'update-progress') {
+      $head = str_replace('</head>', '<script src="/progress.js" defer></script></head>', $head);
+    }
     $html = str_replace('<body', $head.'<body data-fixture-scenario="'.$scenario.'"', $html);
     $html = str_replace('http://localhost/storage/', '/storage/', $html);
 

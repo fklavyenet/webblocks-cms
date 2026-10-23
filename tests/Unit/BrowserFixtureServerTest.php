@@ -26,10 +26,13 @@ class BrowserFixtureServerTest extends TestCase
 
   public function test_each_fixture_serves_its_real_assets_and_the_shared_browser_controls(): void
   {
-    foreach (['parent' => null, 'asset-picker' => 'asset-picker', 'rich-text' => 'rich-text-editor'] as $scenario => $script) {
+    foreach (['parent' => null, 'asset-picker' => 'asset-picker', 'rich-text' => 'rich-text-editor', 'update-progress' => null] as $scenario => $script) {
       $paths = ['/cms/webblocks-ui/'.WebBlocks::UI_VERSION.'/webblocks-ui.js', '/cms/css/admin.css', '/fixture.js', '/fixture.css'];
       if ($script !== null) {
         $paths[] = '/cms/js/admin/'.$script.'.js';
+      }
+      if ($scenario === 'update-progress') {
+        $paths[] = '/progress.js';
       }
       foreach ($paths as $path) {
         $response = BrowserFixtureServer::response($scenario, 'GET', $path);
@@ -43,7 +46,7 @@ class BrowserFixtureServerTest extends TestCase
 
   public function test_routers_are_read_only_and_do_not_expose_repository_or_unrelated_files(): void
   {
-    foreach (['parent', 'asset-picker', 'rich-text'] as $scenario) {
+    foreach (['parent', 'asset-picker', 'rich-text', 'update-progress'] as $scenario) {
       foreach (['POST', 'PUT', 'PATCH', 'DELETE'] as $method) {
         $response = BrowserFixtureServer::response($scenario, $method, '/');
         $this->assertSame(405, $response->getStatusCode());
