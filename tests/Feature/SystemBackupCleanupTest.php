@@ -20,10 +20,17 @@ class SystemBackupCleanupTest extends TestCase
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
   }
 
+  protected function setUp(): void
+  {
+    parent::setUp();
+    Storage::fake(SystemBackupManager::ARCHIVE_DISK);
+    // Read-only previews check the configured root before resolving the adapter.
+    config()->set('filesystems.disks.backups', ['driver' => 'local', 'root' => Storage::disk(SystemBackupManager::ARCHIVE_DISK)->path('')]);
+  }
+
   #[Test]
   public function it_preserves_manual_uploaded_running_and_latest_pre_update_backups(): void
   {
-    Storage::fake(SystemBackupManager::ARCHIVE_DISK);
     $this->app->make(SystemSettings::class)->save([
       SystemSettings::BACKUP_CLEANUP_PRE_UPDATE_DAYS => 14,
       SystemSettings::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE => 2,
@@ -58,7 +65,6 @@ class SystemBackupCleanupTest extends TestCase
   #[Test]
   public function it_deletes_eligible_archive_and_record_together(): void
   {
-    Storage::fake(SystemBackupManager::ARCHIVE_DISK);
     $backup = $this->backup(SystemBackup::TYPE_CONTENT_APPLY, now()->subDays(8));
     $backup->forceFill(['archive_path' => 'old.zip', 'archive_filename' => 'old.zip'])->save();
     Storage::disk(SystemBackupManager::ARCHIVE_DISK)->put('old.zip', 'archive');

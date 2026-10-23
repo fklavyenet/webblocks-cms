@@ -2,12 +2,17 @@
 
 ## Unreleased
 
-## 1.105.11
+## 1.105.12
 
 - Add per-backup protection and policy/indefinite/explicit-expiration controls, opt-in manual backup retention, validated per-type recovery floors, and a soft size budget that never overrides retention safeguards.
 - Share backup retention previews across Backups, Cleanup, API and CLI; account for physical archive bytes, shared files and unknown storage, record bounded cleanup outcomes, and serialize backup, restore, retention and delete operations with a filesystem lease.
 - Preserve creation-time retention in SQL snapshots and repair additive operational schema after restoring older backups.
 - Organize Cleanup into native report/settings/action tabs with preserved validation and policy links; replace admin fieldset/legend markup with named WebBlocks UI groups and record a global CMS contributor rule with a regression guard.
+- Isolate cleanup test disk configuration so clean PHP/Laravel CI environments exercise the fake archives without depending on a pre-existing default backup directory.
+
+## 1.105.11 (unpublished candidate)
+
+- Not published to the update channel or GitHub Releases: CI exposed a cleanup fixture disk-root mismatch. Superseded by 1.105.12.
 
 ## 1.105.10
 

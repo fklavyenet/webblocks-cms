@@ -1798,7 +1798,7 @@ traversal, internal symlink escapes and absolute paths outside the disk.
 
 ### Backup lifecycle and Cleanup workspace
 
-CMS 1.105.11 adds `is_protected` (boolean), `retention_mode`
+CMS 1.105.12 adds `is_protected` (boolean), `retention_mode`
 (`policy`, `never`, `expires`) and nullable `expires_at` SQL fields on backup
 records through idempotent fresh/update migrations. No new JSON authority is
 introduced. Missing retention or summary schema blocks automatic cleanup.
