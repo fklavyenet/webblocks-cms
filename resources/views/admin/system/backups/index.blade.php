@@ -18,6 +18,8 @@
   $archiveFeedback = static fn ($resolution) => $resolution ? $adminText('backups.archive_feedback.'.$resolution->status) : $adminText('backups.archive_unavailable');
   $filters = $filters ?? ['search' => '', 'type' => '', 'status' => ''];
   $hasActiveFilters = $filters['search'] !== '' || $filters['type'] !== '' || $filters['status'] !== '';
+  $retentionText = static fn (string $key) => $adminTranslator->get('backup-retention.'.$key, $adminLocale);
+  $retentionDecisions = collect($backupCleanupPreview->overview['items'] ?? [])->keyBy('id');
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('backups.title'), 'heading' => $adminText('backups.title')])
@@ -30,12 +32,13 @@
     ])
 
     @include('webblocks-cms::admin.partials.flash')
+    @include('webblocks-cms::admin.system.backups.retention-summary', ['plan' => $backupCleanupPreview->overview])
 
     <div class="wb-stack wb-stack-4">
         <div class="wb-alert wb-alert-info wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
             <div class="wb-stack wb-gap-1">
                 <div class="wb-alert-title">{{ $adminText('backups.cleanup_status', ['status' => $backupCleanupSettings['enabled'] ? $adminText('common.enabled') : $adminText('common.disabled')]) }}</div>
-                <div>{{ $adminText('backups.cleanup_status_help', ['days' => $backupCleanupSettings['pre_update_days'], 'keep' => $backupCleanupSettings['keep_latest_pre_update'], 'count' => $backupCleanupPreview->candidateCount()]) }} <a href="{{ route('admin.system.cleanup.index') }}" class="wb-link">{{ $adminText('backups.manage_cleanup_settings') }}</a></div>
+                <div>{{ $adminText('backups.cleanup_status_help', ['days' => $backupCleanupSettings['pre_update_days'], 'keep' => $backupCleanupSettings['keep_latest_pre_update'], 'count' => $backupCleanupPreview->candidateCount()]) }} <a href="{{ route('admin.system.cleanup.index', ['tab' => 'settings']) }}" class="wb-link">{{ $adminText('backups.manage_cleanup_settings') }}</a></div>
             </div>
             <button
                 type="button"
@@ -171,10 +174,7 @@
                     </div>
 
                     <div class="wb-cluster wb-cluster-2">
-                        <form method="POST" action="{{ route('admin.system.backups.store') }}">
-                            @csrf
-                            <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $backupTableExists)>{{ $adminText('backups.create_backup') }}</button>
-                        </form>
+                        <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#create-backup-retention-modal" @disabled(! $backupTableExists || ! ($backupCleanupPreview->overview['ready'] ?? false))>{{ $adminText('backups.create_backup') }}</button>
                         <a href="{{ route('admin.system.backups.upload') }}" class="wb-btn wb-btn-secondary">{{ $adminText('backups.upload_backup') }}</a>
                     </div>
                 </div>
@@ -204,10 +204,7 @@
                     </div>
 
                     <div class="wb-cluster wb-cluster-2">
-                        <form method="POST" action="{{ route('admin.system.backups.store') }}">
-                            @csrf
-                            <button type="submit" class="wb-btn wb-btn-primary" @disabled(! $backupTableExists)>{{ $adminText('backups.create_backup') }}</button>
-                        </form>
+                        <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#create-backup-retention-modal" @disabled(! $backupTableExists || ! ($backupCleanupPreview->overview['ready'] ?? false))>{{ $adminText('backups.create_backup') }}</button>
                         <a href="{{ route('admin.system.backups.upload') }}" class="wb-btn wb-btn-secondary">{{ $adminText('backups.upload_backup') }}</a>
                     </div>
                 </div>
@@ -251,6 +248,7 @@
                                         <td>{{ $backup->created_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
                                         <td>
                                             <div>{{ $backup->archive_filename ?? '-' }}</div>
+                                            <div class="wb-text-sm wb-text-muted">{{ $retentionText('reason_'.($retentionDecisions[$backup->id]['reason'] ?? 'schema_missing')) }}</div>
                                             @if ($backup->label)
                                                 <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.source') }} {{ $backup->label }}</div>
                                             @endif
@@ -266,6 +264,7 @@
                                         <td>{{ $backup->triggeredBy?->name ?? '-' }}</td>
                                         <td class="wb-table-actions">
                                             <div class="wb-action-group">
+                                                <a href="{{ route('admin.system.backups.show', $backup) }}#backup-retention" class="wb-action-btn wb-action-btn-edit" title="{{ $retentionText('manage') }}" aria-label="{{ $retentionText('manage') }}"><i class="wb-icon {{ $backup->is_protected ? 'wb-icon-lock' : 'wb-icon-settings' }}" aria-hidden="true"></i></a>
                                                 <a href="{{ route('admin.system.backups.show', $backup) }}" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('backups.details') }}" aria-label="{{ $adminText('backups.details') }}">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
@@ -283,10 +282,11 @@
                                                 <button
                                                     type="button"
                                                     class="wb-action-btn wb-action-btn-delete"
-                                                    title="{{ $backup->isRunning() ? $adminText('backups.delete_stuck_running') : $adminText('backups.delete_backup') }}"
-                                                    aria-label="{{ $backup->isRunning() ? $adminText('backups.delete_stuck_running') : $adminText('backups.delete_backup') }}"
+                                                    title="{{ $backup->is_protected ? $retentionText('protected_error') : ($backup->isRunning() ? $adminText('backups.delete_stuck_running') : $adminText('backups.delete_backup')) }}"
+                                                    aria-label="{{ $backup->is_protected ? $retentionText('protected_error') : ($backup->isRunning() ? $adminText('backups.delete_stuck_running') : $adminText('backups.delete_backup')) }}"
                                                     data-wb-toggle="modal"
                                                     data-wb-target="#delete-backup-{{ $backup->id }}-modal"
+                                                    @disabled($backup->is_protected)
                                                 >
                                                     <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                 </button>
@@ -377,6 +377,17 @@
         'submitLabel' => $adminText('backups.clean_up_now'),
     ])
         <p>{{ $adminText('backups.cleanup_preview_help', ['count' => $backupCleanupPreview->candidateCount(), 'size' => number_format($backupCleanupPreview->candidateBytes / 1048576, 1)]) }}</p>
-        <p>{{ $adminText('backups.cleanup_preservation_help') }}</p>
+        <p>{{ $retentionText('cleanup_help') }}</p>
     @endcomponent
+@endpush
+
+@push('overlays')
+    <div class="wb-modal" id="create-backup-retention-modal" role="dialog" aria-modal="true" aria-labelledby="create-backup-retention-title">
+        <div class="wb-modal-dialog"><form method="POST" action="{{ route('admin.system.backups.store') }}">
+            @csrf
+            <div class="wb-modal-header"><h2 class="wb-modal-title" id="create-backup-retention-title">{{ $retentionText('create') }}</h2><button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('common.cancel') }}"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button></div>
+            <div class="wb-modal-body">@include('webblocks-cms::admin.system.backups.retention-fields', ['retentionBackup' => null])</div>
+            <div class="wb-modal-footer"><button class="wb-btn wb-btn-primary" type="submit">{{ $retentionText('create') }}</button></div>
+        </form></div>
+    </div>
 @endpush

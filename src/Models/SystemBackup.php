@@ -27,6 +27,9 @@ class SystemBackup extends CmsModel
   public const STATUS_FAILED = 'failed';
 
   protected $fillable = [
+    'is_protected',
+    'retention_mode',
+    'expires_at',
     'type',
     'status',
     'label',
@@ -46,6 +49,8 @@ class SystemBackup extends CmsModel
   ];
 
   protected $casts = [
+    'is_protected' => 'bool',
+    'expires_at' => 'datetime',
     'includes_database' => 'bool',
     'includes_uploads' => 'bool',
     'started_at' => 'datetime',
@@ -74,7 +79,7 @@ class SystemBackup extends CmsModel
 
   public function isDeletable(): bool
   {
-    return ! $this->isRunning() || $this->isStaleRunning();
+    return ! $this->is_protected && (! $this->isRunning() || $this->isStaleRunning());
   }
 
   public function isStaleRunning(): bool

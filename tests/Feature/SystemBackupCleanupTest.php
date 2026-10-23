@@ -32,6 +32,16 @@ class SystemBackupCleanupTest extends TestCase
     ]);
 
     $oldPreUpdates = collect(range(1, 4))->map(fn (int $index) => $this->backup(SystemBackup::TYPE_PRE_UPDATE, now()->subDays(40 + $index)));
+    foreach ($oldPreUpdates as $backup) {
+      $path = 'valid-'.$backup->id.'.zip';
+      $zip = new \ZipArchive;
+      $zip->open(Storage::disk(SystemBackupManager::ARCHIVE_DISK)->path($path), \ZipArchive::CREATE);
+      $zip->addFromString('manifest.json', '{"backup_id":1}');
+      $zip->addFromString('database/database.sql', 'CREATE TABLE fixture (id INTEGER);');
+      $zip->close();
+      $backup->update(['archive_path' => $path, 'archive_filename' => $path]);
+    }
+
     $manual = $this->backup(SystemBackup::TYPE_MANUAL, now()->subYear());
     $uploaded = $this->backup(SystemBackup::TYPE_UPLOADED, now()->subYear());
     $running = $this->backup(SystemBackup::TYPE_CONTENT_APPLY, now()->subYear(), SystemBackup::STATUS_RUNNING);

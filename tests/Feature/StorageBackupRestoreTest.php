@@ -7,11 +7,14 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
+use WebBlocks\Cms\Actions\SystemBackups\CreateManagedBackup;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
+use WebBlocks\Cms\Support\System\BackupRetentionSchema;
+use WebBlocks\Cms\Support\System\MaintenanceCleanupState;
 use WebBlocks\Cms\Support\System\SystemBackupArchiveResolver;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
@@ -184,6 +187,47 @@ class StorageBackupRestoreTest extends TestCase
     $this->assertTrue($resolver->resolvePath('escape.zip')->isUnsafe());
     $this->assertTrue($resolver->resolvePath('../outside.zip')->isUnsafe());
     $this->assertTrue($resolver->resolvePath($this->root.'/outside.zip')->isUnsafe());
+  }
+
+  #[Test]
+  public function a_snapshot_before_retention_columns_restores_and_repairs_the_additive_schema(): void
+  {
+    $site = Site::create(['name' => 'Before retention', 'handle' => 'northstar', 'is_primary' => true]);
+    Storage::disk('public')->put('documents/synthetic.txt', 'Legacy content');
+    foreach (['is_protected', 'retention_mode', 'expires_at'] as $column) {
+      Schema::table('wbcms_system_backups', fn ($table) => $table->dropColumn($column));
+    }
+    Schema::dropIfExists(MaintenanceCleanupState::TABLE);
+    $backup = app(SystemBackupManager::class)->createManualBackup();
+    BackupRetentionSchema::migrate();
+    MaintenanceCleanupState::migrate();
+    $site->update(['name' => 'After retention']);
+    Storage::disk('public')->put('documents/synthetic.txt', 'Changed content');
+    $result = app(SystemBackupRestoreManager::class)->restoreFromBackup($backup);
+    $this->assertSame('Before retention', Site::findOrFail($site->id)->name);
+    $this->assertSame('Legacy content', Storage::disk('public')->get('documents/synthetic.txt'));
+    $this->assertTrue(BackupRetentionSchema::ready());
+    $this->assertTrue(app(MaintenanceCleanupState::class)->ready());
+    $this->assertSame(SystemBackupRestore::STATUS_COMPLETED, $result->restoreRecord->status);
+    $this->assertDatabaseIntegrity();
+    app(SystemBackupRestoreManager::class)->restoreReference($result->safetyBackup->archive_path);
+    $this->assertSame('After retention', Site::findOrFail($site->id)->name);
+    $this->assertSame('Changed content', Storage::disk('public')->get('documents/synthetic.txt'));
+    $this->assertTrue(BackupRetentionSchema::ready());
+    $this->assertDatabaseIntegrity();
+  }
+
+  #[Test]
+  public function creation_protection_is_inside_the_database_snapshot_and_survives_restoration(): void
+  {
+    $backup = app(CreateManagedBackup::class)->execute(['is_protected' => true, 'retention_mode' => 'never']);
+    $this->assertTrue($backup->is_protected);
+    $backup->update(['is_protected' => false, 'retention_mode' => 'policy']);
+    app(SystemBackupRestoreManager::class)->restoreFromBackup($backup);
+    $restored = $backup->fresh();
+    $this->assertTrue($restored->is_protected);
+    $this->assertSame('never', $restored->retention_mode);
+    $this->assertDatabaseIntegrity();
   }
 
   private function assertDatabaseIntegrity(): void

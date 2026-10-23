@@ -52,6 +52,18 @@ class SystemBackupArchiveResolver
     return $this->resolvePath((string) $backup->archive_path, requireReadableFile: $requireReadableFile);
   }
 
+  public function resolveForRetention(SystemBackup $backup): SystemBackupArchiveResolution
+  {
+    // A report must not create a missing disk root through the filesystem adapter.
+    if (! is_dir((string) config('filesystems.disks.backups.root', storage_path('app/backups')))) {
+      return new SystemBackupArchiveResolution(SystemBackupArchiveResolution::STATUS_MISSING, message: 'Backup archive storage is missing.');
+    }
+
+    return $backup->isFailed() && $backup->archive_path
+      ? $this->resolvePath($backup->archive_path)
+      : $this->resolveForBackup($backup);
+  }
+
   public function resolvePath(
     string $storedPath,
     bool $requireExistingFile = true,

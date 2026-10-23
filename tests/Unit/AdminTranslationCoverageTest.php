@@ -57,6 +57,23 @@ class AdminTranslationCoverageTest extends TestCase
     }
   }
 
+  public function test_backup_retention_locales_preserve_keys_and_placeholders(): void
+  {
+    $root = dirname(__DIR__, 2).'/resources/lang';
+    $source = require $root.'/en/backup-retention.php';
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $translated = require $root.'/'.$locale.'/backup-retention.php';
+      $this->assertSame(array_keys($source), array_keys($translated));
+      foreach ($source as $key => $text) {
+        preg_match_all('/:[A-Za-z_][A-Za-z0-9_]*/', $text, $expected);
+        preg_match_all('/:[A-Za-z_][A-Za-z0-9_]*/', $translated[$key], $actual);
+        sort($expected[0]);
+        sort($actual[0]);
+        $this->assertSame($expected[0], $actual[0], $locale.'.backup-retention.'.$key);
+      }
+    }
+  }
+
   /** @return array<string, mixed> */
   private function flatten(array $items, string $prefix = ''): array
   {

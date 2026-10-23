@@ -62,6 +62,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryContro
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationAssetController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalBackupCleanupController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalBackupRetentionController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentSourceController;
@@ -116,6 +117,8 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/system/updates/check', [InternalSystemUpdateController::class, 'check'])->middleware('internal-api.capability:system-updates.read')->name('system.updates.check');
     Route::post('/system/updates', [InternalSystemUpdateController::class, 'store'])->middleware('internal-api.capability:system-updates.run')->name('system.updates.store');
     Route::get('/system/updates/operations/{operation}', [InternalSystemUpdateController::class, 'show'])->middleware('internal-api.capability:system-updates.read')->name('system.updates.show');
+    Route::get('/system/backups/{backup}/retention', [InternalBackupRetentionController::class, 'show'])->middleware('internal-api.capability:backups.read')->name('system.backups.retention.show');
+    Route::put('/system/backups/{backup}/retention', [InternalBackupRetentionController::class, 'update'])->middleware('internal-api.capability:backups.settings.write')->name('system.backups.retention.update');
     Route::get('/system/backup-cleanup', [InternalBackupCleanupController::class, 'show'])->middleware('internal-api.capability:backups.read')->name('system.backup-cleanup.show');
     Route::put('/system/backup-cleanup', [InternalBackupCleanupController::class, 'update'])->middleware('internal-api.capability:backups.settings.write')->name('system.backup-cleanup.update');
     Route::post('/system/backup-cleanup/run', [InternalBackupCleanupController::class, 'run'])->middleware('internal-api.capability:backups.delete')->name('system.backup-cleanup.run');
@@ -459,6 +462,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::post('system/backups/upload', [SystemBackupController::class, 'upload'])->name('system.backups.upload.store');
       Route::delete('system/backups/bulk', [SystemBackupController::class, 'bulkDestroy'])->name('system.backups.bulk-destroy');
       Route::post('system/backups/cleanup', [SystemBackupController::class, 'cleanup'])->name('system.backups.cleanup');
+      Route::put('system/backups/{backup}/retention', [SystemBackupController::class, 'retention'])->name('system.backups.retention.update');
       Route::delete('system/backups/{backup}', [SystemBackupController::class, 'destroy'])->name('system.backups.destroy');
       Route::get('system/backups/{backup}', [SystemBackupController::class, 'show'])->name('system.backups.show');
       Route::get('system/backups/{backup}/download', [SystemBackupController::class, 'download'])->name('system.backups.download');

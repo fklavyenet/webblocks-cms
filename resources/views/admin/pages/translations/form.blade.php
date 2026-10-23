@@ -103,8 +103,8 @@
             </div>
         </div>
 
-        <fieldset class="wb-card" @disabled(! ($canEditSeo ?? true))>
-            <legend class="wb-card-header"><strong>{{ $adminText('seo') }}</strong></legend>
+        <section class="wb-card" role="group" aria-labelledby="translation-seo-heading">
+            <div class="wb-card-header"><h3 class="wb-m-0 wb-text-base wb-font-semibold" id="translation-seo-heading">{{ $adminText('seo') }}</h3></div>
 
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div class="wb-text-sm wb-text-muted">{{ $adminText('seo_help') }}</div>
@@ -113,32 +113,33 @@
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-stack-2 wb-field">
                             <label for="translation_seo_title">{{ $adminText('seo_title') }}</label>
-                            <input id="translation_seo_title" name="seo_title" class="wb-input" type="text" value="{{ old('seo_title', $translation->seo_title) }}">
+                            <input @disabled(! ($canEditSeo ?? true)) id="translation_seo_title" name="seo_title" class="wb-input" type="text" value="{{ old('seo_title', $translation->seo_title) }}">
                         </div>
 
                         <div class="wb-stack-2 wb-field">
                             <label for="translation_seo_description">{{ $adminText('seo_description') }}</label>
-                            <textarea id="translation_seo_description" name="seo_description" class="wb-input" rows="5">{{ old('seo_description', $translation->seo_description) }}</textarea>
+                            <textarea @disabled(! ($canEditSeo ?? true)) id="translation_seo_description" name="seo_description" class="wb-input" rows="5">{{ old('seo_description', $translation->seo_description) }}</textarea>
                         </div>
 
                         <div class="wb-stack-2 wb-field">
                             <label for="translation_seo_keywords">{{ $adminText('seo_keywords') }}</label>
-                            <input id="translation_seo_keywords" name="seo_keywords" class="wb-input" type="text" value="{{ old('seo_keywords', $translation->seo_keywords) }}">
+                            <input @disabled(! ($canEditSeo ?? true)) id="translation_seo_keywords" name="seo_keywords" class="wb-input" type="text" value="{{ old('seo_keywords', $translation->seo_keywords) }}">
                         </div>
                     </div>
 
                     <div class="wb-stack wb-gap-3">
                         <div class="wb-stack-2 wb-field">
                             <label for="translation_og_title">{{ $adminText('og_title') }}</label>
-                            <input id="translation_og_title" name="og_title" class="wb-input" type="text" value="{{ old('og_title', $translation->og_title) }}">
+                            <input @disabled(! ($canEditSeo ?? true)) id="translation_og_title" name="og_title" class="wb-input" type="text" value="{{ old('og_title', $translation->og_title) }}">
                         </div>
 
                         <div class="wb-stack-2 wb-field">
                             <label for="translation_og_description">{{ $adminText('og_description') }}</label>
-                            <textarea id="translation_og_description" name="og_description" class="wb-input" rows="5">{{ old('og_description', $translation->og_description) }}</textarea>
+                            <textarea @disabled(! ($canEditSeo ?? true)) id="translation_og_description" name="og_description" class="wb-input" rows="5">{{ old('og_description', $translation->og_description) }}</textarea>
                         </div>
 
                         <div class="wb-stack wb-gap-2 wb-field">
+                            @if ($canEditSeo ?? true)
                             <label for="og_image_media_id_open">{{ $adminText('og_image') }}</label>
                             @include('webblocks-cms::admin.media.asset-picker-panel', [
                                 'name' => 'translation-og-image',
@@ -153,12 +154,15 @@
                                 'replaceLabel' => $adminText('replace_social_image'),
                                 'clearLabel' => $adminText('remove_social_image'),
                             ])
+                            @else
+                                <div class="wb-text-sm">{{ $adminText('og_image') }}: {{ $selectedOgImage?->original_name ?? $selectedOgImage?->filename ?? '—' }}</div>
+                            @endif
                             <div class="wb-text-sm wb-text-muted">{{ $adminText('og_image_help') }}</div>
                         </div>
                     </div>
                 </div>
             </div>
-        </fieldset>
+        </section>
 
         <div class="wb-card-footer">
             <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl])" />

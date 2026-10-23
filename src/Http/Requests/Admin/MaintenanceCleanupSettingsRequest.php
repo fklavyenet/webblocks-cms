@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use WebBlocks\Cms\Support\System\BackupRetentionSettings;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
 class MaintenanceCleanupSettingsRequest extends FormRequest
@@ -15,6 +16,7 @@ class MaintenanceCleanupSettingsRequest extends FormRequest
   public function rules(): array
   {
     return [
+      ...BackupRetentionSettings::rules(),
       'automatic' => ['sometimes', 'array:asset-revisions,media-variants,temporary-workspaces,page-revisions,shared-slot-revisions'],
       'automatic.*' => ['required', 'boolean'],
       'backup_cleanup_enabled' => ['required', 'boolean'],
@@ -40,6 +42,7 @@ class MaintenanceCleanupSettingsRequest extends FormRequest
   public function settingsPayload(): array
   {
     $values = [
+      ...BackupRetentionSettings::payload($this->validated()),
       SystemSettings::BACKUP_CLEANUP_ENABLED => $this->validated('backup_cleanup_enabled'),
       SystemSettings::BACKUP_CLEANUP_PRE_UPDATE_DAYS => $this->validated('backup_cleanup_pre_update_days'),
       SystemSettings::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE => $this->validated('backup_cleanup_keep_latest_pre_update'),

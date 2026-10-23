@@ -64,6 +64,10 @@ class SystemBackupBulkDeleter
 
   private function safeFailureMessage(Throwable $throwable): string
   {
+    if ($throwable instanceof BackupOperationException) {
+      return $throwable->getMessage();
+    }
+
   return match ($throwable->getMessage()) {
       'Running backup cannot be deleted unless you explicitly confirm it is stuck.',
       'Backup archive path is invalid.',

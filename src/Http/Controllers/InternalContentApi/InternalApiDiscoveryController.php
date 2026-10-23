@@ -269,6 +269,7 @@ class InternalApiDiscoveryController extends Controller
       'system_updates_operation' => '/webadmin/api/system/updates/operations/{operation}',
       'backup_cleanup' => '/webadmin/api/system/backup-cleanup',
       'backup_cleanup_run' => '/webadmin/api/system/backup-cleanup/run',
+      'backup_retention' => '/webadmin/api/system/backups/{backup}/retention',
       'maintenance_cleanup' => '/webadmin/api/system/cleanup',
       'maintenance_cleanup_run' => '/webadmin/api/system/cleanup/{category}/run',
       'page_layout_slots_sync' => '/webadmin/api/pages/{page}/sync-layout-slots',
@@ -386,11 +387,15 @@ class InternalApiDiscoveryController extends Controller
         'x-statuses' => ['running', 'success', 'success_with_warnings', 'failed', 'restored'],
         'responses' => ['200' => ['description' => 'Operation status, requires_attention, stable code and sanitized result', 'content' => $json], '403' => ['description' => 'Missing capability or installation authority', 'content' => $json], '404' => ['description' => 'Unknown operation', 'content' => $json], '503' => ['description' => 'Temporary maintenance mode']],
       ]],
+      '/system/backups/{backup}/retention' => [
+        'get' => ['summary' => 'Read backup protection, expiration and current retention decision', 'x-required-capability' => 'backups.read', 'responses' => ['200' => ['description' => 'Retention metadata and decision JSON', 'content' => $json]]],
+        'put' => ['summary' => 'Set explicit backup protection and retention mode', 'x-required-capability' => 'backups.settings.write', 'x-required-fields' => ['is_protected', 'retention_mode'], 'x-safety' => 'Modes: policy, never, expires. expires requires expires_at; expiration does not override protection or successful minimum counts.', 'responses' => ['200' => ['description' => 'Updated retention JSON', 'content' => $json], '409' => ['description' => 'Operation busy or schema unavailable', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
+      ],
       '/system/backup-cleanup' => [
         'get' => ['summary' => 'Read automatic backup cleanup policy and current preview', 'x-required-capability' => 'backups.read', 'responses' => ['200' => ['description' => 'Policy and preview JSON', 'content' => $json], '403' => ['description' => 'Requires backups.read', 'content' => $json]]],
-        'put' => ['summary' => 'Replace the automatic backup cleanup policy', 'x-required-capability' => 'backups.settings.write', 'x-required-fields' => ['enabled', 'pre_update_days', 'keep_latest_pre_update', 'restore_safety_days', 'content_apply_days'], 'responses' => ['200' => ['description' => 'Updated policy and preview JSON', 'content' => $json], '403' => ['description' => 'Requires backups.settings.write', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
+        'put' => ['summary' => 'Replace the base backup cleanup policy and patch optional retention/budget fields', 'x-optional-fields' => ['manual_enabled', 'manual_days', 'keep_latest_manual', 'keep_latest_restore_safety', 'keep_latest_content_apply', 'budget_gb'], 'x-required-capability' => 'backups.settings.write', 'x-required-fields' => ['enabled', 'pre_update_days', 'keep_latest_pre_update', 'restore_safety_days', 'content_apply_days'], 'responses' => ['200' => ['description' => 'Updated policy and preview JSON', 'content' => $json], '403' => ['description' => 'Requires backups.settings.write', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
       ],
-      '/system/backup-cleanup/run' => ['post' => ['summary' => 'Permanently delete backups eligible under the configured policy', 'x-required-capability' => 'backups.delete', 'x-destructive' => true, 'x-safety' => 'Manual, uploaded, and running backups are never eligible; latest successful pre-update backups are protected.', 'responses' => ['200' => ['description' => 'Cleanup result JSON', 'content' => $json], '403' => ['description' => 'Requires backups.delete', 'content' => $json]]]],
+      '/system/backup-cleanup/run' => ['post' => ['summary' => 'Permanently delete backups eligible under the configured policy', 'x-required-capability' => 'backups.delete', 'x-destructive' => true, 'x-safety' => 'Protected and running archives are excluded; age and valid successful minimum counts apply. Manual cleanup requires opt-in; uploaded archives require explicit expiration. The size budget never overrides these safeguards.', 'responses' => ['200' => ['description' => 'Cleanup result JSON', 'content' => $json], '403' => ['description' => 'Requires backups.delete', 'content' => $json]]]],
       '/system/health' => ['get' => [
         'summary' => 'Read installation-wide health without running maintenance',
         'x-required-capability' => 'system-health.read',

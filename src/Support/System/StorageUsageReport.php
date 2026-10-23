@@ -16,7 +16,7 @@ final class StorageUsageReport
     return [
       'measured_at' => now()->toIso8601String(),
       'categories' => [
-        'backups' => $this->disk('backups', storage_path('app/backups')),
+        'backups' => $this->backups(),
         'transfer_packages' => $this->disk(SiteTransferDisk::DISK, storage_path('app/site-transfers')),
         'public_uploads' => $this->disk('public', null, false),
         'media_variants' => $this->disk('public', null, true),
@@ -30,6 +30,11 @@ final class StorageUsageReport
         'logs' => $this->directories([storage_path('logs')]),
       ],
     ];
+  }
+
+  public function backups(): array
+  {
+    return $this->disk('backups', storage_path('app/backups'));
   }
 
   private function disk(string $name, ?string $defaultRoot, ?bool $variants = null): array

@@ -11,13 +11,19 @@ use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
+use WebBlocks\Cms\Actions\SystemBackups\CreateManagedBackup;
+use WebBlocks\Cms\Actions\SystemBackups\UpdateBackupRetention;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteSystemBackupsRequest;
+use WebBlocks\Cms\Http\Requests\Admin\CreateSystemBackupRequest;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemBackupRestoreRequest;
+use WebBlocks\Cms\Http\Requests\Admin\SystemBackupRetentionRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SystemBackupUploadRequest;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\System\BackupOperationException;
 use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
+use WebBlocks\Cms\Support\System\BackupRetentionSchema;
 use WebBlocks\Cms\Support\System\SystemBackupBulkDeleter;
 use WebBlocks\Cms\Support\System\SystemBackupCleanup;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
@@ -122,10 +128,10 @@ class SystemBackupController extends Controller
     ]);
   }
 
-  public function store(Request $request): RedirectResponse
+  public function store(CreateSystemBackupRequest $request): RedirectResponse
   {
     try {
-      $backup = $this->systemBackupManager->createManualBackup($request->user()?->id);
+      $backup = app(CreateManagedBackup::class)->execute($request->validated(), $request->user()?->id);
 
       return redirect()
         ->route('admin.system.backups.index')
@@ -137,13 +143,26 @@ class SystemBackupController extends Controller
     }
   }
 
+  public function retention(SystemBackupRetentionRequest $request, SystemBackup $backup, UpdateBackupRetention $action): RedirectResponse
+  {
+    try {
+      $action->execute($backup, $request->validated());
+
+      return redirect()->route('admin.system.backups.show', $backup)->with('status', __('webblocks-cms::backup-retention.saved'));
+    } catch (BackupOperationException $exception) {
+      return redirect()->route('admin.system.backups.show', $backup)->withErrors(['retention' => $exception->getMessage()]);
+    }
+  }
+
   public function cleanup(): RedirectResponse
   {
     $result = $this->backupCleanup->run(force: true);
 
-    return redirect()
-      ->route('admin.system.backups.index')
-      ->with('status', 'Backup cleanup removed '.$result->deletedCount().' backup(s) and freed '.number_format($result->deletedBytes).' byte(s).');
+    $message = __('webblocks-cms::storage.execution_result', ['count' => $result->deletedCount(), 'bytes' => number_format($result->deletedBytes), 'failures' => count($result->failures)]);
+
+    return $result->failures === []
+      ? redirect()->route('admin.system.backups.index')->with('status', $message)
+      : redirect()->route('admin.system.backups.index')->withErrors(['cleanup' => $message]);
   }
 
   public function createUpload(): View
@@ -184,6 +203,7 @@ class SystemBackupController extends Controller
     }
 
     return view('webblocks-cms::admin.system.backups.show', [
+      'retentionReady' => BackupRetentionSchema::ready(),
       'backup' => $backup->load('triggeredBy'),
       'restoreRuns' => $this->resolveCompatibilityRestoreManager()->latestRestoresForBackup($backup),
       'inspection' => $inspection,

@@ -1794,3 +1794,66 @@ restorable, including archived variants when present. Unique archive names
 prevent same-second safety backups from overwriting restore sources. Archive
 resolution supports a configured symlinked disk root while rejecting relative
 traversal, internal symlink escapes and absolute paths outside the disk.
+
+
+### Backup lifecycle and Cleanup workspace
+
+CMS 1.105.11 adds `is_protected` (boolean), `retention_mode`
+(`policy`, `never`, `expires`) and nullable `expires_at` SQL fields on backup
+records through idempotent fresh/update migrations. No new JSON authority is
+introduced. Missing retention or summary schema blocks automatic cleanup.
+Protection blocks single, forced and bulk deletion until explicitly removed.
+Bulk failures expose localized protection/operation feedback without diagnostics.
+`never` blocks automatic expiration but permits an explicit operator deletion.
+Running backups and recovery archives for recent failed/restored updates remain
+protected. The operation lease serializes creation, upload, restore, retention
+changes and deletion on the backups filesystem, survives SQL restoration, and
+releases on process exit. Restores may create their safety archive under the
+same process lease; shared filesystems must support advisory file locks.
+
+Defaults are pre-update 14 days/latest five valid successful archives; restore
+safety 14 days/latest two; content apply seven days/latest three; manual 30
+days/latest three with manual-policy cleanup disabled. Uploaded archives in
+`policy` mode remain indefinite. Explicit `expires` opts an individual archive
+into cleanup even for manual/uploaded types, without overriding protection or
+successful-count floors. Age and count safeguards apply together. Only readable,
+structurally validated, distinct physical archives count toward each type's
+floor; missing/corrupt snapshots do not displace valid recovery points. Saved
+settings are preserved. Multiple records sharing a physical archive do not
+multiply eligible bytes; a retained reference protects that file, and explicit
+record deletion does not unlink a file still referenced elsewhere.
+
+The backup budget is unset by default, accepts 0.01–10240 GiB, warns at 80% and
+reports an overrun at 100%. It is a soft reporting budget, never authority to
+shorten age/count protection. Measurements include unregistered files on the
+backups disk but cleanup never automatically selects those files. Reports expose
+total, explicitly protected, eligible and estimated post-cleanup bytes, measurement
+status, current/remaining overrun, per-record decisions and the last bounded SQL
+cleanup outcome. Partial/unavailable scans are explicit. Preview reads do not
+create archive directories, acquire an operation lease, delete files or write
+execution history. Runs compute their plan under the lease and credit only bytes
+actually removed. If unlink succeeds but deleting its SQL record fails, freed
+bytes are recorded with a failure and no deleted-record count. Oldest eligible
+records are processed first.
+
+`PUT /webadmin/api/system/backup-cleanup` keeps its original required fields and
+patches optional `manual_enabled`, `manual_days`, `keep_latest_manual`,
+`keep_latest_restore_safety`, `keep_latest_content_apply` and nullable `budget_gb`.
+Omission preserves saved values; null budget clears the budget. Existing read,
+settings-write and delete capabilities remain separate. New GET/PUT
+`/webadmin/api/system/backups/{backup}/retention` use `backups.read` and
+`backups.settings.write`; PUT requires `is_protected`, `retention_mode` and, for
+`expires`, a valid `expires_at` in the application timezone. Admin changes use
+SystemBackupPolicy and FormRequest validation. The policy accepts the configured
+authenticatable user contract and still requires system access. Manual creation stores selected
+retention before the SQL dump, so its own snapshot includes that state. Older
+SQL snapshots receive the additive retention/summary schema during restore
+maintenance. No backup format change or remote-copy automation is introduced.
+
+Cleanup uses native `wb-tabs` for storage/history, retention/automation and
+cleanup actions. Policy links open the settings panel and focus their group;
+validation and save/run redirects preserve the relevant panel. Informational
+cards have no destructive actions. All CMS admin templates use named WebBlocks UI
+groups/cards instead of HTML `fieldset`/`legend`, including shared listing
+controls and translated-page SEO groups; existing SEO edit restrictions remain.
+The contributor contract and a template-wide regression guard enforce the rule.

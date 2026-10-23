@@ -36,6 +36,11 @@ class SystemBackupManager
     return $this->createBackup(SystemBackup::TYPE_MANUAL, $triggeredByUserId, $label);
   }
 
+  public function createManagedManualBackup(array $retention, ?int $triggeredByUserId = null): SystemBackup
+  {
+    return $this->createBackup(SystemBackup::TYPE_MANUAL, $triggeredByUserId, retention: $retention);
+  }
+
   public function createRestoreSafetyBackup(?int $triggeredByUserId = null, ?string $label = null): SystemBackup
   {
     return $this->createBackup(self::TYPE_RESTORE_SAFETY, $triggeredByUserId, $label);
@@ -56,11 +61,17 @@ class SystemBackupManager
     $this->backupArchiveResolver()->assertValidArchivePath($path);
   }
 
-  private function createBackup(string $type, ?int $triggeredByUserId = null, ?string $label = null): SystemBackup
+  private function createBackup(string $type, ?int $triggeredByUserId = null, ?string $label = null, array $retention = []): SystemBackup
+  {
+    return app(BackupOperations::class)->run(fn () => $this->createBackupUnderLease($type, $triggeredByUserId, $label, $retention));
+  }
+
+  private function createBackupUnderLease(string $type, ?int $triggeredByUserId, ?string $label, array $retention): SystemBackup
   {
     $startedAt = now();
     $output = [];
     $backup = SystemBackup::query()->create([
+      ...$retention,
       'type' => $type,
       'status' => SystemBackup::STATUS_RUNNING,
       'label' => $label,
@@ -274,6 +285,17 @@ class SystemBackupManager
 
   public function deleteBackupRecord(SystemBackup $backup, bool $allowRunning = false): void
   {
+    app(BackupOperations::class)->run(function () use ($backup, $allowRunning): void {
+      $backup->refresh();
+      if ($backup->is_protected) {
+        throw new BackupOperationException(__('webblocks-cms::backup-retention.protected_error'));
+      }
+      $this->deleteBackupUnderLease($backup, $allowRunning);
+    });
+  }
+
+  private function deleteBackupUnderLease(SystemBackup $backup, bool $allowRunning): void
+  {
     if ($backup->isRunning() && ! $backup->isStaleRunning() && ! $allowRunning) {
       throw new RuntimeException('Running backup cannot be deleted unless you explicitly confirm it is stuck.');
     }
@@ -290,6 +312,14 @@ class SystemBackupManager
   private function deleteArchiveIfPresent(SystemBackup $backup, string $archivePath): void
   {
     $resolution = $this->backupArchiveResolver()->resolvePath($archivePath, requireReadableFile: false);
+    if ($resolution->isAvailable()) {
+      foreach (SystemBackup::query()->where('id', '!=', $backup->id)->whereNotNull('archive_path')->get(['id', 'archive_path']) as $other) {
+        $otherResolution = $this->backupArchiveResolver()->resolvePath($other->archive_path, requireReadableFile: false);
+        if ($otherResolution->isAvailable() && $otherResolution->absolutePath === $resolution->absolutePath) {
+          return; // Delete this record only; another record still owns the file.
+        }
+      }
+    }
 
     if ($resolution->isUnsafe()) {
       throw new RuntimeException($resolution->feedbackMessage());

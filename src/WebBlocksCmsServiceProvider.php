@@ -67,7 +67,9 @@ use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\AutomaticPageRule;
 use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Policies\AutomaticPagePolicy;
+use WebBlocks\Cms\Policies\SystemBackupPolicy;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
 use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
@@ -107,6 +109,7 @@ use WebBlocks\Cms\Support\Relational\TokenRelations;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
+use WebBlocks\Cms\Support\System\BackupOperations;
 use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
@@ -900,6 +903,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public function register(): void
   {
+    $this->app->singleton(BackupOperations::class);
+
     $this->app->register(EmbeddedRuntimeServiceProvider::class);
 
     require_once __DIR__.'/Support/helpers.php';
@@ -1085,7 +1090,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       }
 
       $this->app->make(Schedule::class)
-        ->command('system:backups:cleanup')
+        ->command('system:backups:cleanup', ['--scheduled'])
         ->dailyAt('03:30')
         ->withoutOverlapping()
         ->onOneServer();
@@ -1498,6 +1503,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   protected function bootAuthorization(): void
   {
+    Gate::policy(SystemBackup::class, SystemBackupPolicy::class);
     Gate::policy(AutomaticPageRule::class, AutomaticPagePolicy::class);
     Gate::define('access-admin', fn ($user) => is_object($user) && method_exists($user, 'canAccessAdmin') && $user->canAccessAdmin());
     Gate::define('manage-users', fn ($user) => app(PluginAccessResolver::class)->isSuperAdmin($user));

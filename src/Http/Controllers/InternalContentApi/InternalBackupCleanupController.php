@@ -3,8 +3,9 @@
 namespace WebBlocks\Cms\Http\Controllers\InternalContentApi;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use WebBlocks\Cms\Http\Requests\InternalContentApi\BackupCleanupSettingsRequest;
+use WebBlocks\Cms\Support\System\BackupRetentionSettings;
 use WebBlocks\Cms\Support\System\SystemBackupCleanup;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
@@ -20,17 +21,12 @@ class InternalBackupCleanupController extends Controller
     return response()->json(['ok' => true, 'policy' => $this->settings->backupCleanupSettings(), 'preview' => $this->present($this->cleanup->preview())]);
   }
 
-  public function update(Request $request): JsonResponse
+  public function update(BackupCleanupSettingsRequest $request): JsonResponse
   {
-    $validated = validator($request->all(), [
-      'enabled' => ['required', 'boolean'],
-      'pre_update_days' => ['required', 'integer', 'min:1', 'max:3650'],
-      'keep_latest_pre_update' => ['required', 'integer', 'min:1', 'max:100'],
-      'restore_safety_days' => ['required', 'integer', 'min:1', 'max:3650'],
-      'content_apply_days' => ['required', 'integer', 'min:1', 'max:3650'],
-    ])->validate();
+    $validated = $request->validated();
 
     $this->settings->save([
+      ...BackupRetentionSettings::payload($validated),
       SystemSettings::BACKUP_CLEANUP_ENABLED => $validated['enabled'],
       SystemSettings::BACKUP_CLEANUP_PRE_UPDATE_DAYS => $validated['pre_update_days'],
       SystemSettings::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE => $validated['keep_latest_pre_update'],
@@ -43,12 +39,15 @@ class InternalBackupCleanupController extends Controller
 
   public function run(): JsonResponse
   {
-    return response()->json(['ok' => true, 'result' => $this->present($this->cleanup->run(force: true))]);
+    $result = $this->cleanup->run(force: true);
+
+    return response()->json(['ok' => $result->failures === [], 'result' => $this->present($result)]);
   }
 
   private function present($result): array
   {
     return [
+      'overview' => $result->overview,
       'candidate_count' => $result->candidateCount(),
       'candidate_bytes' => $result->candidateBytes,
       'deleted_count' => $result->deletedCount(),

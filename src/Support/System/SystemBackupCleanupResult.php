@@ -15,6 +15,7 @@ final class SystemBackupCleanupResult
     public readonly array $deletedIds = [],
     public readonly int $deletedBytes = 0,
     public readonly array $failures = [],
+    public readonly array $overview = [],
   ) {}
 
   public function candidateCount(): int

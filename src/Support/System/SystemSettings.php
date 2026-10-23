@@ -86,6 +86,15 @@ class SystemSettings
 
   public const CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS = 'system.cleanup_keep_latest_shared_slot_revisions';
 
+  public const BACKUP_LIFECYCLE_KEYS = [
+    'manual_enabled' => 'system.backup_cleanup_manual_enabled',
+    'manual_days' => 'system.backup_cleanup_manual_days',
+    'keep_latest_manual' => 'system.backup_cleanup_keep_latest_manual',
+    'keep_latest_restore_safety' => 'system.backup_cleanup_keep_latest_restore_safety',
+    'keep_latest_content_apply' => 'system.backup_cleanup_keep_latest_content_apply',
+    'budget_gb' => 'system.backup_cleanup_budget_gb',
+  ];
+
   public const CLEANUP_AUTOMATIC_KEYS = [
     'asset-revisions' => 'system.cleanup_automatic_asset_revisions',
     'media-variants' => 'system.cleanup_automatic_media_variants',
@@ -96,6 +105,7 @@ class SystemSettings
 
   private const READABLE_KEYS = [
     ...self::CLEANUP_AUTOMATIC_KEYS,
+    ...self::BACKUP_LIFECYCLE_KEYS,
     self::PROJECT_NAME,
     self::PROJECT_TAGLINE,
     self::APP_NAME,
@@ -132,6 +142,7 @@ class SystemSettings
 
   public const MANAGED_KEYS = [
     ...self::CLEANUP_AUTOMATIC_KEYS,
+    ...self::BACKUP_LIFECYCLE_KEYS,
     self::PROJECT_NAME,
     self::PROJECT_TAGLINE,
     self::DEFAULT_LOCALE,
@@ -353,14 +364,19 @@ class SystemSettings
     return filter_var($this->get(self::BACKUP_CLEANUP_ENABLED, true), FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? true;
   }
 
-  /** @return array{enabled: bool, pre_update_days: int, keep_latest_pre_update: int, restore_safety_days: int, content_apply_days: int} */
   public function backupCleanupSettings(): array
   {
     return [
+      'manual_enabled' => filter_var($this->get(self::BACKUP_LIFECYCLE_KEYS['manual_enabled'], false), FILTER_VALIDATE_BOOL),
+      'manual_days' => $this->boundedInt(self::BACKUP_LIFECYCLE_KEYS['manual_days'], 30, 1, 3650),
+      'keep_latest_manual' => $this->boundedInt(self::BACKUP_LIFECYCLE_KEYS['keep_latest_manual'], 3, 1, 100),
+      'keep_latest_restore_safety' => $this->boundedInt(self::BACKUP_LIFECYCLE_KEYS['keep_latest_restore_safety'], 2, 1, 100),
+      'keep_latest_content_apply' => $this->boundedInt(self::BACKUP_LIFECYCLE_KEYS['keep_latest_content_apply'], 3, 1, 100),
+      'budget_gb' => max(0, min(10240, (float) $this->get(self::BACKUP_LIFECYCLE_KEYS['budget_gb'], 0))),
       'enabled' => $this->backupCleanupEnabled(),
       'pre_update_days' => $this->boundedInt(self::BACKUP_CLEANUP_PRE_UPDATE_DAYS, 14, 1, 3650),
       'keep_latest_pre_update' => $this->boundedInt(self::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE, 5, 1, 100),
-      'restore_safety_days' => $this->boundedInt(self::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS, 30, 1, 3650),
+      'restore_safety_days' => $this->boundedInt(self::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS, 14, 1, 3650),
       'content_apply_days' => $this->boundedInt(self::BACKUP_CLEANUP_CONTENT_APPLY_DAYS, 7, 1, 3650),
     ];
   }

@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\User as AuthenticatableUser;
 use Illuminate\Support\Facades\Gate;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Tests\TestCase;
 
 class AdminRoleAccessMatrixTest extends TestCase
@@ -37,6 +38,7 @@ class AdminRoleAccessMatrixTest extends TestCase
     $user = $this->user($role);
 
     $this->assertSame($accessSystem, Gate::forUser($user)->allows('access-system'));
+    $this->assertSame($accessSystem, Gate::forUser($user)->allows('manageRetention', SystemBackup::class));
     $this->assertSame($manageSiteOperations, Gate::forUser($user)->allows('manage-site-operations'));
     $this->assertSame($viewVisitorReports, Gate::forUser($user)->allows('view-visitor-reports'));
   }

@@ -64,8 +64,8 @@
                             <input type="hidden" name="correct_view" value="1">
                         @endif
                     @endif
-                    <fieldset class="wb-stack wb-gap-2">
-                        <legend class="wb-label">{{ $viewText('columns') }}</legend>
+                    <section class="wb-stack wb-gap-2" role="group" aria-labelledby="listing-columns-title">
+                        <h3 class="wb-m-0 wb-text-base wb-font-semibold" id="listing-columns-title">{{ $viewText('columns') }}</h3>
                         <p class="wb-text-sm wb-text-muted">{{ $viewText('columns_help') }}</p>
                         @foreach ($listingView['columnOptions'] as $columnIndex => $columnOption)
                             <div class="wb-field">
@@ -78,7 +78,7 @@
                                 </select>
                             </div>
                         @endforeach
-                    </fieldset>
+                    </section>
                     <button class="wb-btn wb-btn-secondary" type="submit">{{ $viewText('apply_columns') }}</button>
                 </form>
             </div>

@@ -17,6 +17,11 @@ class UploadedSystemBackupManager
 
   public function import(UploadedFile $file, ?int $triggeredByUserId = null): SystemBackup
   {
+    return app(BackupOperations::class)->run(fn () => $this->importUnderLease($file, $triggeredByUserId));
+  }
+
+  private function importUnderLease(UploadedFile $file, ?int $triggeredByUserId = null): SystemBackup
+  {
     $startedAt = now();
     $sourceFilename = $file->getClientOriginalName();
     $safeFilename = Str::lower(Str::random(8)).'-webblocks-cms-backup-upload-'.$startedAt->format('Y-m-d-His').'.zip';

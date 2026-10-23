@@ -9,6 +9,17 @@ use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 class AdminUiOwnershipTest extends TestCase
 {
   #[Test]
+  public function admin_templates_use_named_groups_instead_of_fieldsets_and_legends(): void
+  {
+    $root = dirname(__DIR__, 2).'/resources/views/admin';
+    foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root)) as $file) {
+      if ($file->isFile() && str_ends_with($file->getFilename(), '.blade.php')) {
+        $this->assertDoesNotMatchRegularExpression('/<\s*(fieldset|legend)\b/i', file_get_contents($file->getPathname()), $file->getFilename());
+      }
+    }
+  }
+
+  #[Test]
   public function password_visibility_is_owned_by_webblocks_ui(): void
   {
     $root = dirname(__DIR__, 2);

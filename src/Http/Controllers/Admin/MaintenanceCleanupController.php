@@ -31,7 +31,7 @@ class MaintenanceCleanupController extends Controller
   {
     $this->settings->save($request->settingsPayload());
 
-    return redirect()->route('admin.system.cleanup.index')->with('status', __('webblocks-cms::storage.settings_saved'));
+    return redirect()->route('admin.system.cleanup.index', ['tab' => 'settings'])->with('status', __('webblocks-cms::storage.settings_saved'));
   }
 
   public function run(string $category): RedirectResponse
@@ -51,7 +51,7 @@ class MaintenanceCleanupController extends Controller
     $message = __('webblocks-cms::storage.execution_result', ['count' => $count, 'bytes' => number_format($bytes), 'failures' => count($result->failures)]);
 
     return $result->failures === []
-      ? redirect()->route('admin.system.cleanup.index')->with('status', $message)
-      : redirect()->route('admin.system.cleanup.index')->withErrors(['cleanup' => $message]);
+      ? redirect()->route('admin.system.cleanup.index', ['tab' => 'actions'])->with('status', $message)
+      : redirect()->route('admin.system.cleanup.index', ['tab' => 'actions'])->withErrors(['cleanup' => $message]);
   }
 }

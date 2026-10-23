@@ -9,6 +9,9 @@ class SystemBackupRestoreMaintenanceRunner
 {
   public function run(array &$output = []): void
   {
+    // Older SQL snapshots can predate these additive operational fields.
+    BackupRetentionSchema::migrate();
+    MaintenanceCleanupState::migrate();
     $this->runArtisanCommand('storage:link', ['--force' => true], $output);
     $this->runArtisanCommand('optimize:clear', [], $output);
   }

@@ -80,6 +80,11 @@ class SystemBackupRestoreManager
 
   private function restoreTarget(array $target, ?int $triggeredByUserId): BackupRestoreResult
   {
+    return app(BackupOperations::class)->run(fn () => $this->restoreUnderLease($target, $triggeredByUserId));
+  }
+
+  private function restoreUnderLease(array $target, ?int $triggeredByUserId): BackupRestoreResult
+  {
     $startedAt = now();
     $output = [];
     $temporaryDirectory = storage_path('app/temp/system-backup-restores/'.$startedAt->format('YmdHis').'-'.Str::lower(Str::random(8)));

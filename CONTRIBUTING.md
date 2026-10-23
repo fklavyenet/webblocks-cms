@@ -31,6 +31,15 @@ PHPUnit checks the rendered System Updates screen and serves its shared progress
 
 The standalone PHP Node/npm guard runs before the long tests in pre-push and CI, without Composer dependencies. It checks Git-tracked and non-ignored untracked files for package manifests/lockfiles, Node configuration, CommonJS tools, literal Node/npm commands, declared CI/container runtimes and Node/bare-package JavaScript imports. It ignores installed Git-ignored dependencies and prose/comments; native browser JavaScript, relative/URL module imports and package exclusion lists remain valid. Findings name files and lines without printing command arguments. This is a static dependency guard, not an interpreter for dynamically constructed commands.
 
+## Admin form composition
+
+Admin templates must not use HTML `fieldset` or `legend`. Use WebBlocks UI cards
+or a `role="group"` container with a visible heading referenced by
+`aria-labelledby`. Multi-section workspaces use the shipped `wb-tabs` /
+`data-wb-tabs` contract, with separate information, settings and action panels
+where useful. Validation and action redirects must retain the relevant panel;
+links to settings must open the panel containing their destination.
+
 ## Optional browser fixtures
 
 The browser fixtures use PHP's built-in server and the real Blade fragments exported by their PHP tests. From the package root, start one fixture:

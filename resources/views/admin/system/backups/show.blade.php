@@ -216,6 +216,19 @@
             </div>
         </div>
     </div>
+
+    <div class="wb-card wb-mt-4" id="backup-retention">
+        <div class="wb-card-header"><strong>{{ __('webblocks-cms::backup-retention.title') }}</strong></div>
+        @if ($retentionReady)
+            <form method="POST" action="{{ route('admin.system.backups.retention.update', $backup) }}">
+                @csrf @method('PUT')
+                <div class="wb-card-body">@include('webblocks-cms::admin.system.backups.retention-fields', ['retentionBackup' => $backup])</div>
+                <div class="wb-card-footer"><button class="wb-btn wb-btn-primary" type="submit">{{ __('webblocks-cms::backup-retention.save') }}</button></div>
+            </form>
+        @else
+            <div class="wb-card-body">{{ __('webblocks-cms::backup-retention.schema_missing') }}</div>
+        @endif
+    </div>
 @endsection
 
 @push('overlays')
