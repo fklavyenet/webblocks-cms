@@ -6,6 +6,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $text('title'), 'heading' => $text('title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('embedded-applications');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title'), 'description' => $text('description'), 'count' => $applications->count()])
     @include('webblocks-cms::admin.partials.flash')
 
@@ -16,8 +19,8 @@
         </div>
         <div class="wb-card-body">
             <div class="wb-table-wrap">
-                <table class="wb-table">
-                <thead><tr><th>{{ $text('name') }}</th><th>{{ $text('handle') }}</th><th>{{ $text('mode') }}</th><th>{{ $text('status') }}</th><th>{{ $text('actions') }}</th></tr></thead>
+                <table class="wb-table" @include('webblocks-cms::admin.partials.table-sort-attributes')>
+                <thead><tr>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $text('name')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'handle', 'label' => $text('handle')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'render_mode', 'label' => $text('mode')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_enabled', 'label' => $text('status')])<th>{{ $text('actions') }}</th></tr></thead>
                 <tbody>
                 @forelse ($applications as $application)
                     <tr>

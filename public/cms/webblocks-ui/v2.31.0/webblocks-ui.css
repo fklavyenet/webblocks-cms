@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.30.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.31.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -3961,13 +3961,69 @@ html[data-theme="auto"]:not([data-mode="light"]) .wb-alert-danger {
   white-space: nowrap;
 }
 
-/* ── Sortable header ──────────────────────────────────────── */
+/* ── Sortable header (legacy marker + opt-in control) ──────── */
 .wb-table th[data-wb-sort] {
   cursor: pointer;
   user-select: none;
 }
 .wb-table th[data-wb-sort]:hover {
   color: var(--wb-text);
+}
+
+.wb-table[data-wb-table-sort] thead th[data-wb-sort] {
+  padding: 0;
+}
+
+.wb-table-sort {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--wb-s2);
+  width: 100%;
+  min-height: 24px;
+  padding: var(--wb-s3) var(--wb-s4);
+  border: 0;
+  border-radius: var(--wb-r-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wb-table-sm .wb-table-sort {
+  padding: var(--wb-s2) var(--wb-s3);
+}
+
+.wb-table-sort:hover,
+.wb-table th[aria-sort] > .wb-table-sort {
+  color: var(--wb-text);
+}
+
+.wb-table-sort:focus-visible {
+  outline: 2px solid var(--wb-primary);
+  outline-offset: -3px;
+}
+
+.wb-table-sort:disabled,
+.wb-table-sort[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Use the existing wb-icon-sm sizing and shipped arrow masks. */
+.wb-table-sort-icon {
+  flex: 0 0 var(--wb-icon-size, 1rem);
+}
+
+/* Keep masked icons visible in the user's high-contrast palette. */
+@media (forced-colors: active) {
+  .wb-table-sort .wb-table-sort-icon {
+    forced-color-adjust: none;
+    background-color: ButtonText;
+  }
 }
 
 /* ── Filter row ───────────────────────────────────────────── */

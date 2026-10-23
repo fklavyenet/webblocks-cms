@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\LocaleRequest;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Locales\LocaleLifecycleGuard;
 use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
@@ -25,7 +26,8 @@ class LocaleController extends Controller
     $locales = Locale::query()
       ->orderByDesc('is_default')
       ->orderBy('name')
-      ->paginate(AdminPagination::perPage());
+      ->tap(fn ($query) => AdminTableSort::for('locales')->apply($query))
+      ->paginate(AdminPagination::perPage())->withQueryString();
 
     AdminPagination::redirectOutOfRange($locales);
 

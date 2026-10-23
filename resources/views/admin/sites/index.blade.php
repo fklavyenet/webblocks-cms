@@ -15,6 +15,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('sites.title'), 'heading' => $adminText('sites.title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('sites');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('sites.title'),
         'description' => $adminText('sites.description'),
@@ -39,16 +42,16 @@
 
         <div class="wb-card-body">
             <div class="wb-table-wrap">
-                <table class="wb-table wb-table-striped wb-table-hover">
+                <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                     <thead>
                         <tr>
                             <th>{{ $adminText('sites.columns.view') }}</th>
-                            <th>{{ $adminText('sites.columns.name') }}</th>
-                            <th>{{ $adminText('sites.columns.handle') }}</th>
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $adminText('sites.columns.name')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'handle', 'label' => $adminText('sites.columns.handle')])
                             <th>{{ $adminText('sites.columns.domains') }}</th>
                             <th>{{ $adminText('sites.columns.locales') }}</th>
-                            <th>{{ $adminText('sites.columns.pages') }}</th>
-                            <th>{{ $adminText('sites.columns.status') }}</th>
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'pages_count', 'label' => $adminText('sites.columns.pages')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_primary', 'label' => $adminText('sites.columns.status')])
                             <th>{{ $adminText('sites.columns.actions') }}</th>
                         </tr>
                     </thead>

@@ -21,6 +21,7 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
@@ -127,6 +128,7 @@ class BlockController extends Controller
     )
       ->with('page.translations')
       ->orderByDesc('id')
+      ->tap(fn ($query) => AdminTableSort::for('blocks')->apply($query))
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 

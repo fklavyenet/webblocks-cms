@@ -7,6 +7,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('users');
+@endphp
     @php
         $hasActiveFilters = $filters['q'] !== '' || $filters['status'] !== '' || $filters['role'] !== '';
     @endphp
@@ -108,7 +111,7 @@
                 ])
 
                 <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover">
+                    <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
                                 <th>
@@ -117,12 +120,12 @@
                                         <span class="wb-sr-only">{{ $adminText('select_all_visible') }}</span>
                                     </label>
                                 </th>
-                                <th>{{ $adminText('name') }}</th>
-                                <th>{{ $adminText('email') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $adminText('name')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'email', 'label' => $adminText('email')])
                                 <th>{{ $adminText('role') }}</th>
                                 <th>{{ $adminText('site_access') }}</th>
-                                <th>{{ $adminText('status') }}</th>
-                                <th>{{ $adminText('last_login') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_active', 'label' => $adminText('status')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'last_login_at', 'label' => $adminText('last_login')])
                                 <th>{{ $adminText('actions') }}</th>
                             </tr>
                         </thead>

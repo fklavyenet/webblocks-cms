@@ -7,6 +7,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $pageLayoutsText('title'), 'heading' => $pageLayoutsText('title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('page-layouts');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageLayoutsText('title'),
         'description' => $pageLayoutsText('index_description'),
@@ -27,15 +30,15 @@
 
         <div class="wb-card-body">
             <div class="wb-table-wrap">
-                <table class="wb-table wb-table-striped wb-table-hover">
+                <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                     <thead>
                         <tr>
-                            <th>{{ $pageLayoutsText('name') }}</th>
-                            <th>{{ $pageLayoutsText('handle') }}</th>
-                            <th>{{ $pageLayoutsText('body_class') }}</th>
-                            <th>{{ $pageLayoutsText('status') }}</th>
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $pageLayoutsText('name')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'handle', 'label' => $pageLayoutsText('handle')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'body_class', 'label' => $pageLayoutsText('body_class')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_active', 'label' => $pageLayoutsText('status')])
                             <th>{{ $pageLayoutsText('ownership') }}</th>
-                            <th>{{ $pageLayoutsText('sort_order') }}</th>
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'sort_order', 'label' => $pageLayoutsText('sort_order')])
                             <th>{{ $pageLayoutsText('actions') }}</th>
                         </tr>
                     </thead>

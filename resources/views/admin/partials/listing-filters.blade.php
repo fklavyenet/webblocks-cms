@@ -7,6 +7,14 @@
     $selects = $selects ?? [];
     $dates = $dates ?? [];
     $hidden = $hidden ?? [];
+    if (isset($tableSort)) {
+        $visibleFields = array_column($selects, 'name');
+        foreach ($tableSort->filterFields() as $sortField => $sortValue) {
+            if (! in_array($sortField, $visibleFields, true)) {
+                $hidden[$sortField] = $sortValue;
+            }
+        }
+    }
     $showActions = $showActions ?? true;
     $liveSearch = $liveSearch ?? false;
     $showReset = $showReset ?? false;

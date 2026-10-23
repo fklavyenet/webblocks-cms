@@ -6,6 +6,9 @@
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('overview'), 'heading' => $adminText('overview')])
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('engagement');
+@endphp
 <div class="wb-stack wb-gap-4">
     @include('webblocks-cms::admin.partials.page-header', ['title' => $adminText('overview'), 'description' => $adminText('overview_description')])
     @include('webblocks-cms::admin.partials.flash')
@@ -38,8 +41,8 @@
     </div>
     <section class="wb-card">
         <div class="wb-card-header"><strong>{{ $adminText('page_summary') }}</strong></div>
-        <div class="wb-card-body"><div class="wb-table-wrap"><table class="wb-table">
-            <thead><tr><th>{{ $adminText('source') }}</th><th>{{ $adminText('site') }}</th><th>{{ $adminText('status_pending') }}</th><th>{{ $adminText('votes') }}</th><th>{{ $adminText('rating') }}</th><th>{{ $adminText('last_activity') }}</th><th>{{ $adminText('actions') }}</th></tr></thead>
+        <div class="wb-card-body"><div class="wb-table-wrap"><table class="wb-table" @include('webblocks-cms::admin.partials.table-sort-attributes')>
+            <thead><tr><th>{{ $adminText('source') }}</th><th>{{ $adminText('site') }}</th>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'pending', 'label' => $adminText('status_pending')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'votes', 'label' => $adminText('votes')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'average', 'label' => $adminText('rating')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'activity', 'label' => $adminText('last_activity')])<th>{{ $adminText('actions') }}</th></tr></thead>
             <tbody>@forelse ($pageSummary as $page)
                 <tr><td>{{ $page->title ?: $page->slug }}</td><td>{{ $page->site?->name }}</td><td>{{ $page->pending_count }}</td><td>{{ $page->vote_count }}</td><td>{{ $page->average_rating !== null ? round($page->average_rating, 1).' / 5' : '—' }}</td><td>{{ $page->last_activity ?: '—' }}</td><td class="wb-table-actions"><div class="wb-action-group">
                     <a class="wb-action-btn wb-action-btn-view" href="{{ route('admin.engagement.comments.index', ['site' => $page->site_id, 'page_id' => $page->id]) }}" title="{{ $adminText('view_comments') }}" aria-label="{{ $adminText('view_comments') }}"><i class="wb-icon wb-icon-message-square" aria-hidden="true"></i></a>

@@ -27,6 +27,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
@@ -95,8 +96,9 @@ class PageController extends Controller
     $searchPageId = preg_match('/^#?(\d+)$/', $search, $matches) === 1 ? (int) $matches[1] : null;
     $status = $request->string('status')->toString();
     $detailsPageId = $request->integer('details');
-    $sort = $request->string('sort')->toString();
-    $direction = Str::lower($request->string('direction')->toString()) === 'asc' ? 'asc' : 'desc';
+    $tableSort = AdminTableSort::for('pages');
+    $sort = $tableSort->key;
+    $direction = $tableSort->direction;
     $allowedStatuses = $this->workflowManager->allowedStatuses();
     $allowedSorts = ['created_at', 'title', 'slug', 'status', 'updated_at'];
     $defaultLocaleId = Page::defaultLocaleId();
@@ -167,6 +169,7 @@ class PageController extends Controller
       ->when($sort === 'slug', fn ($query) => $query->orderByDefaultTranslation('slug', $direction))
       ->when(! in_array($sort, ['title', 'slug'], true), fn ($query) => $query->orderBy($sort, $direction))
       ->when($sort !== 'created_at', fn ($query) => $query->orderByDesc('created_at'))
+      ->orderByDesc('id')
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 

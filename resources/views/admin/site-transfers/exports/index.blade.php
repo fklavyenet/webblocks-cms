@@ -48,7 +48,10 @@
                     ])
 
                     <div class="wb-table-wrap">
-                        <table class="wb-table wb-table-striped wb-table-hover">
+                        @php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('exports');
+@endphp
+<table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                             <thead>
                                 <tr>
                                     <th>
@@ -57,11 +60,11 @@
                                             <span class="wb-sr-only">{{ $adminText('site_transfers.select_all_exports') }}</span>
                                         </label>
                                     </th>
-                                    <th>{{ $adminText('site_transfers.created_at') }}</th>
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'created_at', 'label' => $adminText('site_transfers.created_at')])
                                     <th>{{ $adminText('site_transfers.site') }}</th>
-                                    <th>{{ $adminText('site_transfers.includes_media') }}</th>
-                                    <th>{{ $adminText('site_transfers.package_size') }}</th>
-                                    <th>{{ $adminText('common.status') }}</th>
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'includes_media', 'label' => $adminText('site_transfers.includes_media')])
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'archive_size_bytes', 'label' => $adminText('site_transfers.package_size')])
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('common.status')])
                                     <th>{{ $adminText('common.actions') }}</th>
                                 </tr>
                             </thead>
@@ -191,7 +194,10 @@
                     ])
 
                     <div class="wb-table-wrap">
-                        <table class="wb-table wb-table-striped wb-table-hover">
+                        @php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('imports');
+@endphp
+<table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                             <thead>
                                 <tr>
                                     <th>
@@ -200,10 +206,10 @@
                                             <span class="wb-sr-only">{{ $adminText('site_transfers.select_all_imports') }}</span>
                                         </label>
                                     </th>
-                                    <th>{{ $adminText('site_transfers.created_at') }}</th>
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'created_at', 'label' => $adminText('site_transfers.created_at')])
                                     <th>{{ $adminText('site_transfers.imported_site_result') }}</th>
-                                    <th>{{ $adminText('site_transfers.source_package_name') }}</th>
-                                    <th>{{ $adminText('common.status') }}</th>
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'source_archive_name', 'label' => $adminText('site_transfers.source_package_name')])
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('common.status')])
                                     <th>{{ $adminText('common.actions') }}</th>
                                 </tr>
                             </thead>

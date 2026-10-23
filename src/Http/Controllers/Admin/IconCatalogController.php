@@ -10,6 +10,7 @@ use Illuminate\Routing\Controller;
 use Throwable;
 use WebBlocks\Cms\Http\Requests\Admin\IconCatalogItemUpdateRequest;
 use WebBlocks\Cms\Models\IconCatalogItem;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Icons\WebBlocksIconManifestSyncer;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -47,12 +48,14 @@ class IconCatalogController extends Controller
       ->orderBy('source')
       ->orderBy('sort_order')
       ->orderBy('label')
+      ->tap(fn ($query) => AdminTableSort::for('icons')->apply($query))
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 
     AdminPagination::redirectOutOfRange($icons, $request);
 
     $baseQuery = array_filter([
+      ...AdminTableSort::for('icons')->filterFields(),
       'search' => $filters['search'],
       'source' => $filters['source'],
       'tag' => $filters['tag'],

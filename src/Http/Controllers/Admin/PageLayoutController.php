@@ -9,6 +9,7 @@ use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\PageLayoutRequest;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 
 class PageLayoutController extends Controller
@@ -21,7 +22,8 @@ class PageLayoutController extends Controller
     $pageLayouts = PageLayout::query()
       ->orderBy('sort_order')
       ->orderBy('name')
-      ->paginate(AdminPagination::perPage());
+      ->tap(fn ($query) => AdminTableSort::for('page-layouts')->apply($query))
+      ->paginate(AdminPagination::perPage())->withQueryString();
 
     AdminPagination::redirectOutOfRange($pageLayouts);
 

@@ -11,6 +11,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $blocksIndexText('blocks'), 'heading' => $blocksIndexText('blocks')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('blocks');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $blocksIndexTitle,
         'description' => $currentPage ? $blocksIndexText('page_description') : $blocksIndexText('description'),
@@ -96,8 +99,8 @@
             </div>
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover">
-                        <thead><tr><th>{{ $blocksIndexText('id') }}</th><th>{{ $blocksIndexText('page') }}</th><th>{{ $blocksIndexText('parent') }}</th><th>{{ $blocksIndexText('block_type') }}</th><th>{{ $blocksIndexText('slot_type') }}</th><th>{{ $blocksIndexText('order') }}</th><th>{{ $blocksIndexText('status') }}</th><th>{{ $blocksIndexText('kind') }}</th><th>{{ $blocksIndexText('actions') }}</th></tr></thead>
+                    <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
+                        <thead><tr>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'id', 'label' => $blocksIndexText('id')])<th>{{ $blocksIndexText('page') }}</th><th>{{ $blocksIndexText('parent') }}</th><th>{{ $blocksIndexText('block_type') }}</th><th>{{ $blocksIndexText('slot_type') }}</th>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'sort_order', 'label' => $blocksIndexText('order')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $blocksIndexText('status')])<th>{{ $blocksIndexText('kind') }}</th><th>{{ $blocksIndexText('actions') }}</th></tr></thead>
                         <tbody>
                             @foreach ($blocks as $block)
                                 <tr>

@@ -60,11 +60,12 @@ class SiteIndexViewColumnTest extends TestCase
 
     $html = $this->renderIndex();
 
-    $this->assertLessThan(
-      strpos($html, '<th>Name</th>'),
-      strpos($html, '<th>View</th>'),
-      'The View column heads the table.'
-    );
+    $document = new \DOMDocument;
+    @$document->loadHTML($html);
+    $headers = (new \DOMXPath($document))->query('//table/thead/tr/th');
+    $this->assertSame('View', trim($headers->item(0)->textContent));
+    $this->assertSame('Name', trim($headers->item(1)->textContent));
+    $this->assertFalse($headers->item(0)->hasAttribute('data-wb-sort'));
     $this->assertLessThan(
       strpos($html, '<td><strong>Shop</strong></td>'),
       strpos($html, 'data-column="view"'),

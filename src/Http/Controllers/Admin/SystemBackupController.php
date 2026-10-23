@@ -20,6 +20,7 @@ use WebBlocks\Cms\Http\Requests\Admin\SystemBackupRetentionRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SystemBackupUploadRequest;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemBackupRestore;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\System\BackupOperationException;
 use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
@@ -95,6 +96,7 @@ class SystemBackupController extends Controller
         ->when($type !== '', fn ($query) => $query->where('type', $type))
         ->when($status !== '', fn ($query) => $query->where('status', $status))
         ->latest()
+        ->tap(fn ($query) => AdminTableSort::for('backups')->apply($query))
         ->paginate($perPage)
         ->withQueryString()
       : new LengthAwarePaginator([], 0, self::FALLBACK_PER_PAGE, 1, [

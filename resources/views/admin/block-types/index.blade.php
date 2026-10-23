@@ -10,6 +10,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $blockTypesIndexText('block_types'), 'heading' => $blockTypesIndexText('block_types')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('block-types');
+@endphp
     @php
         $hasActiveFilters = $filters['search'] !== '' || $filters['category'] !== '' || $filters['status'] !== '' || $filters['support'] !== '' || $filters['usage'] !== '';
         $baseQuery = array_filter(array_merge($filters, ['page' => $blockTypes->currentPage() > 1 ? $blockTypes->currentPage() : null]));
@@ -104,13 +107,13 @@
         @else
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover">
+                    <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
-                                <th>{{ $blockTypesIndexText('name') }}</th>
-                                <th>{{ $blockTypesIndexText('category') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $blockTypesIndexText('name')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'category', 'label' => $blockTypesIndexText('category')])
                                 <th>{{ $blockTypesIndexText('usage') }}</th>
-                                <th>{{ $blockTypesIndexText('status') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $blockTypesIndexText('status')])
                                 <th>{{ $blockTypesIndexText('support') }}</th>
                                 <th>{{ $blockTypesIndexText('actions') }}</th>
                             </tr>

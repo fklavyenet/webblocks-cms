@@ -1,5 +1,5 @@
 @if ($columnHeading)
-    <th>{{ $adminText('pages.last_edited') }}</th>
+    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'updated_at', 'label' => $adminText('pages.last_edited')])
 @else
     <td class="wb-admin-pages-table-cell wb-admin-pages-last-edited-cell">
         <div class="wb-admin-pages-last-edited wb-text-sm">

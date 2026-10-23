@@ -2,11 +2,14 @@
     $adminLocaleCode = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('engagement.'.$key, $adminLocaleCode, $replace);
-    $hasActiveFilters = count(array_filter(array_diff_key($filters, ['sort' => true, 'page' => true]), fn ($value) => $value !== '' && $value !== null)) > 0;
+    $hasActiveFilters = count(array_filter(array_diff_key($filters, ['sort' => true, 'direction' => true, 'page' => true]), fn ($value) => $value !== '' && $value !== null)) > 0;
     $returnQuery = $returnQuery ?? http_build_query(request()->query());
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('comments'), 'heading' => $adminText('comments')])
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('comments');
+@endphp
 <div class="wb-stack wb-gap-4">
     @include('webblocks-cms::admin.partials.page-header', ['title' => $adminText('comments'), 'description' => $adminText('comments_description')])
     @include('webblocks-cms::admin.partials.flash')
@@ -23,8 +26,8 @@
                 <button class="wb-btn wb-btn-secondary" type="submit" @disabled($comments->isEmpty())>{{ $adminText('apply_selected') }}</button>
             </form>
             <p class="wb-text-sm wb-text-muted">{{ $adminText('spam_help') }}</p>
-            <div class="wb-table-wrap"><table class="wb-table">
-                <thead><tr><th>{{ $adminText('select') }}</th><th>{{ $adminText('comment') }}</th><th>{{ $adminText('source') }}</th><th>{{ $adminText('status') }}</th><th>{{ $adminText('spam') }}</th><th>{{ $adminText('submitted') }}</th><th>{{ $adminText('actions') }}</th></tr></thead>
+            <div class="wb-table-wrap"><table class="wb-table" @include('webblocks-cms::admin.partials.table-sort-attributes')>
+                <thead><tr><th>{{ $adminText('select') }}</th><th>{{ $adminText('comment') }}</th><th>{{ $adminText('source') }}</th>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('status')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'spam_score', 'label' => $adminText('spam')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'created_at', 'label' => $adminText('submitted')])<th>{{ $adminText('actions') }}</th></tr></thead>
                 <tbody>@forelse ($comments as $comment)
                     <tr><td><label class="wb-check" for="comment-select-{{ $comment->id }}"><input id="comment-select-{{ $comment->id }}" type="checkbox" form="engagement-bulk-moderation" name="comment_ids[]" value="{{ $comment->id }}" aria-label="{{ $adminText('select_comment', ['id' => $comment->id]) }}"><span class="wb-sr-only">{{ $adminText('select_comment', ['id' => $comment->id]) }}</span></label></td>
                         <td><div class="wb-stack wb-gap-1"><strong>{{ $comment->author_name ?: $adminText('anonymous') }}</strong><span>{{ \Illuminate\Support\Str::limit($comment->body, 140) }}</span></div></td>

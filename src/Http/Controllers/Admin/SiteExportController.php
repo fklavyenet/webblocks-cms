@@ -12,6 +12,7 @@ use WebBlocks\Cms\Http\Requests\Admin\SiteExportRequest;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteExport;
 use WebBlocks\Cms\Models\SiteImport;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Sites\ExportImport\ExportablePages;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportBulkDeleter;
@@ -29,12 +30,14 @@ class SiteExportController extends Controller
     $exports = SiteExport::query()
       ->with(['site', 'user'])
       ->latest()
+      ->tap(fn ($query) => AdminTableSort::for('exports')->apply($query))
       ->paginate(AdminPagination::perPage(), ['*'], 'exports_page')
       ->withQueryString();
 
     $imports = SiteImport::query()
       ->with(['targetSite', 'user'])
       ->latest()
+      ->tap(fn ($query) => AdminTableSort::for('imports')->apply($query))
       ->paginate(AdminPagination::perPage(), ['*'], 'imports_page')
       ->withQueryString();
 

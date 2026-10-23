@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -17,6 +18,7 @@ class SlotTypeController extends Controller
       ->withCount('blocks')
       ->orderBy('sort_order')
       ->orderBy('name')
+      ->tap(fn ($query) => AdminTableSort::for('slot-types')->apply($query))
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 

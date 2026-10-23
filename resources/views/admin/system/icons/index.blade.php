@@ -12,6 +12,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('icons');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('title'),
         'description' => $adminText('description'),
@@ -90,15 +93,15 @@
         @else
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover">
+                    <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
                                 <th>{{ $adminText('icon') }}</th>
-                                <th>{{ $adminText('label') }}</th>
-                                <th>{{ $adminText('source') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'label', 'label' => $adminText('label')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'source', 'label' => $adminText('source')])
                                 <th>{{ $adminText('contexts') }}</th>
-                                <th>{{ $adminText('status') }}</th>
-                                <th>{{ $adminText('sort') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_active', 'label' => $adminText('status')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'sort_order', 'label' => $adminText('sort')])
                                 <th>{{ $adminText('actions') }}</th>
                             </tr>
                         </thead>

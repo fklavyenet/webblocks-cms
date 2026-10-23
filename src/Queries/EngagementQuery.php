@@ -83,7 +83,7 @@ class EngagementQuery
       ->leftJoinSub($ratings, 'feedback_ratings', fn ($join) => $join->on('feedback_ratings.page_id', '=', $table.'.id'))
       ->where(fn ($query) => $query->whereNotNull('comment_count')->orWhereNotNull('vote_count'))
       ->select($table.'.*')->selectRaw("coalesce(comment_count, 0) as comment_count, coalesce(pending_count, 0) as pending_count, coalesce(vote_count, 0) as vote_count, average_rating, case when coalesce(comment_activity, '') > coalesce(rating_activity, '') then comment_activity else rating_activity end as last_activity")
-      ->with(['site', 'translations'])->orderByDesc($sort)->orderBy($table.'.id')->paginate(AdminPagination::perPage())->withQueryString();
+      ->with(['site', 'translations'])->orderBy($sort, ($filters['direction'] ?? 'desc') === 'asc' ? 'asc' : 'desc')->orderBy($table.'.id')->paginate(AdminPagination::perPage())->withQueryString();
   }
 
   private function scope(Builder $query, $user): Builder

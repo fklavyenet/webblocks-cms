@@ -10,6 +10,7 @@ use WebBlocks\Cms\Actions\Applications\DeleteEmbeddedApplication;
 use WebBlocks\Cms\Actions\Applications\UpdateEmbeddedApplication;
 use WebBlocks\Cms\Http\Requests\Admin\EmbeddedApplicationRequest;
 use WebBlocks\Cms\Models\EmbeddedApplication;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -19,7 +20,7 @@ class EmbeddedApplicationController extends Controller
   public function index(): View
   {
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.embedded-applications.index', [
-      'applications' => EmbeddedApplication::query()->orderBy('name')->get(),
+      'applications' => EmbeddedApplication::query()->orderBy('name')->tap(fn ($query) => AdminTableSort::for('embedded-applications')->apply($query))->get(),
     ]);
   }
 

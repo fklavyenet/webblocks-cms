@@ -15,6 +15,7 @@ use WebBlocks\Cms\Http\Requests\Admin\UserStoreRequest;
 use WebBlocks\Cms\Http\Requests\Admin\UserUpdateRequest;
 use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Users\UserLifecycleGuard;
@@ -39,6 +40,7 @@ class UserController extends Controller
       ->with('sites')
       ->withRoleOrder()
       ->orderBy('name')
+      ->tap(fn ($query) => AdminTableSort::for('users')->apply($query))
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 

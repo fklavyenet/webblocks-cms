@@ -10,6 +10,7 @@ use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\CmsApiTokenRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Policies\SystemUpdateApiPolicy;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
@@ -38,7 +39,8 @@ class CmsApiTokenController extends Controller
         ->with('creator')
         ->orderByRaw('case when revoked_at is null then 0 else 1 end')
         ->latest()
-        ->paginate($this->systemSettings->adminListingPerPage());
+        ->tap(fn ($query) => AdminTableSort::for('api-tokens')->apply($query))
+        ->paginate($this->systemSettings->adminListingPerPage())->withQueryString();
 
       AdminPagination::redirectOutOfRange($tokens);
 

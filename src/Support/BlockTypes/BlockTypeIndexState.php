@@ -16,6 +16,8 @@ class BlockTypeIndexState
     'status',
     'support',
     'usage',
+    'sort',
+    'direction',
     'page',
   ];
 
@@ -105,6 +107,14 @@ class BlockTypeIndexState
       }
 
       if ($key === 'page' && (! ctype_digit($stringValue) || (int) $stringValue < 2)) {
+        continue;
+      }
+
+      if ($key === 'sort' && ! in_array($stringValue, ['name', 'category', 'status'], true)) {
+        continue;
+      }
+
+      if ($key === 'direction' && ! in_array($stringValue, ['asc', 'desc'], true)) {
         continue;
       }
 

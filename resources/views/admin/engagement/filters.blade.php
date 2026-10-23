@@ -15,7 +15,7 @@
         'search' => $kind === 'overview' ? null : ['id' => 'engagement_search', 'name' => 'search', 'label' => $adminText('search'), 'value' => $filters['search'] ?? '', 'placeholder' => $adminText($kind === 'comments' ? 'search_comments' : 'search_ratings')],
         'selects' => $selects,
         'dates' => $kind === 'overview' ? [] : [['id' => 'engagement_from', 'name' => 'from', 'label' => $adminText('from'), 'value' => $filters['from'] ?? ''], ['id' => 'engagement_until', 'name' => 'until', 'label' => $adminText('until'), 'value' => $filters['until'] ?? '']],
-        'showReset' => count(array_filter($filters, fn ($value, $key) => $value !== '' && $key !== 'sort', ARRAY_FILTER_USE_BOTH)) > 0,
+        'showReset' => count(array_filter($filters, fn ($value, $key) => $value !== '' && ! in_array($key, ['sort', 'direction'], true), ARRAY_FILTER_USE_BOTH)) > 0,
         'resetUrl' => $filterRoute,
         'applyLabel' => $adminText('apply'), 'resetLabel' => $adminText('clear_filters'),
     ])

@@ -1,5 +1,5 @@
 @if ($columnHeading)
-    <th>{{ $adminText('updated') }}</th>
+    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'updated_at', 'label' => $adminText('updated')])
 @else
     <td>
         <div class="wb-stack wb-gap-1">

@@ -28,6 +28,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('pages.title'), 'heading' => $adminText('pages.title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('pages');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('pages.title').' · '.$siteContext,
         'description' => null,
@@ -162,7 +165,7 @@
                 ])
 
                 <div class="wb-table-wrap wb-admin-pages-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover wb-admin-pages-table">
+                    <table class="wb-table wb-table-striped wb-table-hover wb-admin-pages-table" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
                                 <th>
@@ -171,7 +174,7 @@
                                         <span class="wb-sr-only">{{ $adminText('pages.select_all_visible') }}</span>
                                     </label>
                                 </th>
-                                <th>{{ $adminText('pages.columns.page') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'title', 'label' => $adminText('pages.columns.page')])
                                 @foreach ($listingColumns as $listingColumn)
                                     @include('webblocks-cms::admin.pages.columns.'.$listingColumn, ['columnHeading' => true])
                                 @endforeach

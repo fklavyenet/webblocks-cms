@@ -6,6 +6,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $domainsIndexText('title'), 'heading' => $domainsIndexText('title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('domains');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $domainsIndexText('title'),
         'description' => $domainsIndexText('description'),
@@ -23,12 +26,12 @@
                 </div>
             @else
                 <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover">
+                    <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
-                                <th>{{ $domainsIndexText('site') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $domainsIndexText('site')])
                                 <th>{{ $domainsIndexText('primary_domain') }}</th>
-                                <th>{{ $domainsIndexText('assigned_domains') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'site_domains_count', 'label' => $domainsIndexText('assigned_domains')])
                                 <th>{{ $domainsIndexText('action') }}</th>
                             </tr>
                         </thead>

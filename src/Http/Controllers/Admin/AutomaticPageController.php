@@ -20,6 +20,7 @@ use WebBlocks\Cms\Models\AutomaticPageAdoption;
 use WebBlocks\Cms\Models\AutomaticPageRule;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\ContentSources\AutomaticPageDesign;
 use WebBlocks\Cms\Support\ContentSources\AutomaticPageInspector;
 use WebBlocks\Cms\Support\ContentSources\AutomaticPagePreview;
@@ -37,7 +38,7 @@ final class AutomaticPageController
     $siteId = $request->integer('site') ?: null;
     abort_if($siteId && ! $sites->contains('id', $siteId), 403);
     $ready = Schema::hasTable('wbcms_automatic_page_rules');
-    $rules = $ready ? AutomaticPageRule::query()->with(['site', 'templatePage.translations.locale'])->whereIn('site_id', $siteId ? [$siteId] : $sites->modelKeys())->orderByDesc('id')->paginate(20)->withQueryString() : null;
+    $rules = $ready ? AutomaticPageRule::query()->with(['site', 'templatePage.translations.locale'])->whereIn('site_id', $siteId ? [$siteId] : $sites->modelKeys())->orderByDesc('id')->tap(fn ($query) => AdminTableSort::for('automatic-pages')->apply($query))->paginate(20)->withQueryString() : null;
 
     return view('webblocks-cms::admin.automatic-pages.index', compact('sites', 'siteId', 'rules', 'ready'));
   }

@@ -30,6 +30,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('media');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('title'),
         'description' => $adminText('description'),
@@ -229,7 +232,7 @@
                 </div>
             @else
                 <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover wb-media-table">
+                    <table class="wb-table wb-table-striped wb-table-hover wb-media-table" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
                                 <th>
@@ -238,7 +241,7 @@
                                         <span class="wb-sr-only">{{ $adminText('select_all_visible_media') }}</span>
                                     </label>
                                 </th>
-                                <th>{{ $adminText('media') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'title', 'label' => $adminText('media')])
                                 @foreach ($listingColumns as $listingColumn)
                                     @include('webblocks-cms::admin.media.columns.'.$listingColumn, ['columnHeading' => true])
                                 @endforeach

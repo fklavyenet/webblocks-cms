@@ -25,6 +25,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('backups.title'), 'heading' => $adminText('backups.title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('backups');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('backups.title'),
         'description' => $adminText('backups.description'),
@@ -217,7 +220,7 @@
                     ])
 
                     <div class="wb-table-wrap">
-                        <table class="wb-table wb-table-striped wb-table-hover">
+                        <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                             <thead>
                                 <tr>
                                     <th>
@@ -226,11 +229,11 @@
                                             <span class="wb-sr-only">{{ $adminText('backups.select_all_visible') }}</span>
                                         </label>
                                     </th>
-                                    <th>{{ $adminText('backups.created_at') }}</th>
-                                    <th>{{ $adminText('backups.archive') }}</th>
-                                    <th>{{ $adminText('common.status') }}</th>
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'created_at', 'label' => $adminText('backups.created_at')])
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'archive_filename', 'label' => $adminText('backups.archive')])
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('common.status')])
                                     <th>{{ $adminText('backups.contents_label') }}</th>
-                                    <th>{{ $adminText('backups.size') }}</th>
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'archive_size_bytes', 'label' => $adminText('backups.size')])
                                     <th>{{ $adminText('backups.triggered_by') }}</th>
                                     <th>{{ $adminText('common.actions') }}</th>
                                 </tr>

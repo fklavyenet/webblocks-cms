@@ -31,6 +31,6 @@ class ModerateCommentsRequest extends FormRequest
   {
     parse_str((string) $this->input('return_query', ''), $filters);
 
-    return array_filter(array_intersect_key($filters, array_flip(['search', 'site', 'page_id', 'status', 'rating', 'from', 'until', 'page', 'sort'])), 'is_scalar');
+    return array_filter(array_intersect_key($filters, array_flip(['search', 'site', 'page_id', 'status', 'rating', 'from', 'until', 'page', 'sort', 'direction'])), 'is_scalar');
   }
 }

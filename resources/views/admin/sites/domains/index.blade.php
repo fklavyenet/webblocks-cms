@@ -19,6 +19,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $localizedPageTitle, 'heading' => $localizedPageTitle])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('site-domains');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="'.e($adminText('breadcrumb')).'"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.index').'">'.e($adminText('sites')).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.edit', $site).'">'.e($site->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($adminText('domains_title')).'</span></li></ol></nav>',
         'title' => $adminText('domains_title'),
@@ -63,13 +66,13 @@
                     </div>
                 @else
                     <div class="wb-table-wrap">
-                        <table class="wb-table wb-table-striped wb-table-hover">
+                        <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                             <thead>
                                 <tr>
-                                    <th>{{ $adminText('domain') }}</th>
-                                    <th>{{ $adminText('domain_role') }}</th>
-                                    <th>{{ $adminText('domain_redirect') }}</th>
-                                    <th>{{ $adminText('status') }}</th>
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'domain', 'label' => $adminText('domain')])
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_primary', 'label' => $adminText('domain_role')])
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'redirect_to_primary', 'label' => $adminText('domain_redirect')])
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('status')])
                                     <th>{{ $adminText('actions') }}</th>
                                 </tr>
                             </thead>

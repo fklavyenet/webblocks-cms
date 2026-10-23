@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\BlockTypeRequest;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeIndexState;
@@ -45,6 +46,7 @@ class BlockTypeController extends Controller
       ->withCount('blocks')
       ->orderBy('sort_order')
       ->orderBy('name')
+      ->tap(fn ($query) => AdminTableSort::for('block-types')->apply($query))
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
 

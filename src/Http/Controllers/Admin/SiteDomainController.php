@@ -12,6 +12,7 @@ use WebBlocks\Cms\Http\Requests\Admin\SiteDomainStoreRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SiteDomainUpdateRequest;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Sites\SiteDomainManager;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -28,7 +29,7 @@ class SiteDomainController extends Controller
   {
     $this->authorization->abortUnlessSystem($request->user());
 
-    $sites = $this->authorization->scopeSitesForUser(Site::query()->primaryFirst()->orderBy('name'), $request->user())->get();
+    $sites = $this->authorization->scopeSitesForUser(Site::query()->withCount('siteDomains')->primaryFirst()->orderBy('name'), $request->user())->tap(fn ($query) => AdminTableSort::for('domains')->apply($query))->get();
     [$activeSite, $siteFilterValue] = $this->resolveSiteContext($request, $sites);
 
     if ($activeSite) {
@@ -51,7 +52,7 @@ class SiteDomainController extends Controller
 
     return view('webblocks-cms::admin.sites.domains.index', [
       'site' => $site->loadMissing('siteDomains'),
-      'domains' => $site->siteDomains()->orderByDesc('is_primary')->orderBy('domain')->get(),
+      'domains' => $site->siteDomains()->orderByDesc('is_primary')->orderBy('domain')->tap(fn ($query) => AdminTableSort::for('site-domains')->apply($query))->get(),
     ]);
   }
 

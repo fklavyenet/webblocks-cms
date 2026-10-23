@@ -1,5 +1,5 @@
 @if ($columnHeading)
-    <th>{{ $adminText('usage') }}</th>
+    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'usage', 'label' => $adminText('usage')])
 @else
     <td>
         @if ($assetUsages->isNotEmpty())

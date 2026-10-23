@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\PersonalApiTokenRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\InternalApiTokens\PersonalApiTokenPolicy;
@@ -20,7 +21,7 @@ class PersonalApiTokenController extends Controller
     $capabilities = $policy->grantable($user);
     $presenter = app(CmsApiTokenCapabilities::class);
 
-    $tokens = CmsApiToken::query()->where('token_type', 'personal')->where('created_by_user_id', $user->id)->latest()->paginate(20);
+    $tokens = CmsApiToken::query()->where('token_type', 'personal')->where('created_by_user_id', $user->id)->latest()->tap(fn ($query) => AdminTableSort::for('personal-api-tokens')->apply($query))->paginate(20)->withQueryString();
     $activitySchemaReady = $this->activitySchemaReady();
 
     if ($activitySchemaReady) {

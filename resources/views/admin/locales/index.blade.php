@@ -7,6 +7,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $localesIndexText('title'), 'heading' => $localesIndexText('title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('locales');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $localesIndexText('title'),
         'description' => $localesIndexText('description'),
@@ -27,12 +30,12 @@
 
         <div class="wb-card-body">
             <div class="wb-table-wrap">
-                <table class="wb-table wb-table-striped wb-table-hover">
+                <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                     <thead>
                         <tr>
-                            <th>{{ $localesIndexText('code') }}</th>
-                            <th>{{ $localesIndexText('name') }}</th>
-                            <th>{{ $localesIndexText('status') }}</th>
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'code', 'label' => $localesIndexText('code')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $localesIndexText('name')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_enabled', 'label' => $localesIndexText('status')])
                             <th>{{ $localesIndexText('usage') }}</th>
                             <th>{{ $localesIndexText('lifecycle') }}</th>
                             <th>{{ $localesIndexText('action') }}</th>

@@ -15,6 +15,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
@@ -60,7 +61,8 @@ class SiteController extends Controller
       ->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])
       ->primaryFirst()
       ->orderBy('name')
-      ->paginate(AdminPagination::perPage());
+      ->tap(fn ($query) => AdminTableSort::for('sites')->apply($query))
+      ->paginate(AdminPagination::perPage())->withQueryString();
 
     AdminPagination::redirectOutOfRange($sites);
 

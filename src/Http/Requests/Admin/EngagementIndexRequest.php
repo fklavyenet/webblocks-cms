@@ -28,13 +28,21 @@ class EngagementIndexRequest extends FormRequest
       'rating' => ['nullable', 'integer', 'min:1', 'max:255'],
       'from' => ['nullable', 'date_format:Y-m-d'],
       'until' => ['nullable', 'date_format:Y-m-d', ...($this->filled('from') ? ['after_or_equal:from'] : [])],
-      'sort' => ['nullable', Rule::in(['pending', 'votes', 'average', 'activity'])],
+      'sort' => ['nullable', Rule::in($this->sortKeys())],
+      'direction' => ['nullable', Rule::in(['asc', 'desc'])],
       'page' => ['nullable', 'integer', 'min:1'],
     ];
   }
 
+  private function sortKeys(): array
+  {
+    return $this->routeIs('admin.engagement.comments.index')
+      ? ['status', 'spam_score', 'created_at']
+      : ($this->routeIs('admin.engagement.ratings.index') ? ['rating_value', 'status', 'created_at', 'updated_at'] : ['pending', 'votes', 'average', 'activity']);
+  }
+
   public function filters(): array
   {
-    return array_replace(['search' => '', 'site' => '', 'page_id' => '', 'status' => '', 'rating' => '', 'from' => '', 'until' => '', 'sort' => 'pending'], array_filter($this->validated(), fn ($value) => $value !== null));
+    return array_replace(['search' => '', 'site' => '', 'page_id' => '', 'status' => '', 'rating' => '', 'from' => '', 'until' => '', 'sort' => $this->routeIs('admin.engagement.index') ? 'pending' : 'created_at', 'direction' => 'desc'], array_filter($this->validated(), fn ($value) => $value !== null));
   }
 }

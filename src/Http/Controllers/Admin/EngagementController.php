@@ -14,6 +14,7 @@ use WebBlocks\Cms\Http\Requests\Admin\EngagementIndexRequest;
 use WebBlocks\Cms\Http\Requests\Admin\ModerateCommentsRequest;
 use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Policies\EngagementPolicy;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Queries\EngagementQuery;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
@@ -25,7 +26,7 @@ class EngagementController extends Controller
 
   public function index(EngagementIndexRequest $request): View
   {
-    $filters = array_intersect_key($request->filters(), array_flip(['site', 'sort']));
+    $filters = array_intersect_key($request->filters(), array_flip(['site', 'sort', 'direction']));
     $pages = $this->query->pageSummary($request->user(), $filters);
     AdminPagination::redirectOutOfRange($pages, $request);
 
@@ -37,7 +38,7 @@ class EngagementController extends Controller
     $filters = $request->filters();
     $ready = Schema::hasTable('wbcms_comment_entries');
     $query = $ready ? $this->query->comments($request->user(), $filters) : null;
-    $comments = $query ? (clone $query)->with(['site', 'page.site', 'page.translations', 'block.blockType'])->latest()->orderByDesc('id')->paginate(AdminPagination::perPage())->withQueryString() : $this->emptyPaginator();
+    $comments = $query ? (clone $query)->with(['site', 'page.site', 'page.translations', 'block.blockType'])->latest()->orderByDesc('id')->tap(fn ($query) => AdminTableSort::for('comments')->apply($query))->paginate(AdminPagination::perPage())->withQueryString() : $this->emptyPaginator();
     AdminPagination::redirectOutOfRange($comments, $request);
 
     return view('webblocks-cms::admin.engagement.comments', $this->options($request, $filters) + [
@@ -52,7 +53,7 @@ class EngagementController extends Controller
     $filters = $request->filters();
     $ready = Schema::hasTable('wbcms_content_ratings');
     $query = $ready ? $this->query->ratings($request->user(), $filters) : null;
-    $ratings = $query ? (clone $query)->with(['site', 'page.site', 'page.translations', 'block.blockType'])->latest()->orderByDesc('id')->paginate(AdminPagination::perPage())->withQueryString() : $this->emptyPaginator();
+    $ratings = $query ? (clone $query)->with(['site', 'page.site', 'page.translations', 'block.blockType'])->latest()->orderByDesc('id')->tap(fn ($query) => AdminTableSort::for('ratings')->apply($query))->paginate(AdminPagination::perPage())->withQueryString() : $this->emptyPaginator();
     AdminPagination::redirectOutOfRange($ratings, $request);
 
     return view('webblocks-cms::admin.engagement.ratings', array_replace($this->query->overview($request->user(), $filters), $this->options($request, $filters), [
@@ -65,7 +66,7 @@ class EngagementController extends Controller
   {
     abort_unless(app(EngagementPolicy::class)->update($request->user(), $commentEntry), 403);
 
-    return view('webblocks-cms::admin.engagement.comment', ['comment' => $commentEntry->load(['site', 'page.translations', 'block']), 'returnQuery' => http_build_query(array_intersect_key($request->query(), array_flip(['search', 'site', 'page_id', 'status', 'from', 'until', 'page', 'sort'])))]);
+    return view('webblocks-cms::admin.engagement.comment', ['comment' => $commentEntry->load(['site', 'page.translations', 'block']), 'returnQuery' => http_build_query(array_intersect_key($request->query(), array_flip(['search', 'site', 'page_id', 'status', 'from', 'until', 'page', 'sort', 'direction'])))]);
   }
 
   public function updateCommentStatus(ModerateCommentsRequest $request, CommentEntry $commentEntry): RedirectResponse

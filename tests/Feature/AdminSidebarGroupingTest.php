@@ -18,6 +18,7 @@ use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginMenuItem;
 use WebBlocks\Cms\Support\Plugins\PluginPermission;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
+use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\Tests\TestCase;
 
 class AdminSidebarGroupingTest extends TestCase
@@ -88,7 +89,7 @@ class AdminSidebarGroupingTest extends TestCase
     $this->assertSame(['/webadmin', '/webadmin/sites', '/webadmin/pages', '/webadmin/media', '/webadmin/assets'], $this->paths($xpath, $primary));
     $allPaths = $this->paths($xpath, $nav);
     $this->assertSame($allPaths, array_values(array_unique($allPaths)));
-    $bundledIcons = array_column(json_decode(file_get_contents(dirname(__DIR__, 2).'/public/cms/webblocks-ui/v2.30.0/webblocks-icons.json'), true), 'css_class');
+    $bundledIcons = array_column(json_decode(file_get_contents(dirname(__DIR__, 2).'/public/cms/webblocks-ui/'.WebBlocks::UI_VERSION.'/webblocks-icons.json'), true), 'css_class');
     foreach ($xpath->query('.//a', $nav) as $link) {
       $icons = $xpath->query('./i[@aria-hidden="true"]', $link);
       $this->assertSame(1, $icons->length, $link->textContent);

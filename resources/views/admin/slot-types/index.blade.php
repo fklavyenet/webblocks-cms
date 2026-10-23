@@ -11,6 +11,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $localizedPageTitle, 'heading' => $localizedPageTitle])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('slot-types');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $localizedPageTitle,
         'description' => $adminText('description'),
@@ -28,16 +31,16 @@
         </div>
         <div class="wb-card-body">
             <div class="wb-table-wrap">
-                <table class="wb-table wb-table-striped wb-table-hover">
+                <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                     <thead>
                         <tr>
-                            <th>{{ $adminText('name') }}</th>
-                            <th>{{ $adminText('slug') }}</th>
-                            <th>{{ $adminText('axis') }}</th>
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $adminText('name')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'slug', 'label' => $adminText('slug')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'axis', 'label' => $adminText('axis')])
                             <th>{{ $adminText('description_column') }}</th>
                             <th>{{ $adminText('blocks') }}</th>
-                            <th>{{ $adminText('sort_order') }}</th>
-                            <th>{{ $adminText('status') }}</th>
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'sort_order', 'label' => $adminText('sort_order')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('status')])
                             <th>{{ $adminText('system') }}</th>
                         </tr>
                     </thead>

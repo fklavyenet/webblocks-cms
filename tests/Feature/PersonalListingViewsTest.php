@@ -13,6 +13,7 @@ use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Queries\ListingViews\ListingViewQuery;
 use WebBlocks\Cms\Support\ListingViews\ListingViewSchema;
 use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
@@ -69,6 +70,27 @@ class PersonalListingViewsTest extends TestCase
   private function applyUrl(int $id, string $listing = 'pages'): string
   {
     return route('admin.listing-views.apply', ['listing' => $listing, 'listingView' => $id]);
+  }
+
+  #[Test]
+  public function column_sort_links_keep_saved_view_identity_columns_and_filter_selection(): void
+  {
+    $id = $this->createView();
+    Page::create(['site_id' => $this->site->id, 'title' => 'Synthetic page', 'slug' => 'synthetic-page', 'status' => 'draft']);
+    $response = $this->followingRedirects()->get($this->applyUrl($id))->assertOk();
+    $dom = new \DOMDocument;
+    @$dom->loadHTML($response->getContent());
+    $xpath = new \DOMXPath($dom);
+    $link = $xpath->query('//th[@data-wb-sort="status"]/a')->item(0);
+    $this->assertNotNull($link);
+    parse_str(parse_url($link->getAttribute('href'), PHP_URL_QUERY), $query);
+    $this->assertSame((string) $id, $query['saved_view']);
+    $this->assertSame('updated,status', $query['columns']);
+    $this->assertSame('draft', $query['status']);
+    $response = $this->get($link->getAttribute('href'))->assertOk();
+    $response->assertViewHas('listingView', fn ($view) => $view['changed'] && ! $view['blocked'] && $view['selected']->id === $id);
+    $response->assertViewHas('filters', fn ($filters) => $filters['sort'] === 'status' && $filters['direction'] === 'asc');
+    $this->assertSame('title', app(ListingViewQuery::class)->owned($this->actor, 'pages', $id)->filters['sort']);
   }
 
   private function index(array $query = [], string $listing = 'pages')

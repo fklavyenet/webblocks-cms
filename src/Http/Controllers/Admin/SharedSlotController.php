@@ -21,6 +21,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
@@ -56,8 +57,9 @@ class SharedSlotController extends Controller
     $sharedSlotsReady = $this->schema->sharedSlotsTableExists();
     $search = trim((string) $request->string('search'));
     $status = $request->string('status')->toString();
-    $sort = $request->string('sort')->toString();
-    $direction = Str::lower($request->string('direction')->toString()) === 'asc' ? 'asc' : 'desc';
+    $tableSort = AdminTableSort::for('shared-slots');
+    $sort = $tableSort->key;
+    $direction = $tableSort->direction;
     $allowedSorts = ['updated_at', 'name', 'handle', 'slot_name', 'public_shell'];
 
     if (! in_array($status, ['active', 'inactive'], true)) {
@@ -94,6 +96,7 @@ class SharedSlotController extends Controller
         ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
         ->orderBy($sort, $direction)
         ->when($sort !== 'updated_at', fn ($query) => $query->orderByDesc('updated_at'))
+        ->orderByDesc('id')
         ->paginate(AdminPagination::perPage())
         ->withQueryString();
 

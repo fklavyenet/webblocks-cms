@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Policies\CmsRolePolicy;
 use WebBlocks\Cms\Queries\Access\CmsPermissionQuery;
 use WebBlocks\Cms\Queries\Access\CmsRoleQuery;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 
@@ -24,6 +25,7 @@ class CmsRoleController extends Controller
   public function index(CmsRoleIndexRequest $request, CmsRoleQuery $query)
   {
     $filters = ['q' => trim((string) $request->validated('q', '')), 'type' => $request->validated('type', '') ?? ''];
+    $filters += AdminTableSort::for('roles')->filterFields();
     $historyFilters = collect(['history_user', 'history_site', 'history_role', 'history_action'])
       ->mapWithKeys(fn ($key) => [$key => $request->validated($key, '') ?? ''])->all();
     $roles = $query->listing($filters);

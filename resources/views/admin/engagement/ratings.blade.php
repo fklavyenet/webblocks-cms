@@ -2,11 +2,14 @@
     $adminLocaleCode = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('engagement.'.$key, $adminLocaleCode, $replace);
-    $hasActiveFilters = count(array_filter(array_diff_key($filters, ['sort' => true, 'page' => true]), fn ($value) => $value !== '' && $value !== null)) > 0;
+    $hasActiveFilters = count(array_filter(array_diff_key($filters, ['sort' => true, 'direction' => true, 'page' => true]), fn ($value) => $value !== '' && $value !== null)) > 0;
     $returnQuery = $returnQuery ?? http_build_query(request()->query());
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('ratings'), 'heading' => $adminText('ratings')])
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('ratings');
+@endphp
 <div class="wb-stack wb-gap-4">
     @include('webblocks-cms::admin.partials.page-header', ['title' => $adminText('ratings'), 'description' => $adminText('ratings_description')])
     @if (! $tableReady)<div class="wb-alert wb-alert-warning">{{ $adminText('setup_guidance') }}</div>@endif
@@ -16,8 +19,8 @@
         <div class="wb-card-header wb-cluster wb-cluster-between"><strong>{{ $adminText('ratings') }} <span class="wb-badge">{{ $filteredCount }}</span></strong><span>{{ $adminText('total', ['count' => $totalCount]) }}</span></div>
         <div class="wb-card-body wb-stack wb-gap-3">
             <p class="wb-text-sm wb-text-muted">{{ $adminText('rating_history_help') }}</p>
-            <div class="wb-table-wrap"><table class="wb-table">
-                <thead><tr><th>{{ $adminText('rating') }}</th><th>{{ $adminText('source') }}</th><th>{{ $adminText('status') }}</th><th>{{ $adminText('submitted') }}</th><th>{{ $adminText('updated') }}</th><th>{{ $adminText('actions') }}</th></tr></thead>
+            <div class="wb-table-wrap"><table class="wb-table" @include('webblocks-cms::admin.partials.table-sort-attributes')>
+                <thead><tr>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'rating_value', 'label' => $adminText('rating')])<th>{{ $adminText('source') }}</th>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('status')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'created_at', 'label' => $adminText('submitted')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'updated_at', 'label' => $adminText('updated')])<th>{{ $adminText('actions') }}</th></tr></thead>
                 <tbody>@forelse ($ratings as $rating)
                     <tr><td><strong>{{ $rating->rating_value }} / {{ $rating->rating_max }}</strong></td>
                         <td><div class="wb-stack wb-gap-1"><span>{{ $rating->page?->title ?: '—' }}</span><span class="wb-text-sm wb-text-muted">{{ $rating->site?->name }}</span>@if (! $rating->block_id)<span class="wb-text-sm wb-text-muted">{{ $adminText('previous_block') }}</span>@endif</div></td>

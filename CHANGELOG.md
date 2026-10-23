@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.105.14
+
+- Update the bundled WebBlocks UI runtime and icon catalog to 2.31.0.
+- Add accessible server-side column sorting to 24 admin lists, keeping existing sort filters, private saved views, list/grid presentation, site access and pagination intact.
+- Preserve sort state when filtering and returning from supported dialogs; give export and import tables independent sort and page parameters, and use deterministic record ordering across pages.
+
 ## 1.105.13
 
 - Explain backup storage in Cleanup and Backups with per-reason backup counts, distinct physical file counts and bytes, plus unmatched files and explicit incomplete-measurement states.

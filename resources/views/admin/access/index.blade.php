@@ -1,5 +1,8 @@
 @extends('webblocks-cms::layouts.admin', ['title' => __('webblocks-cms::acl.title'), 'heading' => __('webblocks-cms::acl.title')])
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('roles');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => __('webblocks-cms::acl.title'),
         'description' => __('webblocks-cms::acl.description'),
@@ -55,11 +58,11 @@
                 </div>
             @else
                 <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover">
+                    <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead><tr>
-                            <th>{{ __('webblocks-cms::acl.name') }}</th>
-                            <th>{{ __('webblocks-cms::acl.role_type') }}</th>
-                            <th>{{ __('webblocks-cms::acl.assignments') }}</th>
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => __('webblocks-cms::acl.name')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_protected', 'label' => __('webblocks-cms::acl.role_type')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'assignment_count', 'label' => __('webblocks-cms::acl.assignments')])
                             <th class="wb-table-actions">{{ __('webblocks-cms::acl.actions') }}</th>
                         </tr></thead>
                         <tbody>

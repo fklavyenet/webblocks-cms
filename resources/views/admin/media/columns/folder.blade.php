@@ -1,5 +1,5 @@
 @if ($columnHeading)
-    <th>{{ $adminText('folder') }}</th>
+    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'folder', 'label' => $adminText('folder')])
 @else
     <td>
         <div class="wb-stack wb-gap-1">

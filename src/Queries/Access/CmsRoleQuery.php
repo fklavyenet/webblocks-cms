@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Queries\Access;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\CmsRole;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 
@@ -19,6 +20,7 @@ final class CmsRoleQuery
       ->when(($filters['q'] ?? '') !== '', fn ($query) => $query->where(fn ($q) => $q->where('name', 'like', '%'.$filters['q'].'%')->orWhere('description', 'like', '%'.$filters['q'].'%')))
       ->when($filters['type'] ?? '', fn ($query, $type) => $query->where('is_protected', $type === 'protected'))
       ->orderByDesc('is_protected')->orderBy('name')->orderBy('id')
+      ->tap(fn ($query) => AdminTableSort::for('roles')->apply($query))
       ->paginate(AdminPagination::perPage(), ['*'], 'roles_page')->withQueryString();
   }
 

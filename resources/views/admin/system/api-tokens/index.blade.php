@@ -7,6 +7,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('api-tokens');
+@endphp
     @php($editingTokenId = (string) old('_editing_token', ''))
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('title'),
@@ -159,14 +162,14 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                 </div>
             @else
                 <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover">
+                    <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
-                                <th>{{ $adminText('name') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $adminText('name')])
                                 <th>{{ $adminText('status') }}</th>
                                 <th>{{ $adminText('preview') }}</th>
-                                <th>{{ $adminText('created') }}</th>
-                                <th>{{ $adminText('last_used') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'created_at', 'label' => $adminText('created')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'last_used_at', 'label' => $adminText('last_used')])
                                 <th>{{ $adminText('actions') }}</th>
                             </tr>
                         </thead>

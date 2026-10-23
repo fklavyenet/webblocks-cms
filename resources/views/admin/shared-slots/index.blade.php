@@ -21,6 +21,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $localizedPageTitle, 'heading' => $localizedPageTitle])
 
 @section('content')
+@php
+    $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('shared-slots');
+@endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $localizedPageTitle,
         'context' => '<span>'.e($siteContextDescription).'</span>',
@@ -151,17 +154,17 @@
 
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
-                    <table class="wb-table wb-table-striped wb-table-hover">
+                    <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
-                                <th>{{ $adminText('name') }}</th>
-                                <th>{{ $adminText('handle') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $adminText('name')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'handle', 'label' => $adminText('handle')])
                                 <th>{{ $adminText('site') }}</th>
-                                <th>{{ $adminText('slot') }}</th>
-                                <th>{{ $adminText('page_layout') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'slot_name', 'label' => $adminText('slot')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'public_shell', 'label' => $adminText('page_layout')])
                                 <th>{{ $adminText('status') }}</th>
                                 <th>{{ $adminText('usage') }}</th>
-                                <th>{{ $adminText('updated') }}</th>
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'updated_at', 'label' => $adminText('updated')])
                                 <th>{{ $adminText('actions') }}</th>
                             </tr>
                         </thead>
