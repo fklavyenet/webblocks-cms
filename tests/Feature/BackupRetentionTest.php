@@ -19,6 +19,7 @@ use WebBlocks\Cms\Http\Requests\Admin\SystemBackupRetentionRequest;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\BackupCleanupSettingsRequest;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Support\System\BackupOperations;
+use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
 use WebBlocks\Cms\Support\System\BackupRetentionPlan;
 use WebBlocks\Cms\Support\System\BackupRetentionSchema;
 use WebBlocks\Cms\Support\System\MaintenanceCleanupState;
@@ -327,6 +328,159 @@ class BackupRetentionTest extends TestCase
     $create = (new CreateSystemBackupRequest)->rules();
     $this->assertTrue(validator([], $create)->passes());
     $this->assertFalse(validator(['is_protected' => true], $create)->passes());
+  }
+
+  #[Test]
+  public function reason_summary_reconciles_records_files_and_bytes_and_renders_in_cleanup(): void
+  {
+    foreach (range(1, 6) as $days) {
+      $this->archive('pre_update', $days);
+    }
+    foreach (range(1, 4) as $index) {
+      $this->archive('manual');
+    }
+    $this->archive('uploaded')->update(['is_protected' => true]);
+    $this->archive('uploaded')->update(['retention_mode' => 'expires', 'expires_at' => now()->subDay()]);
+    $this->archive('uploaded');
+    $missing = $this->archive('uploaded');
+    Storage::disk('backups')->delete($missing->archive_path);
+    $this->archive('uploaded')->update(['status' => 'running']);
+    Storage::disk('backups')->put('unregistered.zip', str_repeat('x', 4096));
+    Storage::disk('backups')->put('.backup-operations.lock', '');
+
+    $plan = app(BackupRetentionPlan::class)->overview();
+    $summary = $plan['reason_summary'];
+    $groups = collect($summary['groups'])->keyBy('reason');
+    $expectedCounts = ['minimum_count' => 8, 'retained' => 1, 'manual_disabled' => 1, 'protected' => 1, 'eligible' => 1, 'never' => 1, 'unavailable' => 1, 'running' => 1];
+    $this->assertCount(8, $groups);
+    foreach ($expectedCounts as $reason => $count) {
+      $this->assertSame($count, $groups[$reason]['record_count'], $reason);
+    }
+    $this->assertSame(15, $summary['record_count']);
+    $this->assertSame(16, $summary['file_count']);
+    $this->assertSame(['file_count' => 2, 'bytes' => 4096], $summary['other_files']);
+    $this->assertSame($summary['bytes'], $groups->sum('bytes') + $summary['other_files']['bytes']);
+    $this->assertSame($summary['file_count'], $groups->sum('file_count') + $summary['other_files']['file_count']);
+    $this->assertSame($plan['storage']['eligible_bytes'], $groups['eligible']['bytes']);
+    $this->assertSame(0, $groups['unavailable']['file_count']);
+    $this->assertSame(1, $groups['running']['file_count']);
+    $this->assertDatabaseCount('wbcms_maintenance_cleanup_states', 0);
+    $this->assertSame($summary, app(InternalBackupCleanupController::class)->show()->getData(true)['preview']['overview']['reason_summary']);
+    $this->assertStringNotContainsString(Storage::disk('backups')->path(''), json_encode($summary, JSON_UNESCAPED_SLASHES));
+
+    $html = app(MaintenanceCleanupController::class)->index()->render();
+    $dom = new \DOMDocument;
+    @$dom->loadHTML($html);
+    $xpath = new \DOMXPath($dom);
+    $table = '//*[@id="cleanup-report-panel"]//table[@aria-labelledby="backup-retention-reasons"]';
+    $this->assertSame(8, $xpath->query($table.'/tbody/tr[th and td[1] != "—"]')->length);
+    $this->assertSame('15', $xpath->query($table.'/tfoot/tr/td[1]')->item(0)->textContent);
+    $this->assertSame('16', $xpath->query($table.'/tfoot/tr/td[2]')->item(0)->textContent);
+    $this->assertStringContainsString(__('webblocks-cms::backup-retention.summary_rule_help'), $html);
+    $this->assertStringContainsString(__('webblocks-cms::backup-retention.summary_other_help'), $html);
+  }
+
+  #[Test]
+  public function reason_summary_assigns_shared_physical_bytes_once_to_the_strongest_reason(): void
+  {
+    $original = $this->archive('uploaded');
+    $protected = $original->replicate();
+    $protected->is_protected = true;
+    $protected->save();
+    $expired = $original->replicate();
+    $expired->retention_mode = 'expires';
+    $expired->expires_at = now()->subDay();
+    $expired->save();
+    $plan = app(BackupRetentionPlan::class)->overview();
+    $summary = $plan['reason_summary'];
+    $groups = collect($summary['groups'])->keyBy('reason');
+    $size = filesize(Storage::disk('backups')->path($original->archive_path));
+    $this->assertSame(3, $summary['record_count']);
+    $this->assertSame(1, $summary['file_count']);
+    $this->assertSame($size, $summary['bytes']);
+    $this->assertSame($size, $groups['protected']['bytes']);
+    $this->assertSame(0, $groups['never']['bytes']);
+    $this->assertSame(0, $groups['shared_archive']['bytes']);
+    $this->assertSame(['file_count' => 0, 'bytes' => 0], $summary['other_files']);
+    $this->assertSame([], app(SystemBackupCleanup::class)->preview()->candidateIds);
+  }
+
+  #[Test]
+  public function running_archive_references_explain_storage_and_keep_shared_files_out_of_cleanup(): void
+  {
+    $expired = $this->archive('uploaded');
+    $expired->update(['retention_mode' => 'expires', 'expires_at' => now()->subDay()]);
+    $running = $expired->replicate();
+    $running->status = 'running';
+    $running->save();
+    $preview = app(SystemBackupCleanup::class)->preview();
+    $summary = $preview->overview['reason_summary'];
+    $groups = collect($summary['groups'])->keyBy('reason');
+    $this->assertSame([], $preview->candidateIds);
+    $this->assertSame(1, $summary['file_count']);
+    $this->assertGreaterThan(0, $groups['running']['bytes']);
+    $this->assertSame(0, $groups['shared_archive']['bytes']);
+    $this->assertSame([], app(SystemBackupCleanup::class)->run(force: true)->deletedIds);
+    Storage::disk('backups')->assertExists($expired->archive_path);
+  }
+
+  #[Test]
+  public function partial_storage_scans_do_not_claim_complete_reason_totals_or_zero_other_files(): void
+  {
+    $backup = $this->archive('uploaded');
+    symlink(Storage::disk('backups')->path($backup->archive_path), Storage::disk('backups')->path('linked.zip'));
+    $plan = app(BackupRetentionPlan::class)->overview();
+    $summary = $plan['reason_summary'];
+    $this->assertSame('partial', $summary['status']);
+    $this->assertNull($summary['bytes']);
+    $this->assertNull($summary['file_count']);
+    $this->assertSame(['file_count' => null, 'bytes' => null], $summary['other_files']);
+    $this->assertGreaterThan(0, $summary['groups'][0]['bytes']);
+    $html = view('webblocks-cms::admin.system.backups.retention-summary', ['plan' => $plan])->render();
+    $this->assertStringContainsString(__('webblocks-cms::backup-retention.summary_partial'), $html);
+    $this->assertStringContainsString('<td>—</td><td>—</td>', $html);
+  }
+
+  #[Test]
+  public function reason_summary_handles_empty_storage_and_missing_roots_without_creating_them(): void
+  {
+    $plan = app(BackupRetentionPlan::class)->overview();
+    $this->assertSame([], $plan['reason_summary']['groups']);
+    $this->assertSame(0, $plan['reason_summary']['bytes']);
+    $this->assertStringContainsString(__('webblocks-cms::backup-retention.summary_empty'), view('webblocks-cms::admin.system.backups.retention-summary', ['plan' => $plan])->render());
+    $backup = $this->archive('uploaded');
+    $root = Storage::disk('backups')->path('nonexistent-root');
+    config()->set('filesystems.disks.backups.root', $root);
+    Storage::forgetDisk('backups');
+    $summary = app(BackupRetentionPlan::class)->overview()['reason_summary'];
+    $this->assertSame('missing', $summary['status']);
+    $this->assertSame([['reason' => 'unavailable', 'record_count' => 1, 'file_count' => 0, 'bytes' => 0]], $summary['groups']);
+    $this->assertSame(0, $summary['bytes']);
+    $this->assertDirectoryDoesNotExist($root);
+    $this->assertDatabaseHas('wbcms_system_backups', ['id' => $backup->id]);
+  }
+
+  #[Test]
+  public function files_changed_between_archive_inspection_and_disk_scan_make_totals_unconfirmed(): void
+  {
+    $backup = $this->archive('pre_update');
+    $inspector = app(BackupRestoreArchiveInspector::class);
+    $changingInspector = \Mockery::mock(BackupRestoreArchiveInspector::class);
+    $changingInspector->shouldReceive('inspect')->once()->andReturnUsing(function ($path) use ($inspector, $backup) {
+      $result = $inspector->inspect($path);
+      Storage::disk('backups')->delete($backup->archive_path);
+
+      return $result;
+    });
+    app()->instance(BackupRestoreArchiveInspector::class, $changingInspector);
+    $plan = app(BackupRetentionPlan::class)->overview();
+    $summary = $plan['reason_summary'];
+    $this->assertSame('partial', $summary['status']);
+    $this->assertNull($summary['bytes']);
+    $this->assertNull($summary['file_count']);
+    $this->assertSame(['file_count' => null, 'bytes' => null], $summary['other_files']);
+    $this->assertGreaterThan(0, $summary['groups'][0]['bytes']);
+    $this->assertSame(0, $plan['storage']['total_bytes']);
   }
 
   #[Test]

@@ -1829,7 +1829,22 @@ shorten age/count protection. Measurements include unregistered files on the
 backups disk but cleanup never automatically selects those files. Reports expose
 total, explicitly protected, eligible and estimated post-cleanup bytes, measurement
 status, current/remaining overrun, per-record decisions and the last bounded SQL
-cleanup outcome. Partial/unavailable scans are explicit. Preview reads do not
+cleanup outcome. CMS 1.105.13 adds `reason_summary`, which groups the existing
+per-record decisions by `reason`, with `record_count`, distinct attributed
+`file_count` and physical `bytes`. Its total record count is independent of the
+physical file count. Shared archives contribute bytes once, to the first
+applicable group in displayed order: schema missing, explicit protection,
+running, failed-update recovery, minimum count, indefinite, manual disabled,
+within retention, invalid policy, unavailable, shared archive, eligible.
+`other_files` reports measured files not matched to an archive, including lock
+or support files; these remain outside automatic cleanup. Complete scans reconcile
+group bytes plus other bytes with total disk usage. Incomplete or inconsistent
+scans expose a partial/unavailable summary and null total/other-file metrics,
+while still showing measured known archives. Running archives can be measured
+but remain ineligible. Cleanup and Backups render the same summary, and the
+existing backup-cleanup API exposes it under `preview.overview.reason_summary`.
+No new write operation, persistence, policy default or archive format is added.
+Partial/unavailable scans are explicit. Preview reads do not
 create archive directories, acquire an operation lease, delete files or write
 execution history. Runs compute their plan under the lease and credit only bytes
 actually removed. If unlink succeeds but deleting its SQL record fails, freed

@@ -28,13 +28,19 @@ final class BackupRetentionPlan
     $available = [];
     $sizes = [];
     $paths = [];
+    $physicalArchives = [];
     $floorPaths = [];
     foreach ($rows as $backup) {
       try {
         $resolution = $this->resolver->resolveForRetention($backup);
         $available[$backup->id] = $resolution->isAvailable();
         $paths[$backup->id] = $resolution->absolutePath;
-        $sizes[$backup->id] = $resolution->isAvailable() ? (int) filesize($resolution->absolutePath) : 0;
+        $path = $resolution->absolutePath;
+        $size = $path !== null && is_file($path) ? filesize($path) : false;
+        if ($size !== false) {
+          $physicalArchives[$backup->id] = ['path' => $path, 'bytes' => $size];
+        }
+        $sizes[$backup->id] = $resolution->isAvailable() && $size !== false ? $size : 0;
         if ($backup->isSuccessful() && $resolution->isAvailable() && ($limits[$backup->type] ?? 0) > 0 && ! isset($floorPaths[$backup->type][$resolution->absolutePath])) {
           $this->inspector->inspect($resolution->absolutePath);
           $floors[$backup->id] = true;
@@ -110,13 +116,53 @@ final class BackupRetentionPlan
     $budget = (int) round($policy['budget_gb'] * 1073741824);
     $remaining = max(0, $measurement['bytes'] - $eligible);
 
-    return ['ready' => $ready, 'last_run' => $state['categories']['backups'] ?? null, 'items' => $items, 'storage' => [
+    return ['ready' => $ready, 'last_run' => $state['categories']['backups'] ?? null, 'items' => $items,
+      'reason_summary' => $this->reasonSummary($items, $physicalArchives, $measurement), 'storage' => [
       'status' => $measurement['status'], 'total_bytes' => $measurement['bytes'], 'protected_bytes' => $protected,
       'eligible_bytes' => $eligible, 'after_cleanup_bytes' => $remaining, 'budget_bytes' => $budget ?: null,
       'over_budget_bytes' => $budget > 0 ? max(0, $measurement['bytes'] - $budget) : 0,
       'remaining_over_budget_bytes' => $budget > 0 ? max(0, $remaining - $budget) : 0,
       'budget_status' => $budget === 0 ? 'unset' : (in_array($measurement['status'], ['available', 'missing'], true) ? ($measurement['bytes'] >= $budget ? 'exceeded' : ($measurement['bytes'] >= $budget * 0.8 ? 'warning' : 'within')) : 'unavailable'),
     ]];
+  }
+
+  private function reasonSummary(array $items, array $archives, array $measurement): array
+  {
+    // Attribute shared physical files to one determining reason, strongest first.
+    $groups = [];
+    foreach (['schema_missing', 'protected', 'running', 'failed_update', 'minimum_count', 'never', 'manual_disabled', 'retained', 'invalid_policy', 'unavailable', 'shared_archive', 'eligible'] as $reason) {
+      $groups[$reason] = ['reason' => $reason, 'record_count' => 0, 'file_count' => 0, 'bytes' => 0];
+    }
+    $byReason = [];
+    foreach ($items as $item) {
+      $groups[$item['reason']]['record_count']++;
+      if (isset($archives[$item['id']])) {
+        $byReason[$item['reason']][] = $archives[$item['id']];
+      }
+    }
+    $seen = [];
+    foreach ($groups as $reason => &$group) {
+      foreach ($byReason[$reason] ?? [] as $archive) {
+        if (! isset($seen[$archive['path']])) {
+          $seen[$archive['path']] = true;
+          $group['file_count']++;
+          $group['bytes'] += $archive['bytes'];
+        }
+      }
+    }
+    unset($group);
+    $knownBytes = array_sum(array_column($groups, 'bytes'));
+    $complete = in_array($measurement['status'], ['available', 'missing'], true)
+      && $measurement['files'] >= count($seen) && $measurement['bytes'] >= $knownBytes;
+
+    return [
+      'status' => $complete ? $measurement['status'] : ($measurement['status'] === 'unavailable' ? 'unavailable' : 'partial'),
+      'groups' => array_values(array_filter($groups, fn ($group) => $group['record_count'] > 0)),
+      'record_count' => count($items),
+      'file_count' => $complete ? $measurement['files'] : null,
+      'bytes' => $complete ? $measurement['bytes'] : null,
+      'other_files' => ['file_count' => $complete ? $measurement['files'] - count($seen) : null, 'bytes' => $complete ? $measurement['bytes'] - $knownBytes : null],
+    ];
   }
 
   private function failedUpdateBackupIds()

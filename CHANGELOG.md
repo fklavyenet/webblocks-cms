@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.105.13
+
+- Explain backup storage in Cleanup and Backups with per-reason backup counts, distinct physical file counts and bytes, plus unmatched files and explicit incomplete-measurement states.
+- Count in-progress archive files in the storage explanation without making running backups eligible for cleanup; clarify that newest-backup counts are retention floors rather than total caps.
+
 ## 1.105.12
 
 - Add per-backup protection and policy/indefinite/explicit-expiration controls, opt-in manual backup retention, validated per-type recovery floors, and a soft size budget that never overrides retention safeguards.

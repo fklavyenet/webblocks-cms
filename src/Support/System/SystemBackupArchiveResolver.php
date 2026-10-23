@@ -59,7 +59,8 @@ class SystemBackupArchiveResolver
       return new SystemBackupArchiveResolution(SystemBackupArchiveResolution::STATUS_MISSING, message: 'Backup archive storage is missing.');
     }
 
-    return $backup->isFailed() && $backup->archive_path
+    // Running archives may occupy disk space but are never cleanup candidates.
+    return ($backup->isFailed() || $backup->isRunning()) && $backup->archive_path
       ? $this->resolvePath($backup->archive_path)
       : $this->resolveForBackup($backup);
   }
