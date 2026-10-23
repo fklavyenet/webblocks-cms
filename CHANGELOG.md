@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 1.105.10
+
+- Extend Cleanup with timestamped file counts and storage measurements for backups, media variants, transfers, temporary workspaces, asset revisions, site files and logs, with explicit partial/unavailable states.
+- Add opt-in daily and weekly maintenance categories, shared execution locks, active-workspace protection and bounded relational execution summaries while preserving existing retention safeguards. New automatic maintenance categories remain disabled until configured.
+- Exclude regenerable image variants from new system backups, record the exclusion in the existing manifest format and keep original uploads and legacy backup restoration compatible.
+- Prevent same-second safety backups from replacing restore sources and support configured symlinked backup roots without allowing traversal or symlink escapes.
+- Default unset page and Shared Slot revision retention to 90 days while retaining the latest 50 per owner and preserving explicitly saved policies.
+- Group Cleanup policy fields by category, show individual maintenance schedules and neutral empty states, and use accessible standard icon actions in Retained History.
+
 ## 1.105.9
 
 - Add revisioned per-block authoring settings schemas to block discovery and content contracts, with typed values, enums, ranges and operation-specific write policies.

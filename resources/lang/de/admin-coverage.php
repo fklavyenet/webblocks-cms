@@ -13,7 +13,7 @@ return [
     'title' => 'Aufräumen',
     'description' => 'Überprüfen Sie das Speicherwachstum, konfigurieren Sie die Aufbewahrung und entfernen Sie generierte Wartungsdaten sicher.',
     'retention_policy' => 'Retentionspolitik',
-    'automatic_backup_cleanup' => 'Automatische Backup-Bereinigung nach erfolgreichen Systemaktualisierungen aktivieren',
+    'automatic_backup_cleanup' => 'Automatische Backup-Bereinigung aktivieren',
     'pre_update_days' => 'Bewahren Sie voraktualisierte Backups für mindestens (Tage) auf',
     'keep_latest_backups' => 'Behalten Sie immer die neuesten erfolgreichen Pre-Update-Backups',
     'restore_safety_days' => 'Sicherheits-Backups wiederherstellen (Tage)',

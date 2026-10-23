@@ -12,7 +12,7 @@ return [
     'title' => 'Cleanup',
     'description' => 'Depolama büyüme, yapılandırma tutma ve güvenli bir şekilde üretilen bakım verilerini ortadan kaldırır.',
     'retention_policy' => 'Retention Policy',
-    'automatic_backup_cleanup' => 'Başarılı sistem güncelleştirmelerinden sonra enable otomatik yedekleme temizlendi',
+    'automatic_backup_cleanup' => 'Otomatik yedek temizliğini etkinleştir',
     'pre_update_days' => 'En az (gün) için önceden belirlenmiş yedekleri tutun (gün)',
     'keep_latest_backups' => 'Her zaman en son başarılı önceden belirlenmiş yedekleri tut',
     'restore_safety_days' => 'Güvenlik yedeklerini geri yüklemeye devam edin (gün)',

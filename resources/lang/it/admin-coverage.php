@@ -14,7 +14,7 @@ return [
     'title' => 'Pulizia',
     'description' => 'Rivedere la crescita di archiviazione, configurare la ritenzione e rimuovere in modo sicuro i dati di manutenzione generati.',
     'retention_policy' => 'Politica di conservazione',
-    'automatic_backup_cleanup' => 'Abilitare la pulizia automatica di backup dopo gli aggiornamenti di sistema di successo',
+    'automatic_backup_cleanup' => 'Attivare la pulizia automatica dei backup',
     'pre_update_days' => 'Mantenere i backup pre-aggiornamento per almeno (giorni)',
     'keep_latest_backups' => 'Mantenere sempre i backup pre-update di successo più recenti',
     'restore_safety_days' => 'Mantenere i backup di sicurezza di ripristino (giorni)',

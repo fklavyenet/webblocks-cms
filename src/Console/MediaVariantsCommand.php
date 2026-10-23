@@ -37,7 +37,9 @@ class MediaVariantsCommand extends Command
     $query->chunkById(50, function ($media) use (&$counts): void {
       foreach ($media as $item) {
         if ($this->option('prune')) {
-          $counts['pruned'] += $this->transforms->prune($item);
+          $result = $this->transforms->pruneWithResult($item);
+          $counts['pruned'] += $result['deleted'];
+          $counts['failed'] += count($result['failures']);
 
           continue;
         }

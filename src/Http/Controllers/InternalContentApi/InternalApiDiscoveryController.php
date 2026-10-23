@@ -11,6 +11,7 @@ use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenAuthenticator;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalApiRateLimit;
 use WebBlocks\Cms\Support\Plugins\PluginApiDiscoveryRegistrar;
+use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class InternalApiDiscoveryController extends Controller
@@ -397,8 +398,8 @@ class InternalApiDiscoveryController extends Controller
         'responses' => ['200' => ['description' => 'Timestamped health checks, stable message keys and safe parameters; capacity and site scans cached for five minutes', 'content' => $json], '403' => ['description' => 'Requires an installation-wide system token owned by an active system administrator', 'content' => $json], '422' => ['description' => 'Invalid site filter', 'content' => $json]],
       ]],
       '/system/cleanup' => [
-        'get' => ['summary' => 'Read maintenance cleanup policy and category previews', 'x-required-capability' => 'maintenance.read', 'responses' => ['200' => ['description' => 'Policy and overview JSON', 'content' => $json]]],
-        'put' => ['summary' => 'Replace maintenance cleanup retention settings', 'x-required-capability' => 'maintenance.settings.write', 'x-required-fields' => ['asset_revision_days', 'keep_latest_asset_revisions', 'temporary_workspace_hours', 'page_revision_days', 'keep_latest_page_revisions', 'shared_slot_revision_days', 'keep_latest_shared_slot_revisions'], 'responses' => ['200' => ['description' => 'Updated policy and overview JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
+        'get' => ['summary' => 'Read maintenance policy, category previews, physical file measurements and latest execution outcomes', 'x-required-capability' => 'maintenance.read', 'responses' => ['200' => ['description' => 'Policy and overview JSON', 'content' => $json]]],
+        'put' => ['summary' => 'Replace retention settings and optionally patch automatic category selection', 'x-optional-fields' => ['automatic'], 'x-automatic-categories' => MaintenanceCleanup::RUNNABLE, 'x-required-capability' => 'maintenance.settings.write', 'x-required-fields' => ['asset_revision_days', 'keep_latest_asset_revisions', 'temporary_workspace_hours', 'page_revision_days', 'keep_latest_page_revisions', 'shared_slot_revision_days', 'keep_latest_shared_slot_revisions'], 'responses' => ['200' => ['description' => 'Updated policy and overview JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
       ],
       '/system/cleanup/{category}/run' => ['post' => ['summary' => 'Run one safe maintenance cleanup category', 'x-required-capability' => 'maintenance.delete', 'x-destructive' => true, 'x-supported-categories' => ['asset-revisions', 'media-variants', 'temporary-workspaces', 'page-revisions', 'shared-slot-revisions'], 'responses' => ['200' => ['description' => 'Cleanup result JSON', 'content' => $json], '404' => ['description' => 'Unsupported category', 'content' => $json]]]],
       '/plugins' => ['get' => ['summary' => 'List installed and registered plugins', 'x-required-capability' => 'plugins.read', 'responses' => ['200' => ['description' => 'Plugin status JSON', 'content' => $json], '403' => ['description' => 'Requires plugins.read capability', 'content' => $json]]]],

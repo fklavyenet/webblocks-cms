@@ -73,7 +73,7 @@ class SystemBackupManager
 
     $temporaryDirectory = storage_path('app/temp/system-backups/'.$startedAt->format('YmdHis').'-'.Str::lower(Str::random(8)));
     $databaseDumpPath = $temporaryDirectory.'/database.sql';
-    $archiveFilename = 'webblocks-cms-backup-'.$startedAt->format('Y-m-d-His').'.zip';
+    $archiveFilename = 'webblocks-cms-backup-'.$startedAt->format('Y-m-d-His').'-'.$backup->id.'-'.Str::lower(Str::random(8)).'.zip';
     $archiveRelativePath = $archiveFilename;
 
     try {

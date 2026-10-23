@@ -107,6 +107,7 @@ use WebBlocks\Cms\Support\Relational\TokenRelations;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
+use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
@@ -1066,6 +1067,22 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         ->dailyAt('03:45')
         ->withoutOverlapping(1440)
         ->onOneServer();
+
+      foreach (MaintenanceCleanup::RUNNABLE as $category) {
+        $event = $this->app->make(Schedule::class)
+          ->command('system:cleanup', [$category, '--scheduled'])
+          ->withoutOverlapping()
+          ->onOneServer();
+        if (in_array($category, ['page-revisions', 'shared-slot-revisions'], true)) {
+          $event->weeklyOn(0, $category === 'page-revisions' ? '04:30' : '04:45');
+        } else {
+          $event->dailyAt(match ($category) {
+            'asset-revisions' => '04:00',
+            'media-variants' => '04:10',
+            default => '04:20',
+          });
+        }
+      }
 
       $this->app->make(Schedule::class)
         ->command('system:backups:cleanup')

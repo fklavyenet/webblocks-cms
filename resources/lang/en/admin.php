@@ -137,7 +137,7 @@ return [
     'title' => 'Cleanup',
     'description' => 'Review storage growth, configure retention, and safely remove generated maintenance data.',
     'retention_policy' => 'Retention Policy',
-    'automatic_backup_cleanup' => 'Enable automatic backup cleanup after successful system updates',
+    'automatic_backup_cleanup' => 'Enable automatic backup cleanup',
     'pre_update_days' => 'Keep pre-update backups for at least (days)',
     'keep_latest_backups' => 'Always keep latest successful pre-update backups',
     'restore_safety_days' => 'Keep restore safety backups (days)',

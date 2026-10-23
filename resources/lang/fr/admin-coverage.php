@@ -14,7 +14,7 @@ return [
     'title' => '▁Nettoyage',
     'description' => '▁Examiner la▁croissance du▁stockage,▁configurer la▁rétention et▁supprimer en▁toute▁sécurité les▁données de maintenance▁générées.',
     'retention_policy' => '▁Politique de conservation',
-    'automatic_backup_cleanup' => 'Activer le▁nettoyage▁automatique de▁sauvegarde▁après des▁mises à▁jour▁système▁réussies',
+    'automatic_backup_cleanup' => 'Activer le nettoyage automatique des sauvegardes',
     'pre_update_days' => '▁Conserver les▁sauvegardes pré-mise à▁jour pendant au▁moins (jours)',
     'keep_latest_backups' => '▁Gardez▁toujours les▁dernières▁sauvegardes▁réussies pré-mise à▁jour',
     'restore_safety_days' => '▁Conserver les▁sauvegardes de▁sécurité (jours)',

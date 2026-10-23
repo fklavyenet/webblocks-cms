@@ -1724,3 +1724,73 @@ Plugins may opt in with `PluginBlockTypeDefinition::settingsSchema()` or a manif
 `webblocks:blocks:audit-settings` produces a read-only JSON compatibility report (default at most 100 reported blocks, `--limit` up to 1000). It reports block identities, field paths and codes without values, does not repair content or resolve external providers, and exits 1 when incompatible settings exist. This is a scalar-schema report, not a live application/provider health check. Existing schema-less plugins are counted separately. Newly changed declared settings are limited to 128 fields, 256 KiB, 32 nested levels and 4096 nodes; historical unchanged data and schema-less plugin behavior remain compatible.
 
 The additive update declares `sort_order`, `show_approved`, `show_author_name`, and `store_submissions` in typed SQL storage and rebinds applicable old documents without casting their values. Unsupported historical shapes remain typed structure nodes. Re-running the migration is safe; rollback retains these columns to avoid data loss. No content is published or rewritten to insert defaults.
+
+
+## Hosting storage and scheduled maintenance
+
+`Maintenance → Cleanup` and `GET /webadmin/api/system/cleanup` expose a read-only
+`storage_report` with `measured_at` and `categories`. Each category has physical
+`files`, `bytes` and `status` (`available`, `missing`, `partial`, `unavailable`).
+Categories cover the backups and site-transfers disks, public uploads excluding
+variants, generated media variants, known temporary workspace roots, asset
+revision roots, site public files and standard application logs. No filenames,
+absolute paths, log contents or credentials are returned. Measurements are not
+hosting quota, allocated database size or a deduplicated cross-disk grand total;
+custom log locations are excluded. Unavailable category previews carry a failure
+rather than claiming a confirmed zero. Existing logical revision byte totals
+remain separate from physical-file measurements.
+
+The optional `automatic` object on maintenance settings writes patches boolean
+selection by `asset-revisions`, `media-variants`, `temporary-workspaces`,
+`page-revisions` and `shared-slot-revisions`. Omitted flags keep their values;
+unknown categories and non-boolean values fail validation. All five new flags
+default to disabled. Existing `maintenance.read`, `maintenance.settings.write`,
+`maintenance.delete` and System panel authorization remain separate.
+
+Page and Shared Slot revision retention now defaults to 90 days, with the latest
+50 revisions per owner still protected independently of age. Explicit saved
+settings, including a 365-day policy, are not rewritten; the new fallback also
+applies wherever no setting was stored. The Cleanup form groups each category's
+age and protected-count fields together and explains the combined condition.
+Retained History uses standard `wb-action-group` icon actions with localized
+accessible labels: revision policy links target the corresponding focusable form
+group, while the transfer action opens its existing management screen. Management
+status is separate from Actions. Empty cleanup categories show a neutral empty
+state instead of a disabled destructive button; eligible categories retain their
+confirmation modal. Per-category daily/weekly schedule labels use shared
+translation placeholders without changing scheduler execution times.
+
+Laravel Scheduler registers assets at 04:00, obsolete media variants at 04:10 and
+temporary workspaces at 04:20 daily; page and Shared Slot revisions run on Sunday
+at 04:30 and 04:45, in the application's scheduling timezone. Each command uses
+`system:cleanup <category> --scheduled`, checks its category flag, and has
+scheduler overlap/single-server protection plus a shared maintenance execution
+lock. Existing age/minimum-count protections and active revision-restore source
+protection remain authoritative. Existing asset-write cleanup and backup,
+visitor and editor-recovery schedules are unchanged. A host scheduler and
+shared atomic-lock cache are required; reads show actual scheduler evidence
+without creating a heartbeat.
+
+Latest execution summaries are bounded to one SQL row per maintenance category,
+with manual/scheduled source, timestamps, candidate/deleted counts and bytes,
+failure count and last successful completion. Missing summary schema blocks
+execution; fresh and package-update migrations install it idempotently. A
+running summary older than the execution lock lifecycle is presented as
+interrupted without mutating state. Dry-run and overview reads do not write
+summaries. Partial variant deletion credits only bytes from successfully removed
+directories. Current fingerprints and original media remain protected. Temporary
+cleanup honors configured update roots, active update records/locks, recent
+nested writes and symlinks; flat abandoned catalog downloads use nonblocking
+exclusive file locks, while installation holds a shared lease. Other files,
+transfer archives and application logs are not added to automatic deletion.
+
+New system backup ZIP archives omit the reserved generated-cache namespace
+`media/transforms/` from uploads. The immutable version-one manifest records
+`excluded_upload_paths: ["media/transforms/"]`; database, original uploads,
+unrelated public files and site public files retain their existing restoration
+contract. Variants regenerate on renderer demand with codec failure falling
+back to the original. Existing version-one and legacy manifests remain
+restorable, including archived variants when present. Unique archive names
+prevent same-second safety backups from overwriting restore sources. Archive
+resolution supports a configured symlinked disk root while rejecting relative
+traversal, internal symlink escapes and absolute paths outside the disk.

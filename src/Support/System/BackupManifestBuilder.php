@@ -27,6 +27,7 @@ class BackupManifestBuilder
         'site_public' => true,
       ],
       'uploads_root' => 'storage/app/public',
+      'excluded_upload_paths' => ['media/transforms/'],
       'site_public_root' => 'public/site',
       'archive_format' => 'zip',
       'archive_filename' => $archiveFilename,

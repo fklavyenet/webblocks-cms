@@ -66,15 +66,24 @@ class CatalogPluginInstallBridge
     }
 
     $tempPath = null;
+    $lease = null;
 
     try {
       $tempPath = $this->download($downloadUrl, $filename);
+      // Maintenance may remove abandoned downloads, but never this live artifact.
+      $lease = fopen($tempPath, 'r');
+      if ($lease === false || ! flock($lease, LOCK_SH)) {
+        throw new RuntimeException('The catalog artifact could not be locked for installation.');
+      }
       $this->verifyChecksum($tempPath, $checksum);
 
       return $installedVersion === null
         ? $this->installer->install($tempPath)
         : $this->installer->update($tempPath, $plugin->handle, $installedVersion);
     } finally {
+      if (is_resource($lease)) {
+        fclose($lease);
+      }
       if ($tempPath !== null && is_file($tempPath)) {
         File::delete($tempPath);
       }

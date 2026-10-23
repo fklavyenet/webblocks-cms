@@ -14,7 +14,7 @@ return [
     'title' => 'Limpieza',
     'description' => 'Revisa el crecimiento del almacenamiento, configura la retención y elimina de forma segura los datos de mantenimiento generados.',
     'retention_policy' => 'Política de retención',
-    'automatic_backup_cleanup' => 'Habilitar la limpieza automática de copia de seguridad después de actualizaciones exitosas del sistema',
+    'automatic_backup_cleanup' => 'Activar la limpieza automática de copias',
     'pre_update_days' => 'Mantenga copias de seguridad pre-actualizadas por lo menos (días)',
     'keep_latest_backups' => 'Mantenga siempre los últimos respaldos antes de actualización exitosos',
     'restore_safety_days' => 'Mantenga los respaldos de seguridad de restauración (días)',

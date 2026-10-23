@@ -3,8 +3,10 @@
 namespace WebBlocks\Cms\Support\System;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use WebBlocks\Cms\Models\Block;
@@ -19,6 +21,7 @@ use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Revisions\RevisionCleanupQuery;
 use WebBlocks\Cms\Support\Revisions\RevisionPayloadSizes;
+use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 
 class MaintenanceCleanup
 {
@@ -51,11 +54,11 @@ class MaintenanceCleanup
     $mediaStorage = $this->mediaStorageOverview();
 
     return [
-      'asset_revisions' => $this->previewAssetRevisions(),
-      'media_variants' => $this->previewMediaVariants(),
-      'temporary_workspaces' => $this->previewTemporaryWorkspaces(),
-      'page_revision_cleanup' => $this->previewPageRevisions(),
-      'shared_slot_revision_cleanup' => $this->previewSharedSlotRevisions(),
+      'asset_revisions' => $this->preview(self::ASSET_REVISIONS),
+      'media_variants' => $this->preview(self::MEDIA_VARIANTS),
+      'temporary_workspaces' => $this->preview(self::TEMPORARY_WORKSPACES),
+      'page_revision_cleanup' => $this->preview(self::PAGE_REVISIONS),
+      'shared_slot_revision_cleanup' => $this->preview(self::SHARED_SLOT_REVISIONS),
       'page_revisions' => (int) $pageRevisionTotals->sum('count'),
       'page_revision_bytes' => $pageRevisionBytes,
       'shared_slot_revisions' => (int) $sharedSlotRevisionTotals->sum('count'),
@@ -65,22 +68,63 @@ class MaintenanceCleanup
       'site_growth' => $this->siteGrowthOverview($pageRevisionTotals, $sharedSlotRevisionTotals),
       'capacity_warnings' => $this->capacityWarnings($pageRevisionBytes + $sharedSlotRevisionBytes, $blockStorage, $mediaStorage),
       'transfer_packages' => $this->transferPackageCount(),
+      'storage_report' => app(StorageUsageReport::class)->overview(),
+      'automation' => [
+        'enabled' => app(SystemSettings::class)->automaticMaintenanceSettings(),
+        'scheduler' => app(SchedulerHealth::class)->snapshot(),
+        ...app(MaintenanceCleanupState::class)->overview(),
+      ],
     ];
   }
 
   public function preview(string $category): MaintenanceCleanupResult
   {
-    return match ($category) {
-      self::ASSET_REVISIONS => $this->previewAssetRevisions(),
-      self::MEDIA_VARIANTS => $this->previewMediaVariants(),
-      self::TEMPORARY_WORKSPACES => $this->previewTemporaryWorkspaces(),
-      self::PAGE_REVISIONS => $this->previewPageRevisions(),
-      self::SHARED_SLOT_REVISIONS => $this->previewSharedSlotRevisions(),
-      default => throw new \InvalidArgumentException('Unsupported maintenance cleanup category.'),
-    };
+    if (! in_array($category, self::RUNNABLE, true)) {
+      throw new \InvalidArgumentException('Unsupported maintenance cleanup category.');
+    }
+    try {
+      return match ($category) {
+        self::ASSET_REVISIONS => $this->previewAssetRevisions(),
+        self::MEDIA_VARIANTS => $this->previewMediaVariants(),
+        self::TEMPORARY_WORKSPACES => $this->previewTemporaryWorkspaces(),
+        self::PAGE_REVISIONS => $this->previewPageRevisions(),
+        self::SHARED_SLOT_REVISIONS => $this->previewSharedSlotRevisions(),
+      };
+    } catch (\Throwable) {
+      return new MaintenanceCleanupResult(0, 0, failures: [['code' => 'preview_unavailable']]);
+    }
   }
 
-  public function run(string $category): MaintenanceCleanupResult
+  public function run(string $category, string $source = 'manual'): MaintenanceCleanupResult
+  {
+    if (! in_array($category, self::RUNNABLE, true)) {
+      throw new \InvalidArgumentException('Unsupported maintenance cleanup category.');
+    }
+    $state = app(MaintenanceCleanupState::class);
+    if (! $state->ready()) {
+      return new MaintenanceCleanupResult(0, 0, failures: [['code' => 'schema_missing']]);
+    }
+    $lock = Cache::lock('cms:maintenance-cleanup', 86400);
+    if (! $lock->get()) {
+      return new MaintenanceCleanupResult(0, 0, failures: [['code' => 'busy']]);
+    }
+    try {
+      $state->start($category, $source === 'scheduled' ? 'scheduled' : 'manual');
+      try {
+        $result = $this->execute($category);
+      } catch (\Throwable $exception) {
+        $result = new MaintenanceCleanupResult(0, 0, failures: [['code' => 'failed']]);
+        Log::warning('Maintenance cleanup failed.', ['category' => $category, 'exception' => $exception::class]);
+      }
+      $state->finish($category, $result);
+
+      return $result;
+    } finally {
+      $lock->release();
+    }
+  }
+
+  private function execute(string $category): MaintenanceCleanupResult
   {
     return match ($category) {
       self::ASSET_REVISIONS => $this->cleanAssetRevisions(),
@@ -146,13 +190,21 @@ class MaintenanceCleanup
   private function cleanTemporaryWorkspaces(): MaintenanceCleanupResult
   {
     $candidates = $this->temporaryWorkspaceCandidates();
+    $candidateBytes = array_sum(array_map($this->pathSize(...), $candidates));
     $deleted = 0;
     $bytes = 0;
     $failures = [];
 
+    $cutoff = now()->subHours($this->settings->maintenanceCleanupSettings()['temporary_workspace_hours'])->getTimestamp();
     foreach ($candidates as $path) {
+      if (is_link($path) || ! file_exists($path) || filemtime($path) >= $cutoff) {
+        continue;
+      }
+      if (is_dir($path) && ($this->updatesActive() || $this->latestModification($path) >= $cutoff)) {
+        continue;
+      }
       $size = $this->pathSize($path);
-      if (File::deleteDirectory($path)) {
+      if (is_file($path) ? $this->deleteTemporaryFile($path) : File::deleteDirectory($path)) {
         $deleted++;
         $bytes += $size;
       } else {
@@ -160,7 +212,7 @@ class MaintenanceCleanup
       }
     }
 
-    return new MaintenanceCleanupResult(count($candidates), array_sum(array_map($this->pathSize(...), $candidates)), $deleted, $bytes, $failures);
+    return new MaintenanceCleanupResult(count($candidates), $candidateBytes, $deleted, $bytes, $failures);
   }
 
   private function cleanMediaVariants(): MaintenanceCleanupResult
@@ -169,15 +221,21 @@ class MaintenanceCleanup
     $deleted = 0;
     $failures = [];
 
-    $this->imageMedia()->each(function (Media $media) use (&$deleted, &$failures): void {
+    $deletedBytes = 0;
+    foreach ($this->imageMedia() as $media) {
       try {
-        $deleted += $this->mediaTransforms->prune($media);
-      } catch (\Throwable $exception) {
-        $failures[] = ['id' => (int) $media->getKey(), 'message' => $exception->getMessage()];
+        $result = $this->mediaTransforms->pruneWithResult($media);
+        $deleted += $result['deleted'];
+        $deletedBytes += $result['bytes'];
+        foreach ($result['failures'] as $failure) {
+          $failures[] = ['id' => (int) $media->getKey(), 'message' => $failure];
+        }
+      } catch (\Throwable) {
+        $failures[] = ['id' => (int) $media->getKey(), 'code' => 'failed'];
       }
-    });
+    }
 
-    return new MaintenanceCleanupResult($preview->candidateCount, $preview->candidateBytes, $deleted, $deleted > 0 ? $preview->candidateBytes : 0, $failures);
+    return new MaintenanceCleanupResult($preview->candidateCount, $preview->candidateBytes, $deleted, $deletedBytes, $failures);
   }
 
   private function cleanPageRevisions(): MaintenanceCleanupResult
@@ -295,18 +353,80 @@ class MaintenanceCleanup
     $cutoff = now()->subHours($this->settings->maintenanceCleanupSettings()['temporary_workspace_hours'])->getTimestamp();
     $paths = [];
 
-    foreach ([storage_path('app/system-updates'), storage_path('app/webblocks/tmp/catalog-installs')] as $root) {
-      if (! is_dir($root)) {
-        continue;
-      }
-      foreach (File::directories($root) as $directory) {
-        if (filemtime($directory) < $cutoff) {
+    $updateRoot = storage_path(trim((string) config('webblocks-updates.installer.workspace_root', 'app/system-updates'), '/'));
+    if (! $this->updatesActive() && is_dir($updateRoot) && ! is_link($updateRoot)) {
+      foreach (File::directories($updateRoot) as $directory) {
+        if (! is_link($directory) && filemtime($directory) < $cutoff && $this->latestModification($directory) < $cutoff) {
           $paths[] = $directory;
+        }
+      }
+    }
+    $catalogRoot = storage_path('app/webblocks/tmp/catalog-installs');
+    if (is_dir($catalogRoot) && ! is_link($catalogRoot)) {
+      // The catalog downloads flat temporary files, not child directories.
+      foreach (File::files($catalogRoot) as $file) {
+        if (! $file->isLink() && str_starts_with($file->getFilename(), 'catalog-plugin-') && $file->getMTime() < $cutoff && $this->temporaryFileAvailable($file->getPathname())) {
+          $paths[] = $file->getPathname();
         }
       }
     }
 
     return $paths;
+  }
+
+  private function updatesActive(): bool
+  {
+    if (Schema::hasTable('wbcms_system_update_runs') && DB::table('wbcms_system_update_runs')->whereIn('status', ['running', 'pending'])->exists()) {
+      return true;
+    }
+    $lock = Cache::lock((string) config('webblocks-updates.installer.lock_name', 'system-updates:run'), 1);
+    if (! $lock->get()) {
+      return true;
+    }
+    $lock->release();
+
+    return false;
+  }
+
+  private function latestModification(string $directory): int
+  {
+    $latest = (int) filemtime($directory);
+    $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
+    foreach ($iterator as $file) {
+      // Never traverse a workspace containing external symlinks.
+      if ($file->isLink()) {
+        return PHP_INT_MAX;
+      }
+      $latest = max($latest, $file->getMTime());
+    }
+
+    return $latest;
+  }
+
+  private function temporaryFileAvailable(string $path): bool
+  {
+    $handle = @fopen($path, 'r');
+    if ($handle === false) {
+      return false;
+    }
+    try {
+      return flock($handle, LOCK_EX | LOCK_NB);
+    } finally {
+      fclose($handle);
+    }
+  }
+
+  private function deleteTemporaryFile(string $path): bool
+  {
+    $handle = fopen($path, 'r');
+    if ($handle === false) {
+      return false;
+    }
+    try {
+      return flock($handle, LOCK_EX | LOCK_NB) && File::delete($path);
+    } finally {
+      fclose($handle);
+    }
   }
 
   private function deleteFiles(array $paths): MaintenanceCleanupResult
@@ -373,14 +493,19 @@ class MaintenanceCleanup
       ->first();
     $variantFiles = 0;
     $variantBytes = 0;
+    $measurement = 'available';
 
     foreach (Media::query()->where('kind', Media::KIND_IMAGE)->distinct()->pluck('disk') as $diskName) {
-      $disk = Storage::disk($diskName);
-      foreach ($disk->listContents('media/transforms', true) as $file) {
-        if ($file->isFile()) {
-          $variantFiles++;
-          $variantBytes += $file->fileSize() ?? (int) $disk->size($file->path());
+      try {
+        $disk = Storage::disk($diskName);
+        foreach ($disk->listContents('media/transforms', true) as $file) {
+          if ($file->isFile()) {
+            $variantFiles++;
+            $variantBytes += $file->fileSize() ?? (int) $disk->size($file->path());
+          }
         }
+      } catch (\Throwable) {
+        $measurement = 'partial';
       }
     }
 
@@ -390,6 +515,7 @@ class MaintenanceCleanup
       'original_bytes' => (int) $summary->original_bytes,
       'variant_files' => $variantFiles,
       'variant_bytes' => $variantBytes,
+      'variant_measurement_status' => $measurement,
     ];
   }
 

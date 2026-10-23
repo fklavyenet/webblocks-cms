@@ -86,7 +86,16 @@ class SystemSettings
 
   public const CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS = 'system.cleanup_keep_latest_shared_slot_revisions';
 
+  public const CLEANUP_AUTOMATIC_KEYS = [
+    'asset-revisions' => 'system.cleanup_automatic_asset_revisions',
+    'media-variants' => 'system.cleanup_automatic_media_variants',
+    'temporary-workspaces' => 'system.cleanup_automatic_temporary_workspaces',
+    'page-revisions' => 'system.cleanup_automatic_page_revisions',
+    'shared-slot-revisions' => 'system.cleanup_automatic_shared_slot_revisions',
+  ];
+
   private const READABLE_KEYS = [
+    ...self::CLEANUP_AUTOMATIC_KEYS,
     self::PROJECT_NAME,
     self::PROJECT_TAGLINE,
     self::APP_NAME,
@@ -122,6 +131,7 @@ class SystemSettings
   ];
 
   public const MANAGED_KEYS = [
+    ...self::CLEANUP_AUTOMATIC_KEYS,
     self::PROJECT_NAME,
     self::PROJECT_TAGLINE,
     self::DEFAULT_LOCALE,
@@ -362,11 +372,22 @@ class SystemSettings
       'asset_revision_days' => $this->boundedInt(self::CLEANUP_ASSET_REVISION_DAYS, 90, 1, 3650),
       'keep_latest_asset_revisions' => $this->boundedInt(self::CLEANUP_KEEP_LATEST_ASSET_REVISIONS, 20, 1, 1000),
       'temporary_workspace_hours' => $this->boundedInt(self::CLEANUP_TEMPORARY_WORKSPACE_HOURS, 24, 1, 8760),
-      'page_revision_days' => $this->boundedInt(self::CLEANUP_PAGE_REVISION_DAYS, 365, 1, 3650),
+      'page_revision_days' => $this->boundedInt(self::CLEANUP_PAGE_REVISION_DAYS, 90, 1, 3650),
       'keep_latest_page_revisions' => $this->boundedInt(self::CLEANUP_KEEP_LATEST_PAGE_REVISIONS, 50, 1, 1000),
-      'shared_slot_revision_days' => $this->boundedInt(self::CLEANUP_SHARED_SLOT_REVISION_DAYS, 365, 1, 3650),
+      'shared_slot_revision_days' => $this->boundedInt(self::CLEANUP_SHARED_SLOT_REVISION_DAYS, 90, 1, 3650),
       'keep_latest_shared_slot_revisions' => $this->boundedInt(self::CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS, 50, 1, 1000),
     ];
+  }
+
+  /** @return array<string, bool> */
+  public function automaticMaintenanceSettings(): array
+  {
+    $values = [];
+    foreach (self::CLEANUP_AUTOMATIC_KEYS as $category => $key) {
+      $values[$category] = filter_var($this->get($key, false), FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
+    }
+
+    return $values;
   }
 
   public function save(array $values): void

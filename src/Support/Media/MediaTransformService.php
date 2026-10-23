@@ -114,20 +114,43 @@ class MediaTransformService
 
   public function prune(Media $media): int
   {
+    return $this->pruneWithResult($media)['deleted'];
+  }
+
+  /** @return array{deleted: int, bytes: int, failures: list<string>} */
+  public function pruneWithResult(Media $media): array
+  {
     $disk = Storage::disk($media->disk);
     $root = 'media/transforms/'.$media->getKey();
     $active = collect(config('media_transforms.variants', []))
       ->map(fn (array $definition) => substr($this->fingerprint($media, $definition), 0, 16))
       ->unique()->all();
-    $pruned = 0;
+    $result = ['deleted' => 0, 'bytes' => 0, 'failures' => []];
 
     foreach ($disk->directories($root) as $directory) {
-      if (! in_array(basename($directory), $active, true) && $disk->deleteDirectory($directory)) {
-        $pruned++;
+      if (in_array(basename($directory), $active, true)) {
+        continue;
+      }
+      try {
+        $bytes = 0;
+        foreach ($disk->listContents($directory, true) as $entry) {
+          if ($entry->isFile()) {
+            $bytes += $entry->fileSize() ?? (int) $disk->size($entry->path());
+          }
+        }
+        if (! $disk->deleteDirectory($directory)) {
+          $result['failures'][] = 'Variant directory could not be deleted.';
+
+          continue;
+        }
+        $result['deleted']++;
+        $result['bytes'] += $bytes;
+      } catch (Throwable) {
+        $result['failures'][] = 'Variant directory could not be deleted.';
       }
     }
 
-    return $pruned;
+    return $result;
   }
 
   private function supports(Media $media): bool

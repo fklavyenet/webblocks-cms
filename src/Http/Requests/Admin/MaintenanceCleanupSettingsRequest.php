@@ -15,6 +15,8 @@ class MaintenanceCleanupSettingsRequest extends FormRequest
   public function rules(): array
   {
     return [
+      'automatic' => ['sometimes', 'array:asset-revisions,media-variants,temporary-workspaces,page-revisions,shared-slot-revisions'],
+      'automatic.*' => ['required', 'boolean'],
       'backup_cleanup_enabled' => ['required', 'boolean'],
       'backup_cleanup_pre_update_days' => ['required', 'integer', 'min:1', 'max:3650'],
       'backup_cleanup_keep_latest_pre_update' => ['required', 'integer', 'min:1', 'max:100'],
@@ -37,7 +39,7 @@ class MaintenanceCleanupSettingsRequest extends FormRequest
 
   public function settingsPayload(): array
   {
-    return [
+    $values = [
       SystemSettings::BACKUP_CLEANUP_ENABLED => $this->validated('backup_cleanup_enabled'),
       SystemSettings::BACKUP_CLEANUP_PRE_UPDATE_DAYS => $this->validated('backup_cleanup_pre_update_days'),
       SystemSettings::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE => $this->validated('backup_cleanup_keep_latest_pre_update'),
@@ -51,5 +53,10 @@ class MaintenanceCleanupSettingsRequest extends FormRequest
       SystemSettings::CLEANUP_SHARED_SLOT_REVISION_DAYS => $this->validated('shared_slot_revision_days'),
       SystemSettings::CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS => $this->validated('keep_latest_shared_slot_revisions'),
     ];
+    foreach ($this->validated('automatic', []) as $category => $enabled) {
+      $values[SystemSettings::CLEANUP_AUTOMATIC_KEYS[$category]] = $enabled;
+    }
+
+    return $values;
   }
 }

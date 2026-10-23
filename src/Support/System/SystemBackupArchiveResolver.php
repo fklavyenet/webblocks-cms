@@ -59,7 +59,8 @@ class SystemBackupArchiveResolver
   ): SystemBackupArchiveResolution {
     $storedPath = trim($storedPath);
 
-    if ($storedPath === '' || str_contains($storedPath, "\0")) {
+    if ($storedPath === '' || str_contains($storedPath, "\0")
+      || (! $this->isAbsolutePath($storedPath) && $this->hasInvalidRelativePath($storedPath))) {
       return new SystemBackupArchiveResolution(
         SystemBackupArchiveResolution::STATUS_UNSAFE,
         message: 'Backup archive path is invalid.',
@@ -77,6 +78,14 @@ class SystemBackupArchiveResolver
     }
 
     $candidate = $this->candidateAbsolutePath($disk, $storedPath);
+    // A configured local disk root may itself be a symlink (including /tmp).
+    // Canonicalize that prefix before the lexical check, then still verify the
+    // complete real path below so a symlink inside the disk cannot escape it.
+    $configuredRoot = rtrim($this->normalizePath($disk->path('')), '/');
+    $normalizedCandidate = $this->normalizePath($candidate);
+    if ($normalizedCandidate === $configuredRoot || str_starts_with($normalizedCandidate, $configuredRoot.'/')) {
+      $candidate = $root.substr($normalizedCandidate, strlen($configuredRoot));
+    }
     $relativePath = $this->relativePath($root, $candidate);
 
     if ($relativePath === null || $this->hasInvalidRelativePath($relativePath)) {
