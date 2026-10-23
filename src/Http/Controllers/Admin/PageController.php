@@ -100,7 +100,7 @@ class PageController extends Controller
     $sort = $tableSort->key;
     $direction = $tableSort->direction;
     $allowedStatuses = $this->workflowManager->allowedStatuses();
-    $allowedSorts = ['created_at', 'title', 'slug', 'status', 'updated_at'];
+    $allowedSorts = array_keys($tableSort->columns());
     $defaultLocaleId = Page::defaultLocaleId();
     [$activeSite, $siteFilterValue] = $this->resolveSiteContext($request, $sites);
 

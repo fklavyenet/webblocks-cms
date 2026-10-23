@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\ListingViews;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 
 final class ListingViewDefinition
@@ -45,7 +46,7 @@ final class ListingViewDefinition
       $values[$key] = trim((string) $value);
       $this->ensure(mb_strlen($values[$key]) <= ($key === 'search' ? 255 : 32));
     }
-    $sorts = $listing === 'pages' ? ['created_at', 'updated_at', 'title', 'slug', 'status'] : ['created_at', 'updated_at', 'title', 'filename', 'kind', 'folder', 'usage'];
+    $sorts = array_keys(AdminTableSort::for($listing)->columns());
     $this->ensure(in_array($values['sort'], $sorts, true) && in_array($values['direction'], ['asc', 'desc'], true));
     if ($listing === 'pages') {
       $this->ensure(in_array($values['status'], ['', 'draft', 'in_review', 'published', 'archived'], true));

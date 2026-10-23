@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.105.16
+
+- Make personal view management compact and responsive, with standard WebBlocks UI accordion controls and naturally sized name/action rows.
+- Match Pages sort choices and optional-column labels to the table headings in all six panel languages, including Page instead of Title.
+- Add server-side ID and Total Blocks sorting to the Pages table and saved personal views, preserving existing Created and Slug sort choices.
+
 ## 1.105.15
 
 - Keep the update modal open once and its elapsed timer continuous while server admission hands over to progress monitoring.

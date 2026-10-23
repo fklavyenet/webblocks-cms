@@ -38,7 +38,13 @@
     ])
 
     @include('webblocks-cms::admin.partials.flash')
-    @include('webblocks-cms::admin.partials.listing-views')
+    @include('webblocks-cms::admin.partials.listing-views', ['listingColumnLabels' => [
+        'id' => $adminText('pages.columns.id'),
+        'view' => $adminText('pages.columns.view'),
+        'blocks' => $adminText('pages.columns.total_blocks'),
+        'status' => $adminText('common.status'),
+        'updated' => $adminText('pages.last_edited'),
+    ]])
 
     <div class="wb-card wb-card-muted wb-admin-pages-index-filters">
         <div class="wb-card-body">
@@ -80,11 +86,13 @@
                         'label' => $adminText('common.sort_by'),
                         'selected' => $filters['sort'],
                         'options' => [
-                            'created_at' => $adminText('pages.created_at'),
-                            'updated_at' => $adminText('pages.last_edited'),
-                            'title' => $adminText('pages.columns.title'),
-                            'slug' => $adminText('page_form.slug'),
+                            'title' => $adminText('pages.columns.page'),
+                            'id' => $adminText('pages.columns.id'),
+                            'blocks_count' => $adminText('pages.columns.total_blocks'),
                             'status' => $adminText('common.status'),
+                            'updated_at' => $adminText('pages.last_edited'),
+                            'created_at' => $adminText('pages.created_at'),
+                            'slug' => $adminText('page_form.slug'),
                         ],
                     ],
                     [

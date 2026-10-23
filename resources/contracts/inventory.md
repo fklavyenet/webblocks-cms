@@ -1644,6 +1644,14 @@ Filters and Standard view clear the view selection and custom columns; Pages
 retain their existing site-context rules. Pagination, list/grid/folder links,
 details and safe return URLs preserve the current view and column context.
 
+Personal view management uses the native WebBlocks UI accordion, compact name
+and action rows, and responsive column controls. Pages use the same localized
+labels in the column chooser, table headings and corresponding sort choices.
+Page, ID, total blocks, status and last edited support server-side heading
+sorting; ID and total-block sorting can also be retained in a personal view.
+Created time and slug remain additional sort choices even without standalone
+table columns. Selection, public/preview links and actions are not sortable.
+
 ## Private editing preview (1.105.7)
 
 Existing editable draft and staged pages offer an optional adjacent preview on

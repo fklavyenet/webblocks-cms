@@ -6,7 +6,7 @@
     $standardUrl = route('admin.'.$listing.'.index', $listing === 'pages' ? ['reset' => 1] : []);
 @endphp
 <div class="wb-card wb-card-muted" data-wb-listing-views>
-    <div class="wb-card-body wb-stack wb-gap-3">
+    <div class="wb-card-body wb-stack wb-stack-3">
         <div class="wb-cluster wb-cluster-between wb-flex-wrap wb-gap-2">
             <strong>{{ $viewText('title') }}</strong>
             <a href="{{ $standardUrl }}" class="wb-btn wb-btn-secondary">{{ $viewText('standard') }}</a>
@@ -22,67 +22,84 @@
             <p class="wb-text-sm" role="status" data-wb-listing-view-status>{{ $viewText($listingView['blocked'] ? 'stale' : ($listingView['changed'] ? 'changed' : 'matching')) }}</p>
         @endif
         <p class="wb-text-sm wb-text-muted" data-wb-listing-view-pending hidden>{{ $viewText('pending') }}</p>
-        <details>
-            <summary>{{ $viewText('manage') }}</summary>
-            <div class="wb-stack wb-gap-3">
-                <p class="wb-text-sm wb-text-muted">{{ $viewText('help') }}</p>
-                <form method="POST" action="{{ route('admin.listing-views.store', $viewRoute) }}" class="wb-stack wb-gap-2">
-                    @csrf
-                    <input type="hidden" name="operation" value="save">
-                    @foreach ($listingView['filters'] as $filterName => $filterValue)
-                        <input type="hidden" name="filters[{{ $filterName }}]" value="{{ $filterValue }}">
-                    @endforeach
-                    <input type="hidden" name="columns" value="{{ implode(',', $listingColumns) }}">
-                    <label class="wb-label" for="listing_view_new_name">{{ $viewText('name') }}</label>
-                    <input id="listing_view_new_name" class="wb-input" name="name" maxlength="80" required>
-                    <button class="wb-btn wb-btn-primary" type="submit" data-wb-listing-view-save>{{ $viewText('create') }}</button>
-                </form>
-                @if ($selectedView)
-                    <form method="POST" action="{{ route('admin.listing-views.update', [...$viewRoute, 'listingView' => $selectedView->id]) }}" class="wb-stack wb-gap-2">
-                        @csrf
-                        @method('PUT')
-                        @foreach ($listingView['filters'] as $filterName => $filterValue)
-                            <input type="hidden" name="filters[{{ $filterName }}]" value="{{ $filterValue }}">
-                        @endforeach
-                        <input type="hidden" name="columns" value="{{ implode(',', $listingColumns) }}">
-                        <label class="wb-label" for="listing_view_name">{{ $viewText('name') }}</label>
-                        <input id="listing_view_name" class="wb-input" name="name" value="{{ $selectedView->name }}" maxlength="80" required>
-                        <div class="wb-cluster wb-flex-wrap wb-gap-2">
-                            <button class="wb-btn wb-btn-secondary" type="submit" name="operation" value="rename">{{ $viewText('rename') }}</button>
-                            <button class="wb-btn wb-btn-primary" type="submit" name="operation" value="save" data-wb-listing-view-save @disabled($listingView['blocked'] && ! request()->boolean('correct_view'))>{{ $viewText('update') }}</button>
-                            <button class="wb-btn wb-btn-danger" type="button" data-wb-toggle="modal" data-wb-target="#delete-listing-view-modal">{{ $viewText('delete') }}</button>
-                        </div>
-                    </form>
-                @endif
-                <form method="GET" action="{{ route('admin.'.$listing.'.index') }}" class="wb-stack wb-gap-2" data-wb-listing-view-columns>
-                    @foreach ($listingView['filters'] as $filterName => $filterValue)
-                        <input type="hidden" name="{{ $filterName }}" value="{{ $filterValue }}">
-                    @endforeach
-                    @if ($selectedView)
-                        <input type="hidden" name="saved_view" value="{{ $selectedView->id }}">
-                        @if ($listingView['blocked'])
-                            <input type="hidden" name="correct_view" value="1">
-                        @endif
-                    @endif
-                    <section class="wb-stack wb-gap-2" role="group" aria-labelledby="listing-columns-title">
-                        <h3 class="wb-m-0 wb-text-base wb-font-semibold" id="listing-columns-title">{{ $viewText('columns') }}</h3>
-                        <p class="wb-text-sm wb-text-muted">{{ $viewText('columns_help') }}</p>
-                        @foreach ($listingView['columnOptions'] as $columnIndex => $columnOption)
+        <div class="wb-accordion" data-wb-accordion>
+            <div class="wb-accordion-item">
+                <button type="button" class="wb-accordion-trigger" aria-expanded="false" aria-controls="listing-view-management">
+                    <span>{{ $viewText('manage') }}</span>
+                    <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
+                </button>
+                <div class="wb-accordion-content" id="listing-view-management">
+                    <div class="wb-form-grid wb-mt-3">
+                        <p class="wb-text-sm wb-text-muted">{{ $viewText('help') }}</p>
+                        <form method="POST" action="{{ route('admin.listing-views.store', $viewRoute) }}" class="wb-admin-listing-view-form">
+                            @csrf
+                            <input type="hidden" name="operation" value="save">
+                            @foreach ($listingView['filters'] as $filterName => $filterValue)
+                                <input type="hidden" name="filters[{{ $filterName }}]" value="{{ $filterValue }}">
+                            @endforeach
+                            <input type="hidden" name="columns" value="{{ implode(',', $listingColumns) }}">
                             <div class="wb-field">
-                                <label for="listing_column_{{ $columnIndex }}" class="wb-label">{{ $viewText('position') }} {{ $columnIndex + 1 }}</label>
-                                <select id="listing_column_{{ $columnIndex }}" name="columns[]" class="wb-select">
-                                    <option value="">{{ $viewText('hidden') }}</option>
-                                    @foreach ($listingView['columnOptions'] as $option)
-                                        <option value="{{ $option }}" @selected(($listingColumns[$columnIndex] ?? '') === $option)>{{ $viewText($listing.'.'.$option) }}</option>
-                                    @endforeach
-                                </select>
+                                <label class="wb-label" for="listing_view_new_name">{{ $viewText('name') }}</label>
+                                <input id="listing_view_new_name" class="wb-input" name="name" maxlength="80" required>
                             </div>
-                        @endforeach
-                    </section>
-                    <button class="wb-btn wb-btn-secondary" type="submit">{{ $viewText('apply_columns') }}</button>
-                </form>
+                            <div class="wb-cluster wb-cluster-2">
+                                <button class="wb-btn wb-btn-primary" type="submit" data-wb-listing-view-save>{{ $viewText('create') }}</button>
+                            </div>
+                        </form>
+                        @if ($selectedView)
+                            <form method="POST" action="{{ route('admin.listing-views.update', [...$viewRoute, 'listingView' => $selectedView->id]) }}" class="wb-admin-listing-view-form">
+                                @csrf
+                                @method('PUT')
+                                @foreach ($listingView['filters'] as $filterName => $filterValue)
+                                    <input type="hidden" name="filters[{{ $filterName }}]" value="{{ $filterValue }}">
+                                @endforeach
+                                <input type="hidden" name="columns" value="{{ implode(',', $listingColumns) }}">
+                                <div class="wb-field">
+                                    <label class="wb-label" for="listing_view_name">{{ $viewText('name') }}</label>
+                                    <input id="listing_view_name" class="wb-input" name="name" value="{{ $selectedView->name }}" maxlength="80" required>
+                                </div>
+                                <div class="wb-cluster wb-flex-wrap wb-gap-2">
+                                    <button class="wb-btn wb-btn-secondary" type="submit" name="operation" value="rename">{{ $viewText('rename') }}</button>
+                                    <button class="wb-btn wb-btn-primary" type="submit" name="operation" value="save" data-wb-listing-view-save @disabled($listingView['blocked'] && ! request()->boolean('correct_view'))>{{ $viewText('update') }}</button>
+                                    <button class="wb-btn wb-btn-danger" type="button" data-wb-toggle="modal" data-wb-target="#delete-listing-view-modal">{{ $viewText('delete') }}</button>
+                                </div>
+                            </form>
+                        @endif
+                        <form method="GET" action="{{ route('admin.'.$listing.'.index') }}" class="wb-form-section" data-wb-listing-view-columns>
+                            @foreach ($listingView['filters'] as $filterName => $filterValue)
+                                <input type="hidden" name="{{ $filterName }}" value="{{ $filterValue }}">
+                            @endforeach
+                            @if ($selectedView)
+                                <input type="hidden" name="saved_view" value="{{ $selectedView->id }}">
+                                @if ($listingView['blocked'])
+                                    <input type="hidden" name="correct_view" value="1">
+                                @endif
+                            @endif
+                            <section class="wb-form-grid" role="group" aria-labelledby="listing-columns-title">
+                                <h3 class="wb-m-0 wb-text-base wb-font-semibold" id="listing-columns-title">{{ $viewText('columns') }}</h3>
+                                <p class="wb-text-sm wb-text-muted">{{ $viewText('columns_help') }}</p>
+                                <div class="wb-admin-listing-view-columns">
+                                    @foreach ($listingView['columnOptions'] as $columnIndex => $columnOption)
+                                        <div class="wb-field">
+                                            <label for="listing_column_{{ $columnIndex }}" class="wb-label">{{ $viewText('position') }} {{ $columnIndex + 1 }}</label>
+                                            <select id="listing_column_{{ $columnIndex }}" name="columns[]" class="wb-select">
+                                                <option value="">{{ $viewText('hidden') }}</option>
+                                                @foreach ($listingView['columnOptions'] as $option)
+                                                    <option value="{{ $option }}" @selected(($listingColumns[$columnIndex] ?? '') === $option)>{{ $listingColumnLabels[$option] ?? $viewText($listing.'.'.$option) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </section>
+                            <div class="wb-cluster wb-cluster-2">
+                                <button class="wb-btn wb-btn-secondary" type="submit">{{ $viewText('apply_columns') }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-        </details>
+        </div>
     </div>
 </div>
 @if ($selectedView)

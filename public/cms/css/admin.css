@@ -64,6 +64,29 @@ svg.wb-sidebar-brand-logo {
     width: 100%;
 }
 
+.wb-admin-listing-view-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--wb-s3);
+}
+
+.wb-admin-listing-view-form > .wb-field {
+    flex: 0 1 24rem;
+    min-width: 0;
+    width: 100%;
+}
+
+.wb-admin-listing-view-form .wb-btn {
+    white-space: normal;
+}
+
+.wb-admin-listing-view-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+    gap: var(--wb-s3);
+}
+
 .wb-slot-visual {
     border: 1px solid color-mix(in srgb, var(--wb-border) 72%, transparent);
 }

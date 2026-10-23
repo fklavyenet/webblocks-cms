@@ -8,7 +8,7 @@ use WebBlocks\Cms\Http\Requests\Admin\AdminTableSortRequest;
 final class AdminTableSort
 {
   private const TABLES = [
-    'pages' => [['created_at', 'updated_at', 'title', 'slug', 'status'], 'created_at', 'desc'],
+    'pages' => [['created_at', 'updated_at', 'title', 'slug', 'status', 'id', 'blocks_count'], 'created_at', 'desc'],
     'media' => [['created_at', 'updated_at', 'title', 'filename', 'kind', 'folder', 'usage'], 'updated_at', 'desc'],
     'shared-slots' => [['updated_at', 'name', 'handle', 'slot_name', 'public_shell'], 'updated_at', 'desc'],
     'blocks' => [['id', 'sort_order', 'status'], 'id', 'desc'],

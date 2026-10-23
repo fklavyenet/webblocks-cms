@@ -99,6 +99,19 @@ class PersonalListingViewsTest extends TestCase
   }
 
   #[Test]
+  public function page_views_retain_id_and_block_count_sorting(): void
+  {
+    foreach (['id', 'blocks_count'] as $sort) {
+      $payload = [...$this->payload('pages', ['sort' => $sort]), 'name' => 'Sorted by '.$sort];
+      $id = $this->createView('pages', $payload);
+      $this->app['session']->flush();
+      $response = $this->followingRedirects()->get($this->applyUrl($id))->assertOk();
+      $response->assertViewHas('filters', fn ($filters) => $filters['sort'] === $sort && $filters['direction'] === 'asc');
+      $response->assertViewHas('listingView', fn ($view) => ! $view['blocked'] && ! $view['changed']);
+    }
+  }
+
+  #[Test]
   public function page_views_survive_sessions_reset_pagination_and_preserve_results_and_permissions(): void
   {
     foreach (['Beta', 'Alpha'] as $title) {

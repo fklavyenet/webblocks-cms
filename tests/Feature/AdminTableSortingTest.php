@@ -227,6 +227,45 @@ class AdminTableSortingTest extends TestCase
   }
 
   #[Test]
+  public function page_sort_choices_match_headings_and_sort_ids_and_block_counts(): void
+  {
+    $page = Models\Page::firstOrFail();
+    $page->blocks()->firstOrFail()->replicate()->save();
+    foreach (['id', 'blocks_count'] as $key) {
+      foreach (['asc', 'desc'] as $direction) {
+        $response = $this->get(route('admin.pages.index', ['site' => 'all', 'sort' => $key, 'direction' => $direction]))->assertOk();
+        $values = $response->viewData('pages')->pluck($key)->all();
+        $this->assertCount(2, array_unique($values));
+        $expected = $values;
+        $direction === 'asc' ? sort($expected) : rsort($expected);
+        $this->assertSame($expected, $values);
+        $dom = new DOMDocument;
+        @$dom->loadHTML($response->getContent());
+        $xpath = new DOMXPath($dom);
+        $this->assertSame($key, $xpath->query('//select[@id="pages_sort"]/option[@selected]')->item(0)->getAttribute('value'));
+        $this->assertSame($direction === 'asc' ? 'ascending' : 'descending', $xpath->query('//th[@data-wb-sort="'.$key.'"]')->item(0)->getAttribute('aria-sort'));
+      }
+    }
+    foreach (['en', 'tr', 'de', 'fr', 'es', 'it'] as $locale) {
+      auth()->user()->forceFill(['admin_locale' => $locale])->save();
+      $response = $this->get(route('admin.pages.index', ['site' => 'all']))->assertOk();
+      $dom = new DOMDocument;
+      @$dom->loadHTML($response->getContent());
+      $xpath = new DOMXPath($dom);
+      foreach (['title', 'id', 'blocks_count', 'status', 'updated_at'] as $key) {
+        $heading = trim($xpath->query('//th[@data-wb-sort="'.$key.'"]/a')->item(0)->textContent);
+        $this->assertSame($heading, trim($xpath->query('//select[@id="pages_sort"]/option[@value="'.$key.'"]')->item(0)->textContent));
+      }
+      foreach (['id' => 'id', 'view' => null, 'blocks' => 'blocks_count', 'status' => 'status', 'updated' => 'updated_at'] as $column => $sortKey) {
+        $heading = $sortKey === null
+          ? $xpath->query('//table//thead/tr/th')->item(3)
+          : $xpath->query('//th[@data-wb-sort="'.$sortKey.'"]')->item(0);
+        $this->assertSame(trim($heading->textContent), trim($xpath->query('//select[@id="listing_column_0"]/option[@value="'.$column.'"]')->item(0)->textContent));
+      }
+    }
+  }
+
+  #[Test]
   public function sorting_controls_have_translated_accessible_names_in_every_panel_language(): void
   {
     foreach (['en', 'tr', 'de', 'fr', 'es', 'it'] as $locale) {
