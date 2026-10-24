@@ -2,13 +2,18 @@
 
 ## Unreleased
 
-## 1.105.19
+## 1.105.20
 
 - Speed up admin navigation by reusing authorization inputs, schema checks, default locale and site domain lookups within each request, refreshing them after database writes and rollback.
 - Resolve Media Library usage in batches while preserving site access, usage labels and reference ordering.
 - Keep Blocks page filters bounded with searchable, independently paginated page choices and retained selections.
 - Load Sites export choices only when opening the selected site's dialog, and batch list deletion availability while preserving full confirmation and transactional deletion guards.
 - Add regression coverage for query growth, actor and connection isolation, EN/TR lookup behavior, filter navigation and media references.
+- Keep exact page-ID searches compatible with both supported Laravel framework versions.
+
+## 1.105.19 (unpublished candidate)
+
+- Not published to the update channel or GitHub Releases: CI found a Laravel 12 incompatibility in exact page-ID searches. Superseded by 1.105.20.
 
 ## 1.105.18
 

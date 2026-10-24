@@ -30,7 +30,7 @@ class AdminBlockPageOptions
       ->when($search !== '', fn (Builder $query) => $query->where(function (Builder $query) use ($search, $id): void {
         $query->whereHas('translations', fn (Builder $query) => $query->where(function (Builder $query) use ($search): void {
           $query->where('name', 'like', '%'.$search.'%')->orWhere('path', 'like', '%'.$search.'%')->orWhere('slug', 'like', '%'.$search.'%');
-        }))->when($id !== null, fn (Builder $query) => $query->orWhereKey($id));
+        }))->when($id !== null, fn (Builder $query) => $query->orWhere($query->getModel()->getQualifiedKeyName(), $id));
       }))
       ->orderByDesc('id')
       ->paginate(self::LIMIT, ['*'], 'page_options_page', max(1, (int) ($filters['page_options_page'] ?? 1)))
