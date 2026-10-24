@@ -4,20 +4,19 @@ namespace WebBlocks\Cms\Support\Pages;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageAccessRule;
 use WebBlocks\Cms\Support\Memberships\MemberDirectory;
 use WebBlocks\Cms\Support\Plugins\PluginServiceRegistry;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 
 class PublicPageAccess
 {
   public function allows(Page $page, Request $request): bool
   {
-    if (! Schema::hasTable('wbcms_page_access_rules')) {
-      return true;
-    }
-    $rule = PageAccessRule::query()->where('page_id', $page->id)->first();
+    $rule = $this->ruleFor($page);
     if (! $rule) {
       return true;
     }
@@ -33,17 +32,41 @@ class PublicPageAccess
   /** Public discovery never includes protected page text, even for members. */
   public function scopePublic(Builder $query): Builder
   {
-    return Schema::hasTable('wbcms_page_access_rules') ? $query->whereDoesntHave('accessRule') : $query;
+    return $this->available() ? $query->whereDoesntHave('accessRule') : $query;
   }
 
   public function protected(Page $page): bool
   {
-    return Schema::hasTable('wbcms_page_access_rules') && PageAccessRule::query()->where('page_id', $page->id)->exists();
+    return $this->ruleFor($page) !== null;
   }
 
   public function exportRule(Page $page): ?array
   {
-    return $this->protected($page) ? $page->accessRule()->first()?->only('package_id') : null;
+    return $this->ruleFor($page)?->only('package_id');
+  }
+
+  public function available(): bool
+  {
+    return app(RequestMemo::class)->remember('page.access-schema', [], fn () => Schema::hasTable('wbcms_page_access_rules'));
+  }
+
+  private function ruleFor(Page $page): ?PageAccessRule
+  {
+    if (! $this->available()) {
+      return null;
+    }
+
+    return app(RequestMemo::class)->remember('page.access-rule', [$page->getConnectionName(), $page->site_id, $page->id], fn () => $page->accessRule()->first());
+  }
+
+  /** Called immediately after eager loading, without caching membership decisions. */
+  public function primeRules(Collection $pages): void
+  {
+    foreach ($pages as $page) {
+      if ($page instanceof Page && $page->relationLoaded('accessRule')) {
+        app(RequestMemo::class)->put('page.access-rule', [$page->getConnectionName(), $page->site_id, $page->id], $page->accessRule);
+      }
+    }
   }
 
   public function importRule(Page $page, mixed $rule): void
@@ -54,7 +77,7 @@ class PublicPageAccess
     if (! is_array($rule) || ! array_key_exists('package_id', $rule) || array_diff(array_keys($rule), ['package_id']) !== []) {
       throw new \RuntimeException(__('webblocks-cms::admin.plugin_dependencies.invalid_access'));
     }
-    if (! Schema::hasTable('wbcms_page_access_rules')) {
+    if (! $this->available()) {
       throw new \RuntimeException(__('webblocks-cms::admin.plugin_dependencies.invalid_access'));
     }
     // Source package IDs cannot authorize unrelated packages on another installation.

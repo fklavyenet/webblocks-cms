@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 
 class NavigationTree
 {
@@ -16,9 +17,11 @@ class NavigationTree
     $items = NavigationItem::query()
       ->forSite($site)
       ->forMenu($menuKey)
-      ->with(['page.translations', 'translations.locale'])
+      ->with(['page.translations', 'page.site', 'translations.locale', ...(app(PublicPageAccess::class)->available() ? ['page.accessRule'] : [])])
       ->ordered()
       ->get();
+
+    app(PublicPageAccess::class)->primeRules($items->pluck('page')->filter());
 
     return $this->nestItems($items);
   }

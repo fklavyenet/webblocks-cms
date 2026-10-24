@@ -93,6 +93,13 @@ class PageController extends Controller
         ->orderBy('id'),
     ]);
 
+    // All page-owned published blocks are already loaded in one ordered set.
+    // Reuse those instances instead of hydrating every descendant again at each level.
+    $children = $page->blocks->groupBy('parent_id');
+    foreach ($page->blocks as $block) {
+      $block->setRelation('children', $children->get($block->id, collect())->values());
+    }
+
     $this->visitorEventLogger->logPageView($request, $page);
 
     $view = view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.pages.show', $this->presenter->present($page));
@@ -118,11 +125,6 @@ class PageController extends Controller
       'buttonTranslations',
       'imageTranslations',
       'contactFormTranslations',
-      'children' => fn ($query) => $query
-        ->where('status', 'published')
-        ->with($this->publishedBlockRelations())
-        ->orderBy('sort_order')
-        ->orderBy('id'),
     ];
   }
 }

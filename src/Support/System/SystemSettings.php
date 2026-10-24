@@ -8,6 +8,7 @@ use Throwable;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class SystemSettings
@@ -177,6 +178,11 @@ class SystemSettings
 
   public function all(): array
   {
+    return app(RequestMemo::class)->remember('system.settings', [], fn () => $this->loadAll());
+  }
+
+  private function loadAll(): array
+  {
     if (! $this->settingsTableExists()) {
       return [];
     }
@@ -197,6 +203,11 @@ class SystemSettings
   }
 
   public function defaultLocaleCode(): string
+  {
+    return app(RequestMemo::class)->remember('system.default-locale', [], fn () => $this->loadDefaultLocaleCode());
+  }
+
+  private function loadDefaultLocaleCode(): string
   {
     try {
       $defaultLocale = Locale::query()->where('is_default', true)->value('code');

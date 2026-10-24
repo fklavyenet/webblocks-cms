@@ -6,6 +6,8 @@ use FilesystemIterator;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionsHandler;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
 use Illuminate\Http\Request;
@@ -102,6 +104,7 @@ use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRegistrar;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Relational\RelationalDocuments;
 use WebBlocks\Cms\Support\Relational\StructuredSettings;
@@ -903,6 +906,21 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public function register(): void
   {
+    $this->app->scoped(RequestMemo::class);
+    // Resolve the current scope at call time, including from long-lived helpers.
+    // Pivot/raw writes bypass model events; they must invalidate negative lookups too.
+    $this->app['events']->listen(QueryExecuted::class, static function (QueryExecuted $query): void {
+      $app = app();
+      if ($app->resolved(RequestMemo::class) && ! preg_match('/^\s*(select|pragma|explain|show|describe)\b/i', $query->sql)) {
+        $app->make(RequestMemo::class)->clear();
+      }
+    });
+    $this->app['events']->listen(TransactionRolledBack::class, static function (): void {
+      $app = app();
+      if ($app->resolved(RequestMemo::class)) {
+        $app->make(RequestMemo::class)->clear();
+      }
+    });
     $this->app->singleton(BackupOperations::class);
 
     $this->app->register(EmbeddedRuntimeServiceProvider::class);

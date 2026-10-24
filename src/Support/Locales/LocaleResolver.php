@@ -3,8 +3,10 @@
 namespace WebBlocks\Cms\Support\Locales;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
 class LocaleResolver
@@ -26,6 +28,11 @@ class LocaleResolver
   }
 
   public function default(): Locale
+  {
+    return app(RequestMemo::class)->remember('locale.default', [], fn () => $this->loadDefault());
+  }
+
+  private function loadDefault(): Locale
   {
     $configuredCode = $this->systemSettings->defaultLocaleCode();
 
@@ -49,17 +56,18 @@ class LocaleResolver
       return null;
     }
 
-    $query = Locale::query()
-      ->where('code', $code)
-      ->where('is_enabled', true);
-
     if ($site) {
-      $query->whereHas('sites', fn ($sites) => $sites
-        ->where((new Site)->qualifyColumn('id'), $site->id)
-        ->where('wbcms_site_locales.is_enabled', true));
+      return $this->enabledForSite($site)->firstWhere('code', $code);
     }
 
-    return $query->first();
+    return app(RequestMemo::class)->remember('locale.enabled', [$code], fn () => Locale::query()
+      ->where('code', $code)
+      ->where('is_enabled', true)->first());
+  }
+
+  public function enabledForSite(Site $site): Collection
+  {
+    return app(RequestMemo::class)->remember('locale.site', [$site->getConnectionName(), $site->id], fn () => $site->enabledLocales()->get());
   }
 
   public function resolve(string $code): ?Locale
@@ -70,6 +78,6 @@ class LocaleResolver
       return null;
     }
 
-    return Locale::query()->where('code', $code)->first();
+    return app(RequestMemo::class)->remember('locale.resolve', [$code], fn () => Locale::query()->where('code', $code)->first());
   }
 }

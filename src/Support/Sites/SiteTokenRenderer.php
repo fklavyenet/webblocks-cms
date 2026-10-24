@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Sites;
 
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteVariable;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 
 class SiteTokenRenderer
 {
@@ -11,7 +12,7 @@ class SiteTokenRenderer
 
   public function render(?string $value, ?Site $site, bool $escapeReplacement = false): ?string
   {
-    if ($value === null || $value === '' || ! $site) {
+    if ($value === null || $value === '' || ! $site || preg_match(self::TOKEN_PATTERN, $value) !== 1) {
       return $value;
     }
 
@@ -37,6 +38,11 @@ class SiteTokenRenderer
   }
 
   private function variablesFor(Site $site): array
+  {
+    return app(RequestMemo::class)->remember('site.variables', [$site->getConnectionName(), $site->id], fn () => $this->loadVariables($site));
+  }
+
+  private function loadVariables(Site $site): array
   {
     $variables = $site->relationLoaded('siteVariables')
       ? $site->siteVariables

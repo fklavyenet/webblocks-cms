@@ -8,6 +8,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\Sites\ResolvedSite;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteResolver;
@@ -102,7 +103,10 @@ class PageRouteResolver
       return null;
     }
 
-    return $this->applyLocalePrefix($this->canonicalPublicPath($translation), $resolvedLocale);
+    return app(RequestMemo::class)->remember('page.path', [
+      $page->getConnectionName(), $resolvedSite->id, $page->id, $resolvedLocale->id,
+      $resolvedLocale->code, $resolvedLocale->is_default, $translation->path, $translation->slug, $this->publicMount->prefix(),
+    ], fn () => $this->applyLocalePrefix($this->canonicalPublicPath($translation), $resolvedLocale));
   }
 
   public function urlFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
@@ -255,6 +259,56 @@ class PageRouteResolver
       return $url;
     }
 
+    return app(RequestMemo::class)->remember('page.localized-url', [
+      $site->getConnectionName(), $site->id, $targetLocale->id, $targetLocale->code,
+      $targetLocale->is_default, $this->publicMount->prefix(), $url,
+    ], fn () => $this->resolveLocalizedUrl($url, $targetLocale, $site));
+  }
+
+  private function resolveLocalizedUrl(string $url, Locale $targetLocale, Site $site): string
+  {
+    $source = $this->sourceLink($url, $site);
+    if ($source === null) {
+      return $url;
+    }
+    [$authorLocale, $path, $suffix] = $source;
+    $identity = [$site->getConnectionName(), $site->id, $authorLocale->id, $path];
+    $memo = app(RequestMemo::class);
+    if (! $memo->has('page.link-source', $identity)) {
+      $this->primeSourceLinks($site, $authorLocale, [$path]);
+    }
+    $translation = $memo->remember('page.link-source', $identity, fn () => null);
+    if (! $translation?->page) {
+      return $url;
+    }
+
+    $localizedPath = $this->pathFor($translation->page, $targetLocale, $site);
+
+    return $localizedPath ? $localizedPath.$suffix : $url;
+  }
+
+  /** Batch only links present in this render, never the entire site's catalog. */
+  public function primeLocalizedUrls(array $urls, Site $site): void
+  {
+    $groups = [];
+    foreach (array_unique($urls) as $url) {
+      $source = $this->sourceLink($url, $site);
+      if ($source !== null) {
+        [$authorLocale, $path] = $source;
+        $groups[$authorLocale->id]['locale'] = $authorLocale;
+        $groups[$authorLocale->id]['paths'][] = $path;
+      }
+    }
+    foreach ($groups as $group) {
+      $this->primeSourceLinks($site, $group['locale'], $group['paths']);
+    }
+  }
+
+  private function sourceLink(string $url, Site $site): ?array
+  {
+    if (! str_starts_with($url, '/') || str_starts_with($url, '//')) {
+      return null;
+    }
     $suffixStart = strcspn($url, '?#');
     $path = substr($url, 0, $suffixStart);
     // Accept already-mounted page links as well as stored content-relative links.
@@ -274,37 +328,43 @@ class PageRouteResolver
     }
 
     if (! $authorLocale) {
-      return $url;
+      return null;
     }
 
     try {
       $path = PagePath::canonicalize($path);
     } catch (\InvalidArgumentException) {
-      return $url;
+      return null;
     }
 
     if (PagePath::isReserved($path)) {
-      return $url;
+      return null;
     }
 
-    $translation = PageTranslation::query()
-      ->with('page')
+    return [$authorLocale, $path, $suffix];
+  }
+
+  private function primeSourceLinks(Site $site, Locale $authorLocale, array $paths): void
+  {
+    $memo = app(RequestMemo::class);
+    $paths = array_values(array_filter(array_unique($paths), fn ($path) => ! $memo->has('page.link-source', [$site->getConnectionName(), $site->id, $authorLocale->id, $path])));
+    foreach (array_chunk($paths, 100) as $chunk) {
+      $translations = PageTranslation::query()
+      ->with('page.translations')
       ->where('site_id', $site->id)
       ->where('locale_id', $authorLocale->id)
-      ->where('path', $path)
+      ->whereIn('path', $chunk)
       ->whereHas('page', fn ($query) => $query
         ->where('site_id', $site->id)
         ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
         ->where('status', 'published'))
-      ->first();
-
-    if (! $translation || ! $translation->page) {
-      return $url;
+      ->get()->keyBy('path');
+      foreach ($chunk as $path) {
+        $translation = $translations->get($path);
+        $translation?->page?->setRelation('site', $site);
+        $memo->put('page.link-source', [$site->getConnectionName(), $site->id, $authorLocale->id, $path], $translation);
+      }
     }
-
-    $localizedPath = $this->pathFor($translation->page, $targetLocale, $site);
-
-    return $localizedPath ? $localizedPath.$suffix : $url;
   }
 
   public function legacyRedirectPath(Request $request, string $legacyPath): ?string
@@ -342,8 +402,11 @@ class PageRouteResolver
       }
     }
 
-    return $translations?->first(fn (PageTranslation $candidate) => $candidate->locale_id === $resolvedLocale->id)
-      ?? $page->translations()->where('locale_id', $resolvedLocale->id)->first();
+    if ($translation = $translations?->first(fn (PageTranslation $candidate) => $candidate->locale_id === $resolvedLocale->id)) {
+      return $translation;
+    }
+
+    return app(RequestMemo::class)->remember('page.translation', [$page->getConnectionName(), $page->site_id, $page->id, $resolvedLocale->id], fn () => $page->translations()->where('locale_id', $resolvedLocale->id)->first());
   }
 
   public function siteLocale(?string $localeCode = null, ?Site $site = null): Locale
@@ -356,9 +419,9 @@ class PageRouteResolver
 
   private function requestedLocale(Locale|string|null $locale = null, ?Site $site = null): ?Locale
   {
-    $defaultLocale = $this->localeResolver->default();
-
     if ($locale === null) {
+      $defaultLocale = $this->localeResolver->default();
+
       return $site && ! $site->hasEnabledLocale($defaultLocale) ? null : $defaultLocale;
     }
 

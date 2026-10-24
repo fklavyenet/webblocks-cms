@@ -52,6 +52,13 @@ class PublicPagePresenter
     $slots = $this->separateHeaderNavbarsFromSiblingBlocks($slots);
     $slots = $this->orderSlotsForLayout($page, $slots);
     $applicationAssets = $this->applicationAssetCollector->collect($slots);
+    if ($page->site) {
+      $urls = [];
+      foreach ($slots as $slot) {
+        $this->collectEditorialUrls($slot['blocks'], $urls);
+      }
+      $this->pageRouteResolver->primeLocalizedUrls($urls, $page->site);
+    }
 
     return [
       'page' => $page,
@@ -83,6 +90,27 @@ class PublicPagePresenter
     $slug = trim($slug, '-');
 
     return 'wb-page-'.($slug !== '' ? $slug : 'home');
+  }
+
+  private function collectEditorialUrls(Collection $blocks, array &$urls): void
+  {
+    foreach ($blocks as $block) {
+      // These are prefetch hints only. Dynamic bindings still resolve at render time.
+      $url = match ($block->typeSlug()) {
+        'button_link' => $block->buttonLinkUrl(),
+        'card' => $block->cardUrl(),
+        'button', 'column_item', 'link-list-item', 'stat-card' => Block::safePublicUrl($block->url),
+        'navbar-brand' => $block->navbarBrandUrl(),
+        'sidebar-brand', 'sidebar-nav-item', 'sidebar-nav-group' => $block->sidebarLinkUrl(),
+        default => null,
+      };
+      if ($url !== null) {
+        $urls[] = $url;
+      }
+      if ($block->relationLoaded('children')) {
+        $this->collectEditorialUrls($block->children, $urls);
+      }
+    }
   }
 
   private function stagedSourcePageBodyClass(Page $page): ?string

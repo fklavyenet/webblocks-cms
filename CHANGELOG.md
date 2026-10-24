@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.105.17
+
+- Speed up public page rendering by reusing locale, site variable and localized-link lookups within each request, including empty and missing results.
+- Load menu targets and access metadata in batches, preserving translated paths, link suffixes, draft filtering and member access checks.
+- Resolve shared block trees once per node and load page-owned descendants once, preserving block order, ownership and translation fallback.
+- Keep cached lookups isolated across sites, requests and worker jobs, and refresh them after database writes or transaction rollback.
+
 ## 1.105.16
 
 - Make personal view management compact and responsive, with standard WebBlocks UI accordion controls and naturally sized name/action rows.

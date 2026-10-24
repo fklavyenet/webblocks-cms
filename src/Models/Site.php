@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Support\Database\CmsTable;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
@@ -307,10 +308,14 @@ class Site extends CmsModel
 
   public function hasEnabledLocale(Locale|int|string|null $locale): bool
   {
+    if ($locale === null || $locale === '') {
+      return false;
+    }
+    $locales = app(LocaleResolver::class)->enabledForSite($this);
     $localeId = match (true) {
       $locale instanceof Locale => $locale->id,
       is_numeric($locale) => (int) $locale,
-      is_string($locale) && $locale !== '' => Locale::query()->where('code', Locale::normalizeCode($locale))->value('id'),
+      is_string($locale) && $locale !== '' => $locales->firstWhere('code', Locale::normalizeCode($locale))?->id,
       default => null,
     };
 
@@ -318,9 +323,7 @@ class Site extends CmsModel
       return false;
     }
 
-    return $this->enabledLocales()
-      ->where((new Locale)->qualifyColumn('id'), $localeId)
-      ->exists();
+    return $locales->contains('id', $localeId);
   }
 
   public static function primary(): ?self
