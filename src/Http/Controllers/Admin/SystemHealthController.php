@@ -16,14 +16,20 @@ class SystemHealthController extends Controller
     return view('webblocks-cms::admin.system.health', ['health' => $health->report($request->siteId())]);
   }
 
-  public function refresh(SystemHealthRequest $request, SystemHealthQuery $health): RedirectResponse
+  public function refresh(SystemHealthRequest $request): RedirectResponse
   {
+    $redirect = $request->filled('cleanup_tab')
+      ? redirect()->route('admin.system.cleanup.index', ['tab' => $request->validated('cleanup_tab')])
+      : redirect()->route('admin.system.health.index', array_filter(['site_id' => $request->siteId()]));
+
     try {
-      app(SystemMaintenanceReports::class)->refresh();
+      $refreshed = app(SystemMaintenanceReports::class)->refresh();
     } catch (\Throwable) {
-      return redirect()->route('admin.system.health.index', array_filter(['site_id' => $request->siteId()]))->withErrors(['health' => __('webblocks-cms::maintenance_reports.refresh_failed')]);
+      return $redirect->withErrors(['health' => __('webblocks-cms::maintenance_reports.refresh_failed')]);
     }
 
-    return redirect()->route('admin.system.health.index', array_filter(['site_id' => $request->siteId()]));
+    return $refreshed
+      ? $redirect->with('status', __('webblocks-cms::maintenance_reports.refresh_completed'))
+      : $redirect->with('maintenance_refresh_pending', true);
   }
 }

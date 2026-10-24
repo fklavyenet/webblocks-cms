@@ -20,7 +20,10 @@ class SystemHealthRequest extends FormRequest
 
   public function rules(): array
   {
-    return ['site_id' => ['nullable', 'integer', Rule::exists((new Site)->getTable(), 'id')]];
+    return [
+      'site_id' => ['nullable', 'integer', Rule::exists((new Site)->getTable(), 'id')],
+      'cleanup_tab' => ['nullable', Rule::in(['report', 'actions'])],
+    ];
   }
 
   public function siteId(): ?int

@@ -17,6 +17,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title'), 'description' => $text('description')])
     @include('webblocks-cms::admin.partials.flash')
+    @include('webblocks-cms::admin.partials.maintenance-refresh-feedback')
 
     <div class="wb-stack wb-stack-4">
         <div class="wb-card">
@@ -25,13 +26,7 @@
                     <strong>{{ $text('checked_at', ['time' => $date($health['checked_at'])]) }}</strong>
                     <span class="wb-text-sm wb-text-muted">{{ $text('snapshot_help') }}</span>
                 </div>
-                <form method="POST" action="{{ route('admin.system.health.refresh') }}">
-                    @csrf
-                    @if ($health['selected_site_id'])
-                        <input type="hidden" name="site_id" value="{{ $health['selected_site_id'] }}">
-                    @endif
-                    <button type="submit" class="wb-btn wb-btn-secondary"><i class="wb-icon wb-icon-refresh-cw" aria-hidden="true"></i> {{ $text('refresh') }}</button>
-                </form>
+                @include('webblocks-cms::admin.partials.maintenance-refresh-form', ['refreshSiteId' => $health['selected_site_id']])
             </div>
         </div>
 

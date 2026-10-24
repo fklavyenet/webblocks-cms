@@ -51,6 +51,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title'), 'description' => $text('description')])
     @include('webblocks-cms::admin.partials.flash')
+    @include('webblocks-cms::admin.partials.maintenance-refresh-feedback')
 
     @include('webblocks-cms::admin.partials.maintenance-report-status', ['report' => $maintenanceReport])
     @foreach ($overview['capacity_warnings'] ?? [] as $warning)
@@ -195,6 +196,8 @@
         </div>
         <div class="wb-card-footer wb-text-sm wb-text-muted">{{ $storageText('history_help') }}</div>
     </div>
+            @else
+                @include('webblocks-cms::admin.partials.cleanup-report-unavailable', ['refreshCleanupTab' => 'report'])
             @endif
             </div>
             <div class="wb-tabs-panel {{ $cleanupTab === 'settings' ? 'is-active' : '' }}" id="cleanup-settings-panel" @if ($cleanupTab !== 'settings') hidden @endif>
@@ -253,6 +256,9 @@
 
             </div>
             <div class="wb-tabs-panel {{ $cleanupTab === 'actions' ? 'is-active' : '' }}" id="cleanup-actions-panel" @if ($cleanupTab !== 'actions') hidden @endif>
+    @unless ($overview)
+        @include('webblocks-cms::admin.partials.cleanup-report-unavailable', ['refreshCleanupTab' => 'actions'])
+    @endunless
     <div class="wb-grid wb-grid-2 wb-gap-4 wb-mt-4">
         @foreach ($cards as $category => $card)
             <div class="wb-card">

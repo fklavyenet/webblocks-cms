@@ -24,6 +24,7 @@ use WebBlocks\Cms\Support\System\SystemBackupCleanup;
 use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\System\UploadedSystemBackupManager;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 use ZipArchive;
@@ -84,6 +85,107 @@ class SystemMaintenanceReportsTest extends TestCase
     $this->get(route('admin.dashboard'))->assertOk()->assertSee('Report not available yet.')->assertDontSee('No attention needed');
     $this->get(route('admin.system.backups.index'))->assertOk()->assertSee('data-wb-maintenance-report="missing"', false)->assertSee('name="retention_mode"', false);
     $this->get(route('admin.system.cleanup.index', ['tab' => 'settings']))->assertOk()->assertSee('data-wb-maintenance-report="missing"', false)->assertSee('name="page_revision_days"', false);
+  }
+
+  #[Test]
+  public function missing_reports_leave_both_cleanup_panels_with_an_explanation_and_refresh_action(): void
+  {
+    Cache::flush();
+    $this->forbidExpensiveReads();
+    foreach (['report', 'actions'] as $tab) {
+      $response = $this->get(route('admin.system.cleanup.index', ['tab' => $tab]))->assertOk();
+      $document = new \DOMDocument;
+      @$document->loadHTML($response->getContent());
+      $xpath = new \DOMXPath($document);
+      $panel = $xpath->query('//*[@id="cleanup-'.$tab.'-panel"]')->item(0);
+      $this->assertNotNull($panel);
+      $this->assertFalse($panel->hasAttribute('hidden'));
+      $this->assertStringContainsString(__('webblocks-cms::maintenance_reports.cleanup_'.$tab.'_unavailable'), $panel->textContent);
+      $this->assertSame(1, $xpath->query('.//form[@action="'.route('admin.system.health.refresh').'"]//input[@name="cleanup_tab" and @value="'.$tab.'"]', $panel)->length);
+      $this->assertSame(1, $xpath->query('.//button[@data-wb-busy]', $panel)->length);
+      $response->assertDontSee('data-wb-target="#cleanup-', false)->assertSee('name="page_revision_days"', false);
+    }
+  }
+
+  #[Test]
+  public function manual_refresh_confirms_success_and_keeps_the_site_filter(): void
+  {
+    $site = Site::create(['name' => 'Synthetic', 'handle' => 'synthetic']);
+    $response = $this->post(route('admin.system.health.refresh'), ['site_id' => $site->id]);
+    $response->assertRedirect(route('admin.system.health.index', ['site_id' => $site->id]))
+      ->assertSessionHas('status', __('webblocks-cms::maintenance_reports.refresh_completed'));
+    $this->assertSame('fresh', app(SystemMaintenanceReports::class)->read()['status']);
+    $this->get($response->headers->get('Location'))->assertOk()
+      ->assertSee('Checks and maintenance reports refreshed.')
+      ->assertSee('data-wb-busy-label="Refreshing checks…"', false);
+  }
+
+  #[Test]
+  public function cleanup_refresh_returns_to_the_requested_panel_with_the_completed_report(): void
+  {
+    foreach (['report', 'actions'] as $tab) {
+      $response = $this->post(route('admin.system.health.refresh'), ['cleanup_tab' => $tab]);
+      $response->assertRedirect(route('admin.system.cleanup.index', ['tab' => $tab]))
+        ->assertSessionHas('status', __('webblocks-cms::maintenance_reports.refresh_completed'));
+      $this->get($response->headers->get('Location'))->assertOk()
+        ->assertSee('id="cleanup-'.$tab.'-panel"', false)
+        ->assertSee('data-wb-maintenance-report="fresh"', false)
+        ->assertDontSee(__('webblocks-cms::maintenance_reports.cleanup_'.$tab.'_unavailable'))
+        ->assertSee('Storage report');
+    }
+  }
+
+  #[Test]
+  public function a_busy_refresh_shows_a_notice_instead_of_claiming_success(): void
+  {
+    app(SystemHealthQuery::class)->refreshSnapshot();
+    $reports = app(SystemMaintenanceReports::class);
+    $lock = Cache::lock($reports->cacheKey().':refresh', 900);
+    $this->assertTrue($lock->get());
+    $this->forbidExpensiveReads();
+    try {
+      foreach ([[], ['cleanup_tab' => 'actions']] as $parameters) {
+        $response = $this->post(route('admin.system.health.refresh'), $parameters);
+        $response->assertSessionHas('maintenance_refresh_pending', true)->assertSessionMissing('status');
+        $this->get($response->headers->get('Location'))->assertOk()
+          ->assertSee('Another report refresh is already in progress.')
+          ->assertSee('role="status"', false)
+          ->assertDontSee('Checks and maintenance reports refreshed.');
+      }
+    } finally {
+      $lock->release();
+    }
+  }
+
+  #[Test]
+  public function cleanup_refresh_failures_remain_visible_in_the_requested_panel(): void
+  {
+    $this->app->instance(SystemMaintenanceReports::class, Mockery::mock(SystemMaintenanceReports::class)->makePartial()->shouldReceive('refresh')->once()->andThrow(new RuntimeException('SENTINEL_PRIVATE'))->getMock());
+    $response = $this->post(route('admin.system.health.refresh'), ['cleanup_tab' => 'report']);
+    $response->assertRedirect(route('admin.system.cleanup.index', ['tab' => 'report']))->assertSessionHasErrors('health');
+    $this->get($response->headers->get('Location'))->assertOk()
+      ->assertSee(__('webblocks-cms::maintenance_reports.refresh_failed'))
+      ->assertDontSee('SENTINEL_PRIVATE');
+  }
+
+  #[Test]
+  public function refresh_rejects_unknown_cleanup_destinations_before_doing_work(): void
+  {
+    $this->app->instance(SystemMaintenanceReports::class, Mockery::mock(SystemMaintenanceReports::class)->shouldNotReceive('refresh')->getMock());
+    $this->postJson(route('admin.system.health.refresh'), ['cleanup_tab' => 'https://example.test'])->assertUnprocessable()->assertJsonValidationErrors('cleanup_tab');
+  }
+
+  #[Test]
+  public function every_admin_language_has_all_maintenance_report_messages(): void
+  {
+    $english = require dirname(__DIR__, 2).'/resources/lang/en/maintenance_reports.php';
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $catalog = require dirname(__DIR__, 2).'/resources/lang/'.$locale.'/maintenance_reports.php';
+      $this->assertSame(array_keys($english), array_keys($catalog));
+      foreach ($catalog as $message) {
+        $this->assertNotSame('', trim($message));
+      }
+    }
   }
 
   #[Test]
@@ -301,7 +403,7 @@ class SystemMaintenanceReportsTest extends TestCase
   public function manual_refresh_failure_retains_the_site_filter_and_hides_private_error_text(): void
   {
     $site = Site::create(['name' => 'Synthetic', 'handle' => 'synthetic']);
-    $this->app->instance(SystemMaintenanceReports::class, Mockery::mock(SystemMaintenanceReports::class)->shouldReceive('refresh')->once()->andThrow(new RuntimeException('SENTINEL_PRIVATE'))->getMock());
+    $this->app->instance(SystemMaintenanceReports::class, Mockery::mock(SystemMaintenanceReports::class)->makePartial()->shouldReceive('refresh')->once()->andThrow(new RuntimeException('SENTINEL_PRIVATE'))->getMock());
     $response = $this->post(route('admin.system.health.refresh', ['site_id' => $site->id]));
     $response->assertRedirect(route('admin.system.health.index', ['site_id' => $site->id]))->assertSessionHasErrors('health');
     $this->assertStringNotContainsString('SENTINEL_PRIVATE', session('errors')->first('health'));

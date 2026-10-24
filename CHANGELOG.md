@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.105.22
+
+- Show explanatory empty states and direct Refresh checks actions in Cleanup’s Storage and history and Cleanup actions tabs before the first report is available; return to the selected tab after refreshing.
+- Show a busy indicator while refreshing checks and explicit completion, concurrent-refresh, or failure feedback, preserving the System Health site filter and all six panel languages.
+
 ## 1.105.21
 
 - Dashboard, Backups, and Cleanup now open without rebuilding health reports, scanning storage, or decompressing backup SQL during ordinary panel requests, including when cached reports expire or refresh.
