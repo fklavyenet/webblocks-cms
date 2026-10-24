@@ -38,7 +38,9 @@
                     <div class="wb-stack wb-stack-2">
                         <strong id="dashboard-health-title">{{ $adminTranslator->get('system_health.title', $adminLocaleCode) }}</strong>
                         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                            @if (array_sum($dashboardSystemHealth['counts']) === 0)
+                            @if (($dashboardSystemHealth['status'] ?? 'fresh') === 'missing')
+                                <span class="wb-status-pill wb-status-inactive">{{ $adminTranslator->get('maintenance_reports.missing', $adminLocaleCode) }}</span>
+                            @elseif (array_sum($dashboardSystemHealth['counts']) === 0)
                                 <span class="wb-status-pill wb-status-active">{{ $adminTranslator->get('system_health.no_attention', $adminLocaleCode) }}</span>
                             @else
                                 @foreach (['critical' => 'wb-status-error', 'warning' => 'wb-status-pending', 'unknown' => 'wb-status-inactive'] as $status => $class)
@@ -49,6 +51,9 @@
                             @endif
                         </div>
                     </div>
+                    @if (($dashboardSystemHealth['status'] ?? 'fresh') === 'stale')
+                        <p class="wb-text-sm wb-text-muted">{{ $adminTranslator->get('maintenance_reports.stale', $adminLocaleCode, ['time' => $dashboardSystemHealth['checked_at']]) }}</p>
+                    @endif
                     <a href="{{ route('admin.system.health.index') }}" class="wb-btn wb-btn-secondary">{{ $adminTranslator->get('system_health.details', $adminLocaleCode) }}</a>
                 </div>
             </section>

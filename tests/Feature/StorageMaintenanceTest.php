@@ -21,6 +21,7 @@ use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\MaintenanceCleanupResult;
 use WebBlocks\Cms\Support\System\MaintenanceCleanupState;
 use WebBlocks\Cms\Support\System\StorageUsageReport;
+use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -253,6 +254,7 @@ class StorageMaintenanceTest extends TestCase
     $state = app(MaintenanceCleanupState::class);
     $state->start('media-variants', 'scheduled');
     $state->finish('media-variants', new MaintenanceCleanupResult(2, 20, 1, 3, [['code' => 'failed']]));
+    app(SystemMaintenanceReports::class)->refresh();
     foreach (['en', 'tr'] as $locale) {
       app()->setLocale($locale);
       $html = $controller->index()->render();

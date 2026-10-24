@@ -45,7 +45,7 @@ class UploadedSystemBackupManager
         'Archive validation passed.',
       ];
 
-      return SystemBackup::query()->create([
+      $backup = SystemBackup::query()->create([
         'type' => SystemBackup::TYPE_UPLOADED,
         'status' => SystemBackup::STATUS_COMPLETED,
         'label' => $sourceFilename,
@@ -62,6 +62,9 @@ class UploadedSystemBackupManager
         'output' => implode(PHP_EOL, array_merge($output, $this->manifestSummaryLines($manifest, $inspection))),
         'triggered_by_user_id' => $triggeredByUserId,
       ]);
+      app(BackupArchiveValidation::class)->validate($backup, alreadyInspected: true);
+
+      return $backup;
     } catch (Throwable $throwable) {
       $disk->delete($storedPath);
 

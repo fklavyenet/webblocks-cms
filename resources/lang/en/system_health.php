@@ -5,7 +5,7 @@ return [
   'navigation' => 'Maintenance',
   'description' => 'See what needs attention across your sites and find the next step.',
   'checked_at' => 'Last checked: :time',
-  'snapshot_help' => 'Site and storage checks are saved for five minutes. Scheduled work is checked on every visit.',
+  'snapshot_help' => 'Site checks are cached for five minutes. Storage uses the last completed maintenance report. Refresh checks updates both reports; scheduler evidence is read on each visit.',
   'refresh' => 'Refresh checks',
   'site_filter' => 'Site',
   'all_sites' => 'All sites',

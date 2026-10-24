@@ -13,13 +13,15 @@ final class StorageUsageReport
 {
   public function overview(): array
   {
+    $public = $this->publicMeasurements();
+
     return [
       'measured_at' => now()->toIso8601String(),
       'categories' => [
         'backups' => $this->backups(),
         'transfer_packages' => $this->disk(SiteTransferDisk::DISK, storage_path('app/site-transfers')),
-        'public_uploads' => $this->disk('public', null, false),
-        'media_variants' => $this->disk('public', null, true),
+        'public_uploads' => $public['uploads'],
+        'media_variants' => $public['variants'],
         'temporary_workspaces' => $this->directories([
           storage_path(trim((string) config('webblocks-updates.installer.workspace_root', 'app/system-updates'), '/')),
           storage_path('app/webblocks/tmp/catalog-installs'),
@@ -30,6 +32,53 @@ final class StorageUsageReport
         'logs' => $this->directories([storage_path('logs')]),
       ],
     ];
+  }
+
+  /** Partition uploads and generated variants in a single physical traversal. */
+  private function publicMeasurements(): array
+  {
+    $result = ['uploads' => $this->empty(), 'variants' => $this->empty()];
+    $config = config('filesystems.disks.public');
+    if (! is_array($config)) {
+      return ['uploads' => $this->empty('unavailable'), 'variants' => $this->empty('unavailable')];
+    }
+    try {
+      if (($config['driver'] ?? null) === 'local') {
+        $root = isset($config['root']) ? realpath($config['root']) : false;
+        if ($root === false || ! is_dir($root)) {
+          return ['uploads' => $this->empty('missing'), 'variants' => $this->empty('missing')];
+        }
+        $entries = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
+        foreach ($entries as $file) {
+          if ($file->isLink()) {
+            $result['uploads']['status'] = $result['variants']['status'] = 'partial';
+          } elseif ($file->isFile()) {
+            $path = substr($file->getPathname(), strlen(rtrim($root, '/')) + 1);
+            $key = $this->included($path, true) ? 'variants' : 'uploads';
+            $result[$key]['files']++;
+            $result[$key]['bytes'] += $file->getSize();
+          }
+        }
+      } else {
+        foreach (Storage::disk('public')->listContents('', true) as $file) {
+          if ($file->isFile()) {
+            $key = $this->included($file->path(), true) ? 'variants' : 'uploads';
+            $result[$key]['files']++;
+            if ($file->fileSize() === null) {
+              $result[$key]['status'] = 'partial';
+            } else {
+              $result[$key]['bytes'] += $file->fileSize();
+            }
+          }
+        }
+      }
+    } catch (Throwable) {
+      foreach ($result as &$measurement) {
+        $measurement['status'] = $measurement['files'] > 0 ? 'partial' : 'unavailable';
+      }
+    }
+
+    return $result;
   }
 
   public function backups(): array

@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\SystemHealthRequest;
 use WebBlocks\Cms\Queries\SystemHealthQuery;
+use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 
 class SystemHealthController extends Controller
 {
@@ -17,7 +18,11 @@ class SystemHealthController extends Controller
 
   public function refresh(SystemHealthRequest $request, SystemHealthQuery $health): RedirectResponse
   {
-    $health->refresh();
+    try {
+      app(SystemMaintenanceReports::class)->refresh();
+    } catch (\Throwable) {
+      return redirect()->route('admin.system.health.index', array_filter(['site_id' => $request->siteId()]))->withErrors(['health' => __('webblocks-cms::maintenance_reports.refresh_failed')]);
+    }
 
     return redirect()->route('admin.system.health.index', array_filter(['site_id' => $request->siteId()]));
   }

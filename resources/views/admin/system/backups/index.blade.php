@@ -35,20 +35,28 @@
     ])
 
     @include('webblocks-cms::admin.partials.flash')
+    @include('webblocks-cms::admin.partials.maintenance-report-status', ['report' => $maintenanceReport])
+    @if ($backupCleanupPreview)
     @include('webblocks-cms::admin.system.backups.retention-summary', ['plan' => $backupCleanupPreview->overview])
+
+    @endif
 
     <div class="wb-stack wb-stack-4">
         <div class="wb-alert wb-alert-info wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
             <div class="wb-stack wb-gap-1">
                 <div class="wb-alert-title">{{ $adminText('backups.cleanup_status', ['status' => $backupCleanupSettings['enabled'] ? $adminText('common.enabled') : $adminText('common.disabled')]) }}</div>
+                @if ($backupCleanupPreview)
                 <div>{{ $adminText('backups.cleanup_status_help', ['days' => $backupCleanupSettings['pre_update_days'], 'keep' => $backupCleanupSettings['keep_latest_pre_update'], 'count' => $backupCleanupPreview->candidateCount()]) }} <a href="{{ route('admin.system.cleanup.index', ['tab' => 'settings']) }}" class="wb-link">{{ $adminText('backups.manage_cleanup_settings') }}</a></div>
+                @else
+                <a href="{{ route('admin.system.cleanup.index', ['tab' => 'settings']) }}" class="wb-link">{{ $adminText('backups.manage_cleanup_settings') }}</a>
+                @endif
             </div>
             <button
                 type="button"
                 class="wb-btn wb-btn-danger"
                 data-wb-toggle="modal"
                 data-wb-target="#backups-cleanup-run-modal"
-                @disabled($backupCleanupPreview->candidateCount() === 0)
+                @disabled(($backupCleanupPreview?->candidateCount() ?? 0) === 0)
             >{{ $adminText('backups.clean_up_now') }}</button>
         </div>
         @if (! $backupTableExists)
@@ -177,7 +185,7 @@
                     </div>
 
                     <div class="wb-cluster wb-cluster-2">
-                        <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#create-backup-retention-modal" @disabled(! $backupTableExists || ! ($backupCleanupPreview->overview['ready'] ?? false))>{{ $adminText('backups.create_backup') }}</button>
+                        <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#create-backup-retention-modal" @disabled(! $backupTableExists || ! $backupRetentionReady)>{{ $adminText('backups.create_backup') }}</button>
                         <a href="{{ route('admin.system.backups.upload') }}" class="wb-btn wb-btn-secondary">{{ $adminText('backups.upload_backup') }}</a>
                     </div>
                 </div>
@@ -207,7 +215,7 @@
                     </div>
 
                     <div class="wb-cluster wb-cluster-2">
-                        <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#create-backup-retention-modal" @disabled(! $backupTableExists || ! ($backupCleanupPreview->overview['ready'] ?? false))>{{ $adminText('backups.create_backup') }}</button>
+                        <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#create-backup-retention-modal" @disabled(! $backupTableExists || ! $backupRetentionReady)>{{ $adminText('backups.create_backup') }}</button>
                         <a href="{{ route('admin.system.backups.upload') }}" class="wb-btn wb-btn-secondary">{{ $adminText('backups.upload_backup') }}</a>
                     </div>
                 </div>
@@ -379,7 +387,7 @@
         'method' => 'POST',
         'submitLabel' => $adminText('backups.clean_up_now'),
     ])
-        <p>{{ $adminText('backups.cleanup_preview_help', ['count' => $backupCleanupPreview->candidateCount(), 'size' => number_format($backupCleanupPreview->candidateBytes / 1048576, 1)]) }}</p>
+        <p>{{ $adminText('backups.cleanup_preview_help', ['count' => $backupCleanupPreview?->candidateCount() ?? 0, 'size' => number_format(($backupCleanupPreview?->candidateBytes ?? 0) / 1048576, 1)]) }}</p>
         <p>{{ $retentionText('cleanup_help') }}</p>
     @endcomponent
 @endpush

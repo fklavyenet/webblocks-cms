@@ -11,6 +11,8 @@ class SystemBackupRestoreMaintenanceRunner
   {
     // Older SQL snapshots can predate these additive operational fields.
     BackupRetentionSchema::migrate();
+    BackupArchiveValidation::migrate();
+    app(SystemMaintenanceReports::class)->invalidate();
     MaintenanceCleanupState::migrate();
     $this->runArtisanCommand('storage:link', ['--force' => true], $output);
     $this->runArtisanCommand('optimize:clear', [], $output);

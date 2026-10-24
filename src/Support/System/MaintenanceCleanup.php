@@ -120,6 +120,7 @@ class MaintenanceCleanup
 
       return $result;
     } finally {
+      app(SystemMaintenanceReports::class)->invalidate();
       $lock->release();
     }
   }

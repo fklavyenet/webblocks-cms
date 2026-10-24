@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'reason_validation_pending' => 'Validación del archivo pendiente',
   'cleanup_help' => 'Se respetan protección, plazo y cantidad mínima de copias correctas. Las copias manuales requieren activación independiente; los archivos cargados se conservan sin caducidad explícita.',
   'tabs' => 'Secciones de limpieza',
   'report_tab' => 'Almacenamiento e historial',

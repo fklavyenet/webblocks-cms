@@ -5,7 +5,7 @@ return [
   'navigation' => 'Mantenimiento',
   'description' => 'Consulte qué necesita atención en sus sitios y encuentre el siguiente paso.',
   'checked_at' => 'Última comprobación: :time',
-  'snapshot_help' => 'Las comprobaciones de sitios y almacenamiento se guardan cinco minutos. Las tareas programadas se comprueban en cada visita.',
+  'snapshot_help' => 'Las comprobaciones de sitios se guardan en caché cinco minutos. El almacenamiento usa el último informe de mantenimiento completado. Actualizar comprobaciones renueva ambos informes; los datos del programador se leen en cada visita.',
   'refresh' => 'Actualizar comprobaciones',
   'site_filter' => 'Sitio',
   'all_sites' => 'Todos los sitios',

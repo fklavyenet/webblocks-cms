@@ -26,6 +26,7 @@ use WebBlocks\Cms\Support\System\MaintenanceCleanupState;
 use WebBlocks\Cms\Support\System\SystemBackupBulkDeleter;
 use WebBlocks\Cms\Support\System\SystemBackupCleanup;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
+use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Tests\TestCase;
 use ZipArchive;
@@ -222,7 +223,9 @@ class BackupRetentionTest extends TestCase
   #[Test]
   public function cleanup_tabs_separate_information_settings_and_actions_and_preserve_deep_links(): void
   {
+    app(SystemMaintenanceReports::class)->refresh(100);
     request()->query->set('tab', 'settings');
+    app(SystemMaintenanceReports::class)->refresh(100);
     $html = app(MaintenanceCleanupController::class)->index()->render();
     $dom = new \DOMDocument;
     @$dom->loadHTML($html);
@@ -368,6 +371,7 @@ class BackupRetentionTest extends TestCase
     $this->assertSame($summary, app(InternalBackupCleanupController::class)->show()->getData(true)['preview']['overview']['reason_summary']);
     $this->assertStringNotContainsString(Storage::disk('backups')->path(''), json_encode($summary, JSON_UNESCAPED_SLASHES));
 
+    app(SystemMaintenanceReports::class)->refresh(100);
     $html = app(MaintenanceCleanupController::class)->index()->render();
     $dom = new \DOMDocument;
     @$dom->loadHTML($html);

@@ -17,13 +17,16 @@ final class BackupRetentionPlan
     private readonly BackupRestoreArchiveInspector $inspector,
   ) {}
 
-  public function overview(): array
+  public function overview(bool $verifyArchives = true): array
   {
     $policy = $this->settings->backupCleanupSettings();
     $state = app(MaintenanceCleanupState::class)->overview();
     $ready = BackupRetentionSchema::ready() && $state['ready'];
-    $rows = Schema::hasTable('wbcms_system_backups') ? SystemBackup::query()->latest('created_at')->latest('id')->get() : collect();
+    $rows = Schema::hasTable('wbcms_system_backups') ? SystemBackup::query()->latest('created_at')->latest('id')->get($ready ? ['id', 'type', 'status', 'archive_path', 'archive_filename', 'is_protected', 'retention_mode', 'expires_at', 'created_at', 'finished_at'] : ['*']) : collect();
     $limits = ['pre_update' => $policy['keep_latest_pre_update'], 'restore_safety' => $policy['keep_latest_restore_safety'], 'content_apply' => $policy['keep_latest_content_apply'], 'manual' => $policy['keep_latest_manual']];
+    $validation = app(BackupArchiveValidation::class);
+    $records = $verifyArchives ? collect() : $validation->records($rows->modelKeys());
+    $pending = [];
     $floors = [];
     $available = [];
     $sizes = [];
@@ -42,7 +45,18 @@ final class BackupRetentionPlan
         }
         $sizes[$backup->id] = $resolution->isAvailable() && $size !== false ? $size : 0;
         if ($backup->isSuccessful() && $resolution->isAvailable() && ($limits[$backup->type] ?? 0) > 0 && ! isset($floorPaths[$backup->type][$resolution->absolutePath])) {
-          $this->inspector->inspect($resolution->absolutePath);
+          if ($verifyArchives) {
+            $this->inspector->inspect($resolution->absolutePath);
+          } else {
+            $status = $validation->status($records->get($backup->id), $resolution->absolutePath);
+            if ($status !== 'valid') {
+              if ($status === 'pending') {
+                $pending[$backup->id] = true;
+              }
+
+              continue;
+            }
+          }
           $floors[$backup->id] = true;
           $floorPaths[$backup->type][$resolution->absolutePath] = true;
           $limits[$backup->type]--;
@@ -84,6 +98,9 @@ final class BackupRetentionPlan
         $expires = $mode === 'expires' ? $backup->expires_at?->toIso8601String() : ($mode === 'policy' && $days !== null ? CarbonImmutable::parse($backup->created_at)->addDays($days)->toIso8601String() : null);
         $reason = $expires === null ? 'invalid_policy' : (CarbonImmutable::parse($expires)->lt(now()) ? 'eligible' : 'retained');
       }
+      if ($pending !== [] && $reason === 'eligible') {
+        $reason = 'validation_pending';
+      }
       $items[] = ['id' => (int) $backup->id, 'reason' => $reason, 'expires_at' => $expires, 'bytes' => $sizes[$backup->id] ?? 0];
     }
     $retainedPaths = [];
@@ -116,7 +133,7 @@ final class BackupRetentionPlan
     $budget = (int) round($policy['budget_gb'] * 1073741824);
     $remaining = max(0, $measurement['bytes'] - $eligible);
 
-    return ['ready' => $ready, 'last_run' => $state['categories']['backups'] ?? null, 'items' => $items,
+    return ['ready' => $ready, 'validation_pending' => count($pending), 'last_run' => $state['categories']['backups'] ?? null, 'items' => $items,
       'reason_summary' => $this->reasonSummary($items, $physicalArchives, $measurement), 'storage' => [
       'status' => $measurement['status'], 'total_bytes' => $measurement['bytes'], 'protected_bytes' => $protected,
       'eligible_bytes' => $eligible, 'after_cleanup_bytes' => $remaining, 'budget_bytes' => $budget ?: null,
@@ -130,7 +147,7 @@ final class BackupRetentionPlan
   {
     // Attribute shared physical files to one determining reason, strongest first.
     $groups = [];
-    foreach (['schema_missing', 'protected', 'running', 'failed_update', 'minimum_count', 'never', 'manual_disabled', 'retained', 'invalid_policy', 'unavailable', 'shared_archive', 'eligible'] as $reason) {
+    foreach (['schema_missing', 'protected', 'running', 'failed_update', 'minimum_count', 'never', 'manual_disabled', 'retained', 'invalid_policy', 'unavailable', 'shared_archive', 'validation_pending', 'eligible'] as $reason) {
       $groups[$reason] = ['reason' => $reason, 'record_count' => 0, 'file_count' => 0, 'bytes' => 0];
     }
     $byReason = [];

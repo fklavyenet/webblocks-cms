@@ -29,6 +29,7 @@ use WebBlocks\Cms\Support\System\SystemBackupBulkDeleter;
 use WebBlocks\Cms\Support\System\SystemBackupCleanup;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
+use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\System\UploadedSystemBackupManager;
 
@@ -72,9 +73,7 @@ class SystemBackupController extends Controller
       $status = '';
     }
 
-    if ($tableExists) {
-      $this->systemBackupManager->markStaleBackupsAsFailed();
-    }
+    $report = app(SystemMaintenanceReports::class)->read();
 
     $totalCount = $tableExists
       ? SystemBackup::query()->count()
@@ -126,7 +125,9 @@ class SystemBackupController extends Controller
       'filteredCount' => $backups->total(),
       'backupArchiveStatuses' => $backupArchiveStatuses,
       'backupCleanupSettings' => $this->systemSettings->backupCleanupSettings(),
-      'backupCleanupPreview' => $this->backupCleanup->preview(),
+      'backupCleanupPreview' => $report['backup'],
+      'maintenanceReport' => $report,
+      'backupRetentionReady' => BackupRetentionSchema::ready(),
     ]);
   }
 

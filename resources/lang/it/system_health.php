@@ -5,7 +5,7 @@ return [
   'navigation' => 'Manutenzione',
   'description' => 'Scopri cosa richiede attenzione nei tuoi siti e trova il prossimo passo.',
   'checked_at' => 'Ultimo controllo: :time',
-  'snapshot_help' => 'I controlli di siti e spazio vengono conservati per cinque minuti. Le attività pianificate vengono controllate a ogni visita.',
+  'snapshot_help' => 'I controlli dei siti restano in cache per cinque minuti. Lo spazio usa l’ultimo rapporto di manutenzione completato. Aggiorna controlli aggiorna entrambi i rapporti; le informazioni dello scheduler sono lette a ogni visita.',
   'refresh' => 'Aggiorna controlli',
   'site_filter' => 'Sito',
   'all_sites' => 'Tutti i siti',

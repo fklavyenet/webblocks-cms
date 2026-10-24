@@ -12,14 +12,14 @@
         if ($bytes < 1073741824) return number_format($bytes / 1048576, 1).' MB';
         return number_format($bytes / 1073741824, 2).' GB';
     };
-    $cards = [
+    $cards = $overview ? [
         'backups' => ['title' => $text('backups'), 'result' => $backupPreview, 'count' => $backupPreview->candidateCount(), 'bytes' => $backupPreview->candidateBytes, 'help' => $retentionText('cleanup_help')],
         'asset-revisions' => ['title' => $text('asset_revisions'), 'result' => $overview['asset_revisions'], 'count' => $overview['asset_revisions']->candidateCount, 'bytes' => $overview['asset_revisions']->candidateBytes, 'help' => $text('asset_revisions_help')],
         'media-variants' => ['title' => $text('media_variants'), 'result' => $overview['media_variants'], 'count' => $overview['media_variants']->candidateCount, 'bytes' => $overview['media_variants']->candidateBytes, 'help' => $text('media_variants_help')],
         'temporary-workspaces' => ['title' => $text('temporary_workspaces'), 'result' => $overview['temporary_workspaces'], 'count' => $overview['temporary_workspaces']->candidateCount, 'bytes' => $overview['temporary_workspaces']->candidateBytes, 'help' => $text('temporary_workspaces_help')],
         'page-revisions' => ['title' => $text('page_revisions'), 'result' => $overview['page_revision_cleanup'], 'count' => $overview['page_revision_cleanup']->candidateCount, 'bytes' => $overview['page_revision_cleanup']->candidateBytes, 'help' => $text('page_revisions_help')],
         'shared-slot-revisions' => ['title' => $text('shared_slot_revisions'), 'result' => $overview['shared_slot_revision_cleanup'], 'count' => $overview['shared_slot_revision_cleanup']->candidateCount, 'bytes' => $overview['shared_slot_revision_cleanup']->candidateBytes, 'help' => $text('shared_slot_revisions_help')],
-    ];
+    ] : [];
     $policyGroups = [
         'backups' => [
             'backup_cleanup_pre_update_days' => [$text('pre_update_days'), $settings['pre_update_days'], 3650],
@@ -52,7 +52,8 @@
     @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title'), 'description' => $text('description')])
     @include('webblocks-cms::admin.partials.flash')
 
-    @foreach ($overview['capacity_warnings'] as $warning)
+    @include('webblocks-cms::admin.partials.maintenance-report-status', ['report' => $maintenanceReport])
+    @foreach ($overview['capacity_warnings'] ?? [] as $warning)
         <div class="wb-alert wb-alert-warning wb-mb-4"><div><div class="wb-alert-title">{{ $text('capacity_warning_title') }}</div><div>{{ $text('capacity_warning_'.$warning) }}</div></div></div>
     @endforeach
 
@@ -64,6 +65,7 @@
         </div>
         <div class="wb-tabs-panels">
             <div class="wb-tabs-panel {{ $cleanupTab === 'report' ? 'is-active' : '' }}" id="cleanup-report-panel" @if ($cleanupTab !== 'report') hidden @endif>
+    @if ($overview)
     <div class="wb-card wb-mb-4">
         <div class="wb-card-header"><strong>{{ $storageText('report_title') }}</strong></div>
         <div class="wb-card-body wb-stack wb-gap-3">
@@ -193,6 +195,7 @@
         </div>
         <div class="wb-card-footer wb-text-sm wb-text-muted">{{ $storageText('history_help') }}</div>
     </div>
+            @endif
             </div>
             <div class="wb-tabs-panel {{ $cleanupTab === 'settings' ? 'is-active' : '' }}" id="cleanup-settings-panel" @if ($cleanupTab !== 'settings') hidden @endif>
     <form method="POST" action="{{ route('admin.system.cleanup.update') }}" class="wb-card wb-stack wb-gap-0">
@@ -204,15 +207,15 @@
             <section class="wb-stack wb-gap-3" role="group" aria-labelledby="cleanup-automatic-title">
                 <h3 class="wb-m-0 wb-text-base wb-font-semibold" id="cleanup-automatic-title">{{ $storageText('automatic_title') }}</h3>
                 <p class="wb-text-muted">{{ $storageText('automatic_help') }}</p>
-                <p>{{ $storageText('scheduler') }}: <strong>{{ $storageText($overview['automation']['scheduler']['scheduler_status']) }}</strong></p>
-                @unless ($overview['automation']['ready'])
+                <p>{{ $storageText('scheduler') }}: <strong>{{ $storageText($automation['scheduler']['scheduler_status']) }}</strong></p>
+                @unless ($automation['ready'])
                     <div class="wb-alert wb-alert-warning"><div>{{ $storageText('schema_missing') }}</div></div>
                 @endunless
                 <div class="wb-grid wb-grid-2 wb-gap-3">
-                    @foreach ($overview['automation']['enabled'] as $category => $enabled)
+                    @foreach ($automation['enabled'] as $category => $enabled)
                         <div class="wb-stack wb-gap-1">
                             <input type="hidden" name="automatic[{{ $category }}]" value="0">
-                            <label class="wb-check"><input name="automatic[{{ $category }}]" type="checkbox" value="1" @checked(old('automatic.'.$category, $enabled)) @disabled(! $overview['automation']['ready'])> <span>{{ $cards[$category]['title'] }}</span></label>
+                            <label class="wb-check"><input name="automatic[{{ $category }}]" type="checkbox" value="1" @checked(old('automatic.'.$category, $enabled)) @disabled(! $automation['ready'])> <span>{{ $text(str_replace('-', '_', $category)) }}</span></label>
                             <span class="wb-text-sm wb-text-muted">{{ $storageText(in_array($category, ['page-revisions', 'shared-slot-revisions'], true) ? 'weekly_schedule' : 'daily_schedule', ['time' => $scheduleTimes[$category]]) }}</span>
                         </div>
                     @endforeach
@@ -221,7 +224,7 @@
             <p class="wb-text-sm wb-text-muted" id="cleanup-retention-help">{{ $storageText('retention_help') }}</p>
             @foreach ($policyGroups as $category => $fields)
                 <section class="wb-stack wb-gap-3" role="group" aria-labelledby="cleanup-{{ $category }}-title" id="cleanup-{{ $category }}-policy" tabindex="-1" @if (in_array($category, ['asset-revisions', 'page-revisions', 'shared-slot-revisions'], true)) aria-describedby="cleanup-retention-help" @endif>
-                    <h3 class="wb-m-0 wb-text-base wb-font-semibold" id="cleanup-{{ $category }}-title">{{ $cards[$category]['title'] }}</h3>
+                    <h3 class="wb-m-0 wb-text-base wb-font-semibold" id="cleanup-{{ $category }}-title">{{ $text(str_replace('-', '_', $category)) }}</h3>
                     @if ($category === 'backups')
                         <input type="hidden" name="backup_cleanup_enabled" value="0">
                         <label class="wb-check"><input name="backup_cleanup_enabled" type="checkbox" value="1" @checked(old('backup_cleanup_enabled', $settings['enabled']))> <span>{{ $text('automatic_backup_cleanup') }}</span></label>
@@ -260,7 +263,7 @@
                         <div class="wb-alert wb-alert-warning"><div>{{ $storageText('preview_unavailable') }}</div></div>
                     @endif
                     @if ($category !== 'backups')
-                        @php($execution = $overview['automation']['categories'][$category] ?? null)
+                        @php($execution = $automation['categories'][$category] ?? null)
                         @if ($execution)
                             <p class="wb-text-sm">{{ $storageText('last_run') }}: {{ $execution['finished_at'] ?? $execution['started_at'] }} · {{ $storageText($execution['status']) }} · {{ $storageText($execution['source']) }}</p>
                             <p class="wb-text-sm">{{ $storageText('deleted', ['count' => $execution['deleted_count'], 'bytes' => number_format($execution['deleted_bytes']), 'failures' => $execution['failure_count']]) }}</p>

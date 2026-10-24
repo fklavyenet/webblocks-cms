@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'reason_validation_pending' => 'Archivprüfung ausstehend',
   'cleanup_help' => 'Schutz, Aufbewahrungsfristen und Mindestanzahl erfolgreicher Backups gelten immer. Manuelle Backups benötigen eine gesonderte Aktivierung; hochgeladene Archive bleiben ohne explizites Ablaufdatum erhalten.',
   'tabs' => 'Bereinigungsbereiche',
   'report_tab' => 'Speicher und Verlauf',

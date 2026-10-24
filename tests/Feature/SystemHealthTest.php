@@ -26,8 +26,8 @@ use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenAuthenticator;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
-use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\SystemHealthStatus;
+use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
@@ -234,7 +234,7 @@ class SystemHealthTest extends TestCase
   public function unavailable_checks_are_isolated_and_do_not_expose_exception_text(): void
   {
     $this->site();
-    $this->mock(MaintenanceCleanup::class, fn ($mock) => $mock->shouldReceive('overview')->once()->andThrow(new \RuntimeException('SENTINEL_SECRET')));
+    $this->mock(SystemMaintenanceReports::class, fn ($mock) => $mock->shouldReceive('read')->once()->andThrow(new \RuntimeException('SENTINEL_SECRET')));
     $report = $this->report();
     $this->assertSame('unknown', $report['categories']['storage']['status']);
     $this->assertCount(1, $report['sites']);

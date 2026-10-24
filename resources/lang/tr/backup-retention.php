@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'reason_validation_pending' => 'Arşiv doğrulaması bekliyor',
   'cleanup_help' => 'Koruma, saklama süresi ve asgari başarılı yedek adedi her zaman geçerlidir. Manuel yedekler ayrı etkinleştirme ayarına bağlıdır; yüklenen arşivler açıkça sona erme tarihi seçilmedikçe saklanır.',
   'tabs' => 'Temizlik bölümleri',
   'report_tab' => 'Depolama ve geçmiş',

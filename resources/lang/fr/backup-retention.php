@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'reason_validation_pending' => 'Validation de l’archive en attente',
   'cleanup_help' => 'Protection, durée de conservation et nombre minimal de sauvegardes réussies restent applicables. Les sauvegardes manuelles nécessitent une activation distincte ; les archives téléversées sont conservées sans expiration explicite.',
   'tabs' => 'Sections de nettoyage',
   'report_tab' => 'Stockage et historique',

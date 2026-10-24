@@ -13,9 +13,9 @@ class SystemBackupCleanup
     private readonly SystemBackupManager $backups,
   ) {}
 
-  public function preview(): SystemBackupCleanupResult
+  public function preview(bool $verifyArchives = true): SystemBackupCleanupResult
   {
-    $plan = app(BackupRetentionPlan::class)->overview();
+    $plan = app(BackupRetentionPlan::class)->overview($verifyArchives);
     $items = array_values(array_filter($plan['items'], fn ($item) => $item['reason'] === 'eligible'));
 
     return new SystemBackupCleanupResult(array_column($items, 'id'), $plan['storage']['eligible_bytes'], overview: $plan);
@@ -59,6 +59,7 @@ class SystemBackupCleanup
           }
         }
 
+        app(SystemMaintenanceReports::class)->invalidate();
         $state->finish('backups', new MaintenanceCleanupResult(count($preview->candidateIds), $preview->candidateBytes, count($deletedIds), $deletedBytes, $failures));
 
         return new SystemBackupCleanupResult($preview->candidateIds, $preview->candidateBytes, $deletedIds, $deletedBytes, $failures, $preview->overview);

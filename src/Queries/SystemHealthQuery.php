@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Queries;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -20,6 +21,7 @@ use WebBlocks\Cms\Support\System\SystemBackupCleanup;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemHealthStatus as Health;
 use WebBlocks\Cms\Support\System\SystemInformation;
+use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -53,18 +55,72 @@ class SystemHealthQuery
 
   public function dashboardSummary(): array
   {
-    $report = $this->report();
+    $snapshot = $this->cachedSnapshot();
+    if ($snapshot === null || ! isset($snapshot['dashboard_counts'])) {
+      return ['counts' => [], 'status' => 'missing', 'checked_at' => null];
+    }
 
-    return ['counts' => array_intersect_key($report['counts'], array_flip(['critical', 'warning', 'unknown']))];
+    try {
+      $generation = app(SystemMaintenanceReports::class)->generation();
+    } catch (Throwable) {
+      $generation = null;
+    }
+
+    return [
+      'counts' => array_intersect_key($snapshot['dashboard_counts'], array_flip(['critical', 'warning', 'unknown'])),
+      'status' => $generation !== null && ($snapshot['generation'] ?? null) === $generation && now()->timestamp - Carbon::parse($snapshot['checked_at'])->timestamp < self::TTL_SECONDS ? 'fresh' : 'stale',
+      'checked_at' => $snapshot['checked_at'],
+    ];
+  }
+
+  private function cachedSnapshot(): ?array
+  {
+    try {
+      $snapshot = Cache::get($this->cacheKey());
+
+      if (! is_array($snapshot) || ! isset($snapshot['checked_at'], $snapshot['sites'], $snapshot['categories'], $snapshot['operations'], $snapshot['sites_available'])
+        || ! is_array($snapshot['sites']) || ! is_array($snapshot['categories']) || ! is_array($snapshot['operations'])) {
+        return null;
+      }
+      Carbon::parse($snapshot['checked_at']);
+
+      return $snapshot;
+    } catch (Throwable) {
+      return null;
+    }
+  }
+
+  public function refreshSnapshot(): array
+  {
+    try {
+      $generation = app(SystemMaintenanceReports::class)->generation();
+    } catch (Throwable) {
+      $generation = null;
+    }
+    $snapshot = $this->snapshot();
+    $snapshot['dashboard_counts'] = $this->formatReport($snapshot)['counts'];
+    try {
+      $snapshot['generation'] = $generation;
+      Cache::put($this->cacheKey(), $snapshot, SystemMaintenanceReports::RETAIN_SECONDS);
+    } catch (Throwable) {
+      // The completed snapshot remains usable; never compute it a second time on cache failure.
+    }
+
+    return $snapshot;
   }
 
   public function report(?int $siteId = null): array
   {
-    try {
-      $snapshot = Cache::remember($this->cacheKey(), self::TTL_SECONDS, fn () => $this->snapshot());
-    } catch (Throwable) {
-      $snapshot = $this->snapshot();
+    $snapshot = $this->cachedSnapshot();
+    if ($snapshot === null || now()->timestamp - Carbon::parse($snapshot['checked_at'])->timestamp >= self::TTL_SECONDS) {
+      $snapshot = $this->refreshSnapshot();
     }
+
+    return $this->formatReport($snapshot, $siteId);
+  }
+
+  private function formatReport(array $snapshot, ?int $siteId = null): array
+  {
     $siteOptions = array_map(fn (array $site) => ['id' => $site['id'], 'name' => $site['name']], $snapshot['sites']);
     $sites = array_values(array_filter($snapshot['sites'], fn (array $site) => $siteId === null || $site['id'] === $siteId));
     $scheduler = $this->schedulerSnapshot();
@@ -178,8 +234,12 @@ class SystemHealthQuery
 
   private function storage(): array
   {
-    $overview = $this->cleanup->overview();
-    $preview = $this->backupCleanup->preview();
+    $report = app(SystemMaintenanceReports::class)->read();
+    if ($report['status'] !== 'fresh') {
+      return [Health::check('storage', 'unknown', 'check_unavailable', 'admin.system.cleanup.index')];
+    }
+    $overview = $report['cleanup'];
+    $preview = $report['backup'];
     $bytes = $preview->candidateBytes;
     $count = $preview->candidateCount();
     foreach ($overview as $item) {

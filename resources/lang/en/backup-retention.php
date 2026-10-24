@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'reason_validation_pending' => 'Archive validation pending',
   'cleanup_help' => 'Protection, retention periods and minimum successful counts always apply. Manual backups follow their separate opt-in setting; uploaded archives are kept unless an expiration is explicitly selected.',
   'tabs' => 'Cleanup sections',
   'report_tab' => 'Storage and history',

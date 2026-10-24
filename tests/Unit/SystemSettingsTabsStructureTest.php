@@ -52,6 +52,6 @@ class SystemSettingsTabsStructureTest extends TestCase
 
     $this->assertStringContainsString('data-wb-target="#backups-cleanup-run-modal"', $view);
     $this->assertStringContainsString("'action' => route('admin.system.backups.cleanup')", $view);
-    $this->assertStringContainsString('@disabled($backupCleanupPreview->candidateCount() === 0)', $view);
+    $this->assertStringContainsString('@disabled(($backupCleanupPreview?->candidateCount() ?? 0) === 0)', $view);
   }
 }

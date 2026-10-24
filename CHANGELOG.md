@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.105.21
+
+- Dashboard, Backups, and Cleanup now open without rebuilding health reports, scanning storage, or decompressing backup SQL during ordinary panel requests, including when cached reports expire or refresh.
+- Maintenance reports refresh through the CMS scheduler every five minutes and the existing health refresh action. The panel shows the last measurement time and clearly identifies missing, stale, or pending archive validation results; settings remain available before the first report.
+- Backup validation provenance is stored in an additive relational table. Existing recovery archives are validated in bounded background batches, while cleanup and restore continue to verify current archives and recovery protections before acting.
+- Public uploads and generated media variants are measured in one storage traversal. Concurrent mutations keep in-progress report measurements marked stale rather than presenting them as current.
+
 ## 1.105.20
 
 - Speed up admin navigation by reusing authorization inputs, schema checks, default locale and site domain lookups within each request, refreshing them after database writes and rollback.

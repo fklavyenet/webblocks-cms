@@ -1766,6 +1766,36 @@ The additive update declares `sort_order`, `show_approved`, `show_author_name`, 
 
 ## Hosting storage and scheduled maintenance
 
+Panel Dashboard, Backups and Cleanup GETs read the last completed maintenance
+report without parsing backup SQL or starting background work on a synchronous
+queue. A cold or unavailable cache is explicitly unverified; a report older than
+five minutes or invalidated by CMS mutations is labeled stale with its original
+measurement time. The transient cache retains the last report for at most seven
+days. Settings remain editable before a report is available. No report cache
+can authorize deletion or restore.
+
+`system:reports:refresh` is scheduled every five minutes and shares a refresh
+lease with the authorized System Health refresh action. It validates at most
+eight previously unverified or changed recovery-floor archives per invocation,
+then publishes the shared retention/storage report and Dashboard health summary.
+Installations without a running scheduler can use System Health → Refresh checks;
+ordinary panel requests never fall back to a synchronous full scan. Cache write
+failure does not recompute a completed health snapshot.
+
+Typed SQL backup validation provenance records the backup ID, filesystem
+signature, compressed archive SHA-256, validator version, status and timestamp.
+Backup creation/upload records validation outside list requests; existing
+archives are backfilled in bounded batches. Unknown validation withholds cleanup
+eligibility in the panel report. This provenance is an optimization for reports,
+not a replacement for full current archive inspection under the cleanup lease
+or before restore. A cached file signature is not proof against malicious file
+replacement. The existing explicit API/CLI cleanup previews still perform fresh
+validation; their plan adds a `validation_pending` count (zero for full checks).
+Missing provenance schema never triggers heavy list-request fallback. Fresh and
+package-update migrations create it idempotently, and restore maintenance repairs
+it after restoring an older database. Public uploads and variants are partitioned
+in one filesystem traversal in the physical usage report.
+
 `Maintenance → Cleanup` and `GET /webadmin/api/system/cleanup` expose a read-only
 `storage_report` with `measured_at` and `categories`. Each category has physical
 `files`, `bytes` and `status` (`available`, `missing`, `partial`, `unavailable`).

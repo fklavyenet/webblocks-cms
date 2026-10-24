@@ -5,7 +5,7 @@ return [
   'navigation' => 'Wartung',
   'description' => 'Sehen Sie, was bei Ihren Websites Aufmerksamkeit braucht, und finden Sie den nächsten Schritt.',
   'checked_at' => 'Zuletzt geprüft: :time',
-  'snapshot_help' => 'Website- und Speicherprüfungen werden fünf Minuten gespeichert. Geplante Aufgaben werden bei jedem Besuch geprüft.',
+  'snapshot_help' => 'Website-Prüfungen werden fünf Minuten zwischengespeichert. Speicherwerte stammen aus dem letzten abgeschlossenen Wartungsbericht. Prüfungen aktualisieren erneuert beide Berichte; Scheduler-Nachweise werden bei jedem Besuch gelesen.',
   'refresh' => 'Prüfungen aktualisieren',
   'site_filter' => 'Website',
   'all_sites' => 'Alle Websites',

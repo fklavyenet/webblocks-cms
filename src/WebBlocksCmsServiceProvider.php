@@ -39,6 +39,7 @@ use WebBlocks\Cms\Console\PluginProbeCommand;
 use WebBlocks\Cms\Console\PruneEditorRecoveriesCommand;
 use WebBlocks\Cms\Console\PrunePromotedStagedUpdatesCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
+use WebBlocks\Cms\Console\RefreshSystemReportsCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
 use WebBlocks\Cms\Console\SchedulerStatusCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
@@ -68,8 +69,14 @@ use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\AutomaticPageRule;
 use WebBlocks\Cms\Models\BlockMedia;
+use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\PageRevision;
+use WebBlocks\Cms\Models\SharedSlotRevision;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SiteExport;
+use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Policies\AutomaticPagePolicy;
 use WebBlocks\Cms\Policies\SystemBackupPolicy;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
@@ -115,6 +122,7 @@ use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\BackupOperations;
 use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
+use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateDownloader;
@@ -841,6 +849,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     ImportDemoMedia::class,
     MediaVariantsCommand::class,
     MaintenanceCleanupCommand::class,
+    RefreshSystemReportsCommand::class,
     VisitorReportCleanupCommand::class,
     ResetPrimitiveBlocksCommand::class,
     SiteCloneCommand::class,
@@ -958,6 +967,14 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->bootRateLimiters();
     $this->bootCommands();
     $this->bootSchedule();
+    foreach ([SystemBackup::class, SystemSetting::class,
+      Media::class, PageRevision::class,
+      SharedSlotRevision::class, SiteExport::class,
+      SiteImport::class] as $model) {
+      $invalidate = fn () => app(SystemMaintenanceReports::class)->invalidate();
+      $model::saved($invalidate);
+      $model::deleted($invalidate);
+    }
     $this->bootInternalApiCsrfExclusions();
     $this->bootRoutes();
     if (Route::has('admin.system.updates.indicator')) {
@@ -1090,6 +1107,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         ->dailyAt('03:45')
         ->withoutOverlapping(1440)
         ->onOneServer();
+
+      $this->app->make(Schedule::class)->command('system:reports:refresh')->everyFiveMinutes()->withoutOverlapping(15);
 
       foreach (MaintenanceCleanup::RUNNABLE as $category) {
         $event = $this->app->make(Schedule::class)

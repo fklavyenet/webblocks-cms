@@ -5,7 +5,7 @@ return [
   'navigation' => 'Bakım',
   'description' => 'Sitelerinizde dikkat gerektiren konuları görün ve ilgili işlemlere ulaşın.',
   'checked_at' => 'Son kontrol: :time',
-  'snapshot_help' => 'Site ve depolama kontrolleri beş dakika saklanır. Zamanlanmış işler her ziyarette kontrol edilir.',
+  'snapshot_help' => 'Site kontrolleri beş dakika önbellekte tutulur. Depolama için son tamamlanan bakım raporu kullanılır. Kontrolleri yenile işlemi iki raporu da günceller; zamanlayıcı kanıtları her ziyarette okunur.',
   'refresh' => 'Kontrolleri yenile',
   'site_filter' => 'Site',
   'all_sites' => 'Tüm siteler',

@@ -117,6 +117,8 @@ class SystemBackupManager
         $output,
       );
 
+      app(BackupArchiveValidation::class)->validate($backup);
+
       return $backup->fresh();
     } catch (Throwable $throwable) {
       $sanitizedFailureDetail = $this->sanitizeFailureDetail($throwable->getMessage());

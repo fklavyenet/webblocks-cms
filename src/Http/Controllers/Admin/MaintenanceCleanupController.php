@@ -6,8 +6,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\MaintenanceCleanupSettingsRequest;
+use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\System\MaintenanceCleanup;
+use WebBlocks\Cms\Support\System\MaintenanceCleanupState;
 use WebBlocks\Cms\Support\System\SystemBackupCleanup;
+use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
 class MaintenanceCleanupController extends Controller
@@ -20,10 +23,19 @@ class MaintenanceCleanupController extends Controller
 
   public function index(): View
   {
+    $report = app(SystemMaintenanceReports::class)->read();
+    $automation = [
+      'enabled' => $this->settings->automaticMaintenanceSettings(),
+      'scheduler' => app(SchedulerHealth::class)->snapshot(),
+      ...app(MaintenanceCleanupState::class)->overview(),
+    ];
+
     return view('webblocks-cms::admin.system.cleanup', [
       'settings' => [...$this->settings->backupCleanupSettings(), ...$this->settings->maintenanceCleanupSettings()],
-      'backupPreview' => $this->backupCleanup->preview(),
-      'overview' => $this->cleanup->overview(),
+      'backupPreview' => $report['backup'],
+      'overview' => $report['cleanup'],
+      'maintenanceReport' => $report,
+      'automation' => $automation,
     ]);
   }
 
