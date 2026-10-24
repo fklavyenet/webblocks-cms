@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.105.18
+
+- Reuse loaded media relations across block image aliases, eliminating repeated image queries while preserving private media access and unsaved image replacements.
+- Reuse plugin lifecycle status within each request without loading setup and rollback documents for scalar activation checks; keep emergency disable and runtime failure markers immediate.
+- Reuse layout schema, slot types and layout graphs within each request, returning independent model copies for callers that edit them.
+- Preserve request, worker, database-write and rollback isolation, with regression coverage and matching EN/TR public-page output.
+
 ## 1.105.17
 
 - Speed up public page rendering by reusing locale, site variable and localized-link lookups within each request, including empty and missing results.

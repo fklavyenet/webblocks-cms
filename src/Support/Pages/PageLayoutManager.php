@@ -3,17 +3,17 @@
 namespace WebBlocks\Cms\Support\Pages;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageLayoutSlot;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 
 class PageLayoutManager
 {
   public function tableExists(): bool
   {
-    return Schema::hasTable('wbcms_page_layouts');
+    return $this->tableAvailable(new PageLayout);
   }
 
   public function activeHandles(): array
@@ -38,16 +38,59 @@ class PageLayoutManager
       return null;
     }
 
-    return PageLayout::query()
+    $layout = app(RequestMemo::class)->remember('layout.graph', [
+      ...$this->connectionIdentity(new PageLayout), $normalized, $includeInactive,
+    ], fn () => PageLayout::query()
       ->when($this->slotsTableExists(), fn ($query) => $query->with(['layoutSlots.slotType']))
       ->when(! $includeInactive, fn ($query) => $query->where('is_active', true))
       ->where('handle', $normalized)
-      ->first();
+      ->first());
+
+    if ($layout === null) {
+      return null;
+    }
+
+    // Preserve fresh-model semantics for callers that edit a returned graph.
+    $copy = clone $layout;
+    if ($layout->relationLoaded('layoutSlots')) {
+      $copy->setRelation('layoutSlots', $layout->layoutSlots->map(function (PageLayoutSlot $slot) {
+        $copy = clone $slot;
+        if ($slot->relationLoaded('slotType')) {
+          $copy->setRelation('slotType', $slot->slotType === null ? null : clone $slot->slotType);
+        }
+
+        return $copy;
+      }));
+    }
+
+    return $copy;
   }
 
   public function slotsTableExists(): bool
   {
-    return Schema::hasTable('wbcms_page_layout_slots');
+    return $this->tableAvailable(new PageLayoutSlot);
+  }
+
+  private function connectionIdentity(PageLayout|PageLayoutSlot|SlotType $model): array
+  {
+    $connection = $model->getConnection();
+
+    return [$connection->getName(), $connection->getDatabaseName(), $model->getTable()];
+  }
+
+  private function tableAvailable(PageLayout|PageLayoutSlot $model): bool
+  {
+    return app(RequestMemo::class)->remember('layout.schema', $this->connectionIdentity($model),
+      fn () => $model->getConnection()->getSchemaBuilder()->hasTable($model->getTable()));
+  }
+
+  private function slotTypeForSlug(string $slug): ?SlotType
+  {
+    $type = app(RequestMemo::class)->remember('layout.slot-type', [
+      ...$this->connectionIdentity(new SlotType), $slug,
+    ], fn () => SlotType::query()->where('slug', $slug)->first());
+
+    return $type === null ? null : clone $type;
   }
 
   public function resolveShellType(?string $handle): string
@@ -204,7 +247,7 @@ class PageLayoutManager
           return null;
         }
 
-        $slotType = SlotType::query()->where('slug', $normalizedSlotSlug)->first();
+        $slotType = $this->slotTypeForSlug($normalizedSlotSlug);
         $layoutSlot = new PageLayoutSlot([
           'slot_name' => $normalizedSlotSlug,
           'label' => $slotType?->name ?? str($normalizedSlotSlug)->headline()->toString(),
@@ -253,7 +296,7 @@ class PageLayoutManager
           'sort_order' => (int) ($slot['sort_order'] ?? 0),
         ]);
 
-        $layoutSlot->setRelation('slotType', SlotType::query()->where('slug', $slotTypeSlug)->first()
+        $layoutSlot->setRelation('slotType', $this->slotTypeForSlug($slotTypeSlug)
           ?? new SlotType([
             'slug' => $slotTypeSlug,
             'name' => $slot['label'] ?? str($slot['slot_name'] ?? 'main')->headline()->toString(),

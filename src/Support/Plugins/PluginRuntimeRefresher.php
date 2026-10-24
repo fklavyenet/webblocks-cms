@@ -8,6 +8,7 @@ use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
 use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 
 class PluginRuntimeRefresher
 {
@@ -33,6 +34,7 @@ class PluginRuntimeRefresher
    */
   public function refreshInstalledPackageAssets(string $handle, string $version, string $path): ?array
   {
+    app(RequestMemo::class)->clear();
     $plugin = PluginDefinition::make($handle)
       ->version($version)
       ->installPath($path);
@@ -52,6 +54,7 @@ class PluginRuntimeRefresher
    */
   public function refresh(bool $clearOptimizedCaches = false, bool $registerRoutes = false): array
   {
+    app(RequestMemo::class)->clear();
     foreach ([
       PluginRegistry::class,
       PluginPermissionRegistry::class,

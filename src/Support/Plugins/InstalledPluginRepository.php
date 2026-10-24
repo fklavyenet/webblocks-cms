@@ -4,9 +4,9 @@ namespace WebBlocks\Cms\Support\Plugins;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use WebBlocks\Cms\Models\PluginLifecycle;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Relational\PersistentSchema;
 
@@ -109,8 +109,8 @@ class InstalledPluginRepository
       return null;
     }
     try {
-      if (Schema::hasTable('wbcms_plugin_lifecycles')) {
-        $state = $this->findState($handle);
+      if ($this->stateTableExists()) {
+        $state = $this->findStatus($handle);
         if ($state !== null) {
           return $state->disabled_at ? null : ($state->enabled_version ?: null);
         }
@@ -156,7 +156,7 @@ class InstalledPluginRepository
   public function setupResult(string $handle, string $version): array
   {
     $this->assertValidCoordinates($handle, $version);
-    if (Schema::hasTable('wbcms_plugin_lifecycles')) {
+    if ($this->stateTableExists()) {
       $state = $this->findState($handle, $version);
       if ($state !== null) {
         return is_array($state->setup_result) ? $state->setup_result : [];
@@ -292,8 +292,8 @@ class InstalledPluginRepository
       return true;
     }
     try {
-      if (Schema::hasTable('wbcms_plugin_lifecycles')) {
-        $state = $this->findState($handle);
+      if ($this->stateTableExists()) {
+        $state = $this->findStatus($handle);
         if ($state !== null) {
           return $state->disabled_at !== null;
         }
@@ -325,8 +325,8 @@ class InstalledPluginRepository
       return true;
     }
     try {
-      if (Schema::hasTable('wbcms_plugin_lifecycles')) {
-        $state = $this->findState($handle, $version);
+      if ($this->stateTableExists()) {
+        $state = $this->findStatus($handle, $version);
         if ($state !== null) {
           return $state->failed_at !== null;
         }
@@ -350,7 +350,7 @@ class InstalledPluginRepository
     if (! PluginDefinition::isValidHandle($handle)) {
       return [];
     }
-    if (Schema::hasTable('wbcms_plugin_lifecycles')) {
+    if ($this->stateTableExists()) {
       $state = $this->findState($handle);
       if ($state !== null) {
         return is_array($state->previous_state) ? $state->previous_state : [];
@@ -367,9 +367,38 @@ class InstalledPluginRepository
     return hash('sha256', realpath($this->rootPath()) ?: $this->rootPath());
   }
 
+  private function stateIdentity(string $handle = '', string $version = ''): array
+  {
+    $connection = (new PluginLifecycle)->getConnection();
+
+    return [$connection->getName(), $connection->getDatabaseName(), $this->rootHash(), $handle, $version];
+  }
+
+  private function stateTableExists(): bool
+  {
+    $model = new PluginLifecycle;
+    $connection = $model->getConnection();
+
+    return app(RequestMemo::class)->remember('plugin.state-schema', [
+      $connection->getName(), $connection->getDatabaseName(), $model->getTable(),
+    ], fn () => $connection->getSchemaBuilder()->hasTable($model->getTable()));
+  }
+
+  /** Scalar activation checks must not hydrate setup/rollback/legacy documents. */
+  private function findStatus(string $handle, string $version = ''): ?object
+  {
+    return app(RequestMemo::class)->remember('plugin.status', $this->stateIdentity($handle, $version), fn () => PluginLifecycle::query()
+      ->where('root_hash', $this->rootHash())->where('handle', $handle)->where('version', $version)
+      ->toBase()->first(['id', 'enabled_version', 'disabled_at', 'failed_at']));
+  }
+
   private function findState(string $handle, string $version = ''): ?PluginLifecycle
   {
-    return PluginLifecycle::where('root_hash', $this->rootHash())->where('handle', $handle)->where('version', $version)->first();
+    $state = app(RequestMemo::class)->remember('plugin.state', $this->stateIdentity($handle, $version), fn () => PluginLifecycle::query()
+      ->where('root_hash', $this->rootHash())->where('handle', $handle)->where('version', $version)->first());
+
+    // Writers receive their own model; mutations cannot alter the cached read.
+    return $state === null ? null : clone $state;
   }
 
   private function state(string $handle, string $version = ''): PluginLifecycle
