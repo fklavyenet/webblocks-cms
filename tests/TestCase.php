@@ -9,10 +9,65 @@ use Orchestra\Testbench\TestCase as Orchestra;
 use WebBlocks\Cms\Models\Concerns\HasCmsAdminAccess;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
+use WebBlocks\Cms\Tests\Support\SqliteDatabaseSnapshot;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
+  protected bool $cacheFreshDatabaseSchema = true;
+
+  private static array $freshDatabaseSnapshots = [];
+
+  public static function tearDownAfterClass(): void
+  {
+    unset(self::$freshDatabaseSnapshots[static::class]);
+    parent::tearDownAfterClass();
+  }
+
+  protected function loadMigrationsFrom(array|string $paths): void
+  {
+    // Keep migration/restore profiles, other engines, custom schemas and Laravel's
+    // transaction-based RefreshDatabase lifecycle on Testbench's original path.
+    if (! $this->cacheFreshDatabaseSchema
+      || getenv('WEBBLOCKS_CMS_TEST_FRESH_SCHEMA_CACHE') === '0'
+      || $paths !== dirname(__DIR__).'/database/migrations/fresh'
+      || static::usesRefreshDatabaseTestingConcern()
+      || ! $this->usesSqliteInMemoryDatabaseConnection()) {
+      parent::loadMigrationsFrom($paths);
+
+      return;
+    }
+    $connection = $this->app['db']->connection();
+    $database = $connection->getPdo();
+    if ($connection->getConfig('database') !== ':memory:'
+      || $connection->transactionLevel() !== 0
+      || $database->inTransaction()
+      || $database->query('SELECT count(*) FROM sqlite_master')->fetchColumn() !== 0) {
+      parent::loadMigrationsFrom($paths);
+
+      return;
+    }
+    // Configuration variants within a class must get their own real migration run.
+    try {
+      $key = hash('sha256', serialize($this->app['config']->all()));
+    } catch (\Exception) {
+      parent::loadMigrationsFrom($paths);
+
+      return;
+    }
+    $snapshot = self::$freshDatabaseSnapshots[static::class][$key] ?? null;
+    if ($snapshot === null) {
+      parent::loadMigrationsFrom($paths);
+      self::$freshDatabaseSnapshots[static::class][$key] = SqliteDatabaseSnapshot::capture($database);
+      // This connection is disposable. Do not run 21 reverse migrations just
+      // before discarding it. Dedicated migration tests still exercise both ways.
+      array_shift($this->cachedTestMigratorProcessors);
+    } else {
+      $snapshot->restore($database);
+    }
+    $this->beforeApplicationDestroyed(fn () => $connection->disconnect());
+  }
+
   /** Legacy-copy/backfill fixtures deliberately exercise the 1.98.7 bridge schema. */
   protected function loadRelationalBridgeFixtureMigrations(): void
   {

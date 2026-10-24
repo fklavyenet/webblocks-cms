@@ -24,6 +24,8 @@ use ZipArchive;
 /** Real SQL export/import, ZIP extraction, file replacement and restore maintenance. */
 class StorageBackupRestoreTest extends TestCase
 {
+  protected bool $cacheFreshDatabaseSchema = false;
+
   private string $root;
 
   protected function defineEnvironment($app): void

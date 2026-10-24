@@ -10,6 +10,8 @@ use WebBlocks\Cms\Tests\TestCase;
 
 class RenameHtmlClassesToCssClassesMigrationTest extends TestCase
 {
+  protected bool $cacheFreshDatabaseSchema = false;
+
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');

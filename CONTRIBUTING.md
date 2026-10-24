@@ -29,6 +29,8 @@ The package CI exercises the source tree, exported distribution, current Laravel
 
 PHPUnit checks the rendered System Updates screen and serves its shared progress asset through the real route. These checks run in CI and the local pre-push hook without Node.js. They do not execute browser JavaScript.
 
+Ordinary SQLite in-memory tests run the real fresh migrations once per test class and configuration, then restore the resulting schema and seed rows into a separate connection for each case. The fixture lives only in process memory and is discarded after the class. No transaction wrapper is added, so commits, rollbacks, schema changes and sequences remain isolated between cases. Migration and restore tests set `protected bool $cacheFreshDatabaseSchema = false`; bridge schemas, nonempty databases, other engines and `RefreshDatabase` retain their original lifecycle. Set `WEBBLOCKS_CMS_TEST_FRESH_SCHEMA_CACHE=0` to compare against the uncached setup.
+
 The standalone PHP Node/npm guard runs before the long tests in pre-push and CI, without Composer dependencies. It checks Git-tracked and non-ignored untracked files for package manifests/lockfiles, Node configuration, CommonJS tools, literal Node/npm commands, declared CI/container runtimes and Node/bare-package JavaScript imports. It ignores installed Git-ignored dependencies and prose/comments; native browser JavaScript, relative/URL module imports and package exclusion lists remain valid. Findings name files and lines without printing command arguments. This is a static dependency guard, not an interpreter for dynamically constructed commands.
 
 ## Admin form composition
