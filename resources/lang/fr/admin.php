@@ -1067,6 +1067,8 @@ $translations = [
     'delete_all_blocks_button' => 'Supprimer tous les blocs',
   ],
   'blocks_index' => [
+    'page_search' => 'Rechercher une page',
+    'page_search_help' => 'Recherchez par nom, chemin ou ID de page, puis appliquez. Jusqu’à :limit résultats sont affichés ; la page sélectionnée est conservée.',
     'blocks' => 'Blocs',
     'blocks_for_page' => 'Blocs de :title',
     'description' => 'Inspectez et modifiez les instances de bloc dans tout le CMS.',

@@ -97,8 +97,9 @@ class MediaController extends Controller
 
     AdminPagination::redirectOutOfRange($mediaPaginator);
 
-    $mediaPaginator->getCollection()->transform(function (Media $media) {
-      $usages = $this->mediaUsageResolver->resolve($media, request()->user());
+    $resolvedUsages = $this->mediaUsageResolver->resolveMany($mediaPaginator->getCollection(), $user);
+    $mediaPaginator->getCollection()->transform(function (Media $media) use ($resolvedUsages) {
+      $usages = $resolvedUsages->get($media->id, collect());
       $media->setRelation('resolvedUsages', $usages);
       $media->setAttribute('resolved_usage_count', $usages->count());
 
@@ -114,7 +115,7 @@ class MediaController extends Controller
       : null;
 
     if ($previewMedia instanceof Media && ! $previewMedia->relationLoaded('resolvedUsages')) {
-      $previewMedia->setRelation('resolvedUsages', $this->mediaUsageResolver->resolve($previewMedia));
+      $previewMedia->setRelation('resolvedUsages', $this->mediaUsageResolver->resolve($previewMedia, $user));
     }
 
     if ($usageMedia instanceof Media && ! $usageMedia->relationLoaded('resolvedUsages')) {

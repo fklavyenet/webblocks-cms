@@ -195,7 +195,7 @@
                                     $translations = $page->translations->sortByDesc(fn ($translation) => $translation->locale?->is_default)->values();
                                     $enabledLocaleCount = (int) ($siteLocaleCounts[$page->site_id] ?? $translations->count());
                                     $missingTranslations = max($enabledLocaleCount - $translations->count(), 0);
-                                    $defaultPublicUrl = $page->publicUrl();
+                                    $defaultPublicUrl = $page->isPublished() ? $page->publicUrl() : null;
                                     $previewUrl = route('admin.pages.preview', $page);
                                 @endphp
                                 <tr>
@@ -235,7 +235,7 @@
                                             <div class="wb-admin-pages-path-row wb-cluster wb-cluster-2 wb-flex-wrap wb-text-sm">
                                                 @foreach ($translations->take(3) as $translation)
                                                     @php
-                                                        $translationPublicUrl = $page->publicUrl($translation->locale?->code);
+                                                        $translationPublicUrl = $page->isPublished() ? $page->publicUrl($translation->locale?->code) : null;
                                                         $translationPublicPath = $page->publicPath($translation->locale?->code);
                                                     @endphp
                                                     @if ($translationPublicUrl && $translationPublicPath && $page->isPublished())

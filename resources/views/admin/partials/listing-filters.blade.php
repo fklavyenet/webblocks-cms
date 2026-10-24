@@ -4,6 +4,7 @@
 
     $method = strtoupper($method ?? 'GET');
     $search = $search ?? null;
+    $extraSearches = $extraSearches ?? [];
     $selects = $selects ?? [];
     $dates = $dates ?? [];
     $hidden = $hidden ?? [];
@@ -48,6 +49,16 @@
                 >
             </div>
         @endif
+
+        @foreach ($extraSearches as $extraSearch)
+            <div class="wb-field">
+                <label for="{{ $extraSearch['id'] }}" class="wb-label">{{ $extraSearch['label'] }}</label>
+                <input id="{{ $extraSearch['id'] }}" name="{{ $extraSearch['name'] }}" type="search" class="wb-input" value="{{ $extraSearch['value'] }}" @if (! empty($extraSearch['hint'])) aria-describedby="{{ $extraSearch['id'] }}_hint" @endif>
+                @if (! empty($extraSearch['hint']))
+                    <div id="{{ $extraSearch['id'] }}_hint" class="wb-field-hint">{{ $extraSearch['hint'] }}</div>
+                @endif
+            </div>
+        @endforeach
 
         @if ($selects !== [] || $dates !== [])
             @foreach ($selects as $select)

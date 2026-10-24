@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Queries\SiteDomainQuery;
 use WebBlocks\Cms\Support\Database\CmsTable;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
@@ -202,7 +203,7 @@ class Site extends CmsModel
   {
     return Attribute::make(
       get: function ($value, array $attributes) {
-        if (! Schema::hasTable('wbcms_site_domains')) {
+        if (! app(SiteDomainQuery::class)->tableExists($this)) {
           return $attributes['domain'] ?? null;
         }
 
@@ -216,9 +217,7 @@ class Site extends CmsModel
           }
         }
 
-        $primaryDomain = $this->siteDomains()
-          ->where('is_primary', true)
-          ->value('domain');
+        $primaryDomain = app(SiteDomainQuery::class)->primary($this)?->domain;
 
         return $primaryDomain ?? ($attributes['domain'] ?? null);
       },
@@ -337,7 +336,7 @@ class Site extends CmsModel
       return $this->siteDomains->first(fn (SiteDomain $domain) => $domain->is_primary);
     }
 
-    return $this->siteDomains()->where('is_primary', true)->first();
+    return app(SiteDomainQuery::class)->primary($this);
   }
 
   public function activeDomains()

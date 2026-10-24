@@ -57,7 +57,6 @@
                     </thead>
                     <tbody>
                         @foreach ($sites as $site)
-                            @php($deleteReport = $siteDeleteReports[$site->id] ?? null)
                             <tr data-site-id="{{ $site->id }}">
                                 <td data-column="view">
                                     <a
@@ -79,7 +78,7 @@
                                         @if ($site->canonicalDomain())
                                             <span class="wb-text-sm wb-text-muted">https://{{ $site->canonicalDomain() }}</span>
                                         @endif
-                                        @php($aliasCount = $site->siteDomains()->where('is_primary', false)->count())
+                                        @php($aliasCount = $site->alias_domains_count ?? $site->siteDomains()->where('is_primary', false)->count())
                                         @if ($aliasCount > 0)
                                             <span class="wb-text-sm wb-text-muted">{{ $adminText('sites.alias_count', ['count' => $aliasCount]) }}</span>
                                         @endif
@@ -141,7 +140,7 @@
                                                     <a href="{{ route('admin.sites.promote', ['target_site_id' => $site->id]) }}" class="wb-dropdown-item">{{ $adminText('sites.promote_to_site') }}</a>
                                                 @endif
                                                 <hr class="wb-dropdown-divider">
-                                                <a href="{{ route('admin.sites.delete', $site) }}" class="wb-dropdown-item wb-text-danger" @if (! $deleteReport?->canDelete) aria-disabled="true" @endif>{{ $adminText('sites.delete_site') }}</a>
+                                                <a href="{{ route('admin.sites.delete', $site) }}" class="wb-dropdown-item wb-text-danger" @if (! in_array($site->id, $deletableSiteIds ?? [], true)) aria-disabled="true" @endif>{{ $adminText('sites.delete_site') }}</a>
                                             </div>
                                         </div>
                                         @endif
@@ -164,7 +163,7 @@
         ])
     @endif
 
-    @if ($canExportSites)
+    @if ($showExportModal)
         @include('webblocks-cms::admin.site-transfers.partials.export-modal', [
             'modalId' => 'siteIndexExportModal',
             'modalTitle' => $adminText('sites.export_modal_title'),

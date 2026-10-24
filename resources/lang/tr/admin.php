@@ -1067,6 +1067,8 @@ $translations = [
     'delete_all_blocks_button' => 'Tüm blokları sil',
   ],
   'blocks_index' => [
+    'page_search' => 'Sayfa seçeneklerini ara',
+    'page_search_help' => 'Sayfa adı, yol veya ID ile arayıp uygula. En fazla :limit eşleşme gösterilir; seçili sayfa korunur.',
     'blocks' => 'Bloklar',
     'blocks_for_page' => ':title için Bloklar',
     'description' => 'CMS genelindeki blok instancelarini incele ve düzenle.',

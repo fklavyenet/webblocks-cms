@@ -4,13 +4,17 @@ namespace WebBlocks\Cms\Support\Access;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 
 final class CmsAuthorization
 {
   public function ready(): bool
   {
-    return Schema::hasTable('wbcms_acl_roles') && Schema::hasColumn('wbcms_site_user', 'role_id');
+    return $this->remember('schema', [], function (): bool {
+      $schema = DB::connection()->getSchemaBuilder();
+
+      return $schema->hasTable('wbcms_acl_roles') && $schema->hasColumn('wbcms_site_user', 'role_id');
+    });
   }
 
   public function isSuperAdmin($user): bool
@@ -19,7 +23,8 @@ final class CmsAuthorization
     return false;
     }
     if ($this->ready()) {
-      return $user->getAuthIdentifier() !== null && DB::table('wbcms_acl_system_administrators')->where('user_id', $user->getAuthIdentifier())->exists();
+      return $user->getAuthIdentifier() !== null && $this->remember('system-administrator', [$user->getAuthIdentifier()],
+        fn () => DB::table('wbcms_acl_system_administrators')->where('user_id', $user->getAuthIdentifier())->exists());
     }
 
     return ($user->role ?? null) === 'super_admin' || (bool) ($user->is_admin ?? false);
@@ -31,7 +36,7 @@ final class CmsAuthorization
     return collect();
     }
     if ($this->isSuperAdmin($user)) {
-    return DB::table('wbcms_sites')->pluck('id');
+    return clone $this->remember('all-sites', [], fn () => DB::table('wbcms_sites')->pluck('id'));
     }
     if (! $this->ready()) {
     return $user->sites()->pluck('wbcms_sites.id');
@@ -44,7 +49,8 @@ final class CmsAuthorization
       $query->whereExists(fn ($q) => $q->selectRaw('1')->from('wbcms_acl_role_permissions as panel_grant')->whereColumn('panel_grant.role_id', 'membership.role_id')->where('panel_grant.permission', 'cms.panel.access'));
     }
 
-    return $query->pluck('membership.site_id')->map(fn ($id) => (int) $id);
+    return clone $this->remember('permission-sites', [$user->getAuthIdentifier(), $permission],
+      fn () => $query->pluck('membership.site_id')->map(fn ($id) => (int) $id));
   }
 
   public function allows($user, string $permission, int|string|null $siteId = null): bool
@@ -71,7 +77,17 @@ final class CmsAuthorization
     }
     $memberships = DB::table('wbcms_site_user as m')->leftJoin('wbcms_acl_roles as r', 'r.id', '=', 'm.role_id')->where('m.user_id', $user->getAuthIdentifier());
 
-    return (clone $memberships)->exists() && ! (clone $memberships)->where(fn ($q) => $q->whereNull('r.id')->orWhere('r.is_protected', false))->exists();
+    return $this->remember('legacy-memberships', [$user->getAuthIdentifier()],
+      fn () => (clone $memberships)->exists() && ! (clone $memberships)->where(fn ($q) => $q->whereNull('r.id')->orWhere('r.is_protected', false))->exists());
+  }
+
+  private function remember(string $group, array $identity, callable $load): mixed
+  {
+    $connection = DB::connection();
+
+    return app(RequestMemo::class)->remember('acl.'.$group, [
+      $connection->getName(), $connection->getDatabaseName(), $connection->getTablePrefix(), ...$identity,
+    ], $load);
   }
 
   public function legacyApiSiteIds($user): Collection

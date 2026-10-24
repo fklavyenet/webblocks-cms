@@ -17,9 +17,10 @@ class ExportablePages
   /**
    * @return array<int, list<array<string, mixed>>>
    */
-  public function grouped(): array
+  public function grouped(?int $siteId = null): array
   {
     return Page::query()
+      ->when($siteId !== null, fn ($query) => $query->where('site_id', $siteId))
       ->whereRuntimeSettingNull('revision_restore_candidate')
       // Shared-slot source pages are machinery behind a shared slot rather
       // than content anyone chooses, and the exporter skips them anyway.

@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Queries\AdminTableSort;
+use WebBlocks\Cms\Queries\SiteDeletionAvailabilityQuery;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
@@ -57,24 +58,24 @@ class SiteController extends Controller
           : null;
 
     $sites = $sitesQuery()
-      ->with(['locales' => fn ($query) => $query->orderBy('name')])
-      ->withCount(['pages' => fn ($query) => $query->visibleInAdmin()])
+      ->with(['siteDomains', 'locales' => fn ($query) => $query->orderBy('name')])
+      ->withCount(['pages' => fn ($query) => $query->visibleInAdmin(), 'siteDomains as alias_domains_count' => fn ($query) => $query->where('is_primary', false)])
       ->primaryFirst()
       ->orderBy('name')
       ->tap(fn ($query) => AdminTableSort::for('sites')->apply($query))
       ->paginate(AdminPagination::perPage())->withQueryString();
 
     AdminPagination::redirectOutOfRange($sites);
+    $canManageSites = (bool) $user?->isSuperAdmin();
 
     return view('webblocks-cms::admin.sites.index', [
-      'exportablePages' => app(ExportablePages::class)->grouped(),
+      'exportablePages' => $canManageSites && $requestedModal === 'export-site' && $selectedExportSite
+        ? app(ExportablePages::class)->grouped((int) $selectedExportSite->id) : [],
       'sites' => $sites,
-      'siteDeleteReports' => $user?->isSuperAdmin()
-        ? $sitesQuery()->get()->keyBy('id')->map(fn (Site $site) => $this->siteDeleteService->inspect($site))
-        : collect(),
+      'deletableSiteIds' => $canManageSites ? app(SiteDeletionAvailabilityQuery::class)->deletableIds($sites->getCollection(), $siteCount) : [],
       'siteCount' => $siteCount,
-      'canManageSites' => $user?->isSuperAdmin() ?? false,
-      'canExportSites' => $user?->isSuperAdmin() ?? false,
+      'canManageSites' => $canManageSites,
+      'canExportSites' => $canManageSites,
       'siteExportUi' => [
         'requestedModal' => $requestedModal,
         'selectedSite' => $selectedExportSite,

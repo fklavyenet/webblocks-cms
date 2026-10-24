@@ -10,6 +10,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use WebBlocks\Cms\Actions\Blocks\UpdateBlockStatus;
+use WebBlocks\Cms\Http\Requests\Admin\BlockIndexRequest;
 use WebBlocks\Cms\Http\Requests\Admin\BlockRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
@@ -21,6 +22,7 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Queries\AdminBlockPageOptions;
 use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
@@ -103,7 +105,7 @@ class BlockController extends Controller
       ->with('status', $message);
   }
 
-  public function index(Request $request): View
+  public function index(BlockIndexRequest $request): View
   {
     abort_unless($request->user()?->can('access-system'), 403);
 
@@ -133,6 +135,8 @@ class BlockController extends Controller
       ->withQueryString();
 
     AdminPagination::redirectOutOfRange($blocks, $request);
+    $pageOptions = app(AdminBlockPageOptions::class)->window($request->user(), $filters);
+    AdminPagination::redirectOutOfRange($pageOptions['paginator'], $request, 'page_options_page');
 
     $currentPage = $pageId
       ? Page::query()->with(['site', 'translations.locale'])->find($pageId)
@@ -143,7 +147,9 @@ class BlockController extends Controller
       'currentPage' => $currentPage,
       'filters' => $filters,
       'filterSites' => $this->blockIndexSiteOptions(),
-      'filterPages' => $this->blockIndexPageOptions($filters['site']),
+      'filterPages' => $pageOptions['options'],
+      'pageOptionsPaginator' => $pageOptions['paginator'],
+      'pageOptionsLimit' => AdminBlockPageOptions::LIMIT,
       'filterBlockTypes' => $this->blockIndexBlockTypeOptions(),
       'filterLocales' => $this->blockIndexLocaleOptions(),
       'hasActiveFilters' => $this->hasActiveIndexFilters($filters),
@@ -1094,6 +1100,8 @@ class BlockController extends Controller
 
     return [
       'search' => trim((string) $request->query('search', '')),
+      'page_search' => trim((string) $request->query('page_search', '')),
+      'page_options_page' => $request->integer('page_options_page') > 1 ? (string) $request->integer('page_options_page') : '',
       'site' => $this->normalizePositiveIntegerFilter($request->query('site')),
       'page_id' => $this->normalizePositiveIntegerFilter($request->query('page_id')),
       'block_type_id' => $this->normalizePositiveIntegerFilter($request->query('block_type_id')),
@@ -1244,33 +1252,6 @@ class BlockController extends Controller
       ->get()
       ->mapWithKeys(fn (Site $site) => [(string) $site->id => $site->name])
       ->all();
-  }
-
-  private function blockIndexPageOptions(string $siteId): array
-  {
-    return Page::query()
-      ->with(['translations.locale'])
-      ->whereHas('blocks')
-      ->when($siteId !== '', fn (Builder $query) => $query->where('site_id', (int) $siteId))
-      ->orderByDesc('id')
-      ->get()
-      ->mapWithKeys(fn (Page $page) => [(string) $page->id => $this->blockIndexPageLabel($page)])
-      ->all();
-  }
-
-  private function blockIndexPageLabel(Page $page): string
-  {
-    $title = trim((string) ($page->title ?? ''));
-    $path = trim((string) ($page->defaultTranslation()?->path ?? ''));
-    $parts = [$title !== '' ? $title : 'Page'];
-
-    if ($path !== '') {
-      $parts[] = $path;
-    }
-
-    $parts[] = '#'.$page->id;
-
-    return implode(' | ', $parts);
   }
 
   private function blockIndexBlockTypeOptions(): array

@@ -17,24 +17,40 @@ class MediaUsageResolver
 {
   public function resolve(Media $media, $actor = null): Collection
   {
-    return $this->blockUsages($media)
-      ->concat($this->galleryUsages($media))
-      ->concat($this->attachmentUsages($media))
-      ->concat($this->mobileImageUsages($media))
-      ->concat($this->siteBrandingUsages($media))
-      ->concat($this->pageSeoUsages($media))
-      ->filter(function (array $usage) use ($actor): bool {
-        $acl = app(CmsAuthorization::class);
+    return $this->resolveMany(collect([$media]), $actor)->get($media->id, collect());
+  }
 
-        return ! $actor || ! $acl->ready() || $acl->isSuperAdmin($actor) || $acl->usesLegacyRoles($actor)
-          || (isset($usage['_site_id']) && $acl->allows($actor, 'cms.media.read', $usage['_site_id']));
-      })
-      ->map(function (array $usage): array {
-      unset($usage['_site_id']);
+  /** @return Collection<int, Collection<int, array<string, mixed>>> */
+  public function resolveMany(Collection $media, $actor = null): Collection
+  {
+    $ids = $media->pluck('id')->filter()->map(fn ($id) => (int) $id)->unique()->values();
+    if ($ids->isEmpty()) {
+      return collect();
+    }
+    $mediaIds = $ids->all();
+    $groups = $this->blockUsages($mediaIds)
+      ->concat($this->galleryUsages($mediaIds))
+      ->concat($this->attachmentUsages($mediaIds))
+      ->concat($this->mobileImageUsages($mediaIds))
+      ->concat($this->siteBrandingUsages($mediaIds))
+      ->concat($this->pageSeoUsages($mediaIds))
+      ->groupBy('_media_id');
+
+    return $ids->mapWithKeys(fn (int $id) => [$id => $this->visibleUsages($groups->get($id, collect()), $actor)]);
+  }
+
+  private function visibleUsages(Collection $usages, $actor): Collection
+  {
+    return $usages->filter(function (array $usage) use ($actor): bool {
+      $acl = app(CmsAuthorization::class);
+
+      return ! $actor || ! $acl->ready() || $acl->isSuperAdmin($actor) || $acl->usesLegacyRoles($actor)
+        || (isset($usage['_site_id']) && $acl->allows($actor, 'cms.media.read', $usage['_site_id']));
+    })->map(function (array $usage): array {
+      unset($usage['_site_id'], $usage['_media_id']);
 
       return $usage;
-      })
-      ->values();
+    })->values();
   }
 
   public function count(Media $media): int
@@ -47,15 +63,17 @@ class MediaUsageResolver
     return $this->count($media) > 0;
   }
 
-  private function blockUsages(Media $media): Collection
+  private function blockUsages(array $mediaIds): Collection
   {
     return Block::query()
-      ->with(['page', 'blockType'])
-      ->where('media_id', $media->id)
+      ->with(['page.translations', 'blockType'])
+      ->whereIn('media_id', $mediaIds)
+      ->orderBy('id')
       ->get()
       ->map(function (Block $block) {
         return [
           'type' => 'Block',
+          '_media_id' => $block->media_id,
           '_site_id' => $block?->page?->site_id,
           'context' => $block->typeSlug() === 'download' ? 'Download block' : $block->typeName(),
           'label' => $block->title ?: $block->typeName(),
@@ -65,18 +83,20 @@ class MediaUsageResolver
       });
   }
 
-  private function galleryUsages(Media $media): Collection
+  private function galleryUsages(array $mediaIds): Collection
   {
     return BlockMedia::query()
-      ->with(['block.page', 'block.blockType'])
-      ->where('media_id', $media->id)
+      ->with(['block.page.translations', 'block.blockType'])
+      ->whereIn('media_id', $mediaIds)
       ->where('role', 'gallery_item')
+      ->orderBy('id')
       ->get()
       ->map(function (BlockMedia $blockMedia) {
         $block = $blockMedia->block;
 
         return [
           'type' => 'Block',
+          '_media_id' => $blockMedia->media_id,
           '_site_id' => $block?->page?->site_id,
           'context' => 'Gallery block',
           'label' => $block?->title ?: $block?->typeName(),
@@ -86,18 +106,20 @@ class MediaUsageResolver
       });
   }
 
-  private function attachmentUsages(Media $media): Collection
+  private function attachmentUsages(array $mediaIds): Collection
   {
     return BlockMedia::query()
-      ->with(['block.page', 'block.blockType'])
-      ->where('media_id', $media->id)
+      ->with(['block.page.translations', 'block.blockType'])
+      ->whereIn('media_id', $mediaIds)
       ->where('role', 'attachment')
+      ->orderBy('id')
       ->get()
       ->map(function (BlockMedia $blockMedia) {
         $block = $blockMedia->block;
 
         return [
           'type' => 'Block',
+          '_media_id' => $blockMedia->media_id,
           '_site_id' => $block?->page?->site_id,
           'context' => 'Button attachment',
           'label' => $block?->title ?: $block?->typeName(),
@@ -107,21 +129,23 @@ class MediaUsageResolver
       });
   }
 
-  private function mobileImageUsages(Media $media): Collection
+  private function mobileImageUsages(array $mediaIds): Collection
   {
     $locale = app(AdminLocaleResolver::class)->locale();
     $context = app(CmsTranslator::class)->get('admin.blocks.mobile_media.title', $locale);
 
     return BlockMedia::query()
-      ->with(['block.page', 'block.blockType'])
-      ->where('media_id', $media->id)
+      ->with(['block.page.translations', 'block.blockType'])
+      ->whereIn('media_id', $mediaIds)
       ->where('role', MobileBlockMedia::ROLE)
+      ->orderBy('id')
       ->get()
       ->map(function (BlockMedia $blockMedia) use ($context): array {
         $block = $blockMedia->block;
 
         return [
           'type' => 'Block',
+          '_media_id' => $blockMedia->media_id,
           '_site_id' => $block?->page?->site_id,
           'context' => $context,
           'label' => $block?->title ?: $block?->typeName(),
@@ -131,41 +155,47 @@ class MediaUsageResolver
       });
   }
 
-  private function siteBrandingUsages(Media $media): Collection
+  private function siteBrandingUsages(array $mediaIds): Collection
   {
     return Site::query()
-      ->where(function ($query) use ($media): void {
-        $query->where('favicon_media_id', $media->id)
-          ->orWhere('social_image_media_id', $media->id);
+      ->where(function ($query) use ($mediaIds): void {
+        $query->whereIn('favicon_media_id', $mediaIds)
+          ->orWhereIn('social_image_media_id', $mediaIds);
       })
+      ->orderBy('id')
       ->get()
-      ->map(function (Site $site) use ($media) {
-        $context = (int) $site->favicon_media_id === (int) $media->id
-          ? 'Site favicon'
-          : 'Site social image';
+      ->flatMap(function (Site $site) use ($mediaIds): array {
+        $references = [['id' => (int) $site->favicon_media_id, 'context' => 'Site favicon']];
+        if ((int) $site->social_image_media_id !== (int) $site->favicon_media_id) {
+          $references[] = ['id' => (int) $site->social_image_media_id, 'context' => 'Site social image'];
+        }
 
-        return [
-          'type' => 'Site',
-          '_site_id' => $site->id,
-          'context' => $context,
-          'label' => $site->name,
-          'admin_url' => route('admin.sites.edit', $site),
-          'page_title' => null,
-        ];
+        return collect($references)->filter(fn (array $reference) => in_array($reference['id'], $mediaIds, true))
+          ->map(fn (array $reference) => [
+            'type' => 'Site',
+            '_media_id' => $reference['id'],
+            '_site_id' => $site->id,
+            'context' => $reference['context'],
+            'label' => $site->name,
+            'admin_url' => route('admin.sites.edit', $site),
+            'page_title' => null,
+          ])->all();
       });
   }
 
-  private function pageSeoUsages(Media $media): Collection
+  private function pageSeoUsages(array $mediaIds): Collection
   {
     return PageTranslation::query()
-      ->with(['page', 'locale'])
-      ->where('og_image_media_id', $media->id)
+      ->with(['page.translations', 'locale'])
+      ->whereIn('og_image_media_id', $mediaIds)
+      ->orderBy('id')
       ->get()
       ->map(function (PageTranslation $translation) {
         $page = $translation->page;
 
         return [
           'type' => 'Page translation',
+          '_media_id' => $translation->og_image_media_id,
           '_site_id' => $page?->site_id,
           'context' => 'SEO social image',
           'label' => $translation->name ?: $page?->title,

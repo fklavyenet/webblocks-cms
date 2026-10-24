@@ -1068,6 +1068,8 @@ $translations = [
     'delete_all_blocks_button' => 'Alle Blöcke löschen',
   ],
   'blocks_index' => [
+    'page_search' => 'Seitenauswahl durchsuchen',
+    'page_search_help' => 'Nach Seitenname, Pfad oder ID suchen und anwenden. Bis zu :limit Treffer werden angezeigt; die ausgewählte Seite bleibt erhalten.',
     'blocks' => 'Blöcke',
     'blocks_for_page' => 'Blöcke für :title',
     'description' => 'Block-Instanzen im gesamten CMS prüfen und bearbeiten.',

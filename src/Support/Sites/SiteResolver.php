@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
+use WebBlocks\Cms\Queries\SiteDomainQuery;
 
 class SiteResolver
 {
@@ -82,9 +83,7 @@ class SiteResolver
       return $primary;
     }
 
-    return Schema::hasTable('wbcms_site_domains')
-      ? $site->activeDomains()->first()
-      : null;
+    return app(SiteDomainQuery::class)->firstActive($site);
   }
 
   private function resolveActiveSiteDomain(string $host): ?SiteDomain

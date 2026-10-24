@@ -1270,6 +1270,8 @@ return [
     'delete_all_blocks_button' => 'Delete all blocks',
   ],
   'blocks_index' => [
+    'page_search' => 'Find page options',
+    'page_search_help' => 'Search by page name, path or ID, then apply. Up to :limit matches are shown; the selected page is retained.',
     'blocks' => 'Blocks',
     'blocks_for_page' => 'Blocks for :title',
     'description' => 'Inspect and edit block instances across the CMS.',

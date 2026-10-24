@@ -1652,6 +1652,34 @@ sorting; ID and total-block sorting can also be retained in a personal view.
 Created time and slug remain additional sort choices even without standalone
 table columns. Selection, public/preview links and actions are not sortable.
 
+## Admin list lookups and bounded page choices
+
+Admin schema, system-membership and permission-site inputs are shared only
+within the current request/job and database connection. Account activity and
+the active permission catalog are still checked by each authorization call.
+Database writes, DDL and transaction rollback invalidate these inputs; no
+permission decision is retained across requests. Returned site-ID collections
+and database domain models are independent copies. Loaded/unsaved domain
+relations retain their existing override and active/legacy fallback behavior.
+
+The Blocks list page filter offers 50 recent/matching accessible pages per
+window, plus the currently selected accessible page when outside that window. GET
+`page_search` accepts at most 200 characters and searches translated page name,
+path, slug or an exact page ID (optionally prefixed with `#`). Apply refreshes
+the choices; only selecting `page_id` restricts the block results. Site scope,
+selection, search, sort and pagination remain explicit URL state. Choice
+pagination uses `page_options_page` independently of the block table's `page`;
+out-of-range windows return to the last available window. This is a
+read-only native panel form, not an Internal Content API authoring field.
+
+The Sites index loads export page choices only when the selected site's export
+modal is opened, preserving archived defaults and exclusions for source pages
+and revision candidates. List deletion availability uses bounded page/block
+message references; the selected site's confirmation report and transactional
+delete guards remain authoritative. Media list usage is resolved in batches
+for visible media, preserving source order, branding precedence and existing
+site-read visibility. No new persistence or public content field is introduced.
+
 ## Private editing preview (1.105.7)
 
 Existing editable draft and staged pages offer an optional adjacent preview on

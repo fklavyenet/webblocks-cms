@@ -127,7 +127,7 @@ class PageController extends Controller
       ->whereRuntimeSettingNull('revision_restore_candidate')
       ->when($listingView['blocked'], fn ($query) => $query->whereRaw('1 = 0'))
       ->with([
-        'site',
+        'site.siteDomains',
         'translations.locale',
         'createdByUser',
         'updatedByUser',

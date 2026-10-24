@@ -3,8 +3,9 @@
 namespace WebBlocks\Cms\Support\Translations;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
 class AdminLocaleResolver
@@ -53,7 +54,11 @@ class AdminLocaleResolver
   public function userPreferencesAvailable(): bool
   {
     try {
-      return Schema::hasTable('users') && Schema::hasColumn('users', 'admin_locale');
+      $connection = DB::connection();
+
+      return app(RequestMemo::class)->remember('admin.locale-schema', [
+        $connection->getName(), $connection->getDatabaseName(), $connection->getTablePrefix(),
+      ], fn () => $connection->getSchemaBuilder()->hasTable('users') && $connection->getSchemaBuilder()->hasColumn('users', 'admin_locale'));
     } catch (\Throwable) {
       return false;
     }

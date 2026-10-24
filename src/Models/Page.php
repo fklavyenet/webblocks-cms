@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
@@ -478,7 +479,12 @@ class Page extends CmsModel
 
   public static function defaultLocaleId(): ?int
   {
-    return Locale::query()->where('is_default', true)->value('id');
+    $model = new Locale;
+    $connection = $model->getConnection();
+
+    return app(RequestMemo::class)->remember('page.default-locale-id', [
+      $connection->getName(), $connection->getDatabaseName(), $connection->getTablePrefix(), $model->getTable(),
+    ], fn () => Locale::query()->where('is_default', true)->value('id'));
   }
 
   private function resolvedTitle(mixed $fallback = null): ?string

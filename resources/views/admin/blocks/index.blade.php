@@ -34,6 +34,13 @@
                     'value' => $filters['search'],
                     'placeholder' => $blocksIndexText('search_placeholder'),
                 ],
+                'extraSearches' => [[
+                    'id' => 'blocks_page_search',
+                    'name' => 'page_search',
+                    'label' => $blocksIndexText('page_search'),
+                    'value' => $filters['page_search'] ?? '',
+                    'hint' => $blocksIndexText('page_search_help', ['limit' => $pageOptionsLimit ?? \WebBlocks\Cms\Queries\AdminBlockPageOptions::LIMIT]),
+                ]],
                 'selects' => [
                     [
                         'id' => 'blocks_site',
@@ -85,6 +92,9 @@
                 'resetLabel' => $blocksIndexText('clear_filters'),
             ])
         </div>
+        @if (isset($pageOptionsPaginator))
+            @include('webblocks-cms::admin.partials.pagination', ['paginator' => $pageOptionsPaginator, 'ariaLabel' => $blocksIndexText('page_search'), 'compact' => true])
+        @endif
     </div>
 
     @if ($blocks->isEmpty())
