@@ -33,7 +33,7 @@ return [
     'media_variants' => 'Generierte Medienvarianten',
     'media_variants_help' => 'Es werden nur veraltet generierte Fingerabdruckverzeichnisse entfernt. Original Media Library-Dateien sind niemals berechtigt.',
     'temporary_workspaces' => 'Temporäre Arbeitsbereiche',
-    'temporary_workspaces_help' => 'Nur verlassene Systemaktualisierungs- und Plugin-Katalog-Arbeitsbereiche, die älter als der konfigurierte Schwellenwert sind, sind berechtigt.',
+    'temporary_workspaces_help' => 'Nur erkannte temporäre Arbeitsbereiche für Systemupdates, Sicherung/Wiederherstellung und den Plugin-Katalog, die älter als die eingestellte Frist sind, werden bereinigt. Aktive Vorgänge, die Installationskennung und unbekannte Dateien bleiben erhalten.',
     'page_revisions_help' => 'Seitenrevisionen werden erst nach Ablauf der Mindestdauer und außerhalb der geschützten neuesten Revisionen berechtigt. Aktive Wiederherstellungsvorschauen bleiben geschützt.',
     'shared_slot_revisions_help' => 'Shared-Slot-Revisionen werden erst nach Ablauf der Mindestdauer und außerhalb der geschützten neuesten Revisionen berechtigt.',
     'preview' => 'Aktuelle Bereinigungsvorschau',

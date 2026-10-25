@@ -1847,10 +1847,22 @@ running summary older than the execution lock lifecycle is presented as
 interrupted without mutating state. Dry-run and overview reads do not write
 summaries. Partial variant deletion credits only bytes from successfully removed
 directories. Current fingerprints and original media remain protected. Temporary
-cleanup honors configured update roots, active update records/locks, recent
-nested writes and symlinks; flat abandoned catalog downloads use nonblocking
-exclusive file locks, while installation holds a shared lease. Other files,
-transfer archives and application logs are not added to automatic deletion.
+cleanup selects timestamp/UUID update runs and timestamp/random backup/restore
+scratch runs under the known `app/temp/system-backups` and
+`app/temp/system-backup-restores` roots. The age threshold covers every nested
+entry. Installation identity, unknown run names, updater recovery-backup folders,
+symlinked trees/ancestors and roots overlapping backup or public-upload storage
+are retained. Stale running/pending update history alone does not block cleanup;
+fresh admission/heartbeat evidence, queued operator jobs, held update locks and
+process-held backup/restore leases remain protective. Cleanup holds a live update
+lease and the process-held backup lease while rechecking tree identity and age
+before deletion, without changing update history or manufacturing progress.
+An unverified heartbeat cache write stops cleanup; integer and numeric-string
+cache representations are both supported.
+Flat abandoned catalog downloads use nonblocking exclusive file locks, while
+installation holds a shared lease. Other files, transfer archives and application
+logs are not added to automatic deletion. Physical measurements may therefore
+include retained files with no cleanup candidate.
 
 New system backup ZIP archives omit the reserved generated-cache namespace
 `media/transforms/` from uploads. The immutable version-one manifest records

@@ -34,7 +34,7 @@ return [
     'media_variants' => 'Variantes de los medios de comunicación',
     'media_variants_help' => 'Sólo se eliminan los directorios obsoletos generados de huellas dactilares. Los archivos originales de Media Library nunca son elegibles.',
     'temporary_workspaces' => 'Espacios de trabajo temporales',
-    'temporary_workspaces_help' => 'Sólo los espacios de trabajo abandonados de System Update y plugin de catálogo más antiguos que el umbral configurado son elegibles.',
+    'temporary_workspaces_help' => 'Solo se pueden eliminar los espacios temporales reconocidos de actualizaciones del sistema, copias/restauraciones y catálogo de plugins anteriores al plazo configurado. Se conservan las operaciones activas, la identidad de instalación y los archivos desconocidos.',
     'page_revisions_help' => 'Las revisiones de página solo son aptas cuando cumplen la antigüedad y quedan fuera del mínimo protegido por página. Las vistas previas de restauración activas permanecen protegidas.',
     'shared_slot_revisions_help' => 'Las revisiones de Espacio Compartido solo son aptas cuando cumplen la antigüedad y quedan fuera del mínimo protegido por espacio.',
     'preview' => 'Previsualización de limpieza actual',

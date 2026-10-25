@@ -34,7 +34,7 @@ return [
     'media_variants' => '▁Variants des▁médias▁générés',
     'media_variants_help' => '▁Seuls les▁répertoires d\'empreintes▁digitales▁obsolètes▁sont▁supprimés. Les▁fichiers de la▁médiathèque▁originale ne▁sont▁jamais▁admissibles.',
     'temporary_workspaces' => '▁Espaces de travail▁temporaires',
-    'temporary_workspaces_help' => '▁Seuls les▁espaces de travail de▁mise à▁jour▁système et de catalogue de plugin▁abandonnés plus▁anciens que le▁seuil▁configuré▁sont▁éligibles.',
+    'temporary_workspaces_help' => 'Seuls les espaces temporaires reconnus des mises à jour système, sauvegardes/restaurations et du catalogue de plugins plus anciens que le délai configuré sont supprimables. Les opérations actives, l’identifiant d’installation et les fichiers inconnus sont conservés.',
     'page_revisions_help' => 'Les révisions de page ne sont éligibles que si elles dépassent l’âge minimum et le nombre protégé par page. Les aperçus de restauration actifs restent protégés.',
     'shared_slot_revisions_help' => 'Les révisions de Slot partagé ne sont éligibles que si elles dépassent l’âge minimum et le nombre protégé par slot.',
     'preview' => '▁Aperçu▁actuel du▁nettoyage',

@@ -170,12 +170,12 @@ class StorageMaintenanceTest extends TestCase
   public function temporary_cleanup_preserves_live_updates_recent_work_and_locked_catalog_downloads(): void
   {
     $old = now()->subDays(2)->getTimestamp();
-    $update = storage_path('app/system-updates/old');
+    $update = storage_path('app/system-updates/20260101-120000-12345678-1234-1234-1234-123456789abc');
     File::ensureDirectoryExists($update);
     File::put($update.'/package.zip', 'old');
     touch($update.'/package.zip', $old);
     touch($update, $old);
-    $recent = storage_path('app/system-updates/recent');
+    $recent = storage_path('app/system-updates/20260102-120000-12345678-1234-1234-1234-123456789abc');
     File::ensureDirectoryExists($recent);
     File::put($recent.'/package.zip', 'new');
     touch($recent, $old);

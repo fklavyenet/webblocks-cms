@@ -34,7 +34,7 @@ return [
     'media_variants' => 'Varianti di media generati',
     'media_variants_help' => 'Vengono rimosse solo le directory generate dalle impronte digitali obsolete. I file della Media Library originale non sono mai eleggibili.',
     'temporary_workspaces' => 'Spazi di lavoro temporanei',
-    'temporary_workspaces_help' => 'Sono ammissibili solo gli spazi di lavoro di aggiornamento del sistema abbandonati e del catalogo dei plugin più vecchi della soglia configurata.',
+    'temporary_workspaces_help' => 'Sono eliminabili solo gli spazi temporanei riconosciuti per aggiornamenti di sistema, backup/ripristino e catalogo plugin più vecchi della soglia configurata. Le operazioni attive, l’identità di installazione e i file sconosciuti vengono conservati.',
     'page_revisions_help' => 'Le revisioni di pagina sono idonee solo quando superano sia l’età minima sia il numero protetto per pagina. Le anteprime di ripristino attive restano protette.',
     'shared_slot_revisions_help' => 'Le revisioni degli Slot condivisi sono idonee solo quando superano sia l’età minima sia il numero protetto per slot.',
     'preview' => 'Anteprima pulizia attuale',

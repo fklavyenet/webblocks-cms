@@ -157,7 +157,7 @@ return [
     'media_variants' => 'Generated Media Variants',
     'media_variants_help' => 'Only obsolete generated fingerprint directories are removed. Original Media Library files are never eligible.',
     'temporary_workspaces' => 'Temporary Workspaces',
-    'temporary_workspaces_help' => 'Only abandoned System Update and plugin catalog workspaces older than the configured threshold are eligible.',
+    'temporary_workspaces_help' => 'Only recognized System Update, backup/restore and plugin catalog temporary workspaces older than the configured threshold are eligible. Active work, installation identity and unrecognized files are kept.',
     'page_revisions_help' => 'Page revisions become eligible only after both the age and per-page minimum-count protections are satisfied. Revisions used by an active restore preview remain protected.',
     'shared_slot_revisions_help' => 'Shared Slot revisions become eligible only after both the age and per-slot minimum-count protections are satisfied.',
     'preview' => 'Current cleanup preview',

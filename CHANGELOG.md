@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.105.24
+
+- Clean abandoned backup and restore scratch directories alongside recognized update and plugin catalog workspaces, while retaining installation identity, unknown files and recovery archives.
+- Stop stale update history from blocking temporary cleanup indefinitely. Fresh admissions, heartbeats and real update/backup leases still protect active work; deletion rechecks age, tree identity and symlink safety under the operation leases.
+- Preserve the existing 24-hour default and opt-in automation policy, with regression coverage for scheduled execution, concurrent operations, changed trees, protected storage and cleanup failures.
+
 ## 1.105.23
 
 - Store maintenance reports as versioned arrays and scalar values so Dashboard, Backups, Cleanup and System Health can read them when cache object deserialization is disabled.

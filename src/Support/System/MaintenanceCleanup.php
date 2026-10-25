@@ -144,7 +144,7 @@ class MaintenanceCleanup
 
   public function previewTemporaryWorkspaces(): MaintenanceCleanupResult
   {
-    return $this->fileResult($this->temporaryWorkspaceCandidates());
+    return app(TemporaryWorkspaceCleanup::class)->preview();
   }
 
   public function previewMediaVariants(): MaintenanceCleanupResult
@@ -190,30 +190,7 @@ class MaintenanceCleanup
 
   private function cleanTemporaryWorkspaces(): MaintenanceCleanupResult
   {
-    $candidates = $this->temporaryWorkspaceCandidates();
-    $candidateBytes = array_sum(array_map($this->pathSize(...), $candidates));
-    $deleted = 0;
-    $bytes = 0;
-    $failures = [];
-
-    $cutoff = now()->subHours($this->settings->maintenanceCleanupSettings()['temporary_workspace_hours'])->getTimestamp();
-    foreach ($candidates as $path) {
-      if (is_link($path) || ! file_exists($path) || filemtime($path) >= $cutoff) {
-        continue;
-      }
-      if (is_dir($path) && ($this->updatesActive() || $this->latestModification($path) >= $cutoff)) {
-        continue;
-      }
-      $size = $this->pathSize($path);
-      if (is_file($path) ? $this->deleteTemporaryFile($path) : File::deleteDirectory($path)) {
-        $deleted++;
-        $bytes += $size;
-      } else {
-        $failures[] = ['path' => basename($path), 'message' => 'Directory could not be deleted.'];
-      }
-    }
-
-    return new MaintenanceCleanupResult(count($candidates), $candidateBytes, $deleted, $bytes, $failures);
+    return app(TemporaryWorkspaceCleanup::class)->run();
   }
 
   private function cleanMediaVariants(): MaintenanceCleanupResult
@@ -347,87 +324,6 @@ class MaintenanceCleanup
     }
 
     return $candidates;
-  }
-
-  private function temporaryWorkspaceCandidates(): array
-  {
-    $cutoff = now()->subHours($this->settings->maintenanceCleanupSettings()['temporary_workspace_hours'])->getTimestamp();
-    $paths = [];
-
-    $updateRoot = storage_path(trim((string) config('webblocks-updates.installer.workspace_root', 'app/system-updates'), '/'));
-    if (! $this->updatesActive() && is_dir($updateRoot) && ! is_link($updateRoot)) {
-      foreach (File::directories($updateRoot) as $directory) {
-        if (! is_link($directory) && filemtime($directory) < $cutoff && $this->latestModification($directory) < $cutoff) {
-          $paths[] = $directory;
-        }
-      }
-    }
-    $catalogRoot = storage_path('app/webblocks/tmp/catalog-installs');
-    if (is_dir($catalogRoot) && ! is_link($catalogRoot)) {
-      // The catalog downloads flat temporary files, not child directories.
-      foreach (File::files($catalogRoot) as $file) {
-        if (! $file->isLink() && str_starts_with($file->getFilename(), 'catalog-plugin-') && $file->getMTime() < $cutoff && $this->temporaryFileAvailable($file->getPathname())) {
-          $paths[] = $file->getPathname();
-        }
-      }
-    }
-
-    return $paths;
-  }
-
-  private function updatesActive(): bool
-  {
-    if (Schema::hasTable('wbcms_system_update_runs') && DB::table('wbcms_system_update_runs')->whereIn('status', ['running', 'pending'])->exists()) {
-      return true;
-    }
-    $lock = Cache::lock((string) config('webblocks-updates.installer.lock_name', 'system-updates:run'), 1);
-    if (! $lock->get()) {
-      return true;
-    }
-    $lock->release();
-
-    return false;
-  }
-
-  private function latestModification(string $directory): int
-  {
-    $latest = (int) filemtime($directory);
-    $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
-    foreach ($iterator as $file) {
-      // Never traverse a workspace containing external symlinks.
-      if ($file->isLink()) {
-        return PHP_INT_MAX;
-      }
-      $latest = max($latest, $file->getMTime());
-    }
-
-    return $latest;
-  }
-
-  private function temporaryFileAvailable(string $path): bool
-  {
-    $handle = @fopen($path, 'r');
-    if ($handle === false) {
-      return false;
-    }
-    try {
-      return flock($handle, LOCK_EX | LOCK_NB);
-    } finally {
-      fclose($handle);
-    }
-  }
-
-  private function deleteTemporaryFile(string $path): bool
-  {
-    $handle = fopen($path, 'r');
-    if ($handle === false) {
-      return false;
-    }
-    try {
-      return flock($handle, LOCK_EX | LOCK_NB) && File::delete($path);
-    } finally {
-      fclose($handle);
-    }
   }
 
   private function deleteFiles(array $paths): MaintenanceCleanupResult

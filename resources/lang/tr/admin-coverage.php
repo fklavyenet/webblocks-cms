@@ -32,7 +32,7 @@ return [
     'media_variants' => 'Genrated Media Variants',
     'media_variants_help' => 'Sadece eski üretilen parmak izi yönetmenleri kaldırıldı. Orijinal Media Library dosyaları asla uygun değildir.',
     'temporary_workspaces' => 'Geçici İş Alanı',
-    'temporary_workspaces_help' => 'Sadece terk edilmiş Sistem Güncellemesi ve eklenti katalog çalışma alanları, yapılandırılmış eşinden daha eskidir.',
+    'temporary_workspaces_help' => 'Yalnızca yapılandırılmış süreden eski, tanınan Sistem Güncellemesi, yedekleme/geri yükleme ve eklenti kataloğu geçici çalışma alanları temizlenebilir. Aktif işler, kurulum kimliği ve tanınmayan dosyalar korunur.',
     'page_revisions_help' => 'Sayfa revizyonları yalnızca yaş ve sayfa başına korunacak en yeni revizyon sayısı koşullarının ikisi de sağlandığında temizlenebilir. Aktif geri yükleme önizlemeleri korunur.',
     'shared_slot_revisions_help' => 'Ortak Slot revizyonları yalnızca yaş ve slot başına korunacak en yeni revizyon sayısı koşullarının ikisi de sağlandığında temizlenebilir.',
     'preview' => 'Şimdiki temizleme önizleme',
