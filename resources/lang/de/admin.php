@@ -1864,9 +1864,17 @@ $translations = [
     'unknown' => 'unbekannt',
   ],
   'updates' => [
+    'progress_title' => 'Systemupdate: :version',
     'duration' => 'Dauer',
     'elapsed' => 'Verstrichen',
     'phases' => [
+      'check' => 'Verfügbares Update wird geprüft',
+      'filesystem_backup' => 'Aktuelle Dateien werden gesichert',
+      'verify' => 'Heruntergeladenes Paket wird geprüft',
+      'maintenance_down' => 'Website-Zugriff wird während des Updates vorübergehend pausiert',
+      'post_apply' => 'Update-Einrichtung wird abgeschlossen',
+      'verify_version' => 'Installierte Version wird geprüft',
+      'maintenance_up' => 'Website wird wieder verfügbar gemacht',
       'rollback' => 'Restoring package and backup',
       'backup' => 'Sicherung',
       'download' => 'Paket wird heruntergeladen',

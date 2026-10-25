@@ -2087,9 +2087,17 @@ return [
     'unknown' => 'unknown',
   ],
   'updates' => [
+    'progress_title' => 'System update: :version',
     'duration' => 'Duration',
     'elapsed' => 'Elapsed',
     'phases' => [
+      'check' => 'Checking the available update',
+      'filesystem_backup' => 'Backing up the current files',
+      'verify' => 'Checking the downloaded package',
+      'maintenance_down' => 'Pausing site access while the update is applied',
+      'post_apply' => 'Finishing the update setup',
+      'verify_version' => 'Checking the installed version',
+      'maintenance_up' => 'Making the site available again',
       'rollback' => 'Restoring package and backup',
       'backup' => 'Backup',
       'download' => 'Downloading package',

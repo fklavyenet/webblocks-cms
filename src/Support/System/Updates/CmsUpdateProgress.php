@@ -138,16 +138,28 @@ class CmsUpdateProgress
       'duration_ms' => $run?->duration_ms,
       'elapsed_ms' => $run?->duration_ms ?? ($started ? max(0, (int) $started->diffInMilliseconds($operation?->finished_at ?? $run?->finished_at ?? now())) : null),
       'steps' => $run && Schema::hasTable('wbcms_system_update_run_steps') ? DB::table('wbcms_system_update_run_steps')->where('system_update_run_id', $run->id)->orderBy('id')->get()->map(function ($row) use ($state, $terminal, $operation, $run): array {
-        $labelKey = 'webblocks-cms::admin.updates.phases.'.$row->stage;
-        $sharedKey = 'publisher-client::updates.phases.'.$row->stage;
-
-        return ['phase' => $row->stage, 'label' => trans()->has($labelKey) ? __($labelKey) : (trans()->has($sharedKey) ? __($sharedKey) : __('publisher-client::updates.progress.step_running')),
+        return ['phase' => $row->stage, 'label' => $this->labelForStage($row->stage),
           'state' => $row->state ?? ($row->finished_at ? 'complete' : ($state === 'interrupted' ? 'interrupted' : ($terminal ? 'failed' : 'running'))),
           'elapsed_ms' => $row->duration_ms ?? max(0, (int) Carbon::parse($row->started_at)->diffInMilliseconds($operation?->finished_at ?? $run?->finished_at ?? now()))];
       })->all() : [],
       'stage' => $step?->stage,
-      'stage_label' => $step?->stage ? __('webblocks-cms::admin.updates.phases.'.$step->stage) : null,
+      'stage_label' => $this->labelForStage($step?->stage),
     ];
+  }
+
+  private function labelForStage(?string $stage): ?string
+  {
+    if ($stage === null) {
+      return null;
+    }
+    foreach (['webblocks-cms::admin.updates.phases.', 'publisher-client::updates.phases.'] as $prefix) {
+      $key = $prefix.$stage;
+      if (trans()->has($key)) {
+        return __($key);
+      }
+    }
+
+    return __('webblocks-cms::admin.updates.updating_body');
   }
 
   private function installedVersion(bool $terminal): string

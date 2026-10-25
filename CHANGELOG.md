@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.105.26
+
+- Resolve current update-phase headings with the same localized fallback as recorded steps, with readable labels for every engine phase in all six panel languages.
+- Use a neutral update dialog title and hide active phase/waiting instructions together with the progress indicator when tracking stops or a terminal result is shown, keeping the elapsed time and confirmed result visible.
+
 ## 1.105.25
 
 - Organize Cleanup retention settings into responsive tables for automatic schedules, backup retention and revision/workspace policies, preserving saved values, validation feedback and policy links.

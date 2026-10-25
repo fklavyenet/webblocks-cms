@@ -1990,3 +1990,20 @@ errors are never rendered or logged. The OS crontab remains host-owned; no new
 CMS persistence is introduced. Installing an entry is not execution evidence:
 only the actual scheduled heartbeat verifies scheduler activity. Updates never
 silently install OS tasks or enable destructive cleanup categories.
+
+### Update progress copy and activity visibility (1.105.26)
+
+The CMS progress payload uses one label resolver for the current phase and
+recorded steps: product translation, shared Client translation, then a readable
+CMS fallback. All current engine phases have product labels in six panel
+languages. Missing or future phase translations never expose a translation key
+in the phase heading. Operation identity, elapsed time, terminal-state and
+installed-version verification remain unchanged.
+
+The product-owned dialog uses a neutral versioned title. Its activity group
+contains the current phase, native indeterminate progressbar and waiting advice;
+the existing Client visibility contract hides the whole group on unconfirmed,
+interrupted or terminal results. Elapsed time and the recorded result remain
+outside that group. Successful verified updates retain the existing automatic
+return; failed/restored results stay available with the update-history link.
+The embedded Client runtime is unchanged.

@@ -1862,9 +1862,17 @@ $translations = [
     'unknown' => 'sconosciuto',
   ],
   'updates' => [
+    'progress_title' => 'Aggiornamento di sistema: :version',
     'duration' => 'Durata',
     'elapsed' => 'Tempo trascorso',
     'phases' => [
+      'check' => 'Verifica dell’aggiornamento disponibile',
+      'filesystem_backup' => 'Backup dei file attuali',
+      'verify' => 'Verifica del pacchetto scaricato',
+      'maintenance_down' => 'Sospensione temporanea dell’accesso al sito durante l’aggiornamento',
+      'post_apply' => 'Completamento della configurazione dell’aggiornamento',
+      'verify_version' => 'Verifica della versione installata',
+      'maintenance_up' => 'Ripristino dell’accesso al sito',
       'rollback' => 'Restoring package and backup',
       'backup' => 'Backup',
       'download' => 'Download del pacchetto',

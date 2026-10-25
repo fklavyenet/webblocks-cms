@@ -1863,9 +1863,17 @@ $translations = [
     'unknown' => 'desconocido',
   ],
   'updates' => [
+    'progress_title' => 'Actualización del sistema: :version',
     'duration' => 'Duración',
     'elapsed' => 'Tiempo transcurrido',
     'phases' => [
+      'check' => 'Comprobando la actualización disponible',
+      'filesystem_backup' => 'Creando copia de los archivos actuales',
+      'verify' => 'Verificando el paquete descargado',
+      'maintenance_down' => 'Pausando temporalmente el acceso al sitio durante la actualización',
+      'post_apply' => 'Finalizando la configuración de la actualización',
+      'verify_version' => 'Comprobando la versión instalada',
+      'maintenance_up' => 'Restableciendo el acceso al sitio',
       'rollback' => 'Restoring package and backup',
       'backup' => 'Copia de seguridad',
       'download' => 'Descargando paquete',

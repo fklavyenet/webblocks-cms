@@ -62,7 +62,7 @@ class SystemUpdatesScreenTest extends TestCase
     // Progress modal wired to the indicator poll.
     $this->assertStringContainsString('data-pc-update-modal', $html);
     $this->assertStringContainsString(route('admin.system.updates.indicator'), $html);
-    $this->assertStringContainsString('Updating to 1.41.0', $html);
+    $this->assertStringContainsString('System update: 1.41.0', $html);
 
     // History accordion + eye-modal log.
     $this->assertStringContainsString('Update history', $html);
@@ -108,7 +108,7 @@ class SystemUpdatesScreenTest extends TestCase
     $this->assertSame(route('admin.system.updates.store'), $forms->item(0)->getAttribute('action'));
 
     $stage = $xpath->query('//*[@data-update-stage]')->item(0);
-    $bar = $xpath->query('//*[@data-update-loading and @role="progressbar"]')->item(0);
+    $bar = $xpath->query('//*[@data-update-loading]//*[@role="progressbar"]')->item(0);
     $this->assertInstanceOf(DOMElement::class, $stage);
     $this->assertInstanceOf(DOMElement::class, $bar);
     $this->assertSame($stage->getAttribute('id'), $bar->getAttribute('aria-labelledby'));
@@ -117,7 +117,11 @@ class SystemUpdatesScreenTest extends TestCase
     $this->assertCount(0, $xpath->query('//*[@data-update-steps]'));
     $this->assertCount(1, $xpath->query('//*[@data-update-elapsed and @role="timer" and @aria-live="off"]'));
     $modal = $xpath->query('//*[@id="pc-update-progress"]')->item(0);
-    $this->assertLessThan(strpos($document->saveHTML($modal), 'data-update-loading'), strpos($document->saveHTML($modal), 'data-update-stage'));
+    $this->assertCount(1, $xpath->query('//*[@data-update-loading]//*[@data-update-stage]'));
+    $this->assertCount(1, $xpath->query('//*[@data-update-loading]//*[@data-update-running-help]'));
+    $this->assertCount(0, $xpath->query('//*[@data-update-loading]//*[@data-update-elapsed or @data-update-message]'));
+    $this->assertStringContainsString('System update:', $xpath->query('//*[@id="pc-update-progress-title"]')->item(0)->textContent);
+    $this->assertStringNotContainsString('This can take a minute', $document->saveHTML($modal));
     $this->assertLessThan(strpos($document->saveHTML($modal), 'data-update-elapsed'), strpos($document->saveHTML($modal), 'data-update-loading'));
 
     if ($fixture = getenv('WEBBLOCKS_UPDATE_PROGRESS_FIXTURE')) {

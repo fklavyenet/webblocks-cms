@@ -28,6 +28,7 @@ use WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter;
 use WebBlocks\Cms\Support\Updates\Client\Updates\RunHeartbeat;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateCheckResult;
+use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateProgress;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateResult;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateServerClient;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -86,6 +87,49 @@ class AdminUpdateOperationTest extends TestCase
       $migration->down();
     }
     $this->assertSame('failed', $progress->payload($operation->id)['steps'][1]['state']);
+  }
+
+  public function test_every_update_phase_has_the_same_readable_heading_and_step_label_in_all_panel_locales(): void
+  {
+    $operation = $this->operation(['status' => 'running', 'heartbeat_at' => now()]);
+    $run = SystemUpdateRun::create(['from_version' => '1.0.0', 'to_version' => WebBlocks::version(), 'status' => 'running', 'started_at' => now()]);
+    $progress = app(CmsUpdateProgress::class);
+    $progress->operation($operation->id);
+    $progress->start($run);
+    $phases = array_merge(UpdateProgress::PHASES, ['backup', 'catalog', 'assets']);
+    foreach (['en', 'tr', 'de', 'fr', 'es', 'it'] as $locale) {
+      app()->setLocale($locale);
+      foreach ($phases as $phase) {
+        $progress->stage($phase);
+        $payload = $progress->payload($operation->id);
+        $this->assertSame($phase, $payload['stage']);
+        $this->assertSame(__('webblocks-cms::admin.updates.phases.'.$phase), $payload['stage_label']);
+        $this->assertSame($payload['stage_label'], $payload['steps'][array_key_last($payload['steps'])]['label']);
+        $this->assertNotSame('', trim($payload['stage_label']));
+        $this->assertStringNotContainsString('::', $payload['stage_label']);
+      }
+    }
+  }
+
+  public function test_new_shared_and_unknown_phases_never_leak_a_translation_key_into_the_heading(): void
+  {
+    $operation = $this->operation(['status' => 'running', 'heartbeat_at' => now()]);
+    $run = SystemUpdateRun::create(['from_version' => '1.0.0', 'to_version' => WebBlocks::version(), 'status' => 'running', 'started_at' => now()]);
+    $progress = app(CmsUpdateProgress::class);
+    $progress->operation($operation->id);
+    $progress->start($run);
+    __('publisher-client::updates.progress.step_running');
+    trans()->addLines(['updates.phases.shared_only' => 'Checking the site'], 'en', 'publisher-client');
+    $progress->stage('shared_only');
+    $payload = $progress->payload($operation->id);
+    $this->assertSame('Checking the site', $payload['stage_label']);
+    $this->assertSame('Checking the site', $payload['steps'][0]['label']);
+    $progress->stage('unknown_legacy_phase');
+    $payload = $progress->payload($operation->id);
+    $this->assertSame(__('webblocks-cms::admin.updates.updating_body'), $payload['stage_label']);
+    $this->assertSame($payload['stage_label'], $payload['steps'][1]['label']);
+    $this->assertStringNotContainsString('unknown_legacy_phase', $payload['stage_label']);
+    $this->assertStringNotContainsString('::', $payload['stage_label']);
   }
 
   public function test_schema_migration_is_repeatable_and_keeps_receipts(): void

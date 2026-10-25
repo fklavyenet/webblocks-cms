@@ -6,6 +6,8 @@
     var opener = document.getElementById('pc-update-progress-open');
     var elapsed = modal.querySelector('[data-update-elapsed]');
     var bar = modal.querySelector('[data-update-loading]');
+    var nativeBar = bar.querySelector('[role="progressbar"]');
+    var help = modal.querySelector('[data-update-running-help]');
     var stage = modal.querySelector('[data-update-stage]');
     var message = modal.querySelector('[data-update-message]');
     var operation = '00000000-0000-4000-8000-000000000015';
@@ -98,7 +100,7 @@
             if (scenario === 'legacy') {
                 assert(modal.querySelectorAll('[data-update-steps] li').length === 2, 'Existing product step-list views remain compatible');
             } else {
-                assert(stage.textContent === 'Verify' && !bar.hasAttribute('aria-valuenow'), 'Native bar shows the current phase without a fabricated percentage');
+                assert(stage.textContent === 'Verify' && nativeBar.classList.contains('wb-progress-bar-indeterminate') && !nativeBar.hasAttribute('aria-valuenow'), 'Native bar shows the current phase without a fabricated percentage');
                 assert(!modal.querySelector('[data-update-steps]'), 'Compact modal contains no growing step list');
             }
         }
@@ -122,11 +124,14 @@
         assert(opens === 1 && posts === (scenario === 'resume' ? 0 : 1), 'Read-only recheck neither reopens nor reposts');
         await poll(progress(250, 'Health check', { terminal: true, state: 'success', installed_version: '1.0.0', target_version: '2.0.0' }));
         assert(bar.hidden && sessionStorage.getItem(storageKey) === operation, 'Version mismatch cannot confirm terminal success');
-        await poll(progress(300, 'Complete', { terminal: true, state: 'success', installed_version: '2.0.0', target_version: '2.0.0' }));
+        var result = { failure: { state: 'failed', message: 'The update failed. Review the update history.' }, restored: { state: 'restored', message: 'The previous files were restored. Review the update history.' }, warnings: { state: 'success_with_warnings', message: 'Update completed with warnings.' } }[scenario] || { state: 'success', message: 'Update completed.' };
+        await poll(progress(300, 'Making the site available again', Object.assign({ terminal: true, installed_version: '2.0.0', target_version: '2.0.0' }, result)));
         var finishedAt = seconds();
+        assert(bar.hidden && !message.hidden && message.textContent === result.message, 'Completion replaces the phase and waiting instructions with the confirmed result');
+        assert(help.parentElement === bar && (scenario === 'legacy' || stage.parentElement === bar), 'Current phase and waiting advice share the activity visibility');
         await wait(1700);
         assert(bar.hidden && seconds() === finishedAt, 'Verified completion stops both activity and elapsed time');
-        assert(sessionStorage.getItem(storageKey) === null && window.location.hash === '#completed', 'Only verified success clears the receipt and returns');
+        assert(sessionStorage.getItem(storageKey) === null && window.location.hash === (['success', 'success_with_warnings'].indexOf(result.state) !== -1 ? '#completed' : ''), 'Only verified success returns automatically; other terminal results stay available');
         assert(opens === 1, 'Entire operation uses one modal opening');
         document.getElementById('test-status').textContent = 'PASS ' + scenario + '\n' + checks.join('\n');
     }

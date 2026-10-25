@@ -1877,9 +1877,17 @@ $translations = [
     'unknown' => 'bilinmiyor',
   ],
   'updates' => [
+    'progress_title' => 'Sistem güncellemesi: :version',
     'duration' => 'Süre',
     'elapsed' => 'Geçen süre',
     'phases' => [
+      'check' => 'Kullanılabilir güncelleme kontrol ediliyor',
+      'filesystem_backup' => 'Mevcut dosyalar yedekleniyor',
+      'verify' => 'İndirilen paket doğrulanıyor',
+      'maintenance_down' => 'Güncelleme uygulanırken site erişimi geçici olarak durduruluyor',
+      'post_apply' => 'Güncelleme kurulumu tamamlanıyor',
+      'verify_version' => 'Yüklenen sürüm kontrol ediliyor',
+      'maintenance_up' => 'Site yeniden erişime açılıyor',
       'rollback' => 'Paket ve yedeği geri yükleme',
       'backup' => 'Yedekleme',
       'download' => 'Paket indiriliyor',
