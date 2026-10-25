@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.105.27
+
+- Repair missing declared fields in existing revision snapshot tables during updates, preventing Comments block saves from failing while preserving saved versions and their original values.
+
 ## 1.105.26
 
 - Resolve current update-phase headings with the same localized fallback as recorded steps, with readable labels for every engine phase in all six panel languages.
