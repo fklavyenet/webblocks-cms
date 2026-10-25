@@ -7,13 +7,19 @@ use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\SystemHealthRequest;
 use WebBlocks\Cms\Queries\SystemHealthQuery;
+use WebBlocks\Cms\Support\System\SchedulerSetup;
 use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 
 class SystemHealthController extends Controller
 {
   public function index(SystemHealthRequest $request, SystemHealthQuery $health): View
   {
-    return view('webblocks-cms::admin.system.health', ['health' => $health->report($request->siteId())]);
+    return view('webblocks-cms::admin.system.health', ['health' => $health->report($request->siteId()), 'schedulerSetupUrl' => route('admin.system.scheduler.index')]);
+  }
+
+  public function scheduler(SystemHealthRequest $request, SchedulerSetup $setup): View
+  {
+    return view('webblocks-cms::admin.system.scheduler', ['setup' => $setup->instructions()]);
   }
 
   public function refresh(SystemHealthRequest $request): RedirectResponse

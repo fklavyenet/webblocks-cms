@@ -12,6 +12,8 @@ use WebBlocks\Cms\Support\WebBlocks;
 final class BrowserFixtureServer
 {
   private const SCENARIOS = [
+    'retention' => ['SchedulerSetupTest', 'WEBBLOCKS_RETENTION_FIXTURE', 'retention_table_browser_fixture'],
+    'scheduler' => ['SchedulerSetupTest', 'WEBBLOCKS_SCHEDULER_FIXTURE', 'retention_table_browser_fixture'],
     'parent' => ['SlotBlockEditorFragmentSafetyTest', 'WEBBLOCKS_PARENT_FIXTURE', 'full_and_fragment_parent_options'],
     'asset-picker' => ['AssetPickerViewTest', 'WEBBLOCKS_ASSET_PICKER_FIXTURE', 'picker_results_remain_inert'],
     'rich-text' => ['RichTextEditorViewTest', 'WEBBLOCKS_RICH_TEXT_FIXTURE', 'editor_controls_and_shared_dialogs'],
@@ -126,7 +128,7 @@ final class BrowserFixtureServer
       $head .= '<link rel="stylesheet" href="'.$css.'">';
     }
     $head .= '<script src="/cms/webblocks-ui/'.$version.'/webblocks-ui.js" defer></script>';
-    if (! in_array($scenario, ['parent', 'update-progress'], true)) {
+    if (! in_array($scenario, ['parent', 'update-progress', 'retention', 'scheduler'], true)) {
       $script = match ($scenario) {
         'asset-picker' => 'asset-picker',
         'editor-preview' => 'editor-preview',

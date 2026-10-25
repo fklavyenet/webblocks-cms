@@ -13,6 +13,7 @@ use Illuminate\View\View;
 use WebBlocks\Cms\Actions\System\StartAdminSystemUpdate;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest;
 use WebBlocks\Cms\Support\Database\CmsTableCompatibilityViews;
+use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
@@ -36,6 +37,7 @@ class SystemUpdateController extends Controller
 
     return view('webblocks-cms::admin.system.updates', [
       'report' => $report,
+      'schedulerNeedsSetup' => app(SchedulerHealth::class)->snapshot()['scheduler_status'] !== 'healthy',
       'runs' => $this->displayRuns(),
       'preflight' => $report['checks'] ?? [],
       'checkedAt' => is_string($checkedAt)

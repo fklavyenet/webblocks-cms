@@ -50,7 +50,7 @@ return [
   'health_last_completed' => 'Last completed notification run (UTC)',
   'health_no_record' => 'No recorded run',
   'health_impact' => 'Scheduled message batches and daily summaries may remain pending. Ask your server administrator to check the scheduler.',
-  'health_setup' => 'Your server administrator or hosting provider must configure Laravel schedule:run every minute, under the application user and matching CLI PHP version. The CMS registers its tasks; it does not install a server cron entry.',
+  'health_setup' => 'Your server administrator or hosting provider must configure Laravel schedule:run every minute, under the application user and matching CLI PHP version. Standard hosting cron or the optional webblocks:scheduler:setup --install command can establish this connection; updates never install it silently.',
   'health_guide' => 'Read scheduler setup instructions',
   'health_install_title' => 'Before using scheduled notifications',
   'health_install_help' => 'New sites default to batched notifications and a daily summary. They require a working outbound mail transport, a correct APP_URL, the Laravel scheduler every minute, and a shared cache with atomic locks when multiple workers run. Verify scheduler health after installation.',

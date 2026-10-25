@@ -13,3 +13,7 @@
 <p>{{ __('webblocks-cms::notifications.health_setup') }}</p>
 <p><a class="wb-link" href="{{ app(\WebBlocks\Cms\Support\Admin\DocumentationUrlResolver::class)->url(app()->getLocale()) }}/installation#scheduled-notifications-and-scheduler-health">{{ __('webblocks-cms::notifications.health_guide') }}</a></p>
 </div>
+
+@if (! empty($schedulerSetupUrl))
+<p><a class="wb-link" href="{{ $schedulerSetupUrl }}">{{ __('webblocks-cms::scheduler.title') }}</a></p>
+@endif

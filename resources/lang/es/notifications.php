@@ -50,7 +50,7 @@ return [
   'health_last_completed' => 'Último proceso completado (UTC)',
   'health_no_record' => 'Sin ejecuciones registradas',
   'health_impact' => 'Las notificaciones agrupadas y los resúmenes diarios pueden seguir pendientes. Pide al administrador del servidor que revise el programador.',
-  'health_setup' => 'El administrador o proveedor debe ejecutar Laravel schedule:run cada minuto con el usuario de la aplicación y la versión PHP CLI adecuada. El CMS registra tareas, pero no configura el cron del servidor.',
+  'health_setup' => 'El administrador o proveedor debe ejecutar Laravel schedule:run cada minuto con la cuenta de la aplicación y PHP CLI adecuado. Use cron del alojamiento o webblocks:scheduler:setup --install; las actualizaciones no lo instalan silenciosamente.',
   'health_guide' => 'Leer las instrucciones del programador',
   'health_install_title' => 'Antes de usar notificaciones programadas',
   'health_install_help' => 'Los sitios nuevos usan notificaciones agrupadas y un resumen diario. Requieren correo saliente operativo, APP_URL correcta, el programador Laravel cada minuto y caché compartida con bloqueos atómicos si hay varios procesos. Verifica el programador después de instalar.',

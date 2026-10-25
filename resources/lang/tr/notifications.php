@@ -50,7 +50,7 @@ return [
   'health_last_completed' => 'Son tamamlanan bildirim işi (UTC)',
   'health_no_record' => 'Çalışma kaydı yok',
   'health_impact' => 'Toplu mesaj bildirimleri ve günlük özetler beklemede kalabilir. Sunucu yöneticinizden zamanlayıcıyı kontrol etmesini isteyin.',
-  'health_setup' => 'Sunucu yöneticiniz veya hosting sağlayıcınız, uygulama kullanıcısı ve uygun CLI PHP sürümüyle Laravel schedule:run komutunu her dakika çalıştıracak şekilde ayarlamalıdır. CMS görevlerini kaydeder; sunucuya cron kaydı kurmaz.',
+  'health_setup' => 'Sunucu yöneticiniz veya hosting sağlayıcınız, uygulama kullanıcısı ve uygun CLI PHP sürümüyle Laravel schedule:run komutunu her dakika çalıştıracak şekilde ayarlamalıdır. Standart hosting cron veya isteğe bağlı webblocks:scheduler:setup --install komutu bu bağlantıyı kurabilir; güncellemeler bunu sessizce yapmaz.',
   'health_guide' => 'Zamanlayıcı kurulum yönergelerini oku',
   'health_install_title' => 'Zamanlanmış bildirimleri kullanmadan önce',
   'health_install_help' => 'Yeni siteler varsayılan olarak toplu bildirim ve günlük özet kullanır. Bunlar çalışan bir e-posta taşıyıcısı, doğru APP_URL, her dakika çalışan Laravel zamanlayıcısı ve birden çok işleyicide atomik kilit destekleyen ortak cache gerektirir. Kurulumdan sonra zamanlayıcı sağlığını doğrulayın.',

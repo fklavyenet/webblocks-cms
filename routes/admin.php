@@ -472,6 +472,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::put('system/cleanup', [MaintenanceCleanupController::class, 'update'])->name('system.cleanup.update');
       Route::post('system/cleanup/{category}', [MaintenanceCleanupController::class, 'run'])->name('system.cleanup.run');
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
+      Route::get('system/scheduler', [SystemHealthController::class, 'scheduler'])->name('system.scheduler.index');
       Route::get('system/health', [SystemHealthController::class, 'index'])->name('system.health.index');
       Route::post('system/health/refresh', [SystemHealthController::class, 'refresh'])->middleware('throttle:6,1')->name('system.health.refresh');
       Route::get('system/information', SystemInformationController::class)->name('system.information');

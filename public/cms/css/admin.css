@@ -1477,3 +1477,22 @@ input.wb-admin-table-grid-input:focus {
     .wb-editor-preview-open { display: block; }
     .wb-editor-preview-panel { display: none; }
 }
+
+/* Retention fields retain native table semantics and stack on small screens. */
+.wb-cms-policy-table > tbody > tr > th { white-space: normal; width: 48%; }
+.wb-cms-policy-input { width: 7rem; max-width: 100%; }
+.wb-cms-policy-cell { display: flex; align-items: center; gap: var(--wb-s2); }
+.wb-cms-policy-cell .wb-field { margin: 0; }
+.wb-cms-policy-label { display: none; }
+.wb-cms-policy-budget { max-width: 24rem; }
+.wb-cms-scheduler-command { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+@media (max-width: 640px) {
+  .wb-cms-policy-table, .wb-cms-policy-table tbody, .wb-cms-policy-table tr,
+  .wb-cms-policy-table th, .wb-cms-policy-table td { display: block; width: auto; }
+  .wb-cms-policy-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .wb-cms-policy-table > tbody > tr > th { width: auto; }
+  .wb-cms-policy-table td { display: flex; align-items: center; justify-content: space-between; gap: var(--wb-s3); }
+  .wb-cms-policy-label { display: block; font-size: .875rem; }
+  .wb-cms-policy-table tr { border-bottom: 1px solid var(--wb-border); }
+  .wb-cms-policy-table td, .wb-cms-policy-table th { border-bottom: 0; }
+}

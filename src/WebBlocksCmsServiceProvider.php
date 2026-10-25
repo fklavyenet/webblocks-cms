@@ -41,6 +41,7 @@ use WebBlocks\Cms\Console\PrunePromotedStagedUpdatesCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\RefreshSystemReportsCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
+use WebBlocks\Cms\Console\SchedulerSetupCommand;
 use WebBlocks\Cms\Console\SchedulerStatusCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
 use WebBlocks\Cms\Console\SiteCloneCommand;
@@ -832,6 +833,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     BlockSettingsAuditCommand::class,
     PruneEditorRecoveriesCommand::class,
     SchedulerStatusCommand::class,
+    SchedulerSetupCommand::class,
     DispatchSiteNotificationsCommand::class,
     PluginMigrateCommand::class,
     PluginProbeCommand::class,

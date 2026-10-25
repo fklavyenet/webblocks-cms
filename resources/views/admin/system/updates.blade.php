@@ -27,6 +27,9 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('updates.title'), 'heading' => $adminText('updates.title')])
 
 @section('content')
+  @if ($schedulerNeedsSetup ?? false)
+    <div class="wb-alert wb-alert-info wb-mb-4"><div><a class="wb-link" href="{{ route('admin.system.scheduler.index') }}">{{ $adminTranslator->get('scheduler.title', $adminLocale) }}</a><p>{{ $adminTranslator->get('scheduler.policy_help', $adminLocale) }}</p></div></div>
+  @endif
   @php
     $check = $report['version'] ?? [];
     $installedVersion = $report['installed_version'] ?? ($check['installed_version'] ?? '');

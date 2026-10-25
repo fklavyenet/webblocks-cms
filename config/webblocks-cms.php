@@ -2,6 +2,11 @@
 
 return [
 
+  'scheduler' => [
+    // Optional CLI PHP executable for hosting-panel instructions (never PHP-FPM).
+    'php_binary' => env('WEBBLOCKS_CMS_SCHEDULER_PHP_BINARY'),
+  ],
+
   /*
    * Ceiling on the site override directory an export will package.
    *

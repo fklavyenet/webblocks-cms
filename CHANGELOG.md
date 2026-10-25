@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.105.25
+
+- Organize Cleanup retention settings into responsive tables for automatic schedules, backup retention and revision/workspace policies, preserving saved values, validation feedback and policy links.
+- Add an authorized Scheduler setup screen with installation-specific hosting cron commands, optional CLI installation instructions and recorded execution evidence. Link it from Cleanup, System Health and the update screen when scheduling needs attention.
+- Add `webblocks:scheduler:setup` for read-only inspection and an explicitly confirmed, current-application-account cron installation. Preserve existing cron content, refuse root or ambiguous/conflicting configurations, avoid duplicate entries and verify the installed entry without claiming runtime success.
+- Keep each installation’s saved retention, category opt-ins and scheduling times unchanged. Herne is optional; restricted hosting environments retain the standard cron setup path.
+
 ## 1.105.24
 
 - Clean abandoned backup and restore scratch directories alongside recognized update and plugin catalog workspaces, while retaining installation identity, unknown files and recovery archives.

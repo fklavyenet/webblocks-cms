@@ -90,6 +90,7 @@ class InstallWebBlocksCmsCommand extends Command
     $this->installState->markInstalled();
 
     $this->components->info('WebBlocks CMS is ready. Open /webadmin to sign in.');
+    $this->line(__('webblocks-cms::scheduler.title').': php artisan webblocks:scheduler:setup');
 
     return self::SUCCESS;
   }

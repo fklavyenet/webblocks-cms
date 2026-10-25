@@ -2,6 +2,7 @@
     $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $translator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $text = static fn (string $key, array $replace = []) => $translator->admin('cleanup.'.$key, $adminLocale, $replace);
+    $tableText = static fn (string $key) => $translator->get('retention-table.'.$key, $adminLocale);
     $storageText = static fn (string $key, array $replace = []) => $translator->get('storage.'.$key, $adminLocale, $replace);
     $retentionText = static fn (string $key, array $replace = []) => $translator->get('backup-retention.'.$key, $adminLocale, $replace);
     $cleanupTab = old('_cleanup_tab', request()->query('tab', 'report'));
@@ -41,6 +42,24 @@
         ],
         'temporary-workspaces' => [
             'temporary_workspace_hours' => [$text('temporary_workspace_hours'), $settings['temporary_workspace_hours'], 8760],
+        ],
+    ];
+    $backupPolicyRows = [
+        'pre_update' => [
+            ['backup_cleanup_pre_update_days', ...$policyGroups['backups']['backup_cleanup_pre_update_days']],
+            ['backup_cleanup_keep_latest_pre_update', ...$policyGroups['backups']['backup_cleanup_keep_latest_pre_update']],
+        ],
+        'restore_safety' => [
+            ['backup_cleanup_restore_safety_days', ...$policyGroups['backups']['backup_cleanup_restore_safety_days']],
+            ['keep_latest_restore_safety', $retentionText('keep_latest_restore_safety'), $settings['keep_latest_restore_safety'], 100],
+        ],
+        'content_apply' => [
+            ['backup_cleanup_content_apply_days', ...$policyGroups['backups']['backup_cleanup_content_apply_days']],
+            ['keep_latest_content_apply', $retentionText('keep_latest_content_apply'), $settings['keep_latest_content_apply'], 100],
+        ],
+        'manual' => [
+            ['manual_days', $retentionText('manual_days'), $settings['manual_days'], 3650],
+            ['keep_latest_manual', $retentionText('keep_latest_manual'), $settings['keep_latest_manual'], 100],
         ],
     ];
     $scheduleTimes = ['asset-revisions' => '04:00', 'media-variants' => '04:10', 'temporary-workspaces' => '04:20', 'page-revisions' => '04:30', 'shared-slot-revisions' => '04:45'];
@@ -214,42 +233,70 @@
                 @unless ($automation['ready'])
                     <div class="wb-alert wb-alert-warning"><div>{{ $storageText('schema_missing') }}</div></div>
                 @endunless
-                <div class="wb-grid wb-grid-2 wb-gap-3">
-                    @foreach ($automation['enabled'] as $category => $enabled)
-                        <div class="wb-stack wb-gap-1">
-                            <input type="hidden" name="automatic[{{ $category }}]" value="0">
-                            <label class="wb-check"><input name="automatic[{{ $category }}]" type="checkbox" value="1" @checked(old('automatic.'.$category, $enabled)) @disabled(! $automation['ready'])> <span>{{ $text(str_replace('-', '_', $category)) }}</span></label>
-                            <span class="wb-text-sm wb-text-muted">{{ $storageText(in_array($category, ['page-revisions', 'shared-slot-revisions'], true) ? 'weekly_schedule' : 'daily_schedule', ['time' => $scheduleTimes[$category]]) }}</span>
-                        </div>
-                    @endforeach
+                <p><a class="wb-link" href="{{ route('admin.system.scheduler.index') }}">{{ $tableText('scheduler_setup') }}</a></p>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-striped wb-cms-policy-table" aria-labelledby="cleanup-automatic-title">
+                        <thead><tr><th scope="col">{{ $tableText('category') }}</th><th scope="col">{{ $tableText('enabled') }}</th><th scope="col">{{ $tableText('schedule') }}</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <th scope="row">{{ $text('backups') }}</th>
+                                <td><span class="wb-cms-policy-label" aria-hidden="true">{{ $tableText('enabled') }}</span><input type="hidden" name="backup_cleanup_enabled" value="0"><label class="wb-check"><input name="backup_cleanup_enabled" type="checkbox" value="1" @checked(old('backup_cleanup_enabled', $settings['enabled']))><span class="wb-sr-only">{{ $text('automatic_backup_cleanup') }}</span></label></td>
+                                <td><span class="wb-cms-policy-label" aria-hidden="true">{{ $tableText('schedule') }}</span>{{ $storageText('daily_schedule', ['time' => '03:30']) }}</td>
+                            </tr>
+                            @foreach ($automation['enabled'] as $category => $enabled)
+                                <tr>
+                                    <th scope="row">{{ $text(str_replace('-', '_', $category)) }}</th>
+                                    <td><span class="wb-cms-policy-label" aria-hidden="true">{{ $tableText('enabled') }}</span><input type="hidden" name="automatic[{{ $category }}]" value="0"><label class="wb-check"><input name="automatic[{{ $category }}]" type="checkbox" value="1" @checked(old('automatic.'.$category, $enabled)) @disabled(! $automation['ready'])><span class="wb-sr-only">{{ $text(str_replace('-', '_', $category)) }}</span></label></td>
+                                    <td><span class="wb-cms-policy-label" aria-hidden="true">{{ $tableText('schedule') }}</span>{{ $storageText(in_array($category, ['page-revisions', 'shared-slot-revisions'], true) ? 'weekly_schedule' : 'daily_schedule', ['time' => $scheduleTimes[$category]]) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </section>
             <p class="wb-text-sm wb-text-muted" id="cleanup-retention-help">{{ $storageText('retention_help') }}</p>
-            @foreach ($policyGroups as $category => $fields)
-                <section class="wb-stack wb-gap-3" role="group" aria-labelledby="cleanup-{{ $category }}-title" id="cleanup-{{ $category }}-policy" tabindex="-1" @if (in_array($category, ['asset-revisions', 'page-revisions', 'shared-slot-revisions'], true)) aria-describedby="cleanup-retention-help" @endif>
-                    <h3 class="wb-m-0 wb-text-base wb-font-semibold" id="cleanup-{{ $category }}-title">{{ $text(str_replace('-', '_', $category)) }}</h3>
-                    @if ($category === 'backups')
-                        <input type="hidden" name="backup_cleanup_enabled" value="0">
-                        <label class="wb-check"><input name="backup_cleanup_enabled" type="checkbox" value="1" @checked(old('backup_cleanup_enabled', $settings['enabled']))> <span>{{ $text('automatic_backup_cleanup') }}</span></label>
-                    @endif
-                    <div class="wb-grid wb-grid-2 wb-gap-4">
-                        @foreach ($fields as $name => [$label, $value, $max])
-                            <div class="wb-field wb-stack-2"><label for="cleanup_{{ $name }}">{{ $label }}</label><input class="wb-input" id="cleanup_{{ $name }}" name="{{ $name }}" type="number" min="1" max="{{ $max }}" required value="{{ old($name, $value) }}"></div>
-                        @endforeach
-                    </div>
-                    @if ($category === 'backups')
-                        <input type="hidden" name="manual_enabled" value="0">
-                        <label class="wb-check"><input name="manual_enabled" type="checkbox" value="1" @checked(old('manual_enabled', $settings['manual_enabled']))><span>{{ $retentionText('manual_enabled') }}</span></label>
-                        <div class="wb-grid wb-grid-2 wb-gap-4">
-                            @foreach (['manual_days' => 3650, 'keep_latest_manual' => 100, 'keep_latest_restore_safety' => 100, 'keep_latest_content_apply' => 100] as $field => $maximum)
-                                <div class="wb-field wb-stack-2"><label for="cleanup_{{ $field }}">{{ $retentionText($field) }}</label><input class="wb-input" id="cleanup_{{ $field }}" name="{{ $field }}" type="number" min="1" max="{{ $maximum }}" required value="{{ old($field, $settings[$field]) }}"></div>
+            <section class="wb-stack wb-gap-3" role="group" aria-labelledby="cleanup-backups-title" id="cleanup-backups-policy" tabindex="-1" aria-describedby="cleanup-retention-help">
+                <h3 class="wb-m-0 wb-text-base wb-font-semibold" id="cleanup-backups-title">{{ $text('backups') }}</h3>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-striped wb-cms-policy-table" aria-labelledby="cleanup-backups-title">
+                        <thead><tr><th scope="col">{{ $tableText('category') }}</th><th scope="col">{{ $tableText('retention') }}</th><th scope="col">{{ $tableText('minimum') }}</th></tr></thead>
+                        <tbody>
+                            @foreach ($backupPolicyRows as $kind => [$ageField, $countField])
+                                <tr>
+                                    <th scope="row">{{ $tableText($kind) }}
+                                        @if ($kind === 'manual')
+                                            <div class="wb-mt-2"><input type="hidden" name="manual_enabled" value="0"><label class="wb-check"><input name="manual_enabled" type="checkbox" value="1" @checked(old('manual_enabled', $settings['manual_enabled']))><span class="wb-text-sm">{{ $retentionText('manual_enabled') }}</span></label></div>
+                                        @endif
+                                    </th>
+                                    <td><span class="wb-cms-policy-label" aria-hidden="true">{{ $tableText('retention') }}</span><div class="wb-cms-policy-cell">@include('webblocks-cms::admin.partials.cleanup-policy-input', ['field' => $ageField])<span>{{ $tableText('days') }}</span></div></td>
+                                    <td><span class="wb-cms-policy-label" aria-hidden="true">{{ $tableText('minimum') }}</span>@include('webblocks-cms::admin.partials.cleanup-policy-input', ['field' => $countField])</td>
+                                </tr>
                             @endforeach
-                            <div class="wb-field wb-stack-2"><label for="cleanup_budget_gb">{{ $retentionText('budget_gb') }}</label><input class="wb-input" id="cleanup_budget_gb" name="budget_gb" type="number" min="0.01" max="10240" step="0.01" value="{{ old('budget_gb', $settings['budget_gb'] ?: '') }}" aria-describedby="cleanup-budget-help"></div>
-                        </div>
-                        <p class="wb-text-sm wb-text-muted" id="cleanup-budget-help">{{ $retentionText('budget_help') }}</p>
-                    @endif
-                </section>
-            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="wb-field wb-stack-2 wb-cms-policy-budget"><label for="cleanup_budget_gb">{{ $retentionText('budget_gb') }}</label><input class="wb-input" id="cleanup_budget_gb" name="budget_gb" type="number" min="0.01" max="10240" step="0.01" value="{{ old('budget_gb', $settings['budget_gb'] ?: '') }}" aria-describedby="cleanup-budget-help"></div>
+                <p class="wb-text-sm wb-text-muted" id="cleanup-budget-help">{{ $retentionText('budget_help') }}</p>
+            </section>
+            <section class="wb-stack wb-gap-3" role="group" aria-labelledby="cleanup-history-title">
+                <h3 class="wb-m-0 wb-text-base wb-font-semibold" id="cleanup-history-title">{{ $tableText('history_title') }}</h3>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-striped wb-cms-policy-table" aria-labelledby="cleanup-history-title" aria-describedby="cleanup-retention-help">
+                        <thead><tr><th scope="col">{{ $tableText('category') }}</th><th scope="col">{{ $tableText('retention') }}</th><th scope="col">{{ $tableText('minimum') }}</th></tr></thead>
+                        <tbody>
+                            @foreach ($policyGroups as $category => $fields)
+                                @continue($category === 'backups')
+                                @php($fieldNames = array_keys($fields))
+                                <tr id="cleanup-{{ $category }}-policy" tabindex="-1" aria-describedby="cleanup-retention-help">
+                                    <th scope="row" id="cleanup-{{ $category }}-title">{{ $text(str_replace('-', '_', $category)) }}</th>
+                                    <td><span class="wb-cms-policy-label" aria-hidden="true">{{ $tableText('retention') }}</span><div class="wb-cms-policy-cell">@include('webblocks-cms::admin.partials.cleanup-policy-input', ['field' => [$fieldNames[0], ...$fields[$fieldNames[0]]]])<span>{{ $tableText($category === 'temporary-workspaces' ? 'hours' : 'days') }}</span></div></td>
+                                    <td><span class="wb-cms-policy-label" aria-hidden="true">{{ $tableText('minimum') }}</span>@if (isset($fieldNames[1])) @include('webblocks-cms::admin.partials.cleanup-policy-input', ['field' => [$fieldNames[1], ...$fields[$fieldNames[1]]]]) @else <span>—</span> @endif</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
         <div class="wb-card-footer"><button class="wb-btn wb-btn-primary" type="submit">{{ $text('save') }}</button></div>
     </form>

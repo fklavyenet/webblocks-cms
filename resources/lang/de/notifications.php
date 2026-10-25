@@ -50,7 +50,7 @@ return [
   'health_last_completed' => 'Letzter abgeschlossener Benachrichtigungslauf (UTC)',
   'health_no_record' => 'Kein Lauf aufgezeichnet',
   'health_impact' => 'Gesammelte Nachrichten und tägliche Zusammenfassungen können ausstehen. Bitten Sie die Serververwaltung, den Zeitplaner zu prüfen.',
-  'health_setup' => 'Die Serververwaltung oder der Hosting-Anbieter muss Laravel schedule:run jede Minute mit dem Anwendungskonto und der passenden CLI-PHP-Version ausführen. Das CMS registriert Aufgaben und richtet keinen Server-Cron ein.',
+  'health_setup' => 'Die Serververwaltung oder der Hosting-Anbieter muss Laravel schedule:run jede Minute mit dem Anwendungskonto und passendem CLI-PHP ausführen. Nutzen Sie Hosting-Cron oder optional webblocks:scheduler:setup --install; Updates richten dies nicht still ein.',
   'health_guide' => 'Anleitung zum Zeitplaner lesen',
   'health_install_title' => 'Vor geplanten Benachrichtigungen',
   'health_install_help' => 'Neue Websites verwenden standardmäßig Sammelbenachrichtigungen und tägliche Zusammenfassungen. Erforderlich sind ein funktionierender Mailtransport, die korrekte APP_URL, der Laravel-Zeitplaner jede Minute und bei mehreren Prozessen ein gemeinsamer Cache mit atomaren Sperren. Nach der Installation den Zeitplaner prüfen.',

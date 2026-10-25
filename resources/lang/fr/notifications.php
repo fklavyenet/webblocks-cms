@@ -50,7 +50,7 @@ return [
   'health_last_completed' => 'Dernier traitement terminé (UTC)',
   'health_no_record' => 'Aucune exécution enregistrée',
   'health_impact' => 'Les notifications regroupées et résumés quotidiens peuvent rester en attente. Demandez à votre administrateur de vérifier le planificateur.',
-  'health_setup' => 'Votre administrateur serveur ou hébergeur doit exécuter Laravel schedule:run chaque minute avec le compte applicatif et la version PHP CLI correspondante. Le CMS inscrit ses tâches mais ne configure pas le cron serveur.',
+  'health_setup' => 'Votre administrateur serveur ou hébergeur doit exécuter Laravel schedule:run chaque minute avec le compte applicatif et PHP CLI adapté. Utilisez le cron de l’hébergement ou webblocks:scheduler:setup --install ; les mises à jour ne l’installent pas silencieusement.',
   'health_guide' => 'Lire les instructions du planificateur',
   'health_install_title' => 'Avant les notifications planifiées',
   'health_install_help' => 'Les nouveaux sites utilisent des notifications regroupées et un résumé quotidien. Ils nécessitent un transport mail fonctionnel, une APP_URL correcte, le planificateur Laravel chaque minute et un cache partagé avec verrous atomiques pour plusieurs processus. Vérifiez le planificateur après installation.',

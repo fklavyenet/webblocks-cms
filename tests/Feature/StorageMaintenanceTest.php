@@ -270,7 +270,7 @@ class StorageMaintenanceTest extends TestCase
       $xpath = new \DOMXPath($dom);
       foreach (['page-revisions' => ['page_revision_days', 'keep_latest_page_revisions'], 'shared-slot-revisions' => ['shared_slot_revision_days', 'keep_latest_shared_slot_revisions']] as $category => $fields) {
         foreach ($fields as $field) {
-          $this->assertSame(1, $xpath->query('//section[@role="group" and @id="cleanup-'.$category.'-policy"]//input[@name="'.$field.'"]')->length);
+          $this->assertSame(1, $xpath->query('//tr[@id="cleanup-'.$category.'-policy"]//input[@name="'.$field.'"]')->length);
         }
         $action = $xpath->query('//td[contains(@class,"wb-table-actions")]/div[contains(@class,"wb-action-group")]/a[@href="'.route('admin.system.cleanup.index', ['tab' => 'settings']).'#cleanup-'.$category.'-policy"]')->item(0);
         $this->assertNotNull($action);
