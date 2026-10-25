@@ -259,7 +259,7 @@
                                         <td>{{ $backup->created_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
                                         <td>
                                             <div>{{ $backup->archive_filename ?? '-' }}</div>
-                                            <div class="wb-text-sm wb-text-muted">{{ $retentionText('reason_'.($retentionDecisions[$backup->id]['reason'] ?? 'schema_missing')) }}</div>
+                                            <div class="wb-text-sm wb-text-muted">{{ isset($retentionDecisions[$backup->id]['reason']) ? $retentionText('reason_'.$retentionDecisions[$backup->id]['reason']) : $adminTranslator->get('storage.preview_unavailable', $adminLocale) }}</div>
                                             @if ($backup->label)
                                                 <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.source') }} {{ $backup->label }}</div>
                                             @endif

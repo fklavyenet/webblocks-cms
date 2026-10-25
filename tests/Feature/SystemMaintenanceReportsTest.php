@@ -6,9 +6,11 @@ use App\Models\User;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
@@ -76,14 +78,145 @@ class SystemMaintenanceReportsTest extends TestCase
     $this->app->instance(SystemHealthSiteQuery::class, Mockery::mock(SystemHealthSiteQuery::class)->shouldNotReceive('rows')->getMock());
   }
 
-  #[Test]
-  public function cold_panel_gets_never_run_reports_or_sync_queue_work_and_settings_remain_editable(): void
+  public static function reportStores(): array
   {
+    return ['array' => [false], 'restricted database' => [true]];
+  }
+
+  public static function completedReports(): array
+  {
+    return ['first report' => [false], 'previous report' => [true]];
+  }
+
+  private function useRestrictedDatabaseCache(): void
+  {
+    Schema::create('report_cache', function ($table): void {
+      $table->string('key')->primary();
+      $table->text('value');
+      $table->integer('expiration');
+    });
+    Schema::create('report_cache_locks', function ($table): void {
+      $table->string('key')->primary();
+      $table->string('owner');
+      $table->integer('expiration');
+    });
+    config()->set('cache.serializable_classes', false);
+    config()->set('cache.stores.report-database', [
+      'driver' => 'database', 'connection' => config('database.default'),
+      'table' => 'report_cache', 'lock_table' => 'report_cache_locks',
+      'lock_lottery' => [0, 100], 'prefix' => '',
+    ]);
+    Cache::setDefaultDriver('report-database');
+  }
+
+  #[Test]
+  public function restricted_database_cache_round_trips_reports_without_objects(): void
+  {
+    $this->useRestrictedDatabaseCache();
+    $this->archive();
+    $reports = app(SystemMaintenanceReports::class);
+    $this->assertTrue($reports->refresh());
+    Cache::purge('report-database');
+    $this->assertSame('fresh', $reports->read()['status']);
+    $payload = Cache::get($reports->cacheKey());
+    $plain = function (mixed $value) use (&$plain): void {
+      $this->assertTrue(is_array($value) || is_scalar($value) || $value === null);
+      if (is_array($value)) {
+        foreach ($value as $item) {
+          $plain($item);
+        }
+      }
+    };
+    $plain($payload);
+    $this->assertSame($payload, unserialize(DB::table('report_cache')->where('key', $reports->cacheKey())->value('value'), ['allowed_classes' => false]));
+    $health = app(SystemHealthQuery::class)->report();
+    $this->assertNotSame('unknown', $health['categories']['storage']['status']);
+    $this->get(route('admin.system.health.index'))->assertOk()->assertSee('Storage &amp; cleanup', false);
+    $this->forbidExpensiveReads();
+    foreach ([0, 301] as $seconds) {
+      if ($seconds) {
+        $this->travel($seconds)->seconds();
+      }
+      $state = $seconds ? 'stale' : 'fresh';
+      $this->get(route('admin.dashboard'))->assertOk()->assertSee('data-wb-system-health-summary', false);
+      $this->get(route('admin.system.backups.index'))->assertOk()->assertSee('data-wb-maintenance-report="'.$state.'"', false);
+      $this->get(route('admin.system.cleanup.index'))->assertOk()->assertSee('data-wb-maintenance-report="'.$state.'"', false)->assertSee('Storage report');
+      $this->get(route('admin.system.cleanup.index', ['tab' => 'actions']))->assertOk()
+        ->assertSee('class="wb-tabs-panel is-active" id="cleanup-actions-panel"', false)
+        ->assertDontSee(__('webblocks-cms::maintenance_reports.cleanup_actions_unavailable'));
+    }
+    $this->travelBack();
+  }
+
+  #[Test]
+  #[DataProvider('completedReports')]
+  public function unreadable_database_writes_report_failure_restore_the_previous_report_and_release_the_lock(bool $hasPrevious): void
+  {
+    $this->useRestrictedDatabaseCache();
+    $reports = app(SystemMaintenanceReports::class);
+    if ($hasPrevious) {
+      $reports->refresh();
+    }
+    $previous = $reports->read();
+    $key = $reports->cacheKey();
+    $corruptNextWrite = true;
+    DB::listen(function ($query) use ($key, &$corruptNextWrite): void {
+      if ($corruptNextWrite && str_starts_with($query->sql, 'insert into "report_cache"') && in_array($key, $query->bindings, true)) {
+        $corruptNextWrite = false;
+        DB::table('report_cache')->where('key', $key)->update(['value' => serialize(['unreadable' => true])]);
+      }
+    });
+    $response = $this->post(route('admin.system.health.refresh'), ['cleanup_tab' => 'actions']);
+    $this->assertFalse($corruptNextWrite);
+    $response->assertRedirect(route('admin.system.cleanup.index', ['tab' => 'actions']))
+      ->assertSessionHasErrors('health')->assertSessionMissing('status');
+    $this->assertEquals($previous, $reports->read());
+    $this->get($response->headers->get('Location'))->assertOk()
+      ->assertSee(__('webblocks-cms::maintenance_reports.refresh_failed'))
+      ->assertDontSee(__('webblocks-cms::maintenance_reports.refresh_completed'));
+    $lock = Cache::lock($key.':refresh', 900);
+    $this->assertTrue($lock->get());
+    $lock->release();
+  }
+
+  #[Test]
+  public function malformed_snapshot_fields_and_legacy_objects_remain_unavailable_without_scanning(): void
+  {
+    $this->useRestrictedDatabaseCache();
+    $reports = app(SystemMaintenanceReports::class);
+    $reports->refresh();
+    $valid = Cache::get($reports->cacheKey());
+    $invalid = [];
+    $invalid[] = array_replace($valid, ['schema_version' => 999]);
+    $invalid[] = array_replace($valid, ['snapshot_id' => '']);
+    $invalid[] = array_replace_recursive($valid, ['backup' => ['candidateBytes' => '0']]);
+    $invalid[] = array_replace_recursive($valid, ['backup' => ['candidateIds' => ['invalid']]]);
+    $invalid[] = array_replace_recursive($valid, ['cleanup' => ['asset_revisions' => ['candidateCount' => -1]]]);
+    $invalid[] = array_replace_recursive($valid, ['cleanup' => ['media_storage' => ['unexpected' => new \stdClass]]]);
+    $legacy = $valid;
+    $legacy['backup'] = $reports->read()['backup'];
+    $invalid[] = $legacy;
+    $this->forbidExpensiveReads();
+    foreach ($invalid as $payload) {
+      Cache::put($reports->cacheKey(), $payload, 300);
+      $this->assertSame('missing', $reports->read()['status']);
+      $this->get(route('admin.system.cleanup.index'))->assertOk()->assertSee('Report not available yet.');
+    }
+  }
+
+  #[Test]
+  #[DataProvider('reportStores')]
+  public function cold_panel_gets_never_run_reports_or_sync_queue_work_and_settings_remain_editable(bool $database): void
+  {
+    if ($database) {
+      $this->useRestrictedDatabaseCache();
+    }
     $this->archive();
     Cache::flush();
     $this->forbidExpensiveReads();
     $this->get(route('admin.dashboard'))->assertOk()->assertSee('Report not available yet.')->assertDontSee('No attention needed');
-    $this->get(route('admin.system.backups.index'))->assertOk()->assertSee('data-wb-maintenance-report="missing"', false)->assertSee('name="retention_mode"', false);
+    $this->get(route('admin.system.backups.index'))->assertOk()->assertSee('data-wb-maintenance-report="missing"', false)->assertSee('name="retention_mode"', false)
+      ->assertSee(__('webblocks-cms::storage.preview_unavailable'))->assertDontSee('Schema update required');
     $this->get(route('admin.system.cleanup.index', ['tab' => 'settings']))->assertOk()->assertSee('data-wb-maintenance-report="missing"', false)->assertSee('name="page_revision_days"', false);
   }
 
@@ -108,8 +241,12 @@ class SystemMaintenanceReportsTest extends TestCase
   }
 
   #[Test]
-  public function manual_refresh_confirms_success_and_keeps_the_site_filter(): void
+  #[DataProvider('reportStores')]
+  public function manual_refresh_confirms_success_and_keeps_the_site_filter(bool $database): void
   {
+    if ($database) {
+      $this->useRestrictedDatabaseCache();
+    }
     $site = Site::create(['name' => 'Synthetic', 'handle' => 'synthetic']);
     $response = $this->post(route('admin.system.health.refresh'), ['site_id' => $site->id]);
     $response->assertRedirect(route('admin.system.health.index', ['site_id' => $site->id]))
@@ -121,8 +258,12 @@ class SystemMaintenanceReportsTest extends TestCase
   }
 
   #[Test]
-  public function cleanup_refresh_returns_to_the_requested_panel_with_the_completed_report(): void
+  #[DataProvider('reportStores')]
+  public function cleanup_refresh_returns_to_the_requested_panel_with_the_completed_report(bool $database): void
   {
+    if ($database) {
+      $this->useRestrictedDatabaseCache();
+    }
     foreach (['report', 'actions'] as $tab) {
       $response = $this->post(route('admin.system.health.refresh'), ['cleanup_tab' => $tab]);
       $response->assertRedirect(route('admin.system.cleanup.index', ['tab' => $tab]))
@@ -244,8 +385,12 @@ class SystemMaintenanceReportsTest extends TestCase
   }
 
   #[Test]
-  public function mutations_mark_the_last_report_stale_and_a_refresh_is_serialized(): void
+  #[DataProvider('reportStores')]
+  public function mutations_mark_the_last_report_stale_and_a_refresh_is_serialized(bool $database): void
   {
+    if ($database) {
+      $this->useRestrictedDatabaseCache();
+    }
     $this->archive();
     $reports = app(SystemMaintenanceReports::class);
     $reports->refresh();
@@ -275,8 +420,12 @@ class SystemMaintenanceReportsTest extends TestCase
   }
 
   #[Test]
-  public function refresh_failure_preserves_the_previous_report_and_releases_the_lease(): void
+  #[DataProvider('reportStores')]
+  public function refresh_failure_preserves_the_previous_report_and_releases_the_lease(bool $database): void
   {
+    if ($database) {
+      $this->useRestrictedDatabaseCache();
+    }
     $reports = app(SystemMaintenanceReports::class);
     $reports->refresh();
     $before = $reports->read();
@@ -306,8 +455,12 @@ class SystemMaintenanceReportsTest extends TestCase
   }
 
   #[Test]
-  public function ordinary_requests_read_the_last_report_while_a_refresh_owns_the_lease(): void
+  #[DataProvider('reportStores')]
+  public function ordinary_requests_read_the_last_report_while_a_refresh_owns_the_lease(bool $database): void
   {
+    if ($database) {
+      $this->useRestrictedDatabaseCache();
+    }
     $this->archive();
     $reports = app(SystemMaintenanceReports::class);
     $reports->refresh();
@@ -339,8 +492,12 @@ class SystemMaintenanceReportsTest extends TestCase
   }
 
   #[Test]
-  public function malformed_cached_reports_are_unavailable_and_never_rebuild_in_the_request(): void
+  #[DataProvider('reportStores')]
+  public function malformed_cached_reports_are_unavailable_and_never_rebuild_in_the_request(bool $database): void
   {
+    if ($database) {
+      $this->useRestrictedDatabaseCache();
+    }
     $reports = app(SystemMaintenanceReports::class);
     Cache::put($reports->cacheKey(), ['checked_at' => now()->timestamp, 'generation' => '', 'backup' => 'invalid', 'cleanup' => []], 300);
     $this->forbidExpensiveReads();
@@ -349,8 +506,12 @@ class SystemMaintenanceReportsTest extends TestCase
   }
 
   #[Test]
-  public function a_mutation_during_refresh_cannot_publish_an_apparently_fresh_report(): void
+  #[DataProvider('reportStores')]
+  public function a_mutation_during_refresh_cannot_publish_an_apparently_fresh_report(bool $database): void
   {
+    if ($database) {
+      $this->useRestrictedDatabaseCache();
+    }
     $reports = app(SystemMaintenanceReports::class);
     $reports->refresh();
     $cleanup = app(MaintenanceCleanup::class);

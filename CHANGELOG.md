@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.105.23
+
+- Store maintenance reports as versioned arrays and scalar values so Dashboard, Backups, Cleanup and System Health can read them when cache object deserialization is disabled.
+- Verify each report by reading its unique snapshot back from cache before confirming Refresh checks; report a failure and retain the previous completed measurement when verification fails.
+- Show unavailable cleanup previews instead of a misleading schema-update warning when a backup has no cached retention decision.
+
 ## 1.105.22
 
 - Show explanatory empty states and direct Refresh checks actions in Cleanup’s Storage and history and Cleanup actions tabs before the first report is available; return to the selected tab after refreshing.
