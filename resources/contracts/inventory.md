@@ -2007,3 +2007,21 @@ interrupted or terminal results. Elapsed time and the recorded result remain
 outside that group. Successful verified updates retain the existing automatic
 return; failed/restored results stay available with the update-history link.
 The embedded Client runtime is unchanged.
+
+### Large staged content-plan writes (1.105.28)
+
+The existing HTTP content-plan modes and publication capabilities remain unchanged.
+Staging and promotion reuse copied block models and known translation relationships;
+translation locale validation and model hooks still run. Unchanged root copies are
+not saved twice. Parent and collection-template references are remapped after every
+copy has an identity. Promotion loads and locks each selected source slot's block
+tree once, then deletes descendants before their parents within that page/slot.
+
+Ordinary model writes retain the request's relational schema-discovery cache;
+package schema migration and database restore paths still invalidate it explicitly.
+New relational documents skip deletion of nonexistent children. Existing documents
+retain their identity and replace prior typed rows/nodes under the normal owner
+transaction. Complete independent revision snapshots, SQL authority, legacy value
+shapes, API wire formats and public rendering are preserved. No new persistence,
+background publication job, SSH requirement or hosting configuration is introduced.
+The existing API search-refresh middleware continues to coalesce index work.

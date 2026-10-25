@@ -33,9 +33,12 @@ class BlockDeletionManager
     ];
   }
 
-  public function recursiveDeleteOrder(Block $block): Collection
+  public function recursiveDeleteOrder(Block $block, ?Collection $scopedBlocks = null): Collection
   {
-    $scopedBlocks = $this->scopedBlocks($block);
+    $scopedBlocks = $scopedBlocks === null ? $this->scopedBlocks($block) : $scopedBlocks->filter(
+      fn (Block $candidate): bool => (int) $candidate->page_id === (int) $block->page_id
+        && (int) $candidate->slot_type_id === (int) $block->slot_type_id,
+    );
     $descendantIds = $this->descendantIds($block, $scopedBlocks);
 
     if ($descendantIds->isEmpty()) {

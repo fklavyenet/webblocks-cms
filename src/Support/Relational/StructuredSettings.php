@@ -149,13 +149,19 @@ class StructuredSettings
     [$nodes, $records] = SettingTree::encode($value, $model instanceof Block, $attribute);
     $owner = $model instanceof Block ? 'block_id' : 'application_id';
     $identity = [$owner => $model->getKey(), 'attribute' => $attribute];
-    DB::table('wbcms_setting_documents')->updateOrInsert($identity, ['format' => $format, 'payload_bytes' => $bytes, 'node_count' => count($nodes)]);
-    $documentId = (int) DB::table('wbcms_setting_documents')->where($identity)->value('id');
-    DB::table('wbcms_setting_nodes')->where('document_id', $documentId)->delete();
-    // Options depend on field definitions; remove children first, insert them last.
     $tables = array_keys(SettingDefinitions::tables());
-    foreach (array_reverse($tables) as $table) {
-      DB::table('wbcms_'.$table)->where('document_id', $documentId)->delete();
+    $existing = DB::table('wbcms_setting_documents')->where($identity)->lockForUpdate()->first(['id']);
+    $metadata = ['format' => $format, 'payload_bytes' => $bytes, 'node_count' => count($nodes)];
+    if ($existing === null) {
+      $documentId = (int) DB::table('wbcms_setting_documents')->insertGetId($identity + $metadata);
+    } else {
+      $documentId = (int) $existing->id;
+      DB::table('wbcms_setting_documents')->where('id', $documentId)->update($metadata);
+      DB::table('wbcms_setting_nodes')->where('document_id', $documentId)->delete();
+      // Options depend on field definitions; remove children first, insert them last.
+      foreach (array_reverse($tables) as $table) {
+        DB::table('wbcms_'.$table)->where('document_id', $documentId)->delete();
+      }
     }
     foreach ($tables as $table) {
       foreach ($records[$table] ?? [] as $row) {

@@ -123,7 +123,8 @@ abstract class CmsModel extends Model
 
   public function save(array $options = [])
   {
-    app(PersistentDocuments::class)->clear();
+    // PersistentDocuments caches schema discovery, not record values. DDL and
+    // restore paths invalidate it explicitly; a row save does not change it.
     if (PersistentFields::attributes($this) === [] && ! ($this instanceof Page || $this instanceof Block || $this instanceof Site || $this instanceof CmsApiToken || $this instanceof EmbeddedApplication)) {
       return parent::save($options);
     }

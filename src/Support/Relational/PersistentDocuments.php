@@ -186,12 +186,19 @@ class PersistentDocuments
     }
     [$nodes, $records] = SettingTree::encode($value, false, $attribute, $this->selector($attribute), $attribute === 'snapshot');
     $identity = [$definition[0] => $model->getKey(), 'attribute' => $attribute];
-    DB::table('wbcms_persistent_documents')->updateOrInsert($identity, ['format' => $format, 'payload_bytes' => $bytes, 'node_count' => count($nodes)]);
-    $id = (int) DB::table('wbcms_persistent_documents')->where($identity)->value('id');
-    DB::table('wbcms_persistent_nodes')->where('document_id', $id)->delete();
-    $tables = $attribute === 'snapshot' ? array_keys(SnapshotFields::tables()) : ['persistent_items', 'persistent_metadata', 'import_identity_maps', 'import_copied_files'];
-    foreach ($tables as $table) {
-      DB::table('wbcms_'.$table)->where('document_id', $id)->delete();
+    $existing = DB::table('wbcms_persistent_documents')->where($identity)->lockForUpdate()->first(['id']);
+    $metadata = ['format' => $format, 'payload_bytes' => $bytes, 'node_count' => count($nodes)];
+    if ($existing === null) {
+      // A new document has no prior child rows to remove.
+      $id = (int) DB::table('wbcms_persistent_documents')->insertGetId($identity + $metadata);
+    } else {
+      $id = (int) $existing->id;
+      DB::table('wbcms_persistent_documents')->where('id', $id)->update($metadata);
+      DB::table('wbcms_persistent_nodes')->where('document_id', $id)->delete();
+      $tables = $attribute === 'snapshot' ? array_keys(SnapshotFields::tables()) : ['persistent_items', 'persistent_metadata', 'import_identity_maps', 'import_copied_files'];
+      foreach ($tables as $table) {
+        DB::table('wbcms_'.$table)->where('document_id', $id)->delete();
+      }
     }
     foreach ($records as $table => $items) {
       $columns = [];

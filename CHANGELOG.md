@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.105.28
+
+- Reduce SQL work when staging and publishing large pages through the Content API: reuse copied blocks and their known translation relationships, skip unchanged second saves, and load each source slot's deletion tree once.
+- Reuse relational schema discovery across ordinary row writes and avoid clearing nonexistent child rows when creating SQL documents. Schema migration/restore invalidation and transactional replacement of existing values remain intact.
+- Preserve all locale content, parent/template references, publication permissions and complete safety revisions, with regression coverage for large six-language HTTP publication and failed copies.
+
+
 ## 1.105.27
 
 - Repair missing declared fields in existing revision snapshot tables during updates, preventing Comments block saves from failing while preserving saved versions and their original values.

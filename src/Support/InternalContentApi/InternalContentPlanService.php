@@ -881,17 +881,16 @@ class InternalContentPlanService
         continue;
       }
 
-      $topLevelBlocks = Block::query()
+      $slotBlocks = Block::query()
         ->where('page_id', $sourcePage->id)
         ->where('slot_type_id', $slotType->id)
-        ->whereNull('parent_id')
         ->orderBy('sort_order')
         ->orderBy('id')
         ->lockForUpdate()
         ->get();
 
-      foreach ($topLevelBlocks as $block) {
-        foreach ($this->blockDeletionManager->recursiveDeleteOrder($block) as $deleteBlock) {
+      foreach ($slotBlocks->whereNull('parent_id') as $block) {
+        foreach ($this->blockDeletionManager->recursiveDeleteOrder($block, $slotBlocks) as $deleteBlock) {
           $deleteBlock->delete();
           $deletedCount++;
         }
@@ -913,6 +912,7 @@ class InternalContentPlanService
       ->lockForUpdate()
       ->get();
     $blockMap = [];
+    $copies = [];
 
     foreach ($blocks as $block) {
       $attributes = Arr::except($block->portableAttributes(), ['id', 'parent_id', 'page_id', 'created_at', 'updated_at']);
@@ -924,7 +924,9 @@ class InternalContentPlanService
       }
 
       $newBlock = Block::query()->create($attributes);
+      $newBlock->setRelation('page', $targetPage);
       $blockMap[$block->id] = $newBlock->id;
+      $copies[$block->id] = $newBlock;
 
       foreach ($block->blockAssets as $blockAsset) {
         $newBlockAsset = BlockAsset::query()->create([
@@ -946,22 +948,24 @@ class InternalContentPlanService
     }
 
     foreach ($blocks as $block) {
-      $copy = Block::query()->findOrFail($blockMap[$block->id]);
+      $copy = $copies[$block->id];
       $copy->parent_id = $blockMap[$block->parent_id] ?? null;
-      $settings = $copy->decodedSettings();
+      $settings = $block->decodedSettings();
       $templateId = (int) data_get($settings, 'content_collection.template_block_id');
       if ($templateId && isset($blockMap[$templateId])) {
         $settings['content_collection']['template_block_id'] = $blockMap[$templateId];
         $copy->settings = $settings;
       }
-      $copy->save();
+      if ($copy->isDirty()) {
+        $copy->save();
+      }
     }
   }
 
   private function cloneBlockTranslations(Block $source, Block $target): void
   {
     foreach ($source->textTranslations as $translation) {
-      BlockTextTranslation::query()->create([
+      $this->cloneTranslation(BlockTextTranslation::class, $target, [
         'block_id' => $target->id,
         'locale_id' => $translation->locale_id,
         'title' => $translation->title,
@@ -973,7 +977,7 @@ class InternalContentPlanService
     }
 
     foreach ($source->buttonTranslations as $translation) {
-      BlockButtonTranslation::query()->create([
+      $this->cloneTranslation(BlockButtonTranslation::class, $target, [
         'block_id' => $target->id,
         'locale_id' => $translation->locale_id,
         'title' => $translation->title,
@@ -981,7 +985,7 @@ class InternalContentPlanService
     }
 
     foreach ($source->imageTranslations as $translation) {
-      BlockImageTranslation::query()->create([
+      $this->cloneTranslation(BlockImageTranslation::class, $target, [
         'block_id' => $target->id,
         'locale_id' => $translation->locale_id,
         'caption' => $translation->caption,
@@ -990,7 +994,7 @@ class InternalContentPlanService
     }
 
     foreach ($source->contactFormTranslations as $translation) {
-      BlockContactFormTranslation::query()->create([
+      $this->cloneTranslation(BlockContactFormTranslation::class, $target, [
         'block_id' => $target->id,
         'locale_id' => $translation->locale_id,
         'title' => $translation->title,
@@ -1000,6 +1004,14 @@ class InternalContentPlanService
         'consent_label' => $translation->consent_label,
       ]);
     }
+  }
+
+  /** Keep normal translation validation/hooks while reusing their known inverse. */
+  private function cloneTranslation(string $model, Block $target, array $attributes): void
+  {
+    $translation = new $model($attributes);
+    $translation->setRelation('block', $target);
+    $translation->save();
   }
 
   private function normalize(array $payload): InternalContentPlanResult
