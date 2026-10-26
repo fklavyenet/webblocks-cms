@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Request;
 use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Mockery;
 use WebBlocks\Cms\Actions\System\StartAdminSystemUpdate;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\DatabaseDumpWriter;
@@ -54,6 +56,27 @@ class AdminUpdateOperationTest extends TestCase
       'target_version' => WebBlocks::version(), 'checksum_sha256' => str_repeat('a', 64),
       'status' => 'queued', 'started_at' => now(),
     ], $attributes));
+  }
+
+  public function test_indicator_restores_cached_progress_messages_after_another_product_changes_them(): void
+  {
+    $operation = $this->operation(['status' => 'running', 'heartbeat_at' => now()]);
+    foreach (['en', 'tr', 'de', 'fr', 'es', 'it'] as $locale) {
+      app()->setLocale($locale);
+      $expected = require dirname(__DIR__, 2).'/src/Support/Updates/Client/Resources/lang/'.$locale.'/updates.php';
+      foreach (['running', 'success', 'failed', 'restored', 'cancelled'] as $status) {
+        $key = $status === 'failed' ? 'failure_message' : $status;
+        app('translator')->addLines(['updates.progress.'.$key => 'Foreign status'], $locale, 'publisher-client');
+        $operation->update(['status' => $status]);
+        $request = Request::create('/', 'GET', ['operation' => $operation->id]);
+
+        $response = app(SystemUpdateController::class)->indicator($request);
+
+        $this->assertSame($expected['progress'][$key], $response->getData(true)['progress']['message']);
+        $this->assertSame($status, $response->getData(true)['progress']['state']);
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+      }
+    }
   }
 
   public function test_shared_reporter_exposes_durable_step_durations_and_failure_state(): void

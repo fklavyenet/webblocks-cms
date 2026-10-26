@@ -84,11 +84,14 @@ class UpdateServerClient
     }
 
     try {
+      $request = app(\WebBlocks\Cms\Support\Updates\Client\Contracts\UpdateRequestAuthorizer::class)->authorize($request, $serverUrl.$latestPath, 'check', ['product' => $product, 'channel' => $channel, 'installed_version' => $installedVersion]);
       $response = $request->get($serverUrl.$latestPath, array_merge([
         'product' => $product,
         'channel' => $channel,
         'installed_version' => $installedVersion,
       ], $this->telemetry->updateCheckPayload($product, $installedVersion, $channel)));
+    } catch (UpdateAuthorizationException $exception) {
+      return $this->configState('authorization_required', 'Update authorization required', $exception->userMessage(), $serverUrl, $product, $channel, $installedVersion);
     } catch (ConnectionException $exception) {
       return $this->result(
         state: 'server_unreachable',

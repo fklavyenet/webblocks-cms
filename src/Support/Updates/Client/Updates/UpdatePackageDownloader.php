@@ -17,12 +17,13 @@ class UpdatePackageDownloader
   public function download(string $url, string $destinationPath): void
   {
     try {
-      $response = Http::timeout((int) config('publisher-client.apply.download_timeout_seconds', 120))
+      $request = Http::timeout((int) config('publisher-client.apply.download_timeout_seconds', 120))
         ->connectTimeout((int) config('publisher-client.connect_timeout_seconds', 3))
         ->withHeaders([
           'User-Agent' => $this->userAgent(),
-        ])
-        ->get($url);
+        ]);
+      $request = app(\WebBlocks\Cms\Support\Updates\Client\Contracts\UpdateRequestAuthorizer::class)->authorize($request, $url, 'download');
+      $response = $request->get($url);
     } catch (ConnectionException $exception) {
       throw new UpdateException(
         'The update package could not be downloaded.',

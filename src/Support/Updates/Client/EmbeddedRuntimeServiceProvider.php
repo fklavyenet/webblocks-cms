@@ -56,6 +56,7 @@ final class EmbeddedRuntimeServiceProvider extends ServiceProvider
             };
         });
 
+        $this->app->bind(\WebBlocks\Cms\Support\Updates\Client\Contracts\UpdateRequestAuthorizer::class, \WebBlocks\Cms\Support\Updates\Client\Updates\NullUpdateRequestAuthorizer::class);
         $this->app->bind(BackupManager::class, FilesystemBackupManager::class);
         $this->app->singleton(RunHeartbeat::class);
         $this->app->singleton(\WebBlocks\Cms\Support\Updates\Client\Updates\UpdateProgress::class);

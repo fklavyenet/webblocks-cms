@@ -24,55 +24,11 @@ It answers five questions for every shipped core block:
 
 This document summarizes source-backed behavior. Live API discovery remains authoritative for install-specific IDs, enabled plugins, custom block types, locales, layouts, media records, navigation menus, and capabilities.
 
-## Audit Baseline
+## Contract Scope And Freshness
 
-- Repository: `fklavyenet/webblocks-cms`
-- Branch: `main`
-- Audited commit: `741a44bc0fe00bf38cae0753bd9edb02978b0dbe`
-- Audited release documentation: `1.40.2`
-- Audit date: `2026-07-14`
-- Repository shape: package-only Composer package
-- Published core catalog rows: `51`
-- Draft legacy catalog rows: `7`
-- AI-writable structured core rows after the policy below is enforced: `50`
-- AI-writable raw HTML rows after the policy below is enforced: `0`
+This contract describes the supported authoring surface of the reviewed package version. The current catalog is listed below. Confirm install-specific availability, enabled plugins, permissions and supported fields through API discovery before applying a content plan.
 
-### Amendments since the audit
-
-The baseline above is still the last full audit. These entries were corrected
-against source afterwards rather than re-auditing every block, so treat anything
-outside this list as `1.40.2`-era and confirm it through live API discovery.
-
-- `card` (`1.40.5`): the Card style `variant` exists. This document previously
-  stated that no supported Card visual variant field existed, which was wrong
-  from `1.40.5` onward.
-- `link-list` (`1.40.10`): `settings.row_layout` and `settings.list_frame`.
-- `link-list-item` (`1.40.8`): optional `media_id` thumbnail.
-- `1.91.0`: optional mobile-image relationships on eight native media blocks.
-- `1.91.1`: all nine Slide and Slider content positions.
-- `1.93.0`: Rich Text undo/redo, focus mode, word count, and safe paste behavior.
-- `1.94.0–1.94.2`: managed-plugin startup validation, quarantine, retained packages, and active-account recovery checks.
-
-Historical repository note: the pre-package-only CMS tree contained `docs/feature-inventory.md`, a broad product-feature discoverability matrix. It was removed when the package-only repository tree was constructed and was not a per-block AI authoring inventory. The runtime contract now lives at `resources/contracts/inventory.md`.
-
-Source families inspected:
-
-- `src/Support/Blocks/CoreBlockTypeCatalogSyncer.php`
-- `src/Support/BlockTypes/BlockTypeContractRegistry.php`
-- `src/Support/Blocks/BlockTranslationRegistry.php`
-- `src/Models/Block.php`
-- `src/Http/Requests/Admin/BlockRequest.php`
-- `src/Support/InternalContentApi/InternalContentPlanService.php`
-- `src/Support/InternalContentApi/InternalContentApiOperations.php`
-- `src/Http/Controllers/InternalContentApi/InternalContentResourceController.php`
-- `src/Http/Controllers/InternalContentApi/InternalSharedSlotController.php`
-- `src/Http/Controllers/InternalContentApi/InternalApiDiscoveryController.php`
-- `routes/admin.php`
-- `resources/views/admin/blocks/types/*.blade.php`
-- `resources/views/admin/blocks/settings/*.blade.php`
-- `resources/views/pages/partials/blocks/*.blade.php`
-- `public/cms/css/public.css`
-- focused package tests and current product documentation
+Legacy renderer compatibility does not make an unpublished handle available for new authoring. Use the current catalog and field contracts rather than historical counts or implementation milestones.
 
 ## Non-Negotiable AI Authoring Rules
 
@@ -1097,37 +1053,13 @@ Do not use site CSS to:
 - rebuild a missing layout with fragile absolute positioning;
 - hardcode light-only colors that break Light/Dark/Auto mode.
 
-## Known Source Gaps At The Audit Baseline
+## Supported Limitations
 
-These are implementation findings, not permissions to invent behavior:
+The footer uses normal layout and navigation blocks; a dedicated footer-composition block is not required or implied by WebBlocks UI class names. Use documented native blocks for shared footers.
 
-1. Resolved: this inventory now ships as `resources/contracts/inventory.md` and is served to tools by `GET /webadmin/api/inventory`.
-2. Resolved in 1.105.8: the sibling block-contract table and declared count cover all 55 currently published core types (62 total definitions). Documentation checks compare table coverage with the product catalog when the source checkout is available. The full-audit counts above remain historical.
-3. Several existing docs still show pre-package-only renderer paths under `packages/webblocks-cms/...`; current package paths begin at `resources/views/...`.
-4. Resolved: Trusted HTML is no longer API-writable. `BlockTypeApiAuthoringPolicy` blocks every API mutation path, including generic normalization, existing-block PATCH, and the Shared Slot reorder, subtree-delete, clear-all, and publish operations.
-5. Resolved: Hero and CTA are plain containers for `button_link` children in both the admin and the API. The `primary_cta` / `secondary_cta` fields survive as a two-button shorthand. The unpublished legacy `button` catalog row is no longer an authoring blocker.
-6. Resolved: the Column Item editor now exposes the subtitle field that the Columns `stats` variant renders as the stat value.
-7. Resolved in 1.105.8: Audio direct media assignments work in Content Plan, slot-block creation and existing-block updates, with a shared media kind and audio MIME check.
-8. Resolved: icon normalization has one owner. `InternalContentApiOperations` holds the canonical `PUBLIC_ICON_BLOCK_TYPES` list plus the shared slug/tone normalizers, and the full content plan delegates to them, so plans and incremental block endpoints validate icons identically.
-9. Resolved in 1.105.9: all 55 published core blocks expose a machine-readable authoring settings schema. Content plans, slot POST, block PATCH and canonical admin settings use the common validator. Historical unknown values remain readable and survive unrelated updates; existing values are not permission to introduce or change unknown keys.
-10. Resolved: `navigation-auto` now has a documented contract in `BlockTypeContractRegistry` and is discoverable through block-types and content-contract.
-11. WebBlocks UI ships a `wb-footer-*` anatomy (`wb-footer-grid`, `wb-footer-brand`, `wb-footer-nav`, `wb-footer-link`, `wb-footer-list`, `wb-footer-item`, `wb-footer-copy`, `wb-footer-meta`, `wb-footer-text`, `wb-footer-logo`) that no CMS renderer emits. A shared-slot footer composes generic `wb-section`/`wb-container`/`wb-grid`/`wb-stack`/`wb-cluster` instead, so the pattern is reachable only from hand-written layouts. Cosmetic since 1.50.0 gave `.wb-slot-footer` its own surface; a footer-composition block remains deliberately deferred rather than pending.
-12. Resolved: `GET /content-contract` derives its `media_library` section from the registered route table, so `supported_operations` and `unsupported_operations` cannot drift from what `openapi.json` publishes. Upload, remote fetch, delete, replace and move are published as supported with the capability each route enforces.
-13. Resolved: consent has a visitor-facing half. The System Settings banner toggle renders WebBlocks UI's Cookie Consent pattern on public pages and wires it to the existing `POST /privacy-consent/sync` endpoint, and `contact_form` gained `settings.consent_required` plus a translated `consent_label` recorded on each submission.
-14. The repository has dashboard and page-management screenshots, but no canonical per-block/per-variant visual fixture gallery. The “Example appearance” descriptions in this inventory are therefore source-derived, not screenshot-backed golden references. Until that gallery exists, prefer documented neutral compositions and avoid claiming visual fidelity from prose alone.
-15. Resolved for planning: `GET /content-contract` now publishes a machine-readable design-direction contract covering character, density, typography, geometry, imagery, corners, contrast, rhythm roles, Card policy, and known composition gaps. It deliberately does not persist a hidden style record; AI tools state the direction in their plan/report and implement it through supported block choices, theme tokens, and stable site CSS.
+Prose descriptions of appearance are not approved screenshot references. Confirm responsive output and visual behavior in the target installation before promising fidelity to a design.
 
-## Inventory Review And Freshness Checks
-
-The product owns this runtime contract. The documentation repository keeps a generated version snapshot with a distinct source identity; edits start in the product contract.
-
-From CMS 1.94.3, `composer test:inventory` and `composer test:docs` validate `resources/contracts/inventory-review.json` against the current contract and runtime source fingerprints. Changed, added, or removed runtime files and product version changes require a new explicit review. CI and pre-push run the same check; release preparation checks the working tree, and the artifact builder checks the selected Git tree.
-
-After reviewing supported fields, enums, children, media, rendering, editor behavior, permissions, and plugin lifecycle, update this prose and record the review with `composer inventory:review -- --reviewed --note="review summary"`. An unchanged contract after a source change is accepted only with an explicit `--no-authoring-impact="reason"` explanation. Review records must never be refreshed automatically by CI or release scripts.
-
-The mechanical record captures the published core catalog, child rules, renderer-root ownership, API write policy, and mobile-media support from actual product helpers. PHPUnit compares this record with the current helpers, and the source check requires a unique inventory heading for every published core block. Fingerprints and mechanical comparisons enforce review and structural consistency; they do not prove every sentence's meaning. Prose and no-impact explanations remain the contributor's and reviewer's responsibility.
-
-The documentation repository's `tools/inventory-snapshot.php` regenerates the snapshot and its `inventory-source.json` provenance. Its checks reject manual snapshot edits and compare product version, source fingerprint, review checksum, and document content against a selected product checkout. Isolated documentation checks verify recorded provenance without requiring the product at runtime. Snapshot generation and CMS publication remain separate operations.
+Discovery describes the installed authoring contract. It does not certify an external provider, future plugin capability or visual output that has not been reviewed.
 
 ## Related Detailed References
 

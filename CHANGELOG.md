@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.105.37
+
+- Restore CMS-owned Publisher Client translations at update entry points, including messages already loaded by older coinstalled clients. Preserve installation translation overrides and unrelated catalogs, with regression coverage for the modal and progress responses in all six panel languages.
+- Embed Publisher Client 1.3.0 with optional product-owned update authorization and configurable background checks, retaining the CMS default public update delivery.
+
 ## 1.105.36
 
 - Use WebBlocks UI 2.31.2 for consistent accordion spacing: body content keeps a gap below the trigger, nested wrappers no longer double horizontal padding, and direct bodies retain their full bottom padding after reopen or resize.

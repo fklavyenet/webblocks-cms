@@ -40,6 +40,10 @@ class AdminUpdateIndicator
       $status = null;
     }
 
+    if (! is_array($status) && ! $refresh && ! config('publisher-client.admin.indicator_background_checks', true)) {
+      return $this->payloadFromStatus([]);
+    }
+
     if (! is_array($status)) {
       $status = $this->safeStatus();
       $this->storeVersionStatus($status);

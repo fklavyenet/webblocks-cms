@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use Illuminate\Support\Facades\File;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\ConfigVersionResolver;
@@ -13,6 +15,71 @@ use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class CmsPublisherClientCoexistenceTest extends TestCase
 {
+  public static function translationCollisions(): iterable
+  {
+    foreach (['en', 'tr', 'de', 'fr', 'es', 'it'] as $locale) {
+      foreach ([false, true] as $cached) {
+        yield $locale.($cached ? '-cached' : '-unloaded') => [$locale, $cached];
+      }
+    }
+  }
+
+  #[Test]
+  #[DataProvider('translationCollisions')]
+  public function cms_restores_its_update_translations_after_an_older_product_claims_the_namespace(string $locale, bool $cached): void
+  {
+    $directory = sys_get_temp_dir().'/cms-client-translations-'.bin2hex(random_bytes(6));
+    File::ensureDirectoryExists($directory.'/'.$locale);
+    File::put($directory.'/'.$locale.'/updates.php', "<?php return ['title' => 'Older updates'];");
+    $translator = app('translator');
+    $translator->addNamespace('publisher-client', $directory);
+    $translator->setLoaded([]);
+    $translator->addLines(['messages.retained' => 'Unrelated translation'], $locale, 'another-product');
+    if ($cached) {
+      $this->assertSame('Older updates', $translator->get('publisher-client::updates.title', [], $locale));
+      $this->assertSame('publisher-client::updates.elapsed', $translator->get('publisher-client::updates.elapsed', [], $locale));
+    }
+
+    try {
+      app(CmsPublisherClientConfigurator::class)->configure();
+      app(CmsPublisherClientConfigurator::class)->configure();
+
+      $expected = require dirname(__DIR__, 2).'/src/Support/Updates/Client/Resources/lang/'.$locale.'/updates.php';
+      foreach (['title', 'elapsed', 'progress.running', 'progress.return', 'progress.success', 'progress.failure_message', 'phases.download'] as $key) {
+        $this->assertSame(data_get($expected, $key), $translator->get('publisher-client::updates.'.$key, [], $locale));
+      }
+      $this->assertSame('Unrelated translation', $translator->get('another-product::messages.retained', [], $locale));
+    } finally {
+      File::deleteDirectory($directory);
+    }
+  }
+
+  #[Test]
+  public function cms_retains_installation_translation_overrides_while_restoring_its_catalog(): void
+  {
+    $directory = sys_get_temp_dir().'/cms-client-overrides-'.bin2hex(random_bytes(6));
+    $translator = app('translator');
+    $translator->getLoader()->addPath($directory);
+    try {
+      foreach (['en', 'tr', 'de', 'fr', 'es', 'it'] as $locale) {
+        $path = $directory.'/vendor/publisher-client/'.$locale;
+        File::ensureDirectoryExists($path);
+        File::put($path.'/updates.php', "<?php return ['elapsed' => 'Installation elapsed'];");
+        $translator->addLines(['updates.elapsed' => 'Foreign elapsed'], $locale, 'publisher-client');
+      }
+
+      app(CmsPublisherClientConfigurator::class)->configure();
+
+      foreach (['en', 'tr', 'de', 'fr', 'es', 'it'] as $locale) {
+        $expected = require dirname(__DIR__, 2).'/src/Support/Updates/Client/Resources/lang/'.$locale.'/updates.php';
+        $this->assertSame('Installation elapsed', $translator->get('publisher-client::updates.elapsed', [], $locale));
+        $this->assertSame($expected['progress']['running'], $translator->get('publisher-client::updates.progress.running', [], $locale));
+      }
+    } finally {
+      File::deleteDirectory($directory);
+    }
+  }
+
   #[Test]
   public function cms_restores_its_namespaced_runtime_after_another_product_overwrites_shared_config(): void
   {

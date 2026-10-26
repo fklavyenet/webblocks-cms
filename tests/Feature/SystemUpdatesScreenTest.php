@@ -6,9 +6,12 @@ use Carbon\CarbonImmutable;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
+use Illuminate\Http\Request;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\Updates\Client\Updates\ProgressAssets;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -31,6 +34,30 @@ class SystemUpdatesScreenTest extends TestCase
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
+
+  #[Test]
+  public function controller_restores_cached_modal_translations_in_every_panel_language(): void
+  {
+    $this->mock(SystemUpdateInspector::class)->shouldReceive('report')->andReturn($this->updateAvailableReport());
+
+    foreach (['en', 'tr', 'de', 'fr', 'es', 'it'] as $locale) {
+      app()->setLocale($locale);
+      app('translator')->addLines([
+        'updates.elapsed' => 'Foreign elapsed',
+        'updates.progress.running' => 'publisher-client::updates.progress.running',
+        'updates.progress.recheck' => 'Foreign recheck',
+      ], $locale, 'publisher-client');
+
+      $html = app(SystemUpdateController::class)->index(Request::create('/'))->render();
+      $expected = require dirname(__DIR__, 2).'/src/Support/Updates/Client/Resources/lang/'.$locale.'/updates.php';
+      $this->assertStringContainsString(e($expected['elapsed']), $html);
+      $this->assertStringContainsString('data-progress-running="'.e($expected['progress']['running']).'"', $html);
+      $this->assertStringContainsString(e($expected['progress']['recheck']), $html);
+      $this->assertStringNotContainsString('publisher-client::updates.', $html);
+      $this->assertStringNotContainsString('Foreign elapsed', $html);
+      $this->assertStringNotContainsString('Foreign recheck', $html);
+    }
   }
 
   #[Test]

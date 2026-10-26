@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\System\Updates;
 
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Arr;
 use WebBlocks\Cms\Support\Updates\Client\Apply\PackageApplyStrategy;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\ConfigVersionResolver;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -14,6 +15,7 @@ final class CmsPublisherClientConfigurator
 
   public function configure(): void
   {
+    $this->configureTranslations();
     $this->app->bind(PackageApplyStrategy::class, CmsPackageApplyStrategy::class);
     $config = $this->app['config'];
     $runtimeRoot = dirname(__DIR__, 4);
@@ -47,5 +49,20 @@ final class CmsPublisherClientConfigurator
     $config->set('publisher-client.migrations.enabled', false);
     $config->set('publisher-client.commands.allowed', []);
     $config->set('publisher-client.commands.post_apply', []);
+  }
+
+  private function configureTranslations(): void
+  {
+    $directory = dirname(__DIR__, 2).'/Updates/Client/Resources/lang';
+    $translator = $this->app['translator'];
+    $translator->addNamespace('publisher-client', $directory);
+
+    foreach (glob($directory.'/*/updates.php') ?: [] as $path) {
+      $locale = basename(dirname($path));
+      $lines = $translator->getLoader()->load($locale, 'updates', 'publisher-client');
+      // Rebinding alone leaves another client's previously loaded group cached.
+      // Reload only update messages, retaining host overrides and other groups.
+      $translator->addLines(Arr::dot(['updates' => $lines]), $locale, 'publisher-client');
+    }
   }
 }
