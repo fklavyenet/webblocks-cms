@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.105.29
+
+- Exclude CMS authentication, administration and internal API responses from search indexes with a scoped noindex response header, preserving access checks, existing response directives and public-page indexing.
+
 ## 1.105.28
 
 - Reduce SQL work when staging and publishing large pages through the Content API: reuse copied blocks and their known translation relationships, skip unchanged second saves, and load each source slot's deletion tree once.

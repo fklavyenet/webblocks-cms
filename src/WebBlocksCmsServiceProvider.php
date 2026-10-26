@@ -6,6 +6,7 @@ use FilesystemIterator;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionsHandler;
@@ -62,6 +63,7 @@ use WebBlocks\Cms\Console\SystemUpdateRunsCommand;
 use WebBlocks\Cms\Console\VisitorReportCleanupCommand;
 use WebBlocks\Cms\Console\WorkAdminSystemUpdateCommand;
 use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
+use WebBlocks\Cms\Http\Middleware\PreventAdministrativeIndexing;
 use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
@@ -965,6 +967,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   {
     $this->configureEmbeddedPublisherClient();
     $this->bootMiddlewareAliases();
+    // Include authentication, plugin and API responses without changing public pages.
+    $this->app->make(HttpKernel::class)->prependMiddleware(PreventAdministrativeIndexing::class);
     $this->bootAuthorization();
     $this->bootRateLimiters();
     $this->bootCommands();
