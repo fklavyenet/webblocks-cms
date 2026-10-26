@@ -25,6 +25,7 @@ use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
@@ -628,6 +629,7 @@ class InternalContentApiOperations
     }
 
     $this->validateTranslationShape($translations, $path.'.translations', $errors);
+    $errors = [...$errors, ...app(ContactConsentRequirements::class)->payloadErrors($blockType->slug, $settings, $translations, $path)];
 
     foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta'] as $field) {
       if (array_key_exists($field, $block) && ! array_key_exists($field, $translations)) {
@@ -720,6 +722,10 @@ class InternalContentApiOperations
       'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
       'shared_slot_id' => $sharedSlot->id,
     ]);
+
+    if ($page->status === Page::STATUS_PUBLISHED) {
+      app(ContactConsentRequirements::class)->assertPage($page->fresh());
+    }
 
     return $slot->fresh(['slotType', 'sharedSlot']);
   }

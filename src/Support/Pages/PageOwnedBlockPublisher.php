@@ -10,6 +10,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 
 class PageOwnedBlockPublisher
 {
@@ -51,6 +52,7 @@ class PageOwnedBlockPublisher
   {
     return DB::transaction(function () use ($page, $actor, $source, $captureRevision): array {
       $lockedPage = Page::query()->lockForUpdate()->findOrFail($page->id);
+      app(ContactConsentRequirements::class)->assertPage($lockedPage, true);
       $before = $this->summary($lockedPage);
       $slotTypeIds = collect($before['by_slot'])->pluck('slot_type_id')->filter()->values();
       $published = collect();
@@ -60,8 +62,15 @@ class PageOwnedBlockPublisher
           ->where('page_id', $lockedPage->id)
           ->whereIn('slot_type_id', $slotTypeIds)
           ->whereIn('status', self::PUBLISHABLE_STATUSES)
+          ->with('blockType')
           ->lockForUpdate()
           ->get();
+
+        foreach ($published as $block) {
+          if ($block->typeSlug() === 'contact_form') {
+            app(ContactConsentRequirements::class)->assertBlock($block, $lockedPage);
+          }
+        }
 
         $publishedByStatus = $published
           ->groupBy('status')

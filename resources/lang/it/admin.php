@@ -3955,6 +3955,8 @@ $translations = [
       'soft' => 'Tenue',
     ],
     'contact_form' => [
+      'consent_notice_required' => 'Inserisci un testo quando il consenso è obbligatorio.',
+      'consent_publish_missing' => 'Il blocco :block richiede un testo di consenso per la lingua :locale prima della pubblicazione.',
       'privacy_notice_url' => 'URL dell’informativa sulla privacy',
       'privacy_notice_help' => 'Condiviso tra le lingue. Usa un percorso interno per aprire la traduzione nella lingua del visitatore, oppure un URL HTTP(S) per un’informativa esterna. Lascia vuoto per nascondere il link. Il link è separato dal consenso.',
       'privacy_notice_invalid' => 'Inserisci un percorso interno che inizi con / o un URL HTTP(S) valido.',

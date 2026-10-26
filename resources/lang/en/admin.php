@@ -4199,6 +4199,8 @@ return [
       'soft' => 'Soft',
     ],
     'contact_form' => [
+      'consent_notice_required' => 'Enter a consent notice when consent is required.',
+      'consent_publish_missing' => 'Block :block requires a consent notice for language :locale before publication.',
       'privacy_notice_url' => 'Privacy notice URL',
       'privacy_notice_help' => 'Shared across languages. Use an internal page path to follow its translation in the visitor’s language, or an HTTP(S) URL for an external notice. Leave empty to hide the link. This link is separate from consent.',
       'privacy_notice_invalid' => 'Enter an internal path starting with / or a valid HTTP(S) URL.',

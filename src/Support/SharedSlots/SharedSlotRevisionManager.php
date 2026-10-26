@@ -14,6 +14,7 @@ use WebBlocks\Cms\Models\SharedSlotRevision;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Revisions\RevisionCaptureRecorder;
 
@@ -110,6 +111,9 @@ class SharedSlotRevisionManager
       );
 
       $this->applySnapshot($lockedSharedSlot, $lockedRevision->snapshot ?? []);
+      if ($lockedSharedSlot->fresh()->is_active) {
+        app(ContactConsentRequirements::class)->assertSharedSlot($lockedSharedSlot->fresh());
+      }
 
       $this->capture(
         $lockedSharedSlot->fresh(),

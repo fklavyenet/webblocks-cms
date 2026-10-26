@@ -3956,6 +3956,8 @@ $translations = [
       'soft' => 'Douce',
     ],
     'contact_form' => [
+      'consent_notice_required' => 'Saisissez un texte lorsque le consentement est obligatoire.',
+      'consent_publish_missing' => 'Le bloc :block nécessite un texte de consentement pour la langue :locale avant publication.',
       'privacy_notice_url' => 'URL de la notice de confidentialité',
       'privacy_notice_help' => 'Commune à toutes les langues. Un chemin interne mène à la traduction dans la langue du visiteur ; une URL HTTP(S) permet un lien externe. Laissez vide pour masquer le lien. Ce lien est indépendant du consentement.',
       'privacy_notice_invalid' => 'Saisissez un chemin interne commençant par / ou une URL HTTP(S) valide.',

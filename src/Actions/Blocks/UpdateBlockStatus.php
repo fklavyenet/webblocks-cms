@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
@@ -23,6 +24,10 @@ class UpdateBlockStatus
   {
     DB::transaction(function () use ($block, $status, $page, $sharedSlot, $user): void {
       $block->forceFill(['status' => $status])->save();
+      if ($status === 'published') {
+        app(ContactConsentRequirements::class)->assertBlock($block->fresh(), $page->fresh());
+        app(ContactConsentRequirements::class)->assertPage($page->fresh());
+      }
 
       if ($sharedSlot) {
         $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);

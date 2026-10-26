@@ -8,6 +8,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Policies\CmsResourcePolicy;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 
 class PageWorkflowManager
 {
@@ -98,6 +99,9 @@ class PageWorkflowManager
 
   private function transition(Page $page, User $user, string $status, string $message): string
   {
+    if ($status === Page::STATUS_PUBLISHED) {
+      app(ContactConsentRequirements::class)->assertPage($page->fresh());
+    }
     $actor = $this->currentActorResolver->resolve($user);
     $attributes = [
       'status' => $status,

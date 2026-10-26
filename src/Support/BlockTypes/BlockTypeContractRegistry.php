@@ -787,6 +787,7 @@ class BlockTypeContractRegistry
           'Shared recipient and notification settings stay in block settings.',
           'Optional privacy_notice_url is a shared internal path or HTTP(S) URL in typed relational settings, preserved in revisions and staging. It renders a separately labelled link without changing consent policy. Internal page paths follow the visitor locale with the existing stored-URL fallback; external URLs stay unchanged.',
           'Public submissions are stored as contact_messages rows before notification delivery is attempted.',
+          'Required consent rejects missing, null, empty or whitespace-only notice wording on native saves, API creation and translation PATCH. Omission preserves an existing locale notice; new locale rows need their own wording. Page/block/bulk publication, staged promotion and live revision restore check enabled site locales, visible content and active Shared Slots; absent rows use default fallback but existing blank rows fail before publication. Historical drafts remain repairable.',
           'When settings.consent_required is true, the resolved locale must have a nonblank consent_label. Missing wording disables the public submit button and all submissions are rejected before storage or notification, even with a forged acceptance. An accepted submission records consent_accepted_at plus a copy of the wording, displayed in message Technical details independently of later block edits.',
         ],
         'media_relationship_fields' => ['Not applicable.'],

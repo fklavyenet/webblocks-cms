@@ -3956,6 +3956,8 @@ $translations = [
       'soft' => 'Suave',
     ],
     'contact_form' => [
+      'consent_notice_required' => 'Introduce un aviso cuando el consentimiento sea obligatorio.',
+      'consent_publish_missing' => 'El bloque :block necesita un aviso de consentimiento para el idioma :locale antes de publicarse.',
       'privacy_notice_url' => 'URL del aviso de privacidad',
       'privacy_notice_help' => 'Compartida entre idiomas. Usa una ruta interna para enlazar a la traducción en el idioma del visitante, o una URL HTTP(S) para un aviso externo. Déjala vacía para ocultar el enlace. Este enlace es independiente del consentimiento.',
       'privacy_notice_invalid' => 'Introduce una ruta interna que empiece por / o una URL HTTP(S) válida.',

@@ -32,6 +32,8 @@ use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
+use WebBlocks\Cms\Support\Contact\ContactConsentValidationException;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -453,6 +455,7 @@ class InternalContentPlanService
         );
 
         $deletedCount = $this->promoteStagedSlots($sourcePage, $stagedPage, $plan['staged_update']['promote_slots']);
+        app(ContactConsentRequirements::class)->assertPage($sourcePage->fresh());
         $this->persistPageSourceSync($sourcePage, $plan['page_settings']);
         $sourcePage->forceFill([
           'status' => Page::STATUS_PUBLISHED,
@@ -636,6 +639,8 @@ class InternalContentPlanService
         errors: [$this->error('plan', $exception->getMessage())],
         renderability: $validated->renderability,
       );
+    } catch (ContactConsentValidationException $exception) {
+      return new InternalContentPlanResult(false, $plan, $validated->warnings, collect($exception->errors())->map(fn ($messages, $path) => ['path' => $path, 'message' => implode(' ', $messages), 'code' => ContactConsentRequirements::CODE])->values()->all());
     } catch (\Throwable $exception) {
       report($exception);
 
@@ -1374,6 +1379,9 @@ class InternalContentPlanService
       $pageSettings = ['source_sync' => $this->sourceSync($stagedPage)];
     }
     $promoteSlots = $this->normalizePromoteSlots($input, $sourcePage, $stagedPage, $errors);
+    if ($sourcePage && $stagedPage) {
+      $errors = [...$errors, ...app(ContactConsentRequirements::class)->publicationErrors($sourcePage, replacement: $stagedPage, replaceSlots: $promoteSlots)];
+    }
 
     $normalized = [
       'mode' => self::MODE_PROMOTE_STAGED_UPDATE,
@@ -2121,6 +2129,7 @@ class InternalContentPlanService
     }
 
     $this->validateTranslationShape($translations, $path.'.translations', $errors);
+    $errors = [...$errors, ...app(ContactConsentRequirements::class)->payloadErrors($blockType->slug, $settings, $translations, $path)];
 
     foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta'] as $field) {
       if (array_key_exists($field, $block) && ! array_key_exists($field, $translations)) {

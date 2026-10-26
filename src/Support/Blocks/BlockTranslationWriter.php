@@ -228,6 +228,8 @@ class BlockTranslationWriter
       return $this->pluginTranslationPayload($data, $block, $localeId);
     }
 
+    $consentLabel = $family === 'contact_form' ? $this->resolvedContactTranslationValue($data, $block, $localeId, 'consent_label', '') : null;
+
     return match ($family) {
       'text' => [
         'title' => $this->resolvedTextTranslationValue($data, $block, $localeId, 'title', $block->getRawOriginal('title')),
@@ -250,9 +252,9 @@ class BlockTranslationWriter
         'content' => array_key_exists('content', $data) ? $data['content'] : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, 'content', $block->getRawOriginal('content')),
         'submit_label' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'submit_label', 'Send message'),
         'success_message' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'success_message', config('contact.success_message')),
-        // Empty stays null. With required consent, clearing this locale's
-        // notice prevents submission until wording is restored.
-        'consent_label' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'consent_label', '') ?: null,
+        // Authoring validation rejects blank required notices; historical
+        // snapshots remain lossless, including the nonblank string '0'.
+        'consent_label' => $consentLabel === '' ? null : $consentLabel,
       ],
     };
   }

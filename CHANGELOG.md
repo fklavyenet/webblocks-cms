@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.105.32
+
+- Refuse Contact Form editor/API saves without notice wording when consent is required. Preserve omitted wording and shared policy on locale edits, while allowing legacy broken forms to be repaired one locale at a time.
+- Check required consent notices across enabled site languages before page/block/bulk publication, staged promotion, Shared Slot activation and live revision restore. Refused transitions preserve content, workflow state and revisions; missing translation rows retain the existing default-language fallback.
+
 ## 1.105.31
 
 - Add an optional, separate privacy notice link to Contact Forms, with localized internal page URLs and six-language labels. Validate the shared URL through the editor and Content API, and preserve it in relational storage, staged updates and complete revision snapshots.

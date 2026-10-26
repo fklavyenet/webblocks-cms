@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Pages\PageOwnedBlockPublisher;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -50,6 +51,7 @@ class InternalPagePublishController extends Controller
         ]);
       }
 
+      app(ContactConsentRequirements::class)->assertPage($lockedPage, $includePageOwnedBlocks);
       if ($lockedPage->status !== Page::STATUS_PUBLISHED) {
         $actor = $this->currentActorResolver->resolve(preferredSource: 'internal-api');
         $lockedPage->forceFill([

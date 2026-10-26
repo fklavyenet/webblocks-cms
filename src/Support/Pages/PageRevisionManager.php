@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Revisions\RevisionCaptureRecorder;
 
@@ -113,6 +114,9 @@ class PageRevisionManager
       );
 
       $this->applySnapshot($page->fresh(), $revision->snapshot ?? []);
+      if ($page->fresh()->status === Page::STATUS_PUBLISHED) {
+        app(ContactConsentRequirements::class)->assertPage($page->fresh());
+      }
 
       $this->capture(
         $page->fresh(),

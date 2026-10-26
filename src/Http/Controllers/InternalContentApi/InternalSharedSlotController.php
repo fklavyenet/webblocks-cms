@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
@@ -131,6 +132,10 @@ class InternalSharedSlotController extends Controller
 
       $this->sourcePages->ensureFor($fresh);
       $this->sourcePages->rebuildAssignments($fresh);
+
+      if (! $before->is_active && $fresh->is_active) {
+        app(ContactConsentRequirements::class)->assertSharedSlot($fresh);
+      }
 
       $this->captureSharedSlotRevision($before, $fresh);
     });
@@ -431,6 +436,10 @@ class InternalSharedSlotController extends Controller
         'shared_slot_id' => null,
       ]);
 
+      if ($page->status === Page::STATUS_PUBLISHED) {
+        app(ContactConsentRequirements::class)->assertPage($page->fresh());
+      }
+
       // Blocks the page already owns are untouched either way: page-owned
       // renders them again, disabled keeps the wrapper and renders nothing.
       $page->forceFill(['updated_by_user_id' => null])->save();
@@ -452,6 +461,7 @@ class InternalSharedSlotController extends Controller
     }
 
     $publishedCount = DB::transaction(function () use ($sharedSlot): int {
+      app(ContactConsentRequirements::class)->assertSharedSlot($sharedSlot->fresh(), true);
       $blockIds = $sharedSlot->slotBlocks()
         ->pluck('block_id')
         ->map(fn ($value) => (int) $value)

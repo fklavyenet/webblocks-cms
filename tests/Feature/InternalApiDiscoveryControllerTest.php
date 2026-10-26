@@ -194,7 +194,7 @@ class InternalApiDiscoveryControllerTest extends TestCase
 
     $this->assertContains('locale', $patch['x-supported-fields']);
     $this->assertContains('translations.contact_form.submit_label for contact_form blocks', $patch['x-supported-fields']);
-    $this->assertContains('translations.contact_form.consent_label for contact_form blocks (blank clears the locale notice)', $patch['x-supported-fields']);
+    $this->assertContains('translations.contact_form.consent_label for contact_form blocks (blank clears the locale notice only when consent is optional)', $patch['x-supported-fields']);
     $this->assertContains('translations.consent_label shorthand for contact_form blocks', $patch['x-supported-fields']);
     $this->assertStringContainsString('unsupported_block_translation_fields', $patch['x-note']);
   }

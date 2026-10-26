@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Requests\Admin\SyncPageLayoutSlotsRequest;
 use WebBlocks\Cms\Http\Requests\Admin\UpdatePageSlotSourceRequest;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -128,6 +129,9 @@ class PageSlotController extends Controller
 
     DB::transaction(function () use ($request, $page, $slot): void {
       $slot->update($request->validatedData());
+      if ($page->status === Page::STATUS_PUBLISHED) {
+        app(ContactConsentRequirements::class)->assertPage($page->fresh());
+      }
       $page->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
 
       $this->revisionManager->capture(

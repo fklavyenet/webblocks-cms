@@ -3958,6 +3958,8 @@ $translations = [
       'soft' => 'Weich',
     ],
     'contact_form' => [
+      'consent_notice_required' => 'Geben Sie einen Einwilligungstext ein, wenn die Einwilligung erforderlich ist.',
+      'consent_publish_missing' => 'Block :block benötigt vor der Veröffentlichung einen Einwilligungstext für die Sprache :locale.',
       'privacy_notice_url' => 'URL des Datenschutzhinweises',
       'privacy_notice_help' => 'Gilt für alle Sprachen. Ein interner Seitenpfad führt zur Übersetzung in der Sprache des Besuchers; für externe Hinweise ist eine HTTP(S)-URL möglich. Leer lassen, um den Link auszublenden. Der Link ist unabhängig von der Einwilligung.',
       'privacy_notice_invalid' => 'Geben Sie einen internen Pfad mit / am Anfang oder eine gültige HTTP(S)-URL ein.',

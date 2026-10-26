@@ -20,15 +20,18 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactPrivacyNotice;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoring;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoringException;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
@@ -462,6 +465,16 @@ class BlockRequest extends FormRequest
       if ($selectedBlockType?->slug === 'contact_form' && $this->filled('privacy_notice_url')
         && ContactPrivacyNotice::normalizeUrl($this->input('privacy_notice_url')) === null) {
         $validator->errors()->add('privacy_notice_url', app(CmsTranslator::class)->admin('blocks.contact_form.privacy_notice_invalid', app(AdminLocaleResolver::class)->locale()));
+      }
+      if ($selectedBlockType?->slug === 'contact_form') {
+        $consent = app(ContactConsentRequirements::class);
+        $editingLocale = $localeCode ?? app(LocaleResolver::class)->default()->code;
+        $sharedEdit = $localeCode === null || Locale::where('code', $localeCode)->where('is_default', true)->exists();
+        $required = $sharedEdit && $this->has('consent_required') ? $this->boolean('consent_required') : (bool) $existingBlock?->setting('consent_required', false);
+        $notice = $consent->noticeForEdit($existingBlock, $editingLocale, $this->only('consent_label'));
+        if ($consent->missing($required, $notice)) {
+          $validator->errors()->add('consent_label', $consent->message());
+        }
       }
       $supportsBackgroundMedia = in_array($selectedBlockType?->slug, ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true);
       $isColumns = $selectedBlockType?->slug === 'columns';
@@ -1356,9 +1369,9 @@ class BlockRequest extends FormRequest
             : (bool) ($data['store_submissions'] ?? true),
           // Shared like the other three: the requirement is one policy for the
           // form, while the wording it is enforced against is translated.
-          'consent_required' => $isTranslatedContactFormEdit
+          'consent_required' => $isPrivacyNoticeTranslationEdit || ! array_key_exists('consent_required', $data)
             ? (bool) ($existingSettings['consent_required'] ?? false)
-            : (bool) ($data['consent_required'] ?? false),
+            : (bool) $data['consent_required'],
           'privacy_notice_url' => $isPrivacyNoticeTranslationEdit || ! array_key_exists('privacy_notice_url', $data)
             ? ($existingSettings['privacy_notice_url'] ?? null)
             : ContactPrivacyNotice::normalizeUrl($data['privacy_notice_url']),
@@ -2668,6 +2681,17 @@ class BlockRequest extends FormRequest
     unset($data['content_collection_paginate'], $data['content_collection_per_page']);
     unset($data['content_collection_empty_behavior']);
     unset($data['content_collection_error_behavior']);
+
+    if ($existingBlock && ($data['status'] ?? null) === 'published'
+      && ($existingBlock->status !== 'published' || (! $existingBlock->setting('consent_required', false) && ($settings['consent_required'] ?? false)))) {
+      $preview = clone $existingBlock;
+      $preview->fill(array_intersect_key($data, array_flip(['status', 'parent_id', 'slot_type_id', 'settings'])));
+      if ($preview->typeSlug() === 'contact_form') {
+        app(BlockTranslationWriter::class)->preview($preview, $existingBlock, $data, $data['locale'] ?? app(LocaleResolver::class)->default()->code);
+      }
+      app(ContactConsentRequirements::class)->assertBlock($preview, $existingBlock->page->fresh());
+      app(ContactConsentRequirements::class)->assertPage($existingBlock->page->fresh(), override: $preview);
+    }
 
     return $data;
   }

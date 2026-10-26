@@ -30,6 +30,7 @@ use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoring;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoringException;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
@@ -1334,6 +1335,13 @@ class InternalContentResourceController extends Controller
     }
 
     $settings = $this->mergeSettings($block, $request);
+    if ($block->typeSlug() === 'contact_form') {
+      $consent = app(ContactConsentRequirements::class);
+      $notice = $consent->noticeForEdit($block, $locale->code, $translationPayload, $translationPayload !== []);
+      if ($consent->missing((bool) ($settings['consent_required'] ?? false), $notice)) {
+        return $this->validationError('translations.consent_label', $consent->message(), $consent::CODE);
+      }
+    }
 
     try {
       $settingsInput = is_array($request->input('settings')) ? $request->input('settings') : [];

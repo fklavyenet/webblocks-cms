@@ -28,6 +28,7 @@ use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Blocks\ParentBlockOptionPresenter;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
@@ -218,6 +219,9 @@ class SharedSlotController extends Controller
       $metadataChanged = collect(['name', 'handle', 'slot_name', 'public_shell'])
         ->contains(fn (string $key) => data_get($before, $key) !== data_get($freshSharedSlot, $key));
       $statusChanged = (bool) $before->is_active !== (bool) $freshSharedSlot->is_active;
+      if ($statusChanged && $freshSharedSlot->is_active) {
+        app(ContactConsentRequirements::class)->assertSharedSlot($freshSharedSlot);
+      }
 
       if ($metadataChanged && $this->revisionManager->revisionsTableExists()) {
         $this->revisionManager->capture(
