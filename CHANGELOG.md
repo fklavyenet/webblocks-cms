@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.105.36
+
+- Use WebBlocks UI 2.31.2 for consistent accordion spacing: body content keeps a gap below the trigger, nested wrappers no longer double horizontal padding, and direct bodies retain their full bottom padding after reopen or resize.
+
 ## 1.105.35
 
 - Use shipped WebBlocks UI accordions for UTM review tables, with linked accessible triggers and consistent spacing.

@@ -10,9 +10,9 @@ final class WebBlocks
 
   public const HANDLE = 'webblocks-cms';
 
-  public const VERSION = '1.105.35';
+  public const VERSION = '1.105.36';
 
-  public const UI_VERSION = 'v2.31.0';
+  public const UI_VERSION = 'v2.31.2';
 
   public const UI_PUBLIC_BASE = '/cms/webblocks-ui/'.self::UI_VERSION;
 

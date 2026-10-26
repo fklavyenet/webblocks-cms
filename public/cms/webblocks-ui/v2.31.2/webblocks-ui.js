@@ -1,5 +1,5 @@
 /*!
- * WebBlocks UI v2.31.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.31.2 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -3369,6 +3369,13 @@
 
   // ── Open a single trigger ─────────────────────────────────
 
+  function updateHeight(content) {
+    // A direct body can still carry max-height: 0 from close(). Measuring that
+    // constrained box omits its bottom padding from scrollHeight.
+    content.style.maxHeight = 'none';
+    content.style.maxHeight = content.scrollHeight + 'px';
+  }
+
   function open(trigger) {
     var item = getItem(trigger);
     var content = getContent(trigger);
@@ -3378,7 +3385,7 @@
     if (content) {
       content.classList.add('is-open');
       // Animate height (only meaningful for wb-accordion-content with max-height transition)
-      content.style.maxHeight = content.scrollHeight + 'px';
+      updateHeight(content);
     }
   }
 
@@ -3424,7 +3431,7 @@
     document.querySelectorAll(TRIGGER_SEL).forEach(function (trigger) {
       if (!isOpen(trigger)) return;
       var content = getContent(trigger);
-      if (content) content.style.maxHeight = content.scrollHeight + 'px';
+      if (content) updateHeight(content);
     });
   }
 
