@@ -2,8 +2,15 @@
 
 ## Unreleased
 
+## 1.105.34
+
 - Separate HTML-like and commonly encoded markup in visitor UTM values from campaign, source and medium rankings. Keep stored evidence and all page-view totals, show a translated review section with per-value metrics, and apply ranking limits after classification.
 - Cover public UTM ingestion, historical report values, site/filter isolation, distinct consent-based metrics and escaped report/page-detail output with regression tests.
+
+## 1.105.33
+
+- Repair legacy shared-host string role columns that are still NOT NULL, allowing CMS-integrated host accounts to register without a CMS role. Fresh and update migrations preserve existing role values, defaults, collation, comments and indexes; no CMS grants or duplicate identities are created.
+- Keep the repair idempotent and retain nullable roles on rollback so existing role-free accounts remain valid. Hosts without the CMS identity columns are left untouched.
 
 ## 1.105.32
 
