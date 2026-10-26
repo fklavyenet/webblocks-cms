@@ -52,6 +52,12 @@ class VisitorReportsQuery
         $summary[$metric] += $insights['archived'][$metric];
       }
       $supportsUtmBreakdowns = $this->supportsUtmBreakdowns();
+      $campaigns = [];
+      foreach (['top_campaigns' => 'utm_campaign', 'source_breakdown' => 'utm_source', 'medium_breakdown' => 'utm_medium'] as $key => $column) {
+        $campaigns[$key] = $supportsUtmBreakdowns
+          ? $this->utmBreakdown(clone $query, $column, 10)
+          : ['rows' => collect(), 'flagged_rows' => collect(), 'flagged_page_views' => 0];
+      }
 
       return [
         'insights' => $insights,
@@ -60,9 +66,10 @@ class VisitorReportsQuery
         'top_pages' => $this->topPages(clone $query),
         'top_entry_pages' => $this->topEntryPages(clone $query),
         'top_referrers' => $this->topReferrers(clone $query),
-        'top_campaigns' => $supportsUtmBreakdowns ? $this->topCampaigns(clone $query) : collect(),
-        'source_breakdown' => $supportsUtmBreakdowns ? $this->sourceBreakdown(clone $query) : collect(),
-        'medium_breakdown' => $supportsUtmBreakdowns ? $this->mediumBreakdown(clone $query) : collect(),
+        'top_campaigns' => $campaigns['top_campaigns']['rows'],
+        'source_breakdown' => $campaigns['source_breakdown']['rows'],
+        'medium_breakdown' => $campaigns['medium_breakdown']['rows'],
+        'campaign_quality' => $campaigns,
         'locale_summary' => $this->localeSummary(clone $query),
         'device_summary' => $this->deviceSummary(clone $query),
         'bot_summary' => collect([
@@ -400,21 +407,6 @@ class VisitorReportsQuery
       ->values();
   }
 
-  private function topCampaigns(Builder $query): Collection
-  {
-    return $this->utmBreakdown($query, 'utm_campaign', 10);
-  }
-
-  private function sourceBreakdown(Builder $query): Collection
-  {
-    return $this->utmBreakdown($query, 'utm_source', 10);
-  }
-
-  private function mediumBreakdown(Builder $query): Collection
-  {
-    return $this->utmBreakdown($query, 'utm_medium', 10);
-  }
-
   private function localeSummary(Builder $query): Collection
   {
     $localeNames = Locale::query()->pluck('name', 'id');
@@ -465,9 +457,10 @@ class VisitorReportsQuery
       ]);
   }
 
-  private function utmBreakdown(Builder $query, string $column, int $limit): Collection
+  private function utmBreakdown(Builder $query, string $column, int $limit): array
   {
-    return $query
+    $result = ['rows' => collect(), 'flagged_rows' => collect(), 'flagged_page_views' => 0];
+    $groups = $query
       ->select($column)
       ->selectRaw('COUNT(*) as page_views')
       ->selectRaw($this->uniqueVisitorsExpression().' as unique_visitors')
@@ -476,15 +469,30 @@ class VisitorReportsQuery
       ->groupBy($column)
       ->orderByDesc('page_views')
       ->orderBy($column)
-      ->limit($limit)
-      ->get()
-      ->map(fn (VisitorEvent $event) => [
-        'label' => $this->utmLabel($event->{$column}),
+      ->toBase()
+      ->cursor();
+
+    // Classify SQL groups before applying either top-N limit. Do not load events,
+    // sum distinct visitor/session counts across labels, or rewrite historical data.
+    foreach ($groups as $event) {
+      $flagged = VisitorCampaignValue::containsMarkup($event->{$column});
+      $key = $flagged ? 'flagged_rows' : 'rows';
+      if ($flagged) {
+        $result['flagged_page_views'] += (int) $event->page_views;
+      }
+      if ($result[$key]->count() >= $limit) {
+        continue;
+      }
+      $result[$key]->push([
+        'label' => $flagged ? $event->{$column} : $this->utmLabel($event->{$column}),
         'page_views' => (int) $event->page_views,
         'unique_visitors' => (int) $event->tracked_page_views > 0 ? (int) $event->unique_visitors : null,
         'sessions' => (int) $event->tracked_page_views > 0 ? (int) $event->sessions : null,
         'tracking_state' => (int) $event->tracked_page_views > 0 ? 'tracked' : 'not_tracked',
       ]);
+    }
+
+    return $result;
   }
 
   private function normalizeDateRange(Request $request): array

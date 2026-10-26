@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'campaign_quality' => 'İncelenecek UTM değerleri',
+  'campaign_quality_help' => 'HTML benzeri işaretleme içeren değerler, yaygın kodlanmış biçimleriyle birlikte kampanya sıralamalarından ayrılır. Sayfa görüntülemeleri toplamlarda kalır; kayıtlı metinleri aşağıda gösterilir. Bu durum tek başına saldırı kanıtı değildir. Alan başına en fazla 10 değer listelenir; alanların sayımları örtüşebilir.',
+  'campaign_quality_views' => ':views sayfa görüntülemesi ayrıldı',
+  'campaign_quality_value' => 'Kayıtlı UTM değeri',
   'chart_help' => 'Sol/sağ: tarihler. Home/End: ilk/son değer. Escape: seçimi temizle.',
   'chart_error' => 'Grafik çizilemedi. Verileri okumak için grafik değerlerini açın.',
   'chart_fallback' => 'Tam veri tablosunu okumak için grafik değerlerini açın.',

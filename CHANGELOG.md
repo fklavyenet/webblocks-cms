@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Separate HTML-like and commonly encoded markup in visitor UTM values from campaign, source and medium rankings. Keep stored evidence and all page-view totals, show a translated review section with per-value metrics, and apply ranking limits after classification.
+- Cover public UTM ingestion, historical report values, site/filter isolation, distinct consent-based metrics and escaped report/page-detail output with regression tests.
+
 ## 1.105.32
 
 - Refuse Contact Form editor/API saves without notice wording when consent is required. Preserve omitted wording and shared policy on locale edits, while allowing legacy broken forms to be repaired one locale at a time.

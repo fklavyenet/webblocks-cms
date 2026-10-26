@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'campaign_quality' => 'UTM-Werte zur Prüfung',
+  'campaign_quality_help' => 'Werte mit HTML-ähnlichem Markup, auch in gängigen kodierten Formen, werden getrennt von den Kampagnenranglisten angezeigt. Ihre Seitenaufrufe bleiben in den Gesamtzahlen enthalten; der gespeicherte Text steht unten. Dies allein belegt keinen Angriff. Pro Feld werden bis zu 10 Werte aufgeführt; die Zählungen können sich überschneiden.',
+  'campaign_quality_views' => ':views Seitenaufrufe getrennt',
+  'campaign_quality_value' => 'Gespeicherter UTM-Wert',
   'chart_help' => 'Links/rechts: Datumswerte. Pos1/Ende: erster/letzter Wert. Escape: Auswahl löschen.',
   'chart_error' => 'Das Diagramm konnte nicht gezeichnet werden. Öffnen Sie die Diagrammwerte, um die Daten zu lesen.',
   'chart_fallback' => 'Öffnen Sie die Diagrammwerte, um die vollständige Datentabelle zu lesen.',

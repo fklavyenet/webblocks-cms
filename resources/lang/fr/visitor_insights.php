@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'campaign_quality' => 'Valeurs UTM à vérifier',
+  'campaign_quality_help' => 'Les valeurs contenant du balisage de type HTML, y compris les formes encodées courantes, sont séparées des classements des campagnes. Leurs vues restent dans les totaux et leur texte enregistré figure ci-dessous. Cela seul ne prouve pas une attaque. Jusqu’à 10 valeurs par champ sont affichées ; les décomptes peuvent se recouper.',
+  'campaign_quality_views' => ':views vues séparées',
+  'campaign_quality_value' => 'Valeur UTM enregistrée',
   'chart_help' => 'Gauche/droite : dates. Début/Fin : première/dernière valeur. Échap : effacer la sélection.',
   'chart_error' => 'Le graphique n’a pas pu être tracé. Ouvrez les valeurs du graphique pour lire les données.',
   'chart_fallback' => 'Ouvrez les valeurs du graphique pour lire le tableau de données complet.',

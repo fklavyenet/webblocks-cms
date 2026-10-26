@@ -348,6 +348,38 @@
             </div>
 
                             </div>
+                        @if ($supportsCampaignReports && collect($report['campaign_quality'])->sum('flagged_page_views') > 0)
+                            <section class="wb-card" aria-labelledby="visitor-campaign-quality-title">
+                                <div class="wb-card-header"><h2 class="wb-card-title" id="visitor-campaign-quality-title">{{ $insightText('campaign_quality') }}</h2></div>
+                                <div class="wb-card-body wb-stack wb-gap-3">
+                                    <p>{{ $insightText('campaign_quality_help') }}</p>
+                                    @foreach (['top_campaigns' => 'campaign', 'source_breakdown' => 'source', 'medium_breakdown' => 'medium'] as $key => $field)
+                                        @php($quality = $report['campaign_quality'][$key])
+                                        @if ($quality['flagged_page_views'] > 0)
+                                            <details>
+                                                <summary>{{ $adminText($field) }} · {{ $insightText('campaign_quality_views', ['views' => number_format($quality['flagged_page_views'])]) }}</summary>
+                                                <div class="wb-table-wrap"><table class="wb-table wb-table-striped">
+                                                    <thead><tr>
+                                                        <th scope="col">{{ $insightText('campaign_quality_value') }}</th>
+                                                        <th scope="col">{{ $adminText('page_views') }}</th>
+                                                        <th scope="col">{{ $adminText('visitors') }}</th>
+                                                        <th scope="col">{{ $adminText('sessions') }}</th>
+                                                    </tr></thead>
+                                                    <tbody>@foreach ($quality['flagged_rows'] as $row)
+                                                        <tr>
+                                                            <td><code>{{ $row['label'] }}</code></td>
+                                                            <td>{{ number_format($row['page_views']) }}</td>
+                                                            <td>{{ $trackedMetric($row['unique_visitors'], $row['tracking_state']) }}</td>
+                                                            <td>{{ $trackedMetric($row['sessions'], $row['tracking_state']) }}</td>
+                                                        </tr>
+                                                    @endforeach</tbody>
+                                                </table></div>
+                                            </details>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </section>
+                        @endif
                         </div>
 
                         <div class="wb-tabs-panel {{ $reportTab === 'journeys' ? 'is-active' : '' }}" id="visitor-reports-journeys-panel">

@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'campaign_quality' => 'Valores UTM para revisar',
+  'campaign_quality_help' => 'Los valores con marcado similar a HTML, incluidas formas codificadas habituales, se separan de las clasificaciones de campañas. Sus visitas permanecen en los totales y su texto almacenado se muestra abajo. Esto por sí solo no demuestra un ataque. Se muestran hasta 10 valores por campo; los recuentos pueden solaparse.',
+  'campaign_quality_views' => ':views visitas separadas',
+  'campaign_quality_value' => 'Valor UTM almacenado',
   'chart_help' => 'Izquierda/derecha: fechas. Inicio/Fin: primer/último valor. Escape: borrar selección.',
   'chart_error' => 'No se pudo dibujar el gráfico. Abra los valores del gráfico para leer los datos.',
   'chart_fallback' => 'Abra los valores del gráfico para leer la tabla de datos completa.',

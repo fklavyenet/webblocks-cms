@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'campaign_quality' => 'Valori UTM da verificare',
+  'campaign_quality_help' => 'I valori con markup simile a HTML, comprese le forme codificate comuni, sono separati dalle classifiche delle campagne. Le visualizzazioni restano nei totali e il testo memorizzato è riportato sotto. Questo da solo non dimostra un attacco. Sono elencati fino a 10 valori per campo; i conteggi possono sovrapporsi.',
+  'campaign_quality_views' => ':views visualizzazioni separate',
+  'campaign_quality_value' => 'Valore UTM memorizzato',
   'chart_help' => 'Sinistra/destra: date. Home/Fine: primo/ultimo valore. Esc: cancella la selezione.',
   'chart_error' => 'Impossibile disegnare il grafico. Apri i valori del grafico per leggere i dati.',
   'chart_fallback' => 'Apri i valori del grafico per leggere la tabella dati completa.',

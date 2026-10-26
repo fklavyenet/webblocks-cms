@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'campaign_quality' => 'UTM values to review',
+  'campaign_quality_help' => 'Values containing HTML-like markup, including common encoded forms, are separated from campaign rankings. Their page views remain in totals and their stored text is shown below. This alone does not establish an attack. Up to 10 values per field are listed; field counts may overlap.',
+  'campaign_quality_views' => ':views page views separated',
+  'campaign_quality_value' => 'Stored UTM value',
   'chart_help' => 'Left/right: dates. Home/end: first/last value. Escape: clear selection.',
   'chart_error' => 'The chart could not be drawn. Open chart values to read the data.',
   'chart_fallback' => 'Open chart values to read the complete data table.',
