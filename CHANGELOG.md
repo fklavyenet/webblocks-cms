@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.105.33
+
+- Repair legacy shared-host string role columns that are still NOT NULL, allowing CMS-integrated host accounts to register without a CMS role. Fresh and update migrations preserve existing role values, defaults, collation, comments and indexes; no CMS grants or duplicate identities are created.
+- Keep the repair idempotent and retain nullable roles on rollback so existing role-free accounts remain valid. Hosts without the CMS identity columns are left untouched.
+
 ## 1.105.32
 
 - Refuse Contact Form editor/API saves without notice wording when consent is required. Preserve omitted wording and shared policy on locale edits, while allowing legacy broken forms to be repaired one locale at a time.
