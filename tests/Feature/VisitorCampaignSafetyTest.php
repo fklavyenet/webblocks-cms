@@ -165,6 +165,18 @@ class VisitorCampaignSafetyTest extends TestCase
     $this->assertSame(0, $xpath->query('//@*[contains(., "cms-campaign-probe")]')->length);
     $quality = $xpath->query('//*[@id="visitor-reports-acquisition-panel"]//section[@aria-labelledby="visitor-campaign-quality-title"]')->item(0);
     $this->assertNotNull($quality);
+    $this->assertSame(0, $xpath->query('.//details | .//summary', $quality)->length);
+    $this->assertSame(1, $xpath->query('.//*[@data-wb-accordion]', $quality)->length);
+    $triggers = $xpath->query('.//button[@data-wb-accordion-trigger]', $quality);
+    $this->assertSame(3, $triggers->length);
+    foreach ($triggers as $trigger) {
+      $this->assertSame('false', $trigger->getAttribute('aria-expanded'));
+      $panel = $document->getElementById($trigger->getAttribute('aria-controls'));
+      $this->assertNotNull($panel);
+      $this->assertStringContainsString('wb-accordion-content', $panel->getAttribute('class'));
+      $this->assertSame($trigger->getAttribute('id'), $panel->getAttribute('aria-labelledby'));
+      $this->assertSame(1, $xpath->query('.//table', $panel)->length);
+    }
     $this->assertSame(3, $xpath->query('.//code', $quality)->length);
     foreach ($xpath->query('.//code', $quality) as $code) {
       $this->assertSame(self::PROBE, $code->textContent);

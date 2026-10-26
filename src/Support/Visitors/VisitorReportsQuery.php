@@ -21,6 +21,8 @@ class VisitorReportsQuery
 
   private const FULL_TRACKING_MODE = 'full';
 
+  private ?array $eventColumns = null;
+
   public function __construct(private readonly AdminAuthorization $authorization) {}
 
   public function filters(Request $request, ?User $user = null): array
@@ -44,7 +46,7 @@ class VisitorReportsQuery
 
   public function build(array $filters): array
   {
-    return DB::transaction(function () use ($filters): array {
+    return $this->withEventColumns(fn () => DB::transaction(function () use ($filters): array {
       $query = $this->filteredQuery($filters);
       $summary = $this->summary(clone $query);
       $insights = $this->insights($filters, clone $query, $summary);
@@ -77,12 +79,12 @@ class VisitorReportsQuery
           ['label' => 'Bots', 'page_views' => $summary['bot_page_views']],
         ])->map(fn ($row) => [...$row, 'share' => $summary['total_page_views'] > 0 ? round($row['page_views'] / $summary['total_page_views'] * 100, 1) : 0.0]),
       ];
-    });
+    }));
   }
 
   public function hasEventsTable(): bool
   {
-    return Schema::hasTable('wbcms_visitor_events');
+    return $this->eventColumns !== null ? $this->eventColumns !== [] : Schema::hasTable('wbcms_visitor_events');
   }
 
   public function utmTrackingEnabled(): bool
@@ -92,12 +94,12 @@ class VisitorReportsQuery
 
   public function supportsUtmBreakdowns(): bool
   {
-    return $this->hasEventsTable() && Schema::hasColumns('wbcms_visitor_events', ['utm_source', 'utm_medium', 'utm_campaign']);
+    return $this->supportsColumn('utm_source') && $this->supportsColumn('utm_medium') && $this->supportsColumn('utm_campaign');
   }
 
   public function supportsTrackingMode(): bool
   {
-    return $this->hasEventsTable() && Schema::hasColumn('wbcms_visitor_events', 'tracking_mode');
+    return $this->supportsColumn('tracking_mode');
   }
 
   public function supportsBotBreakdowns(): bool
@@ -106,6 +108,11 @@ class VisitorReportsQuery
   }
 
   public function dashboardSummary(?User $user = null): array
+  {
+    return $this->withEventColumns(fn () => $this->buildDashboardSummary($user));
+  }
+
+  private function buildDashboardSummary(?User $user): array
   {
     $from = CarbonImmutable::today()->subDays(6)->startOfDay();
     $to = CarbonImmutable::today()->endOfDay();
@@ -244,16 +251,23 @@ class VisitorReportsQuery
     ];
   }
 
-  private function pageDetails(Builder $query, VisitorEvent $event): array
+  private function pageDetails(Builder $query, Collection $pages): array
   {
-    $query->where('site_id', $event->site_id)->where('path', $event->path);
-    $event->locale_id === null ? $query->whereNull('locale_id') : $query->where('locale_id', $event->locale_id);
-    $devices = (clone $query)->select('device_type')->selectRaw('COUNT(*) as page_views')
-      ->groupBy('device_type')->get()->map(fn ($row) => [
-        'label' => in_array($row->device_type, ['desktop', 'mobile', 'tablet', 'bot'], true) ? $row->device_type : 'unknown',
-        'views' => (int) $row->page_views,
-      ]);
-    $columns = ['site_id', 'referrer'];
+    if ($pages->isEmpty()) {
+      return [];
+    }
+    $query->where(function (Builder $scoped) use ($pages): void {
+      foreach ($pages as $page) {
+        $scoped->orWhere(function (Builder $match) use ($page): void {
+          $match->where('site_id', $page->site_id)->where('path', $page->path);
+          $page->locale_id === null ? $match->whereNull('locale_id') : $match->where('locale_id', $page->locale_id);
+        });
+      }
+    });
+    $pageColumns = ['site_id', 'locale_id', 'path'];
+    $devices = (clone $query)->select([...$pageColumns, 'device_type'])->selectRaw('COUNT(*) as page_views')
+      ->groupBy([...$pageColumns, 'device_type'])->toBase()->get()->groupBy(fn ($row) => $this->pageKey($row));
+    $columns = [...$pageColumns, 'referrer'];
     foreach (['referrer_host', 'referrer_type'] as $column) {
       if ($this->supportsColumn($column)) {
         $columns[] = $column;
@@ -261,12 +275,28 @@ class VisitorReportsQuery
     }
     $referrers = (clone $query)->with('site.siteDomains')->select($columns)
       ->selectRaw('COUNT(*) as page_views')->groupBy($columns)->get()
-      ->groupBy(fn ($row) => $this->referrerLabel($row))
-      ->map(fn ($rows, $label) => ['label' => $label, 'views' => (int) $rows->sum('page_views')])->values();
+      ->groupBy(fn ($row) => $this->pageKey($row));
+    $details = [];
+    foreach ($pages as $page) {
+      $key = $this->pageKey($page);
+      $deviceGroups = ($devices[$key] ?? collect())->map(fn ($row) => [
+        'label' => in_array($row->device_type, ['desktop', 'mobile', 'tablet', 'bot'], true) ? $row->device_type : 'unknown',
+        'views' => (int) $row->page_views,
+      ]);
+      $referrerGroups = ($referrers[$key] ?? collect())
+        ->groupBy(fn ($row) => $this->referrerLabel($row))
+        ->map(fn ($rows, $label) => ['label' => $label, 'views' => (int) $rows->sum('page_views')])->values();
+      // Suppress the entire dimension when a small cell exists, including cells outside the top 10.
+      $details[$key] = collect(['devices' => $deviceGroups, 'referrers' => $referrerGroups])
+        ->map(fn ($rows) => $rows->contains(fn ($row) => $row['views'] < 5) ? [] : $rows->sortByDesc('views')->take(10)->values()->all())->all();
+    }
 
-    // Suppress the entire dimension when a small cell exists, so totals cannot reveal it by subtraction.
-    return collect(['devices' => $devices, 'referrers' => $referrers])->map(fn ($rows) => $rows->contains(fn ($row) => $row['views'] < 5) ? [] : $rows->sortByDesc('views')->take(10)->values()->all()
-    )->all();
+    return $details;
+  }
+
+  private function pageKey(object $page): string
+  {
+    return serialize([(int) $page->site_id, $page->locale_id === null ? null : (int) $page->locale_id, (string) $page->path]);
   }
 
   private function filteredQuery(array $filters): Builder
@@ -328,7 +358,7 @@ class VisitorReportsQuery
   {
     $detailQuery = clone $query;
 
-    return $query
+    $pages = $query
       ->select('site_id', 'locale_id', 'path')
       ->selectRaw('COUNT(*) as page_views')
       ->selectRaw($this->uniqueVisitorsExpression().' as unique_visitors')
@@ -337,9 +367,11 @@ class VisitorReportsQuery
       ->orderByDesc('page_views')
       ->orderBy('path')
       ->limit($limit)
-      ->get()
-      ->map(fn (VisitorEvent $event) => [
-        'details' => $limit > 1 ? $this->pageDetails(clone $detailQuery, $event) : [],
+      ->get();
+    $details = $limit > 1 ? $this->pageDetails($detailQuery, $pages) : [];
+
+    return $pages->map(fn (VisitorEvent $event) => [
+        'details' => $details[$this->pageKey($event)] ?? [],
         'site_name' => $event->site?->name ?? 'Unknown site',
         'locale_code' => $event->locale?->code ?? 'default',
         'path' => $event->path,
@@ -351,36 +383,26 @@ class VisitorReportsQuery
 
   private function topEntryPages(Builder $query): Collection
   {
-    $entries = $this->fullTrackingQuery($query)
+    $query = $this->fullTrackingQuery($query)
       ->whereNotNull('session_key')
-      ->where('session_key', '!=', '')
-      ->select(['id', 'site_id', 'locale_id', 'path', 'session_key', 'visited_at'])
-      ->orderBy('session_key')
-      ->orderBy('visited_at')
-      ->orderBy('id')
-      ->get()
-      ->unique('session_key')
-      ->groupBy(fn (VisitorEvent $event) => implode('|', [
-        $event->site_id,
-        $event->locale_id ?: 'none',
-        $event->path,
-      ]))
-      ->map(function (Collection $group) {
-        /** @var VisitorEvent $first */
-        $first = $group->first();
+      ->where('session_key', '!=', '');
+    $table = $query->getModel()->getTable();
+    $ranked = (clone $query)->select($table.'.id')
+      ->selectRaw('ROW_NUMBER() OVER (PARTITION BY session_key ORDER BY visited_at, id) as entry_position');
+    $firstIds = $query->getQuery()->getConnection()->query()
+      ->fromSub($ranked->toBase(), 'session_entries')->select('id')->where('entry_position', 1);
 
-        return [
-          'site_name' => $first->site?->name ?? 'Unknown site',
-          'locale_code' => $first->locale?->code ?? 'default',
-          'path' => $first->path,
-          'sessions' => $group->count(),
-        ];
-      })
-      ->sortByDesc('sessions')
-      ->take(10)
-      ->values();
-
-    return $entries;
+    return $query->whereIn($table.'.id', $firstIds)
+      ->select(['site_id', 'locale_id', 'path'])
+      ->selectRaw('COUNT(*) as sessions')
+      ->groupBy('site_id', 'locale_id', 'path')
+      ->orderByDesc('sessions')->orderBy('path')->orderBy('site_id')->orderBy('locale_id')
+      ->limit(10)->get()->map(fn (VisitorEvent $event) => [
+        'site_name' => $event->site?->name ?? 'Unknown site',
+        'locale_code' => $event->locale?->code ?? 'default',
+        'path' => $event->path,
+        'sessions' => (int) $event->sessions,
+      ]);
   }
 
   private function topReferrers(Builder $query): Collection
@@ -394,13 +416,12 @@ class VisitorReportsQuery
 
     return $query
       ->with('site.siteDomains')
-      ->get($columns)
-      ->map(fn (VisitorEvent $event) => $this->referrerLabel($event))
-      ->filter()
-      ->countBy()
-      ->map(fn (int $visits, string $label) => [
+      ->select($columns)->selectRaw('COUNT(*) as visits')->groupBy($columns)
+      ->get()
+      ->groupBy(fn (VisitorEvent $event) => $this->referrerLabel($event))
+      ->map(fn ($rows, $label) => [
         'label' => $label,
-        'visits' => $visits,
+        'visits' => (int) $rows->sum('visits'),
       ])
       ->sortByDesc('visits')
       ->take(10)
@@ -409,7 +430,7 @@ class VisitorReportsQuery
 
   private function localeSummary(Builder $query): Collection
   {
-    $localeNames = Locale::query()->pluck('name', 'id');
+    $locales = Locale::query()->get(['id', 'code', 'name'])->keyBy('id');
 
     return $query
       ->select('locale_id')
@@ -419,12 +440,12 @@ class VisitorReportsQuery
       ->groupBy('locale_id')
       ->orderByDesc('page_views')
       ->get()
-      ->map(function (VisitorEvent $event) use ($localeNames) {
-        $locale = Locale::query()->find($event->locale_id);
+      ->map(function (VisitorEvent $event) use ($locales) {
+        $locale = $locales->get($event->locale_id);
 
         return [
           'label' => $locale?->code ? strtoupper($locale->code) : 'Default',
-          'name' => $locale?->name ?? ($event->locale_id ? ($localeNames[$event->locale_id] ?? 'Unknown locale') : 'Default locale'),
+          'name' => $locale?->name ?? ($event->locale_id ? 'Unknown locale' : 'Default locale'),
           'page_views' => (int) $event->page_views,
           'unique_visitors' => (int) $event->tracked_page_views > 0 ? (int) $event->unique_visitors : null,
           'unique_visitors_state' => (int) $event->tracked_page_views > 0 ? 'tracked' : 'not_tracked',
@@ -740,6 +761,21 @@ class VisitorReportsQuery
 
   private function supportsColumn(string $column): bool
   {
+    if ($this->eventColumns !== null) {
+      return in_array($column, $this->eventColumns, true);
+    }
+
     return $this->hasEventsTable() && Schema::hasColumn('wbcms_visitor_events', $column);
+  }
+
+  private function withEventColumns(callable $callback): array
+  {
+    $previous = $this->eventColumns;
+    $this->eventColumns = Schema::hasTable('wbcms_visitor_events') ? Schema::getColumnListing('wbcms_visitor_events') : [];
+    try {
+      return $callback();
+    } finally {
+      $this->eventColumns = $previous;
+    }
   }
 }

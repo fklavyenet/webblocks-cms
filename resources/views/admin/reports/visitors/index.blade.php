@@ -225,6 +225,7 @@
 
                     <div class="wb-tabs-panels">
                         <div class="wb-tabs-panel {{ $reportTab === 'acquisition' ? 'is-active' : '' }}" id="visitor-reports-acquisition-panel">
+                            <div class="wb-stack wb-gap-3">
                             <div class="wb-grid wb-grid-2">
             <div class="wb-card">
                 <div class="wb-card-header"><strong>{{ $adminText('top_campaigns') }}</strong></div>
@@ -353,11 +354,17 @@
                                 <div class="wb-card-header"><h2 class="wb-card-title" id="visitor-campaign-quality-title">{{ $insightText('campaign_quality') }}</h2></div>
                                 <div class="wb-card-body wb-stack wb-gap-3">
                                     <p>{{ $insightText('campaign_quality_help') }}</p>
+                                    <div class="wb-accordion" data-wb-accordion>
                                     @foreach (['top_campaigns' => 'campaign', 'source_breakdown' => 'source', 'medium_breakdown' => 'medium'] as $key => $field)
                                         @php($quality = $report['campaign_quality'][$key])
                                         @if ($quality['flagged_page_views'] > 0)
-                                            <details>
-                                                <summary>{{ $adminText($field) }} · {{ $insightText('campaign_quality_views', ['views' => number_format($quality['flagged_page_views'])]) }}</summary>
+                                            <div class="wb-accordion-item">
+                                                <button type="button" class="wb-accordion-trigger" data-wb-accordion-trigger aria-expanded="false" aria-controls="visitor-utm-{{ $field }}" id="visitor-utm-{{ $field }}-trigger">
+                                                    <span>{{ $adminText($field) }} · {{ $insightText('campaign_quality_views', ['views' => number_format($quality['flagged_page_views'])]) }}</span>
+                                                    <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
+                                                </button>
+                                                <div class="wb-accordion-content" id="visitor-utm-{{ $field }}" role="region" aria-labelledby="visitor-utm-{{ $field }}-trigger">
+                                                <div class="wb-accordion-body">
                                                 <div class="wb-table-wrap"><table class="wb-table wb-table-striped">
                                                     <thead><tr>
                                                         <th scope="col">{{ $insightText('campaign_quality_value') }}</th>
@@ -374,12 +381,15 @@
                                                         </tr>
                                                     @endforeach</tbody>
                                                 </table></div>
-                                            </details>
+                                                </div></div>
+                                            </div>
                                         @endif
                                     @endforeach
+                                    </div>
                                 </div>
                             </section>
                         @endif
+                            </div>
                         </div>
 
                         <div class="wb-tabs-panel {{ $reportTab === 'journeys' ? 'is-active' : '' }}" id="visitor-reports-journeys-panel">

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.105.35
+
+- Use shipped WebBlocks UI accordions for UTM review tables, with linked accessible triggers and consistent spacing.
+- Reduce Visitor Reports opening work with grouped referrer totals, SQL session-entry ranking, batched page details and one report-scoped visitor schema snapshot. Preserve filters, consent metrics, historical referrer normalization and small-cell privacy suppression without caching report data.
+
 ## 1.105.34
 
 - Separate HTML-like and commonly encoded markup in visitor UTM values from campaign, source and medium rankings. Keep stored evidence and all page-view totals, show a translated review section with per-value metrics, and apply ranking limits after classification.
