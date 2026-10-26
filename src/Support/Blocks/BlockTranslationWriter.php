@@ -2,7 +2,6 @@
 
 namespace WebBlocks\Cms\Support\Blocks;
 
-use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
@@ -145,7 +144,9 @@ class BlockTranslationWriter
         : json_encode($settings, JSON_UNESCAPED_SLASHES);
     }
 
-    DB::table('wbcms_blocks')->where('id', $block->id)->update($updates);
+    // Settings now live in typed SQL records. Use the model's relational writer
+    // instead of addressing the retired settings column during revision restore.
+    Block::withoutTimestamps(fn () => $block->forceFill($updates)->saveQuietly());
   }
 
   private function ensureDefaultTranslation(Block $block, string $family, int $defaultLocaleId, ?Block $translationSourceBlock = null): void

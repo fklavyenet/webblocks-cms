@@ -36,6 +36,7 @@ return [
     ],
   ],
   'contact_form' => [
+    'privacy_notice' => 'Privacy notice',
     'submit' => 'Send message',
     'review' => 'Please review the form',
     'name' => 'Name',

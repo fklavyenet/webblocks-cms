@@ -3956,6 +3956,9 @@ $translations = [
       'soft' => 'Douce',
     ],
     'contact_form' => [
+      'privacy_notice_url' => 'URL de la notice de confidentialité',
+      'privacy_notice_help' => 'Commune à toutes les langues. Un chemin interne mène à la traduction dans la langue du visiteur ; une URL HTTP(S) permet un lien externe. Laissez vide pour masquer le lien. Ce lien est indépendant du consentement.',
+      'privacy_notice_invalid' => 'Saisissez un chemin interne commençant par / ou une URL HTTP(S) valide.',
       'system_title' => 'Bloc de contact réutilisable',
       'system_help' => 'Les messages sont toujours enregistrés en premier. La notification par e-mail intervient après l\'enregistrement, afin que les entrées de la boîte de réception survivent aux échecs de remise.',
       'locale_help' => 'Le titre, le texte d\'introduction, le libellé d\'envoi et le message de succès sont traduits par langue. Les paramètres de remise restent communs à toutes les langues.',

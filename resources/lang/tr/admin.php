@@ -3971,6 +3971,9 @@ $translations = [
       'soft' => 'Yumuşak',
     ],
     'contact_form' => [
+      'privacy_notice_url' => 'Aydınlatma metni bağlantısı',
+      'privacy_notice_help' => 'Tüm diller için ortaktır. Ziyaretçinin dilindeki çeviriye gitmek için site içi sayfa yolu, harici bir metin için HTTP(S) adresi kullanın. Bağlantıyı gizlemek için boş bırakın. Bu bağlantı onaydan ayrıdır.',
+      'privacy_notice_invalid' => '/ ile başlayan bir site içi yol veya geçerli bir HTTP(S) adresi girin.',
       'system_title' => 'Yeniden Kullanılabilir İletişim Bloğu',
       'system_help' => 'Mesajlar her zaman önce kaydedilir. E-posta bildirimi kayıttan sonra çalışır, böylece teslim hatalarında bile gelen kutusu kayıtları korunur.',
       'locale_help' => 'Başlık, giriş metni, gönder butonu etiketi ve başarı mesajı dile göre çevrilir. Teslim ayarları diller arasında ortak kalır.',

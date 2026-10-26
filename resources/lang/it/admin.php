@@ -3955,6 +3955,9 @@ $translations = [
       'soft' => 'Tenue',
     ],
     'contact_form' => [
+      'privacy_notice_url' => 'URL dell’informativa sulla privacy',
+      'privacy_notice_help' => 'Condiviso tra le lingue. Usa un percorso interno per aprire la traduzione nella lingua del visitatore, oppure un URL HTTP(S) per un’informativa esterna. Lascia vuoto per nascondere il link. Il link è separato dal consenso.',
+      'privacy_notice_invalid' => 'Inserisci un percorso interno che inizi con / o un URL HTTP(S) valido.',
       'system_title' => 'Blocco di contatto riutilizzabile',
       'system_help' => 'I messaggi vengono sempre salvati prima. La notifica email viene inviata dopo il salvataggio, così i record della posta in arrivo sopravvivono agli errori di consegna.',
       'locale_help' => 'Intestazione, testo introduttivo, etichetta di invio e messaggio di successo sono tradotti per lingua. Le impostazioni di consegna restano condivise tra le lingue.',

@@ -9,6 +9,7 @@
     $storeSubmissions = (bool) old('store_submissions', $block->setting('store_submissions', true));
     $consentRequired = (bool) old('consent_required', $block->setting('consent_required', false));
     $consentLabel = old('consent_label', $block->consent_label ?? '');
+    $privacyNoticeUrl = old('privacy_notice_url', $block->setting('privacy_notice_url', ''));
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -68,6 +69,15 @@
 
             <span class="wb-text-sm wb-text-muted">{{ $adminText('delivery_help') }}</span>
         </div>
+    </div>
+
+    <div class="wb-stack wb-gap-1">
+        <label for="privacy_notice_url">{{ $adminText('privacy_notice_url') }}</label>
+        <input id="privacy_notice_url" name="privacy_notice_url" class="wb-input" type="text" maxlength="2048" value="{{ $privacyNoticeUrl }}" aria-describedby="privacy-notice-url-help" @disabled(isset($activeLocale) && ! $isDefaultLocale)>
+        <span id="privacy-notice-url-help" class="wb-text-sm wb-text-muted">{{ $adminText('privacy_notice_help') }}</span>
+        @error('privacy_notice_url')
+            <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+        @enderror
     </div>
 
     {{--

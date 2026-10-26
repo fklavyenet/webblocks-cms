@@ -20,6 +20,7 @@
     $consentLabelText = trim((string) ($block->consent_label ?? ''));
     $requiresConsent = (bool) $block->setting('consent_required', false);
     $consentUnavailable = $requiresConsent && $consentLabelText === '';
+    $privacyNoticeUrl = app(\WebBlocks\Cms\Support\Contact\ContactPrivacyNotice::class)->url($block);
 @endphp
 
 <section class="wb-card wb-public-contact-form-card" id="contact-form-{{ $block->id }}">
@@ -99,6 +100,10 @@
                     @endforeach
                 @endif
             </div>
+
+            @if ($privacyNoticeUrl)
+                <p class="wb-m-0"><a class="wb-link" href="{{ $privacyNoticeUrl }}">{{ $translator->get('blocks.contact_form.privacy_notice', $block->renderLocaleCode()) }}</a></p>
+            @endif
 
             @if ($consentUnavailable)
                 <div class="wb-alert wb-alert-warning" role="alert">{{ $translator->get('validation.contact_form.consent_unavailable', $resolvedLocaleCode) }}</div>

@@ -779,12 +779,13 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'contact_form' => [
-        'admin_form_fields' => ['Heading', 'Intro text', 'Submit label', 'Success message', 'Recipient email', 'Send email notification', 'Store submissions', 'Require a consent checkbox', 'Consent notice'],
+        'admin_form_fields' => ['Heading', 'Intro text', 'Submit label', 'Success message', 'Recipient email', 'Send email notification', 'Store submissions', 'Privacy notice URL', 'Require a consent checkbox', 'Consent notice'],
         'translatable_fields' => ['title', 'content', 'submit_label', 'success_message', 'consent_label'],
-        'shared_settings_fields' => ['settings.recipient_email', 'settings.send_email_notification', 'settings.store_submissions', 'settings.consent_required'],
+        'shared_settings_fields' => ['settings.recipient_email', 'settings.send_email_notification', 'settings.store_submissions', 'settings.consent_required', 'settings.privacy_notice_url'],
         'storage_fields' => [
           'Translated visible copy lives in block_contact_form_translations rows.',
           'Shared recipient and notification settings stay in block settings.',
+          'Optional privacy_notice_url is a shared internal path or HTTP(S) URL in typed relational settings, preserved in revisions and staging. It renders a separately labelled link without changing consent policy. Internal page paths follow the visitor locale with the existing stored-URL fallback; external URLs stay unchanged.',
           'Public submissions are stored as contact_messages rows before notification delivery is attempted.',
           'When settings.consent_required is true, the resolved locale must have a nonblank consent_label. Missing wording disables the public submit button and all submissions are rejected before storage or notification, even with a forged acceptance. An accepted submission records consent_accepted_at plus a copy of the wording, displayed in message Technical details independently of later block edits.',
         ],

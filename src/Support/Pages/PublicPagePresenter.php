@@ -10,6 +10,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Support\Applications\ApplicationAssetCollector;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Contact\ContactPrivacyNotice;
 use WebBlocks\Cms\Support\PublicRendering\SlotWrapperResolver;
 
 class PublicPagePresenter
@@ -98,6 +99,7 @@ class PublicPagePresenter
       // These are prefetch hints only. Dynamic bindings still resolve at render time.
       $url = match ($block->typeSlug()) {
         'button_link' => $block->buttonLinkUrl(),
+        'contact_form' => ContactPrivacyNotice::normalizeUrl($block->setting('privacy_notice_url')),
         'card' => $block->cardUrl(),
         'button', 'column_item', 'link-list-item', 'stat-card' => Block::safePublicUrl($block->url),
         'navbar-brand' => $block->navbarBrandUrl(),

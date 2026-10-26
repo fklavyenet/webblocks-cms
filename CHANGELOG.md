@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.105.31
+
+- Add an optional, separate privacy notice link to Contact Forms, with localized internal page URLs and six-language labels. Validate the shared URL through the editor and Content API, and preserve it in relational storage, staged updates and complete revision snapshots.
+- Restore Contact Form and plugin settings through the relational model writer when normalizing saved versions, without writing the retired block settings column or changing recorded timestamps.
+
 ## 1.105.30
 
 - Reject Contact Form submissions when consent is required but the resolved notice is blank, including forged acceptance values. Show a translated unavailable warning and disable submission until the notice is restored.

@@ -4199,6 +4199,9 @@ return [
       'soft' => 'Soft',
     ],
     'contact_form' => [
+      'privacy_notice_url' => 'Privacy notice URL',
+      'privacy_notice_help' => 'Shared across languages. Use an internal page path to follow its translation in the visitor’s language, or an HTTP(S) URL for an external notice. Leave empty to hide the link. This link is separate from consent.',
+      'privacy_notice_invalid' => 'Enter an internal path starting with / or a valid HTTP(S) URL.',
       'system_title' => 'Reusable Contact Block',
       'system_help' => 'Messages are always saved first. Email notification runs after persistence so inbox records survive delivery failures.',
       'locale_help' => 'Heading, intro text, submit label, and success message are translated per locale. Delivery settings stay shared across locales.',

@@ -33,6 +33,7 @@ return [
     ],
   ],
   'contact_form' => [
+    'privacy_notice' => 'Notice de confidentialité',
     'submit' => 'Envoyer le message',
     'review' => 'Veuillez vérifier le formulaire',
     'name' => 'Nom',

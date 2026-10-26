@@ -2134,6 +2134,7 @@ class InternalContentResourceController extends Controller
         'recipient_email' => 'nullable email string; overrides the site and environment recipient fallback chain when present',
         'send_email_notification' => 'boolean; default true',
         'store_submissions' => 'boolean; always true in the native CMS contract',
+        'privacy_notice_url' => 'nullable internal path starting with / or valid HTTP(S) URL, max 2048 characters. Shared across locales and PATCH-writable. The separate privacy notice link follows internal page translations in the visitor locale; missing translations fall back to the stored URL. External URLs are unchanged. Omission preserves and null/blank clears the link without changing consent_required.',
         'consent_required' => 'boolean; default false. When true, requires an accepted checkbox and nonblank consent_label for the resolved locale. Missing wording disables the public submit button and all submissions are rejected before storage or notification, even with a forged acceptance. Accepted submissions record consent_accepted_at plus a copy of the wording.',
       ];
       $payload['public_submit_endpoint'] = [

@@ -179,6 +179,8 @@ class ContactFormConsentTest extends TestCase
   public function a_form_without_consent_stores_no_consent_record(): void
   {
     $block = $this->seedForm(consentRequired: false, consentLabel: null);
+    $block->settings = [...$block->decodedSettings(), 'privacy_notice_url' => '/privacy'];
+    $block->save();
 
     $this->submit($block, consent: null);
 

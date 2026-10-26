@@ -3956,6 +3956,9 @@ $translations = [
       'soft' => 'Suave',
     ],
     'contact_form' => [
+      'privacy_notice_url' => 'URL del aviso de privacidad',
+      'privacy_notice_help' => 'Compartida entre idiomas. Usa una ruta interna para enlazar a la traducción en el idioma del visitante, o una URL HTTP(S) para un aviso externo. Déjala vacía para ocultar el enlace. Este enlace es independiente del consentimiento.',
+      'privacy_notice_invalid' => 'Introduce una ruta interna que empiece por / o una URL HTTP(S) válida.',
       'system_title' => 'Bloque de contacto reutilizable',
       'system_help' => 'Los mensajes siempre se guardan primero. La notificación por correo se envía tras la persistencia, de modo que los registros de la bandeja sobreviven a fallos de entrega.',
       'locale_help' => 'El encabezado, el texto de introducción, la etiqueta de envío y el mensaje de éxito se traducen por idioma. Los ajustes de entrega se comparten entre idiomas.',

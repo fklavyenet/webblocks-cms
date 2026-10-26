@@ -42,7 +42,7 @@ class StagedUpdateMetadataTest extends TestCase
       }
     }
     $form = $this->block($page, $slot, 'contact_form');
-    $form->settings = json_encode(['consent_required' => true, 'send_email_notification' => false]);
+    $form->settings = json_encode(['consent_required' => true, 'send_email_notification' => false, 'privacy_notice_url' => '/privacy']);
     $form->save();
     foreach ($locales as $locale) {
       $form->contactFormTranslations()->create(['locale_id' => $locale->id, 'title' => 'Contact', 'submit_label' => 'Send', 'success_message' => 'Thanks', 'consent_label' => $locale->code.' notice']);
@@ -168,6 +168,7 @@ class StagedUpdateMetadataTest extends TestCase
       }
     }
     $form = $page->blocks()->where('type', 'contact_form')->firstOrFail();
+    $this->assertSame('/privacy', $form->setting('privacy_notice_url'));
     foreach ($locales as $locale) {
       $this->assertSame($locale->code.' notice', $form->contactFormTranslations()->where('locale_id', $locale->id)->value('consent_label'));
     }

@@ -37,7 +37,7 @@ final class SettingDefinitions
         'scope page_type path_prefix sort sort_order language lang data_scope row_layout list_frame thumb_size',
         'limit scale product_id commerce_product_id asset_id media_id',
         'allow_change show_summary show_thumbnail show_description clickable_card exclude_current show_loading_state show_failure_state show_button consent_required send_email_notification store_submissions form_enabled show_approved show_author_name'
-      ) + self::fields('submit_label success_message consent_label recipient_email reply_to_address', '', ''),
+      ) + self::fields('submit_label success_message consent_label recipient_email reply_to_address privacy_notice_url', '', ''),
       'block_content_bindings' => self::fields('source record field', '', ''),
       'block_content_collections' => self::fields('source filter_field filter_value sort_field sort_direction empty_behavior error_behavior', 'template_block_id limit per_page', 'paginate'),
       'block_application_values' => ['value' => 'variant'],

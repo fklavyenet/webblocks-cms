@@ -33,6 +33,7 @@ return [
     ],
   ],
   'contact_form' => [
+    'privacy_notice' => 'Aydınlatma metni',
     'submit' => 'Mesaj gönder',
     'review' => 'Lütfen formu kontrol edin',
     'name' => 'Adınız',

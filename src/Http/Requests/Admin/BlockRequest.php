@@ -23,6 +23,7 @@ use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
+use WebBlocks\Cms\Support\Contact\ContactPrivacyNotice;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoring;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoringException;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
@@ -381,6 +382,7 @@ class BlockRequest extends FormRequest
       'store_submissions' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
       'consent_required' => [($isContactForm && ! $isLocaleRequest) ? 'nullable' : 'nullable', 'boolean'],
       'consent_label' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:1000'],
+      'privacy_notice_url' => [$isContactForm ? 'nullable' : 'prohibited', 'string', 'max:2048'],
       'navigation_menu_key' => [$isNavigationAuto ? 'required' : 'nullable', Rule::in(NavigationItem::menuKeys())],
       'header_actions_show_mode_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
       'header_actions_show_accent_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
@@ -457,6 +459,10 @@ class BlockRequest extends FormRequest
       $existingBlock = $existingBlock instanceof Block ? $existingBlock : null;
       $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
       $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
+      if ($selectedBlockType?->slug === 'contact_form' && $this->filled('privacy_notice_url')
+        && ContactPrivacyNotice::normalizeUrl($this->input('privacy_notice_url')) === null) {
+        $validator->errors()->add('privacy_notice_url', app(CmsTranslator::class)->admin('blocks.contact_form.privacy_notice_invalid', app(AdminLocaleResolver::class)->locale()));
+      }
       $supportsBackgroundMedia = in_array($selectedBlockType?->slug, ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true);
       $isColumns = $selectedBlockType?->slug === 'columns';
       $isFeatureGrid = $selectedBlockType?->slug === 'feature-grid';
@@ -1328,6 +1334,8 @@ class BlockRequest extends FormRequest
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedContactFormEdit = $data['locale'] !== null;
+        $isPrivacyNoticeTranslationEdit = $data['locale'] !== null
+          && ! Locale::query()->where('code', $data['locale'])->where('is_default', true)->exists();
 
         $data['title'] = trim((string) ($data['heading'] ?? '')) ?: null;
         $data['subtitle'] = null;
@@ -1351,6 +1359,9 @@ class BlockRequest extends FormRequest
           'consent_required' => $isTranslatedContactFormEdit
             ? (bool) ($existingSettings['consent_required'] ?? false)
             : (bool) ($data['consent_required'] ?? false),
+          'privacy_notice_url' => $isPrivacyNoticeTranslationEdit || ! array_key_exists('privacy_notice_url', $data)
+            ? ($existingSettings['privacy_notice_url'] ?? null)
+            : ContactPrivacyNotice::normalizeUrl($data['privacy_notice_url']),
         ], JSON_UNESCAPED_SLASHES);
       }
 
@@ -2544,7 +2555,7 @@ class BlockRequest extends FormRequest
       $data['slot'] = $slotType?->slug;
     }
 
-    unset($data['heading'], $data['intro_text'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions'], $data['consent_required']);
+    unset($data['heading'], $data['intro_text'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions'], $data['consent_required'], $data['privacy_notice_url']);
     unset($data['layout']);
     unset($data['title_tag']);
     unset($data['language']);

@@ -3958,6 +3958,9 @@ $translations = [
       'soft' => 'Weich',
     ],
     'contact_form' => [
+      'privacy_notice_url' => 'URL des Datenschutzhinweises',
+      'privacy_notice_help' => 'Gilt für alle Sprachen. Ein interner Seitenpfad führt zur Übersetzung in der Sprache des Besuchers; für externe Hinweise ist eine HTTP(S)-URL möglich. Leer lassen, um den Link auszublenden. Der Link ist unabhängig von der Einwilligung.',
+      'privacy_notice_invalid' => 'Geben Sie einen internen Pfad mit / am Anfang oder eine gültige HTTP(S)-URL ein.',
       'system_title' => 'Wiederverwendbarer Kontaktblock',
       'system_help' => 'Nachrichten werden immer zuerst gespeichert. E-Mail-Benachrichtigungen laufen nach der Speicherung, damit Posteingangseinträge auch bei Zustellfehlern erhalten bleiben.',
       'locale_help' => 'Überschrift, Einleitung, Button-Label und Erfolgsmeldung werden pro Sprache übersetzt. Zustelleinstellungen bleiben sprachübergreifend gemeinsam.',

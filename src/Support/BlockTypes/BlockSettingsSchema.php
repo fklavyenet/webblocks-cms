@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\BlockTypes;
 
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\Contact\ContactPrivacyNotice;
 use WebBlocks\Cms\Support\InternalContentApi\BlockSettingsPatchPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
@@ -111,7 +112,7 @@ final class BlockSettingsSchema
       'bool' => 'boolean', 'int' => 'integer', 'object', 'application_settings' => 'object', 'array' => 'array', default => 'string'
       };
       $constraints = match ($rule[0]) {
-        'enum' => ['enum' => $rule[1]], 'int' => ['minimum' => $rule[1], 'maximum' => $rule[2]], 'text' => ['max_length' => $rule[1]], default => [],
+        'enum' => ['enum' => $rule[1]], 'int' => ['minimum' => $rule[1], 'maximum' => $rule[2]], 'text' => ['max_length' => $rule[1]], 'web_url' => ['max_length' => 2048], default => [],
       };
       $aliases = match (true) {
         $type === 'slider' && $key === 'transition' => ['fade' => 'slide'],
@@ -145,6 +146,7 @@ final class BlockSettingsSchema
       'enum' => $scalar && in_array($text, $rule[1], true),
       'text' => is_string($value) && mb_strlen($text) <= $rule[1],
       'url' => is_string($value) && mb_strlen($text) <= 2048 && preg_match('/^(\/(?!\/)|#|https?:\/\/|mailto:|tel:)/i', $text) === 1,
+      'web_url' => ContactPrivacyNotice::normalizeUrl($value) !== null,
       'email' => is_string($value) && filter_var($text, FILTER_VALIDATE_EMAIL) !== false,
       'menu_key' => is_string($value) && in_array($text, NavigationItem::menuKeys(), true),
       'anchor' => is_string($value) && strlen($text) <= 255 && preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_:.]*$/', $text) === 1,
