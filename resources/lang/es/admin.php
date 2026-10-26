@@ -3231,6 +3231,10 @@ $translations = [
     'all_ratings' => 'Todas las valoraciones',
   ],
   'contact_messages_show' => [
+    'consent_record' => 'Registro de consentimiento',
+    'consent_accepted_at_label' => 'Aceptado el:',
+    'consent_notice_label' => 'Aviso en el momento del envío:',
+    'consent_not_recorded' => 'No registrado',
     'title' => 'Mensaje de contacto: :name',
     'reply_by_email' => 'Responder por correo',
     'reply_subject' => 'Re: :subject',
@@ -3968,7 +3972,7 @@ $translations = [
       'consent_section_label' => 'Consentimiento',
       'consent_required' => 'Exigir una casilla de consentimiento',
       'consent_label' => 'Aviso de consentimiento',
-      'consent_help' => 'El texto es lo que acepta la persona visitante, por eso se traduce por idioma. El envio guarda la hora de la aceptacion y una copia de este texto. Dejalo vacio para ocultar la casilla.',
+      'consent_help' => 'El texto se traduce para cada idioma. Cada envío aceptado guarda la hora del consentimiento y una copia del texto. Si el consentimiento es obligatorio, un aviso vacío o ausente impide el envío.',
     ],
     'header_actions' => [
       'system_title' => 'Acciones de encabezado de sistema',

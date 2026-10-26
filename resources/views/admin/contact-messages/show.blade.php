@@ -109,6 +109,18 @@
                 </div>
             </section>
 
+            <section class="wb-stack wb-gap-2" aria-labelledby="contact-consent-heading">
+                <h3 id="contact-consent-heading" class="wb-contact-message-subject">{{ $adminText('consent_record') }}</h3>
+                <div class="wb-table-wrap">
+                    <table class="wb-table">
+                        <tbody>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('consent_accepted_at_label') }}</th><td>{{ $message->consent_accepted_at?->format('Y-m-d H:i:s') ?? $adminText('consent_not_recorded') }}</td></tr>
+                            <tr><th scope="row" class="wb-table-key">{{ $adminText('consent_notice_label') }}</th><td><div class="wb-contact-message-consent-notice">{{ filled($message->consent_label) ? $message->consent_label : $adminText('consent_not_recorded') }}</div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <section class="wb-stack wb-gap-2" aria-labelledby="contact-notification-heading">
                 <h3 id="contact-notification-heading" class="wb-contact-message-subject">{{ $adminText('email_notification') }}</h3>
                 <div class="wb-table-wrap">

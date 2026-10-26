@@ -2134,7 +2134,7 @@ class InternalContentResourceController extends Controller
         'recipient_email' => 'nullable email string; overrides the site and environment recipient fallback chain when present',
         'send_email_notification' => 'boolean; default true',
         'store_submissions' => 'boolean; always true in the native CMS contract',
-        'consent_required' => 'boolean; default false. When true and the resolved locale has a consent_label, the public form renders a required consent checkbox and the submission records consent_accepted_at plus a copy of the wording.',
+        'consent_required' => 'boolean; default false. When true, requires an accepted checkbox and nonblank consent_label for the resolved locale. Missing wording disables the public submit button and all submissions are rejected before storage or notification, even with a forged acceptance. Accepted submissions record consent_accepted_at plus a copy of the wording.',
       ];
       $payload['public_submit_endpoint'] = [
         'method' => 'POST',
@@ -2149,6 +2149,7 @@ class InternalContentResourceController extends Controller
         'email' => 'required RFC email max 255',
         'subject' => 'nullable string max 255',
         'message' => 'required string',
+        'consent' => 'when consent_required is true, an accepted value and a nonblank resolved notice are both mandatory',
         '_form_check_name' => 'renderer-generated signed metadata; not normal visitor input',
         'form_check_{token}' => 'renderer-generated anti-spam check field; not normal visitor input',
         '_form_stamp' => 'renderer-issued timestamp bound to this form and protected by an HMAC signature',

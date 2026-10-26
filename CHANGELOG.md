@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.105.30
+
+- Reject Contact Form submissions when consent is required but the resolved notice is blank, including forged acceptance values. Show a translated unavailable warning and disable submission until the notice is restored.
+- Show each saved message's consent time and original notice under Technical details, with explicit missing-record values for older submissions.
+
 ## 1.105.29
 
 - Exclude CMS authentication, administration and internal API responses from search indexes with a scoped noindex response header, preserving access checks, existing response directives and public-page indexing.

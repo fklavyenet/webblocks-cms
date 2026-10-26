@@ -12,6 +12,7 @@ return [
     'email_required' => 'Geben Sie Ihre E-Mail-Adresse ein.',
     'email_valid' => 'Geben Sie eine gueltige E-Mail-Adresse ein.',
     'consent_required' => 'Bestätigen Sie den Datenschutzhinweis, um fortzufahren.',
+    'consent_unavailable' => 'Dieses Formular ist vorübergehend nicht verfügbar, da der erforderliche Einwilligungstext fehlt. Bitte versuchen Sie es später erneut.',
     'message_required' => 'Geben Sie eine Nachricht ein.',
   ],
   'comments' => [

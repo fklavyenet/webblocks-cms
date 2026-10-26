@@ -3233,6 +3233,10 @@ $translations = [
     'all_ratings' => 'Alle Bewertungen',
   ],
   'contact_messages_show' => [
+    'consent_record' => 'Einwilligungsnachweis',
+    'consent_accepted_at_label' => 'Akzeptiert am:',
+    'consent_notice_label' => 'Text zum Zeitpunkt der Einsendung:',
+    'consent_not_recorded' => 'Nicht erfasst',
     'title' => 'Kontaktnachricht: :name',
     'reply_by_email' => 'Per E-Mail antworten',
     'reply_subject' => 'Re: :subject',
@@ -3970,7 +3974,7 @@ $translations = [
       'consent_section_label' => 'Einwilligung',
       'consent_required' => 'Eine Einwilligungs-Checkbox verlangen',
       'consent_label' => 'Einwilligungshinweis',
-      'consent_help' => 'Der Text ist das, dem die Besucherin oder der Besucher zustimmt, und wird daher pro Sprache uebersetzt. Die Einsendung speichert den Zeitpunkt der Zustimmung und eine Kopie dieses Textes. Leer lassen, um die Checkbox auszublenden.',
+      'consent_help' => 'Der Text wird für jede Sprache übersetzt. Jede akzeptierte Einsendung speichert den Zeitpunkt der Einwilligung und eine Kopie dieses Textes. Bei erforderlicher Einwilligung verhindern fehlende oder leere Texte das Absenden.',
     ],
     'header_actions' => [
       'system_title' => 'System-Header-Aktionen',

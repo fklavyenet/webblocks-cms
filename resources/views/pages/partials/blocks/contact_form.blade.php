@@ -17,11 +17,9 @@
         : $resolvedSubmitLabel;
     $formCheck = app(\WebBlocks\Cms\Support\Contact\ContactFormCheck::class);
     $formCheckName = $formCheck->fieldName($block);
-    // The checkbox only renders when the form both requires consent and has
-    // wording for this locale: an unlabelled required checkbox would be a
-    // consent record with nothing recorded against it.
     $consentLabelText = trim((string) ($block->consent_label ?? ''));
-    $requiresConsent = (bool) $block->setting('consent_required', false) && $consentLabelText !== '';
+    $requiresConsent = (bool) $block->setting('consent_required', false);
+    $consentUnavailable = $requiresConsent && $consentLabelText === '';
 @endphp
 
 <section class="wb-card wb-public-contact-form-card" id="contact-form-{{ $block->id }}">
@@ -102,7 +100,9 @@
                 @endif
             </div>
 
-            @if ($requiresConsent)
+            @if ($consentUnavailable)
+                <div class="wb-alert wb-alert-warning" role="alert">{{ $translator->get('validation.contact_form.consent_unavailable', $resolvedLocaleCode) }}</div>
+            @elseif ($requiresConsent)
                 <div class="wb-stack wb-gap-1">
                     <label class="wb-check">
                         <input type="checkbox" name="consent" value="1" @checked(old('block_id') == $block->id && old('consent')) required>
@@ -118,7 +118,7 @@
 
             <div class="wb-cluster wb-cluster-between wb-cluster-2">
                 <span class="wb-text-sm wb-text-muted">{{ $contactFormCopy['storage'] }}</span>
-                <button type="submit" class="wb-btn wb-btn-primary">{{ $submitLabel }}</button>
+                <button type="submit" class="wb-btn wb-btn-primary" @disabled($consentUnavailable)>{{ $submitLabel }}</button>
             </div>
         </form>
     </div>

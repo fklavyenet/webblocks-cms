@@ -770,6 +770,10 @@ input.wb-admin-table-grid-input:focus {
 
 .wb-contact-message-body {
     min-height: 12rem;
+}
+
+.wb-contact-message-body,
+.wb-contact-message-consent-notice {
     overflow-wrap: anywhere;
     white-space: pre-line;
 }

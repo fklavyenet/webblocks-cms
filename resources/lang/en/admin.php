@@ -3474,6 +3474,10 @@ return [
     'all_ratings' => 'All ratings',
   ],
   'contact_messages_show' => [
+    'consent_record' => 'Consent record',
+    'consent_accepted_at_label' => 'Accepted at:',
+    'consent_notice_label' => 'Notice at submission:',
+    'consent_not_recorded' => 'Not recorded',
     'title' => 'Contact message: :name',
     'reply_by_email' => 'Reply by email',
     'reply_subject' => 'Re: :subject',
@@ -4211,7 +4215,7 @@ return [
       'consent_section_label' => 'Consent',
       'consent_required' => 'Require a consent checkbox',
       'consent_label' => 'Consent notice',
-      'consent_help' => 'The wording is what the visitor agrees to, so it is translated per language. The submission stores the agreement time and a copy of this wording. Leave it empty to hide the checkbox.',
+      'consent_help' => 'The wording is translated per language. Each accepted submission stores the agreement time and a copy of this wording. When consent is required, missing or blank wording prevents submission.',
     ],
     'header_actions' => [
       'system_title' => 'System Header Actions',

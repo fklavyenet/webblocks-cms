@@ -3231,6 +3231,10 @@ $translations = [
     'all_ratings' => 'Toutes les évaluations',
   ],
   'contact_messages_show' => [
+    'consent_record' => 'Preuve de consentement',
+    'consent_accepted_at_label' => 'Accepté le :',
+    'consent_notice_label' => 'Texte au moment de l’envoi :',
+    'consent_not_recorded' => 'Non enregistré',
     'title' => 'Message de contact : :name',
     'reply_by_email' => 'Répondre par e-mail',
     'reply_subject' => 'Re: :subject',
@@ -3968,7 +3972,7 @@ $translations = [
       'consent_section_label' => 'Consentement',
       'consent_required' => 'Exiger une case de consentement',
       'consent_label' => 'Avis de consentement',
-      'consent_help' => 'Le texte est ce que la personne visitant le site accepte, il est donc traduit par langue. L\'envoi enregistre l\'heure de l\'accord et une copie de ce texte. Laissez vide pour masquer la case.',
+      'consent_help' => 'Le texte est traduit pour chaque langue. Chaque envoi accepté conserve la date du consentement et une copie du texte. Si le consentement est obligatoire, un texte vide ou manquant empêche l’envoi.',
     ],
     'header_actions' => [
       'system_title' => 'Actions d\'en-tête système',

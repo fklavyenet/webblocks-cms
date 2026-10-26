@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use DOMDocument;
 use DOMXPath;
 use Illuminate\Support\ViewErrorBag;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
@@ -86,6 +87,50 @@ class ContactMessageDetailTest extends TestCase
   }
 
   #[Test]
+  public function consent_details_show_the_recorded_timestamp_and_original_text_as_escaped_plain_text(): void
+  {
+    $message = $this->message();
+    $message->consent_accepted_at = '2026-10-26 08:15:30';
+    $message->consent_label = "Original notice.\n<script>alert(1)</script>";
+    $html = $this->render($message);
+    $dom = $this->dom($html);
+    $rows = $dom->query('//details//section[@aria-labelledby="contact-consent-heading"]//tbody/tr');
+
+    $this->assertSame(2, $rows->length);
+    $this->assertSame('2026-10-26 08:15:30', $dom->query('./td', $rows->item(0))->item(0)->textContent);
+    $this->assertSame($message->consent_label, $dom->query('./td', $rows->item(1))->item(0)->textContent);
+    $this->assertStringContainsString(e($message->consent_label), $html);
+    $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
+    $this->assertSame(0, $dom->query('//details[@open]')->length);
+  }
+
+  #[Test]
+  #[DataProvider('incompleteConsentRecords')]
+  public function missing_consent_values_are_explicit_without_inventing_historical_acceptance(?string $acceptedAt, ?string $notice): void
+  {
+    $message = $this->message();
+    $message->consent_accepted_at = $acceptedAt;
+    $message->consent_label = $notice;
+    $original = $message->getAttributes();
+    $dom = $this->dom($this->render($message));
+    $cells = $dom->query('//section[@aria-labelledby="contact-consent-heading"]//tbody/tr/td');
+    $missing = app(CmsTranslator::class)->admin('contact_messages_show.consent_not_recorded', 'en');
+
+    $this->assertSame($acceptedAt ?? $missing, $cells->item(0)->textContent);
+    $this->assertSame(filled($notice) ? $notice : $missing, $cells->item(1)->textContent);
+    $this->assertSame($original, $message->getAttributes());
+  }
+
+  public static function incompleteConsentRecords(): iterable
+  {
+    yield 'legacy' => [null, null];
+    yield 'empty notice' => [null, ''];
+    yield 'whitespace notice' => [null, '  '];
+    yield 'timestamp only' => ['2026-10-26 08:15:30', null];
+    yield 'notice only' => [null, 'Historical wording.'];
+  }
+
+  #[Test]
   public function the_detail_actions_and_empty_subject_are_localized_in_every_admin_locale(): void
   {
     $message = $this->message();
@@ -93,7 +138,7 @@ class ContactMessageDetailTest extends TestCase
     foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
       $this->app['config']->set('app.locale', $locale);
       $html = $this->render($message);
-      foreach (['title', 'empty_value', 'visitor_message', 'reply_by_email', 'mark_replied', 'mark_archived', 'more_actions'] as $key) {
+      foreach (['title', 'empty_value', 'visitor_message', 'reply_by_email', 'mark_replied', 'mark_archived', 'more_actions', 'consent_record', 'consent_accepted_at_label', 'consent_notice_label', 'consent_not_recorded'] as $key) {
         $this->assertTrue(app('translator')->hasForLocale('webblocks-cms::admin.contact_messages_show.'.$key, $locale));
         $this->assertStringContainsString(e(app(CmsTranslator::class)->admin('contact_messages_show.'.$key, $locale, ['name' => $message->name])), $html);
       }

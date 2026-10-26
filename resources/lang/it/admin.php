@@ -3230,6 +3230,10 @@ $translations = [
     'all_ratings' => 'Tutte le valutazioni',
   ],
   'contact_messages_show' => [
+    'consent_record' => 'Registrazione del consenso',
+    'consent_accepted_at_label' => 'Accettato il:',
+    'consent_notice_label' => 'Testo al momento dell’invio:',
+    'consent_not_recorded' => 'Non registrato',
     'title' => 'Messaggio di contatto: :name',
     'reply_by_email' => 'Rispondi via email',
     'reply_subject' => 'Re: :subject',
@@ -3967,7 +3971,7 @@ $translations = [
       'consent_section_label' => 'Consenso',
       'consent_required' => 'Richiedere una casella di consenso',
       'consent_label' => 'Informativa sul consenso',
-      'consent_help' => 'Il testo e\' cio\' che la persona in visita accetta, quindi viene tradotto per lingua. L\'invio memorizza l\'ora dell\'accettazione e una copia di questo testo. Lascialo vuoto per nascondere la casella.',
+      'consent_help' => 'Il testo viene tradotto per ogni lingua. Ogni invio accettato conserva la data del consenso e una copia del testo. Se il consenso è obbligatorio, un testo vuoto o mancante impedisce l’invio.',
     ],
     'header_actions' => [
       'system_title' => 'Azioni di intestazione di sistema',

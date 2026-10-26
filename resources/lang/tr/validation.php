@@ -12,6 +12,7 @@ return [
     'email_required' => 'E-posta adresinizi girin.',
     'email_valid' => 'Gecerli bir e-posta adresi girin.',
     'consent_required' => 'Devam etmek için veri işleme bildirimini onaylayın.',
+    'consent_unavailable' => 'Zorunlu onay metni eksik olduğu için bu form geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.',
     'message_required' => 'Bir mesaj girin.',
   ],
   'comments' => [

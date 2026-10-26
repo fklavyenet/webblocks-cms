@@ -12,6 +12,7 @@ return [
     'email_required' => 'Saisissez votre adresse e-mail.',
     'email_valid' => 'Saisissez une adresse e-mail valide.',
     'consent_required' => 'Confirmez l\'avis de traitement des données pour continuer.',
+    'consent_unavailable' => 'Ce formulaire est temporairement indisponible car le texte de consentement obligatoire est manquant. Veuillez réessayer plus tard.',
     'message_required' => 'Saisissez un message.',
   ],
   'comments' => [

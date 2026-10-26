@@ -3246,6 +3246,10 @@ $translations = [
     'all_ratings' => 'Tüm puanlar',
   ],
   'contact_messages_show' => [
+    'consent_record' => 'Onay kaydı',
+    'consent_accepted_at_label' => 'Onay zamanı:',
+    'consent_notice_label' => 'Gönderim anındaki metin:',
+    'consent_not_recorded' => 'Kaydedilmemiş',
     'title' => 'İletişim mesajı: :name',
     'reply_by_email' => 'E-postayla yanıtla',
     'reply_subject' => 'Ynt: :subject',
@@ -3983,7 +3987,7 @@ $translations = [
       'consent_section_label' => 'Onay',
       'consent_required' => 'Onay kutusu zorunlu olsun',
       'consent_label' => 'Onay metni',
-      'consent_help' => 'Metin, ziyaretcinin onayladigi seydir; bu yuzden dile gore cevrilir. Gonderi, onay zamanini ve bu metnin bir kopyasini saklar. Kutuyu gizlemek icin bos birakin.',
+      'consent_help' => 'Metin her dil için ayrı çevrilir. Onaylanan her gönderi, onay zamanını ve bu metnin bir kopyasını saklar. Onay zorunluysa eksik veya boş metin gönderimi engeller.',
     ],
     'header_actions' => [
       'system_title' => 'Sistem Header Aksiyonları',

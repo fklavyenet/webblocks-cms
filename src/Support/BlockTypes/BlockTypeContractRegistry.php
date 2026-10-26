@@ -786,7 +786,7 @@ class BlockTypeContractRegistry
           'Translated visible copy lives in block_contact_form_translations rows.',
           'Shared recipient and notification settings stay in block settings.',
           'Public submissions are stored as contact_messages rows before notification delivery is attempted.',
-          'The consent checkbox renders only when settings.consent_required is true and the resolved locale has a consent_label; an accepted submission records consent_accepted_at plus a copy of the wording so the agreement stays provable after the block copy is edited.',
+          'When settings.consent_required is true, the resolved locale must have a nonblank consent_label. Missing wording disables the public submit button and all submissions are rejected before storage or notification, even with a forged acceptance. An accepted submission records consent_accepted_at plus a copy of the wording, displayed in message Technical details independently of later block edits.',
         ],
         'media_relationship_fields' => ['Not applicable.'],
         'child_container_behavior' => ['Not a container in the current contract.'],

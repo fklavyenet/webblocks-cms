@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use Illuminate\Http\Request;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\Validation\ValidationException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRenderController;
 use WebBlocks\Cms\Http\Controllers\Public\ContactMessageController;
@@ -17,6 +18,9 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Contact\ContactFormCheck;
+use WebBlocks\Cms\Support\Contact\ContactMessageNotifier;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -50,13 +54,14 @@ class ContactFormConsentTest extends TestCase
   }
 
   #[Test]
-  public function a_required_consent_with_no_wording_renders_no_checkbox(): void
+  public function a_required_consent_with_no_wording_disables_submission_and_explains_why(): void
   {
-    // A required checkbox with no label would be a consent record with nothing
-    // recorded against it, so the missing wording disables the field entirely.
     $block = $this->seedForm(consentRequired: true, consentLabel: null);
+    $html = $this->renderPage($block);
 
-    $this->assertStringNotContainsString('name="consent"', $this->renderPage($block));
+    $this->assertStringNotContainsString('name="consent"', $html);
+    $this->assertMatchesRegularExpression('/<button[^>]*type="submit"[^>]*disabled/', $html);
+    $this->assertStringContainsString(e(app(CmsTranslator::class)->get('validation.contact_form.consent_unavailable', 'en')), $html);
   }
 
   #[Test]
@@ -64,7 +69,75 @@ class ContactFormConsentTest extends TestCase
   {
     $block = $this->seedForm(consentRequired: false, consentLabel: 'Unused wording.');
 
-    $this->assertStringNotContainsString('name="consent"', $this->renderPage($block));
+    $html = $this->renderPage($block);
+    $this->assertStringNotContainsString('name="consent"', $html);
+    $this->assertDoesNotMatchRegularExpression('/<button[^>]*type="submit"[^>]*disabled/', $html);
+  }
+
+  #[Test]
+  #[DataProvider('missingNotices')]
+  public function required_consent_with_missing_wording_refuses_even_forged_acceptance_without_storage_or_notification(?string $notice, ?string $consent): void
+  {
+    $block = $this->seedForm(consentRequired: true, consentLabel: $notice);
+    $block->settings = [...$block->decodedSettings(), 'send_email_notification' => true];
+    $block->save();
+    $this->mock(ContactMessageNotifier::class, fn ($mock) => $mock->shouldNotReceive('send'));
+
+    try {
+      $this->submit($block, consent: $consent);
+      $this->fail('Missing required wording must prevent submission, regardless of the checkbox value.');
+    } catch (ValidationException $exception) {
+      $this->assertSame([
+        'consent' => [app(CmsTranslator::class)->get('validation.contact_form.consent_unavailable', 'en')],
+      ], $exception->errors());
+    }
+
+    $this->assertSame(0, ContactMessage::query()->count());
+  }
+
+  public static function missingNotices(): iterable
+  {
+    foreach (['missing' => null, 'empty' => '', 'whitespace' => " \n\t "] as $name => $notice) {
+      foreach (['omitted' => null, 'unchecked' => '0', 'forged' => '1'] as $state => $consent) {
+        yield $name.' '.$state => [$notice, $consent];
+      }
+    }
+  }
+
+  #[Test]
+  public function a_blank_translated_notice_does_not_silently_disable_the_shared_requirement(): void
+  {
+    $block = $this->seedForm(consentRequired: true, consentLabel: 'English notice.');
+    $locale = Locale::create(['code' => 'de', 'name' => 'Deutsch', 'is_default' => false, 'is_enabled' => true]);
+    $block->page->site->locales()->attach($locale, ['is_enabled' => true]);
+    $block->page->translations()->create(['locale_id' => $locale->id, 'name' => 'Kontakt', 'slug' => 'kontakt', 'path' => '/kontakt']);
+    $block->contactFormTranslations()->create(['locale_id' => $locale->id, 'title' => 'Kontakt', 'consent_label' => '  ']);
+    $noticeError = app(CmsTranslator::class)->get('validation.contact_form.consent_unavailable', 'de');
+    $html = $this->renderPage($block, 'de');
+    $this->assertStringContainsString(e($noticeError), $html);
+    $this->assertMatchesRegularExpression('/<button[^>]*type="submit"[^>]*disabled/', $html);
+
+    try {
+      $this->submit($block, consent: '1', sourceUrl: '/de/kontakt');
+      $this->fail('The English notice must not replace a blank notice in an existing German translation.');
+    } catch (ValidationException $exception) {
+      $this->assertSame(['consent' => [$noticeError]], $exception->errors());
+    }
+    $this->assertSame(0, ContactMessage::query()->count());
+
+    $block->contactFormTranslations()->where('locale_id', $locale->id)->update(['consent_label' => 'Ich stimme zu.']);
+    $this->assertDoesNotMatchRegularExpression('/<button[^>]*type="submit"[^>]*disabled/', $this->renderPage($block, 'de'));
+    $this->submit($block, consent: '1', sourceUrl: '/de/kontakt');
+    $this->assertSame('Ich stimme zu.', ContactMessage::query()->sole()->consent_label);
+    $this->assertNotNull(ContactMessage::query()->sole()->consent_accepted_at);
+  }
+
+  #[Test]
+  public function unavailable_notice_feedback_is_translated_in_every_supported_locale(): void
+  {
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $this->assertTrue(app('translator')->hasForLocale('webblocks-cms::validation.contact_form.consent_unavailable', $locale));
+    }
   }
 
   #[Test]
@@ -129,7 +202,7 @@ class ContactFormConsentTest extends TestCase
     $this->assertSame(50, $message->spam_score);
   }
 
-  private function submit(Block $block, ?string $consent, string $message = 'Hello there.'): void
+  private function submit(Block $block, ?string $consent, string $message = 'Hello there.', string $sourceUrl = '/about'): void
   {
     config()->set('contact.minimum_submit_seconds', 0);
     $check = app(ContactFormCheck::class);
@@ -140,7 +213,7 @@ class ContactFormConsentTest extends TestCase
       'name' => 'Visitor',
       'email' => 'visitor@example.com',
       'message' => $message,
-      'source_url' => '/about',
+      'source_url' => $sourceUrl,
       '_form_stamp' => $check->issueStamp($block),
       '_form_check_name' => $check->signedFieldName($block),
       $checkField => '',
@@ -157,7 +230,7 @@ class ContactFormConsentTest extends TestCase
     $this->app->make(ContactMessageController::class)->store($request);
   }
 
-  private function renderPage(Block $block): string
+  private function renderPage(Block $block, string $locale = 'en'): string
   {
     $page = $block->page;
 
@@ -165,7 +238,7 @@ class ContactFormConsentTest extends TestCase
     // shares from the session; the render endpoint runs outside it.
     view()->share('errors', new ViewErrorBag);
 
-    $request = Request::create('/webadmin/api/pages/'.$page->id.'/render', 'GET', ['format' => 'html']);
+    $request = Request::create('/webadmin/api/pages/'.$page->id.'/render', 'GET', ['format' => 'html', 'locale' => $locale]);
 
     return (string) $this->app->make(InternalPageRenderController::class)->show($request, $page)->getContent();
   }

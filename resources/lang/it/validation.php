@@ -12,6 +12,7 @@ return [
     'email_required' => 'Inserisci il tuo indirizzo email.',
     'email_valid' => 'Inserisci un indirizzo email valido.',
     'consent_required' => 'Conferma l\'informativa sul trattamento dei dati per continuare.',
+    'consent_unavailable' => 'Questo modulo è temporaneamente non disponibile perché manca il testo del consenso obbligatorio. Riprova più tardi.',
     'message_required' => 'Inserisci un messaggio.',
   ],
   'comments' => [

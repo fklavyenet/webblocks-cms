@@ -249,8 +249,8 @@ class BlockTranslationWriter
         'content' => array_key_exists('content', $data) ? $data['content'] : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, 'content', $block->getRawOriginal('content')),
         'submit_label' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'submit_label', 'Send message'),
         'success_message' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'success_message', config('contact.success_message')),
-        // Empty stays null: a blank consent label is how a form opts out of the
-        // checkbox, so it must not fall back to any default wording.
+        // Empty stays null. With required consent, clearing this locale's
+        // notice prevents submission until wording is restored.
         'consent_label' => $this->resolvedContactTranslationValue($data, $block, $localeId, 'consent_label', '') ?: null,
       ],
     };

@@ -12,6 +12,7 @@ return [
     'email_required' => 'Enter your email address.',
     'email_valid' => 'Enter a valid email address.',
     'consent_required' => 'Confirm the data-processing notice to continue.',
+    'consent_unavailable' => 'This form is temporarily unavailable because its required consent notice is missing. Please try again later.',
     'message_required' => 'Enter a message.',
   ],
   'comments' => [

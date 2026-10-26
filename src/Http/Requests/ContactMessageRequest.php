@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Contact\ContactFormCheck;
@@ -49,8 +50,19 @@ class ContactMessageRequest extends FormRequest
       'email.required' => $this->validationText('contact_form.email_required'),
       'email.email' => $this->validationText('contact_form.email_valid'),
       'message.required' => $this->validationText('contact_form.message_required'),
-      'consent.accepted' => $this->validationText('contact_form.consent_required'),
+      'consent.accepted' => $this->validationText($this->consentNoticeIsMissing() ? 'contact_form.consent_unavailable' : 'contact_form.consent_required'),
     ];
+  }
+
+  public function after(): array
+  {
+    return [function (Validator $validator): void {
+      // A forged checkbox value cannot stand in for notice wording that the
+      // visitor was never shown. Reject before storage or notification.
+      if ($this->consentNoticeIsMissing() && ! $validator->errors()->has('consent')) {
+        $validator->errors()->add('consent', $this->validationText('contact_form.consent_unavailable'));
+      }
+    }];
   }
 
   public function payload(): array
@@ -83,8 +95,13 @@ class ContactMessageRequest extends FormRequest
       return false;
     }
 
-    return (bool) $block->setting('consent_required', false)
-      && trim((string) ($block->consent_label ?? '')) !== '';
+    return (bool) $block->setting('consent_required', false);
+  }
+
+  private function consentNoticeIsMissing(): bool
+  {
+    return $this->blockRequiresConsent()
+      && trim((string) ($this->consentBlock()?->consent_label ?? '')) === '';
   }
 
   private function consentBlock(): ?Block
