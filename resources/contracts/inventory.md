@@ -1086,6 +1086,13 @@ Validation is required even when no migration is pending. A failed or timed-out 
 leaves the current package active; subprocess diagnostics are not exposed in responses.
 The default startup timeout is 30 seconds (`webblocks-plugins.install.boot_timeout_seconds`).
 
+Enabled CMS-managed Laravel service providers are registered and booted once per
+application after the host boot completes, including when routes are cached.
+Provider bindings, notification channels and view composers therefore participate
+in normal HTTP and console requests. Disabled, incompatible and recovery-suppressed
+plugins do not start. Catchable provider startup failures quarantine the plugin
+without exposing its diagnostics.
+
 Successful updates retain the previous package and record whether migrations ran.
 Database setup failures leave the plugin disabled and preserve its tables and packages.
 Runtime source/route failures quarantine the plugin; an explicit disable overrides

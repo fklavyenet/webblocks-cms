@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.106.2
+
+- Start enabled installed-plugin Laravel service providers after host boot, including route-cached HTTP and console hosts. Restore plugin notification channels, view composers and container bindings without manual provider registration.
+- Keep inactive, incompatible and recovery-suppressed providers unloaded; quarantine catchable startup failures and preserve startup diagnostics privately.
+
 ## 1.106.1
 
 - Implement CMS TOTP with PHP's built-in cryptographic functions, using the six-digit HMAC-SHA-1 profile, a 30-second step and replay prevention. Verify against RFC 4226 and RFC 6238 reference vectors.
