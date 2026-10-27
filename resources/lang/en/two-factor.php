@@ -1,7 +1,6 @@
 <?php
 
 return [
-  'dependencies' => 'Install the declared CMS Composer dependencies and enable PHP XMLWriter before using two-factor setup or enforcement. The package-only updater does not refresh the host dependency lock.',
   'replace' => 'Replace authenticator',
   'replace_help' => 'Confirm your password and an existing authenticator or recovery code. Your current authenticator remains active until you verify the new one. Completing replacement invalidates old recovery codes and requires other sessions to verify again.',
   'title' => 'Two-factor authentication',
@@ -20,8 +19,7 @@ return [
   'save_codes' => 'Save your recovery codes',
   'save_codes_help' => 'These codes are shown only now. Store them somewhere safe before leaving this page. Each code works once if you lose access to your authenticator app.',
   'setup' => 'Set up your authenticator',
-  'scan_help' => 'Scan this QR code with your authenticator app, or enter the setup key manually. Enter the generated code below to complete setup. Setup expires after ten minutes.',
-  'qr_alt' => 'QR code for adding this CMS account to an authenticator app',
+  'setup_help' => 'In your authenticator app, add an account manually, choose time-based (TOTP), and enter this setup key. Enter the six-digit code below to complete setup. Setup expires after ten minutes.',
   'manual_key' => 'Setup key',
   'enable' => 'Enable two-factor authentication',
   'start_help' => 'Confirm your current password to generate a private setup key.',

@@ -54,7 +54,6 @@ class SystemSettingsController extends Controller
         'cms_mail_password_configured' => $this->systemSettings->cmsMailPasswordConfigured(),
       ],
       'mailDiagnostics' => $this->mailSettingsResolver->diagnostics(),
-      'twoFactorDependenciesReady' => app(TwoFactorAuthentication::class)->dependenciesReady(),
       'twoFactorAvailable' => app(TwoFactorAuthentication::class)->available(),
       'twoFactorPolicy' => app(TwoFactorAuthentication::class)->available() ? app(TwoFactorAuthentication::class)->policy() : [],
       'twoFactorRoles' => app(TwoFactorAuthentication::class)->available() ? CmsRole::query()->orderBy('name')->get() : collect(),

@@ -1,7 +1,6 @@
 <?php
 
 return [
-  'dependencies' => 'Instala las dependencias Composer declaradas del CMS y activa PHP XMLWriter antes de configurar o exigir la función. El actualizador del paquete no renueva el bloqueo de dependencias de la aplicación anfitriona.',
   'replace' => 'Cambiar el autenticador',
   'replace_help' => 'Confirma tu contraseña y un código existente de la aplicación o de recuperación. El autenticador actual sigue activo hasta confirmar el nuevo. Después se invalidan los códigos de recuperación anteriores y las demás sesiones deben verificarse de nuevo.',
   'title' => 'Autenticación de dos factores',
@@ -20,8 +19,7 @@ return [
   'save_codes' => 'Guarda tus códigos de recuperación',
   'save_codes_help' => 'Estos códigos solo se muestran ahora. Guárdalos en un lugar seguro antes de salir de esta página. Cada código sirve una vez si pierdes el acceso a la aplicación.',
   'setup' => 'Configura tu autenticador',
-  'scan_help' => 'Escanea este código QR con tu aplicación o introduce la clave manualmente. Introduce el código generado para terminar. La configuración caduca a los diez minutos.',
-  'qr_alt' => 'Código QR para añadir esta cuenta del CMS a una aplicación de autenticación',
+  'setup_help' => 'Añade una cuenta manualmente en tu aplicación, elige la opción basada en el tiempo (TOTP) e introduce esta clave. Introduce el código de seis dígitos para terminar. La configuración caduca a los diez minutos.',
   'manual_key' => 'Clave de configuración',
   'enable' => 'Activar la autenticación de dos factores',
   'start_help' => 'Confirma tu contraseña actual para generar una clave de configuración privada.',

@@ -6,7 +6,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use PragmaRX\Google2FA\Google2FA;
+use WebBlocks\Cms\Support\Auth\Totp;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
 
 final class ManageTwoFactor
@@ -19,7 +19,7 @@ final class ManageTwoFactor
       }
       $generation = (string) Str::uuid();
       DB::table('wbcms_two_factor_enrollments')->updateOrInsert(['user_id' => $user->getAuthIdentifier()], [
-        'secret' => Crypt::encryptString((new Google2FA)->generateSecretKey(32)),
+        'secret' => Crypt::encryptString((new Totp)->generateSecret()),
         'generation' => $generation, 'expires_at' => now()->addMinutes(10),
       ]);
 
@@ -111,13 +111,7 @@ final class ManageTwoFactor
 
   private function totpStep(#[\SensitiveParameter] string $encryptedSecret, #[\SensitiveParameter] string $code, int $lastStep): int|false
   {
-    if (! preg_match('/^\d{6}$/D', $code)) {
-      return false;
-    }
-
-    abort_unless(class_exists(Google2FA::class), 503, __('webblocks-cms::two-factor.dependencies'));
-
-    return (new Google2FA)->verifyKeyNewer(Crypt::decryptString($encryptedSecret), $code, $lastStep, 1, (int) floor(now()->timestamp / 30));
+    return (new Totp)->verify(Crypt::decryptString($encryptedSecret), $code, $lastStep, now()->timestamp);
   }
 
   private function replaceRecoveryCodes(Authenticatable $user): array

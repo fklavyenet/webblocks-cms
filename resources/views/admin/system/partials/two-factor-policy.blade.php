@@ -1,6 +1,3 @@
-@if (! $twoFactorDependenciesReady)
-    <div class="wb-alert wb-alert-warning" role="alert">{{ __('webblocks-cms::two-factor.dependencies') }}</div>
-@else
 <form method="POST" action="{{ route('webblocks.two-factor.policy') }}" class="wb-card wb-card-muted wb-mb-4">
     @csrf @method('PUT')
     <div class="wb-card-header"><h2 class="wb-card-title">{{ __('webblocks-cms::two-factor.policy') }}</h2></div>
@@ -18,4 +15,3 @@
     </div>
     <div class="wb-card-footer"><button class="wb-btn wb-btn-primary" type="submit">{{ __('webblocks-cms::two-factor.save_policy') }}</button></div>
 </form>
-@endif

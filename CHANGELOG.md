@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.106.1
+
+- Implement CMS TOTP with PHP's built-in cryptographic functions, using the six-digit HMAC-SHA-1 profile, a 30-second step and replay prevention. Verify against RFC 4226 and RFC 6238 reference vectors.
+- Remove QR setup, its UI and translations, the TOTP/QR Composer packages and the XMLWriter requirement. Set up an authenticator by entering the key manually and choosing time-based (TOTP). CMS 2FA no longer needs an additional Composer installation after a panel update.
+- Keep recovery codes, authenticator replacement, mandatory role policy and browser-session enforcement in the CMS with no external 2FA runtime.
+
 ## 1.106.0
 
 - Add CMS-only TOTP authentication, local QR setup, ten single-use recovery codes and safe authenticator replacement. Enforce verification for host logins, remembered sessions, page previews and plugin recovery, with account/IP throttling and replay prevention.

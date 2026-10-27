@@ -25,12 +25,9 @@
     "php": "^8.3",
     "ext-mbstring": "*",
     "ext-sodium": "*",
-    "ext-xmlwriter": "*",
     "ext-zip": "*",
-    "bacon/bacon-qr-code": "^3.0",
     "composer/semver": "^3.4",
-    "laravel/framework": "^12.55 || ^13.0",
-    "pragmarx/google2fa": "^9.0"
+    "laravel/framework": "^12.55 || ^13.0"
   },
   "require-dev": {
     "laravel/pint": "^1.29",

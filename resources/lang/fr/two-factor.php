@@ -1,7 +1,6 @@
 <?php
 
 return [
-  'dependencies' => 'Installez les dépendances Composer déclarées du CMS et activez PHP XMLWriter avant la configuration ou l’obligation. Le programme de mise à jour du paquet ne renouvelle pas le verrou des dépendances de l’hôte.',
   'replace' => 'Remplacer l’authentificateur',
   'replace_help' => 'Confirmez votre mot de passe et un code existant d’application ou de récupération. L’ancien authentificateur reste actif jusqu’à la confirmation du nouveau. Les anciens codes de récupération sont alors invalidés et les autres sessions doivent se vérifier à nouveau.',
   'title' => 'Authentification à deux facteurs',
@@ -20,8 +19,7 @@ return [
   'save_codes' => 'Conserver vos codes de récupération',
   'save_codes_help' => 'Ces codes ne sont affichés que maintenant. Conservez-les en lieu sûr avant de quitter cette page. Chaque code permet un seul accès si vous perdez votre application.',
   'setup' => 'Configurer votre authentificateur',
-  'scan_help' => 'Scannez ce QR code avec votre application ou saisissez la clé manuellement. Saisissez ensuite le code généré pour terminer. La configuration expire après dix minutes.',
-  'qr_alt' => 'QR code pour ajouter ce compte CMS à une application d’authentification',
+  'setup_help' => 'Dans votre application, ajoutez un compte manuellement, choisissez le mode basé sur le temps (TOTP) et saisissez cette clé. Saisissez ensuite le code à six chiffres pour terminer. La configuration expire après dix minutes.',
   'manual_key' => 'Clé de configuration',
   'enable' => 'Activer l’authentification à deux facteurs',
   'start_help' => 'Confirmez votre mot de passe actuel pour générer une clé de configuration privée.',

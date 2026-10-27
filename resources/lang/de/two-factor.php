@@ -1,7 +1,6 @@
 <?php
 
 return [
-  'dependencies' => 'Installieren Sie die deklarierten CMS-Composer-Abhängigkeiten und aktivieren Sie PHP XMLWriter vor Einrichtung oder Erzwingung. Der Paket-Updater aktualisiert die Abhängigkeitssperre der Host-Anwendung nicht.',
   'replace' => 'Authenticator ersetzen',
   'replace_help' => 'Bestätigen Sie Ihr Passwort und einen vorhandenen App- oder Wiederherstellungscode. Der bisherige Authenticator bleibt bis zur Bestätigung des neuen aktiv. Danach werden alte Wiederherstellungscodes ungültig und andere Sitzungen müssen sich erneut verifizieren.',
   'title' => 'Zwei-Faktor-Authentifizierung',
@@ -20,8 +19,7 @@ return [
   'save_codes' => 'Wiederherstellungscodes sichern',
   'save_codes_help' => 'Diese Codes werden nur jetzt angezeigt. Bewahren Sie sie sicher auf, bevor Sie diese Seite verlassen. Jeder Code kann bei Verlust der App einmal verwendet werden.',
   'setup' => 'Authenticator einrichten',
-  'scan_help' => 'Scannen Sie den QR-Code mit Ihrer Authenticator-App oder geben Sie den Einrichtungsschlüssel manuell ein. Bestätigen Sie anschließend den erzeugten Code. Die Einrichtung läuft nach zehn Minuten ab.',
-  'qr_alt' => 'QR-Code zum Hinzufügen dieses CMS-Kontos zu einer Authenticator-App',
+  'setup_help' => 'Fügen Sie in Ihrer Authenticator-App manuell ein Konto hinzu, wählen Sie zeitbasiert (TOTP) und geben Sie diesen Einrichtungsschlüssel ein. Bestätigen Sie anschließend den sechsstelligen Code. Die Einrichtung läuft nach zehn Minuten ab.',
   'manual_key' => 'Einrichtungsschlüssel',
   'enable' => 'Zwei-Faktor-Authentifizierung aktivieren',
   'start_help' => 'Bestätigen Sie Ihr aktuelles Passwort, um einen privaten Einrichtungsschlüssel zu erzeugen.',

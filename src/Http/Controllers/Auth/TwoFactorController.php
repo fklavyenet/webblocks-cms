@@ -2,10 +2,6 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Auth;
 
-use BaconQrCode\Renderer\Image\SvgImageBackEnd;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Writer;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use PragmaRX\Google2FA\Google2FA;
 use WebBlocks\Cms\Actions\Auth\ManageTwoFactor;
 use WebBlocks\Cms\Actions\Auth\UpdateTwoFactorPolicy;
 use WebBlocks\Cms\Http\Requests\Auth\TwoFactorRequest;
@@ -85,7 +80,6 @@ final class TwoFactorController extends Controller
 
   public function start(TwoFactorRequest $request): RedirectResponse
   {
-    abort_unless($this->auth->dependenciesReady(), 503, __('webblocks-cms::two-factor.dependencies'));
     $generation = $this->manage->start($request->user('web'), $request->validated('code') ?? '', $request->validated('recovery_code') ?? '');
     if ($generation === null) {
       return $this->invalid('webblocks.two-factor.show', ['tab' => 'replace']);
@@ -101,7 +95,6 @@ final class TwoFactorController extends Controller
 
   public function confirm(TwoFactorRequest $request): View|RedirectResponse
   {
-    abort_unless($this->auth->dependenciesReady(), 503, __('webblocks-cms::two-factor.dependencies'));
     $codes = $this->manage->confirm($request->user('web'), (string) $request->session()->get(TwoFactorSession::SETUP, ''), $request->validated('code'));
     if ($codes === null) {
       return $this->invalid();
@@ -142,9 +135,6 @@ final class TwoFactorController extends Controller
     if ($credential = $this->auth->credential($request->user('web'))) {
       $this->sessions->mark($request, $request->user('web'), $credential);
     }
-    if ($request->boolean('require_super_admin') || $request->validated('role_ids', []) !== []) {
-      abort_unless($this->auth->dependenciesReady(), 503, __('webblocks-cms::two-factor.dependencies'));
-    }
     $update->handle($request->user('web'), $request->validated());
 
     return to_route('admin.system.settings.edit', ['tab' => 'security'])->with('status', __('webblocks-cms::two-factor.policy_saved'));
@@ -179,19 +169,13 @@ final class TwoFactorController extends Controller
     $user = $request->user('web');
     $credential = $this->auth->credential($user);
     $enrollment = $this->auth->enrollment($user);
-    $setup = $this->auth->dependenciesReady() && $enrollment && strtotime($enrollment->expires_at) > now()->timestamp
+    $setup = $enrollment && strtotime($enrollment->expires_at) > now()->timestamp
       && hash_equals($enrollment->generation, (string) $request->session()->get(TwoFactorSession::SETUP, ''));
     $secret = $setup ? Crypt::decryptString($enrollment->secret) : null;
-    $qr = null;
-    if ($secret !== null) {
-      $uri = (new Google2FA)->getQRCodeUrl('WebBlocks CMS', (string) $user->email, $secret);
-      $qr = 'data:image/svg+xml;base64,'.base64_encode((new Writer(new ImageRenderer(new RendererStyle(240), new SvgImageBackEnd)))->writeString($uri));
-    }
 
     return view('webblocks-cms::auth.two-factor', [
-      'dependenciesReady' => $this->auth->dependenciesReady(),
       'enabled' => $credential?->confirmed_at !== null, 'required' => $this->auth->required($user),
-      'secret' => $secret, 'qr' => $qr, 'recoveryCodes' => $codes,
+      'secret' => $secret, 'recoveryCodes' => $codes,
       'recoveryCount' => DB::table('wbcms_two_factor_recovery_codes')->where('user_id', $user->getAuthIdentifier())->count(),
     ]);
   }

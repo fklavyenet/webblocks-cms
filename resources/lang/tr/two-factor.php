@@ -1,7 +1,6 @@
 <?php
 
 return [
-  'dependencies' => 'İki faktörlü doğrulama kurulumu veya zorunluluk ayarından önce CMS Composer bağımlılıklarını yükleyin ve PHP XMLWriter uzantısını etkinleştirin. Paket güncelleyicisi host bağımlılık kilidini yenilemez.',
   'replace' => 'Doğrulama uygulamasını değiştir',
   'replace_help' => 'Şifrenizi ve mevcut bir uygulama veya kurtarma kodunu doğrulayın. Yeni uygulamayı doğrulayana kadar mevcut uygulamanız etkin kalır. Değişim tamamlanınca eski kurtarma kodları geçersiz olur ve diğer oturumlar tekrar doğrulama yapar.',
   'title' => 'İki faktörlü doğrulama',
@@ -20,8 +19,7 @@ return [
   'save_codes' => 'Kurtarma kodlarınızı saklayın',
   'save_codes_help' => 'Bu kodlar yalnızca şimdi gösterilir. Sayfadan ayrılmadan önce güvenli bir yerde saklayın. Uygulamanıza erişimi kaybederseniz her kodu bir kez kullanabilirsiniz.',
   'setup' => 'Doğrulama uygulamanızı kurun',
-  'scan_help' => 'QR kodunu doğrulama uygulamanızla tarayın veya kurulum anahtarını elle girin. Kurulumu tamamlamak için üretilen kodu aşağıya yazın. Kurulum on dakika sonra sona erer.',
-  'qr_alt' => 'Bu CMS hesabını doğrulama uygulamasına eklemek için QR kodu',
+  'setup_help' => 'Doğrulama uygulamanızda elle hesap ekleyin, zamana dayalı (TOTP) seçeneğini seçin ve bu kurulum anahtarını girin. Kurulumu tamamlamak için altı haneli kodu aşağıya yazın. Kurulum on dakika sonra sona erer.',
   'manual_key' => 'Kurulum anahtarı',
   'enable' => 'İki faktörlü doğrulamayı etkinleştir',
   'start_help' => 'Özel bir kurulum anahtarı üretmek için mevcut şifrenizi doğrulayın.',

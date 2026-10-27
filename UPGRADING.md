@@ -1,10 +1,10 @@
 # Upgrading and Installation Topologies
 
-## 1.106.0: CMS two-factor authentication
+## 1.106.1: CMS two-factor authentication
 
-Install the declared Composer dependencies and run the latest fresh/update migrations before enabling 2FA. TOTP uses `pragmarx/google2fa`; QR codes are generated locally with `bacon/bacon-qr-code` and PHP XMLWriter. Composer-managed installs resolve these requirements when upgrading the CMS.
+CMS TOTP uses PHP's built-in cryptographic functions. There are no additional 2FA Composer packages or XMLWriter requirement, and no QR-code setup. In your authenticator app, add an account manually, choose time-based (TOTP), and enter the key shown by the CMS. The profile uses six digits, HMAC-SHA-1 and 30-second steps.
 
-The package-only panel updater preserves the host application's dependency lock and does not install newly required libraries. For those installs, the operator must refresh the host Composer dependencies separately before enabling this feature. Check the host's CMS version constraint and repository configuration, then update `fklavyenet/webblocks-cms` with its dependencies through the normal Composer workflow. Never run a broad dependency update as an automatic CMS post-install action.
+The normal package update and CMS migrations are sufficient. A panel update does not need a separate Composer dependency refresh for 2FA. Composer-managed installs can remove the previous optional libraries through their normal dependency update workflow; the CMS does not change the host dependency lock.
 
 The migration adds dedicated CMS credential, pending-enrollment, recovery-code and role-policy tables. It does not modify host passwords or enable enforcement by default. Back up the database and application encryption key together; losing the key makes encrypted authenticator secrets unusable. Restoring older database backups may also restore consumed recovery codes and previous factor settings, so reconcile security state before reopening access.
 

@@ -16,9 +16,6 @@
     @if (session('status'))
         <div class="wb-alert wb-alert-success" role="status">{{ session('status') }}</div>
     @endif
-    @if (! $dependenciesReady)
-        <div class="wb-alert wb-alert-warning" role="alert">{{ __('webblocks-cms::two-factor.dependencies') }}</div>
-    @endif
     @if ($required)
         <div class="wb-alert wb-alert-info">{{ __('webblocks-cms::two-factor.required_help') }}</div>
     @endif
@@ -31,14 +28,12 @@
             </div>
         </section>
     @endif
-    @if ($dependenciesReady)
     @if (! $enabled || $secret !== null)
         <section class="wb-card" aria-labelledby="setup-title">
             <div class="wb-card-header"><h2 class="wb-card-title" id="setup-title">{{ __('webblocks-cms::two-factor.setup') }}</h2></div>
             <div class="wb-card-body wb-stack-4">
                 @if ($secret !== null)
-                    <p>{{ __('webblocks-cms::two-factor.scan_help') }}</p>
-                    <div><img src="{{ $qr }}" width="240" height="240" alt="{{ __('webblocks-cms::two-factor.qr_alt') }}"></div>
+                    <p>{{ __('webblocks-cms::two-factor.setup_help') }}</p>
                     <p>{{ __('webblocks-cms::two-factor.manual_key') }}: <code>{{ $secret }}</code></p>
                     <form method="POST" action="{{ route('webblocks.two-factor.confirm') }}" class="wb-stack-4">
                         @csrf
@@ -99,7 +94,6 @@
                 @endif
             </div>
         </div>
-    @endif
     @endif
     <div class="wb-action-group">
         @if ($enabled || ! $required)<a class="wb-btn wb-btn-secondary" href="{{ route('admin.dashboard') }}">{{ __('webblocks-cms::two-factor.continue') }}</a>@endif

@@ -2,11 +2,9 @@
 
 namespace WebBlocks\Cms\Support\Auth;
 
-use BaconQrCode\Writer;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use PragmaRX\Google2FA\Google2FA;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 
 final class TwoFactorAuthentication
@@ -14,11 +12,6 @@ final class TwoFactorAuthentication
   public function available(): bool
   {
     return Schema::hasTable('wbcms_two_factor_credentials');
-  }
-
-  public function dependenciesReady(): bool
-  {
-    return class_exists(Google2FA::class) && class_exists(Writer::class) && extension_loaded('xmlwriter');
   }
 
   public function credential(Authenticatable $user): ?object

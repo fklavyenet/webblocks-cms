@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\Test;
-use PragmaRX\Google2FA\Google2FA;
 use WebBlocks\Cms\Actions\Auth\ManageTwoFactor;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Auth\Totp;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
@@ -56,7 +56,7 @@ class TwoFactorAuthenticationTest extends TestCase
   {
     $row = app(TwoFactorAuthentication::class)->enrollment($user) ?? app(TwoFactorAuthentication::class)->credential($user);
 
-    return (new Google2FA)->oathTotp(Crypt::decryptString($row->secret), (int) floor(now()->timestamp / 30));
+    return (new Totp)->code(Crypt::decryptString($row->secret), (int) floor(now()->timestamp / 30));
   }
 
   private function enroll(TwoFactorTestUser $user): array
@@ -84,7 +84,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $row = app(TwoFactorAuthentication::class)->enrollment($user) ?? app(TwoFactorAuthentication::class)->credential($user);
     $secret = Crypt::decryptString($row->secret);
     $this->assertNotSame($secret, $row->secret);
-    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertSee('data:image/svg+xml;base64', false)->assertSee($secret)
+    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee('data:image')->assertSee('time-based (TOTP)')->assertSee($secret)
       ->assertHeader('Cache-Control', 'no-store, private')->assertHeader('Referrer-Policy', 'no-referrer');
     $this->post(route('webblocks.two-factor.confirm'), ['code' => 'bad'])->assertSessionHasErrors('code')->assertSessionMissing('_old_input.code');
     $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertOk()->assertViewHas('recoveryCodes', fn ($codes) => count($codes) === 10);
@@ -265,7 +265,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->post(route('webblocks.two-factor.start'), ['current_password' => 'fixture-password'])->assertSessionHasErrors('code');
     $this->post(route('webblocks.two-factor.start'), ['current_password' => 'fixture-password', 'recovery_code' => $codes[0]])->assertSessionHasNoErrors();
     $this->assertSame($old->generation, app(TwoFactorAuthentication::class)->credential($user)->generation);
-    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertSee('data:image/svg+xml;base64', false);
+    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee('data:image')->assertSee('time-based (TOTP)');
     $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertOk();
     $this->assertNotSame($old->generation, app(TwoFactorAuthentication::class)->credential($user)->generation);
     $this->assertFalse(app(ManageTwoFactor::class)->verify($user, '', $codes[1]));
@@ -314,7 +314,6 @@ class TwoFactorAuthenticationTest extends TestCase
       $this->assertEqualsCanonicalizing($englishKeys, array_keys($catalog));
       $this->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee('webblocks-cms::two-factor.');
     }
-    $this->assertTrue(app(TwoFactorAuthentication::class)->dependenciesReady());
     $this->assertFalse(app(TwoFactorAuthentication::class)->policy()['require_super_admin']);
   }
 
