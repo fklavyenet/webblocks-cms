@@ -41,6 +41,7 @@ final class ManageTwoFactor
         'email' => $setup->email, 'generation' => $generation, 'confirmed_at' => now(),
       ]);
       DB::table('wbcms_two_factor_enrollments')->where('user_id', $user->getAuthIdentifier())->delete();
+      DB::table('wbcms_two_factor_account_states')->where('user_id', $user->getAuthIdentifier())->update(['enrollment_required' => false]);
 
       return $this->replaceRecoveryCodes($user);
     });

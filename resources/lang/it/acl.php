@@ -41,7 +41,7 @@ return [
   'unknown_actor' => 'Autore sconosciuto', 'no_context' => 'Nessun ruolo, utente o sito collegato',
   'roles_pagination' => 'Paginazione dei ruoli', 'history_pagination' => 'Paginazione della cronologia degli accessi',
   'edit_locked' => 'Il tuo ruolo non consente di modificare questa pagina nel suo stato attuale.',
-  'events' => ['user_activity_changed' => 'Stato account modificato', 'user_system_role_changed' => 'Ruolo di sistema modificato', 'role_saved' => 'Ruolo salvato', 'permission_granted' => 'Permesso concesso', 'permission_revoked' => 'Permesso rimosso', 'role_deleted' => 'Ruolo eliminato', 'assignment_changed' => 'Ruolo del sito modificato', 'user_access_saved' => 'Accesso utente salvato', 'user_deleted' => 'Utente eliminato'],
+  'events' => ['user_two_factor_reset' => 'Autenticazione a due fattori reimpostata', 'user_two_factor_recovered' => 'Autenticazione recuperata dal server', 'user_activity_changed' => 'Stato account modificato', 'user_system_role_changed' => 'Ruolo di sistema modificato', 'role_saved' => 'Ruolo salvato', 'permission_granted' => 'Permesso concesso', 'permission_revoked' => 'Permesso rimosso', 'role_deleted' => 'Ruolo eliminato', 'assignment_changed' => 'Ruolo del sito modificato', 'user_access_saved' => 'Accesso utente salvato', 'user_deleted' => 'Utente eliminato'],
   'site_roles' => 'Ruoli per sito',
   'title' => 'Ruoli e permessi', 'description' => 'Assegna un ruolo per ogni sito. Le modifiche interessano tutte le assegnazioni che usano quel ruolo.',
   'new' => 'Crea ruolo', 'copy' => 'Copia ruolo', 'edit' => 'Modifica', 'name' => 'Nome', 'details' => 'Descrizione',

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.106.4
+
+- Let enrolled Super admins reset another CMS account from Users after confirming their own password and a fresh verification or recovery code. Require a recovery reason and optionally replace an inaccessible profile email.
+- Add webblocks:two-factor:reset for server-authorized recovery, including the only Super admin. Support dry-run, interactive confirmation and deliberate non-interactive recovery with --force.
+- Revoke the target account's existing browser sessions and remembered sign-ins, remove old verification and recovery codes, and require fresh email verification setup even when its role policy is optional. Session invalidation is independent of file, database or Redis storage; existing sessions are rejected on their next web request.
+- Record panel and console recovery in the access audit history with actor, target, source, reason and time. Apply reset state and audit writes atomically; preserve passwords, roles, account activity and independent bearer-token authentication.
+
 ## 1.106.3
 
 - Use email verification codes through existing CMS outgoing-mail settings instead of TOTP, with no new dependency. Codes expire after five minutes, are single use, and have resend and attempt limits; recovery codes and mandatory-role policies remain available.

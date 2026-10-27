@@ -41,7 +41,7 @@ return [
   'unknown_actor' => 'Autor desconocido', 'no_context' => 'Sin rol, usuario o sitio vinculado',
   'roles_pagination' => 'Paginación de roles', 'history_pagination' => 'Paginación del historial de acceso',
   'edit_locked' => 'Tu rol no permite editar esta página en su estado actual.',
-  'events' => ['user_activity_changed' => 'Estado de la cuenta cambiado', 'user_system_role_changed' => 'Rol del sistema cambiado', 'role_saved' => 'Rol guardado', 'permission_granted' => 'Permiso concedido', 'permission_revoked' => 'Permiso retirado', 'role_deleted' => 'Rol eliminado', 'assignment_changed' => 'Rol del sitio cambiado', 'user_access_saved' => 'Acceso del usuario guardado', 'user_deleted' => 'Usuario eliminado'],
+  'events' => ['user_two_factor_reset' => 'Autenticación de dos factores restablecida', 'user_two_factor_recovered' => 'Autenticación recuperada desde el servidor', 'user_activity_changed' => 'Estado de la cuenta cambiado', 'user_system_role_changed' => 'Rol del sistema cambiado', 'role_saved' => 'Rol guardado', 'permission_granted' => 'Permiso concedido', 'permission_revoked' => 'Permiso retirado', 'role_deleted' => 'Rol eliminado', 'assignment_changed' => 'Rol del sitio cambiado', 'user_access_saved' => 'Acceso del usuario guardado', 'user_deleted' => 'Usuario eliminado'],
   'site_roles' => 'Roles por sitio',
   'title' => 'Roles y permisos', 'description' => 'Asigna un rol para cada sitio. Los cambios afectan a todas las asignaciones que usan ese rol.',
   'new' => 'Crear rol', 'copy' => 'Copiar rol', 'edit' => 'Editar', 'name' => 'Nombre', 'details' => 'Descripción',

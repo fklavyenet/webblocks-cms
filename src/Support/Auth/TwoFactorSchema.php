@@ -73,6 +73,19 @@ final class TwoFactorSchema
         $table->unique(['user_id', 'code_hash'], 'wbcms_two_factor_code_unique');
       });
     }
+    if (! Schema::hasTable('wbcms_two_factor_account_states')) {
+      Schema::create('wbcms_two_factor_account_states', function (Blueprint $table): void {
+        $table->foreignId('user_id')->primary()->constrained('users')->cascadeOnDelete();
+        $table->uuid('session_version');
+        $table->boolean('enrollment_required')->default(true);
+        $table->timestamp('reset_at');
+      });
+    }
+    foreach (['source' => 16, 'reason' => 500] as $column => $length) {
+      if (Schema::hasTable('wbcms_acl_events') && ! Schema::hasColumn('wbcms_acl_events', $column)) {
+        Schema::table('wbcms_acl_events', fn (Blueprint $table) => $table->string($column, $length)->nullable());
+      }
+    }
     if (! Schema::hasTable('wbcms_two_factor_policy')) {
       Schema::create('wbcms_two_factor_policy', function (Blueprint $table): void {
         $table->unsignedInteger('id')->primary();

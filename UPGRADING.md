@@ -1,5 +1,17 @@
 # Upgrading and Installation Topologies
 
+## 1.106.4: Account recovery and session revocation
+
+Run the normal package migrations. The update adds relational per-account recovery state and nullable audit source/reason fields. It does not reset accounts, change role policies or end existing sessions merely because the package was upgraded.
+
+An enrolled Super admin can reset another CMS account from Users after confirming their own password and a fresh email or recovery code. Verify the account owner's identity first and record a reason without secrets. A replacement profile email is optional and must be accessible to the owner; the owner must prove it during new verification setup. Self-reset is unavailable in the panel.
+
+Server operators can recover an account by ID or current profile email with `php artisan webblocks:two-factor:reset USER_ID --reason="Owner identity confirmed" --dry-run`. Remove `--dry-run` for interactive confirmation; use `--force` for deliberate non-interactive execution. Add `--email=recovery@example.test` when the profile mailbox is inaccessible. The same command works for the only Super admin and requires server access rather than a working CMS login. If plugin startup prevents normal console boot, the existing `WEBBLOCKS_PLUGIN_SAFE_MODE=1` environment switch remains available.
+
+A reset invalidates existing email and recovery codes, rotates remembered sign-ins and session authorization, and requires fresh setup regardless of role policy. Existing sessions are rejected on their next web request, including host web routes, across session storage backends. Previously rendered pages are not removed from the browser. The user's password, activity and roles remain unchanged. Bearer-token APIs keep their independent authentication. Panel and console recovery are recorded atomically in Users & access audit history; console records identify server-command authority without attributing a CMS actor. Keep reasons free of passwords, codes and other secrets.
+
+Do not remove recovery state to bypass enrollment. Rollback must preserve revocation and audit evidence; older binaries do not enforce the new session-version boundary, so restore the matching backup and reconcile sessions before downgrading.
+
 ## 1.106.3: Email verification and panel account management
 
 CMS sign-in now uses email codes through the existing CMS outgoing-mail settings. No authenticator app, new Composer dependency, queue worker or external QR service is required. Normal account management stays inside the CMS panel; incomplete sign-in, required enrollment and plugin recovery retain the restricted authentication screen.

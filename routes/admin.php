@@ -55,6 +55,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SystemPluginController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
+use WebBlocks\Cms\Http\Controllers\Admin\TwoFactorResetController;
 use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalAdminRenderController;
@@ -407,6 +408,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::get('access/inspect', [CmsRoleController::class, 'inspect'])->name('access.inspect');
       Route::resource('access/roles', CmsRoleController::class)->parameters(['roles' => 'cmsRole'])->names('access.roles')->except(['show']);
       Route::delete('users/bulk', [UserController::class, 'bulkDestroy'])->name('users.bulk-destroy')->middleware('can:manage-users');
+      Route::post('users/{user}/two-factor/reset', [TwoFactorResetController::class, 'store'])->name('users.two-factor.reset')->middleware(['can:manage-users', 'throttle:webblocks-two-factor']);
       Route::resource('users', UserController::class)->except(['show'])->middleware('can:manage-users');
       Route::get('sites/clone', [SiteController::class, 'cloneForm'])->name('sites.clone');
       Route::get('sites/{site}/clone', [SiteController::class, 'cloneForm'])->name('sites.clone.prefill');

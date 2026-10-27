@@ -29,6 +29,9 @@ final class TwoFactorAuthentication
     if (! $this->available()) {
       return false;
     }
+    if ((bool) app(TwoFactorAccountState::class)->state($user)?->enrollment_required) {
+      return true;
+    }
     if (app(CmsAuthorization::class)->isSuperAdmin($user)) {
       return (bool) DB::table('wbcms_two_factor_policy')->where('id', 1)->value('require_super_admin');
     }

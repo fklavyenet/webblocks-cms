@@ -198,6 +198,7 @@
             </div>
         </form>
     </div>
+    @include('webblocks-cms::admin.users.partials.two-factor-reset')
 @endsection
 
 @push('admin-scripts')

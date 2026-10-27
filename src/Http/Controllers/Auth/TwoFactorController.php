@@ -200,8 +200,15 @@ final class TwoFactorController extends Controller
       $email = $credential->email;
       $binding = $this->sessions->fingerprint($user, $credential);
     }
-    $status = app(EmailTwoFactorCodes::class)->send($request, $user, $purpose, $email, $binding);
     $tab = $request->validated('tab') ?? 'recovery';
+    if ($tab === 'user-reset') {
+      $target = Auth::guard('web')->getProvider()->retrieveById($request->validated('target_user_id'));
+      abort_unless(app(TwoFactorPolicy::class)->reset($user, $target), 403);
+    }
+    $status = app(EmailTwoFactorCodes::class)->send($request, $user, $purpose, $email, $binding);
+    if ($tab === 'user-reset') {
+      return $this->deliveryResult('admin.users.edit', $status, ['user' => $target->getAuthIdentifier()]);
+    }
 
     return $this->deliveryResult($tab === 'policy' ? 'admin.system.settings.edit' : 'webblocks.two-factor.show', $status,
       ['tab' => $tab === 'policy' ? 'security' : $tab]);

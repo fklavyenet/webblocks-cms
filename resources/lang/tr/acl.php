@@ -41,7 +41,7 @@ return [
   'unknown_actor' => 'Bilinmeyen kullanıcı', 'no_context' => 'Bağlı rol, kullanıcı veya site yok',
   'roles_pagination' => 'Rol sayfaları', 'history_pagination' => 'Erişim geçmişi sayfaları',
   'edit_locked' => 'Rolünüz bu sayfayı mevcut durumunda düzenlemeye izin vermiyor.',
-  'events' => ['user_activity_changed' => 'Hesap etkinliği değiştirildi', 'user_system_role_changed' => 'Sistem rolü değiştirildi', 'role_saved' => 'Rol kaydedildi', 'permission_granted' => 'İzin verildi', 'permission_revoked' => 'İzin kaldırıldı', 'role_deleted' => 'Rol silindi', 'assignment_changed' => 'Site rolü değiştirildi', 'user_access_saved' => 'Kullanıcı erişimi kaydedildi', 'user_deleted' => 'Kullanıcı silindi'],
+  'events' => ['user_two_factor_reset' => 'İki faktörlü doğrulama sıfırlandı', 'user_two_factor_recovered' => 'İki faktörlü doğrulama sunucudan kurtarıldı', 'user_activity_changed' => 'Hesap etkinliği değiştirildi', 'user_system_role_changed' => 'Sistem rolü değiştirildi', 'role_saved' => 'Rol kaydedildi', 'permission_granted' => 'İzin verildi', 'permission_revoked' => 'İzin kaldırıldı', 'role_deleted' => 'Rol silindi', 'assignment_changed' => 'Site rolü değiştirildi', 'user_access_saved' => 'Kullanıcı erişimi kaydedildi', 'user_deleted' => 'Kullanıcı silindi'],
   'site_roles' => 'Site bazlı roller',
   'title' => 'Roller ve izinler', 'description' => 'Her site için bir rol atayın. Değişiklikler, bu rolün kullanıldığı tüm atamaları etkiler.',
   'new' => 'Rol oluştur', 'copy' => 'Rolü kopyala', 'edit' => 'Düzenle', 'name' => 'Ad', 'details' => 'Açıklama',

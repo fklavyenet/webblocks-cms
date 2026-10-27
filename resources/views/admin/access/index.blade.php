@@ -152,7 +152,7 @@
                                 @php
                                     $eventTime = \Carbon\CarbonImmutable::parse($event->created_at)->format('Y-m-d H:i');
                                     $eventAction = __('webblocks-cms::acl.events.'.str_replace('.', '_', $event->action));
-                                    $eventActor = $event->actor_name ?? ($event->actor_id ? '#'.$event->actor_id : __('webblocks-cms::acl.unknown_actor'));
+                                    $eventActor = $event->actor_name ?? ($event->actor_id ? '#'.$event->actor_id : (($event->source ?? null) === 'console' ? __('webblocks-cms::two-factor.console_actor') : __('webblocks-cms::acl.unknown_actor')));
                                     $eventContext = collect([$event->role_name ?? ($event->action === 'role.deleted' ? $event->before_value : null), $event->user_name, $event->site_name])->filter()->implode(' · ');
                                 @endphp
                                 <tr>
@@ -162,7 +162,7 @@
                                         <span>{{ $eventAction }}</span>
                                         @if ($event->permission)<span class="wb-text-sm wb-text-muted">{{ $permissions[$event->permission]['label'] ?? $event->permission }}</span>@endif
                                     </div></td>
-                                    <td class="wb-text-sm">{{ $eventContext ?: __('webblocks-cms::acl.no_context') }}</td>
+                                    <td class="wb-text-sm">{{ $eventContext ?: __('webblocks-cms::acl.no_context') }}@if ($event->reason ?? null)<p>{{ $event->reason }}</p>@endif</td>
                                     <td class="wb-table-actions"><div class="wb-action-group">
                                         <button type="button" class="wb-action-btn" data-wb-toggle="modal" data-wb-target="#acl-event-{{ $event->id }}" title="{{ __('webblocks-cms::acl.history_view') }}" aria-label="{{ __('webblocks-cms::acl.history_view') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></button>
                                     </div></td>

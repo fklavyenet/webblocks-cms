@@ -41,7 +41,7 @@ return [
   'unknown_actor' => 'Unbekannter Benutzer', 'no_context' => 'Keine verknüpfte Rolle, kein Benutzer und keine Website',
   'roles_pagination' => 'Seitennavigation der Rollen', 'history_pagination' => 'Seitennavigation des Zugriffsverlaufs',
   'edit_locked' => 'Ihre Rolle erlaubt es nicht, diese Seite in ihrem aktuellen Status zu bearbeiten.',
-  'events' => ['user_activity_changed' => 'Kontostatus geändert', 'user_system_role_changed' => 'Systemrolle geändert', 'role_saved' => 'Rolle gespeichert', 'permission_granted' => 'Berechtigung erteilt', 'permission_revoked' => 'Berechtigung entfernt', 'role_deleted' => 'Rolle gelöscht', 'assignment_changed' => 'Website-Rolle geändert', 'user_access_saved' => 'Benutzerzugriff gespeichert', 'user_deleted' => 'Benutzer gelöscht'],
+  'events' => ['user_two_factor_reset' => 'Zwei-Faktor-Authentifizierung zurückgesetzt', 'user_two_factor_recovered' => 'Zwei-Faktor-Authentifizierung über Server wiederhergestellt', 'user_activity_changed' => 'Kontostatus geändert', 'user_system_role_changed' => 'Systemrolle geändert', 'role_saved' => 'Rolle gespeichert', 'permission_granted' => 'Berechtigung erteilt', 'permission_revoked' => 'Berechtigung entfernt', 'role_deleted' => 'Rolle gelöscht', 'assignment_changed' => 'Website-Rolle geändert', 'user_access_saved' => 'Benutzerzugriff gespeichert', 'user_deleted' => 'Benutzer gelöscht'],
   'site_roles' => 'Rollen pro Website',
   'title' => 'Rollen und Berechtigungen', 'description' => 'Weisen Sie jeder Website eine Rolle zu. Änderungen betreffen alle Zuweisungen dieser Rolle.',
   'new' => 'Rolle erstellen', 'copy' => 'Rolle kopieren', 'edit' => 'Bearbeiten', 'name' => 'Name', 'details' => 'Beschreibung',

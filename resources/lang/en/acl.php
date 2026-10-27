@@ -41,7 +41,7 @@ return [
   'unknown_actor' => 'Unknown actor', 'no_context' => 'No linked role, user or site',
   'roles_pagination' => 'Roles pagination', 'history_pagination' => 'Access history pagination',
   'edit_locked' => 'Your role does not allow editing this page in its current state.',
-  'events' => ['user_activity_changed' => 'Account activity changed', 'user_system_role_changed' => 'System role changed', 'role_saved' => 'Role saved', 'permission_granted' => 'Permission granted', 'permission_revoked' => 'Permission removed', 'role_deleted' => 'Role deleted', 'assignment_changed' => 'Site role changed', 'user_access_saved' => 'User access saved', 'user_deleted' => 'User deleted'],
+  'events' => ['user_two_factor_reset' => 'Two-factor authentication reset', 'user_two_factor_recovered' => 'Two-factor authentication recovered from server', 'user_activity_changed' => 'Account activity changed', 'user_system_role_changed' => 'System role changed', 'role_saved' => 'Role saved', 'permission_granted' => 'Permission granted', 'permission_revoked' => 'Permission removed', 'role_deleted' => 'Role deleted', 'assignment_changed' => 'Site role changed', 'user_access_saved' => 'User access saved', 'user_deleted' => 'User deleted'],
   'site_roles' => 'Per-site roles',
   'title' => 'Roles and permissions', 'description' => 'Assign a role for each site. Changes affect every assignment using that role.',
   'new' => 'Create role', 'copy' => 'Copy role', 'edit' => 'Edit', 'name' => 'Name', 'details' => 'Description',

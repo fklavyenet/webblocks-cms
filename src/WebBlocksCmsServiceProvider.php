@@ -45,6 +45,7 @@ use WebBlocks\Cms\Console\PrunePromotedStagedUpdatesCommand;
 use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\RefreshSystemReportsCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
+use WebBlocks\Cms\Console\ResetTwoFactorCommand;
 use WebBlocks\Cms\Console\SchedulerSetupCommand;
 use WebBlocks\Cms\Console\SchedulerStatusCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
@@ -73,6 +74,7 @@ use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
 use WebBlocks\Cms\Http\Middleware\RequireCmsTwoFactor;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiCapability;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
+use WebBlocks\Cms\Http\Middleware\RevokeResetCmsSessions;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Models\AutomaticPageRule;
 use WebBlocks\Cms\Models\BlockMedia;
@@ -90,6 +92,7 @@ use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
 use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
 use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
+use WebBlocks\Cms\Support\Auth\TwoFactorAccountState;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
@@ -228,6 +231,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'auth/partials/two-factor-fields.blade.php',
     'auth/partials/two-factor-send-code.blade.php',
     'admin/system/partials/two-factor-policy.blade.php',
+    'admin/users/partials/two-factor-reset.blade.php',
     'auth/reset-password.blade.php',
     'admin/partials/audit-actor.blade.php',
     'admin/partials/flash.blade.php',
@@ -843,6 +847,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const ICON_SYNC_COMMAND_NAME = 'icons:sync-webblocks-ui';
 
   public const PACKAGE_CONSOLE_COMMANDS = [
+    ResetTwoFactorCommand::class,
     BlockSettingsAuditCommand::class,
     PruneEditorRecoveriesCommand::class,
     SchedulerStatusCommand::class,
@@ -981,12 +986,15 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $httpKernel = $this->app->make(HttpKernel::class);
     // Minimal console-only hosts (including plugin probes) have no web group.
     if (array_key_exists('web', $httpKernel->getMiddlewareGroups())) {
+      $httpKernel->appendMiddlewareToGroup('web', RevokeResetCmsSessions::class);
       $httpKernel->appendMiddlewareToGroup('web', RequireCmsTwoFactor::class);
       $httpKernel->addToMiddlewarePriorityBefore(SubstituteBindings::class, RequireCmsTwoFactor::class);
+      $httpKernel->addToMiddlewarePriorityBefore(RequireCmsTwoFactor::class, RevokeResetCmsSessions::class);
     }
     Event::listen(Login::class, function (Login $event): void {
       if ($event->guard === 'web' && request()->hasSession()) {
         request()->session()->forget([TwoFactorSession::VERIFIED, TwoFactorSession::SETUP]);
+        app(TwoFactorAccountState::class)->stamp(request(), $event->user);
       }
     });
     // Include authentication, plugin and API responses without changing public pages.

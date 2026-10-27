@@ -15,6 +15,7 @@ use WebBlocks\Cms\Http\Requests\Admin\UserStoreRequest;
 use WebBlocks\Cms\Http\Requests\Admin\UserUpdateRequest;
 use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Policies\TwoFactorPolicy;
 use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
@@ -87,6 +88,8 @@ class UserController extends Controller
     return view('webblocks-cms::admin.users.form', [
       'managedUser' => $user,
       'pageTitle' => 'Edit User: '.$user->name,
+      'twoFactorResetTargetAllowed' => app(TwoFactorPolicy::class)->resetTarget(request()->user('web'), $user),
+      'twoFactorResetReady' => app(TwoFactorPolicy::class)->reset(request()->user('web'), $user),
       'formAction' => route('admin.users.update', $user),
       'formMethod' => 'PUT',
       'deleteBlockedMessage' => $this->lifecycleGuard->deletionBlocker($user, request()->user()),

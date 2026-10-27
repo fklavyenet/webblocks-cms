@@ -28,7 +28,7 @@ final class TwoFactorRequest extends FormRequest
       return [];
     }
     if ($this->routeIs('webblocks.two-factor.send')) {
-      return ['purpose' => ['required', Rule::in(['setup', 'action'])], 'tab' => ['nullable', Rule::in(['recovery', 'replace', 'disable', 'policy'])]];
+      return ['purpose' => ['required', Rule::in(['setup', 'action'])], 'tab' => ['nullable', Rule::in(['recovery', 'replace', 'disable', 'policy', 'user-reset'])], 'target_user_id' => ['required_if:tab,user-reset', 'nullable', 'integer', Rule::exists('users', 'id')]];
     }
     $password = ['current_password' => ['required', 'string', 'current_password:web']];
     $factor = [
@@ -55,8 +55,8 @@ final class TwoFactorRequest extends FormRequest
   public function messages(): array
   {
     $messages = [];
-    foreach (['code', 'recovery_code', 'current_password', 'require_super_admin', 'role_ids', 'role_ids.*', 'purpose', 'tab'] as $field) {
-      foreach (['required', 'required_without', 'string', 'regex', 'max', 'prohibits', 'current_password', 'boolean', 'array', 'integer', 'distinct', 'exists', 'in'] as $rule) {
+    foreach (['code', 'recovery_code', 'current_password', 'require_super_admin', 'role_ids', 'role_ids.*', 'purpose', 'tab', 'target_user_id'] as $field) {
+      foreach (['required', 'required_without', 'string', 'regex', 'max', 'prohibits', 'current_password', 'boolean', 'array', 'integer', 'distinct', 'exists', 'in', 'required_if'] as $rule) {
         $messages[$field.'.'.$rule] = __('webblocks-cms::two-factor.invalid');
       }
     }
