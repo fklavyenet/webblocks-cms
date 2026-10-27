@@ -394,11 +394,11 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->actingAs($user)->get(route('webblocks.two-factor.challenge'))->assertOk();
     Notification::assertNothingSent();
     $this->post(route('webblocks.two-factor.sendChallenge'))->assertSessionHasNoErrors();
-    Notification::assertSentOnDemandOnce(TwoFactorEmail::class);
+    Notification::assertSentOnDemandTimes(TwoFactorEmail::class, 1);
     $oldCode = $this->code($user);
     $oldId = session(EmailTwoFactorCodes::SESSION.'.login');
     $this->post(route('webblocks.two-factor.sendChallenge'))->assertSessionHasErrors('code');
-    Notification::assertSentOnDemandOnce(TwoFactorEmail::class);
+    Notification::assertSentOnDemandTimes(TwoFactorEmail::class, 1);
     $this->travel(61)->seconds();
     $this->post(route('webblocks.two-factor.sendChallenge'))->assertSessionHasNoErrors();
     $binding = app(TwoFactorSession::class)->fingerprint($user, app(TwoFactorAuthentication::class)->credential($user));
@@ -480,7 +480,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->assertNull(app(TwoFactorAuthentication::class)->credential($user));
     $this->withSession([TwoFactorSession::SETUP => '']);
     $this->post(route('webblocks.two-factor.send'), ['purpose' => 'setup'])->assertSessionHasErrors('code');
-    Notification::assertSentOnDemandOnce(TwoFactorEmail::class);
+    Notification::assertSentOnDemandTimes(TwoFactorEmail::class, 1);
   }
 
   #[Test]
