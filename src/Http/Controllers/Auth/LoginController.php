@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use WebBlocks\Cms\Support\Auth\EmailTwoFactorCodes;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 use WebBlocks\Cms\Support\Plugins\PluginRecoveryMode;
@@ -67,7 +68,10 @@ class LoginController extends Controller
       $guard->getProvider()->rehashPasswordIfRequired($user, $credentials);
       app(TwoFactorSession::class)->begin($request, $user, $request->boolean('remember'));
 
-      return to_route('webblocks.two-factor.challenge');
+      $credential = app(TwoFactorAuthentication::class)->credential($user);
+      $status = app(EmailTwoFactorCodes::class)->send($request, $user, 'login', $credential->email, app(TwoFactorSession::class)->fingerprint($user, $credential));
+
+      return to_route('webblocks.two-factor.challenge')->with($status === 'sent' ? 'status' : 'email_error', __('webblocks-cms::two-factor.'.$status));
     }
 
     $request->session()->regenerate();

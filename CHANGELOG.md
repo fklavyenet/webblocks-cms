@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- Use email verification codes through existing CMS outgoing-mail settings instead of TOTP. No new package is required. Codes expire after five minutes, are single use, and have resend and attempt limits; recovery codes and mandatory-role policies remain available.
+- Keep normal verification setup and account management inside the CMS panel. Unverified sign-in, mandatory enrollment and plugin recovery retain a restricted authentication screen.
+- Keep verification addresses independent from profile-email changes. Replacing an address requires the existing factor and confirmation of the new address. Upgrade removes TOTP secrets while preserving enabled protection, recovery hashes and role policies; restore a backup before reverting to a TOTP-only version.
+
+## Unreleased
+
 ## 1.106.2
 
 - Start enabled installed-plugin Laravel service providers after host boot, including route-cached HTTP and console hosts. Restore plugin notification channels, view composers and container bindings without manual provider registration.

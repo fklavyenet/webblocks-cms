@@ -8,6 +8,8 @@ use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
 Route::middleware(['web', UseAdminLocale::class])->prefix('webadmin/two-factor')->name('webblocks.two-factor.')->group(function () {
   Route::get('/challenge', [TwoFactorController::class, 'challenge'])->name('challenge');
   Route::post('/challenge', [TwoFactorController::class, 'verify'])->middleware('throttle:webblocks-two-factor')->name('verify');
+  Route::post('/challenge/send', [TwoFactorController::class, 'sendChallenge'])->middleware('throttle:webblocks-two-factor')->name('sendChallenge');
+  Route::post('/email-code', [TwoFactorController::class, 'send'])->middleware('throttle:webblocks-two-factor')->name('send');
   Route::get('/', [TwoFactorController::class, 'show'])->name('show');
   Route::post('/setup', [TwoFactorController::class, 'start'])->middleware('throttle:webblocks-two-factor')->name('start');
   Route::post('/confirm', [TwoFactorController::class, 'confirm'])->middleware('throttle:webblocks-two-factor')->name('confirm');

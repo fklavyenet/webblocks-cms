@@ -226,6 +226,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'auth/two-factor.blade.php',
     'auth/two-factor-challenge.blade.php',
     'auth/partials/two-factor-fields.blade.php',
+    'auth/partials/two-factor-send-code.blade.php',
     'admin/system/partials/two-factor-policy.blade.php',
     'auth/reset-password.blade.php',
     'admin/partials/audit-actor.blade.php',

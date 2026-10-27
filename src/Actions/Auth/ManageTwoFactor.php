@@ -3,23 +3,23 @@
 namespace WebBlocks\Cms\Actions\Auth;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use WebBlocks\Cms\Support\Auth\Totp;
+use WebBlocks\Cms\Support\Auth\EmailTwoFactorCodes;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
+use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 
 final class ManageTwoFactor
 {
-  public function start(Authenticatable $user, #[\SensitiveParameter] string $code = '', #[\SensitiveParameter] string $recoveryCode = ''): ?string
+  public function start(Authenticatable $user, #[\SensitiveParameter] string $code = '', #[\SensitiveParameter] string $recoveryCode = '', string $challenge = ''): ?string
   {
-    return $this->locked($user, function ($credential) use ($user, $code, $recoveryCode): ?string {
-      if ($credential && ! $this->consume($credential, $code, $recoveryCode)) {
+    return $this->locked($user, function ($credential) use ($user, $code, $recoveryCode, $challenge): ?string {
+      if ($credential && ! $this->consume($user, $credential, $code, $recoveryCode, $challenge)) {
         return null;
       }
       $generation = (string) Str::uuid();
       DB::table('wbcms_two_factor_enrollments')->updateOrInsert(['user_id' => $user->getAuthIdentifier()], [
-        'secret' => Crypt::encryptString((new Totp)->generateSecret()),
+        'email' => strtolower(trim((string) $user->email)),
         'generation' => $generation, 'expires_at' => now()->addMinutes(10),
       ]);
 
@@ -27,19 +27,18 @@ final class ManageTwoFactor
     });
   }
 
-  public function confirm(Authenticatable $user, string $generation, #[\SensitiveParameter] string $code): ?array
+  public function confirm(Authenticatable $user, string $generation, #[\SensitiveParameter] string $code, string $challenge = ''): ?array
   {
-    return $this->locked($user, function () use ($user, $generation, $code): ?array {
+    return $this->locked($user, function () use ($user, $generation, $code, $challenge): ?array {
       $setup = DB::table('wbcms_two_factor_enrollments')->where('user_id', $user->getAuthIdentifier())->lockForUpdate()->first();
       if (! $setup || $setup->generation !== $generation || strtotime($setup->expires_at) <= now()->timestamp) {
         return null;
       }
-      $step = $this->totpStep($setup->secret, $code, -1);
-      if ($step === false) {
+      if (! app(EmailTwoFactorCodes::class)->consume($user, 'setup', $setup->email, app(TwoFactorSession::class)->setupBinding($user, $generation), $challenge, $code)) {
         return null;
       }
       DB::table('wbcms_two_factor_credentials')->updateOrInsert(['user_id' => $user->getAuthIdentifier()], [
-        'secret' => $setup->secret, 'generation' => $generation, 'confirmed_at' => now(), 'last_used_step' => $step,
+        'email' => $setup->email, 'generation' => $generation, 'confirmed_at' => now(),
       ]);
       DB::table('wbcms_two_factor_enrollments')->where('user_id', $user->getAuthIdentifier())->delete();
 
@@ -47,16 +46,16 @@ final class ManageTwoFactor
     });
   }
 
-  public function verify(Authenticatable $user, #[\SensitiveParameter] string $code, #[\SensitiveParameter] string $recoveryCode = ''): bool
+  public function verify(Authenticatable $user, #[\SensitiveParameter] string $code, #[\SensitiveParameter] string $recoveryCode = '', string $challenge = '', string $purpose = 'action'): bool
   {
     return $this->locked($user, fn ($credential): bool => $credential && $credential->confirmed_at !== null
-      && $this->consume($credential, $code, $recoveryCode));
+      && $this->consume($user, $credential, $code, $recoveryCode, $challenge, $purpose));
   }
 
-  public function regenerate(Authenticatable $user, #[\SensitiveParameter] string $code, #[\SensitiveParameter] string $recoveryCode): ?array
+  public function regenerate(Authenticatable $user, #[\SensitiveParameter] string $code, #[\SensitiveParameter] string $recoveryCode, string $challenge = ''): ?array
   {
-    return $this->locked($user, function ($credential) use ($user, $code, $recoveryCode): ?array {
-      if (! $credential || $credential->confirmed_at === null || ! $this->consume($credential, $code, $recoveryCode)) {
+    return $this->locked($user, function ($credential) use ($user, $code, $recoveryCode, $challenge): ?array {
+      if (! $credential || $credential->confirmed_at === null || ! $this->consume($user, $credential, $code, $recoveryCode, $challenge)) {
         return null;
       }
 
@@ -64,13 +63,14 @@ final class ManageTwoFactor
     });
   }
 
-  public function disable(Authenticatable $user, #[\SensitiveParameter] string $code, #[\SensitiveParameter] string $recoveryCode): bool
+  public function disable(Authenticatable $user, #[\SensitiveParameter] string $code, #[\SensitiveParameter] string $recoveryCode, string $challenge = ''): bool
   {
-    return $this->locked($user, function ($credential) use ($user, $code, $recoveryCode): bool {
+    return $this->locked($user, function ($credential) use ($user, $code, $recoveryCode, $challenge): bool {
       if (app(TwoFactorAuthentication::class)->required($user) || ! $credential || $credential->confirmed_at === null
-        || ! $this->consume($credential, $code, $recoveryCode)) {
+        || ! $this->consume($user, $credential, $code, $recoveryCode, $challenge)) {
         return false;
       }
+      DB::table('wbcms_two_factor_email_codes')->where('user_id', $user->getAuthIdentifier())->delete();
       DB::table('wbcms_two_factor_credentials')->where('user_id', $user->getAuthIdentifier())->delete();
       DB::table('wbcms_two_factor_enrollments')->where('user_id', $user->getAuthIdentifier())->delete();
 
@@ -88,30 +88,15 @@ final class ManageTwoFactor
     });
   }
 
-  private function consume(object $credential, #[\SensitiveParameter] string $code, #[\SensitiveParameter] string $recoveryCode): bool
+  private function consume(Authenticatable $user, object $credential, #[\SensitiveParameter] string $code, #[\SensitiveParameter] string $recoveryCode, string $challenge, string $purpose = 'action'): bool
   {
     if ($recoveryCode !== '') {
       return DB::table('wbcms_two_factor_recovery_codes')->where('user_id', $credential->user_id)
         ->where('code_hash', hash('sha256', strtolower(trim($recoveryCode))))->delete() === 1;
     }
 
-    return $this->consumeTotp($credential, $code);
-  }
-
-  private function consumeTotp(object $credential, #[\SensitiveParameter] string $code): bool
-  {
-    $step = $this->totpStep($credential->secret, $code, (int) $credential->last_used_step);
-    if ($step === false) {
-      return false;
-    }
-    DB::table('wbcms_two_factor_credentials')->where('user_id', $credential->user_id)->update(['last_used_step' => $step]);
-
-    return true;
-  }
-
-  private function totpStep(#[\SensitiveParameter] string $encryptedSecret, #[\SensitiveParameter] string $code, int $lastStep): int|false
-  {
-    return (new Totp)->verify(Crypt::decryptString($encryptedSecret), $code, $lastStep, now()->timestamp);
+    return app(EmailTwoFactorCodes::class)->consume($user, $purpose, $credential->email,
+      app(TwoFactorSession::class)->fingerprint($user, $credential), $challenge, $code);
   }
 
   private function replaceRecoveryCodes(Authenticatable $user): array

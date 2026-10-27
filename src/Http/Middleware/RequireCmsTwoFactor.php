@@ -41,6 +41,9 @@ final class RequireCmsTwoFactor
     if ((! $confirmed && ! $auth->required($user)) || ($confirmed && app(TwoFactorSession::class)->verified($request, $user, $credential))) {
       return $next($request);
     }
+    if ($request->is('webadmin/plugin-recovery', 'webadmin/plugin-recovery/*')) {
+      $request->session()->put(TwoFactorSession::RECOVERY, true);
+    }
     $url = route($confirmed ? 'webblocks.two-factor.challenge' : 'webblocks.two-factor.show');
     if ($request->expectsJson()) {
       return response()->json(['code' => 'cms_two_factor_required', 'redirect' => $url], 423);

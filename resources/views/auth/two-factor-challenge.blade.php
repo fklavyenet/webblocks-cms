@@ -11,6 +11,13 @@
             @if ($errors->any())
                 <div class="wb-alert wb-alert-danger" role="alert">{{ $errors->first() }}</div>
             @endif
+            @if (session('status'))<div class="wb-alert wb-alert-success" role="status">{{ session('status') }}</div>@endif
+            @if (session('email_error'))<div class="wb-alert wb-alert-danger" role="alert">{{ session('email_error') }}</div>@endif
+            <p>{{ __('webblocks-cms::two-factor.recipient', ['email' => $recipient]) }}</p>
+            <form method="POST" action="{{ route('webblocks.two-factor.sendChallenge') }}">
+                @csrf
+                <button class="wb-btn wb-btn-secondary" type="submit">{{ __('webblocks-cms::two-factor.send_code') }}</button>
+            </form>
             <form method="POST" action="{{ route('webblocks.two-factor.verify') }}" class="wb-stack-4">
                 @csrf
                 @include('webblocks-cms::auth.partials.two-factor-fields', ['fieldPrefix' => 'challenge'])

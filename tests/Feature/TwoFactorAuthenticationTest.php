@@ -2,19 +2,29 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Request;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Actions\Auth\ManageTwoFactor;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\Site;
-use WebBlocks\Cms\Support\Auth\Totp;
+use WebBlocks\Cms\Notifications\System\TwoFactorEmail;
+use WebBlocks\Cms\Queries\PanelNotificationQuery;
+use WebBlocks\Cms\Support\Auth\EmailTwoFactorCodes;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
+use WebBlocks\Cms\Support\Auth\TwoFactorSchema;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
+use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -24,6 +34,8 @@ class TwoFactorAuthenticationTest extends TestCase
   {
     parent::defineEnvironment($app);
     $app['config']->set('webblocks-cms.routes.admin', true);
+    $app['config']->set('mail.default', 'smtp');
+    $app['config']->set('mail.mailers.smtp.transport', 'smtp');
     $app['config']->set('auth.providers.users.model', TwoFactorTestUser::class);
   }
 
@@ -44,6 +56,9 @@ class TwoFactorAuthenticationTest extends TestCase
   {
     parent::setUp();
     $this->withoutMiddleware(RedirectIfNotInstalled::class);
+    Notification::fake();
+    // The notification aggregate belongs to the host's concrete User type.
+    $this->mock(PanelNotificationQuery::class)->shouldReceive('forUser')->andReturn(null);
     $this->travelTo(now()->startOfMinute()->addSeconds(5));
   }
 
@@ -54,16 +69,18 @@ class TwoFactorAuthenticationTest extends TestCase
 
   private function code(TwoFactorTestUser $user): string
   {
-    $row = app(TwoFactorAuthentication::class)->enrollment($user) ?? app(TwoFactorAuthentication::class)->credential($user);
-
-    return (new Totp)->code(Crypt::decryptString($row->secret), (int) floor(now()->timestamp / 30));
+    return Notification::sent(new AnonymousNotifiable, TwoFactorEmail::class)->last()->code;
   }
 
   private function enroll(TwoFactorTestUser $user): array
   {
     $generation = app(ManageTwoFactor::class)->start($user);
+    $request = Request::create('/');
+    $request->setLaravelSession(app('session.store'));
+    $this->assertSame('sent', app(EmailTwoFactorCodes::class)->send($request, $user, 'setup', $user->email, app(TwoFactorSession::class)->setupBinding($user, $generation)));
+    $id = $request->session()->get(EmailTwoFactorCodes::SESSION.'.setup');
 
-    return app(ManageTwoFactor::class)->confirm($user, $generation, $this->code($user));
+    return app(ManageTwoFactor::class)->confirm($user, $generation, $this->code($user), $id);
   }
 
   private function signedIn(TwoFactorTestUser $user): void
@@ -80,11 +97,12 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->actingAs($user)->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee('data:image/svg+xml');
     $this->post(route('webblocks.two-factor.start'), ['current_password' => 'wrong'])->assertSessionHasErrors('current_password');
     $this->assertNull(app(TwoFactorAuthentication::class)->credential($user));
-    $this->post(route('webblocks.two-factor.start'), ['current_password' => 'fixture-password'])->assertRedirect(route('webblocks.two-factor.show'));
+    $this->post(route('webblocks.two-factor.start'), ['current_password' => 'fixture-password'])->assertRedirect(route('webblocks.two-factor.show', ['tab' => 'recovery']));
     $row = app(TwoFactorAuthentication::class)->enrollment($user) ?? app(TwoFactorAuthentication::class)->credential($user);
-    $secret = Crypt::decryptString($row->secret);
-    $this->assertNotSame($secret, $row->secret);
-    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee('data:image')->assertSee('time-based (TOTP)')->assertSee($secret)
+    $this->assertSame($user->email, $row->email);
+    $secret = $this->code($user);
+    $this->assertDatabaseMissing('wbcms_two_factor_email_codes', ['code_hash' => $secret]);
+    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee('data:image')->assertSee('admin-sidebar')->assertSee($user->email)->assertDontSee($secret)
       ->assertHeader('Cache-Control', 'no-store, private')->assertHeader('Referrer-Policy', 'no-referrer');
     $this->post(route('webblocks.two-factor.confirm'), ['code' => 'bad'])->assertSessionHasErrors('code')->assertSessionMissing('_old_input.code');
     $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertOk()->assertViewHas('recoveryCodes', fn ($codes) => count($codes) === 10);
@@ -114,16 +132,36 @@ class TwoFactorAuthenticationTest extends TestCase
   }
 
   #[Test]
-  public function totp_accepts_a_small_clock_window_and_atomically_rejects_replay(): void
+  public function email_codes_expire_are_single_use_and_have_a_persistent_attempt_limit(): void
   {
     $user = $this->actor();
     $this->enroll($user);
-    $this->travel(30)->seconds();
+    $request = Request::create('/');
+    $request->setLaravelSession(app('session.store'));
+    $credential = app(TwoFactorAuthentication::class)->credential($user);
+    $binding = app(TwoFactorSession::class)->fingerprint($user, $credential);
+    $service = app(EmailTwoFactorCodes::class);
+    $this->assertSame('sent', $service->send($request, $user, 'login', $user->email, $binding));
+    $id = $request->session()->get(EmailTwoFactorCodes::SESSION.'.login');
     $code = $this->code($user);
-    $this->assertTrue(app(ManageTwoFactor::class)->verify($user, $code));
-    $this->assertFalse(app(ManageTwoFactor::class)->verify($user, $code));
-    $this->travel(90)->seconds();
-    $this->assertFalse(app(ManageTwoFactor::class)->verify($user, $code));
+    $this->assertFalse($service->consume($user, 'action', $user->email, $binding, $id, $code));
+    $this->assertFalse($service->consume($user, 'login', $user->email, $binding, '', $code));
+    $this->assertTrue($service->consume($user, 'login', $user->email, $binding, $id, $code));
+    $this->assertFalse($service->consume($user, 'login', $user->email, $binding, $id, $code));
+    $this->travel(61)->seconds();
+    $service->send($request, $user, 'login', $user->email, $binding);
+    $id = $request->session()->get(EmailTwoFactorCodes::SESSION.'.login');
+    $code = $this->code($user);
+    $wrong = $code === '000000' ? '000001' : '000000';
+    for ($i = 0; $i < 5; $i++) {
+      $this->assertFalse($service->consume($user, 'login', $user->email, $binding, $id, $wrong));
+    }
+    $this->assertFalse($service->consume($user, 'login', $user->email, $binding, $id, $code));
+    $this->travel(61)->seconds();
+    $service->send($request, $user, 'login', $user->email, $binding);
+    $id = $request->session()->get(EmailTwoFactorCodes::SESSION.'.login');
+    $this->travel(5)->minutes();
+    $this->assertFalse($service->consume($user, 'login', $user->email, $binding, $id, $this->code($user)));
   }
 
   #[Test]
@@ -222,11 +260,11 @@ class TwoFactorAuthenticationTest extends TestCase
     $user = $this->actor();
     app(ManageTwoFactor::class)->start($user);
     $row = app(TwoFactorAuthentication::class)->enrollment($user) ?? app(TwoFactorAuthentication::class)->credential($user);
-    $this->actingAs($user)->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee(Crypt::decryptString($row->secret));
-    $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertSessionHasErrors('code');
+    $this->actingAs($user)->get(route('webblocks.two-factor.show'))->assertOk()->assertViewHas('setupEmail', null);
+    $this->post(route('webblocks.two-factor.confirm'), ['code' => '123456'])->assertSessionHasErrors('code');
     $this->withSession([TwoFactorSession::SETUP => $row->generation]);
     $this->travel(11)->minutes();
-    $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertSessionHasErrors('code');
+    $this->post(route('webblocks.two-factor.confirm'), ['code' => '123456'])->assertSessionHasErrors('code');
     $this->assertNull(app(TwoFactorAuthentication::class)->credential($user));
   }
 
@@ -261,11 +299,14 @@ class TwoFactorAuthenticationTest extends TestCase
     $codes = $this->enroll($user);
     $old = app(TwoFactorAuthentication::class)->credential($user);
     $this->signedIn($user);
+    $this->travel(61)->seconds();
     DB::table('wbcms_two_factor_policy')->where('id', 1)->update(['require_super_admin' => true]);
     $this->post(route('webblocks.two-factor.start'), ['current_password' => 'fixture-password'])->assertSessionHasErrors('code');
     $this->post(route('webblocks.two-factor.start'), ['current_password' => 'fixture-password', 'recovery_code' => $codes[0]])->assertSessionHasNoErrors();
     $this->assertSame($old->generation, app(TwoFactorAuthentication::class)->credential($user)->generation);
-    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee('data:image')->assertSee('time-based (TOTP)');
+    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee('data:image')->assertSee('Enter the code sent to this address');
+    $this->travel(61)->seconds();
+    $this->post(route('webblocks.two-factor.send'), ['purpose' => 'setup'])->assertSessionHasNoErrors();
     $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertOk();
     $this->assertNotSame($old->generation, app(TwoFactorAuthentication::class)->credential($user)->generation);
     $this->assertFalse(app(ManageTwoFactor::class)->verify($user, '', $codes[1]));
@@ -288,7 +329,7 @@ class TwoFactorAuthenticationTest extends TestCase
   }
 
   #[Test]
-  public function a_fresh_totp_finishes_login_and_password_changes_invalidate_verified_sessions(): void
+  public function a_fresh_email_code_finishes_login_and_password_changes_invalidate_verified_sessions(): void
   {
     $user = $this->actor();
     $this->enroll($user);
@@ -327,6 +368,205 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->withToken($token->plainToken)->getJson('/webadmin/api/two-factor-probe')->assertOk();
     $this->withToken('invalid')->getJson('/webadmin/api/two-factor-probe')->assertUnauthorized();
     $this->withToken($token->plainToken)->postJson('/webadmin/two-factor-write')->assertStatus(423);
+  }
+
+  #[Test]
+  public function management_uses_the_panel_but_mandatory_setup_and_login_stay_restricted(): void
+  {
+    $user = $this->actor();
+    $this->actingAs($user)->get(route('webblocks.two-factor.show'))->assertOk()
+      ->assertSee('id="admin-sidebar"', false)->assertSee(route('admin.profile.edit'));
+    DB::table('wbcms_two_factor_policy')->where('id', 1)->update(['require_super_admin' => true]);
+    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee('id="admin-sidebar"', false);
+    $this->post(route('webblocks.two-factor.start'), ['current_password' => 'fixture-password'])->assertSessionHasNoErrors();
+    $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertOk()->assertSee('id="admin-sidebar"', false);
+    $this->withSession([TwoFactorSession::VERIFIED => '']);
+    $this->get(route('webblocks.two-factor.show'))->assertRedirect(route('webblocks.two-factor.challenge'));
+    $this->get(route('webblocks.two-factor.challenge'))->assertOk()->assertDontSee('id="admin-sidebar"', false);
+  }
+
+  #[Test]
+  public function challenge_sends_are_explicit_and_cannot_extend_a_pending_login(): void
+  {
+    $user = $this->actor();
+    $this->enroll($user);
+    Notification::fake();
+    $this->actingAs($user)->get(route('webblocks.two-factor.challenge'))->assertOk();
+    Notification::assertNothingSent();
+    $this->post(route('webblocks.two-factor.sendChallenge'))->assertSessionHasNoErrors();
+    Notification::assertSentOnDemandOnce(TwoFactorEmail::class);
+    $oldCode = $this->code($user);
+    $oldId = session(EmailTwoFactorCodes::SESSION.'.login');
+    $this->post(route('webblocks.two-factor.sendChallenge'))->assertSessionHasErrors('code');
+    Notification::assertSentOnDemandOnce(TwoFactorEmail::class);
+    $this->travel(61)->seconds();
+    $this->post(route('webblocks.two-factor.sendChallenge'))->assertSessionHasNoErrors();
+    $binding = app(TwoFactorSession::class)->fingerprint($user, app(TwoFactorAuthentication::class)->credential($user));
+    $this->assertFalse(app(EmailTwoFactorCodes::class)->consume($user, 'login', $user->email, $binding, $oldId, $oldCode));
+    Auth::guard('web')->logout();
+    $this->flushSession();
+    $this->travel(61)->seconds();
+    $this->post('/webadmin/login', ['email' => $user->email, 'password' => 'fixture-password']);
+    $expiry = session(TwoFactorSession::PENDING.'.expires_at');
+    $this->travel(4)->minutes();
+    $this->post(route('webblocks.two-factor.sendChallenge'))->assertSessionHasNoErrors();
+    $this->assertSame($expiry, session(TwoFactorSession::PENDING.'.expires_at'));
+    $this->travel(61)->seconds();
+    $this->post(route('webblocks.two-factor.verify'), ['code' => $this->code($user)])->assertRedirect(route('webblocks.auth.login'));
+    $this->assertGuest('web');
+  }
+
+  #[Test]
+  public function a_code_from_another_session_or_purpose_cannot_finish_login(): void
+  {
+    $user = $this->actor();
+    $this->enroll($user);
+    $this->post('/webadmin/login', ['email' => $user->email, 'password' => 'fixture-password']);
+    $code = $this->code($user);
+    $id = session(EmailTwoFactorCodes::SESSION.'.login');
+    $this->withSession([EmailTwoFactorCodes::SESSION => []]);
+    $this->post(route('webblocks.two-factor.verify'), ['code' => $code, 'challenge_id' => $id])->assertSessionHasErrors('code');
+    $this->assertGuest('web');
+    $this->withSession([EmailTwoFactorCodes::SESSION => ['login' => $id]]);
+    $this->post(route('webblocks.two-factor.verify'), ['code' => $code])->assertRedirect(route('admin.dashboard'));
+    $this->assertAuthenticatedAs($user);
+  }
+
+  #[Test]
+  public function changing_profile_email_does_not_redirect_the_existing_factor_and_replacement_proves_both_addresses(): void
+  {
+    $user = $this->actor();
+    $codes = $this->enroll($user);
+    $original = $user->email;
+    $user->forceFill(['email' => 'new-address@example.test'])->save();
+    $this->signedIn($user);
+    $this->post(route('webblocks.two-factor.send'), ['purpose' => 'action'])->assertSessionHasNoErrors();
+    Notification::assertSentOnDemand(TwoFactorEmail::class, fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === $original);
+    $this->travel(61)->seconds();
+    $this->post(route('webblocks.two-factor.start'), ['current_password' => 'fixture-password', 'code' => $this->code($user)])->assertSessionHasNoErrors();
+    $this->assertSame($original, app(TwoFactorAuthentication::class)->credential($user)->email);
+    Notification::assertSentOnDemand(TwoFactorEmail::class, fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === $user->email);
+    $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertOk();
+    $this->assertSame($user->email, app(TwoFactorAuthentication::class)->credential($user)->email);
+    $this->assertFalse(app(ManageTwoFactor::class)->verify($user, '', $codes[0]));
+  }
+
+  #[Test]
+  public function email_codes_can_authorize_policy_changes_and_recovery_renewal_once(): void
+  {
+    $user = $this->actor();
+    $this->enroll($user);
+    $this->signedIn($user);
+    $this->post(route('webblocks.two-factor.send'), ['purpose' => 'action', 'tab' => 'policy'])
+      ->assertRedirect(route('admin.system.settings.edit', ['tab' => 'security']));
+    $code = $this->code($user);
+    $this->put(route('webblocks.two-factor.policy'), ['current_password' => 'fixture-password', 'code' => $code, 'require_super_admin' => 1])->assertSessionHasNoErrors();
+    $this->assertTrue(app(TwoFactorAuthentication::class)->required($user));
+    $this->post(route('webblocks.two-factor.regenerate'), ['current_password' => 'fixture-password', 'code' => $code])->assertSessionHasErrors('code');
+    $this->travel(61)->seconds();
+    $this->post(route('webblocks.two-factor.send'), ['purpose' => 'action'])->assertSessionHasNoErrors();
+    $this->post(route('webblocks.two-factor.regenerate'), ['current_password' => 'fixture-password', 'code' => $this->code($user)])
+      ->assertOk()->assertViewHas('recoveryCodes', fn ($codes) => count($codes) === 10);
+  }
+
+  #[Test]
+  public function password_changes_invalidate_setup_codes_and_missing_setup_sessions_cannot_resend(): void
+  {
+    $user = $this->actor();
+    $this->actingAs($user)->post(route('webblocks.two-factor.start'), ['current_password' => 'fixture-password']);
+    $code = $this->code($user);
+    $user->forceFill(['password' => Hash::make('new-password')])->save();
+    $this->post(route('webblocks.two-factor.confirm'), ['code' => $code])->assertSessionHasErrors('code');
+    $this->assertNull(app(TwoFactorAuthentication::class)->credential($user));
+    $this->withSession([TwoFactorSession::SETUP => '']);
+    $this->post(route('webblocks.two-factor.send'), ['purpose' => 'setup'])->assertSessionHasErrors('code');
+    Notification::assertSentOnDemandOnce(TwoFactorEmail::class);
+  }
+
+  #[Test]
+  public function mail_failures_leave_login_pending_and_recovery_available_without_logging_the_exception_message(): void
+  {
+    $user = $this->actor();
+    $codes = $this->enroll($user);
+    Notification::fake();
+    Log::spy();
+    $this->mock(CmsMailSettingsResolver::class)
+      ->shouldReceive('resolvedMailerName')->andThrow(new \RuntimeException('sensitive SMTP message body'));
+    $this->post('/webadmin/login', ['email' => $user->email, 'password' => 'fixture-password'])
+      ->assertRedirect(route('webblocks.two-factor.challenge'))->assertSessionHas('email_error');
+    $this->assertGuest('web');
+    $this->assertNotNull(DB::table('wbcms_two_factor_email_codes')->where('purpose', 'login')->first()->consumed_at);
+    Notification::assertNothingSent();
+    Log::shouldHaveReceived('warning')->once()->with('CMS verification email could not be sent.', ['exception_class' => \RuntimeException::class]);
+    $this->post(route('webblocks.two-factor.verify'), ['recovery_code' => $codes[0]])->assertRedirect(route('admin.dashboard'));
+    $this->assertAuthenticatedAs($user);
+  }
+
+  #[Test]
+  public function log_and_array_transports_cannot_record_verification_codes_even_as_failover(): void
+  {
+    $user = $this->actor();
+    foreach (['log', 'array', 'fallback'] as $mailer) {
+      config(['mail.default' => $mailer, 'mail.mailers.'.$mailer.'.transport' => $mailer === 'fallback' ? 'failover' : $mailer,
+        'mail.mailers.fallback.mailers' => ['smtp', 'log']]);
+      $request = Request::create('/');
+      $request->setLaravelSession(app('session.store'));
+      $this->assertSame('send_failed', app(EmailTwoFactorCodes::class)->send($request, $user, 'login', $user->email, str_repeat('a', 64)));
+      $this->travel(61)->seconds();
+    }
+    Notification::assertNothingSent();
+  }
+
+  #[Test]
+  public function upgrading_totp_removes_secrets_preserves_enforcement_and_keeps_recovery_codes(): void
+  {
+    $user = $this->actor();
+    $codes = $this->enroll($user);
+    $old = app(TwoFactorAuthentication::class)->credential($user);
+    DB::table('wbcms_two_factor_policy')->where('id', 1)->update(['require_super_admin' => true]);
+    foreach (['credentials', 'enrollments'] as $name) {
+      Schema::table('wbcms_two_factor_'.$name, function (Blueprint $table): void {
+        $table->text('secret')->default('old-encrypted-secret');
+        $table->dropColumn('email');
+      });
+    }
+    Schema::table('wbcms_two_factor_credentials', fn (Blueprint $table) => $table->unsignedBigInteger('last_used_step')->nullable());
+    DB::table('wbcms_two_factor_enrollments')->insert(['user_id' => $user->id, 'secret' => 'old-pending-secret', 'generation' => (string) Str::uuid(), 'expires_at' => now()->addMinutes(10)]);
+    $schema = new TwoFactorSchema;
+    $schema->migrate();
+    $schema->migrate();
+    $credential = app(TwoFactorAuthentication::class)->credential($user);
+    $this->assertSame($user->email, $credential->email);
+    $this->assertNotSame($old->generation, $credential->generation);
+    $this->assertNotNull($credential->confirmed_at);
+    $this->assertFalse(Schema::hasColumn('wbcms_two_factor_credentials', 'secret'));
+    $this->assertFalse(Schema::hasColumn('wbcms_two_factor_credentials', 'last_used_step'));
+    $this->assertDatabaseCount('wbcms_two_factor_enrollments', 0);
+    $this->assertTrue(app(TwoFactorAuthentication::class)->required($user));
+    $this->assertTrue(app(ManageTwoFactor::class)->verify($user, '', $codes[0]));
+  }
+
+  #[Test]
+  public function recovery_management_keeps_the_restricted_layout_and_return_destination(): void
+  {
+    $user = $this->actor();
+    $this->enroll($user);
+    $this->signedIn($user);
+    $this->withSession([TwoFactorSession::RECOVERY => true]);
+    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee('id="admin-sidebar"', false)
+      ->assertViewHas('continueUrl', route('admin.plugins.recovery.index'));
+  }
+
+  #[Test]
+  public function verification_mail_renders_localized_content_through_the_cms_mail_resolver(): void
+  {
+    $message = (new TwoFactorEmail('123456'))->toMail(new AnonymousNotifiable);
+    $this->assertSame('smtp', $message->mailer);
+    $this->assertSame(__('webblocks-cms::two-factor.mail_subject'), $message->subject);
+    $this->assertContains(__('webblocks-cms::two-factor.mail_code', ['code' => '123456']), $message->introLines);
+    config(['mail.mailers.smtp.transport' => 'log']);
+    $this->expectException(\RuntimeException::class);
+    (new TwoFactorEmail('123456'))->toMail(new AnonymousNotifiable);
   }
 
   #[Test]

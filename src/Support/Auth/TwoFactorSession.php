@@ -19,7 +19,12 @@ final class TwoFactorSession
 
   public function fingerprint(Authenticatable $user, object $credential): string
   {
-    return hash('sha256', $user->getAuthIdentifier().'|'.$credential->generation.'|'.$user->getAuthPassword());
+    return hash('sha256', $user->getAuthIdentifier().'|'.$credential->generation.'|'.$credential->email.'|'.$user->getAuthPassword());
+  }
+
+  public function setupBinding(Authenticatable $user, string $generation): string
+  {
+    return hash('sha256', $generation.'|'.$user->getAuthPassword());
   }
 
   public function verified(Request $request, Authenticatable $user, object $credential): bool
@@ -31,13 +36,13 @@ final class TwoFactorSession
   {
     $request->session()->regenerate();
     $request->session()->put(self::VERIFIED, $this->fingerprint($user, $credential));
-    $request->session()->forget([self::PENDING, self::SETUP]);
+    $request->session()->forget([self::PENDING, self::SETUP, EmailTwoFactorCodes::SESSION]);
   }
 
   public function begin(Request $request, Authenticatable $user, bool $remember): void
   {
     $request->session()->regenerate();
-    $request->session()->forget([self::VERIFIED, self::SETUP]);
+    $request->session()->forget([self::VERIFIED, self::SETUP, EmailTwoFactorCodes::SESSION]);
     $request->session()->put(self::PENDING, [
       'user_id' => $user->getAuthIdentifier(),
       'expires_at' => now()->addMinutes(5)->timestamp,

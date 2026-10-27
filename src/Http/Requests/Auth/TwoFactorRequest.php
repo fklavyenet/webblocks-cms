@@ -13,7 +13,7 @@ final class TwoFactorRequest extends FormRequest
 {
   public function authorize(): bool
   {
-    if ($this->routeIs('webblocks.two-factor.verify')) {
+    if ($this->routeIs('webblocks.two-factor.verify', 'webblocks.two-factor.sendChallenge')) {
       return true; // The challenge controller validates the expiring password-authenticated identity.
     }
 
@@ -24,6 +24,12 @@ final class TwoFactorRequest extends FormRequest
 
   public function rules(): array
   {
+    if ($this->routeIs('webblocks.two-factor.sendChallenge')) {
+      return [];
+    }
+    if ($this->routeIs('webblocks.two-factor.send')) {
+      return ['purpose' => ['required', Rule::in(['setup', 'action'])], 'tab' => ['nullable', Rule::in(['recovery', 'replace', 'disable', 'policy'])]];
+    }
     $password = ['current_password' => ['required', 'string', 'current_password:web']];
     $factor = [
       'code' => ['nullable', 'required_without:recovery_code', 'string', 'regex:/^\d{6}$/D'],
@@ -43,14 +49,14 @@ final class TwoFactorRequest extends FormRequest
       ] + (app(TwoFactorAuthentication::class)->credential($this->user('web'))?->confirmed_at !== null ? $factor : []);
     }
 
-    return $factor + ($this->routeIs('webblocks.two-factor.verify') ? [] : $password);
+    return $factor + ($this->routeIs('webblocks.two-factor.verify', 'webblocks.two-factor.sendChallenge') ? [] : $password);
   }
 
   public function messages(): array
   {
     $messages = [];
-    foreach (['code', 'recovery_code', 'current_password', 'require_super_admin', 'role_ids', 'role_ids.*'] as $field) {
-      foreach (['required', 'required_without', 'string', 'regex', 'max', 'prohibits', 'current_password', 'boolean', 'array', 'integer', 'distinct', 'exists'] as $rule) {
+    foreach (['code', 'recovery_code', 'current_password', 'require_super_admin', 'role_ids', 'role_ids.*', 'purpose', 'tab'] as $field) {
+      foreach (['required', 'required_without', 'string', 'regex', 'max', 'prohibits', 'current_password', 'boolean', 'array', 'integer', 'distinct', 'exists', 'in'] as $rule) {
         $messages[$field.'.'.$rule] = __('webblocks-cms::two-factor.invalid');
       }
     }
@@ -63,7 +69,7 @@ final class TwoFactorRequest extends FormRequest
     if ($this->expectsJson()) {
       throw new ValidationException($validator, response()->json(['errors' => $validator->errors()], 422));
     }
-    $route = $this->routeIs('webblocks.two-factor.verify') ? 'webblocks.two-factor.challenge'
+    $route = $this->routeIs('webblocks.two-factor.verify', 'webblocks.two-factor.sendChallenge') ? 'webblocks.two-factor.challenge'
       : ($this->routeIs('webblocks.two-factor.policy') ? 'admin.system.settings.edit' : 'webblocks.two-factor.show');
     $parameters = $route === 'admin.system.settings.edit' ? ['tab' => 'security'] : [];
     if ($route === 'webblocks.two-factor.show') {
