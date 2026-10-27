@@ -1,5 +1,15 @@
 # Upgrading and Installation Topologies
 
+## 1.106.3: Email verification and panel account management
+
+CMS sign-in now uses email codes through the existing CMS outgoing-mail settings. No authenticator app, new Composer dependency, queue worker or external QR service is required. Normal account management stays inside the CMS panel; incomplete sign-in, required enrollment and plugin recovery retain the restricted authentication screen.
+
+Before upgrading an installation with enabled TOTP accounts, confirm outgoing-mail delivery and access to those accounts' current profile mailboxes, and retain their saved recovery codes. The normal update migrations bind enabled credentials to each account's current profile email, rotate session proofs, remove TOTP secrets and unfinished setup, and preserve recovery-code hashes and role enforcement. Email codes expire after five minutes and are single use. Delivery failures leave verification incomplete; recovery codes remain available. Log and array mail transports, including fallback destinations, are refused.
+
+After setup, verification stays bound to the confirmed address independently of later profile changes. Changing it requires the current password and an existing email or recovery code, followed by confirmation of the new profile address. Replacement renews recovery codes and requires other sessions to verify again.
+
+The schema no longer supports TOTP-only binaries. A rollback must restore the matching application and database backup. Password resets preserve verification, and no automatic administrator reset is introduced.
+
 ## 1.106.1: CMS two-factor authentication
 
 CMS TOTP uses PHP's built-in cryptographic functions. There are no additional 2FA Composer packages or XMLWriter requirement, and no QR-code setup. In your authenticator app, add an account manually, choose time-based (TOTP), and enter the key shown by the CMS. The profile uses six digits, HMAC-SHA-1 and 30-second steps.

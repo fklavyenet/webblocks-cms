@@ -2,13 +2,12 @@
 
 ## Unreleased
 
-### Changed
+## 1.106.3
 
-- Use email verification codes through existing CMS outgoing-mail settings instead of TOTP. No new package is required. Codes expire after five minutes, are single use, and have resend and attempt limits; recovery codes and mandatory-role policies remain available.
+- Use email verification codes through existing CMS outgoing-mail settings instead of TOTP, with no new dependency. Codes expire after five minutes, are single use, and have resend and attempt limits; recovery codes and mandatory-role policies remain available.
 - Keep normal verification setup and account management inside the CMS panel. Unverified sign-in, mandatory enrollment and plugin recovery retain a restricted authentication screen.
-- Keep verification addresses independent from profile-email changes. Replacing an address requires the existing factor and confirmation of the new address. Upgrade removes TOTP secrets while preserving enabled protection, recovery hashes and role policies; restore a backup before reverting to a TOTP-only version.
-
-## Unreleased
+- Keep verification addresses independent from later profile-email changes. Replacing an address requires the existing factor and confirmation of the new address.
+- Convert existing enabled TOTP accounts to their current profile email while preserving recovery codes and role policies. Confirm outgoing-mail delivery and access to those mailboxes before upgrading. TOTP secrets and unfinished setup are removed; restore the matching backup before reverting to a TOTP-only version.
 
 ## 1.106.2
 
