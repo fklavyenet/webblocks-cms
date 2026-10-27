@@ -18,6 +18,15 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
+    @if ($twoFactorAvailable ?? false)
+        <div class="wb-card wb-mb-4">
+            <div class="wb-card-body wb-split">
+                <div><h2 class="wb-card-title">{{ __('webblocks-cms::two-factor.title') }}</h2><p class="wb-text-muted">{{ __('webblocks-cms::two-factor.description') }}</p></div>
+                <a class="wb-btn wb-btn-secondary" href="{{ route('webblocks.two-factor.show') }}">{{ __('webblocks-cms::two-factor.manage') }}</a>
+            </div>
+        </div>
+    @endif
+
     <div class="wb-grid wb-grid-2">
         <div class="wb-card">
             <div class="wb-card-header">

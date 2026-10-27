@@ -12,6 +12,7 @@ use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\ProfilePasswordUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\ProfileUpdateRequest;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 
 class ProfileController extends Controller
@@ -20,6 +21,7 @@ class ProfileController extends Controller
   {
     return view('webblocks-cms::admin.profile.edit', [
       'user' => request()->user(),
+      'twoFactorAvailable' => app(TwoFactorAuthentication::class)->available(),
       'adminLocaleOptions' => $adminLocaleResolver->options(),
       'adminLocalePreferencesAvailable' => $adminLocaleResolver->userPreferencesAvailable(),
     ]);

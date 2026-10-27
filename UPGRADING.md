@@ -1,5 +1,15 @@
 # Upgrading and Installation Topologies
 
+## 1.106.0: CMS two-factor authentication
+
+Install the declared Composer dependencies and run the latest fresh/update migrations before enabling 2FA. TOTP uses `pragmarx/google2fa`; QR codes are generated locally with `bacon/bacon-qr-code` and PHP XMLWriter. Composer-managed installs resolve these requirements when upgrading the CMS.
+
+The package-only panel updater preserves the host application's dependency lock and does not install newly required libraries. For those installs, the operator must refresh the host Composer dependencies separately before enabling this feature. Check the host's CMS version constraint and repository configuration, then update `fklavyenet/webblocks-cms` with its dependencies through the normal Composer workflow. Never run a broad dependency update as an automatic CMS post-install action.
+
+The migration adds dedicated CMS credential, pending-enrollment, recovery-code and role-policy tables. It does not modify host passwords or enable enforcement by default. Back up the database and application encryption key together; losing the key makes encrypted authenticator secrets unusable. Restoring older database backups may also restore consumed recovery codes and previous factor settings, so reconcile security state before reopening access.
+
+Users enroll through Profile → Manage two-factor authentication. Super admins configure mandatory roles under System → Settings → Security. A matching assignment on any site requires enrollment before further panel access. Existing sessions must verify when 2FA is enabled. Confirm access to an authenticator or safely stored recovery codes before requiring enrollment. Password resets preserve the factor; they do not serve as an MFA bypass. There is no email-based or automatic administrator reset path.
+
 ## Admin navigation and ACL screens in 1.105.1
 
 Version 1.105.1 reorganizes existing sidebar destinations and aligns the Roles and permissions listing with shared CMS controls. Dashboard, Sites, Pages, Media and Assets remain direct links. Users, Roles and permissions, and API Tokens are under Users & access. Grouped links show icons and the active destination's group opens automatically. Existing authorization checks, plugin groups, SQL role grants and API capabilities are unchanged; no new database migration is introduced. Installations overriding the admin layout or ACL index should review their view overrides.

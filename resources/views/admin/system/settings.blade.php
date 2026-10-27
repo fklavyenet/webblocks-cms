@@ -18,7 +18,7 @@
 
     if ($errors->has('recipient_email')) {
         $systemTab = 'mail';
-    } elseif ($errors->hasAny([...array_keys($securityDefinitions), 'mode'])) {
+    } elseif ($errors->hasAny([...array_keys($securityDefinitions), 'mode', 'code', 'current_password', 'role_ids', 'require_super_admin'])) {
         $systemTab = 'security';
     }
 
@@ -333,6 +333,9 @@
         </div>
 
                     <div class="wb-tabs-panel {{ $systemTab === 'security' ? 'is-active' : '' }}" id="system-settings-security-panel">
+                        @if ($twoFactorAvailable ?? false)
+                            @include('webblocks-cms::admin.system.partials.two-factor-policy')
+                        @endif
                         <form method="POST" action="{{ route('admin.system.settings.security.update') }}" class="wb-card wb-card-muted wb-stack wb-gap-0">
                             @csrf
                             @method('PUT')

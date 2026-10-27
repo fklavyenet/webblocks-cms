@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms;
 
 use FilesystemIterator;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
@@ -12,6 +13,8 @@ use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionsHandler;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -67,6 +70,7 @@ use WebBlocks\Cms\Http\Middleware\PreventAdministrativeIndexing;
 use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Middleware\RequireAdminAccess;
+use WebBlocks\Cms\Http\Middleware\RequireCmsTwoFactor;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiCapability;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
@@ -86,6 +90,7 @@ use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
 use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
 use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
+use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
 use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
@@ -210,6 +215,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'install.php',
     'public.php',
     'plugin-recovery.php',
+    'two-factor.php',
   ];
 
   public const PACKAGE_VIEW_FILES = [
@@ -217,6 +223,10 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/system/plugins/recovery.blade.php',
     'auth/forgot-password.blade.php',
     'auth/login.blade.php',
+    'auth/two-factor.blade.php',
+    'auth/two-factor-challenge.blade.php',
+    'auth/partials/two-factor-fields.blade.php',
+    'admin/system/partials/two-factor-policy.blade.php',
     'auth/reset-password.blade.php',
     'admin/partials/audit-actor.blade.php',
     'admin/partials/flash.blade.php',
@@ -967,6 +977,17 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   {
     $this->configureEmbeddedPublisherClient();
     $this->bootMiddlewareAliases();
+    $httpKernel = $this->app->make(HttpKernel::class);
+    // Minimal console-only hosts (including plugin probes) have no web group.
+    if (array_key_exists('web', $httpKernel->getMiddlewareGroups())) {
+      $httpKernel->appendMiddlewareToGroup('web', RequireCmsTwoFactor::class);
+      $httpKernel->addToMiddlewarePriorityBefore(SubstituteBindings::class, RequireCmsTwoFactor::class);
+    }
+    Event::listen(Login::class, function (Login $event): void {
+      if ($event->guard === 'web' && request()->hasSession()) {
+        request()->session()->forget([TwoFactorSession::VERIFIED, TwoFactorSession::SETUP]);
+      }
+    });
     // Include authentication, plugin and API responses without changing public pages.
     $this->app->make(HttpKernel::class)->prependMiddleware(PreventAdministrativeIndexing::class);
     $this->bootAuthorization();
@@ -1023,6 +1044,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       // per-email+IP lockout lives in LoginController; this caps floods and
       // email-rotation attempts from a single source.
       return Limit::perMinute(30)->by($request->ip());
+    });
+
+    RateLimiter::for('webblocks-two-factor', function (Request $request) {
+      $identity = $request->user('web')?->getAuthIdentifier() ?? $request->session()->get('wbcms.two_factor.pending.user_id', 'guest');
+
+      return [Limit::perMinute(5)->by('two-factor-user:'.$identity), Limit::perMinute(30)->by('two-factor-ip:'.$request->ip())];
     });
 
     RateLimiter::for('contact-form-submissions', function (Request $request) {
@@ -1324,8 +1351,9 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
     if (! $this->app->routesAreCached()) {
       require __DIR__.'/../routes/plugin-recovery.php';
+      require __DIR__.'/../routes/two-factor.php';
     }
-    if (! app(PluginRecoveryMode::class)->active()) {
+    if (! app(PluginRecoveryMode::class)->active() && ! request()->is('webadmin/two-factor', 'webadmin/two-factor/*')) {
       app(PluginRuntimeRegistrar::class)->register();
     }
   }

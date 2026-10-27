@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.106.0
+
+- Add CMS-only TOTP authentication, local QR setup, ten single-use recovery codes and safe authenticator replacement. Enforce verification for host logins, remembered sessions, page previews and plugin recovery, with account/IP throttling and replay prevention.
+- Let active Super admins require 2FA for Super admins and built-in or custom site roles from System Settings → Security. Existing users complete setup before entering the panel; required users cannot disable 2FA. Credentials and recovery hashes use dedicated relational tables.
+- Add `pragmarx/google2fa`, `bacon/bacon-qr-code` and PHP XMLWriter as runtime requirements. Package-only panel updates require a separate operator-managed Composer dependency refresh before first enabling 2FA; see UPGRADING.md.
+
 ## 1.105.37
 
 - Restore CMS-owned Publisher Client translations at update entry points, including messages already loaded by older coinstalled clients. Preserve installation translation overrides and unrelated catalogs, with regression coverage for the modal and progress responses in all six panel languages.

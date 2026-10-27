@@ -2,7 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Auth;
 
-use App\Models\User;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
+use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 use WebBlocks\Cms\Support\Plugins\PluginRecoveryMode;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
@@ -36,11 +38,10 @@ class LoginController extends Controller
 
     $this->ensureIsNotRateLimited($request);
 
-    $user = User::query()
-      ->where('email', str((string) $credentials['email'])->lower()->toString())
-      ->first();
+    $credentials['email'] = str((string) $credentials['email'])->lower()->toString();
+    $user = Auth::guard('web')->getProvider()->retrieveByCredentials($credentials);
 
-    if ($user instanceof User && ! $user->is_active) {
+    if ($user instanceof Authenticatable && ! $user->is_active) {
       RateLimiter::hit($this->throttleKey($request), $this->decaySeconds());
 
       throw ValidationException::withMessages([
@@ -48,7 +49,11 @@ class LoginController extends Controller
       ]);
     }
 
-    if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+    $requiresChallenge = $user instanceof Authenticatable && app(TwoFactorAuthentication::class)->credential($user)?->confirmed_at !== null;
+    $guard = Auth::guard('web');
+    $valid = $requiresChallenge ? $guard->validate($credentials) : $guard->attempt($credentials, $request->boolean('remember'));
+
+    if (! $valid) {
       RateLimiter::hit($this->throttleKey($request), $this->decaySeconds());
 
       throw ValidationException::withMessages([
@@ -57,6 +62,13 @@ class LoginController extends Controller
     }
 
     RateLimiter::clear($this->throttleKey($request));
+
+    if ($requiresChallenge) {
+      $guard->getProvider()->rehashPasswordIfRequired($user, $credentials);
+      app(TwoFactorSession::class)->begin($request, $user, $request->boolean('remember'));
+
+      return to_route('webblocks.two-factor.challenge');
+    }
 
     $request->session()->regenerate();
     $request->user()?->forceFill(['last_login_at' => now()])->save();

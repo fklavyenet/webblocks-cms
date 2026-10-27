@@ -8,6 +8,8 @@ use Illuminate\View\View;
 use Throwable;
 use WebBlocks\Cms\Http\Requests\Admin\CmsMailTestEmailRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest;
+use WebBlocks\Cms\Models\CmsRole;
+use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\Mail\CmsTestEmailSender;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
@@ -52,6 +54,11 @@ class SystemSettingsController extends Controller
         'cms_mail_password_configured' => $this->systemSettings->cmsMailPasswordConfigured(),
       ],
       'mailDiagnostics' => $this->mailSettingsResolver->diagnostics(),
+      'twoFactorDependenciesReady' => app(TwoFactorAuthentication::class)->dependenciesReady(),
+      'twoFactorAvailable' => app(TwoFactorAuthentication::class)->available(),
+      'twoFactorPolicy' => app(TwoFactorAuthentication::class)->available() ? app(TwoFactorAuthentication::class)->policy() : [],
+      'twoFactorRoles' => app(TwoFactorAuthentication::class)->available() ? CmsRole::query()->orderBy('name')->get() : collect(),
+      'twoFactorEnabled' => request()->user() && app(TwoFactorAuthentication::class)->credential(request()->user())?->confirmed_at !== null,
       'securityLimits' => app(RequestSecuritySettings::class)->values(),
       'securityDefinitions' => RequestSecuritySettings::DEFINITIONS,
       'securityHasOverrides' => app(RequestSecuritySettings::class)->hasOverrides(),
