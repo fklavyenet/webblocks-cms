@@ -45,6 +45,15 @@ class LocalWebBlocksUiRuntimeTest extends TestCase
     );
   }
 
+  public function test_bundled_ui_supports_native_bounded_measurements(): void
+  {
+    $path = dirname(__DIR__, 2).'/public/cms/webblocks-ui/'.WebBlocks::UI_VERSION.'/webblocks-ui.css';
+    $css = (string) file_get_contents($path);
+    foreach (['meter.wb-meter {', 'meter.wb-meter::-webkit-meter-bar {', 'meter.wb-meter::-moz-meter-bar {'] as $selector) {
+      $this->assertStringContainsString($selector, $css);
+    }
+  }
+
   public function test_runtime_layouts_do_not_reference_the_webblocks_ui_cdn(): void
   {
     $root = dirname(__DIR__, 2);

@@ -1973,3 +1973,12 @@ transaction. Complete independent revision snapshots, SQL authority, legacy valu
 shapes, API wire formats and public rendering are preserved. No new persistence,
 background publication job, SSH requirement or hosting configuration is introduced.
 The existing API search-refresh middleware continues to coalesce index work.
+
+## Bounded measurement presentation
+
+CMS 1.106.5 bundles WebBlocks UI 2.32.0, including native `meter.wb-meter`
+for bounded measurements such as a poll choice percentage. Plugins render valid
+`min`, `max` and `value` attributes, accessible names and visible localized values;
+UI supplies themed native track/fill styling without JavaScript or inline CSS.
+This adds no core block type, editor field, stored setting, permission or API.
+UI assets remain versioned and bundled with the package for offline rendering.

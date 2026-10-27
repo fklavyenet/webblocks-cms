@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.106.5
+
+- Bundle WebBlocks UI 2.32.0 with the native wb-meter bounded-measurement primitive for plugin result displays. Keep UI assets package-local, versioned and checksum-verified; no CDN is needed at runtime.
+
 ## 1.106.4
 
 - Let enrolled Super admins reset another CMS account from Users after confirming their own password and a fresh verification or recovery code. Require a recovery reason and optionally replace an inaccessible profile email.
