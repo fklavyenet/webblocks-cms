@@ -46,7 +46,8 @@ class ConsentController extends Controller
   {
     $action->texts($site, $request->validated('locale'), $request->validated('texts'));
 
-    return $this->back($site, 'texts')->with('consent_locale', $request->validated('locale'));
+    return redirect()->route('admin.consent.texts', ['site' => $site->id, 'locale' => $request->validated('locale')])
+      ->with('consent_locale', $request->validated('locale'))->with('status', __('webblocks-cms::consent.saved'));
   }
 
   public function preview(Request $request, ConsentQuery $query): View

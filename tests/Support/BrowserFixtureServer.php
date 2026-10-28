@@ -56,9 +56,10 @@ final class BrowserFixtureServer
     if (! in_array($method, ['GET', 'HEAD'], true)) {
       return new Response('Read-only fixture.', 405, ['Allow' => 'GET, HEAD']);
     }
-    if ($path === '/') {
+    $consentScreen = $scenario === 'consent-admin' && in_array($path, ['/general', '/general-edit', '/texts', '/texts-edit'], true) ? ltrim($path, '/') : null;
+    if ($path === '/' || $consentScreen !== null) {
       try {
-        return new Response(self::document($scenario), 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+        return new Response(self::document($scenario, $consentScreen), 200, ['Content-Type' => 'text/html; charset=UTF-8']);
       } catch (RuntimeException) {
         return new Response('Fixture generation failed. Run its PHP test for details.', 500);
       }
@@ -120,7 +121,7 @@ final class BrowserFixtureServer
     return new Response('Not found.', 404);
   }
 
-  private static function document(string $scenario): string
+  private static function document(string $scenario, ?string $consentScreen = null): string
   {
     [$test, $environmentKey, $filter] = self::SCENARIOS[$scenario];
     $fixture = tempnam(sys_get_temp_dir(), 'wb-browser-');
@@ -128,7 +129,11 @@ final class BrowserFixtureServer
       throw new RuntimeException('Cannot create fixture file.');
     }
     try {
-      $process = new Process([PHP_BINARY, 'vendor/bin/phpunit', 'tests/Feature/'.$test.'.php', '--filter', $filter], dirname(__DIR__, 2), [$environmentKey => $fixture]);
+      $environment = [$environmentKey => $fixture];
+      if ($consentScreen !== null) {
+        $environment['WEBBLOCKS_CONSENT_ADMIN_SCREEN'] = $consentScreen;
+      }
+      $process = new Process([PHP_BINARY, 'vendor/bin/phpunit', 'tests/Feature/'.$test.'.php', '--filter', $filter], dirname(__DIR__, 2), $environment);
       $process->setTimeout(120)->mustRun();
       $html = file_get_contents($fixture);
       if ($html === false || $html === '') {

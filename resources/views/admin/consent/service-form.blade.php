@@ -1,6 +1,7 @@
 @php
-    $editHandle = request('edit', old('_consent_service'));
-    $editing = $editHandle === 'new' || isset($services[$editHandle]);
+    $editHandle = old('_consent_service', request('edit'));
+    $editHandle = is_string($editHandle) ? $editHandle : null;
+    $editing = ($canWrite && $editHandle === 'new') || isset($services[$editHandle]);
     $service = $services[$editHandle] ?? ['handle' => '', 'provider' => 'custom', 'name' => '', 'description' => '', 'category' => 'preferences', 'script_url' => '', 'privacy_url' => '', 'enabled' => true, 'cookies' => []];
     $closeUrl = route('admin.consent.services', ['site' => $site->id]);
     $serviceTab = old('_consent_tab', 'info');
@@ -45,7 +46,9 @@
                     </div>
                 </div>
             </div>
-            @if ($canWrite)<div class="wb-modal-footer"><button type="submit" class="wb-btn wb-btn-primary">{{ $t('save_changes') }}</button>@if ($service['handle'])<button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#consentDeleteModal">{{ $t('delete') }}</button>@endif</div>@endif
+            <div class="wb-modal-footer">
+                <x-webblocks-cms::admin.form-actions :cancel-url="$closeUrl" :cancel-attributes="['data-wb-dismiss' => 'modal']" :show-submit="$canWrite" :submit-label="$t('save_changes')" :delete-href="$canWrite && $service['handle'] ? '#consentDeleteModal' : null" :delete-label="$t('delete')" :delete-attributes="['data-wb-toggle' => 'modal', 'data-wb-target' => '#consentDeleteModal']" />
+            </div>
         </form>
     </div>
 </div>

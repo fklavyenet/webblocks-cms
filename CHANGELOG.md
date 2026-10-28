@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.107.1
+
+- Align Cookies and Privacy with shared admin filter cards, list cards, status pills and accessible icon row actions. Edit individual settings and translations in native modals, preserving site/language context and unrelated values through saves and validation errors.
+
 ## 1.107.0
 
 - Add site-owned Cookies and Privacy settings with General Settings, Services and Languages and Texts in the admin sidebar, matching capability-scoped Internal Content API operations and relational configuration.

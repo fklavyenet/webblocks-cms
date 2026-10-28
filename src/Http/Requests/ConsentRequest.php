@@ -70,6 +70,9 @@ class ConsentRequest extends FormRequest
         return;
       }
       $allowed = array_merge(array_keys($this->rules()), ['_token', '_method', '_consent_service', '_consent_tab', '_new_handle', '_clear_cookies']);
+      if ($this->routeIs('admin.consent.*')) {
+        $allowed = array_merge($allowed, ['_consent_setting', '_consent_text']);
+      }
       if (array_diff(array_keys($this->all()), $allowed) !== []) {
         $validator->errors()->add('consent', __('webblocks-cms::consent.invalid_fields'));
       }

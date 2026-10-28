@@ -1,4 +1,4 @@
 <div class="wb-card wb-card-muted" data-consent-cookie-row><div class="wb-card-body wb-grid wb-grid-3">
     @foreach (['name', 'path', 'duration'] as $field)<div class="wb-field"><label for="consent-cookie-{{ $i }}-{{ $field }}">{{ $t($field) }}</label><input id="consent-cookie-{{ $i }}-{{ $field }}" class="wb-input" name="cookies[{{ $i }}][{{ $field }}]" value="{{ $cookie[$field] ?? '' }}" maxlength="{{ $field === 'path' ? 255 : 160 }}" @required($field !== 'duration') @readonly(! $canWrite)></div>@endforeach
-    @if ($canWrite)<button type="button" class="wb-btn wb-btn-secondary" data-consent-cookie-remove>{{ $t('remove') }}</button>@endif
+    @if ($canWrite)<div class="wb-action-group"><button type="button" class="wb-action-btn wb-action-btn-delete" title="{{ $t('remove') }}" aria-label="{{ $t('remove') }}" data-consent-cookie-remove><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button></div>@endif
 </div></div>
