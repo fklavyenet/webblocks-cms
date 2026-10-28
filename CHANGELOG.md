@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.107.2
+
+- Group privacy translations into one row for the notice, one for the preference window and one per service. Edit each title/text or name/description pair together in its modal, with default, partly customized and customized status. Preserve existing translations, language selection, API fields and older field-level editor links.
+
 ## 1.107.1
 
 - Align Cookies and Privacy with shared admin filter cards, list cards, status pills and accessible icon row actions. Edit individual settings and translations in native modals, preserving site/language context and unrelated values through saves and validation errors.

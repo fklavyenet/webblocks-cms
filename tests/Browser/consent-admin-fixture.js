@@ -19,12 +19,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 check(!list.querySelector('textarea, input'), 'The list does not contain editing controls');
                 if (list.dataset.consentSection === 'texts') {
                     check(!!filter.querySelector('select[name="locale"]'), 'Site and language share one filter form');
+                    check(list.querySelectorAll('tbody tr').length === 6, 'Notice, preference window and each service occupy one row');
                     check(filter.querySelector('select[name="locale"]').value === 'de', 'The requested language is selected');
                     check(list.textContent.includes('Synthetische Datenschutzauswahl'), 'The list shows the effective translated value');
                 }
                 if (genericModal) {
                     check(genericModal.classList.contains('is-open'), 'The selected field opens with the native modal lifecycle');
                     var input = genericModal.querySelector('textarea, input:not([type="hidden"])');
+                    if (list.dataset.consentSection === 'texts') {
+                        check(genericModal.querySelectorAll('textarea').length === 2, 'The grouped editor contains both related text fields');
+                        check(!!genericModal.querySelector('textarea[name="texts[service.youtube.name]"]') && !!genericModal.querySelector('textarea[name="texts[service.youtube.description]"]'), 'The service name and description share one modal');
+                    }
                     var unchanged = new CustomEvent('wb:overlay:close-request', { bubbles: true, cancelable: true });
                     genericModal.dispatchEvent(unchanged);
                     check(!unchanged.defaultPrevented, 'Opening an editor alone does not mark it dirty');

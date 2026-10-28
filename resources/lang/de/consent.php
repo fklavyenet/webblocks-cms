@@ -108,4 +108,7 @@ return [
   'text_label_body' => 'Hinweistext',
   'text_label_preferences_title' => 'Titel des Einstellungsfensters',
   'text_label_preferences_body' => 'Text des Einstellungsfensters',
+  'notice_group' => 'Hinweis',
+  'preferences_group' => 'Einstellungsfenster',
+  'partly_customized' => 'Teilweise angepasst',
 ];

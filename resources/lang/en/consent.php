@@ -108,4 +108,7 @@ return [
   'text_label_body' => 'Notice text',
   'text_label_preferences_title' => 'Preference window title',
   'text_label_preferences_body' => 'Preference window text',
+  'notice_group' => 'Notice',
+  'preferences_group' => 'Preference window',
+  'partly_customized' => 'Partly customized',
 ];

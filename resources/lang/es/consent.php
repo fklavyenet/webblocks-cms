@@ -108,4 +108,7 @@ return [
   'text_label_body' => 'Texto del aviso',
   'text_label_preferences_title' => 'Título de la ventana de preferencias',
   'text_label_preferences_body' => 'Texto de la ventana de preferencias',
+  'notice_group' => 'Aviso',
+  'preferences_group' => 'Ventana de preferencias',
+  'partly_customized' => 'Parcialmente personalizada',
 ];

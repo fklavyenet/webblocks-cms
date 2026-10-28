@@ -18,11 +18,13 @@
                     <input type="hidden" name="_consent_text" value="{{ $editorKey }}">
                     <input type="hidden" name="locale" value="{{ $selectedLocale }}">
                     <p class="wb-text-sm wb-text-muted">{{ $t('translation_help') }}</p>
-                    <div class="wb-field">
-                        <label for="consent-editor-value" class="wb-label">{{ $editorTitle }}</label>
-                        <textarea id="consent-editor-value" name="texts[{{ $editorKey }}]" class="wb-textarea" maxlength="2000" rows="6" @readonly(! $canWrite)>{{ array_key_exists($editorKey, $oldTexts) ? $oldTexts[$editorKey] : $textRows[$editorKey]['stored'] }}</textarea>
-                    </div>
-                    <div class="wb-stack wb-gap-1"><strong>{{ $t('current_value') }}</strong><p>{{ $textRows[$editorKey]['value'] ?: $t('not_set') }}</p></div>
+                    @foreach ($textRows[$editorKey]['fields'] as $textKey => $field)
+                        @php($fieldId = 'consent-editor-'.str_replace('.', '-', $textKey))
+                        <div class="wb-field">
+                            <label for="{{ $fieldId }}" class="wb-label">{{ $field['label'] }}</label>
+                            <textarea id="{{ $fieldId }}" name="texts[{{ $textKey }}]" class="wb-textarea" maxlength="2000" rows="{{ str_ends_with($textKey, 'name') || str_ends_with($textKey, 'title') ? 2 : 4 }}" placeholder="{{ $field['value'] }}" @readonly(! $canWrite)>{{ array_key_exists($textKey, $oldTexts) ? $oldTexts[$textKey] : $field['stored'] }}</textarea>
+                        </div>
+                    @endforeach
                 @else
                     <input type="hidden" name="_consent_setting" value="{{ $editorKey }}">
                     @if ($editorKey === 'enabled')

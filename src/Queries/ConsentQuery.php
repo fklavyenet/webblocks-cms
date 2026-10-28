@@ -28,6 +28,14 @@ final class ConsentQuery
     $textRows = $request->routeIs('admin.consent.texts') ? $this->textRows($site, $selectedLocale, $data['translations']) : [];
     $editSetting = $request->session()->getOldInput('_consent_setting', $request->query('edit'));
     $editText = $request->session()->getOldInput('_consent_text', $request->query('edit'));
+    if (is_string($editText) && ! isset($textRows[$editText])) {
+      foreach ($textRows as $group => $row) {
+        if (isset($row['fields'][$editText])) {
+          $editText = $group;
+          break;
+        }
+      }
+    }
     $resetSite = $sites->first();
     $resetLocale = $resetSite->id === $site->id ? $data['locales']->first()?->code : $resetSite->enabledLocales()->first()?->code;
 
@@ -44,18 +52,28 @@ final class ConsentQuery
     $translator = app(CmsTranslator::class);
     $adminLocale = app(AdminLocaleResolver::class)->locale();
     $rows = [];
-    foreach (['title', 'body', 'preferences_title', 'preferences_body'] as $key) {
-      $rows[$key] = ['label' => $translator->get('consent.text_label_'.$key, $adminLocale), 'value' => $config->text($site, $key, $locale)];
+    foreach (['notice' => ['title', 'body'], 'preferences' => ['preferences_title', 'preferences_body']] as $group => $keys) {
+      $rows[$group] = ['label' => $translator->get('consent.'.$group.'_group', $adminLocale), 'fields' => []];
+      foreach ($keys as $key) {
+        $rows[$group]['fields'][$key] = ['label' => $translator->get('consent.text_label_'.$key, $adminLocale), 'value' => $config->text($site, $key, $locale)];
+      }
     }
     foreach ($config->services($site, $locale) as $handle => $service) {
+      $group = 'service.'.$handle;
+      $rows[$group] = ['label' => $service['name'], 'fields' => []];
       foreach (['name', 'description'] as $field) {
-        $rows['service.'.$handle.'.'.$field] = ['label' => $service['name'].' — '.$translator->get('consent.'.$field, $adminLocale), 'value' => $service[$field] ?? ''];
+        $rows[$group]['fields'][$group.'.'.$field] = ['label' => $translator->get('consent.'.$field, $adminLocale), 'value' => $service[$field] ?? ''];
       }
     }
     $stored = $translations->where('locale', $locale)->pluck('value', 'key');
-    foreach ($rows as $key => &$row) {
-      $row['stored'] = $stored->get($key);
-      $row['customized'] = $stored->has($key);
+    foreach ($rows as &$row) {
+      $customized = 0;
+      foreach ($row['fields'] as $key => &$field) {
+        $field['stored'] = $stored->get($key);
+        $customized += $stored->has($key) ? 1 : 0;
+      }
+      unset($field);
+      $row['translation_status'] = $customized === 0 ? 'default_value' : ($customized === count($row['fields']) ? 'customized' : 'partly_customized');
     }
 
     return $rows;

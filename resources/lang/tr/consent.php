@@ -108,4 +108,7 @@ return [
   'text_label_body' => 'Bildirim metni',
   'text_label_preferences_title' => 'Tercih penceresi başlığı',
   'text_label_preferences_body' => 'Tercih penceresi metni',
+  'notice_group' => 'Bildirim',
+  'preferences_group' => 'Tercih penceresi',
+  'partly_customized' => 'Kısmen özelleştirilmiş',
 ];

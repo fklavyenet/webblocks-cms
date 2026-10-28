@@ -338,7 +338,7 @@ class ConsentManagementTest extends TestCase
       $screen = getenv('WEBBLOCKS_CONSENT_ADMIN_SCREEN');
       $path = match ($screen) {
         'general' => 'privacy?', 'general-edit' => 'privacy?edit=lifetime_days&',
-        'texts' => 'privacy/texts?locale=de&', 'texts-edit' => 'privacy/texts?locale=de&edit=service.youtube.description&',
+        'texts' => 'privacy/texts?locale=de&', 'texts-edit' => 'privacy/texts?locale=de&edit=service.youtube&',
         default => 'privacy/services?edit=new&',
       };
       $response = $this->get('/webadmin/'.$path.'site='.$site->id);
@@ -350,7 +350,7 @@ class ConsentManagementTest extends TestCase
   #[Test]
   #[RunInSeparateProcess]
   #[PreserveGlobalState(false)]
-  public function panel_lists_preserve_filters_and_edit_one_value_without_overwriting_other_values(): void
+  public function panel_lists_preserve_filters_and_edit_text_groups_without_overwriting_other_values(): void
   {
     $site = $this->site();
     $other = $this->site();
@@ -367,9 +367,10 @@ class ConsentManagementTest extends TestCase
     $action->texts($other, 'de', ['title' => 'Synthetic notice', 'service.youtube.name' => 'Synthetic video service']);
     $url = '/webadmin/privacy/texts?site='.$other->id.'&locale=de';
     $response = $this->get($url)->assertOk()->assertViewHas('selectedLocale', 'de');
-    $this->assertSame('Synthetic notice', $response->viewData('textRows')['title']['value']);
-    $this->assertTrue($response->viewData('textRows')['title']['customized']);
-    $this->assertFalse($response->viewData('textRows')['body']['customized']);
+    $this->assertSame('Synthetic notice', $response->viewData('textRows')['notice']['fields']['title']['value']);
+    $this->assertCount(6, $response->viewData('textRows'));
+    $this->assertSame('partly_customized', $response->viewData('textRows')['notice']['translation_status']);
+    $this->assertSame('default_value', $response->viewData('textRows')['preferences']['translation_status']);
     $document = new \DOMDocument;
     @$document->loadHTML($response->getContent());
     $xpath = new \DOMXPath($document);
@@ -380,12 +381,15 @@ class ConsentManagementTest extends TestCase
       $this->assertNotEmpty($link->getAttribute('aria-label'));
       $this->assertStringContainsString('locale=de', $link->getAttribute('href'));
     }
-    $this->get($url.'&edit=service.youtube.description')->assertOk()->assertSee('id="consentEditorModal"', false)->assertSee('name="texts[service.youtube.description]"', false);
-    $this->put('/webadmin/privacy/'.$other->id.'/texts', ['locale' => 'de', '_consent_text' => 'service.youtube.description', 'texts' => ['service.youtube.description' => 'Synthetic description']])->assertRedirect($url);
+    $this->get($url.'&edit=service.youtube.description')->assertOk()->assertSee('id="consentEditorModal"', false)->assertSee('name="texts[service.youtube.description]"', false)->assertSee('name="texts[service.youtube.name]"', false)->assertViewHas('editText', 'service.youtube');
+    $this->put('/webadmin/privacy/'.$other->id.'/texts', ['locale' => 'de', '_consent_text' => 'service.youtube', 'texts' => ['service.youtube.name' => 'Synthetic grouped name', 'service.youtube.description' => 'Synthetic description']])->assertRedirect($url);
     $this->assertDatabaseHas('wbcms_consent_translations', ['site_id' => $other->id, 'locale' => 'de', 'key' => 'title', 'value' => 'Synthetic notice']);
     $this->assertDatabaseHas('wbcms_consent_translations', ['site_id' => $other->id, 'locale' => 'de', 'key' => 'service.youtube.description', 'value' => 'Synthetic description']);
-    $this->from($url.'&edit=service.youtube.description')->put('/webadmin/privacy/'.$other->id.'/texts', ['locale' => 'de', '_consent_text' => 'service.youtube.description', 'texts' => ['service.youtube.description' => str_repeat('x', 2001)]])->assertSessionHasErrors('texts.service.youtube.description');
-    $this->get($url)->assertOk()->assertSee('id="consentEditorModal"', false)->assertSee(str_repeat('x', 2001));
+    $this->get($url)->assertViewHas('textRows', fn ($rows) => $rows['service.youtube']['translation_status'] === 'customized');
+    $this->get($url.'&edit=notice')->assertOk()->assertSee('name="texts[title]"', false)->assertSee('name="texts[body]"', false);
+    $this->get($url.'&edit=preferences')->assertOk()->assertSee('name="texts[preferences_title]"', false)->assertSee('name="texts[preferences_body]"', false);
+    $this->from($url.'&edit=service.youtube')->put('/webadmin/privacy/'.$other->id.'/texts', ['locale' => 'de', '_consent_text' => 'service.youtube', 'texts' => ['service.youtube.name' => 'Preserved grouped name', 'service.youtube.description' => str_repeat('x', 2001)]])->assertSessionHasErrors('texts.service.youtube.description');
+    $this->get($url)->assertOk()->assertSee('id="consentEditorModal"', false)->assertSee(str_repeat('x', 2001))->assertSee('Preserved grouped name');
     $this->flushSession();
     $this->put('/webadmin/privacy/'.$other->id.'/settings', ['_consent_setting' => 'lifetime_days', 'lifetime_days' => 90])->assertRedirect('/webadmin/privacy?site='.$other->id);
     $this->assertDatabaseHas('wbcms_consent_settings', ['site_id' => $other->id, 'lifetime_days' => 90, 'privacy_url' => '/privacy', 'position' => 'top', 'enabled' => true]);
@@ -393,8 +397,10 @@ class ConsentManagementTest extends TestCase
     $this->from('/webadmin/privacy?site='.$other->id.'&edit=lifetime_days')->put('/webadmin/privacy/'.$other->id.'/settings', ['_consent_setting' => 'lifetime_days', 'lifetime_days' => 731])->assertSessionHasErrors('lifetime_days');
     $this->get('/webadmin/privacy?site='.$other->id)->assertOk()->assertViewHas('editSetting', 'lifetime_days')->assertSee('value="731"', false);
     $this->flushSession();
-    $this->put('/webadmin/privacy/'.$other->id.'/texts', ['locale' => 'de', '_consent_text' => 'service.youtube.description', 'texts' => ['service.youtube.description' => '']])->assertRedirect($url);
+    $this->put('/webadmin/privacy/'.$other->id.'/texts', ['locale' => 'de', '_consent_text' => 'service.youtube', 'texts' => ['service.youtube.name' => 'Synthetic grouped name', 'service.youtube.description' => '']])->assertRedirect($url);
     $this->assertDatabaseMissing('wbcms_consent_translations', ['site_id' => $other->id, 'locale' => 'de', 'key' => 'service.youtube.description']);
+    $this->assertDatabaseHas('wbcms_consent_translations', ['site_id' => $other->id, 'locale' => 'de', 'key' => 'service.youtube.name', 'value' => 'Synthetic grouped name']);
+    $this->get($url)->assertViewHas('textRows', fn ($rows) => $rows['service.youtube']['translation_status'] === 'partly_customized');
     $this->assertDatabaseHas('wbcms_consent_translations', ['site_id' => $other->id, 'locale' => 'de', 'key' => 'title', 'value' => 'Synthetic notice']);
     $token = $this->token(['consent.write'], [$other->id]);
     $this->withToken($token)->patchJson('/webadmin/api/sites/'.$other->id.'/consent', ['_consent_setting' => 'lifetime_days', 'lifetime_days' => 100])->assertUnprocessable();

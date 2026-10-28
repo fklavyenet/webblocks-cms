@@ -108,4 +108,7 @@ return [
   'text_label_body' => 'Texte de l’avis',
   'text_label_preferences_title' => 'Titre de la fenêtre des préférences',
   'text_label_preferences_body' => 'Texte de la fenêtre des préférences',
+  'notice_group' => 'Avis',
+  'preferences_group' => 'Fenêtre des préférences',
+  'partly_customized' => 'Partiellement personnalisée',
 ];
