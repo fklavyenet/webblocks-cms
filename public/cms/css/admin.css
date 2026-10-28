@@ -64,6 +64,15 @@ svg.wb-sidebar-brand-logo {
     width: 100%;
 }
 
+.wb-admin-dashboard-page .wb-sidebar-nav .wb-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.wb-admin-dashboard-page .wb-sidebar-nav > .wb-nav-group > .wb-nav-group-items {
+    padding-left: 18px;
+}
+
 .wb-admin-listing-view-form {
     display: flex;
     flex-wrap: wrap;

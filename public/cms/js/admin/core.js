@@ -175,7 +175,10 @@
 
         data = new window.FormData(form);
 
-        return Array.prototype.map.call(Array.from(data.entries()), function (entry) {
+        // Recovery/session bookkeeping and the selected editor tab are not edits.
+        return Array.from(data.entries()).filter(function (entry) {
+            return ['_editor_recovery_session', '_editor_recovery_base', '_slot_block_tab'].indexOf(entry[0]) === -1;
+        }).map(function (entry) {
             var value = entry[1];
 
             if (value && typeof value === 'object' && typeof value.name === 'string') {

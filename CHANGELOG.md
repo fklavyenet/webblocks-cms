@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.106.6
+
+- Use consistent 18 × 18 px icons for main and nested admin navigation items, with 18 px submenu indentation for more room and a clear hierarchy.
+- Avoid unsaved-change confirmation when opening and closing an unchanged block editor: recovery session metadata and tab selection no longer count as content edits. Keep confirmation for real edits and clear it when original values are restored.
+
 ## 1.106.5
 
 - Bundle WebBlocks UI 2.32.0 with the native wb-meter bounded-measurement primitive for plugin result displays. Keep UI assets package-local, versioned and checksum-verified; no CDN is needed at runtime.

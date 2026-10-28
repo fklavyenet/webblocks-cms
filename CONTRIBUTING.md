@@ -48,6 +48,7 @@ The browser fixtures use PHP's built-in server and the real Blade fragments expo
 
 ```sh
 php -S 127.0.0.1:8089 tests/Browser/parent-block-fixture.php
+php -S 127.0.0.1:8089 tests/Browser/dirty-overlay-fixture.php
 php -S 127.0.0.1:8089 tests/Browser/asset-picker-fixture.php
 php -S 127.0.0.1:8089 tests/Browser/rich-text-editor.php
 php -S 127.0.0.1:8089 tests/Browser/update-progress-fixture.php
@@ -58,6 +59,8 @@ Open `http://127.0.0.1:8089/` in a new tab of the already-open Chrome. These too
 PHP tests cover localized parent choices/order/selection in full and fragment editors, inert picker rows and initial media selections, rich-text field/form ownership, shared dialogs, toolbar controls and server-side rich-text sanitization. They do not execute browser JavaScript. Preserve the following browser checks during an authorized visual QA session:
 
 The update-progress fixture uses the real rendered modal, shared progress script and bundled WebBlocks UI. It intercepts all update/status requests with synthetic responses; its read-only server rejects mutations. The default case tests delayed server admission, monotonic elapsed time, fixed modal height, unavailable/foreign status, interruption/recheck and verified completion. Query cases `resume`, `client`, `legacy`, `auth` and `rejected` cover an existing operation, client-owned admission, older product views and admission failures. Each case reports PASS or FAIL on the page. These browser checks are optional and separate from the PHP-only CI suite.
+
+The dirty-overlay fixture checks the real close guard on a rendered block form: untouched forms, asynchronous recovery metadata, tab changes, real edits, fragment reinitialization, hidden content fields and reverted edits. It reports PASS or FAIL without saving content or contacting recovery endpoints.
 
 - Parent choices: repeated branch labels, hierarchy and the current parent remain identifiable in the Block Info tab.
 - Media picker: note the scroll position, materialized row count and image request count; search, replace the primary image, then add/remove gallery items and reopen the picker to check retained selections.

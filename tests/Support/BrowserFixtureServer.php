@@ -15,6 +15,7 @@ final class BrowserFixtureServer
     'retention' => ['SchedulerSetupTest', 'WEBBLOCKS_RETENTION_FIXTURE', 'retention_table_browser_fixture'],
     'scheduler' => ['SchedulerSetupTest', 'WEBBLOCKS_SCHEDULER_FIXTURE', 'retention_table_browser_fixture'],
     'parent' => ['SlotBlockEditorFragmentSafetyTest', 'WEBBLOCKS_PARENT_FIXTURE', 'full_and_fragment_parent_options'],
+    'dirty-overlay' => ['SlotBlockEditorFragmentSafetyTest', 'WEBBLOCKS_PARENT_FIXTURE', 'full_and_fragment_parent_options'],
     'asset-picker' => ['AssetPickerViewTest', 'WEBBLOCKS_ASSET_PICKER_FIXTURE', 'picker_results_remain_inert'],
     'rich-text' => ['RichTextEditorViewTest', 'WEBBLOCKS_RICH_TEXT_FIXTURE', 'editor_controls_and_shared_dialogs'],
     'editor-preview' => ['EditorPreviewTest', 'WEBBLOCKS_EDITOR_PREVIEW_FIXTURE', 'editor_panel_browser_fixture'],
@@ -70,6 +71,7 @@ final class BrowserFixtureServer
       '/cms/css/admin.css',
     ];
     $script = match ($scenario) {
+      'dirty-overlay' => '/cms/js/admin/core.js',
       'asset-picker' => '/cms/js/admin/asset-picker.js',
       'rich-text' => '/cms/js/admin/rich-text-editor.js',
       'editor-preview' => '/cms/js/admin/editor-preview.js',
@@ -86,6 +88,7 @@ final class BrowserFixtureServer
       $path === '/fixture.js' && $scenario === 'update-progress' => $root.'/tests/Browser/update-progress-fixture.js',
       in_array($path, $assets, true) => $root.'/public'.$path,
       $path === '/fixture.js' && $scenario === 'editor-preview' => $root.'/tests/Browser/editor-preview-fixture.js',
+      $path === '/fixture.js' && $scenario === 'dirty-overlay' => $root.'/tests/Browser/dirty-overlay-fixture.js',
       in_array($path, ['/fixture.css', '/fixture.js'], true) => $root.'/tests/Browser'.$path,
       default => null,
     };
@@ -119,7 +122,7 @@ final class BrowserFixtureServer
       unlink($fixture);
     }
 
-    if ($scenario === 'parent') {
+    if (in_array($scenario, ['parent', 'dirty-overlay'], true)) {
       $html = '<!doctype html><html lang="en" data-wb-theme="light"><body><button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#slot-block-editor-modal">Open block</button>'.$html.'</body></html>';
     }
     $version = WebBlocks::UI_VERSION;
@@ -130,6 +133,7 @@ final class BrowserFixtureServer
     $head .= '<script src="/cms/webblocks-ui/'.$version.'/webblocks-ui.js" defer></script>';
     if (! in_array($scenario, ['parent', 'update-progress', 'retention', 'scheduler'], true)) {
       $script = match ($scenario) {
+        'dirty-overlay' => 'core',
         'asset-picker' => 'asset-picker',
         'editor-preview' => 'editor-preview',
         default => 'rich-text-editor',
