@@ -13,6 +13,12 @@ class CmsApiTokenCapabilities
     private readonly PluginApiCapabilityRegistrar $pluginCapabilities,
   ) {}
 
+  public const CONSENT_READ = 'consent.read';
+
+  public const CONSENT_WRITE = 'consent.write';
+
+  public const CONSENT_CODE_WRITE = 'consent.code.write';
+
   public const CONTENT_READ = 'content.read';
 
   public const CONTENT_VALIDATE = 'content.validate';
@@ -121,6 +127,9 @@ class CmsApiTokenCapabilities
   ];
 
   public const ADVANCED = [
+    self::CONSENT_READ,
+    self::CONSENT_WRITE,
+    self::CONSENT_CODE_WRITE,
     self::SYSTEM_UPDATES_READ,
     self::SYSTEM_UPDATES_RUN,
     self::DOMAINS_WRITE,
@@ -174,6 +183,9 @@ class CmsApiTokenCapabilities
   ];
 
   public const ALL = [
+    self::CONSENT_READ,
+    self::CONSENT_WRITE,
+    self::CONSENT_CODE_WRITE,
     self::SYSTEM_UPDATES_READ,
     self::SYSTEM_UPDATES_RUN,
     self::CONTENT_READ,
@@ -220,6 +232,9 @@ class CmsApiTokenCapabilities
   ];
 
   public const LABELS = [
+    self::CONSENT_READ => 'Read site consent settings and services',
+    self::CONSENT_WRITE => 'Manage site consent settings, services and translations',
+    self::CONSENT_CODE_WRITE => 'Manage executable consent service sources',
     self::SYSTEM_UPDATES_READ => 'Read system update status and results',
     self::SYSTEM_UPDATES_RUN => 'Run an approved installation-wide system update',
     self::CONTENT_READ => 'Read content metadata and contracts',

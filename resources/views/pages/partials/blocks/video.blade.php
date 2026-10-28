@@ -3,31 +3,8 @@
   $rawUrl = trim((string) ($block->url ?? ''));
   $parsedScheme = strtolower((string) parse_url($rawUrl, PHP_URL_SCHEME));
   $safeUrl = $rawUrl !== '' && in_array($parsedScheme, ['http', 'https'], true) ? $rawUrl : null;
-  $host = strtolower((string) parse_url($safeUrl ?? '', PHP_URL_HOST));
-  $embedUrl = null;
-
-  if ($safeUrl && ($host === 'youtu.be' || $host === 'www.youtube.com' || $host === 'youtube.com')) {
-    $videoId = null;
-
-    if ($host === 'youtu.be') {
-      $videoId = trim((string) parse_url($safeUrl, PHP_URL_PATH), '/');
-    } else {
-      parse_str((string) parse_url($safeUrl, PHP_URL_QUERY), $query);
-      $videoId = $query['v'] ?? null;
-    }
-
-    if (is_string($videoId) && $videoId !== '') {
-      $embedUrl = 'https://www.youtube.com/embed/'.$videoId;
-    }
-  }
-
-  if ($safeUrl && ($host === 'vimeo.com' || $host === 'www.vimeo.com')) {
-    $videoId = trim((string) parse_url($safeUrl, PHP_URL_PATH), '/');
-
-    if ($videoId !== '' && preg_match('/^[0-9]+$/', $videoId) === 1) {
-      $embedUrl = 'https://player.vimeo.com/video/'.$videoId;
-    }
-  }
+  $embed = app(\WebBlocks\Cms\Support\Consent\ConsentPresets::class)->embed($rawUrl);
+  $embedUrl = $embed['url'] ?? null;
 
   $videoSource = $assetUrl;
 @endphp
@@ -51,15 +28,9 @@
           <source src="{{ $videoSource }}">
         </video>
       @elseif ($embedUrl)
-        <iframe
-          src="{{ $embedUrl }}"
-          title="{{ $block->title ?: 'Embedded video' }}"
-          loading="lazy"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
-        ></iframe>
+        @include('webblocks-cms::partials.consent-embed', ['embed' => $embed])
       @elseif ($safeUrl)
-        <a href="{{ $safeUrl }}" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">Open video</a>
+        <a href="{{ $safeUrl }}" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('consent.open_video', $block->renderLocaleCode()) }}</a>
       @endif
     </div>
   </div>

@@ -180,6 +180,7 @@ final class CmsResourcePolicy
   public function group(string $name): ?string
   {
     return match (true) {
+      str_starts_with($name, 'consent.') => 'consent',
       str_starts_with($name, 'profile.api-tokens.') => 'personal-tokens',
       str_starts_with($name, 'pages.') && (str_contains($name, 'versions') || str_contains($name, 'revision') || str_contains($name, 'candidate')) => 'revisions',
       str_starts_with($name, 'pages.'), str_starts_with($name, 'blocks.'), str_starts_with($name, 'content.') => 'pages',
@@ -243,6 +244,7 @@ final class CmsResourcePolicy
       'shared-slots' => (str_contains($name, 'revision') || str_contains($name, 'candidate') || str_contains($name, 'restore')) ? 'restore' : (str_starts_with($name, 'shared-slots.') && in_array($action, ['store', 'update', 'destroy', 'delete'], true) && ! str_contains($name, '.blocks.') ? 'manage' : 'update-content'),
       'messages' => in_array($action, ['destroy', 'bulk-destroy'], true) ? 'delete' : 'update-status',
       'engagement' => $action === 'destroy' ? 'delete' : 'moderate',
+      'consent' => 'update',
       'site-settings' => 'update',
       'automatic-pages' => in_array($action, ['activate', 'pause'], true) ? 'activate' : 'configure',
       'sources' => $action === 'preview' ? 'preview' : 'read',

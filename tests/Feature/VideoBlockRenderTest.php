@@ -48,13 +48,14 @@ class VideoBlockRenderTest extends TestCase
   }
 
   #[Test]
-  public function a_youtube_url_still_renders_the_iframe_embed(): void
+  public function a_youtube_url_renders_an_inert_consent_managed_embed(): void
   {
-    $html = $this->renderVideo(['url' => 'https://www.youtube.com/watch?v=abc123']);
+    $html = $this->renderVideo(['url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ']);
 
     $this->assertStringNotContainsString('<video', $html);
     $this->assertStringContainsString('<iframe', $html);
-    $this->assertStringContainsString('https://www.youtube.com/embed/abc123', $html);
+    $this->assertStringContainsString('data-src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"', $html);
+    $this->assertDoesNotMatchRegularExpression('/<iframe[^>]*\ssrc=/', $html);
   }
 
   #[Test]

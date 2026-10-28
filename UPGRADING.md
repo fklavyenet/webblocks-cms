@@ -1,5 +1,15 @@
 # Upgrading and Installation Topologies
 
+## 1.107.0: Site cookie and privacy management
+
+Run the normal package migrations. The update adds relational site consent settings, service overrides, translations and cookie descriptions, plus the External Content block. It requires no new Composer dependency or external consent platform.
+
+Open Cookies and Privacy in the admin sidebar and review each site's settings. Existing sites inherit the former effective Visitor Reports consent-banner setting once; later privacy settings are independent of reports. Published YouTube, Vimeo and Google Maps content uses managed consent placeholders. Disabled consent or disabled providers leave those embeds blocked. Uploaded local video is unchanged. A legacy analytics decision can authorize only CMS measurement, never the new external providers.
+
+Existing API tokens do not automatically receive the new `consent.read`, `consent.write` or system-only `consent.code.write` capabilities. Assign only the required site scope and capabilities. Executable source management requires a Super admin in the panel or a system token with source authority.
+
+Move independently added tracking code from custom head HTML, site JavaScript, tag managers or unregistered plugins into managed integrations when consent control is needed. The CMS does not automatically intercept arbitrary script execution. Overrides of the public layout, cookie-consent partial or Video renderer should be reconciled with the new native consent markup and locally shipped runtime. Use `#cookie-settings` to reopen preferences.
+
 ## 1.106.4: Account recovery and session revocation
 
 Run the normal package migrations. The update adds relational per-account recovery state and nullable audit source/reason fields. It does not reset accounts, change role policies or end existing sessions merely because the package was upgraded.

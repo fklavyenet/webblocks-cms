@@ -95,6 +95,7 @@ use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
 use WebBlocks\Cms\Support\Auth\TwoFactorAccountState;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\Consent\ConsentIntegrations;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
 use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
@@ -567,6 +568,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'cms/js/admin/api-token-capabilities.js',
     'cms/js/admin/builder-items.js',
     'cms/js/admin/core.js',
+    'cms/js/admin/consent.js',
     'cms/js/admin/embedded-application-settings.js',
     'cms/js/admin/gallery-items.js',
     'cms/js/admin/inline-block-builder.js',
@@ -600,6 +602,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'cms/js/admin/api-token-capabilities.js',
     'cms/js/admin/builder-items.js',
     'cms/js/admin/core.js',
+    'cms/js/admin/consent.js',
     'cms/js/admin/embedded-application-settings.js',
     'cms/js/admin/gallery-items.js',
     'cms/js/admin/inline-block-builder.js',
@@ -935,6 +938,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public function register(): void
   {
+    $this->app->singleton(ConsentIntegrations::class);
     $this->app->scoped(RequestMemo::class);
     // Resolve the current scope at call time, including from long-lived helpers.
     // Pivot/raw writes bypass model events; they must invalidate negative lookups too.

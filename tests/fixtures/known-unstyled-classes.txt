@@ -35,3 +35,6 @@ wb-slider-prev
 wb-slot-block-picker-body
 wb-slot-block-picker-dialog
 wb-tabs-panels
+
+# Native WebBlocks UI modal lifecycle hook (modal.js staysInOverlayRoot).
+wb-cookie-consent-modal

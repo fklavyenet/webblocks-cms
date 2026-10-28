@@ -22,6 +22,7 @@ class VisitorEventLogger
       return;
     }
 
+    $request->attributes->set('cms.consent.site', $page->site);
     $translation = $page->getRelation('currentTranslation');
     $trackingMode = $this->supportsTrackingMode()
       ? $this->visitorConsent->trackingMode($request)

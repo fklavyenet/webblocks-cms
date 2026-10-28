@@ -12,6 +12,8 @@ use WebBlocks\Cms\Support\WebBlocks;
 final class BrowserFixtureServer
 {
   private const SCENARIOS = [
+    'consent-admin' => ['ConsentManagementTest', 'WEBBLOCKS_CONSENT_ADMIN_FIXTURE', 'authorized_panel_users_can_open_all_three_screens_and_preview'],
+    'consent' => ['ConsentBrowserTest', 'WEBBLOCKS_CONSENT_FIXTURE', 'consent_browser_fixture'],
     'retention' => ['SchedulerSetupTest', 'WEBBLOCKS_RETENTION_FIXTURE', 'retention_table_browser_fixture'],
     'scheduler' => ['SchedulerSetupTest', 'WEBBLOCKS_SCHEDULER_FIXTURE', 'retention_table_browser_fixture'],
     'parent' => ['SlotBlockEditorFragmentSafetyTest', 'WEBBLOCKS_PARENT_FIXTURE', 'full_and_fragment_parent_options'],
@@ -62,6 +64,12 @@ final class BrowserFixtureServer
       }
     }
 
+    if ($scenario === 'consent' && $path === '/synthetic-embed') {
+      return new Response('<!doctype html><title>Synthetic embed</title><p>Local synthetic content</p>', 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+    }
+    if ($scenario === 'consent' && $path === '/synthetic-script.js') {
+      return new Response('window.syntheticConsentScriptLoads = (window.syntheticConsentScriptLoads || 0) + 1;', 200, ['Content-Type' => 'application/javascript']);
+    }
     $root = dirname(__DIR__, 2);
     $version = WebBlocks::UI_VERSION;
     $assets = [
@@ -69,8 +77,11 @@ final class BrowserFixtureServer
       "/cms/webblocks-ui/{$version}/webblocks-icons.css",
       "/cms/webblocks-ui/{$version}/webblocks-ui.js",
       '/cms/css/admin.css',
+      '/cms/css/public.css',
     ];
     $script = match ($scenario) {
+      'consent-admin' => '/cms/js/admin/core.js',
+      'consent' => '/cms/js/privacy-consent-sync.js',
       'dirty-overlay' => '/cms/js/admin/core.js',
       'asset-picker' => '/cms/js/admin/asset-picker.js',
       'rich-text' => '/cms/js/admin/rich-text-editor.js',
@@ -80,11 +91,16 @@ final class BrowserFixtureServer
     if ($script !== null) {
       $assets[] = $script;
     }
+    if ($scenario === 'consent-admin') {
+      $assets[] = '/cms/js/admin/consent.js';
+    }
     if ($scenario === 'editor-preview') {
       $assets[] = '/cms/js/admin/editor-preview-frame.js';
     }
     $file = match (true) {
       $path === '/progress.js' && $scenario === 'update-progress' => $root.'/src/Support/Updates/Client/Resources/js/update-progress.js',
+      $path === '/fixture.js' && $scenario === 'consent-admin' => $root.'/tests/Browser/consent-admin-fixture.js',
+      $path === '/fixture.js' && $scenario === 'consent' => $root.'/tests/Browser/consent-fixture.js',
       $path === '/fixture.js' && $scenario === 'update-progress' => $root.'/tests/Browser/update-progress-fixture.js',
       in_array($path, $assets, true) => $root.'/public'.$path,
       $path === '/fixture.js' && $scenario === 'editor-preview' => $root.'/tests/Browser/editor-preview-fixture.js',
@@ -122,6 +138,9 @@ final class BrowserFixtureServer
       unlink($fixture);
     }
 
+    if ($scenario === 'consent-admin') {
+      $html = preg_replace('~<head>.*?</head>|<script\b[^>]*>.*?</script>~s', '', $html);
+    }
     if (in_array($scenario, ['parent', 'dirty-overlay'], true)) {
       $html = '<!doctype html><html lang="en" data-wb-theme="light"><body><button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#slot-block-editor-modal">Open block</button>'.$html.'</body></html>';
     }
@@ -131,14 +150,21 @@ final class BrowserFixtureServer
       $head .= '<link rel="stylesheet" href="'.$css.'">';
     }
     $head .= '<script src="/cms/webblocks-ui/'.$version.'/webblocks-ui.js" defer></script>';
-    if (! in_array($scenario, ['parent', 'update-progress', 'retention', 'scheduler'], true)) {
+    if (! in_array($scenario, ['parent', 'update-progress', 'retention', 'scheduler', 'consent'], true)) {
       $script = match ($scenario) {
+        'consent-admin' => 'core',
         'dirty-overlay' => 'core',
         'asset-picker' => 'asset-picker',
         'editor-preview' => 'editor-preview',
         default => 'rich-text-editor',
       };
       $head .= '<script src="/cms/js/admin/'.$script.'.js" defer></script>';
+    }
+    if ($scenario === 'consent-admin') {
+      $head .= '<script src="/cms/js/admin/consent.js" defer></script>';
+    }
+    if ($scenario === 'consent') {
+      $head .= '<link rel="stylesheet" href="/cms/css/public.css">';
     }
     $head .= '<script src="/fixture.js" defer></script></head>';
     if ($scenario === 'update-progress') {

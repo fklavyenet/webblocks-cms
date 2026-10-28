@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
         check(false, 'Recovery session assigned after initialization');
         setMetadata('_editor_recovery_base', 'synthetic-fingerprint');
         setMetadata('_slot_block_tab', 'settings');
+        setMetadata('_consent_tab', 'consent-service-cookies');
         check(false, 'Recovery metadata and tab selection');
 
         var parent = form.elements.namedItem('parent_id');

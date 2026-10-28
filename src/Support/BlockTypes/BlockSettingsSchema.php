@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\BlockTypes;
 
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\Consent\ConsentPresets;
 use WebBlocks\Cms\Support\Contact\ContactPrivacyNotice;
 use WebBlocks\Cms\Support\InternalContentApi\BlockSettingsPatchPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
@@ -28,6 +29,9 @@ final class BlockSettingsSchema
     }
 
     $rules = BlockSettingsPatchPolicy::rulesFor($type);
+    if ($type === 'external-content') {
+      $rules['url'] = ['provider_embed'];
+    }
     $rules += ['url' => ['url'], 'target' => ['enum', ['_self', '_blank']], 'aria_label' => ['text', 255],
       'content_bindings' => ['object'], 'content_collection' => ['object']];
     if (in_array($type, ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true)) {
@@ -112,7 +116,7 @@ final class BlockSettingsSchema
       'bool' => 'boolean', 'int' => 'integer', 'object', 'application_settings' => 'object', 'array' => 'array', default => 'string'
       };
       $constraints = match ($rule[0]) {
-        'enum' => ['enum' => $rule[1]], 'int' => ['minimum' => $rule[1], 'maximum' => $rule[2]], 'text' => ['max_length' => $rule[1]], 'web_url' => ['max_length' => 2048], default => [],
+        'enum' => ['enum' => $rule[1]], 'int' => ['minimum' => $rule[1], 'maximum' => $rule[2]], 'text' => ['max_length' => $rule[1]], 'web_url', 'provider_embed' => ['max_length' => 2048], default => [],
       };
       $aliases = match (true) {
         $type === 'slider' && $key === 'transition' => ['fade' => 'slide'],
@@ -122,7 +126,7 @@ final class BlockSettingsSchema
       $clearValues = $type === 'link-list' ? match ($key) {
       'row_layout' => ['index'], 'list_frame' => ['joined'], 'thumb_size' => ['square'], default => []
       } : [];
-      $required = $type === 'application' && $key === 'application_handle';
+      $required = ($type === 'application' && $key === 'application_handle') || ($type === 'external-content' && $key === 'url');
       $invalid = $mode === 'invalid_plugin_schema';
       $closed = $invalid ? 'invalid_plugin_schema' : $closed;
       $fields[$key] = $constraints + ['aliases' => $aliases, 'clear_values' => $clearValues, 'type' => $typeName, 'rule' => $rule, 'required_on_create' => $required, 'nullable' => ! $required, 'empty' => $required ? 'reject' : 'clear', 'missing' => 'preserve_on_update',
@@ -147,6 +151,7 @@ final class BlockSettingsSchema
       'text' => is_string($value) && mb_strlen($text) <= $rule[1],
       'url' => is_string($value) && mb_strlen($text) <= 2048 && preg_match('/^(\/(?!\/)|#|https?:\/\/|mailto:|tel:)/i', $text) === 1,
       'web_url' => ContactPrivacyNotice::normalizeUrl($value) !== null,
+      'provider_embed' => is_string($value) && mb_strlen($text) <= 2048 && app(ConsentPresets::class)->embed($text) !== null,
       'email' => is_string($value) && filter_var($text, FILTER_VALIDATE_EMAIL) !== false,
       'menu_key' => is_string($value) && in_array($text, NavigationItem::menuKeys(), true),
       'anchor' => is_string($value) && strlen($text) <= 255 && preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_:.]*$/', $text) === 1,
@@ -161,6 +166,7 @@ final class BlockSettingsSchema
       'bool' => $valid ? filter_var($value, FILTER_VALIDATE_BOOL) : $value,
       'int' => $valid ? (int) $value : $value,
       'enum' => $valid ? $text : $value,
+      'provider_embed' => $valid ? app(ConsentPresets::class)->embed($text)['url'] : $value,
       default => $valid && is_string($value) ? trim($value) : $value,
     };
   }

@@ -200,12 +200,12 @@ Underscores normalize to hyphens in `data-wb-public-block-type`; for example `co
 
 ## Quick Catalog Index
 
-The current published core catalog contains 55 rows:
+The current published core catalog contains 56 rows:
 
 | Group | Handles |
 | --- | --- |
 | Layout and composition | `section`, `container`, `stack`, `split`, `cluster`, `grid`, `card`, `card_header`, `card_body`, `card_footer`, `slider`, `slide` |
-| Editorial and marketing | `header`, `plain_text`, `rich-text`, `content_header`, `hero`, `cta`, `columns`, `column_item`, `feature-grid`, `feature-item`, `stat-card`, `image`, `gallery`, `download`, `file`, `video`, `audio`, `code`, `button_link`, `table`, `quote`, `page-list`, `application` |
+| Editorial and marketing | `header`, `plain_text`, `rich-text`, `content_header`, `hero`, `cta`, `columns`, `column_item`, `feature-grid`, `feature-item`, `stat-card`, `image`, `gallery`, `download`, `file`, `video`, `external-content`, `audio`, `code`, `button_link`, `table`, `quote`, `page-list`, `application` |
 | Navigation | `link-list`, `link-list-item`, `navigation-auto`, `toc`, `breadcrumb`, `header-actions`, `sticky-navbar`, `navbar-brand`, `navbar-navigation`, `sidebar-brand`, `sidebar-navigation`, `sidebar-nav-item`, `sidebar-nav-group`, `search-form`, `sidebar-footer` |
 | Pattern, form, and engagement | `alert`, `contact_form`, `rating`, `comments` |
 | Human-only advanced | `html` |
@@ -570,6 +570,17 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | HTML | Generic wrapper plus `<a class="wb-btn wb-btn-primary">` or its secondary-class equivalent; `_blank` adds `rel="noopener noreferrer"`. Empty or unsafe URL emits no anchor. |
 | Example appearance | One managed primary or secondary action, or several actions arranged by a Cluster. |
 | Avoid | Hardcoded anchors in HTML or substituting it for Hero/CTA's internal managed-action child when the action must render inside that promo root. |
+
+### `external-content` — External Content
+
+| Contract area | Source-backed behavior |
+| --- | --- |
+| Editable content | `translations.title`, `translations.content`; shared canonical `url` for a supported provider URL or a copied Google Maps iframe. |
+| Settings and variants | No additional settings. Recognizes HTTPS YouTube/watch/shorts/embed and youtu.be URLs, Vimeo video URLs, and exact Google Maps embed URLs. Copied iframe input contributes only its validated source; other attributes/markup are never rendered. |
+| Children/media | None. No remote thumbnail request is made before permission. |
+| HTML | Owns a card root with a local consent placeholder and an inert template containing an iframe with `data-src`; no live iframe `src` before permission. |
+| Consent | Uses the site's ready-made YouTube, Vimeo or Google Maps service. A one-time action loads only the selected content item. A lasting permission applies only to that service and site. Disabled consent or disabled providers leave managed embeds blocked. |
+| API | API and human writable. Draft placement does not activate a provider in live content; live published video/external-content blocks and referenced active Shared Slots determine provider use. |
 
 ### `table` — Table
 
@@ -1984,3 +1995,21 @@ for bounded measurements such as a poll choice percentage. Plugins render valid
 UI supplies themed native track/fill styling without JavaScript or inline CSS.
 This adds no core block type, editor field, stored setting, permission or API.
 UI assets remain versioned and bundled with the package for offline rendering.
+
+## Site cookie and privacy management
+
+The sidebar has a Cookies and Privacy group with General Settings, Services and Languages and Texts. It remains accessible to permitted operators when consent is disabled. Settings are site-scoped, independent of Visitor Reports, and stored in `wbcms_consent_settings`, `wbcms_consent_services`, `wbcms_consent_translations` and `wbcms_consent_cookies`. General fields are `enabled`, `lifetime_days` (1–730), `privacy_url` (safe site path or HTTPS URL) and `position` (bottom/top). Existing installations inherit their former effective consent-banner setting once; subsequent site settings are independent. The former System Settings privacy panel links to the site workspace instead of displaying an ineffective global toggle. New sites default to enabled, without prompting when there are no optional services in use.
+
+Ready-made provider handles are `cms-analytics`, `youtube`, `google-maps` and `vimeo`. They have code-owned defaults; site overrides and custom services are relational records. Categories are necessary, preferences, analytics, marketing and external. Used, enabled services determine the public modal; unused providers do not create empty categories. CMS measurement is used only when reports are enabled. Basic visitor counts retain their existing behavior. Published known-provider Video and External Content blocks are consent-managed. YouTube uses privacy-enhanced embeds. Local uploaded video remains native video.
+
+The service write contract includes `provider`, `name`, `description`, `category`, `enabled`, `privacy_url`, `script_url` and `cookies` (name/path/duration rows). Handles match `[a-z][a-z0-9-]{0,39}`. A site has at most 16 persisted overrides/custom services, with at most 20 described cookies per service. Script sources must be HTTPS and may only be assigned to custom services. Changing executable sources, changing an executable service's enabled/category values, declaring a service necessary or deleting an executable service requires separate source authority. Reserved session/CSRF/consent cookies cannot be declared for removal. Executable service source changes require a new service revision. Removing a ready-made service keeps a disabled override rather than silently restoring its enabled default.
+
+Internal API operations: `GET /sites/{site}/consent` requires `consent.read`; `PATCH /sites/{site}/consent`, `PUT`/`DELETE /sites/{site}/consent/services/{service}` and `PUT /sites/{site}/consent/texts` require `consent.write`. Source authority additionally requires `consent.code.write`, which is system-token-only and not delegated to personal tokens; session source authority requires a Super admin. Both transports enforce site scope. Panel permissions are `cms.consent.read` and `cms.consent.update`, independently grantable. Text writes accept an enabled site `locale` and a `texts` map: title/body/preferences_title/preferences_body plus service.{handle}.name/description. Blank values clear overrides; source defaults provide six languages and the normal default-language fallback. Admin and private render previews use the real markup but never store choices or load managed external sources.
+
+The public authenticated cookie stores a compact, expiring site/service-revision decision protocol, not configuration or a server persistence document. It is HttpOnly, SameSite=Lax and Secure on HTTPS; browser code receives the current state in escaped page data. No localStorage is required. An older analytics-only consent cookie can authorize only the existing CMS measurement and cannot grant any new service. Service revisions prevent a prior accept-all from authorizing a replacement or changed service. Consent-bearing HTML is private/no-store and varies on Cookie.
+
+The CMS-owned `WebBlocksCmsConsent` browser API exposes open/get/has/set. `#cookie-settings` and the existing preference-center open trigger remain supported. The preference center exists hidden whenever the feature is enabled and never automatically opens after a stored decision. Opening or closing unsaved edits does not save, emit a change or make a sync request. Saving posts status/services/revisions to `/privacy-consent/sites/{site}`; the endpoint resolves the current host's site and refuses foreign/disabled sites and stale grants. A failed save grants nothing new. Successful writes emit the existing `wb:cookie-consent:change` category aggregate with additional service choices. The old `/privacy-consent/sync` endpoint remains compatible.
+
+One-time embed permission is memory-only and limited to that content instance. Persistent changes discard one-time grants; withdrawal removes managed frames, clears declared first-party cookies where possible and reloads after an executed managed script is revoked. Third-party cookies and arbitrary already-running scripts cannot be universally erased. Raw custom head HTML, site JS, unregistered plugin code and tag-manager descendants require explicit integration; a visible switch is not automatic control of every external resource.
+
+Trusted host/plugin providers may register a consent definition through `ConsentIntegrations::register`. Plugin registrations supply their owning plugin handle; disabled or unavailable plugins are excluded. Definitions include a stable version/category/source fingerprint; site overrides still take precedence and cannot replace compiled executable sources. Server integrations can call `ConsentState::allows`; browser integrations use `WebBlocksCmsConsent.has` and the consent-change event. No external CMP, SaaS, runtime dependency or automatic remote cookie scanner is introduced.

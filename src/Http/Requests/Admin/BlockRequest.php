@@ -24,6 +24,7 @@ use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
+use WebBlocks\Cms\Support\Consent\ConsentPresets;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactPrivacyNotice;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoring;
@@ -50,6 +51,12 @@ class BlockRequest extends FormRequest
   {
     $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
     $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
+    if ($selectedBlockType?->slug === 'external-content' && $this->filled('url')) {
+      $embed = app(ConsentPresets::class)->embed((string) $this->input('url'));
+      if ($embed) {
+        $this->merge(['url' => $embed['url']]);
+      }
+    }
     $localeCode = Locale::normalizeCode($this->input('locale'));
 
     if ($selectedBlockType?->slug !== 'contact_form' || $localeCode !== null || $this->has('store_submissions')) {
@@ -462,6 +469,10 @@ class BlockRequest extends FormRequest
       $existingBlock = $existingBlock instanceof Block ? $existingBlock : null;
       $selectedBlockTypeId = (int) ($this->input('block_type_id') ?: $this->route('block')?->block_type_id ?: 0);
       $selectedBlockType = $selectedBlockTypeId > 0 ? BlockType::query()->find($selectedBlockTypeId) : null;
+      if ($selectedBlockType?->slug === 'external-content' && $localeCode === null
+        && app(ConsentPresets::class)->embed((string) $this->input('url', $existingBlock?->url)) === null) {
+        $validator->errors()->add('url', __('webblocks-cms::consent.embed_help'));
+      }
       if ($selectedBlockType?->slug === 'contact_form' && $this->filled('privacy_notice_url')
         && ContactPrivacyNotice::normalizeUrl($this->input('privacy_notice_url')) === null) {
         $validator->errors()->add('privacy_notice_url', app(CmsTranslator::class)->admin('blocks.contact_form.privacy_notice_invalid', app(AdminLocaleResolver::class)->locale()));

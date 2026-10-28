@@ -5,7 +5,10 @@ namespace WebBlocks\Cms\Support\Visitors;
 use Illuminate\Cookie\CookieJar;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Cookie;
+use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\VisitorEvent;
+use WebBlocks\Cms\Support\Consent\ConsentConfiguration;
+use WebBlocks\Cms\Support\Consent\ConsentState;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
 class VisitorConsent
@@ -31,6 +34,16 @@ class VisitorConsent
 
   public function analyticsAccepted(Request $request): bool
   {
+    if (app(ConsentConfiguration::class)->ready()) {
+      $site = $request->attributes->get('cms.consent.site');
+      if ($site instanceof Site) {
+        $config = app(ConsentConfiguration::class);
+        $services = $config->publicServices($site);
+
+        return $config->settings($site)['enabled'] && (app(ConsentState::class)->read($request, $site, $services)['services']['cms-analytics'] ?? false);
+      }
+    }
+
     return $this->storedChoice($request) === self::ACCEPTED;
   }
 

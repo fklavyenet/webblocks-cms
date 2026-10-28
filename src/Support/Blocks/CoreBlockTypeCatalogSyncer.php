@@ -352,6 +352,14 @@ class CoreBlockTypeCatalogSyncer
         'status' => 'published',
       ],
       [
+        'name' => 'External Content',
+        'slug' => 'external-content',
+        'category' => 'content',
+        'description' => 'Consent-managed YouTube, Vimeo or Google Maps content with translated title and description.',
+        'source_type' => 'static', 'is_system' => false, 'is_container' => false,
+        'sort_order' => 14, 'status' => 'published',
+      ],
+      [
         'name' => 'Video',
         'slug' => 'video',
         'category' => 'content',

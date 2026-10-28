@@ -4,32 +4,18 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Http\Request;
 use PHPUnit\Framework\Attributes\Test;
-use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRenderController;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\ConsentSetting;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
-use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Visitors\VisitorConsent;
 use WebBlocks\Cms\Tests\TestCase;
 
-/**
- * Consent shipped as a server half with no visitor half. POST
- * /privacy-consent/sync validated a decision and returned the cookie,
- * VisitorConsent already had bannerEnabled()/shouldShowBanner(), System
- * Settings already had the toggle and its six translations, and
- * cms/js/privacy-consent-sync.js already bridged the UI runtime to the
- * endpoint. None of it was reachable: no view rendered a banner and no view
- * defined window.WebBlocksCmsPrivacyConsent, so the script the package
- * published was dead on arrival and an EU site could not surface consent at
- * all.
- *
- * These tests hold the wiring together: the banner renders when it should, it
- * carries the WebBlocks UI hooks the runtime upgrades, and the bridge script
- * gets the config it reads on line one.
- */
+/** Regression coverage for independent site consent and an always-reopenable preference center. */
 class PublicCookieConsentBannerTest extends TestCase
 {
   protected function defineEnvironment($app): void
@@ -78,7 +64,7 @@ class PublicCookieConsentBannerTest extends TestCase
 
     $this->assertStringContainsString('wb-cookie-consent-banner', $html);
     $this->assertStringContainsString('wbCookiePreferences', $html, 'The banner\'s Customize button targets the preference modal by id.');
-    $this->assertStringContainsString('data-wb-cookie-consent', $html, 'WBCookieConsent upgrades this hook; without it the banner is inert markup.');
+    $this->assertStringContainsString('data-cms-consent-root', $html, 'The CMS owns the service-level consent lifecycle.');
   }
 
   #[Test]
@@ -86,10 +72,10 @@ class PublicCookieConsentBannerTest extends TestCase
   {
     $html = $this->renderPage();
 
-    // PublicPrivacyConsentController::sync requires this exact preference set.
-    foreach (['necessary', 'preferences', 'analytics', 'marketing'] as $category) {
-      $this->assertStringContainsString('data-wb-cookie-category="'.$category.'"', $html);
-    }
+    $this->assertStringContainsString('data-cms-consent-service="cms-analytics"', $html);
+    $this->assertStringContainsString('Necessary', $html);
+    $this->assertStringNotContainsString('data-cms-consent-service="youtube"', $html);
+
   }
 
   #[Test]
@@ -100,12 +86,10 @@ class PublicCookieConsentBannerTest extends TestCase
     $this->assertStringContainsString('cms/js/privacy-consent-sync.js', $html);
     $this->assertStringNotContainsString('WebBlocksCmsPrivacyConsent', $html);
 
-    // privacy-consent-sync.js returns immediately unless all three are present.
-    foreach (['data-sync-url', 'data-csrf-token', 'data-reports-enabled'] as $attribute) {
-      $this->assertStringContainsString($attribute, $html);
-    }
+    $this->assertStringContainsString('data-consent-config=', $html);
+    $this->assertStringContainsString('privacy-consent', $html);
+    $this->assertStringContainsString('csrfToken', $html);
 
-    $this->assertStringContainsString('privacy-consent', $html, 'syncUrl must point at the endpoint the controller serves.');
   }
 
   #[Test]
@@ -116,6 +100,7 @@ class PublicCookieConsentBannerTest extends TestCase
     $html = $this->renderPage([$consent->cookieName() => VisitorConsent::ACCEPTED]);
 
     $this->assertStringNotContainsString('wb-cookie-consent-banner', $html);
+    $this->assertStringContainsString('id="wbCookiePreferences"', $html);
     $this->assertStringContainsString(
       'cms/js/privacy-consent-sync.js',
       $html,
@@ -124,41 +109,41 @@ class PublicCookieConsentBannerTest extends TestCase
   }
 
   #[Test]
-  public function the_system_settings_toggle_suppresses_the_whole_feature(): void
+  public function site_settings_can_suppress_the_whole_feature(): void
   {
-    $this->app->make(SystemSettings::class)->save([SystemSettings::VISITOR_CONSENT_BANNER_ENABLED => '0']);
-
-    $html = $this->renderPage();
-
+    $html = $this->renderPage(enabled: false);
     $this->assertStringNotContainsString('wb-cookie-consent-banner', $html);
+    $this->assertStringNotContainsString('id="wbCookiePreferences"', $html);
     $this->assertStringNotContainsString('cms/js/privacy-consent-sync.js', $html);
   }
 
   #[Test]
-  public function turning_visitor_reports_off_suppresses_the_whole_feature(): void
+  public function consent_remains_available_when_visitor_reports_are_off(): void
   {
     config()->set('cms.visitor_reports.enabled', false);
-
     $html = $this->renderPage();
-
     $this->assertStringNotContainsString('wb-cookie-consent-banner', $html);
-    $this->assertStringNotContainsString('cms/js/privacy-consent-sync.js', $html);
+    $this->assertStringContainsString('id="wbCookiePreferences"', $html);
+    $this->assertStringContainsString('cms/js/privacy-consent-sync.js', $html);
   }
 
   /**
    * @param  array<string, string>  $cookies
    */
-  private function renderPage(array $cookies = []): string
+  private function renderPage(array $cookies = [], bool $enabled = true): string
   {
     $page = $this->seedPage();
+    ConsentSetting::query()->updateOrCreate(['site_id' => $page->site_id], ['enabled' => $enabled]);
 
-    $request = Request::create('/webadmin/api/pages/'.$page->id.'/render', 'GET', ['format' => 'html'], $cookies);
+    $request = Request::create('/about', 'GET', [], $cookies);
 
     // The layout reads the consent cookie through the request() helper, so the
     // container's request has to be the one carrying the cookie.
     $this->app->instance('request', $request);
 
-    $html = (string) $this->app->make(InternalPageRenderController::class)->show($request, $page)->getContent();
+    $page->load(['site', 'translations.locale', 'slots.slotType', 'pageAssets', 'blocks.blockType']);
+    $page->setRelation('currentTranslation', $page->translations->first());
+    $html = view('webblocks-cms::public.pages.show', app(PublicPagePresenter::class)->present($page) + ['previewMode' => false])->render();
 
     $this->assertStringContainsString('class="wb-public-body', $html);
 

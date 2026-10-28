@@ -620,3 +620,15 @@ body.wb-gallery.wb-gallery-document-scope {
     max-inline-size: none;
   }
 }
+
+/* CMS-owned placement around the shared WebBlocks UI consent pattern. */
+[data-cms-consent-banner][data-consent-position="top"] {
+  top: var(--wb-s4);
+  bottom: auto;
+}
+[data-cms-consent-content] iframe {
+  width: 100%;
+  min-height: 24rem;
+  border: 0;
+  aspect-ratio: 16 / 9;
+}

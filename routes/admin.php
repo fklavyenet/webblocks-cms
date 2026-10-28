@@ -7,6 +7,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\BlockController;
 use WebBlocks\Cms\Http\Controllers\Admin\BlockTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\CmsApiTokenController;
 use WebBlocks\Cms\Http\Controllers\Admin\CmsRoleController;
+use WebBlocks\Cms\Http\Controllers\Admin\ConsentController;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
 use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentAuthoringController;
@@ -64,6 +65,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationAssetCo
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApplicationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalBackupCleanupController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalBackupRetentionController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalConsentController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentSourceController;
@@ -108,6 +110,11 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
   ->prefix('webadmin/api')
   ->name('internal-content-api.')
   ->group(function () {
+    Route::get('/sites/{site}/consent', [InternalConsentController::class, 'show'])->middleware('internal-api.capability:consent.read')->name('consent.show');
+    Route::patch('/sites/{site}/consent', [InternalConsentController::class, 'settings'])->middleware('internal-api.capability:consent.write')->name('consent.settings.update');
+    Route::put('/sites/{site}/consent/services/{service}', [InternalConsentController::class, 'service'])->middleware('internal-api.capability:consent.write')->name('consent.services.update');
+    Route::delete('/sites/{site}/consent/services/{service}', [InternalConsentController::class, 'destroy'])->middleware('internal-api.capability:consent.write')->name('consent.services.destroy');
+    Route::put('/sites/{site}/consent/texts', [InternalConsentController::class, 'texts'])->middleware('internal-api.capability:consent.write')->name('consent.texts.update');
     Route::get('/openapi.json', [InternalApiDiscoveryController::class, 'openapi'])->name('openapi');
     Route::get('/ai-guide', [InternalApiDiscoveryController::class, 'aiGuide'])->name('ai-guide');
     Route::get('/inventory', [InternalInventoryController::class, 'show'])->name('inventory.show');
@@ -348,6 +355,14 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('/shared-slots/{shared_slot}/revisions', [SharedSlotRevisionController::class, 'index'])->name('shared-slots.revisions.index')->missing($missingSharedSlot);
     Route::get('/shared-slots/{shared_slot}/revisions/{revision}', [SharedSlotRevisionController::class, 'show'])->name('shared-slots.revisions.show')->missing($missingSharedSlotRevision);
     Route::post('/shared-slots/{shared_slot}/revisions/{revision}/restore', [SharedSlotRevisionController::class, 'restore'])->name('shared-slots.revisions.restore')->missing($missingSharedSlotRevision);
+    Route::get('privacy', [ConsentController::class, 'index'])->name('consent.settings');
+    Route::get('privacy/services', [ConsentController::class, 'index'])->name('consent.services');
+    Route::get('privacy/texts', [ConsentController::class, 'index'])->name('consent.texts');
+    Route::get('privacy/preview', [ConsentController::class, 'preview'])->name('consent.preview');
+    Route::put('privacy/{site}/settings', [ConsentController::class, 'settings'])->name('consent.settings.update');
+    Route::put('privacy/{site}/services/{service}', [ConsentController::class, 'service'])->name('consent.services.update');
+    Route::delete('privacy/{site}/services/{service}', [ConsentController::class, 'destroy'])->name('consent.services.destroy');
+    Route::put('privacy/{site}/texts', [ConsentController::class, 'texts'])->name('consent.texts.update');
     Route::get('reports/visitors', [VisitorReportController::class, 'index'])->middleware('can:view-visitor-reports')->name('reports.visitors.index');
     Route::post('/pages/{page}/editor-preview', EditorPreviewController::class)->middleware('throttle:20,1')->name('pages.editor.preview');
     Route::get('/pages/{page}/editor-recovery/{editingSession}', [EditorRecoveryController::class, 'show'])->whereUuid('editingSession')->name('pages.recovery.show');

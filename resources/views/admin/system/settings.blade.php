@@ -297,37 +297,11 @@
 
                     <div class="wb-tabs-panel {{ $systemTab === 'privacy' ? 'is-active' : '' }}" id="system-settings-privacy-panel">
         <div class="wb-card wb-card-muted">
-            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0">
-                @csrf
-                @method('PUT')
-                <input type="hidden" name="section" value="privacy">
-
-                <div class="wb-card-header"><strong>{{ $systemText('privacy') }}</strong></div>
-
-                <div class="wb-card-body wb-stack wb-gap-3">
-                    <div class="wb-text-sm wb-text-muted">
-                        {{ $systemText('privacy_help') }}
-                    </div>
-
-                    <div class="wb-stack-2 wb-field">
-                        <input type="hidden" name="visitor_consent_banner_enabled" value="0">
-                        <label class="wb-cluster wb-cluster-2" for="settings_visitor_consent_banner_enabled">
-                            <input
-                                id="settings_visitor_consent_banner_enabled"
-                                name="visitor_consent_banner_enabled"
-                                type="checkbox"
-                                value="1"
-                                @checked($settings['visitor_consent_banner_enabled'])
-                            >
-                            <span>{{ $systemText('visitor_consent_banner_enabled') }}</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="wb-card-footer">
-                    <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.system.settings.edit')" :submit-label="$systemText('save_changes')" />
-                </div>
-            </form>
+            <div class="wb-card-header"><strong>{{ $systemText('privacy') }}</strong></div>
+            <div class="wb-card-body wb-stack-3">
+                <p>{{ $adminTranslator->get('consent.site_settings_help', $adminLocale) }}</p>
+                <a class="wb-btn wb-btn-primary" href="{{ route('admin.consent.settings') }}">{{ $adminTranslator->get('consent.menu', $adminLocale) }}</a>
+            </div>
         </div>
 
         </div>

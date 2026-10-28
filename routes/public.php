@@ -10,11 +10,13 @@ use WebBlocks\Cms\Http\Controllers\Public\EmbeddedApplicationPackageController;
 use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
 use WebBlocks\Cms\Http\Controllers\Public\PageController;
 use WebBlocks\Cms\Http\Controllers\Public\PluginAssetController;
+use WebBlocks\Cms\Http\Controllers\Public\PublicConsentController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicPrivacyConsentController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicSearchController;
 use WebBlocks\Cms\Http\Controllers\Public\RobotsController;
 use WebBlocks\Cms\Http\Controllers\Public\SitemapController;
 use WebBlocks\Cms\Http\Middleware\AddCmsIdentificationHeader;
+use WebBlocks\Cms\Http\Middleware\ProtectConsentResponse;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PublicMount;
@@ -23,8 +25,8 @@ use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 $publicMount = app(PublicMount::class);
 
 $publicPageMiddleware = ['web', 'install.required', AddCmsIdentificationHeader::class];
-$publicContentMiddleware = [...$publicPageMiddleware, 'throttle:cms-public-pages'];
-$publicSearchMiddleware = [...$publicPageMiddleware, 'throttle:cms-public-search'];
+$publicContentMiddleware = [...$publicPageMiddleware, ProtectConsentResponse::class, 'throttle:cms-public-pages'];
+$publicSearchMiddleware = [...$publicPageMiddleware, ProtectConsentResponse::class, 'throttle:cms-public-search'];
 
 Route::middleware($publicPageMiddleware)
   ->get('/cms/plugins/{plugin}/{path}', PluginAssetController::class)
@@ -118,6 +120,7 @@ Route::middleware(['web', 'install.required'])->post('/comment-entries', [Commen
   ->name('comment-entries.store');
 
 Route::middleware(['web', 'install.required'])->prefix('privacy-consent')->name('public.privacy-consent.')->group(function () {
+  Route::post('/sites/{site}', [PublicConsentController::class, 'sync'])->name('site-sync');
   Route::post('/sync', [PublicPrivacyConsentController::class, 'sync'])->name('sync');
 });
 

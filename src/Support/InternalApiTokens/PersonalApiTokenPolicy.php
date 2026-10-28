@@ -9,6 +9,7 @@ use WebBlocks\Cms\Support\Access\PermissionCatalog;
 class PersonalApiTokenPolicy
 {
   private const SYSTEM_ONLY = [
+    CmsApiTokenCapabilities::CONSENT_CODE_WRITE,
     CmsApiTokenCapabilities::SYSTEM_UPDATES_READ,
     CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN,
     CmsApiTokenCapabilities::ADMIN_RENDER,
@@ -36,6 +37,7 @@ class PersonalApiTokenPolicy
   ];
 
   private const SITE_ADMIN_ONLY = [
+    CmsApiTokenCapabilities::CONSENT_WRITE,
     CmsApiTokenCapabilities::CONTENT_PUBLISH,
     CmsApiTokenCapabilities::SITE_SETTINGS_WRITE,
   ];

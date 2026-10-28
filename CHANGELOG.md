@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.107.0
+
+- Add site-owned Cookies and Privacy settings with General Settings, Services and Languages and Texts in the admin sidebar, matching capability-scoped Internal Content API operations and relational configuration.
+- Include ready-made CMS measurement, YouTube, Google Maps and Vimeo services. Keep external embeds inert until permission, support loading one content item without a lasting service grant, and retain the preference center after a decision and page refresh.
+- Authenticate site-scoped, expiring service choices and invalidate grants when a service source or purpose changes. Keep existing analytics-only decisions limited to CMS measurement; use the current WebBlocks UI modal and locally shipped CMS runtime without a new dependency.
+- Move privacy settings out of the global Visitor Reports toggle. Existing sites inherit their former effective banner setting once; review Cookies and Privacy after upgrading, since disabled consent keeps managed external embeds blocked. Existing API tokens require explicitly assigned consent capabilities.
+
 ## 1.106.6
 
 - Use consistent 18 × 18 px icons for main and nested admin navigation items, with 18 px submenu indentation for more room and a clear hierarchy.

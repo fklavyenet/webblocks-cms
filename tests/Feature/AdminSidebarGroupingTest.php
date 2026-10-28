@@ -6,12 +6,14 @@ use App\Models\User;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ViewErrorBag;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\CmsRole;
+use WebBlocks\Cms\Models\CmsSiteMembership;
 use WebBlocks\Cms\Models\IconCatalogItem;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
@@ -19,6 +21,7 @@ use WebBlocks\Cms\Support\Plugins\PluginMenuItem;
 use WebBlocks\Cms\Support\Plugins\PluginPermission;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\WebBlocks;
+use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
 class AdminSidebarGroupingTest extends TestCase
@@ -32,6 +35,14 @@ class AdminSidebarGroupingTest extends TestCase
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
+
+  protected function setUp(): void
+  {
+    parent::setUp();
+    if (! class_exists('App\\Models\\User')) {
+      class_alias(SidebarGroupingUser::class, 'App\\Models\\User');
+    }
   }
 
   private function user(string $role = 'super_admin'): User
@@ -78,10 +89,11 @@ class AdminSidebarGroupingTest extends TestCase
   {
     $xpath = $this->sidebar($this->user());
     $groups = $this->sidebarGroups($xpath);
-    $this->assertSame(['Content tools', 'Contact & analytics', 'Users & access', 'System', 'Maintenance'], array_keys($groups));
+    $this->assertSame(['Content tools', 'Contact & analytics', 'Users & access', 'Cookies and Privacy', 'System', 'Maintenance'], array_keys($groups));
     $this->assertSame(['/webadmin/blocks', '/webadmin/dynamic-content', '/webadmin/shared-slots', '/webadmin/navigation'], $this->paths($xpath, $groups['Content tools']));
     $this->assertSame(['/webadmin/contact-messages', '/webadmin/engagement', '/webadmin/reports/visitors'], $this->paths($xpath, $groups['Contact & analytics']));
     $this->assertSame(['/webadmin/users', '/webadmin/access/roles', '/webadmin/system/api-tokens'], $this->paths($xpath, $groups['Users & access']));
+    $this->assertSame(['/webadmin/privacy', '/webadmin/privacy/services', '/webadmin/privacy/texts'], $this->paths($xpath, $groups['Cookies and Privacy']));
     $this->assertNotContains('/webadmin/users', $this->paths($xpath, $groups['System']));
     $this->assertNotContains('/webadmin/system/api-tokens', $this->paths($xpath, $groups['System']));
     $nav = $xpath->query('//aside[@id="admin-sidebar"]/nav')->item(0);
@@ -200,5 +212,15 @@ class AdminSidebarGroupingTest extends TestCase
     $this->assertFalse($groups->item(0)->hasAttribute('data-wb-nav-group-open'));
     $this->assertSame(['/synthetic-example/items'], $this->paths($xpath, $groups->item(1)));
     $this->assertTrue($groups->item(1)->hasAttribute('data-wb-nav-group-open'));
+  }
+}
+
+class SidebarGroupingUser extends CmsSqlTestUser
+{
+  protected $table = 'users';
+
+  public function sites(): BelongsToMany
+  {
+    return $this->belongsToMany(Site::class, 'wbcms_site_user', 'user_id', 'site_id')->using(CmsSiteMembership::class)->withTimestamps();
   }
 }

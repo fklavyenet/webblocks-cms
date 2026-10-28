@@ -8,6 +8,7 @@ use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 final class PermissionCatalog
 {
   public const GROUPS = [
+    'consent' => ['read', 'update'],
     'panel' => ['access'],
     'pages' => ['read', 'create', 'update-draft', 'update-live', 'submit-review', 'return-to-draft', 'publish', 'unpublish', 'archive', 'delete', 'delete-published'],
     'translations' => ['update'], 'seo' => ['update'],
@@ -89,7 +90,7 @@ final class PermissionCatalog
         'cms.revisions.prepare', 'cms.revisions.apply', 'cms.shared-slots.manage', 'cms.shared-slots.restore',
         'cms.messages.read', 'cms.messages.update-status', 'cms.messages.delete',
         'cms.engagement.read', 'cms.engagement.moderate', 'cms.engagement.delete',
-        'cms.reports.read', 'cms.site-settings.update', 'cms.automatic-pages.activate',
+        'cms.reports.read', 'cms.consent.update', 'cms.site-settings.update', 'cms.automatic-pages.activate',
       ]));
     }
 
@@ -112,6 +113,8 @@ final class PermissionCatalog
       'media.read' => 'cms.media.read', 'media.write' => 'cms.media.update',
       'media.upload' => 'cms.media.upload', 'media.replace' => 'cms.media.replace',
       'media.move' => 'cms.media.move', 'media.delete' => 'cms.media.delete',
+      'consent.read' => 'cms.consent.read',
+      'consent.write' => 'cms.consent.update',
       'site-settings.write' => 'cms.site-settings.update',
       'engagement.read' => 'cms.engagement.read', 'engagement.moderate' => 'cms.engagement.moderate',
       default => null,

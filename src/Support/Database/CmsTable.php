@@ -10,6 +10,10 @@ final class CmsTable
    * @var array<int, string>
    */
   public const TABLES = [
+    'consent_settings',
+    'consent_services',
+    'consent_translations',
+    'consent_cookies',
     'acl_roles',
     'acl_role_permissions',
     'acl_system_administrators',

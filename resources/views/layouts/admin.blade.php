@@ -153,6 +153,17 @@
                 ];
             }
 
+            if (app(\WebBlocks\Cms\Policies\CmsNavigationPolicy::class)->visible($user, 'admin.consent.settings')) {
+                $coreGroups[] = [
+                    'key' => 'consent', 'label' => $adminTranslator->get('consent.menu', $adminLocale), 'icon' => 'wb-icon-shield-check',
+                    'items' => [
+                        ['label' => $adminTranslator->get('consent.general', $adminLocale), 'route' => 'admin.consent.settings', 'active' => ['admin.consent.settings', 'admin.consent.settings.*'], 'icon' => 'wb-icon-settings'],
+                        ['label' => $adminTranslator->get('consent.services', $adminLocale), 'route' => 'admin.consent.services', 'active' => ['admin.consent.services', 'admin.consent.services.*'], 'icon' => 'wb-icon-blocks'],
+                        ['label' => $adminTranslator->get('consent.texts', $adminLocale), 'route' => 'admin.consent.texts', 'active' => ['admin.consent.texts', 'admin.consent.texts.*'], 'icon' => 'wb-icon-languages'],
+                    ],
+                ];
+            }
+
             // Keep the established plugin buckets independent of the new core headings.
             $sidebarGroups = app(\WebBlocks\Cms\Support\Plugins\PluginSidebarGroups::class)->appendTo($sidebarGroups, $user, $adminLocale);
             $sidebarGroups = array_values(array_filter([...$coreGroups, ...$sidebarGroups], fn ($group) => $group['items'] !== []));
