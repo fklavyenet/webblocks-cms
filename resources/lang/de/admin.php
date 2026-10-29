@@ -124,6 +124,8 @@ $translations = [
     'delete_children_warning' => 'Dieser Eintrag hat :count untergeordnete Einträge. Sie werden mitgelöscht.',
   ],
   'navigation_form' => [
+    'cookie_settings' => 'Cookie-Einstellungen',
+    'cookie_settings_help' => 'Cookie-Einstellungen ohne Eingabe einer URL öffnen.',
     'save_changes' => 'Änderungen speichern',
     'create' => 'Erstellen',
     'site' => 'Site',
@@ -1426,6 +1428,7 @@ $translations = [
     'sort_order' => 'Sortierung',
   ],
   'page_slot_block_picker' => [
+    'block_types' => ['cookie-settings' => ['name' => 'Cookie-Einstellungen', 'description' => 'Öffnet die Cookie- und Datenschutzeinstellungen der Website erneut.']],
     'title' => 'Block-Typen',
     'description' => 'Wähle einen Block-Typ und konfiguriere ihn, ohne den Slot-Editor zu verlassen.',
     'parent_context' => 'Es werden Block-Typen angezeigt, die in :type erlaubt sind.',
@@ -1451,6 +1454,7 @@ $translations = [
       'layout' => 'Layout',
       'content' => 'Inhalt',
       'navigation' => 'Navigation',
+      'system' => 'System',
       'advanced' => 'Erweitert',
       'all' => 'Alle',
     ],
@@ -1463,6 +1467,8 @@ $translations = [
       'content_text' => 'Hier sind keine redaktionellen Inhalts-Block-Typen geeignet.',
       'navigation_title' => 'Keine Navigations-Block-Typen',
       'navigation_text' => 'Hier sind keine Navigations- oder Docs-Shell-Hilfsblöcke geeignet.',
+      'system_title' => 'Keine Systemblöcke',
+      'system_text' => 'Hier sind keine Systemblöcke verfügbar.',
       'advanced_title' => 'Keine erweiterten Block-Typen',
       'advanced_text' => 'Hier sind keine erweiterten Block-Typen geeignet.',
       'all_title' => 'Keine Block-Typen',
@@ -4550,6 +4556,14 @@ $translations = [
     ],
   ],
 
+  'cookie_settings_block' => [
+    'help' => 'Dieser Systemblock öffnet die vorhandenen Website-Einstellungen. Die Beschriftung folgt der Seitensprache.',
+    'disabled' => 'Cookie-Einstellungen sind für diese Website deaktiviert. Der Block wird Besuchern nicht angezeigt.',
+    'appearance' => 'Darstellung',
+    'text' => 'Textlink',
+    'primary' => 'Primäre Schaltfläche',
+    'secondary' => 'Sekundäre Schaltfläche',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

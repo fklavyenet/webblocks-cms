@@ -123,6 +123,8 @@ $translations = [
     'delete_children_warning' => 'Questa voce ha :count voce/i figlia/e. Verranno eliminate con essa.',
   ],
   'navigation_form' => [
+    'cookie_settings' => 'Impostazioni cookie',
+    'cookie_settings_help' => 'Apri le preferenze dei cookie senza inserire un URL.',
     'save_changes' => 'Salva modifiche',
     'create' => 'Crea',
     'site' => 'Sito',
@@ -1424,6 +1426,7 @@ $translations = [
     'sort_order' => 'Ordinamento',
   ],
   'page_slot_block_picker' => [
+    'block_types' => ['cookie-settings' => ['name' => 'Impostazioni cookie', 'description' => 'Riapre le preferenze sui cookie e sulla privacy del sito.']],
     'title' => 'Tipi di blocco',
     'description' => 'Scegli un tipo di blocco, poi configuralo senza lasciare l\'editor dello slot.',
     'parent_context' => 'Sono mostrati i tipi di blocco consentiti dentro :type.',
@@ -1449,6 +1452,7 @@ $translations = [
       'layout' => 'Layout',
       'content' => 'Contenuto',
       'navigation' => 'Navigazione',
+      'system' => 'Sistema',
       'advanced' => 'Avanzati',
       'all' => 'Tutti',
     ],
@@ -1461,6 +1465,8 @@ $translations = [
       'content_text' => 'Nessun tipo di blocco di contenuto editoriale è idoneo qui.',
       'navigation_title' => 'Nessun tipo di blocco di navigazione',
       'navigation_text' => 'Nessun blocco di navigazione o di utilità della shell della documentazione è idoneo qui.',
+      'system_title' => 'Nessun blocco di sistema',
+      'system_text' => 'Non ci sono blocchi di sistema disponibili qui.',
       'advanced_title' => 'Nessun tipo di blocco avanzato',
       'advanced_text' => 'Nessun tipo di blocco avanzato è idoneo qui.',
       'all_title' => 'Nessun tipo di blocco',
@@ -4547,6 +4553,14 @@ $translations = [
     ],
   ],
 
+  'cookie_settings_block' => [
+    'help' => 'Questo blocco di sistema apre le preferenze esistenti del sito. L’etichetta segue la lingua della pagina.',
+    'disabled' => 'Le impostazioni dei cookie sono disattivate per questo sito. Il blocco non viene mostrato ai visitatori.',
+    'appearance' => 'Aspetto',
+    'text' => 'Collegamento testuale',
+    'primary' => 'Pulsante principale',
+    'secondary' => 'Pulsante secondario',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

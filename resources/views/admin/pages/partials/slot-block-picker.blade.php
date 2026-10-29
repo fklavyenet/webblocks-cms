@@ -8,7 +8,7 @@
   $pickerSearchTerm = strtolower(trim((string) $pickerSearch));
   $pickerTab = trim((string) request('block_type_tab', 'common'));
   $pickerParentId = request()->integer('parent_id') ?: null;
-  $allowedPickerTabs = ['common', 'layout', 'content', 'navigation', 'advanced', 'all'];
+  $allowedPickerTabs = ['common', 'layout', 'content', 'navigation', 'system', 'advanced', 'all'];
   if (! in_array($pickerTab, $allowedPickerTabs, true)) {
     $pickerTab = 'common';
   }
@@ -110,6 +110,12 @@
       'emptyTitle' => $slotBlockPickerText('empty.navigation_title'),
       'emptyText' => $slotBlockPickerText('empty.navigation_text'),
     ],
+    'system' => [
+      'label' => $slotBlockPickerText('tabs.system'),
+      'filter' => fn ($blockType) => (bool) $blockType->is_system,
+      'emptyTitle' => $slotBlockPickerText('empty.system_title'),
+      'emptyText' => $slotBlockPickerText('empty.system_text'),
+    ],
     'advanced' => [
       'label' => $slotBlockPickerText('tabs.advanced'),
       'filter' => fn ($blockType) => strtolower((string) ($blockType->category ?? '')) === 'advanced' || $slugMatches($blockType, $advancedSlugs),
@@ -138,7 +144,7 @@
     $commonBlockTypes = $tabBlockTypes->get('common', collect());
 
     if ($commonBlockTypes->isEmpty()) {
-      $fallbackTab = collect(['layout', 'content', 'navigation', 'advanced', 'all'])
+      $fallbackTab = collect(['layout', 'content', 'navigation', 'system', 'advanced', 'all'])
         ->first(fn (string $tabKey) => ($tabBlockTypes->get($tabKey) ?? collect())->isNotEmpty());
 
       if (is_string($fallbackTab)) {
@@ -159,12 +165,20 @@
   $pickerClientTab = $activeTab;
 
   $kindLabel = function ($blockType) {
+    if ($blockType->is_system) {
+      return 'system';
+    }
+
     if (filled($blockType->category)) {
       return strtolower((string) $blockType->category);
     }
 
     return $blockType->is_system ? 'system' : 'content';
   };
+
+  $kindText = fn ($blockType) => in_array($kindLabel($blockType), ['system', 'layout', 'content', 'navigation', 'advanced'], true)
+    ? $slotBlockPickerText('tabs.'.$kindLabel($blockType))
+    : $kindLabel($blockType);
 
   $kindBadgeClass = function ($blockType) use ($kindLabel) {
     return match ($kindLabel($blockType)) {
@@ -291,7 +305,10 @@
                           </a>
                         </td>
                         <td>
-                          <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindLabel($blockType) }}</span>
+                          <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindText($blockType) }}</span>
+                          @if ($blockType->is_system && in_array($blockType->category, ['layout', 'content', 'navigation', 'advanced'], true))
+                            <span class="wb-badge">{{ $slotBlockPickerText('tabs.'.$blockType->category) }}</span>
+                          @endif
                         </td>
                         <td>{{ $localizedBlockTypeText($blockType, 'description', $descriptionFor($blockType)) }}</td>
                       </tr>
@@ -355,7 +372,10 @@
                                   </a>
                                 </td>
                                 <td>
-                                  <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindLabel($blockType) }}</span>
+                                  <span class="wb-badge {{ $kindBadgeClass($blockType) }}">{{ $kindText($blockType) }}</span>
+                          @if ($blockType->is_system && in_array($blockType->category, ['layout', 'content', 'navigation', 'advanced'], true))
+                            <span class="wb-badge">{{ $slotBlockPickerText('tabs.'.$blockType->category) }}</span>
+                          @endif
                                 </td>
                                 <td>{{ $localizedBlockTypeText($blockType, 'description', $descriptionFor($blockType)) }}</td>
                               </tr>

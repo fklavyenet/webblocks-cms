@@ -80,7 +80,7 @@ class BlockSettingsSchemaTest extends TestCase
   {
     $registry = app(BlockSettingsSchema::class);
     $contracts = app(BlockTypeContractRegistry::class)->publishedCoreContracts();
-    $this->assertCount(56, $contracts);
+    $this->assertCount(57, $contracts);
     foreach ($contracts as $contract) {
       $schema = $registry->forType($contract->slug);
       $this->assertSame('core', $schema['mode'], $contract->slug);

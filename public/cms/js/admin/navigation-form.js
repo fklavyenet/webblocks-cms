@@ -24,7 +24,7 @@ document.querySelectorAll('[data-navigation-link-type]').forEach(function (linkT
         if (urlInput) { urlInput.disabled = !isUrl; }
         if (targetInput) { targetInput.disabled = !isUrl; }
         if (copy) {
-            copy.textContent = isGroup
+            copy.textContent = type === 'cookie_settings' ? copy.dataset.navigationCopyCookieSettings : isGroup
                 ? copy.dataset.navigationCopyGroup
                 : (isUrl ? copy.dataset.navigationCopyCustomUrl : copy.dataset.navigationCopyPage);
         }

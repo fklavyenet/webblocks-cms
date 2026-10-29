@@ -578,12 +578,12 @@ class Block extends CmsModel
   public function allowedChildTypeSlugs(): ?array
   {
     return match ($this->typeSlug()) {
-      'hero', 'cta' => ['button_link', 'button'],
+      'hero', 'cta' => ['button_link', 'button', 'cookie-settings'],
       'slider' => ['slide'],
       'columns' => ['column_item'],
       'feature-grid' => ['feature-item', 'column_item'],
       'card' => ['card_header', 'card_body', 'card_footer'],
-      'sticky-navbar' => ['container', 'cluster', 'header', 'plain_text', 'rich-text', 'button_link', 'navbar-brand', 'navbar-navigation', 'header-actions', 'search-form'],
+      'sticky-navbar' => ['container', 'cluster', 'header', 'plain_text', 'rich-text', 'button_link', 'cookie-settings', 'navbar-brand', 'navbar-navigation', 'header-actions', 'search-form'],
       'link-list' => ['link-list-item'],
       'sidebar-navigation' => ['sidebar-nav-item', 'sidebar-nav-group'],
       'sidebar-nav-group' => ['sidebar-nav-item'],
@@ -1447,6 +1447,7 @@ class Block extends CmsModel
   public function ownsPublicRoot(): bool
   {
     return in_array($this->typeSlug(), [
+      'cookie-settings',
       'header',
       'section',
       'container',

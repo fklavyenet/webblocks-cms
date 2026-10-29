@@ -28,6 +28,10 @@ final class BlockSettingsSchema
       return $this->describe($rules ?? [], $rules === null ? 'legacy_plugin' : ($definition->hasInvalidSettingRules() ? 'invalid_plugin_schema' : 'plugin'), $type);
     }
 
+    if ($type === 'cookie-settings') {
+      return $this->describe(['variant' => ['enum', ['text', 'primary', 'secondary']]], 'core', $type);
+    }
+
     $rules = BlockSettingsPatchPolicy::rulesFor($type);
     if ($type === 'external-content') {
       $rules['url'] = ['provider_embed'];

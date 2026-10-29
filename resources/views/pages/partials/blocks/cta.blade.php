@@ -12,8 +12,10 @@
   // `button_link` keeps its link in settings while the legacy `button` type uses
   // the url column, so an action needs whichever of the two its type owns.
   $actionBlocks = $block->children
-    ->filter(fn ($child) => in_array($child->typeSlug(), ['button', 'button_link'], true))
-    ->filter(fn ($child) => filled($child->buttonLinkUrl() ?: $child->url) && filled($child->title))
+    ->filter(fn ($child) => in_array($child->typeSlug(), ['button', 'button_link', 'cookie-settings'], true))
+    ->filter(fn ($child) => $child->typeSlug() === 'cookie-settings'
+      ? ($child->renderSite() && app(\WebBlocks\Cms\Support\Consent\ConsentConfiguration::class)->settings($child->renderSite())['enabled'])
+      : filled($child->buttonLinkUrl() ?: $child->url) && filled($child->title))
     ->values();
 @endphp
 

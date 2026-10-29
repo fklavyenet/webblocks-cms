@@ -153,10 +153,23 @@
             return persist(grants, enabled ? 'accepted' : 'rejected');
         }
 
+        function isPreferencesLink(link) {
+            if (!link || !config.preferencesUrl) return false;
+            try {
+                var destination = new URL(link.href, window.location.href);
+                var preferences = new URL(config.preferencesUrl, window.location.href);
+                return destination.origin === preferences.origin && destination.pathname === preferences.pathname && !destination.search;
+            } catch (error) { return false; }
+        }
+
         // Capture the compatibility anchor before any site-specific bridge.
         document.addEventListener('click', function (event) {
             if (!(event.target instanceof Element)) return;
-            var link = event.target.closest('a[href="#cookie-settings"], [data-cms-consent-open], [data-wb-cookie-consent-open]');
+            var link = event.target.closest('a[href="#cookie-settings"], a[data-cms-consent-preferences-link], [data-cms-consent-open], [data-wb-cookie-consent-open]');
+            if (!link) {
+                var candidate = event.target.closest('a[href]');
+                if (isPreferencesLink(candidate)) link = candidate;
+            }
             if (link && !link.closest('pre, code, template, [data-wb-demo-static]')) {
                 if (link.hasAttribute('data-wb-cookie-consent-open') && link.getAttribute('data-wb-target') && link.getAttribute('data-wb-target') !== '#wbCookiePreferences') return;
                 if (link.disabled || link.getAttribute('aria-disabled') === 'true') return;
@@ -202,13 +215,18 @@
             Object.keys(services).forEach(function (handle) { grants[handle] = !!event.detail.preferences[services[handle].category]; });
             persist(grants, event.detail.status || 'custom');
         });
-        document.querySelectorAll('a[href="#cookie-settings"]').forEach(function (link) {
+        document.querySelectorAll('a[href]').forEach(function (link) {
+            if (link.getAttribute('href') !== '#cookie-settings' && !isPreferencesLink(link)) return;
             link.setAttribute('aria-controls', 'wbCookiePreferences');
             link.setAttribute('aria-haspopup', 'dialog');
         });
         controls();
         embeds();
         scripts();
+        if (root.hasAttribute('data-cms-consent-auto-open') || window.location.hash === '#cookie-settings') open();
+        window.addEventListener('hashchange', function () {
+            if (window.location.hash === '#cookie-settings') open();
+        });
         if (banner) banner.hidden = !state.needs_choice;
         window.WebBlocksCmsConsent = {
             open: open,

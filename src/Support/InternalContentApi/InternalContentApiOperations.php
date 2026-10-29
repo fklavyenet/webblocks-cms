@@ -255,7 +255,7 @@ class InternalContentApiOperations
       $linkType = NavigationItem::LINK_CUSTOM_URL;
     }
 
-    if ($label === '') {
+    if ($label === '' && $linkType !== NavigationItem::LINK_COOKIE_SETTINGS) {
       $errors[] = $this->error($path.'.label', 'Navigation item label is required.');
     }
 
@@ -286,6 +286,11 @@ class InternalContentApiOperations
         }
       }
 
+      $url = '';
+    } elseif ($linkType === NavigationItem::LINK_COOKIE_SETTINGS) {
+      if ($url !== '' || $pageId || $target !== '_self') {
+        $errors[] = $this->error($path.'.link_type', __('webblocks-cms::consent.fixed_destination'));
+      }
       $url = '';
     } elseif ($linkType === NavigationItem::LINK_GROUP) {
       if ($url !== '') {
@@ -598,6 +603,15 @@ class InternalContentApiOperations
     if (! is_array($settings)) {
       $errors[] = $this->error($path.'.settings', 'Block settings must be an object.');
       $settings = [];
+    }
+
+    if ($blockType->slug === 'cookie-settings') {
+      if (array_key_exists('variant', $block)) {
+        $settings['variant'] = $block['variant'];
+      }
+      if (! empty($block['url'])) {
+        $errors[] = $this->error($path.'.url', 'Cookie settings use the site preference destination.');
+      }
     }
 
     $settingsErrorCount = count($errors);

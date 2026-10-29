@@ -1,6 +1,6 @@
 @php
     $buttons = ($buttons ?? collect())
-        ->filter(fn ($child) => in_array($child->typeSlug(), ['button', 'button_link'], true))
+        ->filter(fn ($child) => in_array($child->typeSlug(), ['button', 'button_link', 'cookie-settings'], true))
         ->values();
     $wrapperClass = $wrapperClass ?? 'wb-cluster wb-cluster-2';
 @endphp

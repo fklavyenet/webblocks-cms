@@ -111,4 +111,6 @@ return [
   'notice_group' => 'Hinweis',
   'preferences_group' => 'Einstellungsfenster',
   'partly_customized' => 'Teilweise angepasst',
+  'saved' => 'Ihre Einstellungen wurden gespeichert.',
+  'fixed_destination' => 'Cookie-Einstellungen verwenden das Einstellungsziel der Website im selben Tab.',
 ];

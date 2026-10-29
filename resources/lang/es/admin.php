@@ -123,6 +123,8 @@ $translations = [
     'delete_children_warning' => 'Este elemento tiene :count elemento(s) hijo(s). Se eliminan junto con él.',
   ],
   'navigation_form' => [
+    'cookie_settings' => 'Configuración de cookies',
+    'cookie_settings_help' => 'Abra las preferencias de cookies sin introducir una URL.',
     'save_changes' => 'Guardar cambios',
     'create' => 'Crear',
     'site' => 'Sitio',
@@ -1425,6 +1427,7 @@ $translations = [
     'sort_order' => 'Orden',
   ],
   'page_slot_block_picker' => [
+    'block_types' => ['cookie-settings' => ['name' => 'Configuración de cookies', 'description' => 'Vuelve a abrir las preferencias de cookies y privacidad del sitio.']],
     'title' => 'Tipos de bloque',
     'description' => 'Elige un tipo de bloque y configúralo sin salir del editor de slots.',
     'parent_context' => 'Mostrando los tipos de bloque permitidos dentro de :type.',
@@ -1450,6 +1453,7 @@ $translations = [
       'layout' => 'Layout',
       'content' => 'Contenido',
       'navigation' => 'Navegación',
+      'system' => 'Sistema',
       'advanced' => 'Avanzados',
       'all' => 'Todos',
     ],
@@ -1462,6 +1466,8 @@ $translations = [
       'content_text' => 'Ningún tipo de bloque de contenido editorial es elegible aquí.',
       'navigation_title' => 'No hay tipos de bloque de navegación',
       'navigation_text' => 'Ningún bloque de utilidad de navegación o de shell de documentación es elegible aquí.',
+      'system_title' => 'No hay bloques de sistema',
+      'system_text' => 'No hay bloques de sistema disponibles aquí.',
       'advanced_title' => 'No hay tipos de bloque avanzados',
       'advanced_text' => 'Ningún tipo de bloque avanzado es elegible aquí.',
       'all_title' => 'No hay tipos de bloque',
@@ -4548,6 +4554,14 @@ $translations = [
     ],
   ],
 
+  'cookie_settings_block' => [
+    'help' => 'Este bloque de sistema abre las preferencias existentes del sitio. La etiqueta sigue el idioma de la página.',
+    'disabled' => 'Las preferencias de cookies están desactivadas para este sitio. El bloque no se muestra a los visitantes.',
+    'appearance' => 'Apariencia',
+    'text' => 'Enlace de texto',
+    'primary' => 'Botón principal',
+    'secondary' => 'Botón secundario',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

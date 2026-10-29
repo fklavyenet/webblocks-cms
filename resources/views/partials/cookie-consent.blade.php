@@ -1,5 +1,5 @@
 @php($ct = $consent['texts'])
-<div data-cms-consent-root data-consent-config="{{ json_encode($consent['payload'], JSON_THROW_ON_ERROR) }}">
+<div data-cms-consent-root @if ($consentAutoOpen ?? false) data-cms-consent-auto-open @endif data-consent-config="{{ json_encode($consent['payload'], JSON_THROW_ON_ERROR) }}">
     @if ($consent['state']['needs_choice'] && count($consent['services']) > 0)
         <div class="wb-cookie-consent wb-cookie-consent-banner" data-cms-consent-banner data-consent-position="{{ $consent['settings']['position'] }}" hidden>
             <section class="wb-card wb-cookie-consent-card" aria-label="{{ $ct['title'] }}">

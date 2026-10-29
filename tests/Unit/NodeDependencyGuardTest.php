@@ -108,32 +108,32 @@ class NodeDependencyGuardTest extends TestCase
     $filesystem = new Filesystem;
     $filesystem->makeDirectory($root.'/vendor/example', 0755, true);
     try {
-      (new Process(['git', 'init', '--quiet', $root]))->mustRun();
+      $this->fixtureProcess(['git', 'init', '--quiet', $root])->mustRun();
       file_put_contents($root.'/.gitignore', "/vendor/\n");
       file_put_contents($root.'/vendor/example/package.json', '{}');
       $script = dirname(__DIR__).'/Support/check-node-dependencies.php';
-      $passed = new Process([PHP_BINARY, $script, '--root='.$root]);
+      $passed = $this->fixtureProcess([PHP_BINARY, $script, '--root='.$root]);
       $passed->run();
       $this->assertSame(0, $passed->getExitCode(), $passed->getErrorOutput());
       file_put_contents($root.'/check', "#!/usr/bin/env node\nconsole.log('ok');");
-      $extensionless = new Process([PHP_BINARY, $script, '--root='.$root]);
+      $extensionless = $this->fixtureProcess([PHP_BINARY, $script, '--root='.$root]);
       $extensionless->run();
       $this->assertSame(1, $extensionless->getExitCode());
       $this->assertStringContainsString('check:1:', $extensionless->getErrorOutput());
       unlink($root.'/check');
       file_put_contents($root.'/check.php', '<?php shell_exec("npm config set token synthetic-private-value");');
-      $failed = new Process([PHP_BINARY, $script, '--root='.$root]);
+      $failed = $this->fixtureProcess([PHP_BINARY, $script, '--root='.$root]);
       $failed->run();
       $this->assertSame(1, $failed->getExitCode());
       $this->assertStringContainsString('check.php:1:', $failed->getErrorOutput());
       $this->assertStringNotContainsString('synthetic-private-value', $failed->getErrorOutput());
       unlink($root.'/check.php');
       file_put_contents($root.'/package.json', '{}');
-      $manifest = new Process([PHP_BINARY, $script, '--root='.$root]);
+      $manifest = $this->fixtureProcess([PHP_BINARY, $script, '--root='.$root]);
       $manifest->run();
       $this->assertSame(1, $manifest->getExitCode());
       $this->assertStringContainsString('package.json:', $manifest->getErrorOutput());
-      $missing = new Process([PHP_BINARY, $script, '--root='.$root.'/missing']);
+      $missing = $this->fixtureProcess([PHP_BINARY, $script, '--root='.$root.'/missing']);
       $missing->run();
       $this->assertSame(2, $missing->getExitCode());
     } finally {
@@ -161,12 +161,12 @@ class NodeDependencyGuardTest extends TestCase
     $filesystem = new Filesystem;
     $filesystem->makeDirectory($root.'/tests/Support', 0755, true);
     try {
-      (new Process(['git', 'init', '--quiet', $root]))->mustRun();
+      $this->fixtureProcess(['git', 'init', '--quiet', $root])->mustRun();
       foreach (['check-node-dependencies.php', 'NodeDependencyGuard.php'] as $file) {
         copy($source.'/tests/Support/'.$file, $root.'/tests/Support/'.$file);
       }
       file_put_contents($root.'/package.json', '{}');
-      $hook = new Process(['/bin/sh', $source.'/scripts/pre-push'], $root);
+      $hook = $this->fixtureProcess(['/bin/sh', $source.'/scripts/pre-push'], $root);
       $hook->run();
       $this->assertSame(1, $hook->getExitCode());
       $this->assertStringContainsString('package.json:', $hook->getErrorOutput());
@@ -185,5 +185,35 @@ class NodeDependencyGuardTest extends TestCase
     $this->assertStringContainsString('check.php:3:', $php[0]);
     $javascript = NodeDependencyGuard::fileErrors('check.js', "// start\nimport fs from 'node:fs';\n");
     $this->assertStringContainsString('check.js:2:', $javascript[0]);
+  }
+
+  /** Keep synthetic Git repositories independent of an enclosing Git hook. */
+  private function fixtureProcess(array $command, ?string $directory = null): Process
+  {
+    $environment = [];
+    foreach (array_keys(getenv()) as $key) {
+      if (str_starts_with($key, 'GIT_')) {
+        $environment[$key] = false;
+      }
+    }
+
+    return new Process($command, $directory, $environment);
+  }
+
+  public function test_fixture_commands_ignore_an_enclosing_repository_environment(): void
+  {
+    $root = sys_get_temp_dir().'/cms-no-node-isolated-'.bin2hex(random_bytes(8));
+    $previous = getenv('GIT_DIR');
+    try {
+      putenv('GIT_DIR='.$root.'/unrelated-repository');
+      $this->fixtureProcess(['git', 'init', '--quiet', $root])->mustRun();
+      $this->assertDirectoryExists($root.'/.git');
+      $process = $this->fixtureProcess(['git', '-C', $root, 'rev-parse', '--is-bare-repository']);
+      $process->mustRun();
+      $this->assertSame('false', trim($process->getOutput()));
+    } finally {
+      putenv($previous === false ? 'GIT_DIR' : 'GIT_DIR='.$previous);
+      (new Filesystem)->deleteDirectory($root);
+    }
   }
 }

@@ -17,7 +17,7 @@ class NavigationTree
     $items = NavigationItem::query()
       ->forSite($site)
       ->forMenu($menuKey)
-      ->with(['page.translations', 'page.site', 'translations.locale', ...(app(PublicPageAccess::class)->available() ? ['page.accessRule'] : [])])
+      ->with(['site', 'page.translations', 'page.site', 'translations.locale', ...(app(PublicPageAccess::class)->available() ? ['page.accessRule'] : [])])
       ->ordered()
       ->get();
 

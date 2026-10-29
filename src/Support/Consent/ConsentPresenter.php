@@ -24,10 +24,10 @@ final class ConsentPresenter
     }
     $texts = [];
     foreach (['title', 'body', 'preferences_title', 'preferences_body', 'accept', 'reject', 'customize', 'save', 'close', 'always_on',
-      'necessary', 'necessary_body', 'preferences', 'analytics', 'marketing', 'external', 'settings', 'privacy', 'load_once', 'allow_service', 'blocked', 'sync_error', 'reload_required', 'reload', 'cookies', 'duration'] as $key) {
+      'necessary', 'necessary_body', 'preferences', 'analytics', 'marketing', 'external', 'settings', 'privacy', 'load_once', 'allow_service', 'blocked', 'sync_error', 'reload_required', 'reload', 'cookies', 'duration', 'saved'] as $key) {
       $texts[$key] = $config->text($site, $key, $locale);
     }
-    $payload = ['site' => $site->id, 'syncUrl' => Route::has('public.privacy-consent.site-sync') ? route('public.privacy-consent.site-sync', $site) : null, 'csrfToken' => csrf_token(),
+    $payload = ['site' => $site->id, 'preferencesUrl' => app(ConsentPreferencesLink::class)->url($site, $locale), 'syncUrl' => Route::has('public.privacy-consent.site-sync') ? route('public.privacy-consent.site-sync', $site) : null, 'csrfToken' => csrf_token(),
       'services' => $services, 'state' => $state, 'preview' => $preview];
 
     return ['enabled' => $preview || $settings['enabled'], 'settings' => $settings, 'services' => $services, 'state' => $state, 'texts' => $texts, 'payload' => $payload,

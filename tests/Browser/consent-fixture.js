@@ -13,6 +13,8 @@
     if (new URLSearchParams(location.search).has('storage-blocked')) {
         Object.defineProperty(window, 'localStorage', { configurable: true, get: function () { throw new Error('Synthetic blocked storage'); } });
     }
+    var direct = new URLSearchParams(location.search).has('direct') || location.hash === '#cookie-settings';
+    if (new URLSearchParams(location.search).has('direct')) root.setAttribute('data-cms-consent-auto-open', '');
     var requests = [];
     var changes = 0;
     var fail = false;
@@ -35,11 +37,20 @@
             var link = document.getElementById('settings-link');
             try {
                 check(!!window.WebBlocksCmsConsent, 'CMS consent runtime initialized');
-                check(modal.hidden && !modal.classList.contains('is-open'), 'Preference modal never opens automatically');
+                check(modal.classList.contains('is-open') === direct, 'Only an explicit settings entry auto-opens the preference center');
+                if (direct) { button('[data-wb-dismiss="modal"]').click(); await frame(); }
                 check(requests.length === 0 && changes === 0, 'Initialization writes no consent');
                 if (choice === 'accepted') check(!!document.querySelector('[data-cms-consent-script="synthetic-script"]'), 'A stored script permission starts the managed source');
                 check(root.querySelector('[data-cms-consent-banner]').hidden === !!choice, 'Banner respects previous choice');
                 if (!choice) check(!document.querySelector('[data-cms-consent-content] iframe'), 'No iframe before consent');
+                document.querySelector('#native-settings a').click(); await frame();
+                check(modal.classList.contains('is-open'), 'Native system block opens the single preference center');
+                check(requests.length === 0, 'Native system block grants nothing');
+                button('[data-wb-dismiss="modal"]').click(); await frame();
+                var menu = document.createElement('a'); menu.href = config.preferencesUrl; menu.textContent = 'Synthetic menu entry'; document.querySelector('main').appendChild(menu);
+                menu.click(); await frame();
+                check(modal.classList.contains('is-open'), 'Generated permanent menu URL opens preferences in place');
+                button('[data-wb-dismiss="modal"]').click(); await frame();
                 link.focus(); link.click(); await frame();
                 check(modal.classList.contains('is-open'), 'Compatibility anchor opens preference modal');
                 check(requests.length === 0 && changes === 0, 'Opening does not change consent or sync');

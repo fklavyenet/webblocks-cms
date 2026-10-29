@@ -95,12 +95,16 @@ class NavigationItemRequest extends FormRequest
         $validator->errors()->add('title', 'A title is required for groups.');
       }
 
-      if ($linkType !== NavigationItem::LINK_PAGE && $title === '') {
+      if (! in_array($linkType, [NavigationItem::LINK_PAGE, NavigationItem::LINK_COOKIE_SETTINGS], true) && $title === '') {
         $validator->errors()->add('title', 'A title is required for this link type.');
       }
 
       if (! app(IconCatalog::class)->isActiveSelection($icon)) {
         $validator->errors()->add('icon', 'Select an active icon from the catalog.');
+      }
+
+      if ($linkType === NavigationItem::LINK_COOKIE_SETTINGS && ($url !== '' || $pageId || ($this->input('target') && $this->input('target') !== '_self'))) {
+        $validator->errors()->add('link_type', __('webblocks-cms::consent.fixed_destination'));
       }
 
       if (! $parentId) {

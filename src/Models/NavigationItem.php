@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Support\Consent\ConsentConfiguration;
+use WebBlocks\Cms\Support\Consent\ConsentPreferencesLink;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 class NavigationItem extends CmsModel
 {
@@ -26,6 +30,8 @@ class NavigationItem extends CmsModel
   public const LINK_CUSTOM_URL = 'custom_url';
 
   public const LINK_GROUP = 'group';
+
+  public const LINK_COOKIE_SETTINGS = 'cookie_settings';
 
   public const VISIBILITY_VISIBLE = 'visible';
 
@@ -101,7 +107,7 @@ class NavigationItem extends CmsModel
 
   public static function linkTypes(): array
   {
-    return [self::LINK_PAGE, self::LINK_CUSTOM_URL, self::LINK_GROUP];
+    return [self::LINK_PAGE, self::LINK_CUSTOM_URL, self::LINK_GROUP, self::LINK_COOKIE_SETTINGS];
   }
 
   public static function visibilities(): array
@@ -182,6 +188,10 @@ class NavigationItem extends CmsModel
 
   public function resolvedTitle(?Locale $locale = null): string
   {
+    if ($this->link_type === self::LINK_COOKIE_SETTINGS && ! $this->translatedTitle($locale) && ! $this->title) {
+      return app(ConsentPreferencesLink::class)->label($this->site, $locale?->code ?? request()?->route('locale') ?? request()?->query('locale'));
+    }
+
     return $this->translatedTitle($locale)
       ?? ($this->title ?: ($this->page?->name ?: ($this->link_type === self::LINK_GROUP ? 'Untitled Group' : (string) $this->url)));
   }
@@ -230,6 +240,8 @@ class NavigationItem extends CmsModel
     return match ($this->link_type) {
       self::LINK_PAGE => $this->page?->publicPath(is_string($requestedLocale) && $requestedLocale !== '' ? $requestedLocale : null),
       self::LINK_CUSTOM_URL => $this->url,
+      self::LINK_COOKIE_SETTINGS => app(ConsentConfiguration::class)->settings($this->site)['enabled']
+        ? app(ConsentPreferencesLink::class)->url($this->site, is_string($requestedLocale) ? $requestedLocale : request()?->query('locale')) : null,
       default => null,
     };
   }
@@ -245,6 +257,7 @@ class NavigationItem extends CmsModel
       self::LINK_PAGE => 'Page',
       self::LINK_CUSTOM_URL => 'URL',
       self::LINK_GROUP => 'Group',
+      self::LINK_COOKIE_SETTINGS => app(CmsTranslator::class)->admin('navigation_form.cookie_settings', app(AdminLocaleResolver::class)->locale()),
       default => 'Item',
     };
   }
@@ -271,11 +284,16 @@ class NavigationItem extends CmsModel
       return $this->url ?: 'Custom URL';
     }
 
+    if ($this->link_type === self::LINK_COOKIE_SETTINGS) {
+      return $this->resolvedUrl() ?? $this->typeLabel();
+    }
+
     return 'Dropdown group';
   }
 
   public function isVisible(): bool
   {
-    return $this->visibility !== self::VISIBILITY_HIDDEN;
+    return $this->visibility !== self::VISIBILITY_HIDDEN
+      && ($this->link_type !== self::LINK_COOKIE_SETTINGS || $this->resolvedUrl() !== null);
   }
 }

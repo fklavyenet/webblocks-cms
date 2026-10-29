@@ -13,6 +13,7 @@ final class BrowserFixtureServer
 {
   private const SCENARIOS = [
     'consent-admin' => ['ConsentManagementTest', 'WEBBLOCKS_CONSENT_ADMIN_FIXTURE', 'authorized_panel_users_can_open_all_three_screens_and_preview'],
+    'system-picker' => ['CookieSettingsBlockTest', 'WEBBLOCKS_SYSTEM_PICKER_FIXTURE', 'system_picker_uses_the_system_flag'],
     'consent' => ['ConsentBrowserTest', 'WEBBLOCKS_CONSENT_FIXTURE', 'consent_browser_fixture'],
     'retention' => ['SchedulerSetupTest', 'WEBBLOCKS_RETENTION_FIXTURE', 'retention_table_browser_fixture'],
     'scheduler' => ['SchedulerSetupTest', 'WEBBLOCKS_SCHEDULER_FIXTURE', 'retention_table_browser_fixture'],
@@ -81,7 +82,7 @@ final class BrowserFixtureServer
       '/cms/css/public.css',
     ];
     $script = match ($scenario) {
-      'consent-admin' => '/cms/js/admin/core.js',
+      'consent-admin', 'system-picker' => '/cms/js/admin/core.js',
       'consent' => '/cms/js/privacy-consent-sync.js',
       'dirty-overlay' => '/cms/js/admin/core.js',
       'asset-picker' => '/cms/js/admin/asset-picker.js',
@@ -157,7 +158,7 @@ final class BrowserFixtureServer
     $head .= '<script src="/cms/webblocks-ui/'.$version.'/webblocks-ui.js" defer></script>';
     if (! in_array($scenario, ['parent', 'update-progress', 'retention', 'scheduler', 'consent'], true)) {
       $script = match ($scenario) {
-        'consent-admin' => 'core',
+        'consent-admin', 'system-picker' => 'core',
         'dirty-overlay' => 'core',
         'asset-picker' => 'asset-picker',
         'editor-preview' => 'editor-preview',

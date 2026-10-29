@@ -231,6 +231,8 @@ return [
     'delete_children_warning' => 'This item has :count child item(s). They are deleted with it.',
   ],
   'navigation_form' => [
+    'cookie_settings' => 'Cookie settings',
+    'cookie_settings_help' => 'Open cookie preferences without entering a URL.',
     'save_changes' => 'Save Changes',
     'create' => 'Create',
     'site' => 'Site',
@@ -1649,6 +1651,7 @@ return [
     'system_block_description' => 'Configure the system-driven output for this block.',
     'content_block_description' => 'Open the editor for this content block.',
     'block_types' => [
+      'cookie-settings' => ['name' => 'Cookie Settings', 'description' => 'Reopen the site’s cookie and privacy preferences.'],
       'stack' => [
         'name' => 'Stack',
         'description' => 'Arranges children from top to bottom and controls their vertical spacing.',
@@ -1667,6 +1670,7 @@ return [
       'layout' => 'Layout',
       'content' => 'Content',
       'navigation' => 'Navigation',
+      'system' => 'System',
       'advanced' => 'Advanced',
       'all' => 'All',
     ],
@@ -1679,6 +1683,8 @@ return [
       'content_text' => 'No editorial content block types are eligible here.',
       'navigation_title' => 'No navigation block types',
       'navigation_text' => 'No navigation or docs-shell utility blocks are eligible here.',
+      'system_title' => 'No system blocks',
+      'system_text' => 'No system blocks are eligible here.',
       'advanced_title' => 'No advanced block types',
       'advanced_text' => 'No advanced block types are eligible here.',
       'all_title' => 'No block types',
@@ -4818,4 +4824,12 @@ return [
     'created' => 'Embedded Application created.', 'updated' => 'Embedded Application updated.', 'deleted' => 'Embedded Application deleted.',
   ],
 
+  'cookie_settings_block' => [
+    'help' => 'This system block opens the existing site preference center. Its label follows the page language.',
+    'disabled' => 'Cookie settings are disabled for this site. This block is hidden from visitors.',
+    'appearance' => 'Appearance',
+    'text' => 'Text link',
+    'primary' => 'Primary button',
+    'secondary' => 'Secondary button',
+  ],
 ];

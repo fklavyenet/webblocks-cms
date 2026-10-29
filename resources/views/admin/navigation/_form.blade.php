@@ -1,4 +1,5 @@
 @php
+    $isCookie = old('link_type', $item->link_type) === \WebBlocks\Cms\Models\NavigationItem::LINK_COOKIE_SETTINGS;
     $isPage = old('link_type', $item->link_type ?: \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) === \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE;
     $isUrl = old('link_type', $item->link_type ?: \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) === \WebBlocks\Cms\Models\NavigationItem::LINK_CUSTOM_URL;
     $isGroup = old('link_type', $item->link_type ?: \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP;
@@ -42,16 +43,20 @@
             <select id="link_type" name="link_type" class="wb-select" required data-navigation-link-type>
                 <option value="page" @selected(old('link_type', $item->link_type ?: 'page') === 'page')>{{ $navigationFormText('page') }}</option>
                 <option value="custom_url" @selected(old('link_type', $item->link_type ?: 'page') === 'custom_url')>{{ $navigationFormText('custom_url') }}</option>
+                <option value="cookie_settings" @selected($isCookie)>{{ $navigationFormText('cookie_settings') }}</option>
                 <option value="group" @selected(old('link_type', $item->link_type ?: 'page') === 'group')>{{ $navigationFormText('group') }}</option>
             </select>
             <div
                 class="wb-text-sm wb-text-muted"
                 data-navigation-link-type-copy
+                data-navigation-copy-cookie-settings="{{ $navigationFormText('cookie_settings_help') }}"
                 data-navigation-copy-group="{{ $navigationFormText('group_help') }}"
                 data-navigation-copy-custom-url="{{ $navigationFormText('custom_url_help') }}"
                 data-navigation-copy-page="{{ $navigationFormText('page_help') }}"
             >
-                @if ($isGroup)
+                @if ($isCookie)
+                    {{ $navigationFormText('cookie_settings_help') }}
+                @elseif ($isGroup)
                     {{ $navigationFormText('group_help') }}
                 @elseif ($isUrl)
                     {{ $navigationFormText('custom_url_help') }}

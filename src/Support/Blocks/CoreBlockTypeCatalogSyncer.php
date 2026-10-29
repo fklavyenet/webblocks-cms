@@ -55,6 +55,17 @@ class CoreBlockTypeCatalogSyncer
   {
     return [
       [
+        'name' => 'Cookie Settings',
+        'slug' => 'cookie-settings',
+        'category' => 'system',
+        'description' => 'Reopens site cookie and privacy preferences with an automatically localized label.',
+        'source_type' => 'static',
+        'is_system' => true,
+        'is_container' => false,
+        'sort_order' => 60,
+        'status' => 'published',
+      ],
+      [
         'name' => 'Text',
         'slug' => 'text',
         'category' => 'legacy',

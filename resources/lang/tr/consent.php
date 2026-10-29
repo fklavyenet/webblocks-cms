@@ -111,4 +111,6 @@ return [
   'notice_group' => 'Bildirim',
   'preferences_group' => 'Tercih penceresi',
   'partly_customized' => 'Kısmen özelleştirilmiş',
+  'saved' => 'Tercihleriniz kaydedildi.',
+  'fixed_destination' => 'Çerez ayarları aynı sekmede sitenin tercih adresini kullanır.',
 ];

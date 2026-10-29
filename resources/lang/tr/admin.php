@@ -125,6 +125,8 @@ $translations = [
     'delete_children_warning' => 'Bu öğenin :count alt öğesi var. Onlar da birlikte silinir.',
   ],
   'navigation_form' => [
+    'cookie_settings' => 'Çerez ayarları',
+    'cookie_settings_help' => 'URL girmeden çerez tercihlerini açın.',
     'save_changes' => 'Değişiklikleri Kaydet',
     'create' => 'Oluştur',
     'site' => 'Site',
@@ -1446,6 +1448,7 @@ $translations = [
     'system_block_description' => 'Bu blok için sistem tarafından üretilen çıktınin ayarlarını yapılandır.',
     'content_block_description' => 'Bu içerik bloğu için editoru aç.',
     'block_types' => [
+      'cookie-settings' => ['name' => 'Çerez Ayarları', 'description' => 'Sitenin çerez ve gizlilik tercihlerini yeniden açar.'],
       'stack' => [
         'name' => 'Dikey Akış (Stack)',
         'description' => 'Alt blokları yukarıdan aşağıya dizer ve aralarındaki dikey boşluğu yönetir.',
@@ -1464,6 +1467,7 @@ $translations = [
       'layout' => 'Layout',
       'content' => 'İçerik',
       'navigation' => 'Navigasyon',
+      'system' => 'Sistem',
       'advanced' => 'Gelişmiş',
       'all' => 'Tümu',
     ],
@@ -1476,6 +1480,8 @@ $translations = [
       'content_text' => 'Burada uygun editorial içerik blok türü yok.',
       'navigation_title' => 'Navigasyon blok türü yok',
       'navigation_text' => 'Burada uygun navigasyon veya docs-shell yardımcı bloğu yok.',
+      'system_title' => 'Sistem bloğu yok',
+      'system_text' => 'Bu alana eklenebilen sistem bloğu bulunmuyor.',
       'advanced_title' => 'Gelişmiş blok türü yok',
       'advanced_text' => 'Burada uygun gelişmiş blok türü yok.',
       'all_title' => 'Blok türü yok',
@@ -4586,6 +4592,14 @@ $translations = [
     'created' => 'Gömülü Uygulama oluşturuldu.', 'updated' => 'Gömülü Uygulama güncellendi.', 'deleted' => 'Gömülü Uygulama silindi.',
   ],
 
+  'cookie_settings_block' => [
+    'help' => 'Bu sistem bloğu mevcut site tercih penceresini açar. Etiketi sayfanın diline göre belirlenir.',
+    'disabled' => 'Bu sitede çerez ayarları kapalı. Blok ziyaretçilere gösterilmez.',
+    'appearance' => 'Görünüm',
+    'text' => 'Metin bağlantısı',
+    'primary' => 'Birincil düğme',
+    'secondary' => 'İkincil düğme',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

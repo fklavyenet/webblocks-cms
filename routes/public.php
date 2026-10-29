@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
 use WebBlocks\Cms\Http\Controllers\Public\PageController;
 use WebBlocks\Cms\Http\Controllers\Public\PluginAssetController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicConsentController;
+use WebBlocks\Cms\Http\Controllers\Public\PublicConsentPreferencesController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicPrivacyConsentController;
 use WebBlocks\Cms\Http\Controllers\Public\PublicSearchController;
 use WebBlocks\Cms\Http\Controllers\Public\RobotsController;
@@ -118,6 +119,13 @@ Route::middleware(['web', 'install.required'])->post('/content-ratings', [Conten
 Route::middleware(['web', 'install.required'])->post('/comment-entries', [CommentEntryController::class, 'store'])
   ->middleware('throttle:engagement-comments')
   ->name('comment-entries.store');
+
+Route::middleware($publicContentMiddleware)->group(function () use ($publicMount) {
+  Route::get($publicMount->path('/privacy-consent/preferences'), [PublicConsentPreferencesController::class, 'show'])->name('public.privacy-consent.preferences');
+  Route::post($publicMount->path('/privacy-consent/preferences'), [PublicConsentPreferencesController::class, 'store'])->name('public.privacy-consent.preferences-save');
+  Route::get($publicMount->path('/{locale}/privacy-consent/preferences'), [PublicConsentPreferencesController::class, 'show'])->where('locale', Locale::routePattern())->name('public.privacy-consent.localized-preferences');
+  Route::post($publicMount->path('/{locale}/privacy-consent/preferences'), [PublicConsentPreferencesController::class, 'store'])->where('locale', Locale::routePattern())->name('public.privacy-consent.localized-preferences-save');
+});
 
 Route::middleware(['web', 'install.required'])->prefix('privacy-consent')->name('public.privacy-consent.')->group(function () {
   Route::post('/sites/{site}', [PublicConsentController::class, 'sync'])->name('site-sync');

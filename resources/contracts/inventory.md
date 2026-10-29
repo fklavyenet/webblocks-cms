@@ -200,7 +200,7 @@ Underscores normalize to hyphens in `data-wb-public-block-type`; for example `co
 
 ## Quick Catalog Index
 
-The current published core catalog contains 56 rows:
+The current published core catalog contains 57 rows:
 
 | Group | Handles |
 | --- | --- |
@@ -208,6 +208,7 @@ The current published core catalog contains 56 rows:
 | Editorial and marketing | `header`, `plain_text`, `rich-text`, `content_header`, `hero`, `cta`, `columns`, `column_item`, `feature-grid`, `feature-item`, `stat-card`, `image`, `gallery`, `download`, `file`, `video`, `external-content`, `audio`, `code`, `button_link`, `table`, `quote`, `page-list`, `application` |
 | Navigation | `link-list`, `link-list-item`, `navigation-auto`, `toc`, `breadcrumb`, `header-actions`, `sticky-navbar`, `navbar-brand`, `navbar-navigation`, `sidebar-brand`, `sidebar-navigation`, `sidebar-nav-item`, `sidebar-nav-group`, `search-form`, `sidebar-footer` |
 | Pattern, form, and engagement | `alert`, `contact_form`, `rating`, `comments` |
+| System actions | `cookie-settings` |
 | Human-only advanced | `html` |
 
 ## Layout And Composition Blocks
@@ -408,7 +409,7 @@ The current published core catalog contains 56 rows:
 | --- | --- |
 | Editable content | `translations.title`, `translations.subtitle` as eyebrow, `translations.content`. Action buttons are separate child `button_link` blocks with their own admin form. |
 | Settings and variants | `variant`: default, muted, soft, accent; `layout`: left, centered, split, or full-bleed; `title_tag`: h1, h2, h3; optional background image and overlay settings. |
-| Children/media | Actions are child `button_link` blocks, with no fixed count. In left/centered/full-bleed layouts `media_id` is background media; in split it renders as a foreground image beside the copy. |
+| Children/media | Actions are child `button_link` blocks or a `cookie-settings` system action, with no fixed count. In left/centered/full-bleed layouts `media_id` is background media; in split it renders as a foreground image beside the copy. |
 | HTML | Legacy layouts own `<section class="wb-card wb-promo [wb-card-*]">`; split adds `.wb-promo--split` and `.wb-promo-media`. Full-bleed deliberately drops the card class and uses `.wb-public-hero--full-bleed` with an aligned `.wb-public-hero__copy`. |
 | Example appearance | A contained promo, foreground image/copy split, or unframed viewport-wide photographic hero, plus actions. |
 | Hard limitation | No second foreground image, product-price/trust-strip region, or arbitrary nested content. |
@@ -423,7 +424,7 @@ The current published core catalog contains 56 rows:
 | Children/media | Actions are child `button_link` blocks, with no fixed count; direct image `media_id` is background media. |
 | HTML | Root-owning `<section class="wb-card wb-promo [wb-card-*]">` with `.wb-promo-copy` and optional action row. |
 | Example appearance | Short conversion band near the end of a page. |
-| Actions | Identical to Hero: add `button_link` children, or use the `primary_cta` / `secondary_cta` shorthand. |
+| Actions | Identical to Hero: add `button_link` or `cookie-settings` children, or use the `primary_cta` / `secondary_cta` shorthand. |
 | Limitation | `settings.layout=centered` is renderer-compatible but is not exposed by the normal CTA admin form and is not a recommended AI authoring field. |
 
 ### `columns` — Columns
@@ -559,6 +560,18 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | HTML | Generic wrapper plus `<pre><code data-language="…">…</code></pre>`. |
 | Example appearance | Copyable-looking command or source snippet. |
 | Avoid | Prose, layout, or executable scripts. |
+
+### `cookie-settings` — Cookie Settings
+
+| Contract area | Source-backed behavior |
+| --- | --- |
+| Kind | System block (`is_system=true`), with no editorial translations, children, media or authored URL. |
+| Settings and variants | Shared `variant`: text/default, primary or secondary. API creation accepts the root variant or settings.variant; PATCH supports both. Appearance uses existing typed block fields. |
+| Label and destination | The label comes from consent.settings in the render language. The real URL is generated for the site language and public mount: /privacy-consent/preferences or /{locale}/privacy-consent/preferences under that mount. |
+| Placement | Page-owned or Shared Slot content, ordinary layout containers, Hero/CTA action areas and Navbar. Existing parent eligibility rules still apply. |
+| HTML | Owns one link or button-styled anchor with data-cms-consent-open, aria-controls and aria-haspopup. Reuses the single layout-owned preference center, including after acceptance or rejection. Disabled site consent hides the public link; the editor explains its absence. Zero optional services still allow the necessary-features explanation. |
+| Direct entry | GET shows preferences without recording a decision, auto-opens the existing center when JavaScript runs, and offers a CSRF-protected native form inside noscript. POST retains the same site/service revision checks, cookie and declared-cookie withdrawal behavior as JSON sync. No caller-selected site or return URL is used. Disabled sites and unavailable site languages return an error. Responses are private/no-store, vary on Cookie and are noindex. |
+| API | Normal content.read/content.apply and Shared Slot capabilities apply; placement does not require consent.write. Content plans, native editing, staging and complete revision snapshots retain the normal block lifecycle. |
 
 ### `button_link` — Button Link
 
@@ -700,7 +713,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | --- | --- |
 | Editable content | No direct copy; optional editor-only `layout_name`. |
 | Settings and variants | `sticky_mode`: sticky/default, static, fixed. |
-| Children/media | Allowed children: container, cluster, header, plain_text, rich-text, button_link, navbar-brand, navbar-navigation, header-actions, search-form. At least one child required by API plans. |
+| Children/media | Allowed children: container, cluster, header, plain_text, rich-text, button_link, cookie-settings, navbar-brand, navbar-navigation, header-actions, search-form. At least one child required by API plans. |
 | HTML | Root-owning `<nav class="wb-navbar …" data-wb-public-block-type="sticky-navbar">…</nav>`. |
 | Example appearance | Shared header: Navbar → Container → Cluster(between) → Brand + navigation/actions. |
 | Avoid | A second custom header shell. |
@@ -2015,3 +2028,11 @@ The CMS-owned `WebBlocksCmsConsent` browser API exposes open/get/has/set. `#cook
 One-time embed permission is memory-only and limited to that content instance. Persistent changes discard one-time grants; withdrawal removes managed frames, clears declared first-party cookies where possible and reloads after an executed managed script is revoked. Third-party cookies and arbitrary already-running scripts cannot be universally erased. Raw custom head HTML, site JS, unregistered plugin code and tag-manager descendants require explicit integration; a visible switch is not automatic control of every external resource.
 
 Trusted host/plugin providers may register a consent definition through `ConsentIntegrations::register`. Plugin registrations supply their owning plugin handle; disabled or unavailable plugins are excluded. Definitions include a stable version/category/source fingerprint; site overrides still take precedence and cannot replace compiled executable sources. Server integrations can call `ConsentState::allows`; browser integrations use `WebBlocksCmsConsent.has` and the consent-change event. No external CMP, SaaS, runtime dependency or automatic remote cookie scanner is introduced.
+
+### System discovery and reusable preference destinations (1.108.0)
+
+The Block Types picker orders Common, Layout, Content, Navigation, System, Advanced and All. System filters the already-eligible catalog by is_system, independent of the functional category. System utilities remain discoverable in their Content/Navigation groups and All. Both native core and enabled plugin system flags are supported; parent restrictions and visibility filtering remain in force. Cards show their localized System badge and retain the functional category badge where applicable. Search still covers the entire eligible catalog.
+
+Navigation items accept link_type=cookie_settings through the panel, navigation API and content plans. They need no authored URL, page reference or label; absent labels use the localized consent-settings label, and ordinary authored/localized label overrides remain supported. The destination is generated at render time, opens in the same tab and disappears from public menus while consent is disabled. Supplying a custom URL, page destination or new-tab target for this type is refused. Existing link types and menu translation contracts are unchanged.
+
+The real generated preference URL opens the existing modal when clicked on a normal page. Its direct GET entry always shows preferences, including for a stored decision. The existing #cookie-settings action remains compatible, and explicit initial fragments/hash changes also open the center. Opening, closing and navigating to preferences never grant consent. The browser payload adds preferencesUrl without exposing cookie values. Ordinary page visits still never auto-open the preference modal.

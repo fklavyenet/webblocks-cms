@@ -111,4 +111,6 @@ return [
   'notice_group' => 'Aviso',
   'preferences_group' => 'Ventana de preferencias',
   'partly_customized' => 'Parcialmente personalizada',
+  'saved' => 'Se han guardado sus preferencias.',
+  'fixed_destination' => 'La configuración de cookies utiliza la dirección de preferencias del sitio en la misma pestaña.',
 ];

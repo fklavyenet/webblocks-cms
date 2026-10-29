@@ -1334,6 +1334,18 @@ class InternalContentResourceController extends Controller
       );
     }
 
+    if ($type === 'cookie-settings') {
+      if ($request->filled('url')) {
+        return $this->validationError('url', 'Cookie settings use the site preference destination.');
+      }
+      if ($request->has('variant')) {
+        $incoming = $request->input('settings', []);
+        if (is_array($incoming)) {
+          $request->merge(['settings' => array_replace($incoming, ['variant' => $request->input('variant')])]);
+        }
+      }
+    }
+
     $settings = $this->mergeSettings($block, $request);
     if ($block->typeSlug() === 'contact_form') {
       $consent = app(ContactConsentRequirements::class);
@@ -1375,7 +1387,7 @@ class InternalContentResourceController extends Controller
       }
 
       $incomingSettings = $request->input('settings', []);
-      foreach (['variant' => ['card', 'header', 'hero', 'cta', 'columns', 'feature-grid', 'button_link', 'download', 'table', 'quote', 'search-form', 'gallery'],
+      foreach (['variant' => ['cookie-settings', 'card', 'header', 'hero', 'cta', 'columns', 'feature-grid', 'button_link', 'download', 'table', 'quote', 'search-form', 'gallery'],
         'url' => ['button_link', 'image', 'file', 'download', 'video', 'audio', 'column_item', 'feature-item', 'link-list-item', 'navbar-brand', 'sidebar-brand', 'sidebar-nav-item', 'stat-card']] as $field => $types) {
         if (is_array($incomingSettings) && array_key_exists($field, $incomingSettings) && ! $request->has($field)
           && in_array($block->typeSlug(), $types, true) && $incomingSettings[$field] !== $block->setting($field)) {

@@ -381,6 +381,15 @@ class InternalNavigationController extends Controller
       $updates['url'] = $url;
     }
 
+    if ($linkType === NavigationItem::LINK_COOKIE_SETTINGS) {
+      if ((array_key_exists('url', $payload) && $url !== '') || (array_key_exists('page_id', $payload) && $pageId) || (array_key_exists('target', $payload) && $target !== '_self')) {
+        $errors[] = $this->operations->error('navigation_item.link_type', __('webblocks-cms::consent.fixed_destination'));
+      }
+      $updates['page_id'] = null;
+      $updates['url'] = null;
+      $target = '_self';
+    }
+
     if ($linkType === NavigationItem::LINK_GROUP) {
       if ($title === '') {
         $errors[] = $this->operations->error('navigation_item.label', 'Navigation group label is required.');

@@ -111,4 +111,6 @@ return [
   'notice_group' => 'Avis',
   'preferences_group' => 'Fenêtre des préférences',
   'partly_customized' => 'Partiellement personnalisée',
+  'saved' => 'Vos préférences ont été enregistrées.',
+  'fixed_destination' => 'Les paramètres des cookies utilisent l’adresse des préférences du site dans le même onglet.',
 ];

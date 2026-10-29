@@ -378,7 +378,7 @@ class BlockRequest extends FormRequest
       'link_list_items.*.is_system' => ['nullable', 'boolean'],
       'link_list_items.*.sort_order' => ['nullable', 'integer', 'min:0'],
       'link_list_items.*._delete' => ['nullable', 'boolean'],
-      'variant' => [($isLayoutPrimitive || $isContentHeader || $isBreadcrumb) ? 'prohibited' : 'nullable', ($isButtonLink || $isDownload) ? Rule::in(['primary', 'secondary', 'ghost']) : 'string', 'max:255'],
+      'variant' => [($isLayoutPrimitive || $isContentHeader || $isBreadcrumb) ? 'prohibited' : 'nullable', $selectedBlockType?->slug === 'cookie-settings' ? Rule::in(['text', 'primary', 'secondary']) : (($isButtonLink || $isDownload) ? Rule::in(['primary', 'secondary', 'ghost']) : 'string'), 'max:255'],
       'meta' => [$isLayoutPrimitive ? 'prohibited' : 'nullable', 'string'],
       'settings' => [($isLayoutPrimitive || $isPluginBlock) ? 'prohibited' : 'nullable', 'string'],
       'plugin_settings' => [$isPluginBlock ? 'nullable' : 'prohibited', 'array'],
@@ -1179,6 +1179,13 @@ class BlockRequest extends FormRequest
           ? null
           : json_encode($settings, JSON_UNESCAPED_SLASHES);
         $data['meta'] = null;
+      }
+
+      if ($blockType?->slug === 'cookie-settings') {
+        foreach (['title', 'content', 'subtitle', 'meta', 'url', 'settings'] as $field) {
+          $data[$field] = null;
+        }
+        $data['variant'] = ($data['variant'] ?? null) ?: 'text';
       }
 
       if ($blockType?->slug === 'hero') {

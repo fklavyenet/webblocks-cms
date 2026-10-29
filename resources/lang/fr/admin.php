@@ -123,6 +123,8 @@ $translations = [
     'delete_children_warning' => 'Cet élément comporte :count élément(s) enfant(s). Ils seront supprimés avec lui.',
   ],
   'navigation_form' => [
+    'cookie_settings' => 'Paramètres des cookies',
+    'cookie_settings_help' => 'Ouvrez les préférences des cookies sans saisir d’URL.',
     'save_changes' => 'Enregistrer les modifications',
     'create' => 'Créer',
     'site' => 'Site',
@@ -1425,6 +1427,7 @@ $translations = [
     'sort_order' => 'Ordre de tri',
   ],
   'page_slot_block_picker' => [
+    'block_types' => ['cookie-settings' => ['name' => 'Paramètres des cookies', 'description' => 'Rouvre les préférences de cookies et de confidentialité du site.']],
     'title' => 'Types de bloc',
     'description' => 'Choisissez un type de bloc, puis configurez-le sans quitter l\'éditeur d\'emplacement.',
     'parent_context' => 'Affichage des types de bloc autorisés à l\'intérieur de :type.',
@@ -1450,6 +1453,7 @@ $translations = [
       'layout' => 'Mise en page',
       'content' => 'Contenu',
       'navigation' => 'Navigation',
+      'system' => 'Système',
       'advanced' => 'Avancés',
       'all' => 'Tous',
     ],
@@ -1462,6 +1466,8 @@ $translations = [
       'content_text' => 'Aucun type de bloc de contenu éditorial n\'est éligible ici.',
       'navigation_title' => 'Aucun type de bloc de navigation',
       'navigation_text' => 'Aucun bloc de navigation ou utilitaire de coquille de documentation n\'est éligible ici.',
+      'system_title' => 'Aucun bloc système',
+      'system_text' => 'Aucun bloc système n’est disponible ici.',
       'advanced_title' => 'Aucun type de bloc avancé',
       'advanced_text' => 'Aucun type de bloc avancé n\'est éligible ici.',
       'all_title' => 'Aucun type de bloc',
@@ -4548,6 +4554,14 @@ $translations = [
     ],
   ],
 
+  'cookie_settings_block' => [
+    'help' => 'Ce bloc système ouvre les préférences existantes du site. Le libellé suit la langue de la page.',
+    'disabled' => 'Les paramètres des cookies sont désactivés pour ce site. Le bloc est masqué aux visiteurs.',
+    'appearance' => 'Apparence',
+    'text' => 'Lien texte',
+    'primary' => 'Bouton principal',
+    'secondary' => 'Bouton secondaire',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

@@ -111,4 +111,6 @@ return [
   'notice_group' => 'Notice',
   'preferences_group' => 'Preference window',
   'partly_customized' => 'Partly customized',
+  'saved' => 'Your preferences have been saved.',
+  'fixed_destination' => 'Cookie settings use the site preference destination in the same tab.',
 ];

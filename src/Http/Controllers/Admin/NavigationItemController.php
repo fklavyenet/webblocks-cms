@@ -218,6 +218,12 @@ class NavigationItemController extends Controller
       $data['page_id'] = null;
     }
 
+    if ($data['link_type'] === NavigationItem::LINK_COOKIE_SETTINGS) {
+      $data['page_id'] = null;
+      $data['url'] = null;
+      $data['target'] = '_self';
+    }
+
     if ($data['link_type'] === NavigationItem::LINK_GROUP) {
       $data['page_id'] = null;
       $data['url'] = null;
