@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.108.1
+
+- Add minimal product-neutral Commerce offer and fulfillment port interfaces. Preserve all 1.108.0 authoring behavior; no settings, migrations or live sales are enabled by these interfaces.
+
 ## 1.108.0
 
 - Add a reusable Cookie Settings system block with localized link/button appearances, page and Shared Slot placement, native editor support and Content API authoring.
