@@ -78,6 +78,9 @@ class PluginDefinition
   /** @var array<string, PluginDashboardWidget> */
   private array $dashboardWidgets = [];
 
+  /** @var array<string, PluginQuickSetting> */
+  private array $quickSettings = [];
+
   /** @var array<string, PluginSystemCard> */
   private array $systemCards = [];
 
@@ -117,6 +120,10 @@ class PluginDefinition
 
     foreach ($this->dashboardWidgets as $key => $widget) {
       $this->dashboardWidgets[$key] = clone $widget;
+    }
+
+    foreach ($this->quickSettings as $key => $setting) {
+      $this->quickSettings[$key] = clone $setting;
     }
 
     foreach ($this->systemCards as $key => $card) {
@@ -773,6 +780,36 @@ class PluginDefinition
   public function dashboardWidgetDefinitions(): array
   {
     return array_map(fn (PluginDashboardWidget $widget): PluginDashboardWidget => clone $widget, $this->dashboardWidgets);
+  }
+
+  /** @param array<int, PluginQuickSetting> $settings */
+  public function quickSettings(array $settings): self
+  {
+    $indexed = [];
+    foreach ($settings as $setting) {
+      if (! $setting instanceof PluginQuickSetting) {
+        throw new PluginException('Plugin quick settings must be PluginQuickSetting instances.');
+      }
+      if (! str_starts_with($setting->key(), $this->handle.'.')) {
+        throw PluginException::invalidExtensionOwnership($this->handle, $setting->key());
+      }
+      if ($setting->permissionName() !== null && ! str_starts_with($setting->permissionName(), $this->handle.'.')) {
+        throw PluginException::invalidPermissionPrefix($this->handle, $setting->permissionName());
+      }
+      if (isset($indexed[$setting->key()])) {
+        throw PluginException::duplicateExtensionKey($setting->key());
+      }
+      $indexed[$setting->key()] = $setting->forPlugin($this->handle);
+    }
+    $this->quickSettings = $indexed;
+
+    return $this;
+  }
+
+  /** @return array<string, PluginQuickSetting> */
+  public function quickSettingDefinitions(): array
+  {
+    return array_map(fn (PluginQuickSetting $setting): PluginQuickSetting => clone $setting, $this->quickSettings);
   }
 
   /**

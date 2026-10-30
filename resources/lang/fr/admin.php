@@ -217,6 +217,7 @@ $translations = [
     'updated' => 'Langue mise à jour avec succès.',
   ],
   'topbar' => [
+    'quick_settings' => 'Réglages rapides',
     'system_updates' => 'Mises à jour du système',
     'color_mode' => 'Mode de couleur',
     'mode_light' => 'Mode clair',
@@ -2787,6 +2788,8 @@ $translations = [
     'reset_email_no_action' => 'Si vous n\'avez pas demandé de réinitialisation, aucune action n\'est requise.',
   ],
   'dashboard' => [
+    'site_health' => 'État du site',
+    'last_7_days' => '7 derniers jours',
     'title' => 'Tableau de bord',
     'browser_title' => 'Tableau de bord d\'administration',
     'description' => 'Consultez l\'état de publication et accédez directement aux principaux outils orientés page.',

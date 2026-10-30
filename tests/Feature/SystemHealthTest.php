@@ -145,6 +145,18 @@ class SystemHealthTest extends TestCase
   }
 
   #[Test]
+  public function a_missing_dashboard_snapshot_shows_unknown_badges_without_running_health_checks(): void
+  {
+    Cache::forget(app(SystemHealthQuery::class)->cacheKey());
+    $this->mock(SystemHealthSiteQuery::class, fn ($mock) => $mock->shouldNotReceive('rows'));
+    $summary = app(SystemHealthQuery::class)->dashboardSummary();
+    $this->assertSame('missing', $summary['status']);
+    $this->assertNull($summary['checked_at']);
+    $this->assertCount(8, $summary['categories']);
+    $this->assertSame(['unknown'], array_values(array_unique(array_column($summary['categories'], 'status'))));
+  }
+
+  #[Test]
   public function a_clear_dashboard_summary_only_claims_no_issues_in_available_checks(): void
   {
     $this->actingAs($this->user());

@@ -57,7 +57,12 @@ class SystemHealthQuery
   {
     $snapshot = $this->cachedSnapshot();
     if ($snapshot === null || ! isset($snapshot['dashboard_counts'])) {
-      return ['counts' => [], 'status' => 'missing', 'checked_at' => null];
+      $categories = [];
+      foreach (['system', 'sites', 'backups', 'scheduling', 'storage', 'search', 'plugins', 'updates'] as $category) {
+        $categories[$category] = ['status' => 'unknown', 'lead' => Health::check($category, 'unknown', 'check_unavailable', 'admin.system.health.index')];
+      }
+
+      return ['counts' => [], 'categories' => $categories, 'status' => 'missing', 'checked_at' => null];
     }
 
     try {
@@ -66,8 +71,11 @@ class SystemHealthQuery
       $generation = null;
     }
 
+    $report = $this->formatReport($snapshot, details: false);
+
     return [
-      'counts' => array_intersect_key($snapshot['dashboard_counts'], array_flip(['critical', 'warning', 'unknown'])),
+      'counts' => array_intersect_key($report['counts'], array_flip(['critical', 'warning', 'unknown'])),
+      'categories' => array_map(fn (array $category): array => ['status' => $category['status'], 'lead' => $category['lead']], $report['categories']),
       'status' => $generation !== null && ($snapshot['generation'] ?? null) === $generation && now()->timestamp - Carbon::parse($snapshot['checked_at'])->timestamp < self::TTL_SECONDS ? 'fresh' : 'stale',
       'checked_at' => $snapshot['checked_at'],
     ];
@@ -119,7 +127,7 @@ class SystemHealthQuery
     return $this->formatReport($snapshot, $siteId);
   }
 
-  private function formatReport(array $snapshot, ?int $siteId = null): array
+  private function formatReport(array $snapshot, ?int $siteId = null, bool $details = true): array
   {
     $siteOptions = array_map(fn (array $site) => ['id' => $site['id'], 'name' => $site['name']], $snapshot['sites']);
     $sites = array_values(array_filter($snapshot['sites'], fn (array $site) => $siteId === null || $site['id'] === $siteId));
@@ -165,7 +173,7 @@ class SystemHealthQuery
     unset($checks);
     usort($issues, fn (array $a, array $b) => Health::ORDER[$a['status']] <=> Health::ORDER[$b['status']]);
 
-    return ['checked_at' => $snapshot['checked_at'], 'scheduler_checked_at' => now()->toIso8601String(), 'scheduler' => $scheduler, 'cache_seconds' => self::TTL_SECONDS, 'selected_site_id' => $siteId, 'site_options' => $siteOptions, 'sites' => $sites, 'categories' => $categories, 'counts' => $counts, 'issues' => $issues, 'information' => $this->information->rows(), 'operations' => $snapshot['operations']];
+    return ['checked_at' => $snapshot['checked_at'], 'scheduler_checked_at' => now()->toIso8601String(), 'scheduler' => $scheduler, 'cache_seconds' => self::TTL_SECONDS, 'selected_site_id' => $siteId, 'site_options' => $siteOptions, 'sites' => $sites, 'categories' => $categories, 'counts' => $counts, 'issues' => $issues, 'information' => $details ? $this->information->rows() : [], 'operations' => $snapshot['operations']];
   }
 
   private function snapshot(): array

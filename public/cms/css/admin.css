@@ -4,6 +4,151 @@
  |--------------------------------------------------------------------------
  */
 
+.wb-cms-dashboard {
+    --wb-cms-status-success: var(--wb-success);
+    --wb-cms-status-warning: var(--wb-warning);
+    --wb-cms-status-danger: var(--wb-danger);
+    display: grid;
+    gap: var(--wb-s3);
+}
+
+.wb-cms-dashboard .wb-status-active { color: var(--wb-cms-status-success); }
+.wb-cms-dashboard .wb-status-pending { color: var(--wb-cms-status-warning); }
+.wb-cms-dashboard .wb-status-error { color: var(--wb-cms-status-danger); }
+
+html[data-mode="dark"] .wb-cms-dashboard {
+    --wb-cms-status-success: var(--wb-success-light);
+    --wb-cms-status-warning: var(--wb-warning-light);
+    --wb-cms-status-danger: var(--wb-danger-light);
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-mode="auto"] .wb-cms-dashboard {
+        --wb-cms-status-success: var(--wb-success-light);
+        --wb-cms-status-warning: var(--wb-warning-light);
+        --wb-cms-status-danger: var(--wb-danger-light);
+    }
+}
+
+.wb-cms-dashboard .wb-page-header {
+    margin-block-end: 0;
+}
+
+.wb-cms-dashboard-grid {
+    gap: var(--wb-s3);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.wb-cms-dashboard .wb-card-header {
+    padding: var(--wb-s2) var(--wb-s3);
+    min-block-size: 2.75rem;
+}
+
+.wb-cms-dashboard .wb-card-body {
+    padding: var(--wb-s3);
+    min-inline-size: 0;
+}
+
+.wb-cms-dashboard-overview {
+    margin: 0;
+    font-size: .875rem;
+}
+
+.wb-cms-dashboard-overview th,
+.wb-cms-dashboard-overview td {
+    padding: .15rem .35rem;
+    vertical-align: middle;
+}
+
+.wb-cms-dashboard-overview td:nth-child(2) {
+    font-variant-numeric: tabular-nums;
+}
+
+.wb-cms-dashboard-contact {
+    border-block-start: 1px solid var(--wb-border);
+    padding-block-start: var(--wb-s2);
+}
+
+.wb-cms-health-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--wb-s1);
+}
+
+.wb-cms-health-badges .wb-status-pill {
+    display: inline-flex;
+    gap: var(--wb-s1);
+    align-items: center;
+    white-space: normal;
+    text-decoration: none;
+}
+
+.wb-cms-dashboard .wb-chart {
+    --wb-chart-height: 12.5rem;
+}
+
+.wb-cms-dashboard-views {
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.wb-cms-dashboard .wb-link-list-item {
+    padding: var(--wb-s2) 0;
+    gap: var(--wb-s2);
+}
+
+.wb-cms-dashboard .wb-link-list-main {
+    min-inline-size: 0;
+}
+
+.wb-cms-dashboard .wb-link-list-title,
+.wb-cms-dashboard .wb-link-list-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wb-cms-dashboard .wb-link-list-title {
+    font-size: .875rem;
+}
+
+.wb-cms-dashboard-recent-page > .wb-status-pill {
+    flex-shrink: 0;
+    justify-self: end;
+    align-self: start;
+}
+
+.wb-cms-dashboard-recent-page {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.wb-cms-dashboard .wb-chart-readout {
+    font-size: .75rem;
+    line-height: 1.35;
+    margin-block: var(--wb-s2) 0;
+}
+
+#admin-quick-settings {
+    inline-size: min(22rem, calc(100vw - 2rem));
+    max-inline-size: calc(100vw - 2rem);
+}
+
+.wb-cms-quick-setting {
+    padding: var(--wb-s3);
+}
+
+.wb-cms-quick-setting + .wb-cms-quick-setting {
+    border-block-start: 1px solid var(--wb-border);
+}
+
+@media (max-width: 1100px) {
+    .wb-cms-dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+    .wb-cms-dashboard-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
 :root {
     --wb-cms-brand-primary: #118AB2;
     --wb-cms-brand-primary-hover: #0B6482;

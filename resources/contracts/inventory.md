@@ -1084,6 +1084,32 @@ Do not use site CSS to:
 - rebuild a missing layout with fragile absolute positioning;
 - hardcode light-only colors that break Light/Dark/Auto mode.
 
+## Administrator dashboard and quick settings
+
+The administrator dashboard uses compact, responsive three-column summary and
+activity rows. Installation health (or the authorized site scheduler summary),
+scoped content counts and plugin summary cards precede page views, recent pages
+and recent media. Contact unread and awaiting-reply totals remain distinct in
+the content overview. Recent collections contain at most three records. Page
+views retain the accessible source table and WebBlocks UI chart keyboard behavior.
+
+Health badges use the saved health snapshot and current scheduler evidence.
+Missing results remain unverified; stale snapshots retain their recorded time.
+Opening the dashboard does not start maintenance scans or external release checks.
+Installation health remains restricted to system operators.
+
+Trusted plugin PHP definitions may register `PluginQuickSetting` entries through
+`PluginDefinition::quickSettings()`. The navbar exposes a native WebBlocks UI
+settings menu only when authorized entries resolve. Entries use plugin-owned
+keys and permissions, stable sort order, a Blade view and an optional
+`resolveUsing()` data provider. Resolvers run only for authenticated authorized
+users of active plugins; returning null hides an entry without site context.
+`PluginDashboardWidget` supports the same view/data resolution and `summary()`
+placement. Existing title/value/description/link widgets remain supported.
+Plugin views must enforce resource/site scope in their data providers and write
+endpoints; visibility never grants permission. These are trusted executable
+extensions, not content-authored HTML or persisted configuration.
+
 ## Supported Limitations
 
 The footer uses normal layout and navigation blocks; a dedicated footer-composition block is not required or implied by WebBlocks UI class names. Use documented native blocks for shared footers.

@@ -18,6 +18,12 @@ class PluginAdminExtensionRegistry
     return $this->plugins->dashboardWidgets($user);
   }
 
+  /** @return array<int, PluginQuickSetting> */
+  public function quickSettings(?Authenticatable $user = null): array
+  {
+    return $this->plugins->quickSettings($user);
+  }
+
   /**
    * @return array<int, PluginSystemCard>
    */

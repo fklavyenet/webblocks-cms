@@ -219,6 +219,7 @@ $translations = [
     'updated' => 'Dil güncellendi.',
   ],
   'topbar' => [
+    'quick_settings' => 'Hızlı ayarlar',
     'system_updates' => 'Sistem Güncellemeleri',
     'color_mode' => 'Renk modu',
     'mode_light' => 'Açık tema',
@@ -2802,6 +2803,8 @@ $translations = [
     'reset_email_no_action' => 'Şifre sıfırlama istemediyseniz başka bir işlem yapmanız gerekmez.',
   ],
   'dashboard' => [
+    'site_health' => 'Site sağlığı',
+    'last_7_days' => 'Son 7 gün',
     'title' => 'Pano',
     'browser_title' => 'Yönetim Panosu',
     'description' => 'Yayın durumunu inceleyin ve sayfa odaklı temel araçlara geçin.',

@@ -218,6 +218,7 @@ $translations = [
     'updated' => 'Sprache wurde aktualisiert.',
   ],
   'topbar' => [
+    'quick_settings' => 'Schnelleinstellungen',
     'system_updates' => 'System-Updates',
     'color_mode' => 'Farbmodus',
     'mode_light' => 'Heller Modus',
@@ -2789,6 +2790,8 @@ $translations = [
     'reset_email_no_action' => 'Wenn Sie kein Zurücksetzen des Passworts angefordert haben, ist keine weitere Aktion erforderlich.',
   ],
   'dashboard' => [
+    'site_health' => 'Website-Zustand',
+    'last_7_days' => 'Letzte 7 Tage',
     'title' => 'Übersicht',
     'browser_title' => 'Admin-Übersicht',
     'description' => 'Prüfen Sie den Veröffentlichungsstatus und springen Sie zu den zentralen seitenbasierten Werkzeugen.',

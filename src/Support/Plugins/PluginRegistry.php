@@ -261,6 +261,9 @@ class PluginRegistry
 
     foreach ($this->enabled() as $plugin) {
       foreach ($plugin->dashboardWidgetDefinitions() as $widget) {
+        if ($user === null && $widget->viewName() !== null) {
+          continue;
+        }
         if (! $this->userCanView($user, $widget->permissionName())) {
           continue;
         }
@@ -269,13 +272,42 @@ class PluginRegistry
           throw PluginException::duplicateExtensionKey($widget->key());
         }
 
-        $widgets[$widget->key()] = $widget;
+        $resolved = $widget->resolve($user);
+        if ($resolved !== null) {
+          $widgets[$widget->key()] = $resolved;
+        }
       }
     }
 
     usort($widgets, fn (PluginDashboardWidget $left, PluginDashboardWidget $right): int => $left->sortOrder() <=> $right->sortOrder());
 
     return $widgets;
+  }
+
+  /** @return array<int, PluginQuickSetting> */
+  public function quickSettings(?Authenticatable $user = null): array
+  {
+    if ($user === null) {
+      return [];
+    }
+    $settings = [];
+    foreach ($this->enabled() as $plugin) {
+      foreach ($plugin->quickSettingDefinitions() as $setting) {
+        if (! $this->userCanView($user, $setting->permissionName())) {
+          continue;
+        }
+        if (isset($settings[$setting->key()])) {
+          throw PluginException::duplicateExtensionKey($setting->key());
+        }
+        $resolved = $setting->resolve($user);
+        if ($resolved !== null) {
+          $settings[$setting->key()] = $resolved;
+        }
+      }
+    }
+    usort($settings, fn (PluginQuickSetting $left, PluginQuickSetting $right): int => $left->sortOrder() <=> $right->sortOrder());
+
+    return $settings;
   }
 
   /**

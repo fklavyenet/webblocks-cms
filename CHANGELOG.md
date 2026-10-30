@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.109.0
+
+- Present a compact, responsive administrator dashboard with Site Health, scoped content counts and plugin summary cards above page views, recent pages and recent media. Keep Contact unread and awaiting-reply totals distinct and preserve accessible chart data and keyboard navigation.
+- Add a navbar Quick settings menu and trusted, permission-filtered plugin view/data extension points. Support rich plugin dashboard summary cards while retaining existing value/link widgets; resource and site authorization remain plugin-owned.
+- Show cached health category badges with honest missing/stale states, current scheduler evidence and readable Light/Dark/Auto foregrounds. Opening the dashboard does not start maintenance scans or external release checks.
+
 ## 1.108.1
 
 - Add minimal product-neutral Commerce offer and fulfillment port interfaces. Preserve all 1.108.0 authoring behavior; no settings, migrations or live sales are enabled by these interfaces.

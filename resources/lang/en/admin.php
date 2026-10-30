@@ -325,6 +325,7 @@ return [
     'updated' => 'Locale updated successfully.',
   ],
   'topbar' => [
+    'quick_settings' => 'Quick settings',
     'system_updates' => 'System Updates',
     'color_mode' => 'Color mode',
     'mode_light' => 'Light mode',
@@ -3019,6 +3020,8 @@ return [
     'reset_email_no_action' => 'If you did not request a password reset, no further action is required.',
   ],
   'dashboard' => [
+    'site_health' => 'Site health',
+    'last_7_days' => 'Last 7 days',
     'title' => 'Dashboard',
     'browser_title' => 'Admin Dashboard',
     'description' => 'Review the publishing state and jump into the core page-first tools.',

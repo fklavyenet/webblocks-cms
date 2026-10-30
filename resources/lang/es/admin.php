@@ -217,6 +217,7 @@ $translations = [
     'updated' => 'Idioma actualizado correctamente.',
   ],
   'topbar' => [
+    'quick_settings' => 'Ajustes rápidos',
     'system_updates' => 'Actualizaciones del sistema',
     'color_mode' => 'Modo de color',
     'mode_light' => 'Modo claro',
@@ -2787,6 +2788,8 @@ $translations = [
     'reset_email_no_action' => 'Si no solicitaste un restablecimiento de contraseña, no es necesaria ninguna otra acción.',
   ],
   'dashboard' => [
+    'site_health' => 'Estado del sitio',
+    'last_7_days' => 'Últimos 7 días',
     'title' => 'Panel',
     'browser_title' => 'Panel de administración',
     'description' => 'Revisa el estado de publicación y accede a las herramientas centrales orientadas a páginas.',
