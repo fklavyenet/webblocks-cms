@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.110.1
+
+- Keep two-factor account management available when enabled plugins provide navbar quick settings. Skip their data resolvers and views on authentication and plugin recovery requests while plugin providers are isolated.
+- Preserve the normal CMS panel, enrollment, verification and recovery-code behavior, with regression coverage for the missing plugin view namespace that previously caused HTTP 500.
+- No new migration, UI asset update or change to two-factor enforcement is required.
+
 ## 1.110.0
 
 - Let editors place a TOC on the left or right of its own slot on any page layout. Keep nested TOCs inline, put the rail above content on narrow screens, and reserve no rail when there are no eligible headings.

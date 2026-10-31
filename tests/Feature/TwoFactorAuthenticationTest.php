@@ -25,6 +25,9 @@ use WebBlocks\Cms\Support\Auth\TwoFactorSchema;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
+use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginQuickSetting;
+use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -88,6 +91,34 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->actingAs($user);
     $credential = app(TwoFactorAuthentication::class)->credential($user);
     $this->withSession([TwoFactorSession::VERIFIED => app(TwoFactorSession::class)->fingerprint($user, $credential)]);
+  }
+
+  #[Test]
+  public function two_factor_panel_management_never_resolves_plugin_quick_settings_without_their_providers(): void
+  {
+    $calls = 0;
+    $registry = new PluginRegistry(['security-fixture' => true]);
+    $registry->register(PluginDefinition::make('security-fixture')->quickSettings([
+      PluginQuickSetting::make('security-fixture.status')->view('security-fixture::unloaded-view')
+        ->resolveUsing(function () use (&$calls): array {
+        $calls++;
+
+        return [];
+        }),
+    ]));
+    $this->app->instance(PluginRegistry::class, $registry);
+    $user = $this->actor();
+
+    // The provider (and its view namespace) is intentionally absent on 2FA URLs.
+    $this->assertFalse(view()->exists('security-fixture::unloaded-view'));
+    $this->actingAs($user)->get(route('webblocks.two-factor.show'))->assertOk()
+      ->assertSee('id="admin-sidebar"', false)->assertDontSee('id="admin-quick-settings"', false);
+    $this->post(route('webblocks.two-factor.start'), ['current_password' => 'fixture-password'])->assertSessionHasNoErrors();
+    $this->get(route('webblocks.two-factor.show'))->assertOk();
+    $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertOk()
+      ->assertSee('id="admin-sidebar"', false)->assertViewHas('recoveryCodes', fn ($codes) => count($codes) === 10);
+    $this->get(route('webblocks.two-factor.show', ['tab' => 'replace']))->assertOk();
+    $this->assertSame(0, $calls);
   }
 
   #[Test]

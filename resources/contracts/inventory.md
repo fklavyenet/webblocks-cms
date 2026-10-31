@@ -1112,6 +1112,8 @@ settings menu only when authorized entries resolve. Entries use plugin-owned
 keys and permissions, stable sort order, a Blade view and an optional
 `resolveUsing()` data provider. Resolvers run only for authenticated authorized
 users of active plugins; returning null hides an entry without site context.
+Two-factor authentication and plugin recovery requests do not resolve or render
+plugin quick settings because plugin runtime providers remain isolated there.
 `PluginDashboardWidget` supports the same view/data resolution and `summary()`
 placement. Existing title/value/description/link widgets remain supported.
 Plugin views must enforce resource/site scope in their data providers and write

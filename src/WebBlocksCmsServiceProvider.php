@@ -1373,7 +1373,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       require __DIR__.'/../routes/plugin-recovery.php';
       require __DIR__.'/../routes/two-factor.php';
     }
-    if (! app(PluginRecoveryMode::class)->active() && ! request()->is('webadmin/two-factor', 'webadmin/two-factor/*')) {
+    if (! app(PluginRecoveryMode::class)->isolatesRuntime()) {
       app(PluginRuntimeRegistrar::class)->register();
     }
   }

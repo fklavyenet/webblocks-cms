@@ -287,7 +287,7 @@ class PluginRegistry
   /** @return array<int, PluginQuickSetting> */
   public function quickSettings(?Authenticatable $user = null): array
   {
-    if ($user === null) {
+    if ($user === null || app(PluginRecoveryMode::class)->isolatesRuntime()) {
       return [];
     }
     $settings = [];

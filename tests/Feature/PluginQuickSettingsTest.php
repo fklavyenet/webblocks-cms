@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Http\Request;
 use WebBlocks\Cms\Support\Plugins\PluginDashboardWidget;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginException;
@@ -13,6 +14,29 @@ use WebBlocks\Cms\Tests\TestCase;
 
 class PluginQuickSettingsTest extends TestCase
 {
+  public function test_authentication_and_recovery_paths_skip_resolvers_but_normal_panel_requests_keep_them(): void
+  {
+    $calls = 0;
+    $registry = new PluginRegistry(['appointments' => true]);
+    $registry->register(PluginDefinition::make('appointments')->quickSettings([
+      PluginQuickSetting::make('appointments.availability')->resolveUsing(function () use (&$calls): array {
+      $calls++;
+
+      return [];
+      }),
+    ]));
+    $user = new User;
+
+    foreach (['/webadmin/two-factor', '/webadmin/two-factor/confirm', '/webadmin/plugin-recovery', '/webadmin/plugin-recovery/login'] as $path) {
+      $this->app->instance('request', Request::create($path));
+      $this->assertSame([], $registry->quickSettings($user));
+    }
+    $this->assertSame(0, $calls);
+    $this->app->instance('request', Request::create('/webadmin/pages'));
+    $this->assertCount(1, $registry->quickSettings($user));
+    $this->assertSame(1, $calls);
+  }
+
   public function test_data_resolvers_only_run_for_authenticated_authorized_users_of_active_plugins(): void
   {
     $calls = 0;
