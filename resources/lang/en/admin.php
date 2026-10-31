@@ -4498,7 +4498,11 @@ return [
       'text_label' => 'Text',
       'level_label' => 'Level',
       'anchor_label' => 'Anchor ID',
-      'anchor_help' => 'Optional shared anchor for TOC links and direct section linking.',
+      'anchor_help' => 'Leave blank for an automatic stable link target. A custom anchor is shared across languages; keep it unique on the page.',
+      'toc_label' => 'Table of contents',
+      'toc_include' => 'Include when eligible',
+      'toc_exclude' => 'Exclude',
+      'toc_help' => 'Only H2/H3 Header blocks with visible text are listed. This choice is shared across languages.',
     ],
     'sticky_navbar_settings' => [
       'position_label' => 'Position',
@@ -4597,7 +4601,11 @@ return [
     ],
     'toc' => [
       'title_label' => 'TOC Title',
-      'title_help' => 'Optional label shown above links generated from Header block anchors on the same page.',
+      'title_help' => 'Optional label above the H2/H3 section headings from this same slot, including nested layout blocks.',
+      'position_label' => 'Position',
+      'position_right' => 'Right',
+      'position_left' => 'Left',
+      'position_help' => 'A top-level TOC sits beside this slot’s content. On narrow screens it appears above the content. Nested TOCs stay inline.',
     ],
     'slide_settings' => [
       'content_position' => 'Content Position',

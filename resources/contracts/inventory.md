@@ -364,9 +364,9 @@ The current published core catalog contains 57 rows:
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | `translations.title`. |
-| Settings and variants | `settings.variant`: h1–h6; `alignment`: left, center, right; `anchor`: safe same-page ID. |
+| Settings and variants | `settings.variant`: h1–h6; `alignment`: left, center, right; `anchor`: safe same-page ID; `include_in_toc`: boolean, default true. |
 | Children/media | None. |
-| HTML | Root-owning `<h1>` through `<h6>` with optional alignment class and `id`. |
+| HTML | Root-owning `<h1>` through `<h6>` with optional alignment class and a stable `id`. New headings save an automatic anchor when none is supplied; historical missing anchors fall back to block identity. Existing valid anchors and legacy URL targets remain supported. Within a page, duplicate explicit anchors retain the lowest-ID heading target and other headings receive unique automatic targets. |
 | Example appearance | Semantic section heading that can be indexed by TOC. |
 | Avoid | Page intro with metadata; use Content Header. |
 
@@ -683,12 +683,13 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | Optional shared title. |
-| Settings and variants | None. |
-| Children/media | Reads published Header blocks in the same slot with valid anchors and H2/H3 variants, in document order. |
-| HTML | Generic wrapper with a generated `nav.wb-section-nav` link list — a self-contained WebBlocks UI primitive, not `wb-link-list`. |
-| Live behavior | Scroll-position highlighting comes free from the shipped `WBSectionNav` module in the same webblocks-ui.js the public layout already loads; the renderer owns no JavaScript of its own. |
-| Example appearance | “Contents” list for a long documentation page. |
-| Render guard | Emits nothing when no eligible headings exist. |
+| Settings and variants | `settings.toc_position`: `left` or `right`, default `right`; available in the panel and Internal Content API. |
+| Children/media | Reads only Header blocks in its own page-owned slot tree, including nested layouts, in document order. Public output excludes unpublished blocks and their branches; preview includes draft headings. Eligible headings render as H2/H3, have nonblank resolved text and `include_in_toc` enabled. Other component titles, HTML headings and other slots are not scanned. Shared Slot source trees remain outside this page-owned scan. |
+| HTML | Generic wrapper with `nav.wb-section-nav`; H3 entries nest under their preceding eligible H2. Leading H3 entries and H3 entries after an excluded H2 remain at the top level. |
+| Placement | The first eligible direct-child TOC sits in a sticky left/right rail beside the rest of its slot, independently of page layout. Nested and additional TOCs remain inline. At viewport widths up to 1180px, or when the slot is at most 48rem wide in browsers supporting container queries, the rail is above the content in one column without sticky scrolling. |
+| Anchors | Uses the same resolved ID as the rendered Header; editing heading copy or translating it does not regenerate its stored automatic anchor. Disabling `include_in_toc` removes only the entry, preserving its link target. |
+| Live behavior | Active-section highlighting uses the bundled WebBlocks UI `WBSectionNav`; no renderer-owned JavaScript. |
+| Render guard | No eligible headings means no TOC navigation and no reserved rail. |
 
 ### `breadcrumb` — Breadcrumb
 

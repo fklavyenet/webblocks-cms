@@ -4254,7 +4254,11 @@ $translations = [
       'text_label' => 'Testo',
       'level_label' => 'Livello',
       'anchor_label' => 'ID àncora',
-      'anchor_help' => 'Àncora condivisa opzionale per i link del sommario e i collegamenti diretti alle sezioni.',
+      'anchor_help' => 'Lascia vuoto per creare automaticamente una destinazione di collegamento stabile. Le ancore personalizzate sono condivise tra le lingue e devono essere univoche nella pagina.',
+      'toc_label' => 'Indice',
+      'toc_include' => 'Includi se idoneo',
+      'toc_exclude' => 'Escludi',
+      'toc_help' => 'Sono elencati solo i blocchi Header H2/H3 con testo visibile. Questa scelta è condivisa tra le lingue.',
     ],
     'sticky_navbar_settings' => [
       'position_label' => 'Posizione',
@@ -4353,7 +4357,11 @@ $translations = [
     ],
     'toc' => [
       'title_label' => 'Titolo del sommario',
-      'title_help' => 'Etichetta opzionale mostrata sopra i link generati dalle àncore dei blocchi Intestazione nella stessa pagina.',
+      'title_help' => 'Etichetta facoltativa sopra le sezioni H2/H3 dello stesso slot, inclusi i blocchi di layout annidati.',
+      'position_label' => 'Posizione',
+      'position_right' => 'Destra',
+      'position_left' => 'Sinistra',
+      'position_help' => 'Un TOC di primo livello appare accanto al contenuto dello slot. Sugli schermi stretti appare sopra. I TOC annidati restano nel flusso.',
     ],
     'slide_settings' => [
       'content_position' => 'Posizione del contenuto',

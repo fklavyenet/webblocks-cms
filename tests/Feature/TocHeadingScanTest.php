@@ -77,7 +77,7 @@ class TocHeadingScanTest extends TestCase
   }
 
   #[Test]
-  public function it_still_requires_h2_or_h3_and_a_valid_anchor(): void
+  public function it_includes_automatic_anchors_but_only_h2_and_h3(): void
   {
     [$page, $mainSlot] = $this->seedPageWithTwoSlots();
 
@@ -86,7 +86,7 @@ class TocHeadingScanTest extends TestCase
     $this->header($page, $mainSlot, 'too-deep', 'Wrong level', 'h4', sortOrder: 2);
     $toc = $this->toc($page, $mainSlot, sortOrder: 3);
 
-    $this->assertSame(['Kept'], $toc->publicTocHeadingBlocks('en')->pluck('title')->all());
+    $this->assertSame(['Kept', 'No anchor'], $toc->publicTocHeadingBlocks('en')->pluck('title')->all());
   }
 
   #[Test]
@@ -101,6 +101,81 @@ class TocHeadingScanTest extends TestCase
 
     $this->assertSame([$heading->id], $ids);
     $this->assertNotContains($toc->id, $ids);
+  }
+
+  #[Test]
+  public function excluded_blank_and_unpublished_branches_are_not_listed_even_when_preloaded(): void
+  {
+    [$page, $slot] = $this->seedPageWithTwoSlots();
+    $kept = $this->header($page, $slot, null, 'Kept', 'h2', 0);
+    $excluded = $this->header($page, $slot, 'excluded', 'Excluded', 'h3', 1);
+    $excluded->update(['settings' => ['anchor' => 'excluded', 'include_in_toc' => false]]);
+    $this->header($page, $slot, 'blank', '   ', 'h2', 2);
+    $parent = Block::create(['page_id' => $page->id, 'slot_type_id' => $slot->id, 'type' => 'section', 'status' => 'draft']);
+    $this->header($page, $slot, 'hidden-child', 'Hidden child', 'h2', 0, $parent->id);
+    $draft = $this->header($page, $slot, 'draft', 'Draft', 'h2', 3);
+    $draft->update(['status' => 'draft']);
+    $toc = $this->toc($page, $slot, 4);
+    $toc->setRelation('renderPage', $page->load('blocks'));
+    $this->assertSame([$kept->id], $toc->publicTocHeadingBlocks('en')->pluck('id')->all());
+    $toc->setAttribute('render_preview', true);
+    $this->assertContains($draft->id, $toc->publicTocHeadingBlocks('en')->pluck('id')->all());
+  }
+
+  #[Test]
+  public function deeply_nested_mixed_levels_keep_the_slot_reading_order(): void
+  {
+    [$page, $slot] = $this->seedPageWithTwoSlots();
+    $parent = null;
+    for ($depth = 0; $depth < 8; $depth++) {
+      $parent = Block::create(['page_id' => $page->id, 'slot_type_id' => $slot->id, 'parent_id' => $parent?->id, 'type' => 'container', 'status' => 'published']);
+    }
+    $this->header($page, $slot, 'title', 'Title', 'h1', 0, $parent->id);
+    $first = $this->header($page, $slot, 'deep', 'Deep section', 'h2', 1, $parent->id);
+    $second = $this->header($page, $slot, 'detail', 'Detail', 'h3', 2, $parent->id);
+    $this->header($page, $slot, 'minor', 'Minor', 'h4', 3, $parent->id);
+    $toc = $this->toc($page, $slot, 1);
+    $this->assertSame([$first->id, $second->id], $toc->publicTocHeadingBlocks('en')->pluck('id')->all());
+  }
+
+  #[Test]
+  public function automatic_targets_survive_copy_edits_and_custom_collisions_remain_unique(): void
+  {
+    [$page, $slot] = $this->seedPageWithTwoSlots();
+    $automatic = $this->header($page, $slot, null, 'Original', 'h2', 0);
+    $target = $automatic->headerAnchor();
+    $automatic->update(['title' => 'Renamed']);
+    $this->assertSame($target, $automatic->fresh()->headerAnchor());
+    $first = $this->header($page, $slot, 'repeated', 'First', 'h2', 1);
+    $second = $this->header($page, $slot, 'repeated', 'Second', 'h3', 2);
+    $reserved = $this->header($page, $slot, 'wb-heading-'.$second->id, 'Reserved', 'h2', 3);
+    $this->assertSame('repeated', $first->headerAnchor());
+    $this->assertSame('wb-heading-'.$second->id.'-2', $second->headerAnchor());
+    $this->assertSame('wb-heading-'.$second->id, $reserved->headerAnchor());
+    $toc = $this->toc($page, $slot, 4);
+    $html = view('webblocks-cms::pages.partials.blocks.toc', ['block' => $toc])->render();
+    foreach ([$automatic, $first, $second, $reserved] as $header) {
+      $target = $header->headerAnchor();
+      $this->assertStringContainsString('href="#'.$target.'"', $html);
+      $this->assertStringContainsString('id="'.$target.'"', view('webblocks-cms::pages.partials.blocks.header', ['block' => $header])->render());
+    }
+  }
+
+  #[Test]
+  public function translated_labels_share_the_same_anchor_and_inclusion_choice(): void
+  {
+    [$page, $slot] = $this->seedPageWithTwoSlots();
+    $tr = Locale::create(['code' => 'tr', 'name' => 'Turkish', 'is_enabled' => true]);
+    $page->site->locales()->syncWithoutDetaching([$tr->id => ['is_enabled' => true], Locale::where('code', 'en')->value('id') => ['is_enabled' => true]]);
+    $header = $this->header($page, $slot, null, 'English heading', 'h2', 0);
+    $header->textTranslations()->create(['locale_id' => $tr->id, 'title' => 'Türkçe başlık']);
+    $toc = $this->toc($page, $slot, 1);
+    $translated = $toc->publicTocHeadingBlocks('tr')->first();
+    $this->assertSame('Türkçe başlık', $translated->tocEligibleHeadingText());
+    $this->assertSame($header->headerAnchor(), $translated->headerAnchor());
+    $header->update(['settings' => [...$header->decodedSettings(), 'include_in_toc' => false]]);
+    $this->assertTrue($toc->publicTocHeadingBlocks('tr')->isEmpty());
+    $this->assertTrue($toc->publicTocHeadingBlocks('en')->isEmpty());
   }
 
   private function header(Page $page, SlotType $slot, ?string $anchor, string $title, string $variant, int $sortOrder, ?int $parentId = null): Block

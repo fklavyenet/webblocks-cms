@@ -451,7 +451,7 @@ class CoreBlockTypeCatalogSyncer
         'name' => 'TOC',
         'slug' => 'toc',
         'category' => 'navigation',
-        'description' => 'Table of contents built from anchored Header blocks in the same slot.',
+        'description' => 'Table of contents built from H2/H3 Header blocks in the same slot, with left or right placement.',
         'source_type' => 'static',
         'is_system' => true,
         'is_container' => false,

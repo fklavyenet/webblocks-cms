@@ -131,16 +131,13 @@ class PageLayoutCatalog
       [
         'handle' => 'article',
         'name' => 'Article Layout',
-        'description' => 'Default layout, plus a narrow sticky TOC rail beside main when a TOC block is present there.',
+        'description' => 'An article-oriented default shell. TOC blocks control their own left/right placement within their slot.',
         'is_system' => true,
         'is_active' => true,
         'sort_order' => 2,
         'body_class' => 'layout-article',
-        // Reuses the default single-column shell: header/main/footer stack the
-        // same way default does. The rail is not a slot region — it only
-        // exists when pages.partials.slots.main finds a top-level toc block,
-        // and pulls that one block into a second grid column. A page using
-        // this layout without a TOC renders exactly like Default Layout.
+        // TOC placement is handled within each content slot, independently
+        // of this shell. Without a TOC, Article remains a single column.
         'shell_type' => 'default',
         'slot_schema' => ['header', 'main', 'footer'],
         'wrapper_schema' => [

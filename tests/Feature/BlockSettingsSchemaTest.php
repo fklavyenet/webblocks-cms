@@ -179,6 +179,108 @@ class BlockSettingsSchemaTest extends TestCase
     $this->assertNotEmpty($errors);
   }
 
+  #[Test]
+  public function toc_settings_work_through_api_creation_patch_and_revision_snapshots(): void
+  {
+    $page = $this->fixture();
+    $controller = app(InternalContentResourceController::class);
+    $response = $controller->storeSlotBlock($this->jsonRequest(['type' => 'toc', 'locale' => 'en', 'title' => 'Contents', 'settings' => ['toc_position' => 'left']]), $page, 'main');
+    $this->assertSame(201, $response->getStatusCode(), $response->getContent());
+    $toc = $page->blocks()->where('type', 'toc')->firstOrFail();
+    $this->assertSame('left', $toc->tocPosition());
+    $settings = $this->merge($toc, ['toc_position' => 'right']);
+    $toc->update(['settings' => $settings]);
+    $this->assertSame('right', $toc->fresh()->tocPosition());
+    $headerResponse = $controller->storeSlotBlock($this->jsonRequest(['type' => 'header', 'locale' => 'en', 'variant' => 'h2', 'translations' => ['title' => 'Section'], 'settings' => ['include_in_toc' => false]]), $page, 'main');
+    $this->assertSame(201, $headerResponse->getStatusCode(), $headerResponse->getContent());
+    $header = $page->blocks()->where('type', 'header')->firstOrFail();
+    $anchor = $header->headerAnchor();
+    $this->assertNotEmpty($anchor);
+    $this->assertFalse($header->setting('include_in_toc'));
+    $snapshot = app(PageRevisionManager::class)->snapshotForInspection($page->fresh());
+    $stored = collect($snapshot['blocks'])->firstWhere('snapshot_id', $header->id);
+    $this->assertSame($anchor, json_decode($stored['settings'], true)['anchor']);
+    $this->assertFalse(json_decode($stored['settings'], true)['include_in_toc']);
+    $this->assertSame('right', json_decode(collect($snapshot['blocks'])->firstWhere('snapshot_id', $toc->id)['settings'], true)['toc_position']);
+    $revision = app(PageRevisionManager::class)->capture($page->fresh());
+    $candidate = Page::create(['site_id' => $page->site_id, 'title' => 'Candidate', 'slug' => 'candidate', 'status' => 'draft']);
+    app(PageRevisionManager::class)->applySnapshotToCandidate($candidate, $revision->fresh()->snapshot, ['source_page_id' => $page->id, 'revision_id' => $revision->id]);
+    $restored = $candidate->blocks()->where('type', 'header')->firstOrFail();
+    $this->assertNotSame($header->id, $restored->id);
+    $this->assertSame($anchor, $restored->headerAnchor());
+    $this->assertFalse($restored->setting('include_in_toc'));
+    $this->assertSame('right', $candidate->blocks()->where('type', 'toc')->firstOrFail()->tocPosition());
+    $errors = [];
+    app(BlockSettingsValidator::class)->normalize('toc', ['toc_position' => 'middle'], 'settings', $errors);
+    $this->assertNotEmpty($errors);
+  }
+
+  #[Test]
+  public function toc_update_migration_adds_live_and_snapshot_columns_repeatably(): void
+  {
+    $page = $this->fixture();
+    $header = Block::create(['page_id' => $page->id, 'type' => 'header', 'title' => 'Historical heading', 'variant' => 'h2']);
+    $header->settings = [];
+    $header->saveQuietly();
+    foreach (['block_navigation_settings', 'snapshot_block_navigation_settings'] as $name) {
+      Schema::table('wbcms_'.$name, function ($table): void {
+        foreach (['toc_position', 'include_in_toc'] as $field) {
+          $table->dropColumn([$field, $field.'_kind', $field.'_text']);
+        }
+      });
+    }
+    $migration = require dirname(__DIR__, 2).'/database/migrations/updates/2026_10_31_140000_add_toc_authoring_settings.php';
+    $migration->up();
+    $migration->up();
+    $this->assertSame('wb-heading-'.$header->id, $header->fresh()->explicitHeaderAnchor());
+    foreach (['block_navigation_settings', 'snapshot_block_navigation_settings'] as $name) {
+      $this->assertTrue(Schema::hasColumns('wbcms_'.$name, ['toc_position', 'include_in_toc']));
+    }
+  }
+
+  #[Test]
+  public function native_toc_and_header_forms_save_settings_and_locale_edits_preserve_shared_choices(): void
+  {
+    $this->app->instance(AdminAuthorization::class, new class extends AdminAuthorization
+    {
+      public function normalizeAllowedMediaId($user, ?int $mediaId): ?int
+      {
+        return null;
+      }
+
+      public function filterAllowedMediaIds($user, array $mediaIds): array
+      {
+        return [];
+      }
+    });
+    $page = $this->fixture();
+    $tr = Locale::create(['code' => 'tr', 'name' => 'Turkish', 'is_enabled' => true]);
+    $page->site->locales()->syncWithoutDetaching([$tr->id => ['is_enabled' => true]]);
+    $normalize = function (Block $block, array $fields): array {
+      $request = BlockRequest::create('/blocks/'.$block->id, 'PUT', array_replace(['page_id' => $block->page_id, 'block_type_id' => $block->block_type_id, 'slot_type_id' => $block->slot_type_id, 'sort_order' => 0, 'status' => 'draft'], $fields));
+      $request->setContainer($this->app);
+      $request->setRedirector(app('redirect'));
+      $route = new Route(['PUT'], '/blocks/{block}', []);
+      $route->bind($request);
+      $route->setParameter('block', $block);
+      $request->setRouteResolver(fn () => $route);
+      $request->validateResolved();
+
+      return $request->validatedData();
+    };
+    $slot = $page->slots->first()->slot_type_id;
+    $header = Block::create(['page_id' => $page->id, 'slot_type_id' => $slot, 'block_type_id' => BlockType::where('slug', 'header')->value('id'), 'variant' => 'h2', 'title' => 'Section', 'status' => 'draft']);
+    $data = $normalize($header, ['text' => 'Section', 'level' => 'h2', 'anchor' => $header->explicitHeaderAnchor(), 'include_in_toc' => '0']);
+    $header->update($data);
+    $this->assertFalse($header->fresh()->setting('include_in_toc'));
+    $data = $normalize($header->fresh(), ['locale' => 'tr', 'text' => 'Bölüm', 'level' => 'h3', 'anchor' => 'changed', 'include_in_toc' => '1']);
+    $this->assertFalse(json_decode($data['settings'], true)['include_in_toc']);
+    $this->assertSame($header->explicitHeaderAnchor(), json_decode($data['settings'], true)['anchor']);
+    $toc = Block::create(['page_id' => $page->id, 'slot_type_id' => $slot, 'block_type_id' => BlockType::where('slug', 'toc')->value('id'), 'status' => 'draft']);
+    $toc->update($normalize($toc, ['title' => 'Contents', 'toc_position' => 'left']));
+    $this->assertSame('left', $toc->fresh()->tocPosition());
+  }
+
   private function plugin(?array $schema, bool $enabled = true): void
   {
     $definition = PluginBlockTypeDefinition::make('schema-test::card')->label('Synthetic plugin');

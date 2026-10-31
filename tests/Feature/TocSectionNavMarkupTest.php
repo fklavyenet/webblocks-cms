@@ -95,6 +95,24 @@ class TocSectionNavMarkupTest extends TestCase
     $this->assertSame('', trim($html));
   }
 
+  #[Test]
+  public function subsections_nest_under_their_section_but_not_under_an_excluded_section(): void
+  {
+    $this->renderToc(title: null);
+    $page = Page::first();
+    $slot = SlotType::first();
+    $toc = Block::where('type', 'toc')->first();
+    $excluded = Block::create(['page_id' => $page->id, 'slot_type_id' => $slot->id, 'type' => 'header', 'variant' => 'h2', 'title' => 'Excluded section', 'sort_order' => 3, 'status' => 'published', 'settings' => ['include_in_toc' => false]]);
+    Block::create(['page_id' => $page->id, 'slot_type_id' => $slot->id, 'type' => 'header', 'variant' => 'h3', 'title' => 'Independent subsection', 'sort_order' => 4, 'status' => 'published']);
+    $html = view('webblocks-cms::pages.partials.blocks.toc', ['block' => $toc->fresh()])->render();
+    $dom = new \DOMDocument;
+    @$dom->loadHTML($html);
+    $xpath = new \DOMXPath($dom);
+    $this->assertSame(1, $xpath->query('//ul[contains(@class,"wb-cms-toc-sublist")]/li/a[text()="Second"]')->length);
+    $this->assertSame(1, $xpath->query('//nav/ul/li/a[text()="Independent subsection"]')->length);
+    $this->assertStringNotContainsString('Excluded section', $html);
+  }
+
   private function renderToc(?string $title, string $suffix = 'x'): string
   {
     $site = Site::query()->create(['name' => 'Test', 'handle' => 'test-'.$suffix, 'is_primary' => true]);

@@ -4270,7 +4270,11 @@ $translations = [
       'text_label' => 'Metin',
       'level_label' => 'Seviye',
       'anchor_label' => 'Anchor ID',
-      'anchor_help' => 'TOC linkleri ve doğrudan bölüm linkleme için opsiyonel ortak anchor.',
+      'anchor_help' => 'Kararlı bir bağlantı hedefinin otomatik oluşturulması için boş bırakın. Özel anchor diller arasında ortaktır; sayfada benzersiz tutun.',
+      'toc_label' => 'İçindekiler',
+      'toc_include' => 'Uygunsa dahil et',
+      'toc_exclude' => 'Hariç tut',
+      'toc_help' => 'Yalnızca görünür metni olan H2/H3 Header blokları listelenir. Bu seçim diller arasında ortaktır.',
     ],
     'sticky_navbar_settings' => [
       'position_label' => 'Pozisyon',
@@ -4369,7 +4373,11 @@ $translations = [
     ],
     'toc' => [
       'title_label' => 'TOC Başlığı',
-      'title_help' => 'Aynı sayfadaki Header blok anchorlarindan üretilen linklerin üstunde gösterilen opsiyonel etiket.',
+      'title_help' => 'İç içe yerleşim blokları dahil, aynı slottaki H2/H3 bölüm başlıklarının üzerinde gösterilen isteğe bağlı etiket.',
+      'position_label' => 'Konum',
+      'position_right' => 'Sağ',
+      'position_left' => 'Sol',
+      'position_help' => 'Üst düzey TOC bu slotun içeriğinin yanında gösterilir. Dar ekranlarda içeriğin üstüne geçer. İç içe TOC blokları akış içinde kalır.',
     ],
     'slide_settings' => [
       'content_position' => 'İçerik Pozisyonu',

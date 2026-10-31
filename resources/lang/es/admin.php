@@ -4255,7 +4255,11 @@ $translations = [
       'text_label' => 'Texto',
       'level_label' => 'Nivel',
       'anchor_label' => 'ID de ancla',
-      'anchor_help' => 'Ancla compartida opcional para enlaces de TOC y enlaces directos a secciones.',
+      'anchor_help' => 'Dejar vacío para crear automáticamente un destino de enlace estable. Un ancla personalizada se comparte entre idiomas y debe ser única en la página.',
+      'toc_label' => 'Tabla de contenidos',
+      'toc_include' => 'Incluir si cumple los requisitos',
+      'toc_exclude' => 'Excluir',
+      'toc_help' => 'Solo se enumeran bloques Header H2/H3 con texto visible. Esta selección se comparte entre idiomas.',
     ],
     'sticky_navbar_settings' => [
       'position_label' => 'Posición',
@@ -4354,7 +4358,11 @@ $translations = [
     ],
     'toc' => [
       'title_label' => 'Título del TOC',
-      'title_help' => 'Etiqueta opcional mostrada sobre los enlaces generados a partir de las anclas de los bloques de Encabezado de la misma página.',
+      'title_help' => 'Etiqueta opcional sobre las secciones H2/H3 de este mismo slot, incluidos los bloques de diseño anidados.',
+      'position_label' => 'Posición',
+      'position_right' => 'Derecha',
+      'position_left' => 'Izquierda',
+      'position_help' => 'Un TOC de nivel superior aparece junto al contenido de este slot. En pantallas estrechas aparece encima. Los TOC anidados permanecen en el flujo.',
     ],
     'slide_settings' => [
       'content_position' => 'Posición del contenido',

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.110.0
+
+- Let editors place a TOC on the left or right of its own slot on any page layout. Keep nested TOCs inline, put the rail above content on narrow screens, and reserve no rail when there are no eligible headings.
+- Build contents from visible H2/H3 Header blocks in the same slot and reading order, including nested layouts. Nest subsections under their section and let editors exclude individual headings without removing their direct links.
+- Give new headings stable automatic anchors, preserve existing custom and legacy targets, and resolve duplicate Header targets consistently between headings and TOC links. Keep generated anchors independent of heading text and locale.
+- Expose TOC placement and heading inclusion in the panel and Internal Content API, with typed relational storage and complete revision snapshots.
+
 ## 1.109.2
 
 - Reuse Gallery media relationships and resolve visitor/default locale identities once per request. Preserve item order, localized alt text, captions, translation fallback and legacy gallery rendering while removing queries that grew with the image count.

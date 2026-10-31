@@ -632,3 +632,77 @@ body.wb-gallery.wb-gallery-document-scope {
   border: 0;
   aspect-ratio: 16 / 9;
 }
+
+/* TOC placement belongs to its content slot, independently of the page shell. */
+.wb-cms-toc-scope {
+    container: wb-cms-toc-slot / inline-size;
+}
+
+.wb-cms-toc-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(12rem, 16rem);
+    gap: var(--wb-s6);
+    align-items: start;
+}
+
+.wb-cms-toc-body {
+    min-width: 0;
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.wb-cms-toc-rail {
+    min-width: 0;
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: calc(var(--wb-navbar-h, 56px) + var(--wb-s4));
+    max-height: calc(100dvh - var(--wb-navbar-h, 56px) - var(--wb-s8));
+    overflow: auto;
+}
+
+.wb-cms-toc-layout-left {
+    grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
+}
+
+.wb-cms-toc-layout-left > .wb-cms-toc-rail {
+    grid-column: 1;
+}
+
+.wb-cms-toc-layout-left > .wb-cms-toc-body {
+    grid-column: 2;
+}
+
+.wb-section-nav-list.wb-cms-toc-sublist {
+    padding-inline-start: var(--wb-s4);
+}
+
+@container wb-cms-toc-slot (max-width: 48rem) {
+    .wb-cms-toc-layout {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .wb-cms-toc-layout > .wb-cms-toc-rail,
+    .wb-cms-toc-layout > .wb-cms-toc-body {
+        width: 100%;
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 1180px) {
+    .wb-cms-toc-layout {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .wb-cms-toc-layout > .wb-cms-toc-rail,
+    .wb-cms-toc-layout > .wb-cms-toc-body {
+        width: 100%;
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+}

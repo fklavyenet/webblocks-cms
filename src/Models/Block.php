@@ -17,6 +17,7 @@ use WebBlocks\Cms\Support\Applications\ApplicationDefinition;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Blocks\HeaderAnchors;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
@@ -97,6 +98,12 @@ class Block extends CmsModel
         $block->slot = SlotType::query()
           ->whereKey($block->slot_type_id)
           ->value('slug') ?? $block->slot;
+      }
+
+      if ($block->typeSlug() === 'header' && $block->explicitHeaderAnchor() === null) {
+        $settings = $block->decodedSettings();
+        $settings['anchor'] = $block->exists ? 'wb-heading-'.$block->id : 'wb-heading-'.Str::uuid();
+        $block->settings = $settings;
       }
     });
 
@@ -389,7 +396,17 @@ class Block extends CmsModel
     return $resolved !== '' ? $resolved : null;
   }
 
+  public function headerLevel(): string
+  {
+    return in_array($this->variant, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true) ? $this->variant : 'h2';
+  }
+
   public function headerAnchor(): ?string
+  {
+    return $this->typeSlug() === 'header' ? app(HeaderAnchors::class)->forBlock($this) : null;
+  }
+
+  public function explicitHeaderAnchor(): ?string
   {
     if ($this->typeSlug() !== 'header') {
       return null;
@@ -415,10 +432,7 @@ class Block extends CmsModel
       return null;
     }
 
-    return $this->stringValueOrNull($this->title)
-      ?? $this->stringValueOrNull($this->content)
-      ?? $this->translatedTextFieldValue('title')
-      ?? $this->translatedTextFieldValue('content');
+    return $this->stringValueOrNull($this->boundPublicValue('title', $this->title ?? ''));
   }
 
   /**
@@ -449,9 +463,11 @@ class Block extends CmsModel
 
     $slotBlocks = $page->relationLoaded('blocks')
       ? $page->blocks
-      : $page->blocks()->where('status', 'published')->orderBy('sort_order')->orderBy('id')->get();
+      : $page->blocks()->when(! $this->getAttribute('render_preview'), fn ($query) => $query->where('status', 'published'))->orderBy('sort_order')->orderBy('id')->get();
 
-    $slotBlocks = $slotBlocks->where('slot_type_id', $this->slot_type_id)->values();
+    $slotBlocks = $slotBlocks->where('slot_type_id', $this->slot_type_id)
+      ->when(! $this->getAttribute('render_preview'), fn (Collection $blocks) => $blocks->where('status', 'published'))
+      ->values();
 
     $resolver = app(BlockTranslationResolver::class);
     $translatedBlocks = $resolver->resolveCollection($slotBlocks, $localeCode ?? $this->renderLocaleCode());
@@ -460,16 +476,26 @@ class Block extends CmsModel
     $sortKey = fn (Block $block) => sprintf('%010d-%010d', (int) $block->sort_order, (int) $block->id);
 
     $headings = collect();
+    $sectionId = null;
 
-    $walk = function (?int $parentId) use (&$walk, $childrenByParent, $sortKey, &$headings): void {
+    $walk = function (?int $parentId) use (&$walk, $childrenByParent, $sortKey, &$headings, &$sectionId): void {
       $children = ($childrenByParent->get($parentId ?? 0) ?? collect())->sortBy($sortKey)->values();
 
       foreach ($children as $child) {
+        if ($child->typeSlug() === 'header' && in_array($child->headerLevel(), ['h1', 'h2'], true)) {
+          $sectionId = null;
+        }
         if ($child->id !== $this->id
           && $child->typeSlug() === 'header'
-          && in_array($child->variant, ['h2', 'h3'], true)
+          && in_array($child->headerLevel(), ['h2', 'h3'], true)
+          && $child->setting('include_in_toc', true) !== false
+          && $child->tocEligibleHeadingText() !== null
           && $child->headerAnchor() !== null
         ) {
+          if ($child->headerLevel() === 'h2') {
+            $sectionId = $child->id;
+          }
+          $child->setAttribute('toc_parent_id', $child->headerLevel() === 'h3' ? $sectionId : null);
           $headings->push($child);
         }
 
@@ -480,6 +506,11 @@ class Block extends CmsModel
     $walk(null);
 
     return $headings->values();
+  }
+
+  public function tocPosition(): string
+  {
+    return $this->setting('toc_position') === 'left' ? 'left' : 'right';
   }
 
   public function pageListSettings(): PageListSettings

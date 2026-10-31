@@ -30,8 +30,8 @@ final class SettingDefinitions
         'interval_ms', 'autoplay pause_on_hover show_arrows show_dots loop swipe keyboard lightbox_enabled viewer_enabled'
       ),
       'block_navigation_settings' => self::fields(
-        'url target aria_label menu_key location sticky_mode active_indicator active_matching active_mode home_label brand_url logo_path',
-        '', 'compact manual_active initially_open include_current show_icons show_search show_language_switcher show_mode_toggle show_accent_toggle'
+        'url target aria_label menu_key location sticky_mode active_indicator active_matching active_mode home_label brand_url logo_path toc_position',
+        '', 'compact manual_active initially_open include_current include_in_toc show_icons show_search show_language_switcher show_mode_toggle show_accent_toggle'
       ),
       'block_content_settings' => self::fields(
         'scope page_type path_prefix sort sort_order language lang data_scope row_layout list_frame thumb_size',

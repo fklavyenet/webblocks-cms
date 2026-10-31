@@ -168,6 +168,8 @@ class BlockRequest extends FormRequest
       'text' => [($isHeader || $isPlainText) ? 'required' : 'nullable', 'string'],
       'level' => [$isHeader ? 'required' : 'nullable', Rule::in(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])],
       'anchor' => [$isHeader ? 'nullable' : 'prohibited', 'string', 'max:255'],
+      'include_in_toc' => [$isHeader ? 'nullable' : 'prohibited', 'boolean'],
+      'toc_position' => [$selectedBlockType?->slug === 'toc' ? 'nullable' : 'prohibited', Rule::in(['left', 'right'])],
       'name' => [($isLayoutPrimitive || $isCard || $isCardRegion || $isStickyNavbar || $isSidebarNavigation || $isSidebarNavGroup) ? 'nullable' : 'prohibited', 'string', 'max:100'],
       'alignment' => [$supportsAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'left', 'center', 'right'])],
       'spacing' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'lg'])],
@@ -1433,6 +1435,9 @@ class BlockRequest extends FormRequest
         $anchor = trim((string) ($data['anchor'] ?? ''));
 
         if (! $isTranslatedHeaderEdit) {
+          if (array_key_exists('include_in_toc', $data)) {
+            $settings['include_in_toc'] = (bool) $data['include_in_toc'];
+          }
           if (in_array($alignment, ['left', 'center', 'right'], true)) {
             $settings['alignment'] = $alignment;
           } else {
@@ -1460,6 +1465,12 @@ class BlockRequest extends FormRequest
         $data['variant'] = $isTranslatedHeaderEdit
           ? ($this->route('block')?->getRawOriginal('variant'))
           : (trim((string) ($data['level'] ?? '')) ?: 'h2');
+      }
+
+      if ($blockType?->slug === 'toc') {
+        $settings = $this->route('block') instanceof Block ? $this->route('block')->decodedSettings() : [];
+        $settings['toc_position'] = $data['toc_position'] ?? ($settings['toc_position'] ?? 'right');
+        $data['settings'] = json_encode($settings, JSON_UNESCAPED_SLASHES);
       }
 
       if ($blockType?->slug === 'content_header') {
@@ -2592,6 +2603,7 @@ class BlockRequest extends FormRequest
     unset($data['language']);
     unset($data['navigation_menu_key']);
     unset($data['text'], $data['level'], $data['anchor']);
+    unset($data['toc_position'], $data['include_in_toc']);
     unset($data['rating_data_scope'], $data['rating_scale'], $data['rating_allow_change'], $data['rating_show_summary'], $data['rating_title']);
     unset($data['comments_data_scope'], $data['comments_form_enabled'], $data['comments_show_approved'], $data['comments_show_author_name'], $data['comments_sort_order']);
     unset($data['label'], $data['target'], $data['action_label'], $data['card_url'], $data['card_target'], $data['card_variant'], $data['image_position'], $data['image_align'], $data['image_aspect'], $data['image_viewer_enabled'], $data['image_viewer_group'], $data['alert_variant']);

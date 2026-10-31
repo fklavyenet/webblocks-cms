@@ -4257,7 +4257,11 @@ $translations = [
       'text_label' => 'Text',
       'level_label' => 'Ebene',
       'anchor_label' => 'Anchor-ID',
-      'anchor_help' => 'Optionaler gemeinsamer Anchor für TOC-Links und direkte Abschnittsverlinkung.',
+      'anchor_help' => 'Leer lassen, um ein stabiles Linkziel automatisch zu erstellen. Eigene Anker gelten für alle Sprachen und müssen auf der Seite eindeutig sein.',
+      'toc_label' => 'Inhaltsverzeichnis',
+      'toc_include' => 'Bei Eignung aufnehmen',
+      'toc_exclude' => 'Ausschließen',
+      'toc_help' => 'Nur H2/H3-Header-Blöcke mit sichtbarem Text werden aufgelistet. Diese Auswahl gilt für alle Sprachen.',
     ],
     'sticky_navbar_settings' => [
       'position_label' => 'Position',
@@ -4356,7 +4360,11 @@ $translations = [
     ],
     'toc' => [
       'title_label' => 'TOC-Titel',
-      'title_help' => 'Optionales Label über Links, die aus Header-Block-Ankern auf derselben Seite erzeugt werden.',
+      'title_help' => 'Optionale Beschriftung über den H2/H3-Abschnitten desselben Slots, einschließlich verschachtelter Layout-Blöcke.',
+      'position_label' => 'Position',
+      'position_right' => 'Rechts',
+      'position_left' => 'Links',
+      'position_help' => 'Ein TOC auf oberster Ebene steht neben dem Inhalt dieses Slots. Auf schmalen Bildschirmen steht es darüber. Verschachtelte TOCs bleiben im Inhaltsfluss.',
     ],
     'slide_settings' => [
       'content_position' => 'Content-Position',

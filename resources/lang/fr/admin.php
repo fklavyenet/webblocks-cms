@@ -4255,7 +4255,11 @@ $translations = [
       'text_label' => 'Texte',
       'level_label' => 'Niveau',
       'anchor_label' => 'ID d\'ancre',
-      'anchor_help' => 'Ancre partagée facultative pour les liens de sommaire et les liens directs vers une section.',
+      'anchor_help' => 'Laisser vide pour créer automatiquement une cible de lien stable. Une ancre personnalisée est partagée entre les langues et doit être unique sur la page.',
+      'toc_label' => 'Table des matières',
+      'toc_include' => 'Inclure si admissible',
+      'toc_exclude' => 'Exclure',
+      'toc_help' => 'Seuls les blocs Header H2/H3 avec du texte visible sont listés. Ce choix est partagé entre les langues.',
     ],
     'sticky_navbar_settings' => [
       'position_label' => 'Position',
@@ -4354,7 +4358,11 @@ $translations = [
     ],
     'toc' => [
       'title_label' => 'Titre du sommaire',
-      'title_help' => 'Libellé facultatif affiché au-dessus des liens générés à partir des ancres des blocs Titre de la même page.',
+      'title_help' => 'Libellé facultatif au-dessus des sections H2/H3 de ce même emplacement, y compris les blocs de mise en page imbriqués.',
+      'position_label' => 'Position',
+      'position_right' => 'Droite',
+      'position_left' => 'Gauche',
+      'position_help' => 'Un TOC de premier niveau apparaît à côté du contenu de cet emplacement. Sur un écran étroit, il apparaît au-dessus. Les TOC imbriqués restent dans le flux.',
     ],
     'slide_settings' => [
       'content_position' => 'Position du contenu',

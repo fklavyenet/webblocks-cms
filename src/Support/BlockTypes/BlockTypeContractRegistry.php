@@ -253,13 +253,13 @@ class BlockTypeContractRegistry
   {
     return [
       'header' => [
-        'admin_form_fields' => ['Text', 'Level', 'Anchor ID'],
+        'admin_form_fields' => ['Text', 'Level', 'Anchor ID', 'Table of contents inclusion'],
         'translatable_fields' => ['title'],
-        'shared_settings_fields' => ['variant', 'settings.alignment', 'settings.anchor'],
+        'shared_settings_fields' => ['variant', 'settings.alignment', 'settings.anchor', 'settings.include_in_toc'],
         'storage_fields' => [
           'Translated heading text lives in block text translation rows.',
           'Shared heading level stays on the block variant column.',
-          'Shared anchor is resolved from settings.anchor with legacy url fallback compatibility.',
+          'Shared anchors use settings.anchor with legacy url fallback. New headings receive a stable stored automatic anchor; historical missing anchors use block identity. Explicit collisions keep the lowest-ID heading target and give other headings unique automatic targets.',
         ],
         'media_relationship_fields' => ['Same-page TOC blocks consume anchored Header blocks by relationship, not by direct foreign key.'],
         'child_container_behavior' => ['Not a container in the current contract.'],
@@ -789,13 +789,13 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'toc' => [
-        'admin_form_fields' => ['Optional title'],
+        'admin_form_fields' => ['Optional title', 'Position (left/right)'],
         'translatable_fields' => [],
-        'shared_settings_fields' => ['canonical title'],
-        'storage_fields' => ['TOC title is stored canonically on the block row.'],
-        'media_relationship_fields' => ['Same-page published Header blocks with valid anchors are discovered at render time.'],
+        'shared_settings_fields' => ['canonical title', 'settings.toc_position'],
+        'storage_fields' => ['TOC title is stored canonically on the block row; position is a typed relational setting, default right.'],
+        'media_relationship_fields' => ['Same-slot visible H2/H3 Header blocks with nonblank text and include_in_toc enabled are discovered in document order. H3 entries nest under the preceding eligible H2.'],
         'child_container_behavior' => ['Not a container. Historical child rows may still exist, but new child placement is not supported and the public renderer ignores child trees.'],
-        'renderer_root_contract' => 'Owns its generated public TOC wrapper when headings exist.',
+        'renderer_root_contract' => 'Renders wb-section-nav only when eligible headings exist. The first eligible direct-child TOC controls a left/right rail in its slot on all layouts; narrow screens put the rail above content. Nested and additional TOCs stay inline.',
         'current_contract_status' => 'clear',
         'known_gaps' => [],
       ],

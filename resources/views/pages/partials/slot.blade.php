@@ -41,7 +41,9 @@
 @if ($bodyClass !== '')
   <div class="{{ $bodyClass }}">
 @endif
-  @if (view()->exists($slotPartial))
+  @if ($slot['blocks']->contains(fn ($block) => $block->typeSlug() === 'toc' && $block->publicTocHeadingBlocks($block->renderLocaleCode())->isNotEmpty()))
+    @include('webblocks-cms::pages.partials.slot-content', ['slot' => $slot])
+  @elseif (view()->exists($slotPartial))
     @include($slotPartial, ['slot' => $slot, 'page' => $page])
   @elseif ($slot['blocks']->isNotEmpty())
     <div class="wb-stack">

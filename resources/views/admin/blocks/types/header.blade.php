@@ -27,7 +27,16 @@
 
     <div class="wb-stack wb-gap-1">
         <label for="anchor">{{ $adminText('anchor_label') }}</label>
-        <input id="anchor" name="anchor" class="wb-input" type="text" value="{{ old('anchor', $block->headerAnchor()) }}">
+        <input id="anchor" name="anchor" class="wb-input" type="text" value="{{ old('anchor', $block->explicitHeaderAnchor()) }}" placeholder="{{ $block->headerAnchor() }}">
         <div class="wb-text-sm wb-text-muted">{{ $adminText('anchor_help') }}</div>
+    </div>
+
+    <div class="wb-stack wb-gap-1">
+        <label for="include_in_toc">{{ $adminText('toc_label') }}</label>
+        <select id="include_in_toc" name="include_in_toc" class="wb-select">
+            <option value="1" @selected((string) old('include_in_toc', $block->setting('include_in_toc', true) ? '1' : '0') === '1')>{{ $adminText('toc_include') }}</option>
+            <option value="0" @selected((string) old('include_in_toc', $block->setting('include_in_toc', true) ? '1' : '0') === '0')>{{ $adminText('toc_exclude') }}</option>
+        </select>
+        <div class="wb-text-sm wb-text-muted">{{ $adminText('toc_help') }}</div>
     </div>
 </div>

@@ -11,14 +11,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Tests\TestCase;
 
-/**
- * Article Layout pulls a top-level toc block out of main's normal flow into a
- * narrow sticky rail beside the rest of the content, by reusing the exact
- * wb-settings-shell.wb-docs-layout grid already shipped for the Settings
- * Shell pattern — no new CSS, and it only activates when both conditions
- * hold: the page is on this layout, and main actually has a toc block as one
- * of its direct children. Anything else renders exactly like Default Layout.
- */
+/** Slot-scoped TOC placement works independently of the page shell. */
 class ArticleLayoutTocRailTest extends TestCase
 {
   protected function defineDatabaseMigrations(): void
@@ -31,34 +24,33 @@ class ArticleLayoutTocRailTest extends TestCase
   {
     $html = $this->renderMain(layout: 'article', suffix: 'a', withToc: true);
 
-    $this->assertStringContainsString('wb-settings-shell wb-docs-layout', $html);
-    $this->assertStringContainsString('wb-settings-body', $html);
-    $this->assertStringContainsString('wb-settings-nav wb-docs-rail', $html);
+    $this->assertStringContainsString('wb-cms-toc-layout wb-cms-toc-layout-right', $html);
+    $this->assertStringContainsString('wb-cms-toc-body', $html);
+    $this->assertStringContainsString('wb-cms-toc-rail', $html);
     $this->assertStringContainsString('wb-section-nav', $html);
 
     // The rail wrapper carries the toc's own root directly -- toc is not in
     // Block::ownsPublicRoot()'s list, so it still gets the generic
     // wb-public-block marker div, same as it would outside the rail.
-    $railStart = strpos($html, 'wb-settings-nav wb-docs-rail');
+    $railStart = strpos($html, 'wb-cms-toc-rail');
     $navStart = strpos($html, 'wb-section-nav');
     $this->assertNotFalse($railStart);
     $this->assertNotFalse($navStart);
     $this->assertGreaterThan($railStart, $navStart, 'The section-nav must render inside the rail wrapper.');
 
-    // The rest of main renders inside wb-settings-body, not the rail.
-    $bodyStart = strpos($html, 'wb-settings-body');
-    $this->assertLessThan($railStart, $bodyStart, 'wb-settings-body must come before the rail in source order.');
-    $this->assertStringContainsString('Article body', substr($html, $bodyStart, $railStart - $bodyStart));
+    // The rest of main renders inside wb-cms-toc-body, not the rail.
+    $bodyStart = strpos($html, 'wb-cms-toc-body');
+    $this->assertGreaterThan($railStart, $bodyStart, 'TOC precedes the content in source order for narrow screens.');
+    $this->assertStringContainsString('Article body', substr($html, $bodyStart));
   }
 
   #[Test]
-  public function a_page_not_on_article_layout_never_splits_even_with_a_toc(): void
+  public function default_layout_also_supports_a_toc_rail(): void
   {
     $html = $this->renderMain(layout: 'default', suffix: 'b', withToc: true);
 
-    $this->assertStringNotContainsString('wb-settings-shell', $html);
-    $this->assertStringNotContainsString('wb-docs-rail', $html);
-    // toc still renders, just inline in the normal single-column flow.
+    $this->assertStringContainsString('wb-cms-toc-layout-right', $html);
+    $this->assertStringContainsString('wb-cms-toc-rail', $html);
     $this->assertStringContainsString('wb-section-nav', $html);
   }
 
@@ -67,8 +59,8 @@ class ArticleLayoutTocRailTest extends TestCase
   {
     $html = $this->renderMain(layout: 'article', suffix: 'c', withToc: false);
 
-    $this->assertStringNotContainsString('wb-settings-shell', $html);
-    $this->assertStringNotContainsString('wb-docs-rail', $html);
+    $this->assertStringNotContainsString('wb-cms-toc-layout', $html);
+    $this->assertStringNotContainsString('wb-cms-toc-rail', $html);
     $this->assertStringContainsString('wb-stack wb-gap-6', $html);
   }
 
@@ -87,11 +79,32 @@ class ArticleLayoutTocRailTest extends TestCase
 
     $html = $this->renderSlot($page, $mainSlot, [$container]);
 
-    $this->assertStringNotContainsString('wb-settings-shell', $html);
-    $this->assertStringNotContainsString('wb-docs-rail', $html);
+    $this->assertStringNotContainsString('wb-cms-toc-layout', $html);
+    $this->assertStringNotContainsString('wb-cms-toc-rail', $html);
   }
 
-  private function renderMain(string $layout, string $suffix, bool $withToc): string
+  #[Test]
+  public function the_editor_can_put_the_rail_on_the_left(): void
+  {
+    $html = $this->renderMain(layout: 'default', suffix: 'left', withToc: true, position: 'left');
+    $this->assertStringContainsString('wb-cms-toc-layout-left', $html);
+    $this->assertSame(1, substr_count($html, '<nav class="wb-section-nav"'));
+  }
+
+  #[Test]
+  public function an_empty_toc_does_not_reserve_a_rail(): void
+  {
+    $html = $this->renderMain(layout: 'article', suffix: 'empty', withToc: false);
+    $page = Page::first();
+    $slot = SlotType::where('slug', 'main')->first();
+    $page->blocks()->delete();
+    $toc = Block::create(['page_id' => $page->id, 'type' => 'toc', 'slot_type_id' => $slot->id, 'status' => 'published']);
+    $html = $this->renderSlot($page->fresh(), $slot, [$toc]);
+    $this->assertStringNotContainsString('wb-cms-toc-layout', $html);
+    $this->assertStringNotContainsString('wb-section-nav', $html);
+  }
+
+  private function renderMain(string $layout, string $suffix, bool $withToc, string $position = 'right'): string
   {
     $site = Site::query()->create(['name' => 'Test', 'handle' => 'test-'.$suffix, 'is_primary' => true]);
     Locale::query()->create(['code' => 'en', 'name' => 'English', 'is_default' => true, 'is_enabled' => true]);
@@ -111,7 +124,7 @@ class ArticleLayoutTocRailTest extends TestCase
     $blocks[] = Block::create(['page_id' => $page->id, 'parent_id' => null, 'type' => 'header', 'slot_type_id' => $mainSlot->id, 'sort_order' => 0, 'title' => 'Article body', 'variant' => 'h2', 'settings' => json_encode(['anchor' => 'article-body']), 'status' => 'published']);
 
     if ($withToc) {
-      $blocks[] = Block::create(['page_id' => $page->id, 'parent_id' => null, 'type' => 'toc', 'slot_type_id' => $mainSlot->id, 'sort_order' => 1, 'status' => 'published']);
+      $blocks[] = Block::create(['page_id' => $page->id, 'parent_id' => null, 'type' => 'toc', 'slot_type_id' => $mainSlot->id, 'sort_order' => 1, 'status' => 'published', 'settings' => ['toc_position' => $position]]);
     }
 
     return $this->renderSlot($page, $mainSlot, $blocks);

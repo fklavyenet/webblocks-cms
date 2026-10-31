@@ -129,7 +129,9 @@ final class BlockSettingsPatchPolicy
     'header' => [
       'alignment' => ['enum', ['left', 'center', 'right']],
       'anchor' => ['anchor'],
+      'include_in_toc' => ['bool'],
     ],
+    'toc' => ['toc_position' => ['enum', ['left', 'right']]],
     'hero' => [
       'layout' => ['enum', ['left', 'centered', 'split', 'full-bleed']],
       'title_tag' => ['enum', ['h1', 'h2', 'h3']],
