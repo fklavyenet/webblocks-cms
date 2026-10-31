@@ -13,6 +13,7 @@ use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionsHandler;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
 use Illuminate\Http\Request;
+use Illuminate\Log\Logger;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
@@ -102,6 +103,8 @@ use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRuntime;
+use WebBlocks\Cms\Support\Logging\CmsLogTap;
+use WebBlocks\Cms\Support\Logging\LogFormatSettings;
 use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
 use WebBlocks\Cms\Support\NativeLocal\SystemNativeLocalProbe;
 use WebBlocks\Cms\Support\Navigation\NavigationCache;
@@ -941,6 +944,25 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public function register(): void
   {
+    $this->app->scoped(LogFormatSettings::class);
+    $this->app->booting(function (): void {
+      $channels = $this->app['config']->get('logging.channels', []);
+      foreach ($channels as $name => &$channel) {
+        if (! in_array($channel['driver'] ?? null, ['single', 'daily'], true)) {
+          continue;
+        }
+        $tap = CmsLogTap::class;
+        $channel['tap'] = array_values(array_unique([...($channel['tap'] ?? []), $tap]));
+        if ($this->app->resolved('log')) {
+          $logger = $this->app['log']->getChannels()[$name] ?? null;
+          if ($logger instanceof Logger) {
+            (new CmsLogTap)($logger);
+          }
+        }
+      }
+      unset($channel);
+      $this->app['config']->set('logging.channels', $channels);
+    });
     $this->app->singleton(ConsentIntegrations::class);
     $this->app->scoped(RequestMemo::class);
     $this->app->singleton(PageListCache::class);

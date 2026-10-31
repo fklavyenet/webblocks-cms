@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.110.3
+
+- Add an active Super admin Short/Full log selector under System → Settings → Logging, stored in install-wide relational settings without editing application files or environment configuration.
+- Short keeps the root error, file/line and first two call steps; Full retains exception chains and complete call stacks. Both omit call arguments and preserve other context, log levels and rotation.
+- Preserve the original single/daily formatter until a choice is saved, including during installation or database outages. A saved CMS choice takes precedence over Herne’s formatter; remote/custom channels and existing records remain unchanged.
+- Include six panel languages and regression coverage for authorization, validation, live formatter switching, file output and recursive lookup protection. No migration is required; restart long-running workers after changing the setting.
+
 ## 1.110.2
 
 - Use one verification field for either an email code or a recovery code across sign-in and account security forms. Place Verify and the sign-out/return action on the same row.

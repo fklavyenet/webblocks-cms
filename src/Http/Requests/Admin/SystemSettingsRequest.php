@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Policies\LogFormatPolicy;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
@@ -13,6 +14,10 @@ class SystemSettingsRequest extends FormRequest
 {
   public function authorize(): bool
   {
+    if ($this->input('section') === 'logging') {
+      return app(LogFormatPolicy::class)->update($this->user());
+    }
+
     return $this->user() !== null;
   }
 
@@ -47,10 +52,11 @@ class SystemSettingsRequest extends FormRequest
     $customSmtpRequired = Rule::requiredIf(fn (): bool => $this->input('cms_mail_mode') === SystemSettings::CMS_MAIL_MODE_CUSTOM && $this->input('cms_mail_mailer') === 'smtp');
 
     $sectionRules = [
-      'section' => ['required', Rule::in(['general', 'project', 'mail', 'privacy'])],
+      'section' => ['required', Rule::in(['general', 'project', 'mail', 'privacy', 'logging'])],
     ];
 
     return match ($this->input('section')) {
+      'logging' => $sectionRules + ['log_format' => ['required', 'string', Rule::in(['compact', 'full'])]],
       'general' => $sectionRules + [
         'default_locale' => [
           'required',
@@ -93,6 +99,10 @@ class SystemSettingsRequest extends FormRequest
 
   public function settingsPayload(): array
   {
+    if ($this->validated('section') === 'logging') {
+      return [SystemSettings::LOG_FORMAT => $this->validated('log_format')];
+    }
+
     if ($this->validated('section') === 'general') {
       return [
         SystemSettings::DEFAULT_LOCALE => $this->validated('default_locale'),

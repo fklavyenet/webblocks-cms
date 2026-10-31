@@ -12,6 +12,7 @@
         'mail' => $systemText('mail'),
         'privacy' => $systemText('privacy'),
         'security' => $systemText('security'),
+        ...($canManageLogFormat ? ['logging' => $systemText('logging')] : []),
         'runtime' => $systemText('runtime_information'),
     ];
     $systemTab = old('section', request()->query('tab', 'general'));
@@ -345,6 +346,29 @@
                         </form>
                     </div>
 
+                    @if($canManageLogFormat)
+                    <div class="wb-tabs-panel {{ $systemTab === 'logging' ? 'is-active' : '' }}" id="system-settings-logging-panel">
+                        <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-card wb-card-muted">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="section" value="logging">
+                            <div class="wb-card-header"><h2 class="wb-card-title">{{ $systemText('logging') }}</h2></div>
+                            <div class="wb-card-body wb-stack-4">
+                                <div class="wb-field">
+                                    <label class="wb-label" for="settings-log-format">{{ $systemText('log_format') }}</label>
+                                    <select class="wb-select" id="settings-log-format" name="log_format" aria-describedby="settings-log-help" required>
+                                        @if($settings['log_format'] === null)<option value="" selected disabled>{{ $systemText('logging_unset') }}</option>@endif
+                                        <option value="compact" @selected($settings['log_format'] === 'compact')>{{ $systemText('logging_compact') }}</option>
+                                        <option value="full" @selected($settings['log_format'] === 'full')>{{ $systemText('logging_full') }}</option>
+                                    </select>
+                                    @error('log_format')<p class="wb-field-error">{{ $message }}</p>@enderror
+                                </div>
+                                <p class="wb-field-hint" id="settings-log-help">{{ $systemText('logging_help') }}</p>
+                            </div>
+                            <div class="wb-card-footer"><button class="wb-btn wb-btn-primary" type="submit">{{ $systemText('logging_save') }}</button></div>
+                        </form>
+                    </div>
+                    @endif
                     <div class="wb-tabs-panel {{ $systemTab === 'runtime' ? 'is-active' : '' }}" id="system-settings-runtime-panel">
         <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $systemText('runtime_information') }}</strong></div>

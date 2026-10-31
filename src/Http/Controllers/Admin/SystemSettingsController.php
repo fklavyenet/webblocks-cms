@@ -9,7 +9,9 @@ use Throwable;
 use WebBlocks\Cms\Http\Requests\Admin\CmsMailTestEmailRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest;
 use WebBlocks\Cms\Models\CmsRole;
+use WebBlocks\Cms\Policies\LogFormatPolicy;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
+use WebBlocks\Cms\Support\Logging\LogFormatSettings;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\Mail\CmsTestEmailSender;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
@@ -34,6 +36,7 @@ class SystemSettingsController extends Controller
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('System Settings'),
       'settings' => [
+        'log_format' => old('log_format', app(LogFormatSettings::class)->mode()),
         'project_name' => old('project_name', $this->systemSettings->projectName()),
         'project_tagline' => old('project_tagline', $this->systemSettings->projectTagline()),
         'default_locale' => old('default_locale', $this->systemSettings->defaultLocaleCode()),
@@ -54,6 +57,7 @@ class SystemSettingsController extends Controller
         'cms_mail_password_configured' => $this->systemSettings->cmsMailPasswordConfigured(),
       ],
       'mailDiagnostics' => $this->mailSettingsResolver->diagnostics(),
+      'canManageLogFormat' => app(LogFormatPolicy::class)->update(request()->user()),
       'twoFactorAvailable' => app(TwoFactorAuthentication::class)->available(),
       'twoFactorPolicy' => app(TwoFactorAuthentication::class)->available() ? app(TwoFactorAuthentication::class)->policy() : [],
       'twoFactorRoles' => app(TwoFactorAuthentication::class)->available() ? CmsRole::query()->orderBy('name')->get() : collect(),
@@ -76,7 +80,8 @@ class SystemSettingsController extends Controller
 
     return redirect()
       ->route('admin.system.settings.edit', ['tab' => $request->validated('section')])
-      ->with('status', 'Settings updated successfully.');
+      ->with('status', $request->validated('section') === 'logging'
+        ? __('webblocks-cms::admin.system_settings.logging_saved') : 'Settings updated successfully.');
   }
 
   public function sendMailTest(CmsMailTestEmailRequest $request, CmsTestEmailSender $sender): RedirectResponse

@@ -13,6 +13,8 @@ use WebBlocks\Cms\Support\WebBlocks;
 
 class SystemSettings
 {
+  public const LOG_FORMAT = 'system.log_format';
+
   public const PROJECT_NAME = 'system.project_name';
 
   public const PROJECT_TAGLINE = 'system.project_tagline';
@@ -105,6 +107,7 @@ class SystemSettings
   ];
 
   private const READABLE_KEYS = [
+    self::LOG_FORMAT,
     ...self::CLEANUP_AUTOMATIC_KEYS,
     ...self::BACKUP_LIFECYCLE_KEYS,
     self::PROJECT_NAME,
@@ -142,6 +145,7 @@ class SystemSettings
   ];
 
   public const MANAGED_KEYS = [
+    self::LOG_FORMAT,
     ...self::CLEANUP_AUTOMATIC_KEYS,
     ...self::BACKUP_LIFECYCLE_KEYS,
     self::PROJECT_NAME,
