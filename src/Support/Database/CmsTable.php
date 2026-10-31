@@ -11,6 +11,7 @@ final class CmsTable
    */
   public const TABLES = [
     'page_list_cache_versions',
+    'navigation_cache_versions',
     'consent_settings',
     'consent_services',
     'consent_translations',

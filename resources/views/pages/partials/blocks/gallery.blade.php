@@ -12,15 +12,16 @@
         ->map(fn ($id) => (int) $id)
         ->filter(fn ($id) => $id > 0)
         ->values();
-    $legacyAssets = $legacyAssetIds->isEmpty()
+    $galleryRelations = $block->galleryItems()->loadMissing(['media', 'galleryItemTranslations']);
+    $nativeAssets = $block->galleryAssets();
+    $legacyAssets = $nativeAssets->isNotEmpty() || $legacyAssetIds->isEmpty()
         ? collect()
         : \WebBlocks\Cms\Models\Media::query()
             ->whereIn('id', $legacyAssetIds)
             ->get()
             ->sortBy(fn ($asset) => $legacyAssetIds->search($asset->id))
             ->values();
-    $galleryRelations = $block->galleryItems()->loadMissing(['media', 'galleryItemTranslations']);
-    $assetSource = $block->galleryAssets()->isNotEmpty() ? $block->galleryAssets()->values() : $legacyAssets;
+    $assetSource = $nativeAssets->isNotEmpty() ? $nativeAssets->values() : $legacyAssets;
     $legacyItems = collect($settings['items'] ?? $settings['images'] ?? []);
     $galleryText = static function ($value): string {
         $text = trim((string) $value);

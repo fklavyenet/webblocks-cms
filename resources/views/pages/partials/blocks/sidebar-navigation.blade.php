@@ -48,7 +48,7 @@
   };
 
   $items = $menuKey !== null
-    ? $filterVisibleItems(app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)->buildMenuTree($menuKey, $block->renderSite()?->id))
+    ? $filterVisibleItems(app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)->buildPublicMenuTree($menuKey, $block->renderSite()?->id))
     : $manualItems;
 @endphp
 

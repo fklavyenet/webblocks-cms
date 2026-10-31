@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.109.2
+
+- Reuse Gallery media relationships and resolve visitor/default locale identities once per request. Preserve item order, localized alt text, captions, translation fallback and legacy gallery rendering while removing queries that grew with the image count.
+- Cache public Navbar, Sidebar and Navigation Auto menu data within and across requests with a persistent Laravel cache store. Keep language, URLs, active-page indicators and consent links live at render time, and give each renderer an independent tree. The default lifetime is 300 seconds; `WEBBLOCKS_CMS_NAVIGATION_CACHE_SECONDS=0` disables shared caching.
+- Invalidate public menu data after CMS/Laravel menu, page, translation, publication, access-rule, site and locale changes, including bulk writes. Exclude hidden items, drafts, protected pages and foreign-site page references from shared menu data. Include a repeatable cache-generation migration, transaction/rollback safety and SQL fallback during cache outages; keep administrator menu reads separate.
+
 ## 1.109.1
 
 - Reuse Page List results within a request and across requests with a shared Laravel cache store. Public listings default to a 300-second lifetime; `WEBBLOCKS_CMS_PAGE_LIST_CACHE_SECONDS=0` disables shared caching.

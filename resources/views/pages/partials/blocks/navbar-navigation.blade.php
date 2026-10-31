@@ -11,7 +11,7 @@
     default => 'wb-navbar-nav--active-underline',
   };
   $items = app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)
-    ->buildMenuTree($menuKey, $site?->id)
+    ->buildPublicMenuTree($menuKey, $site?->id)
     ->filter(fn ($item) => $item->isVisible() && (! $item->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($item->page)))
     ->map(function ($item) {
       $item->setRelation('children', $item->children

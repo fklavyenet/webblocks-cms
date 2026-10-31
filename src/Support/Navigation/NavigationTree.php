@@ -5,12 +5,51 @@ namespace WebBlocks\Cms\Support\Navigation;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\NavigationItem;
+use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 
 class NavigationTree
 {
   public const MAX_DEPTH = 3;
+
+  /** Context-free public data, copied before renderers filter or mark the tree. */
+  public function buildPublicMenuTree(string $menuKey, Site|int|null $site = null): Collection
+  {
+    $siteId = $site instanceof Site ? $site->id : $site;
+    if (! $siteId) {
+      return collect();
+    }
+    $items = app(NavigationCache::class)->remember((new NavigationItem)->getConnection(), [$siteId, $menuKey],
+      fn () => $this->publicItems($this->buildMenuTree($menuKey, $siteId), (int) $siteId));
+    // Neither a renderer's filtered children nor its mutable models may enter
+    // another renderer's tree, including on the first uncached request.
+    $snapshot = app(NavigationSnapshot::class);
+    $copy = $snapshot->decode($snapshot->encode($items));
+    $this->primePublicRules($copy);
+
+    return $copy;
+  }
+
+  private function publicItems(Collection $items, int $siteId): Collection
+  {
+    return $items->filter(fn (NavigationItem $item) => $item->visibility !== NavigationItem::VISIBILITY_HIDDEN
+      && ($item->link_type !== NavigationItem::LINK_PAGE || $item->page !== null)
+      && (! $item->page || ($item->page->status === Page::STATUS_PUBLISHED && $item->page->page_type !== Page::TYPE_SHARED_SLOT_SOURCE && (int) $item->page->site_id === $siteId && ! app(PublicPageAccess::class)->protected($item->page))))
+      ->map(function (NavigationItem $item) use ($siteId): NavigationItem {
+        $item->setRelation('children', $this->publicItems($item->children, $siteId));
+
+        return $item;
+      })->values();
+  }
+
+  private function primePublicRules(Collection $items): void
+  {
+    app(PublicPageAccess::class)->primeRules($items->pluck('page')->filter());
+    foreach ($items as $item) {
+      $this->primePublicRules($item->children);
+    }
+  }
 
   public function buildMenuTree(string $menuKey, Site|int|null $site = null): Collection
   {

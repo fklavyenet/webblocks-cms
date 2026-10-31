@@ -27,6 +27,7 @@ use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -1924,15 +1925,11 @@ class Block extends CmsModel
       return collect();
     }
 
-    $mediaIds = $galleryItems->pluck('media_id')
-      ->map(fn ($id) => (int) $id)
-      ->values()
-      ->all();
+    $galleryItems->loadMissing('media');
 
-    return Media::query()
-      ->whereIn('id', $mediaIds)
-      ->get()
-      ->sortBy(fn (Media $media) => array_search($media->id, $mediaIds, true))
+    return $galleryItems->map(fn (BlockMedia $item) => $item->media)
+      ->filter()
+      ->unique('id')
       ->values();
   }
 
@@ -1956,10 +1953,13 @@ class Block extends CmsModel
 
     // Item copy is independent of the Gallery's optional introductory text.
     $resolvedLocaleCode = $this->getAttribute('requested_locale_code') ?? $this->getAttribute('resolved_locale_code');
+    $connection = (new Locale)->getConnection();
     $resolvedLocaleId = is_string($resolvedLocaleCode) && $resolvedLocaleCode !== ''
-      ? Locale::query()->where('code', $resolvedLocaleCode)->value('id')
+      ? app(RequestMemo::class)->remember('gallery.locale-id', [
+        $connection->getName(), $connection->getDatabaseName(), $connection->getTablePrefix(), $resolvedLocaleCode,
+      ], fn () => Locale::query()->where('code', $resolvedLocaleCode)->value('id'))
       : null;
-    $defaultLocaleId = Locale::query()->where('is_default', true)->value('id');
+    $defaultLocaleId = Page::defaultLocaleId();
 
     return ($resolvedLocaleId ? $translations->firstWhere('locale_id', $resolvedLocaleId) : null)
       ?? ($defaultLocaleId ? $translations->firstWhere('locale_id', $defaultLocaleId) : null)

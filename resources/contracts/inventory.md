@@ -504,6 +504,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Children/media | `gallery_items` or `gallery_media_ids` referencing image Media records; no block children. |
 | HTML | Root-owning `.wb-gallery.wb-gallery--{variant}` with gallery items, responsive media, captions, and optional registry-owned viewer under the canonical overlay root. |
 | Example appearance | Equal product grid, natural-height editorial masonry, or featured-first collage. |
+| Render reuse | Reuses loaded ordered Media relationships and request-scoped locale identities. Image count does not add locale lookups; missing visitor-language copy keeps the existing default-locale/first-translation fallback. Gallery output is not stored across requests. |
 | Avoid | Adding heading/description into Gallery; compose Content Header or Rich Text before it. |
 
 ### `download` — Download
@@ -673,6 +674,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Children/media | Navigation records, not block children. |
 | HTML | Generic wrapper plus semantic `<nav>` and `<ul>` tree. |
 | Example appearance | Compatibility navigation menu in a slot. |
+| Public data reuse | Shares the public menu-data cache described under Navbar Navigation; labels, URLs and visibility still resolve for the current render. |
 | Recommendation | Prefer Navbar Navigation for new shared headers. |
 | Contract registry gap | This published handle has an admin form and renderer but no entry in `BlockTypeContractRegistry` at the audit baseline. Do not infer a complete live API contract until discovery confirms it. |
 
@@ -739,6 +741,8 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Children/media | CMS NavigationItem tree. |
 | HTML | Generic wrapper plus desktop `.wb-navbar-links`, mobile WebBlocks UI dropdown, active classes, and group dropdowns. |
 | Example appearance | Responsive primary navigation with automatic burger menu. |
+| Public data caching | Navbar Navigation, menu-backed Sidebar Navigation and Navigation Auto reuse a site/menu-scoped data snapshot. With the included SQL generation migration and a persistent Laravel cache store, shared reuse defaults to 300 seconds (`WEBBLOCKS_CMS_NAVIGATION_CACHE_SECONDS`; `0` disables shared caching). Snapshots contain public attributes rather than rendered HTML and are capped at 1 MiB; larger trees render without shared storage. Each renderer receives independent model/child collections. |
+| Cache freshness and scope | CMS/Laravel menu, translation, page, publication, access-rule, site and locale/default-locale writes invalidate public menu data for that connection, including raw/bulk writes. Hidden items, unpublished/protected/internal source pages and foreign-site page references are excluded; a resolved site is required. Administrative menu reads stay separate. Transactions bypass shared snapshots, rollback restores the SQL generation, and cache outages fall back to SQL. Language fallback, consent links, mounts and active-page state resolve at render time. Direct external SQL writes require an application cache clear or expiry. |
 
 ### `sidebar-brand` — Sidebar Brand
 
@@ -759,6 +763,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Children/media | Either CMS Navigation records or manual `sidebar-nav-item` / `sidebar-nav-group`; at least one child is required in manual API plans. |
 | HTML | Generic wrapper plus `<nav class="wb-sidebar-nav">` and WebBlocks UI sidebar structures. |
 | Example appearance | Documentation sidebar with active section indication. |
+| Public data reuse | Menu-backed sidebars share the public menu-data cache described under Navbar Navigation. Manual sidebar blocks retain their existing rendering and ownership. |
 
 ### `sidebar-nav-item` — Sidebar Nav Item
 

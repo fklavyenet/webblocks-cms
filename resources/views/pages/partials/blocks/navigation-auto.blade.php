@@ -12,7 +12,7 @@
   $linksToUnpublishedPage = fn ($item) => $item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE
     && ($item->page?->status !== \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED || $item->resolvedUrl() === null);
   $items = app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)
-    ->buildMenuTree($menuKey, $siteScope)
+    ->buildPublicMenuTree($menuKey, $siteScope)
     ->filter(fn ($item) => $item->isVisible() && (! $item->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($item->page)) && ! $linksToUnpublishedPage($item));
 
   $renderNavigationBranch = function ($branch, bool $buttonRoot = false) use (&$renderNavigationBranch, $linksToUnpublishedPage) {
