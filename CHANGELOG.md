@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.109.1
+
+- Reuse Page List results within a request and across requests with a shared Laravel cache store. Public listings default to a 300-second lifetime; `WEBBLOCKS_CMS_PAGE_LIST_CACHE_SECONDS=0` disables shared caching.
+- Refresh listings after CMS/Laravel page, translation, publication, access-rule, page-type, locale and media changes, including bulk writes. Keep sites, languages, list settings, hosting pages and public mounts separate; exclude drafts, protected pages and Shared Slot source pages.
+- Keep cache generations in SQL so rollbacks, overlapping cache fills and cache-service outages cannot revive invalidated results. Apply the included migration to enable shared caching; installations awaiting migration retain uncached reads and request-local reuse.
+
 ## 1.109.0
 
 - Present a compact, responsive administrator dashboard with Site Health, scoped content counts and plugin summary cards above page views, recent pages and recent media. Keep Contact unread and awaiting-reply totals distinct and preserve accessible chart data and keyboard navigation.

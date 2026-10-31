@@ -650,6 +650,8 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | HTML | `wb-grid` of `wb-card` articles (or single-link Card roots when `clickable_card` is enabled), or a `wb-link-list` of `wb-link-list-item` anchors. |
 | Example appearance | A three-column index of guide cards, each linking from its title. |
 | Render guard | Emits nothing when the query returns no pages, or while the scope is unconfigured. Published status, site, render-locale translation, Shared Slot source pages, and the hosting page are filtered in the query and are not settings. |
+| Result caching | Reuses results within a request. After the included cache-generation migration, a shared Laravel cache store also reuses bounded listing data across requests for 300 seconds by default (`WEBBLOCKS_CMS_PAGE_LIST_CACHE_SECONDS`; `0` disables shared reuse). Keys separate installation/database, site, locale, normalized settings, resolved subtree, hosting page and public mount. Empty results are cached too. |
+| Cache freshness | CMS/Laravel writes to pages, translations, access rules, page types, sites/locales, default-locale settings and media rotate a SQL generation for that database connection, including bulk/raw writes through Laravel. Transactions bypass shared results and roll back generation changes with content. Old in-flight fills remain under the old generation; cache failures fall back to SQL. Cache hits avoid the listing query, but still require generation/locale resolution and any cache-backend reads. External database writes outside Laravel require an application cache clear or await expiry. |
 
 ### `application` — Application Block
 

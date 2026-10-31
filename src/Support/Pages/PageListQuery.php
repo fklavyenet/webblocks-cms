@@ -62,18 +62,23 @@ class PageListQuery
 
     $currentPageId = $block->renderPageId();
 
-    $pages = $this->baseQuery($site, $localeId, $settings, $pathPrefix, $currentPageId)
-      ->with([
-        'site',
-        'translations' => fn ($query) => $query->where('locale_id', $localeId)->with('ogImageMedia'),
-      ])
-      ->limit($settings->limit)
-      ->get();
+    return app(PageListCache::class)->remember((new Page)->getConnection(), [
+      $site->getConnectionName(), $site->id, $localeId, $locale->code, $locale->is_default,
+      $settings->toArray(), $pathPrefix, $currentPageId, app(PublicMount::class)->prefix(),
+    ], function () use ($site, $localeId, $settings, $pathPrefix, $currentPageId, $locale): Collection {
+      $pages = $this->baseQuery($site, $localeId, $settings, $pathPrefix, $currentPageId)
+        ->with([
+          'site',
+          'translations' => fn ($query) => $query->where('locale_id', $localeId)->with('ogImageMedia'),
+        ])
+        ->limit($settings->limit)
+        ->get();
 
-    return $pages
-      ->map(fn (Page $page): ?PageListItem => $this->toItem($page, $locale, $site, $settings))
-      ->filter()
-      ->values();
+      return $pages
+        ->map(fn (Page $page): ?PageListItem => $this->toItem($page, $locale, $site, $settings))
+        ->filter()
+        ->values();
+    });
   }
 
   private function baseQuery(

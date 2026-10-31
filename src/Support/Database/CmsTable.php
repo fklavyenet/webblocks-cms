@@ -10,6 +10,7 @@ final class CmsTable
    * @var array<int, string>
    */
   public const TABLES = [
+    'page_list_cache_versions',
     'consent_settings',
     'consent_services',
     'consent_translations',

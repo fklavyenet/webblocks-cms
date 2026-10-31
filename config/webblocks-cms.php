@@ -88,6 +88,11 @@ return [
         // the installed version. Hosts can opt out when policy requires it.
         'send_powered_by_header' => (bool) env('WEBBLOCKS_CMS_SEND_POWERED_BY_HEADER', true),
     ],
+    'page_list' => [
+        // A shared cache store reuses public listings across requests. Zero
+        // disables shared caching; repeated lookups in one request still share.
+        'cache_seconds' => (int) env('WEBBLOCKS_CMS_PAGE_LIST_CACHE_SECONDS', 300),
+    ],
     'sitemap' => [
         'cache_seconds' => (int) env('WEBBLOCKS_CMS_SITEMAP_CACHE_SECONDS', 3600),
         'max_urls' => (int) env('WEBBLOCKS_CMS_SITEMAP_MAX_URLS', 50000),

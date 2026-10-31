@@ -104,6 +104,7 @@ use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRuntime;
 use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
 use WebBlocks\Cms\Support\NativeLocal\SystemNativeLocalProbe;
+use WebBlocks\Cms\Support\Pages\PageListCache;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
@@ -941,6 +942,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   {
     $this->app->singleton(ConsentIntegrations::class);
     $this->app->scoped(RequestMemo::class);
+    $this->app->singleton(PageListCache::class);
     // Resolve the current scope at call time, including from long-lived helpers.
     // Pivot/raw writes bypass model events; they must invalidate negative lookups too.
     $this->app['events']->listen(QueryExecuted::class, static function (QueryExecuted $query): void {
@@ -948,6 +950,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       if ($app->resolved(RequestMemo::class) && ! preg_match('/^\s*(select|pragma|explain|show|describe)\b/i', $query->sql)) {
         $app->make(RequestMemo::class)->clear();
       }
+      $app->make(PageListCache::class)->onQuery($query);
     });
     $this->app['events']->listen(TransactionRolledBack::class, static function (): void {
       $app = app();
