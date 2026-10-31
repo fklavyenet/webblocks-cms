@@ -3,7 +3,7 @@
         @include('webblocks-cms::auth.partials.two-factor-send-code', ['purpose' => 'action', 'sendTab' => 'policy'])
     </div></div>
 @endif
-<form method="POST" action="{{ route('webblocks.two-factor.policy') }}" class="wb-card wb-card-muted wb-mb-4">
+<form id="two-factor-policy" method="POST" action="{{ route('webblocks.two-factor.policy') }}" class="wb-card wb-card-muted wb-mb-4">
     @csrf @method('PUT')
     <div class="wb-card-header"><h2 class="wb-card-title">{{ __('webblocks-cms::two-factor.policy') }}</h2></div>
     <div class="wb-card-body wb-stack-4">

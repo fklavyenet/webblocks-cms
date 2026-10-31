@@ -22,6 +22,16 @@ final class TwoFactorRequest extends FormRequest
       : app(TwoFactorPolicy::class)->manage($this->user('web'));
   }
 
+  protected function prepareForValidation(): void
+  {
+    // The shared field accepts an email code or a recovery code. Keep legacy
+    // recovery_code submissions compatible and reject submissions of both.
+    $code = $this->input('code');
+    if (! $this->routeIs('webblocks.two-factor.confirm') && is_string($code) && $code !== '' && ! preg_match('/^[0-9]{6}$/D', $code) && ! $this->filled('recovery_code')) {
+      $this->merge(['code' => null, 'recovery_code' => $code]);
+    }
+  }
+
   public function rules(): array
   {
     if ($this->routeIs('webblocks.two-factor.sendChallenge')) {

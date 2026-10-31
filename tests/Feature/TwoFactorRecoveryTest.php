@@ -110,13 +110,13 @@ class TwoFactorRecoveryTest extends TestCase
     $targetCodes = $this->enroll($target);
     $oldRemember = $target->remember_token;
     $this->signedIn($actor);
-    $this->post($this->resetUrl($target), ['reason' => 'Owner identity confirmed', 'current_password' => 'wrong', 'recovery_code' => $actorCodes[0]])
+    $this->post($this->resetUrl($target), ['reason' => 'Owner identity confirmed', 'current_password' => 'wrong', 'code' => $actorCodes[0]])
       ->assertSessionHasErrors('current_password')->assertSessionMissing('_old_input');
-    $this->post($this->resetUrl($target), ['reason' => 'Owner identity confirmed', 'current_password' => 'fixture-password', 'recovery_code' => $targetCodes[0]])
+    $this->post($this->resetUrl($target), ['reason' => 'Owner identity confirmed', 'current_password' => 'fixture-password', 'code' => $targetCodes[0]])
       ->assertSessionHasErrors('code')->assertSessionMissing('_old_input');
     $this->assertNotNull(app(TwoFactorAuthentication::class)->credential($target));
     $this->assertDatabaseMissing('wbcms_acl_events', ['action' => 'user.two_factor.reset']);
-    $this->post($this->resetUrl($target), ['reason' => 'Owner identity confirmed', 'current_password' => 'fixture-password', 'recovery_code' => $actorCodes[0], 'actor_id' => $target->id, 'source' => 'console'])
+    $this->post($this->resetUrl($target), ['reason' => 'Owner identity confirmed', 'current_password' => 'fixture-password', 'code' => $actorCodes[0], 'actor_id' => $target->id, 'source' => 'console'])
       ->assertRedirect(route('admin.users.edit', $target))->assertSessionHasNoErrors();
     $this->assertNull(app(TwoFactorAuthentication::class)->credential($target));
     $this->assertTrue(app(TwoFactorAuthentication::class)->required($target));

@@ -61,6 +61,15 @@ final class EmailTwoFactorCodes
     return 'sent';
   }
 
+  public function hasActiveCode(Request $request, Authenticatable $user, string $purpose, string $email, string $binding): bool
+  {
+    return DB::table('wbcms_two_factor_email_codes')
+      ->where('id', $request->session()->get(self::SESSION.'.'.$purpose, ''))
+      ->where('user_id', $user->getAuthIdentifier())->where('purpose', $purpose)
+      ->where('email', $email)->where('binding', $binding)
+      ->whereNull('consumed_at')->where('attempts', '<', 5)->where('expires_at', '>', now())->exists();
+  }
+
   public function consume(Authenticatable $user, string $purpose, string $email, string $binding, string $id, #[\SensitiveParameter] string $code): bool
   {
     return DB::transaction(function () use ($user, $purpose, $email, $binding, $id, $code): bool {

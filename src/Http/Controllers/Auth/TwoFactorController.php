@@ -40,7 +40,10 @@ final class TwoFactorController extends Controller
       return $this->sessions->destination($request);
     }
 
-    return view('webblocks-cms::auth.two-factor-challenge', ['recipient' => $this->maskedEmail($credential->email)]);
+    return view('webblocks-cms::auth.two-factor-challenge', [
+      'recipient' => $this->maskedEmail($credential->email),
+      'emailCodeActive' => app(EmailTwoFactorCodes::class)->hasActiveCode($request, $user, 'login', $credential->email, $this->sessions->fingerprint($user, $credential)),
+    ]);
   }
 
   public function verify(TwoFactorRequest $request): RedirectResponse
@@ -248,7 +251,7 @@ final class TwoFactorController extends Controller
       'layout' => $panel ? 'webblocks-cms::layouts.admin' : 'webblocks-cms::layouts.guest', 'inPanel' => $panel,
       'enabled' => $credential?->confirmed_at !== null, 'required' => $this->auth->required($user),
       'setupEmail' => $setup ? $enrollment->email : null, 'recipient' => $credential?->email ?? $user->email,
-      'recoveryCodes' => $codes,
+      'recoveryCodes' => $codes, 'canConfigurePolicy' => $panel && app(TwoFactorPolicy::class)->configure($user),
       'recoveryCount' => DB::table('wbcms_two_factor_recovery_codes')->where('user_id', $user->getAuthIdentifier())->count(),
     ]);
   }

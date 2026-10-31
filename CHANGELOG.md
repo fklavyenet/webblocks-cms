@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.110.2
+
+- Use one verification field for either an email code or a recovery code across sign-in and account security forms. Place Verify and the sign-out/return action on the same row.
+- Distinguish an active sign-in email code from a code that must be requested, including host and remembered sessions, delivery failures and expired codes. Keep automatic email delivery on CMS password sign-in.
+- Explain mandatory verification without asking already-enrolled users to set it up again. Link eligible Super admins to the existing Security policy controls; enforcement defaults and verification safeguards remain unchanged.
+
 ## 1.110.1
 
 - Keep two-factor account management available when enabled plugins provide navbar quick settings. Skip their data resolvers and views on authentication and plugin recovery requests while plugin providers are isolated.

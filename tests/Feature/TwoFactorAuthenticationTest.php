@@ -122,6 +122,71 @@ class TwoFactorAuthenticationTest extends TestCase
   }
 
   #[Test]
+  public function challenge_shows_one_field_and_the_actual_email_request_state(): void
+  {
+    $user = $this->actor();
+    $this->enroll($user);
+    Notification::fake();
+    $response = $this->actingAs($user)->get(route('webblocks.two-factor.challenge'))->assertOk()
+      ->assertViewHas('emailCodeActive', false)->assertSee(__('webblocks-cms::two-factor.challenge_request_email'))
+      ->assertDontSee('name="recovery_code"', false);
+    Notification::assertNothingSent();
+    $dom = new \DOMDocument;
+    @$dom->loadHTML($response->getContent());
+    $xpath = new \DOMXPath($dom);
+    $this->assertSame(1, $xpath->query('//input[@name="code"]')->length);
+    $this->assertSame(1, $xpath->query('//div[@class="wb-action-group"][button[@form="two-factor-verify"] and form/button]')->length);
+    $this->assertSame(1, $xpath->query('//form[@id="two-factor-verify"]//input[@name="code" and @required and not(@pattern)]')->length);
+
+    $this->post(route('webblocks.two-factor.sendChallenge'))->assertSessionHasNoErrors();
+    foreach ([1, 2] as $refresh) {
+      $this->get(route('webblocks.two-factor.challenge'))->assertOk()->assertViewHas('emailCodeActive', true)
+        ->assertSee(__('webblocks-cms::two-factor.challenge_email_sent'));
+    }
+    Notification::assertSentOnDemandTimes(TwoFactorEmail::class, 1);
+    $this->travel(5)->minutes();
+    $this->get(route('webblocks.two-factor.challenge'))->assertOk()->assertViewHas('emailCodeActive', false)
+      ->assertSee(__('webblocks-cms::two-factor.challenge_request_email'));
+  }
+
+  #[Test]
+  public function the_single_field_accepts_a_recovery_code_during_password_login(): void
+  {
+    $user = $this->actor();
+    $codes = $this->enroll($user);
+    $this->post('/webadmin/login', ['email' => $user->email, 'password' => 'fixture-password'])->assertRedirect(route('webblocks.two-factor.challenge'));
+    $this->get(route('webblocks.two-factor.challenge'))->assertOk()->assertViewHas('emailCodeActive', true);
+    $this->assertGuest('web');
+    $this->post(route('webblocks.two-factor.verify'), ['code' => $codes[0]])->assertRedirect(route('admin.dashboard'));
+    $this->assertAuthenticatedAs($user, 'web');
+    $this->assertFalse(app(ManageTwoFactor::class)->verify($user, '', $codes[0]));
+  }
+
+  #[Test]
+  public function super_admins_can_remove_the_policy_then_disable_using_the_single_code_field(): void
+  {
+    $user = $this->actor();
+    $codes = $this->enroll($user);
+    $this->signedIn($user);
+    DB::table('wbcms_two_factor_policy')->where('id', 1)->update(['require_super_admin' => true]);
+    $this->get(route('webblocks.two-factor.show'))->assertOk()
+      ->assertSee(route('admin.system.settings.edit', ['tab' => 'security']).'#two-factor-policy', false)
+      ->assertSee(__('webblocks-cms::two-factor.policy_manage_help'))
+      ->assertDontSee(__('webblocks-cms::two-factor.required_setup_help'))
+      ->assertDontSee('id="two-factor-disable"', false)->assertDontSee('name="recovery_code"', false);
+    $this->put(route('webblocks.two-factor.policy'), ['current_password' => 'fixture-password', 'require_super_admin' => 0, 'code' => $codes[0], 'recovery_code' => $codes[1]])
+      ->assertSessionHasErrors()->assertSessionMissing('_old_input.code')->assertSessionMissing('_old_input.recovery_code')->assertSessionMissing('_old_input.current_password');
+    $this->assertTrue(app(TwoFactorAuthentication::class)->required($user));
+    $this->put(route('webblocks.two-factor.policy'), ['current_password' => 'fixture-password', 'require_super_admin' => 0, 'code' => $codes[0]])
+      ->assertSessionHasNoErrors();
+    $this->assertFalse(app(TwoFactorAuthentication::class)->required($user));
+    $this->get(route('webblocks.two-factor.show', ['tab' => 'disable']))->assertOk()->assertSee('id="two-factor-disable"', false)
+      ->assertDontSee(__('webblocks-cms::two-factor.required_help'));
+    $this->delete(route('webblocks.two-factor.disable'), ['current_password' => 'fixture-password', 'code' => $codes[1]])->assertSessionHasNoErrors();
+    $this->assertNull(app(TwoFactorAuthentication::class)->credential($user));
+  }
+
+  #[Test]
   public function enrollment_requires_password_a_session_bound_setup_and_a_valid_code(): void
   {
     $user = $this->actor();
@@ -258,7 +323,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->actingAs($user)->put(route('webblocks.two-factor.policy'), ['current_password' => 'fixture-password', 'require_super_admin' => 1, 'role_ids' => [$role->id, $editor->id]])
       ->assertRedirect(route('admin.system.settings.edit', ['tab' => 'security']));
     $this->get('/webadmin/two-factor-probe')->assertRedirect(route('webblocks.two-factor.show'));
-    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertSee('Your CMS role requires');
+    $this->get(route('webblocks.two-factor.show'))->assertOk()->assertSee(__('webblocks-cms::two-factor.required_help'));
     $codes = $this->enroll($user);
     $this->signedIn($user);
     $this->delete(route('webblocks.two-factor.disable'), ['current_password' => 'fixture-password', 'recovery_code' => $codes[0]])->assertSessionHasErrors('code');
@@ -456,6 +521,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $code = $this->code($user);
     $id = session(EmailTwoFactorCodes::SESSION.'.login');
     $this->withSession([EmailTwoFactorCodes::SESSION => []]);
+    $this->get(route('webblocks.two-factor.challenge'))->assertOk()->assertViewHas('emailCodeActive', false);
     $this->post(route('webblocks.two-factor.verify'), ['code' => $code, 'challenge_id' => $id])->assertSessionHasErrors('code');
     $this->assertGuest('web');
     $this->withSession([EmailTwoFactorCodes::SESSION => ['login' => $id]]);
@@ -525,6 +591,8 @@ class TwoFactorAuthenticationTest extends TestCase
       ->shouldReceive('resolvedMailerName')->andThrow(new \RuntimeException('sensitive SMTP message body'));
     $this->post('/webadmin/login', ['email' => $user->email, 'password' => 'fixture-password'])
       ->assertRedirect(route('webblocks.two-factor.challenge'))->assertSessionHas('email_error');
+    $this->get(route('webblocks.two-factor.challenge'))->assertOk()->assertViewHas('emailCodeActive', false)
+      ->assertSee(__('webblocks-cms::two-factor.challenge_request_email'));
     $this->assertGuest('web');
     $this->assertNotNull(DB::table('wbcms_two_factor_email_codes')->where('purpose', 'login')->first()->consumed_at);
     Notification::assertNothingSent();

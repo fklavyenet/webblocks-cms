@@ -14,20 +14,23 @@
             @if (session('status'))<div class="wb-alert wb-alert-success" role="status">{{ session('status') }}</div>@endif
             @if (session('email_error'))<div class="wb-alert wb-alert-danger" role="alert">{{ session('email_error') }}</div>@endif
             <p>{{ __('webblocks-cms::two-factor.recipient', ['email' => $recipient]) }}</p>
+            <p role="status">{{ __('webblocks-cms::two-factor.'.($emailCodeActive ? 'challenge_email_sent' : 'challenge_request_email')) }}</p>
             <form method="POST" action="{{ route('webblocks.two-factor.sendChallenge') }}">
                 @csrf
-                <button class="wb-btn wb-btn-secondary" type="submit">{{ __('webblocks-cms::two-factor.send_code') }}</button>
+                <button class="wb-btn wb-btn-secondary" type="submit">{{ __('webblocks-cms::two-factor.'.($emailCodeActive ? 'send_code' : 'request_code')) }}</button>
             </form>
-            <form method="POST" action="{{ route('webblocks.two-factor.verify') }}" class="wb-stack-4">
+            <form id="two-factor-verify" method="POST" action="{{ route('webblocks.two-factor.verify') }}" class="wb-stack-4">
                 @csrf
                 @include('webblocks-cms::auth.partials.two-factor-fields', ['fieldPrefix' => 'challenge'])
-                <button class="wb-btn wb-btn-primary" type="submit">{{ __('webblocks-cms::two-factor.verify') }}</button>
             </form>
-            @if (auth('web')->check())
-                <form method="POST" action="{{ route('webblocks.auth.logout') }}">@csrf<button class="wb-btn wb-btn-secondary" type="submit">{{ __('webblocks-cms::two-factor.logout') }}</button></form>
-            @else
-                <a class="wb-action-link" href="{{ route('webblocks.auth.login') }}">{{ __('webblocks-cms::two-factor.back_login') }}</a>
-            @endif
+            <div class="wb-action-group">
+                <button class="wb-btn wb-btn-primary" type="submit" form="two-factor-verify">{{ __('webblocks-cms::two-factor.verify') }}</button>
+                @if (auth('web')->check())
+                    <form method="POST" action="{{ route('webblocks.auth.logout') }}">@csrf<button class="wb-btn wb-btn-secondary" type="submit">{{ __('webblocks-cms::two-factor.logout') }}</button></form>
+                @else
+                    <a class="wb-btn wb-btn-secondary" href="{{ route('webblocks.auth.login') }}">{{ __('webblocks-cms::two-factor.back_login') }}</a>
+                @endif
+            </div>
         </div>
     </div>
 </div>

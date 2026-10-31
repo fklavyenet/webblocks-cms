@@ -17,7 +17,14 @@
         <div class="wb-alert wb-alert-success" role="status">{{ session('status') }}</div>
     @endif
     @if ($required)
-        <div class="wb-alert wb-alert-info">{{ __('webblocks-cms::two-factor.required_help') }}</div>
+        <div class="wb-alert wb-alert-info wb-stack-2">
+            <p>{{ __('webblocks-cms::two-factor.required_help') }}</p>
+            @if (! $enabled)<p>{{ __('webblocks-cms::two-factor.required_setup_help') }}</p>@endif
+            @if ($canConfigurePolicy)
+                <p>{{ __('webblocks-cms::two-factor.policy_manage_help') }}</p>
+                <a class="wb-action-link" href="{{ route('admin.system.settings.edit', ['tab' => 'security']) }}#two-factor-policy">{{ __('webblocks-cms::two-factor.policy_manage') }}</a>
+            @endif
+        </div>
     @endif
     @if ($recoveryCodes !== [])
         <section class="wb-card" aria-labelledby="new-recovery-title">
