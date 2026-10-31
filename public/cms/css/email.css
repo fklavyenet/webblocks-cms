@@ -23,3 +23,12 @@
     margin-top: 8px;
     white-space: pre-line;
 }
+
+.wb-email-verification-code {
+    color: #0f172a;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    line-height: 1.4;
+    text-align: center;
+}

@@ -10,10 +10,12 @@ use WebBlocks\Cms\Http\Requests\Admin\CmsMailTestEmailRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest;
 use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Policies\LogFormatPolicy;
+use WebBlocks\Cms\Policies\VerificationEmailPolicy;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
 use WebBlocks\Cms\Support\Logging\LogFormatSettings;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\Mail\CmsTestEmailSender;
+use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -31,6 +33,10 @@ class SystemSettingsController extends Controller
 
   public function edit(): View
   {
+    $verificationLocale = request()->query('verification_locale', $this->adminLocaleResolver->locale());
+    $verificationLocale = is_string($verificationLocale) && in_array($verificationLocale, AdminLocaleResolver::SUPPORTED_LOCALES, true) ? $verificationLocale : 'en';
+    $canManageVerificationEmail = app(VerificationEmailPolicy::class)->update(request()->user());
+
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.settings', [
       'title' => 'System Settings',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
@@ -57,6 +63,9 @@ class SystemSettingsController extends Controller
         'cms_mail_password_configured' => $this->systemSettings->cmsMailPasswordConfigured(),
       ],
       'mailDiagnostics' => $this->mailSettingsResolver->diagnostics(),
+      'canManageVerificationEmail' => $canManageVerificationEmail,
+      'verificationLocale' => $verificationLocale,
+      'verificationTemplates' => $canManageVerificationEmail ? app(VerificationEmailTemplates::class)->templates($verificationLocale) : [],
       'canManageLogFormat' => app(LogFormatPolicy::class)->update(request()->user()),
       'twoFactorAvailable' => app(TwoFactorAuthentication::class)->available(),
       'twoFactorPolicy' => app(TwoFactorAuthentication::class)->available() ? app(TwoFactorAuthentication::class)->policy() : [],

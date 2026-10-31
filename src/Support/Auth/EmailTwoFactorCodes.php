@@ -13,6 +13,8 @@ use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 
 final class EmailTwoFactorCodes
 {
+  public const LIFETIME_MINUTES = 5;
+
   public const SESSION = 'wbcms.two_factor.email_codes';
 
   public function send(Request $request, Authenticatable $user, string $purpose, string $email, string $binding): string
@@ -33,7 +35,7 @@ final class EmailTwoFactorCodes
       DB::table('wbcms_two_factor_email_codes')->insert([
         'id' => $id, 'user_id' => $user->getAuthIdentifier(), 'purpose' => $purpose, 'email' => $email,
         'binding' => $binding, 'code_hash' => $this->hash($id, $code), 'attempts' => 0,
-        'sent_at' => now(), 'expires_at' => now()->addMinutes(5), 'consumed_at' => null,
+        'sent_at' => now(), 'expires_at' => now()->addMinutes(self::LIFETIME_MINUTES), 'consumed_at' => null,
       ]);
 
       return true;

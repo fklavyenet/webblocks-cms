@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.110.4
+
+- Show the verification code at the start of the default email subject and in a separate large, bold area in the message body, with a plain-text alternative.
+- Let active Super admins customize the subject, greeting, introduction, security message and closing under System → Settings → Email → Verification email, independently for all six panel languages.
+- Provide a preview with a sample code that sends no email and saves nothing, plus confirmed restoration of the selected language’s defaults. Support only the code, lifetime and application-name placeholders; escape authored text and reject invalid placeholders or header line breaks.
+- Keep existing CMS delivery settings, two-factor policy and five-minute code validity. Store text in existing relational settings; no migration is required.
+
 ## 1.110.3
 
 - Add an active Super admin Short/Full log selector under System → Settings → Logging, stored in install-wide relational settings without editing application files or environment configuration.

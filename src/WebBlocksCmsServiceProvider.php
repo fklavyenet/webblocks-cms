@@ -229,6 +229,9 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   ];
 
   public const PACKAGE_VIEW_FILES = [
+    'emails/two-factor.blade.php',
+    'emails/themes/verification.blade.php',
+    'admin/system/partials/verification-email.blade.php',
     'admin/runtime-status.blade.php',
     'admin/system/plugins/recovery.blade.php',
     'auth/forgot-password.blade.php',

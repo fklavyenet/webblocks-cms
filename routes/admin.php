@@ -58,6 +58,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
 use WebBlocks\Cms\Http\Controllers\Admin\TwoFactorResetController;
 use WebBlocks\Cms\Http\Controllers\Admin\UserController;
+use WebBlocks\Cms\Http\Controllers\Admin\VerificationEmailSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\VisitorReportController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalAdminRenderController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
@@ -494,6 +495,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::post('system/health/refresh', [SystemHealthController::class, 'refresh'])->middleware('throttle:6,1')->name('system.health.refresh');
       Route::get('system/information', SystemInformationController::class)->name('system.information');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
+      Route::post('system/settings/mail/verification', [VerificationEmailSettingsController::class, 'update'])->name('system.settings.mail.verification');
       Route::put('system/settings/security', [RequestSecuritySettingsController::class, 'update'])->name('system.settings.security.update');
       Route::post('system/settings/mail/test', [SystemSettingsController::class, 'sendMailTest'])->name('system.settings.mail.test');
       Route::get('system/api-tokens', [CmsApiTokenController::class, 'index'])->name('system.api-tokens.index');

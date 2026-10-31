@@ -661,8 +661,8 @@ class TwoFactorAuthenticationTest extends TestCase
   {
     $message = (new TwoFactorEmail('123456'))->toMail(new AnonymousNotifiable);
     $this->assertSame('smtp', $message->mailer);
-    $this->assertSame(__('webblocks-cms::two-factor.mail_subject'), $message->subject);
-    $this->assertContains(__('webblocks-cms::two-factor.mail_code', ['code' => '123456']), $message->introLines);
+    $this->assertSame(str_replace('{code}', '123456', __('webblocks-cms::two-factor.mail_subject')), $message->subject);
+    $this->assertStringContainsString('123456', (string) $message->render());
     config(['mail.mailers.smtp.transport' => 'log']);
     $this->expectException(\RuntimeException::class);
     (new TwoFactorEmail('123456'))->toMail(new AnonymousNotifiable);

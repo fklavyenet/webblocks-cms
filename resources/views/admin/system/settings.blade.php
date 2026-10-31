@@ -294,6 +294,9 @@
 
         </div>
 
+            @if ($canManageVerificationEmail)
+                @include('webblocks-cms::admin.system.partials.verification-email')
+            @endif
         </div>
 
                     <div class="wb-tabs-panel {{ $systemTab === 'privacy' ? 'is-active' : '' }}" id="system-settings-privacy-panel">

@@ -6,6 +6,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use WebBlocks\Cms\Support\Auth\EmailTwoFactorCodes;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
+use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
 
 final class TwoFactorEmail extends Notification
 {
@@ -19,10 +20,9 @@ final class TwoFactorEmail extends Notification
 
   public function toMail(object $notifiable): MailMessage
   {
-    $message = app(CmsMailSettingsResolver::class)->applyToMailMessage((new MailMessage)
-      ->subject(__('webblocks-cms::two-factor.mail_subject'))
-      ->line(__('webblocks-cms::two-factor.mail_code', ['code' => $this->code]))
-      ->line(__('webblocks-cms::two-factor.mail_help')));
+    $message = app(CmsMailSettingsResolver::class)->applyToMailMessage(
+      app(VerificationEmailTemplates::class)->message($this->code, app()->getLocale()),
+    );
     app(EmailTwoFactorCodes::class)->assertDeliverable($message->mailer);
 
     return $message;
