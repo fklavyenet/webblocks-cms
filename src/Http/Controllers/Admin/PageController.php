@@ -22,6 +22,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageRevisionCandidate;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
@@ -398,10 +399,15 @@ class PageController extends Controller
       $page->setRelation('currentTranslation', $translation);
     }
 
+    $restoreCandidate = $page->isRevisionRestoreCandidate()
+      ? PageRevisionCandidate::query()->with(['page', 'revision'])->where('candidate_page_id', $page->id)->where('status', PageRevisionCandidate::STATUS_READY)->first()
+      : null;
+
     return response()
       ->view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.pages.show', [
         ...$presenter->present($page, preview: true, locale: $translation?->locale),
         'previewMode' => true,
+        'revisionTranslationRemovals' => $restoreCandidate ? $this->revisionManager->translationRemovals($restoreCandidate->page, $restoreCandidate->revision) : [],
       ])
       ->header('X-Robots-Tag', 'noindex, nofollow');
   }

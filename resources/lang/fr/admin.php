@@ -639,6 +639,10 @@ $translations = [
     'actions' => 'Actions',
   ],
   'page_revisions' => [
+    'translation_removal_title' => 'Des traductions seront supprimées',
+    'translation_removal_help' => 'Ces langues sont absentes de la version sélectionnée. Son application supprimera leurs traductions de page et leurs adresses. La suppression est bloquée sans votre confirmation explicite.',
+    'confirm_translation_removal' => 'Je consens explicitement à supprimer les traductions indiquées et leurs adresses.',
+    'translation_removal_required' => 'La restauration de cette version supprimerait ces langues : :languages. Vérifiez les traductions concernées et confirmez explicitement leur suppression.',
     'title' => 'Révisions de la page : :title',
     'description' => 'Examinez les instantanés de révision au niveau de la page en vue d\'une restauration du contenu. Cet historique est propre à la page et ne remplace ni les sauvegardes système ni les paquets d\'export de site.',
     'back_to_page' => 'Retour à la page',

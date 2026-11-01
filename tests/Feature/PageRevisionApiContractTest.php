@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRevisionController;
+use WebBlocks\Cms\Http\Requests\InternalContentApi\ApplyPageRevisionCandidateRequest;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
@@ -31,7 +32,7 @@ class PageRevisionApiContractTest extends TestCase
     $candidate = new PageRevisionCandidate;
     foreach (['index' => [$page], 'show' => [$page, $revision], 'prepare' => [$page, $revision], 'apply' => [$page, $candidate], 'discard' => [$page, $candidate]] as $method => $arguments) {
       try {
-        $controller->$method($request, ...$arguments);
+        $controller->$method($method === 'apply' ? ApplyPageRevisionCandidateRequest::create('/webadmin/api') : $request, ...$arguments);
         $this->fail('Expected authorization denial for '.$method);
       } catch (HttpException $exception) {
         $this->assertSame(403, $exception->getStatusCode());

@@ -3,10 +3,10 @@
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use RuntimeException;
+use WebBlocks\Cms\Http\Requests\Admin\ApplyPageRevisionCandidateRequest;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
@@ -100,15 +100,14 @@ class PageRevisionController extends Controller
       ]);
   }
 
-  public function applyCandidate(Request $request, Page $page, PageRevisionCandidate $candidate): RedirectResponse
+  public function applyCandidate(ApplyPageRevisionCandidateRequest $request, Page $page, PageRevisionCandidate $candidate): RedirectResponse
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
     abort_unless($candidate->page_id === $page->id, 404);
     abort_unless($this->revisionManager->canRestore($request->user(), $page), 403);
-    $request->validate(['confirm_apply_candidate' => ['accepted']]);
 
     try {
-      $page = $this->candidateManager->apply($candidate, $request->user());
+      $page = $this->candidateManager->apply($candidate, $request->user(), $request->confirmedTranslationRemovalLocaleIds());
     } catch (RuntimeException $exception) {
       return redirect()
         ->route('admin.pages.revisions.show', [$page, $candidate->page_revision_id])

@@ -87,9 +87,9 @@ class PageRevisionCandidateManager
     });
   }
 
-  public function apply(PageRevisionCandidate $candidate, User $actor): Page
+  public function apply(PageRevisionCandidate $candidate, User $actor, array $confirmedTranslationRemovalLocaleIds = []): Page
   {
-    return DB::transaction(function () use ($candidate, $actor): Page {
+    return DB::transaction(function () use ($candidate, $actor, $confirmedTranslationRemovalLocaleIds): Page {
       $candidate = PageRevisionCandidate::query()->lockForUpdate()->findOrFail($candidate->id);
       $this->assertReady($candidate);
       $page = Page::query()->lockForUpdate()->findOrFail($candidate->page_id);
@@ -99,7 +99,7 @@ class PageRevisionCandidateManager
         throw new RuntimeException('The current page changed after this restore candidate was created. Discard it and prepare a new candidate.');
       }
 
-      $this->revisionManager->restore($page, $revision, $actor);
+      $this->revisionManager->restore($page, $revision, $actor, $confirmedTranslationRemovalLocaleIds);
       $candidatePage = $candidate->candidatePage;
       $candidate->forceFill([
         'status' => PageRevisionCandidate::STATUS_APPLIED,

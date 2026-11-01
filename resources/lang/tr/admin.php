@@ -639,6 +639,10 @@ $translations = [
     'actions' => 'Aksiyonlar',
   ],
   'page_revisions' => [
+    'translation_removal_title' => 'Çeviriler kaldırılacak',
+    'translation_removal_help' => 'Bu diller seçilen sürümde yok. Sürümü uygulamak bu sayfa çevirilerini ve adreslerini kaldırır. Açıkça onaylayana kadar kaldırma işlemi engellenir.',
+    'confirm_translation_removal' => 'Listelenen çevirilerin ve adreslerinin kaldırılmasını açıkça onaylıyorum.',
+    'translation_removal_required' => 'Bu sürümü geri yüklemek şu dilleri kaldırır: :languages. Etkilenen çevirileri inceleyin ve kaldırılmalarını açıkça onaylayın.',
     'title' => 'Sayfa Revizyonları: :title',
     'description' => 'İçerik geri yükleme için sayfa seviyesi revizyon snapshotlarını incele. Bu geçmiş sayfaya özeldir ve sistem yedeklerinin veya site export paketlerinin yerini almaz.',
     'back_to_page' => 'Sayfaya Dön',

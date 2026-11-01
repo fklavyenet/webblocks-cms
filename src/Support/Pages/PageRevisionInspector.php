@@ -23,6 +23,7 @@ class PageRevisionInspector
       'changes' => $this->changes($current, $selected),
       'health' => $this->health($selected),
       'snapshot' => $this->snapshotSummary($selected),
+      'translation_removals' => $this->revisionManager->translationRemovals($page, $revision),
       'capture_history' => app(RevisionCaptureHistory::class)->for($revision),
     ];
   }

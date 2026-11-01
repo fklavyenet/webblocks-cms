@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.110.5
+
+- Protect translations added after a saved page version: restoring that version is blocked by default when it would remove a current language.
+- List affected languages and current addresses on the version review screen, rendered restore preview and in the apply dialog. Require a separate unchecked confirmation for removing those exact translations; the existing preview confirmation does not authorize their removal.
+- Expose the same impact list and explicit locale confirmation through the Internal Content API. Recheck the affected languages when applying and enforce the guard in the shared restore service, retaining the existing safety snapshot and stale-candidate protection. No migration is required.
+
 ## 1.110.4
 
 - Show the verification code at the start of the default email subject and in a separate large, bold area in the message body, with a plain-text alternative.

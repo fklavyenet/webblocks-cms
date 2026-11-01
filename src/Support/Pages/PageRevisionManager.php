@@ -15,6 +15,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageAsset;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
@@ -93,7 +94,23 @@ class PageRevisionManager
     ], $force || $restoredFrom !== null);
   }
 
-  public function restore(Page $page, PageRevision $revision, User $actor): void
+  public function translationRemovals(Page $page, PageRevision $revision): array
+  {
+    $retainedLocaleIds = array_map('intval', array_column($revision->snapshot['translations'] ?? [], 'locale_id'));
+
+    return $page->translations()->with('locale')
+      ->whereNotIn('locale_id', $retainedLocaleIds)
+      ->orderBy('locale_id')
+      ->get()
+      ->map(fn (PageTranslation $translation): array => [
+        'locale_id' => (int) $translation->locale_id,
+        'code' => $translation->locale?->code ?? (string) $translation->locale_id,
+        'name' => $translation->locale?->name ?? (string) $translation->locale_id,
+        'path' => $translation->path,
+      ])->all();
+  }
+
+  public function restore(Page $page, PageRevision $revision, User $actor, array $confirmedTranslationRemovalLocaleIds = []): void
   {
     if (! $this->revisionsTableExists()) {
       throw new \RuntimeException('Page revisions are not ready. Run the latest migrations before using revisions.');
@@ -102,7 +119,17 @@ class PageRevisionManager
     abort_unless($page->id === $revision->page_id, 404);
     abort_unless((int) $page->site_id === (int) $revision->site_id, 404);
 
-    DB::transaction(function () use ($page, $revision, $actor): void {
+    DB::transaction(function () use ($page, $revision, $actor, $confirmedTranslationRemovalLocaleIds): void {
+      $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+      $removals = $this->translationRemovals($page, $revision);
+      $requiredLocaleIds = array_column($removals, 'locale_id');
+      $confirmedLocaleIds = array_values(array_unique(array_map('intval', $confirmedTranslationRemovalLocaleIds)));
+      sort($requiredLocaleIds);
+      sort($confirmedLocaleIds);
+      if ($removals !== [] && $requiredLocaleIds !== $confirmedLocaleIds) {
+        throw new TranslationRemovalConfirmationRequired($removals);
+      }
+
       $this->capture(
         $page->fresh(),
         $actor,

@@ -54,6 +54,20 @@
         </div>
     </div>
 
+    @if ($inspection['translation_removals'] !== [])
+        <div class="wb-alert wb-alert-warning" role="alert">
+            <div>
+                <div class="wb-alert-title">{{ $text('translation_removal_title') }}</div>
+                <p>{{ $text('translation_removal_help') }}</p>
+                <ul>
+                    @foreach ($inspection['translation_removals'] as $translation)
+                        <li>{{ $translation['name'] }} ({{ $translation['code'] }}) — {{ $translation['path'] }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
+
     @if ($candidate)
         <div class="wb-alert wb-alert-info">
             <div>
@@ -139,6 +153,25 @@
             'submitLabel' => $text('apply_candidate'),
         ])
             <p>{{ $text('apply_candidate_warning', ['id' => $revision->id]) }}</p>
+            @if ($inspection['translation_removals'] !== [])
+                <div class="wb-alert wb-alert-warning">
+                    <div>
+                        <strong>{{ $text('translation_removal_title') }}</strong>
+                        <ul>
+                            @foreach ($inspection['translation_removals'] as $translation)
+                                <li>{{ $translation['name'] }} ({{ $translation['code'] }}) — {{ $translation['path'] }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+                @foreach ($inspection['translation_removals'] as $translation)
+                    <input type="hidden" name="translation_removal_locale_ids[]" value="{{ $translation['locale_id'] }}">
+                @endforeach
+                <label class="wb-cluster wb-cluster-2" for="confirm_translation_removal">
+                    <input id="confirm_translation_removal" name="confirm_translation_removal" type="checkbox" value="1" required>
+                    <span>{{ $text('confirm_translation_removal') }}</span>
+                </label>
+            @endif
             <label class="wb-cluster wb-cluster-2" for="confirm_apply_candidate">
                 <input id="confirm_apply_candidate" name="confirm_apply_candidate" type="checkbox" value="1" required>
                 <span>{{ $text('confirm_candidate_previewed') }}</span>

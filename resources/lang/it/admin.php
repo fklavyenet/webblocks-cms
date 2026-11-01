@@ -638,6 +638,10 @@ $translations = [
     'actions' => 'Azioni',
   ],
   'page_revisions' => [
+    'translation_removal_title' => 'Le traduzioni verranno rimosse',
+    'translation_removal_help' => 'Queste lingue non sono presenti nella versione selezionata. Applicandola verranno rimosse le relative traduzioni della pagina e i loro indirizzi. La rimozione è bloccata fino alla conferma esplicita.',
+    'confirm_translation_removal' => 'Acconsento esplicitamente alla rimozione delle traduzioni elencate e dei loro indirizzi.',
+    'translation_removal_required' => 'Il ripristino di questa versione rimuoverebbe queste lingue: :languages. Controlla le traduzioni interessate e confermane esplicitamente la rimozione.',
     'title' => 'Revisioni della pagina: :title',
     'description' => 'Esamina gli snapshot delle revisioni a livello di pagina per il ripristino dei contenuti. Questa cronologia è specifica della pagina e non sostituisce i backup di sistema né i pacchetti di esportazione del sito.',
     'back_to_page' => 'Torna alla pagina',

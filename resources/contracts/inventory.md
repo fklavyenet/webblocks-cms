@@ -1212,6 +1212,28 @@ Search checks compare eligible published page/locale scopes with index rows;
 they do not prove text freshness. Backup availability does not prove restore
 integrity. Update readiness remains separate from normal site operation.
 
+## Page version translation removal protection
+
+Page version restoration replaces the complete page snapshot, including all
+locale rows. Review and candidate preparation report `translation_removals`:
+current page languages absent from the selected version, with `locale_id`,
+`code`, `name` and current `path`. The panel lists these languages and addresses
+on the review screen, rendered candidate preview and in the apply dialog. Applying requires a separate,
+initially unchecked translation-removal confirmation in addition to the existing
+preview confirmation. No removal is authorized by merely preparing a candidate.
+
+Internal Content API candidate payloads expose the same list and
+`translation_removal_confirmation_required`. Apply callers must submit
+`confirm_translation_removal: true` and `translation_removal_locale_ids` matching
+exactly the affected locale IDs. Missing or outdated confirmation returns HTTP
+409 with code `translation_removal_confirmation_required` and the current list,
+without changing the source, candidate or revision history. The shared restore
+service rechecks current translations under the page lock, also guarding direct
+restores. Existing stale-candidate rejection and pre-restore safety snapshots
+remain in force. Restores without removed languages need no additional consent.
+This is a complete page restore; existing translations may return to older
+content, addresses and SEO fields. It does not provide per-language rollback.
+
 ## Relational runtime fields and compatibility
 
 CMS 1.98.5 stores page layout/shared-slot references, staged-update and restore

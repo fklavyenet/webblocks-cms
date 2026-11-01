@@ -768,6 +768,10 @@ return [
     'actions' => 'Actions',
   ],
   'page_revisions' => [
+    'translation_removal_title' => 'Translations will be removed',
+    'translation_removal_help' => 'These languages are absent from the selected version. Applying it will remove their page translations and addresses. Removal is blocked until you explicitly confirm it.',
+    'confirm_translation_removal' => 'I explicitly agree to remove the listed translations and their addresses.',
+    'translation_removal_required' => 'Restoring this version would remove these languages: :languages. Review the affected translations and explicitly confirm their removal.',
     'title' => 'Page Versions: :title',
     'description' => 'Review meaningful saved page states before deciding whether to replace the current page.',
     'back_to_page' => 'Back to Page',

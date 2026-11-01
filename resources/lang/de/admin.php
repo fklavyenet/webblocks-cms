@@ -640,6 +640,10 @@ $translations = [
     'actions' => 'Aktionen',
   ],
   'page_revisions' => [
+    'translation_removal_title' => 'Übersetzungen werden entfernt',
+    'translation_removal_help' => 'Diese Sprachen fehlen in der ausgewählten Version. Beim Anwenden werden ihre Seitenübersetzungen und Adressen entfernt. Dies ist erst nach Ihrer ausdrücklichen Bestätigung möglich.',
+    'confirm_translation_removal' => 'Ich stimme ausdrücklich zu, die aufgeführten Übersetzungen und ihre Adressen zu entfernen.',
+    'translation_removal_required' => 'Die Wiederherstellung würde diese Sprachen entfernen: :languages. Prüfen Sie die betroffenen Übersetzungen und bestätigen Sie deren Entfernung ausdrücklich.',
     'title' => 'Seitenrevisionen: :title',
     'description' => 'Prüfen Sie seitenbezogene Revisions-Snapshots für die Inhaltswiederherstellung. Diese Historie ist seitenspezifisch und ersetzt keine System-Backups oder Site-Exportpakete.',
     'back_to_page' => 'Zurück zur Seite',

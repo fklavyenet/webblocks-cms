@@ -6,12 +6,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use RuntimeException;
+use WebBlocks\Cms\Http\Requests\InternalContentApi\ApplyPageRevisionCandidateRequest;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
 use WebBlocks\Cms\Support\Pages\PageRevisionCandidateManager;
 use WebBlocks\Cms\Support\Pages\PageRevisionInspector;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\TranslationRemovalConfirmationRequired;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class InternalPageRevisionController extends Controller
@@ -82,13 +84,20 @@ class InternalPageRevisionController extends Controller
     return response()->json(['ok' => true, 'candidate' => $this->candidatePayload($candidate)], 201);
   }
 
-  public function apply(Request $request, Page $page, PageRevisionCandidate $candidate): JsonResponse
+  public function apply(ApplyPageRevisionCandidateRequest $request, Page $page, PageRevisionCandidate $candidate): JsonResponse
   {
     $this->authorizeRestore($request, $page);
     abort_unless($candidate->page_id === $page->id, 404);
 
     try {
-      $page = $this->candidates->apply($candidate, $request->user());
+      $page = $this->candidates->apply($candidate, $request->user(), $request->confirmedTranslationRemovalLocaleIds());
+    } catch (TranslationRemovalConfirmationRequired $exception) {
+      return response()->json([
+        'ok' => false,
+        'code' => 'translation_removal_confirmation_required',
+        'message' => $exception->getMessage(),
+        'translation_removals' => $exception->translations,
+      ], 409);
     } catch (RuntimeException $exception) {
       return response()->json(['ok' => false, 'code' => 'restore_candidate_stale', 'message' => $exception->getMessage()], 409);
     }
@@ -126,7 +135,11 @@ class InternalPageRevisionController extends Controller
 
   private function candidatePayload(PageRevisionCandidate $candidate): array
   {
+    $removals = $this->revisions->translationRemovals($candidate->page, $candidate->revision);
+
     return [
+      'translation_removals' => $removals,
+      'translation_removal_confirmation_required' => $removals !== [],
       'id' => $candidate->id,
       'status' => $candidate->status,
       'source_updated_at' => $candidate->source_updated_at?->toIso8601String(),
