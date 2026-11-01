@@ -12,6 +12,7 @@ use WebBlocks\Cms\Support\WebBlocks;
 final class BrowserFixtureServer
 {
   private const SCENARIOS = [
+    'two-factor-policy' => ['TwoFactorAuthenticationTest', 'WEBBLOCKS_TWO_FACTOR_POLICY_FIXTURE', 'policy_card_keeps_delivery_with_confirmation'],
     'consent-admin' => ['ConsentManagementTest', 'WEBBLOCKS_CONSENT_ADMIN_FIXTURE', 'authorized_panel_users_can_open_all_three_screens_and_preview'],
     'system-picker' => ['CookieSettingsBlockTest', 'WEBBLOCKS_SYSTEM_PICKER_FIXTURE', 'system_picker_uses_the_system_flag'],
     'consent' => ['ConsentBrowserTest', 'WEBBLOCKS_CONSENT_FIXTURE', 'consent_browser_fixture'],
@@ -88,6 +89,7 @@ final class BrowserFixtureServer
       'asset-picker' => '/cms/js/admin/asset-picker.js',
       'rich-text' => '/cms/js/admin/rich-text-editor.js',
       'editor-preview' => '/cms/js/admin/editor-preview.js',
+      'two-factor-policy' => '/cms/js/admin/two-factor-policy.js',
       default => null,
     };
     if ($script !== null) {
@@ -100,6 +102,7 @@ final class BrowserFixtureServer
       $assets[] = '/cms/js/admin/editor-preview-frame.js';
     }
     $file = match (true) {
+      $path === '/fixture.js' && $scenario === 'two-factor-policy' => $root.'/tests/Browser/two-factor-policy-fixture.js',
       $path === '/progress.js' && $scenario === 'update-progress' => $root.'/src/Support/Updates/Client/Resources/js/update-progress.js',
       $path === '/fixture.js' && $scenario === 'consent-admin' => $root.'/tests/Browser/consent-admin-fixture.js',
       $path === '/fixture.js' && $scenario === 'consent' => $root.'/tests/Browser/consent-fixture.js',
@@ -162,6 +165,7 @@ final class BrowserFixtureServer
         'dirty-overlay' => 'core',
         'asset-picker' => 'asset-picker',
         'editor-preview' => 'editor-preview',
+        'two-factor-policy' => 'two-factor-policy',
         default => 'rich-text-editor',
       };
       $head .= '<script src="/cms/js/admin/'.$script.'.js" defer></script>';

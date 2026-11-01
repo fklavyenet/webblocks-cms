@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.110.7
+
+- Keep mandatory two-factor role choices, account confirmation and email-code requests together in one policy card. Explain that removing a requirement does not disable verification on existing accounts.
+- Request verification email codes without reloading the page or submitting the entered password, verification code or selected roles. Preserve form entries through delivery success, failures and resend limits; show local delivery feedback and a server-derived resend countdown.
+- Show password and verification validation errors beside their fields, retain single-use email/recovery-code safeguards, and include all six panel languages. No migration is required.
+
 ## 1.110.6
 
 - Restore one language’s page fields or page fields plus native block translations without replacing other languages, current layout, block structure, shared settings, media assignments or workflow state.

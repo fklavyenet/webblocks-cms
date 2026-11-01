@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Http\Controllers\Auth;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -183,7 +184,7 @@ final class TwoFactorController extends Controller
     return $this->deliveryResult('webblocks.two-factor.challenge', $status);
   }
 
-  public function send(TwoFactorRequest $request): RedirectResponse
+  public function send(TwoFactorRequest $request): RedirectResponse|JsonResponse
   {
     $user = $request->user('web');
     $purpose = $request->validated('purpose') ?? 'setup';
@@ -191,14 +192,14 @@ final class TwoFactorController extends Controller
       $enrollment = $this->auth->enrollment($user);
       if (! $enrollment || strtotime($enrollment->expires_at) <= now()->timestamp
         || ! hash_equals($enrollment->generation, (string) $request->session()->get(TwoFactorSession::SETUP, ''))) {
-        return $this->invalid();
+        return $this->invalidDelivery($request);
       }
       $email = $enrollment->email;
       $binding = $this->sessions->setupBinding($user, $enrollment->generation);
     } else {
       $credential = $this->auth->credential($user);
       if ($credential?->confirmed_at === null) {
-        return $this->invalid();
+        return $this->invalidDelivery($request);
       }
       $email = $credential->email;
       $binding = $this->sessions->fingerprint($user, $credential);
@@ -209,12 +210,32 @@ final class TwoFactorController extends Controller
       abort_unless(app(TwoFactorPolicy::class)->reset($user, $target), 403);
     }
     $status = app(EmailTwoFactorCodes::class)->send($request, $user, $purpose, $email, $binding);
+    if ($request->expectsJson()) {
+      $retryAfter = app(EmailTwoFactorCodes::class)->retryAfter($user, $purpose);
+
+      return response()->json([
+        'status' => $status,
+        'message' => __('webblocks-cms::two-factor.'.($status === 'sent' ? 'policy_code_sent' : $status)),
+        'retry_after' => $retryAfter,
+      ], match ($status) {
+        'sent' => 200,
+        'send_throttled' => 429,
+        default => 503,
+      }, $retryAfter > 0 ? ['Retry-After' => (string) $retryAfter] : []);
+    }
     if ($tab === 'user-reset') {
       return $this->deliveryResult('admin.users.edit', $status, ['user' => $target->getAuthIdentifier()]);
     }
 
     return $this->deliveryResult($tab === 'policy' ? 'admin.system.settings.edit' : 'webblocks.two-factor.show', $status,
       ['tab' => $tab === 'policy' ? 'security' : $tab]);
+  }
+
+  private function invalidDelivery(Request $request): RedirectResponse|JsonResponse
+  {
+    return $request->expectsJson()
+      ? response()->json(['status' => 'invalid', 'message' => __('webblocks-cms::two-factor.invalid')], 422)
+      : $this->invalid();
   }
 
   private function deliveryResult(string $route, string $status, array $parameters = []): RedirectResponse

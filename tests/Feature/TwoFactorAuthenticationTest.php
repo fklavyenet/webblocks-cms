@@ -567,6 +567,117 @@ class TwoFactorAuthenticationTest extends TestCase
   }
 
   #[Test]
+  public function policy_card_keeps_delivery_with_confirmation_and_renders_field_errors(): void
+  {
+    $this->app->usePublicPath(dirname(__DIR__, 2).'/public');
+    $user = $this->actor();
+    $this->enroll($user);
+    $this->signedIn($user);
+    $role = CmsRole::where('handle', 'editor')->firstOrFail();
+    $this->put(route('webblocks.two-factor.policy'), [
+      'current_password' => 'wrong', 'code' => ['invalid'], 'require_super_admin' => 0, 'role_ids' => [$role->id],
+    ])->assertSessionHasErrors(['current_password', 'code'])->assertSessionMissing('_old_input.current_password')
+      ->assertSessionMissing('_old_input.code')->assertSessionHas('_old_input.role_ids', [$role->id]);
+    $html = $this->get(route('admin.system.settings.edit', ['tab' => 'security']))->assertOk()
+      ->assertSee(__('webblocks-cms::two-factor.policy_removal_help'))
+      ->assertSee(__('webblocks-cms::two-factor.policy_confirm_help'))->getContent();
+    $dom = new \DOMDocument;
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);
+    $xpath = new \DOMXPath($dom);
+    $this->assertSame(1, $xpath->query('//form[@id="two-factor-policy"]//button[@type="button" and @data-wb-policy-send-code]')->length);
+    $this->assertSame(0, $xpath->query('//form[@id="two-factor-policy"]//form')->length);
+    $this->assertSame(1, $xpath->query('//form[@id="two-factor-policy"]//input[@name="current_password" and @aria-invalid="true" and not(@value)]')->length);
+    $this->assertSame(1, $xpath->query('//form[@id="two-factor-policy"]//input[@name="code" and @aria-invalid="true"]')->length);
+    $this->assertSame(1, $xpath->query('//input[@id="two-factor-role-'.$role->id.'" and @checked]')->length);
+    $this->assertSame(0, $xpath->query('//input[@id="two-factor-root" and @checked]')->length);
+    $this->assertSame(1, $xpath->query('//form[@id="two-factor-policy"]//p[@role="status" and @data-wb-policy-delivery-status]')->length);
+    $this->assertSame(1, $xpath->query('//script[contains(@src, "/cms/js/admin/two-factor-policy.js")]')->length);
+    if ($fixture = getenv('WEBBLOCKS_TWO_FACTOR_POLICY_FIXTURE')) {
+      // Export only the real synthetic policy card; no account/session chrome.
+      $fragment = $dom->saveHTML($xpath->query('//form[@id="two-factor-policy"]')->item(0));
+      file_put_contents($fixture, '<!doctype html><html lang="en" data-wb-theme="light"><body>'.$fragment.'</body></html>');
+    }
+  }
+
+  #[Test]
+  public function asynchronous_policy_delivery_reports_success_and_real_resend_limits_without_saving_policy(): void
+  {
+    $user = $this->actor();
+    $this->enroll($user);
+    $this->signedIn($user);
+    $endpoint = route('webblocks.two-factor.send');
+    $payload = ['purpose' => 'action', 'tab' => 'policy'];
+    $this->postJson($endpoint, $payload)->assertOk()->assertExactJson([
+      'status' => 'sent', 'message' => __('webblocks-cms::two-factor.policy_code_sent'), 'retry_after' => 60,
+    ])->assertSessionMissing('_old_input')->assertSessionMissing('status');
+    $code = $this->code($user);
+    $this->assertFalse(app(TwoFactorAuthentication::class)->required($user));
+    $this->travel(17)->seconds();
+    $this->postJson($endpoint, $payload)->assertStatus(429)->assertJsonPath('status', 'send_throttled')
+      ->assertJsonPath('retry_after', 43)->assertHeader('Retry-After', '43')->assertSessionHasNoErrors();
+    Notification::assertSentOnDemandTimes(TwoFactorEmail::class, 2);
+    $this->put(route('webblocks.two-factor.policy'), ['current_password' => 'fixture-password', 'code' => $code, 'require_super_admin' => 1])
+      ->assertSessionHasNoErrors();
+    $this->assertTrue(app(TwoFactorAuthentication::class)->required($user));
+    $this->put(route('webblocks.two-factor.policy'), ['current_password' => 'fixture-password', 'code' => $code, 'require_super_admin' => 0])
+      ->assertSessionHasErrors('code');
+    $this->travel(44)->seconds();
+    $this->postJson($endpoint, $payload)->assertOk()->assertJsonPath('status', 'sent')->assertJsonPath('retry_after', 60);
+  }
+
+  #[Test]
+  public function asynchronous_delivery_failures_are_json_and_leave_recovery_available(): void
+  {
+    $user = $this->actor();
+    $codes = $this->enroll($user);
+    $this->signedIn($user);
+    $this->mock(CmsMailSettingsResolver::class)->shouldReceive('resolvedMailerName')->andThrow(new \RuntimeException('private delivery data'));
+    $this->postJson(route('webblocks.two-factor.send'), ['purpose' => 'action', 'tab' => 'policy'])
+      ->assertStatus(503)->assertJsonPath('status', 'send_failed')->assertJsonPath('retry_after', 60)
+      ->assertJsonPath('message', __('webblocks-cms::two-factor.send_failed'))->assertDontSee('private delivery data');
+    $this->assertNotNull(DB::table('wbcms_two_factor_email_codes')->where('purpose', 'action')->first()->consumed_at);
+    $this->put(route('webblocks.two-factor.policy'), ['current_password' => 'fixture-password', 'code' => $codes[0], 'require_super_admin' => 0])
+      ->assertSessionHasNoErrors();
+  }
+
+  #[Test]
+  public function delivery_countdown_honours_the_account_wide_ceiling_and_each_purpose(): void
+  {
+    $user = $this->actor();
+    $request = Request::create('/');
+    $request->setLaravelSession(app('session.store'));
+    $delivery = app(EmailTwoFactorCodes::class);
+    $binding = str_repeat('a', 64);
+    foreach (['login', 'setup', 'action'] as $purpose) {
+      $this->assertSame('sent', $delivery->send($request, $user, $purpose, $user->email, $binding));
+      $this->travel(10)->seconds();
+    }
+    $this->assertSame(30, $delivery->retryAfter($user, 'login'));
+    $this->assertSame(40, $delivery->retryAfter($user, 'setup'));
+    $this->assertSame(50, $delivery->retryAfter($user, 'action'));
+    $this->assertSame('send_throttled', $delivery->send($request, $user, 'login', $user->email, $binding));
+    $this->travel(31)->seconds();
+    $this->assertSame(0, $delivery->retryAfter($user, 'login'));
+    $this->assertSame('sent', $delivery->send($request, $user, 'login', $user->email, $binding));
+    $this->assertSame(9, $delivery->retryAfter($user, 'setup'));
+  }
+
+  #[Test]
+  public function asynchronous_delivery_preserves_authentication_and_request_validation_boundaries(): void
+  {
+    $endpoint = route('webblocks.two-factor.send');
+    $this->postJson($endpoint, ['purpose' => 'action', 'tab' => 'policy'])->assertForbidden();
+    $user = $this->actor();
+    $this->actingAs($user)->postJson($endpoint, ['purpose' => 'action', 'tab' => 'policy'])
+      ->assertStatus(422)->assertJsonPath('status', 'invalid');
+    $this->postJson($endpoint, ['purpose' => 'unknown', 'tab' => 'policy'])->assertUnprocessable()->assertJsonValidationErrors('purpose');
+    $this->postJson($endpoint, ['purpose' => 'setup', 'tab' => 'policy'])->assertStatus(422)->assertJsonPath('status', 'invalid');
+    Notification::assertNothingSent();
+    $this->get(route('admin.system.settings.edit', ['tab' => 'security']))->assertOk()->assertDontSee('data-wb-policy-send-code', false)
+      ->assertDontSee('id="two-factor-policy-code"', false);
+  }
+
+  #[Test]
   public function password_changes_invalidate_setup_codes_and_missing_setup_sessions_cannot_resend(): void
   {
     $user = $this->actor();

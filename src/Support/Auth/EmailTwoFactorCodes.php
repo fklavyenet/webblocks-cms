@@ -72,6 +72,20 @@ final class EmailTwoFactorCodes
       ->whereNull('consumed_at')->where('attempts', '<', 5)->where('expires_at', '>', now())->exists();
   }
 
+  public function retryAfter(Authenticatable $user, string $purpose): int
+  {
+    $recent = DB::table('wbcms_two_factor_email_codes')->where('user_id', $user->getAuthIdentifier())
+      ->where('sent_at', '>', now()->subMinute())->orderByDesc('sent_at')->get(['purpose', 'sent_at']);
+    $until = 0;
+    foreach ($recent as $index => $row) {
+      if ($row->purpose === $purpose || $index === 2) {
+        $until = max($until, strtotime($row->sent_at) + 60);
+      }
+    }
+
+    return max(0, $until - now()->timestamp);
+  }
+
   public function consume(Authenticatable $user, string $purpose, string $email, string $binding, string $id, #[\SensitiveParameter] string $code): bool
   {
     return DB::transaction(function () use ($user, $purpose, $email, $binding, $id, $code): bool {
