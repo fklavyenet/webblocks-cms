@@ -29,7 +29,7 @@ The package CI exercises the source tree, exported distribution, current Laravel
 
 PHPUnit checks the rendered System Updates screen and serves its shared progress asset through the real route. These checks run in CI and the local pre-push hook without Node.js. They do not execute browser JavaScript.
 
-Ordinary SQLite in-memory tests run the real fresh migrations once per test class and configuration, then restore the resulting schema and seed rows into a separate connection for each case. The fixture lives only in process memory and is discarded after the class. No transaction wrapper is added, so commits, rollbacks, schema changes and sequences remain isolated between cases. Migration and restore tests set `protected bool $cacheFreshDatabaseSchema = false`; bridge schemas, nonempty databases, other engines and `RefreshDatabase` retain their original lifecycle. Set `WEBBLOCKS_CMS_TEST_FRESH_SCHEMA_CACHE=0` to compare against the uncached setup.
+Ordinary SQLite in-memory tests reuse immutable fresh-schema fixtures within one PHP process, keyed by complete configuration, loaded providers and the migration/runtime/dependency source fingerprint. A bounded 32-entry pool restores schema and seed rows into a separate connection for every case; no transaction wrapper is added. Custom package-provider overrides and migration listeners, migration/restore opt-outs, bridge schemas, nonempty databases, other engines and `RefreshDatabase` retain real migrations. Migration and restore tests set `protected bool $cacheFreshDatabaseSchema = false`. Set `WEBBLOCKS_CMS_TEST_FRESH_SCHEMA_SCOPE=class` for the former class-local cache boundary, or `WEBBLOCKS_CMS_TEST_FRESH_SCHEMA_CACHE=0` for fully uncached setup. Process isolation remains independent; no disk fixture or database connection is shared.
 
 Set `WEBBLOCKS_CMS_TEST_PROFILE` to a local output filename to append JSONL timings without changing the test selection. The records contain test identifiers, process IDs, durations and configuration fingerprints, never configuration values. `full_setup`, `test_body` and `full_teardown` bracket the inherited lifecycle including subclass hooks; `setup` and `teardown` measure the shared Testbench portion. Migration misses, bypasses, snapshot capture and hits are nested measurements, not additional wall time. Use a fresh output filename for each run and compare the same tests with `WEBBLOCKS_CMS_TEST_FRESH_SCHEMA_CACHE=0`. Profiling and its output are test-only and excluded from distribution.
 
@@ -43,6 +43,10 @@ or a `role="group"` container with a visible heading referenced by
 `data-wb-tabs` contract, with separate information, settings and action panels
 where useful. Validation and action redirects must retain the relevant panel;
 links to settings must open the panel containing their destination.
+
+Release push runs the same pre-push gates once for explicitly named branch/tag refs and verifies both remotes. Its Composer alias disables only the outer 300-second Composer timeout; a PHP runner bounds the complete push/verification flow to 900 seconds. Default SSH transport uses keepalive while the full suite runs; explicit operator `GIT_SSH_COMMAND` or `GIT_SSH` settings are preserved. This does not skip checks or change global Composer/SSH configuration.
+
+The package compatibility fixture uses a disposable Git index and object directory with the checkout's immutable objects as read-only alternates. It includes reviewed untracked runtime sources and tracked edits/deletions, builds the real archive and exercises the installed bridge updater. It does not copy the entire checkout or change its index, object store, branches or tags. Distinct Composer and Git export checks are retained.
 
 ## Optional browser fixtures
 

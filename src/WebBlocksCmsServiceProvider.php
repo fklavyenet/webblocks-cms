@@ -9,6 +9,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Database\Events\TransactionCommitted;
 use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionsHandler;
 use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
@@ -146,6 +147,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateDownloader;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateExtractor;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
+use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager as ClientBackupManager;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore as ClientInstalledVersionStore;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\PostApplyRunner as ClientPostApplyRunner;
@@ -970,6 +972,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     });
     $this->app->singleton(ConsentIntegrations::class);
     $this->app->scoped(RequestMemo::class);
+    $this->app->scoped(SiteLocaleValidation::class);
     $this->app->singleton(PageListCache::class);
     $this->app->singleton(NavigationCache::class);
     // Resolve the current scope at call time, including from long-lived helpers.
@@ -979,6 +982,9 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       if ($app->resolved(RequestMemo::class) && ! preg_match('/^\s*(select|pragma|explain|show|describe)\b/i', $query->sql)) {
         $app->make(RequestMemo::class)->clear();
       }
+      if ($app->resolved(SiteLocaleValidation::class)) {
+        $app->make(SiteLocaleValidation::class)->invalidate($query->sql);
+      }
       $app->make(PageListCache::class)->onQuery($query);
       $app->make(NavigationCache::class)->onQuery($query);
     });
@@ -986,6 +992,15 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       $app = app();
       if ($app->resolved(RequestMemo::class)) {
         $app->make(RequestMemo::class)->clear();
+      }
+      if ($app->resolved(SiteLocaleValidation::class)) {
+        $app->make(SiteLocaleValidation::class)->invalidate();
+      }
+    });
+    $this->app['events']->listen(TransactionCommitted::class, static function ($event): void {
+      $app = app();
+      if ($event->connection->transactionLevel() === 0 && $app->resolved(SiteLocaleValidation::class)) {
+        $app->make(SiteLocaleValidation::class)->invalidate();
       }
     });
     $this->app->singleton(BackupOperations::class);

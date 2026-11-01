@@ -2,29 +2,25 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
-use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use PDO;
 use PHPUnit\Framework\Attributes\DataProvider;
+use WebBlocks\Cms\Tests\Support\FreshDatabaseSnapshots;
+use WebBlocks\Cms\Tests\Support\SqliteDatabaseSnapshot;
 use WebBlocks\Cms\Tests\TestCase;
 
 class FreshDatabaseIsolationTest extends TestCase
 {
   private static array $connections = [];
 
-  private static array $migrationRuns = [];
+  private static array $snapshots = [];
 
   protected function defineEnvironment($app): void
   {
     parent::defineEnvironment($app);
     $app['config']->set('app.locale', $this->providedData()[0]);
-    $app['events']->listen(MigrationsEnded::class, static function (MigrationsEnded $event): void {
-      if ($event->method === 'up') {
-        $locale = config('app.locale');
-        self::$migrationRuns[$locale] = (self::$migrationRuns[$locale] ?? 0) + 1;
-      }
-    });
+
   }
 
   protected function defineDatabaseMigrations(): void
@@ -59,7 +55,16 @@ class FreshDatabaseIsolationTest extends TestCase
     $this->assertSame(1, (int) $database->query('PRAGMA foreign_keys')->fetchColumn());
     $this->assertSame([], DB::select('PRAGMA foreign_key_check'));
     if (getenv('WEBBLOCKS_CMS_TEST_FRESH_SCHEMA_CACHE') !== '0') {
-      $this->assertSame(1, self::$migrationRuns[$locale]);
+      // Observe the immutable fixture itself: a migration listener is a custom
+      // lifecycle and deliberately bypasses reuse rather than passively counting it.
+      $boundary = getenv('WEBBLOCKS_CMS_TEST_FRESH_SCHEMA_SCOPE') === 'class' ? static::class : null;
+      $key = FreshDatabaseSnapshots::key($this->app['config']->all(), $this->app->getLoadedProviders(), FreshDatabaseSnapshots::sourceFingerprint(), $boundary);
+      $snapshot = FreshDatabaseSnapshots::get($key);
+      $this->assertInstanceOf(SqliteDatabaseSnapshot::class, $snapshot);
+      if (isset(self::$snapshots[$locale])) {
+        $this->assertSame(self::$snapshots[$locale], $snapshot);
+      }
+      self::$snapshots[$locale] = $snapshot;
     }
     DB::beginTransaction();
     DB::table('wbcms_sites')->insert(['name' => 'Rolled back', 'handle' => 'rolled-back']);
@@ -77,7 +82,7 @@ class FreshDatabaseIsolationTest extends TestCase
   public static function tearDownAfterClass(): void
   {
     self::$connections = [];
-    self::$migrationRuns = [];
+    self::$snapshots = [];
     parent::tearDownAfterClass();
   }
 }

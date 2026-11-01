@@ -10,7 +10,7 @@ class PackageReleaseToolingTest extends TestCase
   {
     $composer = json_decode((string) file_get_contents(__DIR__.'/../../composer.json'), true, 512, JSON_THROW_ON_ERROR);
 
-    $this->assertSame('scripts/release/push.sh', $composer['scripts']['release:push'] ?? null);
+    $this->assertSame(['Composer\\Config::disableProcessTimeout', '@php scripts/release/push.php'], $composer['scripts']['release:push'] ?? null);
     $this->assertSame('scripts/release/prepare.sh', $composer['scripts']['release:prepare'] ?? null);
     $this->assertSame('scripts/release/publish-update.sh', $composer['scripts']['release:publish-update'] ?? null);
   }

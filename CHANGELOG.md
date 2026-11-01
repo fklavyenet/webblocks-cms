@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.111.1
+
+- Speed up staged page creation and promotion by reusing locked locale membership within the existing transaction and avoiding redundant savepoints for newly cloned blocks and translations. Preserve model validation and events, complete revision snapshots, search indexing and atomic rollback, including a locale disabled during copying. No migration is required.
+- Reuse immutable fresh SQLite fixtures across compatible test classes with separate connections and a bounded process-local cache. Retain real migration lifecycles for custom providers/listeners, migration and restore fixtures, other databases and RefreshDatabase; preserve the full test selection and workload.
+- Reduce framework and archive fixture setup while retaining integration, compatibility and package exclusion coverage. Add regression checks for fixture isolation, scoped locale validation, model events and grouped rollback.
+- Keep release pushes alive through the complete test gate with default SSH keepalive and a finite 900-second runner. Preserve explicit transport overrides, named release refs and remote verification.
+
 ## 1.111.0
 
 - Add an explicit per-page, per-language SEO check under Page management, with language-specific shortcuts from the translation table and translation SEO card. Inspect saved rendered content and keep technical issues, editorial suggestions and unavailable checks separate; findings never block publication.

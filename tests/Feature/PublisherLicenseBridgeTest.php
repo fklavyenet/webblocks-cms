@@ -9,6 +9,7 @@ use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateException;
 use WebBlocks\Cms\Tests\Fixtures\PublisherV1881\CmsPublisherClientConfigurator as LegacyConfigurator;
 use WebBlocks\Cms\Tests\Fixtures\PublisherV1881\PackageApplyStrategy as LegacyStrategy;
 use WebBlocks\Cms\Tests\Fixtures\PublisherV1891\CmsPackageApplyStrategy as BridgeStrategy;
+use WebBlocks\Cms\Tests\Support\WorkingTreePackage;
 use WebBlocks\Cms\Tests\TestCase;
 use ZipArchive;
 
@@ -58,24 +59,12 @@ class PublisherLicenseBridgeTest extends TestCase
   public function test_generated_root_license_zip_applies_with_bridge_updater(): void
   {
     $repo = dirname(__DIR__, 2);
-    // Include reviewed new runtime files before commit, without changing the
-    // real repository index, HEAD, tags, or branches.
-    $snapshot = $this->work.'/source';
-    $this->executeFixtureCommand('git -C '.escapeshellarg($repo).' ls-files', $paths);
-    $review = json_decode(File::get($repo.'/resources/contracts/inventory-review.json'), true, flags: JSON_THROW_ON_ERROR);
-    $paths = array_unique([...$paths, ...array_keys($review['sources'])]);
-    foreach ($paths as $path) {
-      if (is_file($repo.'/'.$path)) {
-        File::ensureDirectoryExists(dirname($snapshot.'/'.$path));
-        File::copy($repo.'/'.$path, $snapshot.'/'.$path);
-      }
-    }
-    $this->executeFixtureCommand('git -C '.escapeshellarg($snapshot).' init -q');
-    $this->executeFixtureCommand('git -C '.escapeshellarg($snapshot).' add .');
-    $this->executeFixtureCommand('git -C '.escapeshellarg($snapshot).' write-tree', $trees, $code);
-    $this->assertSame(0, $code);
-    $this->executeFixtureCommand('bash '.escapeshellarg($snapshot.'/scripts/release/build-package.sh').' '.escapeshellarg($this->work.'/update.zip').' '.escapeshellarg($trees[0]).' 2>&1', $output, $code);
-    $this->assertSame(0, $code, implode("\n", $output));
+    $headBefore = trim((string) shell_exec('git -C '.escapeshellarg($repo).' rev-parse HEAD'));
+    $indexPath = trim((string) shell_exec('git -C '.escapeshellarg($repo).' rev-parse --path-format=absolute --git-path index'));
+    $indexBefore = is_file($indexPath) ? hash_file('sha256', $indexPath) : null;
+    WorkingTreePackage::build($repo, $this->work, $this->work.'/update.zip');
+    $this->assertSame($headBefore, trim((string) shell_exec('git -C '.escapeshellarg($repo).' rev-parse HEAD')));
+    $this->assertSame($indexBefore, is_file($indexPath) ? hash_file('sha256', $indexPath) : null);
     $zip = new ZipArchive;
     $this->assertTrue($zip->open($this->work.'/update.zip'));
     $this->assertNotFalse($zip->locateName('LICENSE'));

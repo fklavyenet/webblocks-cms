@@ -3,9 +3,8 @@
 namespace WebBlocks\Cms\Models\Concerns;
 
 use WebBlocks\Cms\Models\Block;
-use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
 
 trait ValidatesBlockTranslationLocale
 {
@@ -24,10 +23,7 @@ trait ValidatesBlockTranslationLocale
         throw new \RuntimeException('Block translations must belong to a block page site.');
       }
 
-      $localeIsEnabled = Site::query()
-        ->whereKey($siteId)
-        ->whereHas('enabledLocales', fn ($query) => $query->where((new Locale)->qualifyColumn('id'), $translation->locale_id))
-        ->exists();
+      $localeIsEnabled = app(SiteLocaleValidation::class)->allows((int) $siteId, $translation->locale_id);
 
       if (! $localeIsEnabled) {
         throw new \RuntimeException('Block translation locale must be enabled for the block page site.');

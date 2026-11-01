@@ -9,6 +9,12 @@ BACKUP_REMOTE="${WEBBLOCKS_RELEASE_BACKUP_REMOTE:-backup}"
 VERSION="$("${PHP_BIN}" -r '$source = file_get_contents($argv[1]); if (! preg_match("/VERSION = '\''([^'\'']+)'\''/", $source, $matches)) { fwrite(STDERR, "Unable to read WebBlocks CMS version.\n"); exit(1); } echo $matches[1];' "${ROOT_DIR}/src/Support/WebBlocks.php")"
 TAG_NAME="v${VERSION}"
 
+# A pre-push full suite can outlive the remote's idle connection limit.
+# Preserve explicitly configured SSH transports; keep the default session alive.
+if [ -z "${GIT_SSH_COMMAND:-}" ] && [ -z "${GIT_SSH:-}" ]; then
+  export GIT_SSH_COMMAND='ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=4'
+fi
+
 cd "${ROOT_DIR}"
 
 BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"

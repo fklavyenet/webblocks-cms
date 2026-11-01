@@ -114,6 +114,30 @@ class ContentPlanLargePublishTest extends TestCase
     $this->assertFalse(PublicSearchIndexer::isCoalescing());
   }
 
+  #[Test]
+  public function a_locale_change_from_a_model_observer_invalidates_bulk_validation_and_rolls_back(): void
+  {
+    $source = $this->seedPage(2);
+    $locale = Locale::where('code', 'fr')->sole();
+    $created = 0;
+    Block::created(function (Block $block) use ($source, $locale, &$created): void {
+      if ($block->page_id !== $source->id && ++$created === 2) {
+        $source->site->locales()->updateExistingPivot($locale->id, ['is_enabled' => false]);
+      }
+    });
+    $token = app(CmsApiTokenIssuer::class)->issue('Synthetic atomic publisher', capabilities: ['content.apply', 'content.publish'])->plainToken;
+    $this->withToken($token)->postJson('/webadmin/api/content/apply', ['plan' => [
+      'mode' => 'create_staged_update_for_published_page', 'source_page_id' => $source->id,
+      'expected_source_path' => '/large-page', 'managed_slots' => ['main'],
+    ]])->assertUnprocessable()->assertJsonPath('ok', false);
+    $this->assertSame(1, Page::count());
+    $this->assertSame(2, $source->blocks()->count());
+    $this->assertSame(12, DB::table('wbcms_block_text_translations')->count());
+    $this->assertSame(0, DB::table('wbcms_page_revisions')->count());
+    $this->assertTrue((bool) $source->site->locales()->where('wbcms_locales.id', $locale->id)->sole()->pivot->is_enabled);
+    $this->assertFalse(PublicSearchIndexer::isCoalescing());
+  }
+
   private function seedPage(int $count): Page
   {
     return PublicSearchIndexer::coalescing(function () use ($count): Page {

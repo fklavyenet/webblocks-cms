@@ -15,6 +15,8 @@ use WebBlocks\Cms\Support\Relational\TokenRelations;
 
 abstract class CmsModel extends Model
 {
+  private bool $joinsCreationTransaction = false;
+
   private array $pendingRelationalValues = [];
 
   private array $pendingPersistentValues = [];
@@ -121,6 +123,20 @@ abstract class CmsModel extends Model
       ? json_encode($value, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) : $value;
   }
 
+  /** @internal Bulk callers propagate failure so the enclosing transaction rolls back. */
+  public function createInTransaction(): bool
+  {
+    if ($this->exists || $this->getConnection()->transactionLevel() === 0) {
+      throw new \LogicException('Bulk creation requires a new model and an enclosing transaction.');
+    }
+    $this->joinsCreationTransaction = true;
+    try {
+      return $this->save();
+    } finally {
+      $this->joinsCreationTransaction = false;
+    }
+  }
+
   public function save(array $options = [])
   {
     // PersistentDocuments caches schema discovery, not record values. DDL and
@@ -129,7 +145,7 @@ abstract class CmsModel extends Model
       return parent::save($options);
     }
 
-    return $this->getConnection()->transaction(function () use ($options) {
+    $persist = function () use ($options) {
       $locked = $this->exists
         ? $this->newQueryWithoutScopes()->whereKey($this->getKey())->lockForUpdate()->first() : null;
       // Refresh rollback copies from the authoritative values before every write.
@@ -145,7 +161,10 @@ abstract class CmsModel extends Model
       }
 
       return parent::save($options);
-    });
+    };
+
+    return $this->joinsCreationTransaction && ! $this->exists && $this->getConnection()->transactionLevel() > 0
+      ? $persist() : $this->getConnection()->transaction($persist);
   }
 
   protected function finishSave(array $options)

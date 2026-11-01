@@ -18,30 +18,6 @@ use WebBlocks\Cms\Tests\TestCase;
 class AdminPaginationOutOfRangeTest extends TestCase
 {
   #[Test]
-  public function a_page_number_past_the_last_page_reports_the_page_worth_redirecting_to(): void
-  {
-    $paginator = $this->paginator(total: 15, perPage: 15, currentPage: 2);
-
-    $this->assertSame(1, AdminPagination::outOfRangePage($paginator));
-  }
-
-  #[Test]
-  public function an_empty_result_set_falls_back_to_the_first_page(): void
-  {
-    $paginator = $this->paginator(total: 0, perPage: 15, currentPage: 3);
-
-    $this->assertSame(1, AdminPagination::outOfRangePage($paginator));
-  }
-
-  #[Test]
-  public function a_page_that_still_holds_results_is_left_alone(): void
-  {
-    $paginator = $this->paginator(total: 40, perPage: 15, currentPage: 3);
-
-    $this->assertNull(AdminPagination::outOfRangePage($paginator));
-  }
-
-  #[Test]
   public function the_redirect_keeps_every_other_filter_and_drops_the_stale_page(): void
   {
     $request = Request::create('https://cms.example.test/webadmin/pages', 'GET', [

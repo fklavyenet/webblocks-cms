@@ -2,6 +2,10 @@
 
 namespace WebBlocks\Cms\Tests;
 
+use Illuminate\Database\Events\MigrationEnded;
+use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Database\Events\MigrationsStarted;
+use Illuminate\Database\Events\MigrationStarted;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +15,7 @@ use PHPUnit\Framework\Attributes\Before;
 use WebBlocks\Cms\Models\Concerns\HasCmsAdminAccess;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
+use WebBlocks\Cms\Tests\Support\FreshDatabaseSnapshots;
 use WebBlocks\Cms\Tests\Support\SqliteDatabaseSnapshot;
 use WebBlocks\Cms\Tests\Support\TestLifecycleProfile;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -19,7 +24,7 @@ abstract class TestCase extends Orchestra
 {
   protected bool $cacheFreshDatabaseSchema = true;
 
-  private static array $freshDatabaseSnapshots = [];
+  private static array $classSnapshotKeys = [];
 
   private int $profileStartedAt = 0;
 
@@ -61,7 +66,10 @@ abstract class TestCase extends Orchestra
 
   public static function tearDownAfterClass(): void
   {
-    unset(self::$freshDatabaseSnapshots[static::class]);
+    foreach (self::$classSnapshotKeys[static::class] ?? [] as $key) {
+      FreshDatabaseSnapshots::forget($key);
+    }
+    unset(self::$classSnapshotKeys[static::class]);
     parent::tearDownAfterClass();
   }
 
@@ -73,7 +81,9 @@ abstract class TestCase extends Orchestra
       || getenv('WEBBLOCKS_CMS_TEST_FRESH_SCHEMA_CACHE') === '0'
       || $paths !== dirname(__DIR__).'/database/migrations/fresh'
       || static::usesRefreshDatabaseTestingConcern()
-      || ! $this->usesSqliteInMemoryDatabaseConnection()) {
+      || ! $this->usesSqliteInMemoryDatabaseConnection()
+      || (new \ReflectionMethod($this, 'getPackageProviders'))->getDeclaringClass()->getName() !== self::class
+      || $this->hasCustomMigrationListeners()) {
       TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'migration_bypass', fn () => parent::loadMigrationsFrom($paths), ['reason' => 'ineligible']);
 
       return;
@@ -88,18 +98,25 @@ abstract class TestCase extends Orchestra
 
       return;
     }
-    // Configuration variants within a class must get their own real migration run.
+    // Configurations/providers/source identities must not share incompatible schemas.
     try {
-      $key = hash('sha256', serialize($this->app['config']->all()));
+      $boundary = getenv('WEBBLOCKS_CMS_TEST_FRESH_SCHEMA_SCOPE') === 'class' ? static::class : null;
+      $key = FreshDatabaseSnapshots::key(
+        $this->app['config']->all(), $this->app->getLoadedProviders(),
+        FreshDatabaseSnapshots::sourceFingerprint(), $boundary,
+      );
+      if ($boundary !== null) {
+        self::$classSnapshotKeys[static::class][$key] = $key;
+      }
     } catch (\Exception) {
       TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'migration_bypass', fn () => parent::loadMigrationsFrom($paths), ['reason' => 'unserializable_config']);
 
       return;
     }
-    $snapshot = self::$freshDatabaseSnapshots[static::class][$key] ?? null;
+    $snapshot = FreshDatabaseSnapshots::get($key);
     if ($snapshot === null) {
       TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'migration_miss', fn () => parent::loadMigrationsFrom($paths), ['configuration' => $key]);
-      self::$freshDatabaseSnapshots[static::class][$key] = TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'snapshot_capture', fn () => SqliteDatabaseSnapshot::capture($database));
+      FreshDatabaseSnapshots::put($key, TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'snapshot_capture', fn () => SqliteDatabaseSnapshot::capture($database)));
       // This connection is disposable. Do not run 21 reverse migrations just
       // before discarding it. Dedicated migration tests still exercise both ways.
       array_shift($this->cachedTestMigratorProcessors);
@@ -107,6 +124,18 @@ abstract class TestCase extends Orchestra
       TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'snapshot_hit', fn () => $snapshot->restore($database), ['configuration' => $key]);
     }
     $this->beforeApplicationDestroyed(fn () => $connection->disconnect());
+  }
+
+  private function hasCustomMigrationListeners(): bool
+  {
+    foreach ([MigrationsStarted::class, MigrationsEnded::class,
+      MigrationStarted::class, MigrationEnded::class] as $event) {
+      if ($this->app['events']->hasListeners($event)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /** Legacy-copy/backfill fixtures deliberately exercise the 1.98.7 bridge schema. */

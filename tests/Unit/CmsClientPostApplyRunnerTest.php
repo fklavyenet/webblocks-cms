@@ -3,16 +3,19 @@
 namespace WebBlocks\Cms\Tests\Unit;
 
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
 use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner;
 use WebBlocks\Cms\Support\System\Updates\UpdateInstaller;
 use WebBlocks\Cms\Support\System\Updates\UpdateMigrationRunner;
 use WebBlocks\Cms\Support\Updates\CmsClientPostApplyRunner;
-use WebBlocks\Cms\Tests\TestCase;
 
 class CmsClientPostApplyRunnerTest extends TestCase
 {
+  use MockeryPHPUnitIntegration;
+
   #[Test]
   public function embedded_client_post_apply_publishes_runtime_assets_last(): void
   {
@@ -39,7 +42,7 @@ class CmsClientPostApplyRunnerTest extends TestCase
 
     $runner = new CmsClientPostApplyRunner($installer);
     $output = [];
-    $runner->run(base_path(), $output);
+    $runner->run(dirname(__DIR__, 2), $output);
 
     $this->assertSame(['dependencies', 'post-install', 'assets'], $installer->steps);
   }

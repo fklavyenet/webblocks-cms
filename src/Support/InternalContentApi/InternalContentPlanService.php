@@ -38,6 +38,7 @@ use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
+use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
 
 class InternalContentPlanService
 {
@@ -909,6 +910,11 @@ class InternalContentPlanService
 
   private function cloneBlocks(Page $sourcePage, Page $targetPage, ?array $slotTypeIds = null, ?string $forcedStatus = null): void
   {
+    app(SiteLocaleValidation::class)->during(fn () => $this->copyBlocks($sourcePage, $targetPage, $slotTypeIds, $forcedStatus));
+  }
+
+  private function copyBlocks(Page $sourcePage, Page $targetPage, ?array $slotTypeIds, ?string $forcedStatus): void
+  {
     $blocks = Block::query()
       ->where('page_id', $sourcePage->id)
       ->when($slotTypeIds !== null, fn ($query) => $query->whereIn('slot_type_id', $slotTypeIds))
@@ -929,8 +935,8 @@ class InternalContentPlanService
       }
 
       $newBlock = (new Block($attributes))->withRevisionIdentity($block->revision_key);
-      $newBlock->save();
       $newBlock->setRelation('page', $targetPage);
+      $newBlock->createInTransaction();
       $blockMap[$block->id] = $newBlock->id;
       $copies[$block->id] = $newBlock;
 
@@ -1018,7 +1024,7 @@ class InternalContentPlanService
   {
     $translation = new $model($attributes);
     $translation->setRelation('block', $target);
-    $translation->save();
+    $translation->createInTransaction();
   }
 
   private function normalize(array $payload): InternalContentPlanResult

@@ -56,7 +56,10 @@
     "ui:vendor": "scripts/release/vendor-ui.sh",
     "ui:verify": "php scripts/release/verify-ui.php",
     "icons:vendor": "scripts/release/vendor-ui.sh",
-    "release:push": "scripts/release/push.sh",
+    "release:push": [
+      "Composer\\Config::disableProcessTimeout",
+      "@php scripts/release/push.php"
+    ],
     "release:prepare": "scripts/release/prepare.sh",
     "release:publish-github": "scripts/release/publish-github.sh",
     "release:publish-update": "scripts/release/publish-update.sh",
