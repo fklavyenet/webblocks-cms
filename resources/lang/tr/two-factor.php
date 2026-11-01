@@ -77,6 +77,7 @@ return [
   'send_request_failed' => 'Kod isteği tamamlanamadı. Bağlantınızı ve oturumunuzu kontrol edip tekrar deneyin. Değişiklikleriniz bu formda duruyor.',
   'save_policy' => 'İki faktörlü doğrulama kuralını kaydet',
   'policy_saved' => 'İki faktörlü doğrulama kuralı kaydedildi.',
+  'policy_removed_notice' => 'Zorunluluk kaldırıldı. Daha önce etkinleştirilen hesaplarda iki faktörlü doğrulama açık kalır ve girişte istenmeye devam eder. Kendi doğrulamanızı hesap ayarlarından yönetebilirsiniz; kapatma işlemi ayrıca yapılır.',
   'send_code' => 'Yeni e-posta kodu gönder',
   'send_help' => 'Kod istemek için “E-posta kodu gönder” düğmesine basın. Kodlar beş dakika geçerlidir ve bir kez kullanılabilir. Bir dakika sonra yeni kod isteyebilirsiniz. Gelmezse istenmeyen posta klasörünüzü kontrol edin.',
   'sent' => 'Doğrulama kodu gönderildi. E-postanızı kontrol edin.',

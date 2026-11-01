@@ -13,6 +13,17 @@ use WebBlocks\Cms\Tests\TestCase;
 class UpdateInstallerCatalogSyncTest extends TestCase
 {
   #[Test]
+  public function maintenance_prerenders_the_cms_page_with_retry_after(): void
+  {
+    $recorder = $this->recordingCommandRunner();
+    $installer = new UpdateInstaller($recorder, $this->noopMigrationRunner($recorder), $this->noopGitRemoteGuard());
+    $output = [];
+    $installer->enterMaintenance($output);
+
+    $this->assertSame(['artisan', 'down', '--render=webblocks-cms::errors.503', '--status=503', '--retry=60'], array_slice($recorder->commands[0], 1));
+  }
+
+  #[Test]
   public function post_install_syncs_shipped_catalog_after_cache_clears(): void
   {
     $recorder = $this->recordingCommandRunner();

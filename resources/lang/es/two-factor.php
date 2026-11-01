@@ -77,6 +77,7 @@ return [
   'send_request_failed' => 'No se pudo completar la solicitud del código. Compruebe su conexión y sesión e inténtelo de nuevo. Sus cambios siguen en este formulario.',
   'save_policy' => 'Guardar la regla de dos factores',
   'policy_saved' => 'Regla de autenticación de dos factores guardada.',
+  'policy_removed_notice' => 'Se ha eliminado el requisito. La autenticación de dos factores sigue activa en las cuentas donde ya estaba habilitada y se seguirá solicitando al iniciar sesión. Gestione su propia verificación en los ajustes de su cuenta; desactivarla es una acción independiente.',
   'send_code' => 'Enviar un nuevo código por correo',
   'send_help' => 'Selecciona «Enviar código por correo» para solicitar un código. Los códigos duran cinco minutos y se usan una sola vez. Puedes solicitar otro después de un minuto. Revisa la carpeta de correo no deseado si no llega.',
   'sent' => 'Código de verificación enviado. Revise su correo.',

@@ -140,9 +140,11 @@ final class TwoFactorController extends Controller
     if ($credential = $this->auth->credential($request->user('web'))) {
       $this->sessions->mark($request, $request->user('web'), $credential);
     }
-    $update->handle($request->user('web'), $request->validated());
+    $requirementRemoved = $update->handle($request->user('web'), $request->validated());
 
-    return to_route('admin.system.settings.edit', ['tab' => 'security'])->with('status', __('webblocks-cms::two-factor.policy_saved'));
+    $response = to_route('admin.system.settings.edit', ['tab' => 'security'])->with('status', __('webblocks-cms::two-factor.policy_saved'));
+
+    return $requirementRemoved ? $response->with('two_factor_requirement_removed', true) : $response;
   }
 
   private function challengeUser(Request $request): ?Authenticatable

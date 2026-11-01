@@ -28,6 +28,12 @@ return [
   ],
 
   'errors' => [
+    'maintenance' => [
+      'eyebrow' => 'Scheduled maintenance',
+      'title' => 'We are carrying out a brief update',
+      'body' => 'We are updating our website. Please try again shortly.',
+      'cta' => 'Try again',
+    ],
     'not_found' => [
       'eyebrow' => 'Not found',
       'title' => 'This page does not exist',

@@ -77,6 +77,7 @@ return [
   'send_request_failed' => 'La demande de code n’a pas pu aboutir. Vérifiez votre connexion et votre session, puis réessayez. Vos modifications restent dans ce formulaire.',
   'save_policy' => 'Enregistrer la règle à deux facteurs',
   'policy_saved' => 'Règle d’authentification à deux facteurs enregistrée.',
+  'policy_removed_notice' => 'L’obligation a été supprimée. L’authentification à deux facteurs reste active sur les comptes où elle était déjà activée et sera toujours demandée à la connexion. Gérez votre propre vérification dans les paramètres de votre compte ; sa désactivation est une action distincte.',
   'send_code' => 'Envoyer un nouveau code par e-mail',
   'send_help' => 'Sélectionnez « Envoyer un code par e-mail » pour demander un code. Les codes sont valables cinq minutes et utilisables une seule fois. Vous pouvez en demander un autre après une minute. Vérifiez vos courriers indésirables si le message n’arrive pas.',
   'sent' => 'Code de vérification envoyé. Consultez votre messagerie.',

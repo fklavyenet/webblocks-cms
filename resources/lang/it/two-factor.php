@@ -77,6 +77,7 @@ return [
   'send_request_failed' => 'Impossibile completare la richiesta del codice. Controlla la connessione e la sessione, poi riprova. Le modifiche restano in questo modulo.',
   'save_policy' => 'Salva regola a due fattori',
   'policy_saved' => 'Regola di autenticazione a due fattori salvata.',
+  'policy_removed_notice' => 'L’obbligo è stato rimosso. L’autenticazione a due fattori resta attiva sugli account in cui era già abilitata e verrà ancora richiesta all’accesso. Gestisci la tua verifica nelle impostazioni del tuo account; la disattivazione è un’azione separata.',
   'send_code' => 'Invia un nuovo codice email',
   'send_help' => 'Seleziona «Invia codice e-mail» per richiedere un codice. I codici durano cinque minuti e si usano una sola volta. Puoi richiederne un altro dopo un minuto. Controlla la cartella spam se il messaggio non arriva.',
   'sent' => 'Codice di verifica inviato. Controlla la tua email.',

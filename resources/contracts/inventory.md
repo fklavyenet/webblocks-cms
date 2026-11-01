@@ -62,6 +62,8 @@ From CMS 1.110.7, System → Settings → Security presents mandatory two-factor
 
 From CMS 1.110.8, the Security tab uses the bundled WebBlocks UI responsive row: the two-factor policy occupies five columns and request limits seven at viewport widths of at least 1200 px. Below that breakpoint the cards stack at full width in policy-first order. Cards align at the top with independent heights and form actions; request limits occupy the full row when two-factor policy controls are unavailable. This presentation change adds no custom layout CSS or JavaScript and changes no policy, request-limit default or persistence.
 
+From CMS 1.111.2, removing an existing Super admin or site-role two-factor requirement shows a confirmation explaining that enrolled accounts still require verification at sign-in, with a link to the operator's account verification settings. The policy card also links enrolled operators to those settings. Adding or resaving unchanged requirements does not show a removal notice. Account enrollment, forced enrollment after recovery, verification and the separate disable action retain their existing security rules.
+
 From CMS 1.106.4, enrolled active Super admins can reset another CMS-managed account from the Users form, using their own current password and a fresh email or recovery code. Self-reset, host-only targets and delegated/non-Super-admin actors are refused. Existing host system/user-management Gates remain enforced. Reset requires a non-secret reason and optionally replaces an inaccessible profile email, whose ownership remains unverified until setup. The shared ACL lock and ordered user-row locks protect post-lock authority and identity checks; reset state, code removal, remembered-token rotation and audit writes commit atomically. An audit-write failure rolls back the reset. The server-only `webblocks:two-factor:reset` command accepts account ID/current profile email, a required reason, optional replacement email, dry-run and explicit confirmation or `--force`. It works when the only Super admin is locked out, without changing passwords, account activity or role assignments. Console recovery has no CMS actor and is identified as server-command authority in access audit history. Reset actions are filterable there and record actor/target IDs, source, reason, time and before/after enrollment state; passwords and codes are not copied into the audit.
 
 Relational `wbcms_two_factor_account_states` stores a per-account session version, reset time and forced-enrollment flag. Old browser sessions are rejected before route binding or mutation on their next web request, including host web routes; remembered tokens also rotate through the host provider's token-column and model-cast contract. Login events stamp the current version, and only successful email setup clears forced enrollment. Reset therefore requires enrollment even for otherwise optional roles and cannot be bypassed by changing role-enforcement settings. Revocation works independently of session storage and is not a promise to erase an already rendered page or cancel an in-flight request. Bearer-token API routes retain their independent authentication. Existing accounts are not reset or logged out merely by this additive migration. Fresh/update migrations are repeatable and preserve revocation and audit evidence on rollback.
@@ -1402,6 +1404,21 @@ and are shown as unconfirmed when no current run heartbeat identifies them.
 
 Only the existing authenticated, system-authorized status route is exempted from
 rendered maintenance mode. Public pages and other admin paths remain in maintenance.
+
+From CMS 1.111.2, update maintenance pre-renders a translated page using the public 404 design's
+WebBlocks UI typography, centered error shell and primary action. HTML responses
+retain HTTP 503 and both HTML and JSON maintenance responses include
+`Retry-After: 60`. The retry link reloads the visitor's current URL, including its
+query. The page is prepared in the application's configured locale with packaged
+English, Turkish, German, French, Spanish and Italian translations and English
+fallback. It uses local CMS styles and a neutral public theme, without querying
+site data or resolving per-request branding/locales. Laravel's saved HTML can be
+served before Composer or the database is available; JSON requests retain the
+framework's JSON maintenance response. Both the embedded client adapter and the
+package installer use this command. Maintenance exit, recovery and the existing
+authorized status-route exemption remain unchanged. The update that first adds
+this behavior still runs through the previously installed updater.
+
 Workers require a POSIX host with a CLI PHP executable and process execution;
 launch failures are recorded and shown. Large backfills have a configurable bounded
 one-hour subprocess limit (`WEBBLOCKS_UPDATES_COMMAND_TIMEOUT`). The first upgrade

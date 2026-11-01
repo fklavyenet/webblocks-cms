@@ -28,6 +28,12 @@ return [
   ],
 
   'errors' => [
+    'maintenance' => [
+      'eyebrow' => 'Planlı bakım',
+      'title' => 'Kısa bir bakım yapıyoruz',
+      'body' => 'Şu anda sitemizi güncelliyoruz. Lütfen birazdan yeniden deneyin.',
+      'cta' => 'Yeniden dene',
+    ],
     'not_found' => [
       'eyebrow' => 'Bulunamadı',
       'title' => 'Bu sayfa mevcut değil',

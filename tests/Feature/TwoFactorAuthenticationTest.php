@@ -178,12 +178,31 @@ class TwoFactorAuthenticationTest extends TestCase
       ->assertSessionHasErrors()->assertSessionMissing('_old_input.code')->assertSessionMissing('_old_input.recovery_code')->assertSessionMissing('_old_input.current_password');
     $this->assertTrue(app(TwoFactorAuthentication::class)->required($user));
     $this->put(route('webblocks.two-factor.policy'), ['current_password' => 'fixture-password', 'require_super_admin' => 0, 'code' => $codes[0]])
-      ->assertSessionHasNoErrors();
+      ->assertSessionHasNoErrors()->assertSessionHas('two_factor_requirement_removed', true);
     $this->assertFalse(app(TwoFactorAuthentication::class)->required($user));
+    $this->assertNotNull(app(TwoFactorAuthentication::class)->credential($user)?->confirmed_at);
+    $this->get(route('admin.system.settings.edit', ['tab' => 'security']))->assertOk()
+      ->assertSee(__('webblocks-cms::two-factor.policy_removed_notice'))
+      ->assertSee('href="'.route('webblocks.two-factor.show').'"', false);
     $this->get(route('webblocks.two-factor.show', ['tab' => 'disable']))->assertOk()->assertSee('id="two-factor-disable"', false)
       ->assertDontSee(__('webblocks-cms::two-factor.required_help'));
     $this->delete(route('webblocks.two-factor.disable'), ['current_password' => 'fixture-password', 'code' => $codes[1]])->assertSessionHasNoErrors();
     $this->assertNull(app(TwoFactorAuthentication::class)->credential($user));
+  }
+
+  #[Test]
+  public function removing_a_site_role_requirement_shows_the_notice_but_enabling_or_resaving_does_not(): void
+  {
+    $user = $this->actor();
+    $this->actingAs($user);
+    $role = CmsRole::query()->firstOrFail();
+    $data = ['current_password' => 'fixture-password', 'require_super_admin' => 0, 'role_ids' => [$role->id]];
+    $this->put(route('webblocks.two-factor.policy'), $data)->assertSessionHasNoErrors()
+      ->assertSessionMissing('two_factor_requirement_removed');
+    $this->put(route('webblocks.two-factor.policy'), $data)->assertSessionHasNoErrors()
+      ->assertSessionMissing('two_factor_requirement_removed');
+    $this->put(route('webblocks.two-factor.policy'), ['current_password' => 'fixture-password', 'require_super_admin' => 0])
+      ->assertSessionHasNoErrors()->assertSessionHas('two_factor_requirement_removed', true);
   }
 
   #[Test]

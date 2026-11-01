@@ -33,6 +33,7 @@ use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateCheckResult;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateProgress;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateResult;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateServerClient;
+use WebBlocks\Cms\Support\Updates\CmsUpdateMaintenance;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -273,8 +274,9 @@ class AdminUpdateOperationTest extends TestCase
   {
     $this->withoutMiddleware('install.required');
     try {
-      $this->artisan('down', ['--render' => 'errors::503'])->assertSuccessful();
-      $this->getJson('/arbitrary-public-path')->assertStatus(503);
+      $this->artisan('down', ['--render' => CmsUpdateMaintenance::VIEW, '--retry' => 60])->assertSuccessful();
+      $this->getJson('/arbitrary-public-path')->assertStatus(503)->assertHeader('Retry-After', '60');
+      $this->get('/arbitrary-public-path')->assertStatus(503)->assertHeader('Retry-After', '60')->assertSee('We are carrying out a brief update');
       $this->getJson(route('admin.system.updates.indicator'))->assertUnauthorized();
       $this->getJson(route('admin.system.updates.index'))->assertStatus(503);
       $down = json_decode(file_get_contents(storage_path('framework/down')), true);

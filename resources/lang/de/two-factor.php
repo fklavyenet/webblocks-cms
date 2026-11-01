@@ -77,6 +77,7 @@ return [
   'send_request_failed' => 'Die Code-Anforderung konnte nicht abgeschlossen werden. Prüfen Sie Verbindung und Sitzung und versuchen Sie es erneut. Ihre Änderungen bleiben in diesem Formular.',
   'save_policy' => 'Zwei-Faktor-Regel speichern',
   'policy_saved' => 'Zwei-Faktor-Regel gespeichert.',
+  'policy_removed_notice' => 'Die Pflicht wurde aufgehoben. Bei bereits eingerichteten Konten bleibt die Zwei-Faktor-Authentifizierung aktiv und wird bei der Anmeldung weiterhin abgefragt. Verwalten Sie Ihre eigene Verifizierung in Ihren Kontoeinstellungen; die Deaktivierung erfolgt separat.',
   'send_code' => 'Neuen E-Mail-Code senden',
   'send_help' => 'Wählen Sie „E-Mail-Code senden“, um einen Code anzufordern. Codes gelten fünf Minuten und können einmal verwendet werden. Nach einer Minute können Sie einen weiteren anfordern. Prüfen Sie Ihren Spamordner, falls die E-Mail nicht ankommt.',
   'sent' => 'Bestätigungscode gesendet. Prüfen Sie Ihre E-Mail.',

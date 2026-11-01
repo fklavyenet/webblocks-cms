@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.111.2
+
+- Explain after removing a mandatory two-factor requirement that enrolled accounts still request verification at sign-in, and link directly to account verification settings. Keep account enrollment and the separate disable confirmation intact.
+- Show a translated maintenance page matching the CMS public 404 design during updates, with an explanation and a retry action for the current URL. Preserve HTTP 503 and send Retry-After: 60 for HTML and JSON maintenance responses.
+- Include all six CMS languages and prepare maintenance HTML without database or session lookups before replacing files. Preserve update status authorization, maintenance recovery and existing two-factor safeguards. No migration is required; the first update installing this fix still uses the previous updater.
+
 ## 1.111.1
 
 - Speed up staged page creation and promotion by reusing locked locale membership within the existing transaction and avoiding redundant savepoints for newly cloned blocks and translations. Preserve model validation and events, complete revision snapshots, search indexing and atomic rollback, including a locale disabled during copying. No migration is required.

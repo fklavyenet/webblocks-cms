@@ -350,8 +350,8 @@ html[data-mode="dark"] body[data-wb-public-theme="graphite"] {
 }
 
 
-/* Branded 404 shell (errors/404.blade.php). The page renders outside the
-   normal public layout, so it declares its own viewport-height centering. */
+/* Branded error shell (404 and update maintenance). These pages render outside
+   the public layout and need their own viewport-height centering. */
 .wb-error-shell {
     min-height: 100vh;
     min-block-size: 100dvh;
@@ -368,6 +368,11 @@ html[data-mode="dark"] body[data-wb-public-theme="graphite"] {
     line-height: 1;
     opacity: 0.35;
     margin-bottom: 0.5rem;
+}
+
+.wb-error-content {
+    max-inline-size: 32rem;
+    inline-size: 100%;
 }
 
 .wb-error-brand {

@@ -38,6 +38,13 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
+    @if (session('two_factor_requirement_removed'))
+        <div class="wb-alert wb-alert-info wb-stack-2" role="status">
+            <p>{{ __('webblocks-cms::two-factor.policy_removed_notice') }}</p>
+            <a class="wb-link" href="{{ route('webblocks.two-factor.show') }}">{{ __('webblocks-cms::two-factor.manage') }}</a>
+        </div>
+    @endif
+
     <div class="wb-card">
         <div class="wb-card-header"><strong>{{ $systemText('settings') }}</strong></div>
 

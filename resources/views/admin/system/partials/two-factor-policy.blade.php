@@ -6,6 +6,9 @@
         <input type="hidden" name="require_super_admin" value="0">
         <label class="wb-check" for="two-factor-root"><input id="two-factor-root" type="checkbox" name="require_super_admin" value="1" @checked(old('require_super_admin', $twoFactorPolicy['require_super_admin']))><span>{{ __('webblocks-cms::two-factor.super_admin') }}</span></label>
         <p class="wb-text-sm wb-text-muted">{{ __('webblocks-cms::two-factor.policy_removal_help') }}</p>
+        @if ($twoFactorEnabled)
+            <a class="wb-action-link" href="{{ route('webblocks.two-factor.show') }}">{{ __('webblocks-cms::two-factor.manage') }}</a>
+        @endif
         <section role="group" aria-labelledby="two-factor-roles-title" class="wb-stack-2">
             <h3 class="wb-text-base" id="two-factor-roles-title">{{ __('webblocks-cms::two-factor.roles') }}</h3>
             @foreach ($twoFactorRoles as $twoFactorRole)

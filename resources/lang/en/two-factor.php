@@ -77,6 +77,7 @@ return [
   'send_request_failed' => 'The code request could not be completed. Check your connection and session, then try again. Your changes are still in this form.',
   'save_policy' => 'Save two-factor policy',
   'policy_saved' => 'Two-factor authentication policy saved.',
+  'policy_removed_notice' => 'The requirement has been removed. Two-factor authentication remains active on accounts where it was already enabled and will still be requested at sign-in. Manage your own verification in your account settings; disabling it is a separate action.',
   'send_code' => 'Send a new email code',
   'send_help' => 'Select “Send email code” to request a code. Codes last five minutes and work once. You can request another after one minute. Check your spam folder if it does not arrive.',
   'sent' => 'Verification code sent. Check your email.',

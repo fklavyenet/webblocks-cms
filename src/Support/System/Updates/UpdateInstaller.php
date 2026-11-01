@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\System\Updates;
 use Illuminate\Support\Facades\File;
 use WebBlocks\Cms\Support\Install\InstallationGitRemoteGuard;
 use WebBlocks\Cms\Support\Updates\CmsRuntimeAssetSynchronizer;
+use WebBlocks\Cms\Support\Updates\CmsUpdateMaintenance;
 
 class UpdateInstaller
 {
@@ -18,10 +19,7 @@ class UpdateInstaller
 
   public function enterMaintenance(array &$output): void
   {
-    $command = $this->commandRunner->artisanCommand([
-      'down',
-      '--render=errors::503',
-    ]);
+    $command = $this->commandRunner->artisanCommand(CmsUpdateMaintenance::arguments());
 
     $output[] = 'Using PHP binary: '.$command[0];
 
