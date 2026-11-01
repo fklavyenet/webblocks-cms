@@ -143,6 +143,7 @@
             <div class="wb-alert wb-alert-warning wb-m-0" role="status">
                 <strong>{{ $publicText('preview.title') }}</strong> - {{ $publicText('preview.body') }}
             </div>
+            @include('webblocks-cms::admin.pages.revisions.partials.locale-restore-notice', ['localeRestoreCandidate' => $localeRestoreCandidate ?? null])
             @include('webblocks-cms::admin.pages.revisions.partials.translation-removal-warning', ['translationRemovals' => $revisionTranslationRemovals ?? []])
         @endif
 

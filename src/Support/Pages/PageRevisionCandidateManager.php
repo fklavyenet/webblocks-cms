@@ -9,6 +9,7 @@ use RuntimeException;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
+use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 
 class PageRevisionCandidateManager
 {
@@ -16,10 +17,10 @@ class PageRevisionCandidateManager
 
   public function tableExists(): bool
   {
-    return Schema::hasTable('wbcms_page_revision_candidates');
+    return Schema::hasTable('wbcms_page_revision_candidates') && Schema::hasColumns('wbcms_page_revision_candidates', ['restore_scope', 'restore_locale_id', 'source_fingerprint', 'revision_fingerprint', 'preview_fingerprint']);
   }
 
-  public function readyFor(Page $page, PageRevision $revision): ?PageRevisionCandidate
+  public function readyFor(Page $page, PageRevision $revision, string $scope = 'full_page', ?int $localeId = null): ?PageRevisionCandidate
   {
     if (! $this->tableExists()) {
       return null;
@@ -28,21 +29,33 @@ class PageRevisionCandidateManager
     return PageRevisionCandidate::query()
       ->where('page_id', $page->id)
       ->where('page_revision_id', $revision->id)
+      ->where('restore_scope', $scope)
+      ->where('restore_locale_id', $localeId)
       ->where('status', PageRevisionCandidate::STATUS_READY)
       ->with('candidatePage')
       ->latest('id')
       ->first();
   }
 
-  public function create(Page $page, PageRevision $revision, User $actor): PageRevisionCandidate
+  public function create(Page $page, PageRevision $revision, User $actor, string $scope = 'full_page', ?int $localeId = null): PageRevisionCandidate
   {
     if (! $this->tableExists()) {
       throw new RuntimeException('Page version candidates are not ready. Run the latest migrations.');
     }
 
-    return DB::transaction(function () use ($page, $revision, $actor): PageRevisionCandidate {
+    return DB::transaction(function () use ($page, $revision, $actor, $scope, $localeId): PageRevisionCandidate {
       $page = Page::query()->lockForUpdate()->findOrFail($page->id);
-      $revision = PageRevision::query()->where('page_id', $page->id)->findOrFail($revision->id);
+      $revision = PageRevision::query()->where('page_id', $page->id)->lockForUpdate()->findOrFail($revision->id);
+      $plan = null;
+      if ($scope !== 'full_page') {
+        app(PageLocaleRestoreManager::class)->lock($page);
+        $plan = app(PageLocaleRestorePlanner::class)->plan($page->fresh(), $revision, $scope, $localeId);
+        if (! $plan['ok']) {
+          throw new PageLocaleRestoreException($plan['issues']);
+        }
+      } elseif ($localeId !== null) {
+        throw new PageLocaleRestoreException([['code' => 'invalid_scope']]);
+      }
 
       PageRevisionCandidate::query()
         ->where('page_id', $page->id)
@@ -56,7 +69,7 @@ class PageRevisionCandidateManager
         'title' => ($page->title ?: 'Page').' version preview',
         'page_type' => $page->page_type,
         'page_type_id' => $page->page_type_id,
-        'layout_id' => data_get($revision->snapshot, 'page.layout_id', $page->layout_id),
+        'layout_id' => $scope === 'full_page' ? data_get($revision->snapshot, 'page.layout_id', $page->layout_id) : $page->layout_id,
         'settings' => ['revision_restore_candidate' => ['state' => 'preparing']],
         'status' => Page::STATUS_DRAFT,
         'created_by_user_id' => $actor->id,
@@ -69,13 +82,17 @@ class PageRevisionCandidateManager
       $candidate = PageRevisionCandidate::query()->create([
         'page_id' => $page->id,
         'page_revision_id' => $revision->id,
+        'restore_scope' => $scope,
+        'restore_locale_id' => $localeId,
+        'source_fingerprint' => $plan['source_fingerprint'] ?? null,
+        'revision_fingerprint' => $plan['revision_fingerprint'] ?? null,
         'candidate_page_id' => $candidatePage->id,
         'created_by_user_id' => $actor->id,
         'status' => PageRevisionCandidate::STATUS_READY,
         'source_updated_at' => $page->updated_at,
       ]);
 
-      $this->revisionManager->applySnapshotToCandidate($candidatePage, $revision->snapshot ?? [], [
+      $this->revisionManager->applySnapshotToCandidate($candidatePage, $plan['projected_snapshot'] ?? $revision->snapshot ?? [], [
         'state' => 'ready',
         'source_page_id' => $page->id,
         'revision_id' => $revision->id,
@@ -83,23 +100,34 @@ class PageRevisionCandidateManager
         'created_at' => now()->toIso8601String(),
       ]);
 
+      if ($plan !== null) {
+        $candidate->forceFill(['preview_fingerprint' => SnapshotContent::hash($this->revisionManager->snapshotForInspection($candidatePage->fresh()))])->save();
+      }
+
       return $candidate->fresh(['candidatePage']);
-    });
+    }, 3);
   }
 
-  public function apply(PageRevisionCandidate $candidate, User $actor, array $confirmedTranslationRemovalLocaleIds = []): Page
+  public function apply(PageRevisionCandidate $candidate, User $actor, array $confirmedTranslationRemovalLocaleIds = [], bool $confirmLocaleRestore = false): Page
   {
-    return DB::transaction(function () use ($candidate, $actor, $confirmedTranslationRemovalLocaleIds): Page {
+    return DB::transaction(function () use ($candidate, $actor, $confirmedTranslationRemovalLocaleIds, $confirmLocaleRestore): Page {
       $candidate = PageRevisionCandidate::query()->lockForUpdate()->findOrFail($candidate->id);
       $this->assertReady($candidate);
       $page = Page::query()->lockForUpdate()->findOrFail($candidate->page_id);
-      $revision = PageRevision::query()->where('page_id', $page->id)->findOrFail($candidate->page_revision_id);
+      $revision = PageRevision::query()->where('page_id', $page->id)->lockForUpdate()->findOrFail($candidate->page_revision_id);
 
       if (! $candidate->source_updated_at || ! $page->updated_at || ! $candidate->source_updated_at->equalTo($page->updated_at)) {
+        if ($candidate->restore_scope !== 'full_page') {
+          throw new PageLocaleRestoreException([['code' => 'stale']]);
+        }
         throw new RuntimeException('The current page changed after this restore candidate was created. Discard it and prepare a new candidate.');
       }
 
-      $this->revisionManager->restore($page, $revision, $actor, $confirmedTranslationRemovalLocaleIds);
+      if (($candidate->restore_scope ?? 'full_page') === 'full_page') {
+        $this->revisionManager->restore($page, $revision, $actor, $confirmedTranslationRemovalLocaleIds);
+      } else {
+        $page = app(PageLocaleRestoreManager::class)->apply($candidate, $page, $revision, $actor, $confirmLocaleRestore);
+      }
       $candidatePage = $candidate->candidatePage;
       $candidate->forceFill([
         'status' => PageRevisionCandidate::STATUS_APPLIED,
@@ -109,7 +137,7 @@ class PageRevisionCandidateManager
       $candidatePage?->delete();
 
       return $page->fresh();
-    });
+    }, 3);
   }
 
   public function discard(PageRevisionCandidate $candidate): void

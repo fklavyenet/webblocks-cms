@@ -6,10 +6,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use RuntimeException;
+use WebBlocks\Cms\Http\Requests\Admin\PageRevisionScopeRequest;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\ApplyPageRevisionCandidateRequest;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
+use WebBlocks\Cms\Support\Pages\PageLocaleRestoreException;
+use WebBlocks\Cms\Support\Pages\PageLocaleRestorePlanner;
 use WebBlocks\Cms\Support\Pages\PageRevisionCandidateManager;
 use WebBlocks\Cms\Support\Pages\PageRevisionInspector;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -57,29 +60,39 @@ class InternalPageRevisionController extends Controller
     ]);
   }
 
-  public function show(Request $request, Page $page, PageRevision $revision): JsonResponse
+  public function show(PageRevisionScopeRequest $request, Page $page, PageRevision $revision): JsonResponse
   {
     $this->authorizeView($request, $page);
     $this->assertRevision($page, $revision);
-    $candidate = $this->candidates->readyFor($page, $revision);
+    $candidate = $this->candidates->readyFor($page, $revision, $request->restoreScope(), $request->restoreLocaleId());
+
+    $inspection = $this->inspector->inspect($page, $revision);
+    if ($request->restoreScope() !== 'full_page') {
+      $inspection['translation_removals'] = [];
+    }
 
     return response()->json([
       'ok' => true,
       'page_id' => $page->id,
       'version_id' => $revision->id,
-      'inspection' => $this->inspector->inspect($page, $revision),
+      'inspection' => $inspection,
+      'locale_plan' => $request->restoreScope() === 'full_page' ? null : ($candidate ? app(PageLocaleRestorePlanner::class)->reviewCandidate($candidate) : app(PageLocaleRestorePlanner::class)->publicPlan(app(PageLocaleRestorePlanner::class)->plan($page, $revision, $request->restoreScope(), $request->restoreLocaleId()))),
       'candidate' => $candidate ? $this->candidatePayload($candidate) : null,
     ]);
   }
 
-  public function prepare(Request $request, Page $page, PageRevision $revision): JsonResponse
+  public function prepare(PageRevisionScopeRequest $request, Page $page, PageRevision $revision): JsonResponse
   {
     $this->authorizeRestore($request, $page);
     $this->assertRevision($page, $revision);
     $inspection = $this->inspector->inspect($page, $revision);
-    abort_if($inspection['health']['status'] === 'blocked', 409, 'This page version has missing required references.');
+    abort_if($request->restoreScope() === 'full_page' && $inspection['health']['status'] === 'blocked', 409, 'This page version has missing required references.');
 
-    $candidate = $this->candidates->create($page, $revision, $request->user());
+    try {
+      $candidate = $this->candidates->create($page, $revision, $request->user(), $request->restoreScope(), $request->restoreLocaleId());
+    } catch (PageLocaleRestoreException $exception) {
+      return response()->json(['ok' => false, 'code' => 'locale_restore_blocked', 'message' => $exception->getMessage(), 'issues' => $exception->issues], 409);
+    }
 
     return response()->json(['ok' => true, 'candidate' => $this->candidatePayload($candidate)], 201);
   }
@@ -90,7 +103,9 @@ class InternalPageRevisionController extends Controller
     abort_unless($candidate->page_id === $page->id, 404);
 
     try {
-      $page = $this->candidates->apply($candidate, $request->user(), $request->confirmedTranslationRemovalLocaleIds());
+      $page = $this->candidates->apply($candidate, $request->user(), $request->confirmedTranslationRemovalLocaleIds(), $request->boolean('confirm_locale_restore'));
+    } catch (PageLocaleRestoreException $exception) {
+      return response()->json(['ok' => false, 'code' => 'locale_restore_blocked', 'message' => $exception->getMessage(), 'issues' => $exception->issues], 409);
     } catch (TranslationRemovalConfirmationRequired $exception) {
       return response()->json([
         'ok' => false,
@@ -135,16 +150,19 @@ class InternalPageRevisionController extends Controller
 
   private function candidatePayload(PageRevisionCandidate $candidate): array
   {
-    $removals = $this->revisions->translationRemovals($candidate->page, $candidate->revision);
+    $removals = $candidate->restore_scope === 'full_page' ? $this->revisions->translationRemovals($candidate->page, $candidate->revision) : [];
 
     return [
       'translation_removals' => $removals,
       'translation_removal_confirmation_required' => $removals !== [],
       'id' => $candidate->id,
+      'restore_scope' => $candidate->restore_scope,
+      'locale_id' => $candidate->restore_locale_id,
+      'locale_plan' => $candidate->restore_scope === 'full_page' ? null : app(PageLocaleRestorePlanner::class)->reviewCandidate($candidate),
       'status' => $candidate->status,
       'source_updated_at' => $candidate->source_updated_at?->toIso8601String(),
       'preview_page_id' => $candidate->candidate_page_id,
-      'preview_url' => $candidate->candidatePage ? route('admin.pages.preview', $candidate->candidatePage, false) : null,
+      'preview_url' => $candidate->previewUrl(false),
       'apply_url' => route('internal-content-api.pages.version-candidates.apply', [$candidate->page_id, $candidate], false),
       'discard_url' => route('internal-content-api.pages.version-candidates.discard', [$candidate->page_id, $candidate], false),
     ];

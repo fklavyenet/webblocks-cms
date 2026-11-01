@@ -7,13 +7,13 @@
     $captionMode = $block->galleryCaptionsMode();
     $overlayMode = $block->galleryOverlayMode();
     $lightboxEnabled = $block->galleryLightboxEnabled();
-    $ariaLabel = $block->stringValueOrNull($block->translatedTextFieldValue('title')) ?: 'Gallery';
+    $ariaLabel = $block->stringValueOrNull($block->title) ?: 'Gallery';
     $legacyAssetIds = collect($settings['asset_ids'] ?? $settings['gallery_asset_ids'] ?? [])
         ->map(fn ($id) => (int) $id)
         ->filter(fn ($id) => $id > 0)
         ->values();
-    $galleryRelations = $block->galleryItems()->loadMissing(['media', 'galleryItemTranslations']);
-    $nativeAssets = $block->galleryAssets();
+    $galleryRelations = $block->galleryItems()->loadMissing(['media', 'galleryItemTranslations'])->filter(fn ($item) => $item->media !== null)->values();
+    $nativeAssets = $galleryRelations->map(fn ($item) => $item->media);
     $legacyAssets = $nativeAssets->isNotEmpty() || $legacyAssetIds->isEmpty()
         ? collect()
         : \WebBlocks\Cms\Models\Media::query()
@@ -46,7 +46,7 @@
     $galleryItems = $assetSource
         ->map(function ($asset, $index) use ($legacyItems, $block, $galleryRelations, $firstGalleryText) {
             $legacyItem = $legacyItems->get($index);
-            $galleryRelation = $galleryRelations->firstWhere('media_id', $asset->id);
+            $galleryRelation = $galleryRelations->get($index);
             $translation = $block->resolvedGalleryItemTranslation($galleryRelation);
             $assetUrl = $asset->url();
             $fallbackUrl = is_array($legacyItem) ? ($legacyItem['media_url'] ?? $legacyItem['url'] ?? null) : null;

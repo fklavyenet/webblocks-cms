@@ -20,7 +20,7 @@ use WebBlocks\Cms\Support\Revisions\RevisionCaptureRecorder;
 
 class SharedSlotRevisionManager
 {
-  private const SNAPSHOT_SCHEMA_VERSION = 1;
+  private const SNAPSHOT_SCHEMA_VERSION = 2;
 
   public function __construct(
     private readonly SharedSlotSourcePageManager $sourcePages,
@@ -140,6 +140,7 @@ class SharedSlotRevisionManager
           'buttonTranslations',
           'imageTranslations',
           'contactFormTranslations',
+      'pluginTranslations',
         ])
         ->orderBy('sort_order')
         ->orderBy('id'),
@@ -168,6 +169,7 @@ class SharedSlotRevisionManager
       'blocks' => $blocks
         ->map(fn (Block $block) => [
           'snapshot_id' => $block->id,
+          'revision_key' => $block->revision_key,
           'parent_snapshot_id' => $block->parent_id,
           'type' => $block->type,
           'block_type_id' => $block->block_type_id,
@@ -189,6 +191,8 @@ class SharedSlotRevisionManager
             ->sortBy('position')
             ->values()
             ->map(fn ($asset) => [
+              'snapshot_id' => $asset->id,
+              'revision_key' => $asset->revision_key,
               'media_id' => $asset->media_id,
               'role' => $asset->role,
               'position' => $asset->position,
@@ -205,6 +209,7 @@ class SharedSlotRevisionManager
                 ->all(),
             ])
             ->all(),
+          'plugin_translations' => $block->pluginTranslations->sortBy(fn ($row) => sprintf('%010d:%s', $row->locale_id, $row->field))->values()->map(fn ($row) => ['locale_id' => $row->locale_id, 'field' => $row->field, 'value' => $row->value])->all(),
           'text_translations' => $block->textTranslations
             ->sortBy('locale_id')
             ->values()
@@ -243,6 +248,7 @@ class SharedSlotRevisionManager
               'content' => $translation->content,
               'submit_label' => $translation->submit_label,
               'success_message' => $translation->success_message,
+              'consent_label' => $translation->consent_label,
             ])
             ->all(),
         ])
@@ -289,7 +295,7 @@ class SharedSlotRevisionManager
           return false;
         }
 
-        $created = $sourcePage->blocks()->create([
+        $created = $sourcePage->blocks()->make([
           'parent_id' => $parentSnapshotId === null ? null : $idMap[$parentSnapshotId],
           'type' => $block['type'],
           'block_type_id' => $block['block_type_id'],
@@ -309,6 +315,8 @@ class SharedSlotRevisionManager
           'is_system' => $block['is_system'],
         ]);
 
+        $created->withRevisionIdentity($block['revision_key'] ?? null)->save();
+
         $idMap[$block['snapshot_id']] = $created->id;
         $createdThisPass++;
 
@@ -326,15 +334,21 @@ class SharedSlotRevisionManager
       $restoredBlock = Block::query()->findOrFail($idMap[$block['snapshot_id']]);
 
       foreach ($block['block_media'] ?? [] as $asset) {
-        $restoredBlockAsset = $restoredBlock->blockAssets()->create([
+        $restoredBlockAsset = $restoredBlock->blockAssets()->make([
           'media_id' => $asset['media_id'] ?? null,
           'role' => $asset['role'],
           'position' => $asset['position'],
         ]);
 
+        $restoredBlockAsset->withRevisionIdentity($asset['revision_key'] ?? null)->save();
+
         foreach ($asset['gallery_item_translations'] ?? [] as $translation) {
           $restoredBlockAsset->galleryItemTranslations()->create($translation);
         }
+      }
+
+      foreach ($block['plugin_translations'] ?? [] as $translation) {
+        $restoredBlock->pluginTranslations()->create($translation);
       }
 
       foreach ($block['text_translations'] ?? [] as $translation) {
@@ -370,6 +384,7 @@ class SharedSlotRevisionManager
         'buttonTranslations',
         'imageTranslations',
         'contactFormTranslations',
+      'pluginTranslations',
       ]));
     }
   }

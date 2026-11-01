@@ -88,7 +88,7 @@ class PageRevisionInspector
   {
     $issues = [];
 
-    if ((int) Arr::get($snapshot, 'schema_version', 0) !== 1) {
+    if (! in_array((int) Arr::get($snapshot, 'schema_version', 0), [1, 2], true)) {
       $issues[] = ['level' => 'blocking', 'message_key' => 'unsupported_schema', 'replace' => []];
     }
 

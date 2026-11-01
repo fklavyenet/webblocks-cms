@@ -16,6 +16,9 @@ class ApplyPageRevisionCandidateRequest extends FormRequest
   {
     return [
       'confirm_apply_candidate' => ['accepted'],
+      'confirm_locale_restore' => ['sometimes', 'accepted'],
+      'restore_scope' => ['prohibited'],
+      'locale_id' => ['prohibited'],
       'confirm_translation_removal' => ['sometimes', 'accepted'],
       'translation_removal_locale_ids' => ['sometimes', 'array'],
       'translation_removal_locale_ids.*' => ['integer', 'min:1', 'distinct'],

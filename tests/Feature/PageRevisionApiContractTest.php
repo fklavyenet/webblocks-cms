@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRevisionController;
+use WebBlocks\Cms\Http\Requests\Admin\PageRevisionScopeRequest;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\ApplyPageRevisionCandidateRequest;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
@@ -32,7 +33,7 @@ class PageRevisionApiContractTest extends TestCase
     $candidate = new PageRevisionCandidate;
     foreach (['index' => [$page], 'show' => [$page, $revision], 'prepare' => [$page, $revision], 'apply' => [$page, $candidate], 'discard' => [$page, $candidate]] as $method => $arguments) {
       try {
-        $controller->$method($method === 'apply' ? ApplyPageRevisionCandidateRequest::create('/webadmin/api') : $request, ...$arguments);
+        $controller->$method($method === 'apply' ? ApplyPageRevisionCandidateRequest::create('/webadmin/api') : (in_array($method, ['show', 'prepare'], true) ? PageRevisionScopeRequest::create('/webadmin/api') : $request), ...$arguments);
         $this->fail('Expected authorization denial for '.$method);
       } catch (HttpException $exception) {
         $this->assertSame(403, $exception->getStatusCode());
@@ -68,5 +69,8 @@ class PageRevisionApiContractTest extends TestCase
     $this->assertSame('content.apply', $paths['/pages/{page}/versions/{revision}/candidate']['post']['x-required-capability']);
     $this->assertSame('content.apply + content.publish', $paths['/pages/{page}/version-candidates/{candidate}/apply']['post']['x-required-capability']);
     $this->assertTrue($paths['/pages/{page}/version-candidates/{candidate}/apply']['post']['x-destructive']);
+    $this->assertSame(['full_page', 'page_fields', 'page_locale'], $paths['/pages/{page}/versions/{revision}/candidate']['post']['requestBody']['content']['application/json']['schema']['properties']['restore_scope']['enum']);
+    $this->assertSame('boolean', $paths['/pages/{page}/version-candidates/{candidate}/apply']['post']['requestBody']['content']['application/json']['schema']['properties']['confirm_locale_restore']['type']);
+    $this->assertSame('locale_id', $paths['/pages/{page}/versions/{revision}']['get']['parameters'][1]['name']);
   }
 }

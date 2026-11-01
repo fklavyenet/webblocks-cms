@@ -25,7 +25,7 @@ use WebBlocks\Cms\Support\Revisions\RevisionCaptureRecorder;
 
 class PageRevisionManager
 {
-  private const SNAPSHOT_SCHEMA_VERSION = 1;
+  private const SNAPSHOT_SCHEMA_VERSION = 2;
 
   public function __construct(
     private readonly PageWorkflowManager $workflowManager,
@@ -169,6 +169,7 @@ class PageRevisionManager
       'blocks.buttonTranslations',
       'blocks.imageTranslations',
       'blocks.contactFormTranslations',
+      'blocks.pluginTranslations',
     ]);
 
     return $this->snapshot($page);
@@ -267,6 +268,7 @@ class PageRevisionManager
       'blocks' => $blocks
         ->map(fn (Block $block) => [
           'snapshot_id' => $block->id,
+          'revision_key' => $block->revision_key,
           'parent_snapshot_id' => $block->parent_id,
           'type' => $block->type,
           'block_type_id' => $block->block_type_id,
@@ -288,6 +290,8 @@ class PageRevisionManager
             ->sortBy('position')
             ->values()
             ->map(fn ($asset) => [
+              'snapshot_id' => $asset->id,
+              'revision_key' => $asset->revision_key,
               'media_id' => $asset->media_id,
               'role' => $asset->role,
               'position' => $asset->position,
@@ -304,6 +308,7 @@ class PageRevisionManager
                 ->all(),
             ])
             ->all(),
+          'plugin_translations' => $block->pluginTranslations->sortBy(fn ($row) => sprintf('%010d:%s', $row->locale_id, $row->field))->values()->map(fn ($row) => ['locale_id' => $row->locale_id, 'field' => $row->field, 'value' => $row->value])->all(),
           'text_translations' => $block->textTranslations
             ->sortBy('locale_id')
             ->values()
@@ -342,6 +347,7 @@ class PageRevisionManager
               'content' => $translation->content,
               'submit_label' => $translation->submit_label,
               'success_message' => $translation->success_message,
+              'consent_label' => $translation->consent_label,
             ])
             ->all(),
         ])
@@ -435,7 +441,7 @@ class PageRevisionManager
           return false;
         }
 
-        $created = $page->blocks()->create([
+        $created = $page->blocks()->make([
           'parent_id' => $parentSnapshotId === null ? null : $idMap[$parentSnapshotId],
           'type' => $block['type'],
           'block_type_id' => $block['block_type_id'],
@@ -455,6 +461,8 @@ class PageRevisionManager
           'is_system' => $block['is_system'],
         ]);
 
+        $created->withRevisionIdentity($block['revision_key'] ?? null)->save();
+
         $idMap[$block['snapshot_id']] = $created->id;
         $createdThisPass++;
 
@@ -472,15 +480,21 @@ class PageRevisionManager
       $restoredBlock = Block::query()->findOrFail($idMap[$block['snapshot_id']]);
 
       foreach ($block['block_media'] ?? [] as $asset) {
-        $restoredBlockAsset = $restoredBlock->blockAssets()->create([
+        $restoredBlockAsset = $restoredBlock->blockAssets()->make([
           'media_id' => $asset['media_id'] ?? null,
           'role' => $asset['role'],
           'position' => $asset['position'],
         ]);
 
+        $restoredBlockAsset->withRevisionIdentity($asset['revision_key'] ?? null)->save();
+
         foreach ($asset['gallery_item_translations'] ?? [] as $translation) {
           $restoredBlockAsset->galleryItemTranslations()->create($translation);
         }
+      }
+
+      foreach ($block['plugin_translations'] ?? [] as $translation) {
+        $restoredBlock->pluginTranslations()->create($translation);
       }
 
       foreach ($block['text_translations'] ?? [] as $translation) {
@@ -516,6 +530,7 @@ class PageRevisionManager
         'buttonTranslations',
         'imageTranslations',
         'contactFormTranslations',
+      'pluginTranslations',
       ]));
     }
   }

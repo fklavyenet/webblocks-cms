@@ -768,6 +768,7 @@ return [
     'actions' => 'Actions',
   ],
   'page_revisions' => [
+    'locale_restore' => require __DIR__.'/page-locale-restore.php',
     'translation_removal_title' => 'Translations will be removed',
     'translation_removal_help' => 'These languages are absent from the selected version. Applying it will remove their page translations and addresses. Removal is blocked until you explicitly confirm it.',
     'confirm_translation_removal' => 'I explicitly agree to remove the listed translations and their addresses.',

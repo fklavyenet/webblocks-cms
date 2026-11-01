@@ -639,6 +639,7 @@ $translations = [
     'actions' => 'Aksiyonlar',
   ],
   'page_revisions' => [
+    'locale_restore' => require __DIR__.'/page-locale-restore.php',
     'translation_removal_title' => 'Çeviriler kaldırılacak',
     'translation_removal_help' => 'Bu diller seçilen sürümde yok. Sürümü uygulamak bu sayfa çevirilerini ve adreslerini kaldırır. Açıkça onaylayana kadar kaldırma işlemi engellenir.',
     'confirm_translation_removal' => 'Listelenen çevirilerin ve adreslerinin kaldırılmasını açıkça onaylıyorum.',

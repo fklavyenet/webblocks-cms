@@ -389,7 +389,7 @@ class SiteCloneService
       ->get();
 
     foreach ($blocks as $block) {
-      $attributes = Arr::except($block->portableAttributes(), ['id', 'parent_id', 'page_id', 'created_at', 'updated_at']);
+      $attributes = Arr::except($block->portableAttributes(), ['id', 'revision_key', 'parent_id', 'page_id', 'created_at', 'updated_at']);
       $attributes['page_id'] = $pageMap[$block->page_id];
       $attributes['parent_id'] = null;
       $attributes['created_at'] = $block->created_at;
@@ -487,14 +487,14 @@ class SiteCloneService
       PageSlot::query()
         ->where('page_id', $targetPageId)
         ->where('slot_type_id', $sourceSlot->slot_type_id)
-        ->update([
+        ->first()?->forceFill([
           'source_type' => $sourceSlot->runtimeSourceType(),
           'shared_slot_id' => $sharedSlotId,
           'sort_order' => $sourceSlot->sort_order,
           'settings' => PageSlot::sanitizeSettings($sourceSlot->settings),
           'created_at' => $sourceSlot->created_at,
           'updated_at' => $sourceSlot->updated_at,
-        ]);
+        ])->save();
     }
   }
 

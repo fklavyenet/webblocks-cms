@@ -21,12 +21,13 @@ final class SnapshotFields
       'snapshot_page_translations' => $ints('locale_id og_image_media_id') + $text('name slug path seo_title seo_description seo_keywords list_excerpt og_title og_description'),
       'snapshot_slots' => $ints('slot_type_id shared_slot_id sort_order') + $text('source_type'),
       'snapshot_assets' => $text('type path load_position') + $ints('sort_order') + $bools('is_defer is_async is_module is_enabled'),
-      'snapshot_blocks' => $ints('snapshot_id parent_snapshot_id block_type_id slot_type_id sort_order media_id') + $text('type source_type slot title subtitle content url variant status') + $bools('is_system'),
-      'snapshot_block_media' => $ints('media_id position') + $text('role'),
+      'snapshot_blocks' => $ints('snapshot_id parent_snapshot_id block_type_id slot_type_id sort_order media_id') + $text('revision_key type source_type slot title subtitle content url variant status') + $bools('is_system'),
+      'snapshot_block_media' => $ints('snapshot_id media_id position') + $text('revision_key role'),
       'snapshot_media_translations' => $ints('locale_id') + $text('alt_text caption overlay_title overlay_text'),
       'snapshot_text_translations' => $ints('locale_id') + $text('title eyebrow subtitle content'),
       'snapshot_button_translations' => $ints('locale_id') + $text('title url'),
       'snapshot_image_translations' => $ints('locale_id') + $text('caption alt_text url'),
+      'snapshot_plugin_translations' => $ints('locale_id') + $text('field value'),
       'snapshot_contact_translations' => $ints('locale_id') + $text('title content submit_label success_message consent_label'),
     ];
     foreach (['block_appearance_settings', 'block_media_settings', 'block_navigation_settings', 'block_content_settings', 'block_content_bindings', 'block_content_collections'] as $name) {
@@ -96,7 +97,7 @@ final class SnapshotFields
       $table = match ($path[2]) {
         'block_media' => 'snapshot_block_media', 'text_translations' => 'snapshot_text_translations',
         'button_translations' => 'snapshot_button_translations', 'image_translations' => 'snapshot_image_translations',
-        'contact_form_translations' => 'snapshot_contact_translations', default => null,
+        'contact_form_translations' => 'snapshot_contact_translations', 'plugin_translations' => 'snapshot_plugin_translations', default => null,
       };
       $index = $ancestors[4];
     } elseif (count($path) === 7 && $path[0] === 'blocks' && $path[2] === 'block_media' && $path[4] === 'gallery_item_translations') {

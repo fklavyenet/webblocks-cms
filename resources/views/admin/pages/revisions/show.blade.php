@@ -17,6 +17,7 @@
         'actions' => '<a href="'.route('admin.pages.revisions.index', $page).'" class="wb-btn wb-btn-secondary">'.e($text('back_to_version_history')).'</a>',
     ])
     @include('webblocks-cms::admin.partials.flash')
+    @include('webblocks-cms::admin.pages.revisions.partials.locale-restore-review')
 
     <div class="wb-grid wb-grid-2 wb-gap-4">
         <div class="wb-card wb-card-muted">
@@ -31,6 +32,7 @@
             </div>
         </div>
 
+        @if ($restoreScope === 'full_page')
         <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $text('restore_readiness') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-3">
@@ -52,6 +54,7 @@
                 <div class="wb-text-sm wb-text-muted">{{ $text('shared_slot_boundary') }}</div>
             </div>
         </div>
+        @endif
     </div>
 
     @if ($inspection['translation_removals'] !== [])
@@ -77,6 +80,7 @@
         </div>
     @endif
 
+    @if ($restoreScope === 'full_page')
     <div class="wb-card">
         <div class="wb-card-header"><strong>{{ $text('current_vs_version') }}</strong></div>
         <div class="wb-card-body">
@@ -122,18 +126,24 @@
                 </table>
             </div>
         </div>
+    @endif
+    @if ($restoreScope !== 'full_page')
+        <div class="wb-card">
+    @endif
         <div class="wb-card-footer wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <span class="wb-text-sm wb-text-muted">{{ $text('candidate_first_help') }}</span>
             @if ($canRestoreRevisions && ! $candidate)
                 <form method="POST" action="{{ route('admin.pages.revisions.candidate.prepare', [$page, $revision]) }}">
                     @csrf
-                    <button type="submit" class="wb-btn wb-btn-primary">{{ $text('prepare_candidate') }}</button>
+                    <input type="hidden" name="restore_scope" value="{{ $restoreScope }}">
+                    @if ($restoreLocaleId)<input type="hidden" name="locale_id" value="{{ $restoreLocaleId }}">@endif
+                    <button type="submit" class="wb-btn wb-btn-primary" @disabled($restoreScope === 'full_page' ? $inspection['health']['status'] === 'blocked' : ! ($localePlan['ok'] ?? false))>{{ $text('prepare_candidate') }}</button>
                 </form>
             @elseif ($candidate)
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <a href="{{ route('admin.pages.preview', $candidate->candidatePage) }}" class="wb-btn wb-btn-primary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i> <span>{{ $text('preview_candidate') }}</span></a>
+                    <a href="{{ $candidate->previewUrl() }}" class="wb-btn wb-btn-primary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i> <span>{{ $text('preview_candidate') }}</span></a>
                     <button type="button" class="wb-btn wb-btn-secondary" data-wb-toggle="modal" data-wb-target="#discard-page-version-candidate-modal">{{ $text('discard_candidate') }}</button>
-                    <button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#apply-page-version-candidate-modal">{{ $text('apply_candidate') }}</button>
+                    <button type="button" class="wb-btn wb-btn-danger" data-wb-toggle="modal" data-wb-target="#apply-page-version-candidate-modal" @disabled($restoreScope !== 'full_page' && ! ($localePlan['ok'] ?? false))>{{ $text('apply_candidate') }}</button>
                 </div>
             @else
                 <span class="wb-text-sm wb-text-muted">{{ $inspection['health']['status'] === 'blocked' ? $text('restore_blocked') : $text('view_only') }}</span>
@@ -152,30 +162,7 @@
             'method' => 'POST',
             'submitLabel' => $text('apply_candidate'),
         ])
-            <p>{{ $text('apply_candidate_warning', ['id' => $revision->id]) }}</p>
-            @if ($inspection['translation_removals'] !== [])
-                <div class="wb-alert wb-alert-warning">
-                    <div>
-                        <strong>{{ $text('translation_removal_title') }}</strong>
-                        <ul>
-                            @foreach ($inspection['translation_removals'] as $translation)
-                                <li>{{ $translation['name'] }} ({{ $translation['code'] }}) — {{ $translation['path'] }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-                @foreach ($inspection['translation_removals'] as $translation)
-                    <input type="hidden" name="translation_removal_locale_ids[]" value="{{ $translation['locale_id'] }}">
-                @endforeach
-                <label class="wb-cluster wb-cluster-2" for="confirm_translation_removal">
-                    <input id="confirm_translation_removal" name="confirm_translation_removal" type="checkbox" value="1" required>
-                    <span>{{ $text('confirm_translation_removal') }}</span>
-                </label>
-            @endif
-            <label class="wb-cluster wb-cluster-2" for="confirm_apply_candidate">
-                <input id="confirm_apply_candidate" name="confirm_apply_candidate" type="checkbox" value="1" required>
-                <span>{{ $text('confirm_candidate_previewed') }}</span>
-            </label>
+            @include('webblocks-cms::admin.pages.revisions.partials.apply-confirmation')
         @endcomponent
 
         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [

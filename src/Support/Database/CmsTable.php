@@ -48,6 +48,7 @@ final class CmsTable
     'snapshot_button_translations',
     'snapshot_image_translations',
     'snapshot_contact_translations',
+    'snapshot_plugin_translations',
     'snapshot_block_appearance_settings',
     'snapshot_block_media_settings',
     'snapshot_block_navigation_settings',

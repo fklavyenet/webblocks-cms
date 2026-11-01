@@ -1212,9 +1212,91 @@ Search checks compare eligible published page/locale scopes with index rows;
 they do not prove text freshness. Backup availability does not prove restore
 integrity. Update readiness remains separate from normal site operation.
 
+## Revision identity foundation (1.110.6)
+
+Blocks carry an internal `revision_key`, unique within a page; gallery media
+links carry one unique within their block. These UUIDs are not authorable fields.
+Normal content changes and gallery reordering retain identity. Independent model
+replication, page/site duplication and site imports create new identities; site
+exports do not carry local history identities. Same-page restore candidates and
+staged preparation/promotion retain lineage in their separate page scopes.
+
+New page and Shared Slot revision snapshots use schema version 2 and persist
+block/gallery identities as declared relational scalars. Schema version 1 remains
+readable and restorable. Upgrade backfills only current live records without
+rewriting historical snapshots, hashes, timestamps or audit history. Old full
+restores receive new identities where historical keys are absent, rather than
+inventing lineage. The additive migration retains restoration metadata on down.
+
+The internal page-revision identity matcher is read-only and checks source page
+and site ownership. Modern records match by UUID; legacy blocks match only an
+original live row on the same page with compatible type and structural context.
+Legacy gallery items without identity are unavailable for scoped matching.
+Deleted/recreated blocks, duplicate identities, missing items, changed parents,
+placement, type or media assignments produce explicit incompatibility codes.
+No fallback match by text, order or media ID is attempted. The language-scoped
+restore workflow below consumes this compatibility result.
+
+## Language-scoped page restore (1.110.6)
+
+Version review offers `full_page` (default), `page_fields` and `page_locale`.
+The latter two require an enabled site `locale_id` present in the saved version.
+`page_fields` restores only that locale's page name, slug/path, SEO/list excerpt
+and Open Graph fields. `page_locale` additionally restores declared native text,
+button, image, contact-form (including consent text) and gallery-item copy.
+Current structure, layout, slots, ordering, shared URLs/settings, media assignments,
+page assets and workflow/publication state are preserved. Shared Slots, plugin
+fields, external content and raw HTML remain current and are explicitly excluded.
+New snapshots include plugin translation rows so technical previews retain current
+plugin copy; a language restore does not apply historical plugin fields.
+
+Review displays localized field differences, the stored path and the proposed
+public URL with the current site domain, public mount and language prefix. Native
+restore refuses incompatible identities/structure; choosing page fields only is
+an explicit alternative. Absent historical locales, rows and required fields never
+authorize deletion or clearing. Complete historical rows can recreate a currently
+missing selected-locale row. Explicit null/empty values retain their meaning.
+Address collisions, reserved paths and missing Open Graph media block preparation.
+Changes that would affect another enabled language through row-level or known
+field-level fallback are refused, with the languages, owners and fields reported.
+When a legacy helper has no default row, its first-row fallback is checked even
+for a non-default selected language. Preparation shortcuts and discard redirects
+preserve the selected language and scope.
+
+The private noindex preview opens in the selected language, clones the current
+page and overlays only the reviewed locale fields. Its technical translation rows
+include enabled languages only; dormant translations remain untouched in the
+source and complete safety/result snapshots, including their timestamps. Duplicate gallery media links render their own item translations;
+the asset-collection helper retains its existing deduplication contract. Gallery
+accessibility labels follow the resolved language. Scope and locale are stored
+on the candidate, carried through review and cannot be overridden on apply.
+The panel requires separate, initially unchecked selected-language consent plus
+its existing preview acknowledgement. API apply requires `confirm_locale_restore:
+true` for these candidates. It refuses client scope/locale overrides.
+
+Apply locks the source graph including page assets, the complete preview graph,
+enabled-locale context and referenced Shared Slot sources, revalidates ownership/references/fallback and compares source, historical
+snapshot and prepared-preview fingerprints. A changed dependency or edited
+preview requires a fresh candidate. Only selected-locale rows are updated or
+created in one transaction; existing row/block/item IDs and all other languages
+are preserved, including non-target translation timestamps. Publication consent
+validation failures roll the operation back.
+Full safety/result versions and the candidate's bound scope/language audit remain
+available; applying the safety version with the same language scope preserves
+later edits in other languages. Applying or discarding retires the technical draft.
+
+The existing version review/candidate API routes accept `restore_scope` and
+`locale_id` on review/preparation. Responses expose `locale_plan` with changes,
+exclusions, proposed path and blocking issues; candidates expose their bound scope
+and locale. Refusals return HTTP 409 `locale_restore_blocked` with issues, while
+malformed selections return validation errors. Read/apply/publish capabilities
+and delegated-user requirements are unchanged. All six panel languages include
+scope, difference, preview, consent and refusal copy. Additive fresh/update
+migrations install typed candidate metadata without rewriting history.
+
 ## Page version translation removal protection
 
-Page version restoration replaces the complete page snapshot, including all
+Full-page version restoration replaces the complete page snapshot, including all
 locale rows. Review and candidate preparation report `translation_removals`:
 current page languages absent from the selected version, with `locale_id`,
 `code`, `name` and current `path`. The panel lists these languages and addresses
@@ -1232,7 +1314,7 @@ service rechecks current translations under the page lock, also guarding direct
 restores. Existing stale-candidate rejection and pre-restore safety snapshots
 remain in force. Restores without removed languages need no additional consent.
 This is a complete page restore; existing translations may return to older
-content, addresses and SEO fields. It does not provide per-language rollback.
+content, addresses and SEO fields. The separate language-scoped workflow above preserves non-target locales.
 
 ## Relational runtime fields and compatibility
 

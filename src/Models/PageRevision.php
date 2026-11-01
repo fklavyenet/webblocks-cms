@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 class PageRevision extends CmsModel
 {
@@ -66,6 +68,10 @@ class PageRevision extends CmsModel
 
   public function labelText(): string
   {
+    if ($this->label === 'Language restored') {
+      return app(CmsTranslator::class)->admin('page_revisions.locale_restore.restored_label', app(AdminLocaleResolver::class)->locale());
+    }
+
     return $this->label ?: 'Page revision';
   }
 

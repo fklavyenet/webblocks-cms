@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased
+## 1.110.6
+
+- Restore one language’s page fields or page fields plus native block translations without replacing other languages, current layout, block structure, shared settings, media assignments or workflow state.
+- Review localized field differences and the proposed public URL, open the preview in the selected language, and explicitly confirm that language’s restore. Bind scope and language to the prepared candidate; retain the full-page translation-removal safeguards from 1.110.5.
+- Match native blocks and gallery items through durable internal identities. Refuse ambiguous, incomplete or structurally incompatible history without guessing, and offer page fields only as an explicit alternative. Additive migrations retain existing history and default older candidates to full-page mode.
+- Prevent changes to other languages through default or first-row fallback. Keep disabled-language records and timestamps intact in the source and safety history, while the private render preview contains only enabled languages.
+- Recheck source, history and preview fingerprints under transaction locks, including page assets and preview rows. Update only selected-language records, retain complete safety/result versions, support recovery of the same language, and preserve existing authorization boundaries.
+- Preserve current plugin copy in previews and contact consent text in snapshots. Render repeated gallery media links with their own translated item copy and localized accessibility labels while retaining asset-collection deduplication.
+- Preserve language/scope context after preparation and discard. Add six-language panel copy and coverage for dormant translations, non-default fallback, concurrent edits, role/site isolation, rollback, recovery and schema upgrades.
+- Persist copied page-slot settings through the model when cloning a site, keeping compatibility with the current relational schema.
 
 ## 1.110.5
 

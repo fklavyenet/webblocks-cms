@@ -7,10 +7,13 @@ use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use RuntimeException;
 use WebBlocks\Cms\Http\Requests\Admin\ApplyPageRevisionCandidateRequest;
+use WebBlocks\Cms\Http\Requests\Admin\PageRevisionScopeRequest;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Pages\PageLocaleRestoreException;
+use WebBlocks\Cms\Support\Pages\PageLocaleRestorePlanner;
 use WebBlocks\Cms\Support\Pages\PageRevisionCandidateManager;
 use WebBlocks\Cms\Support\Pages\PageRevisionInspector;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -53,25 +56,35 @@ class PageRevisionController extends Controller
     ]);
   }
 
-  public function show(Page $page, PageRevision $revision): View
+  public function show(PageRevisionScopeRequest $request, Page $page, PageRevision $revision): View
   {
     $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
     abort_unless($revision->page_id === $page->id, 404);
     abort_unless($this->revisionManager->canView(request()->user(), $page), 403);
 
     $inspection = $this->revisionInspector->inspect($page, $revision);
+    $scope = $request->restoreScope();
+    $localeId = $request->restoreLocaleId();
+    $candidate = $this->candidateManager->readyFor($page, $revision, $scope, $localeId);
+    $localePlan = $scope === 'full_page' ? null : ($candidate ? app(PageLocaleRestorePlanner::class)->reviewCandidate($candidate) : app(PageLocaleRestorePlanner::class)->publicPlan(app(PageLocaleRestorePlanner::class)->plan($page, $revision, $scope, $localeId)));
+    if ($localePlan !== null) {
+      $inspection['translation_removals'] = [];
+    }
 
     return view('webblocks-cms::admin.pages.revisions.show', [
       'page' => $page->loadMissing('site'),
       'revision' => $revision->loadMissing(['actor', 'createdByUser', 'restoredFrom']),
       'inspection' => $inspection,
-      'canRestoreRevisions' => $this->revisionManager->canRestore(request()->user(), $page)
-        && $inspection['health']['status'] !== 'blocked',
-      'candidate' => $this->candidateManager->readyFor($page, $revision),
+      'restoreScope' => $scope,
+      'restoreLocaleId' => $localeId,
+      'localePlan' => $localePlan,
+      'restoreLocales' => $page->site->enabledLocales()->get(),
+      'canRestoreRevisions' => $this->revisionManager->canRestore(request()->user(), $page),
+      'candidate' => $candidate,
     ]);
   }
 
-  public function prepareCandidate(Page $page, PageRevision $revision): RedirectResponse
+  public function prepareCandidate(PageRevisionScopeRequest $request, Page $page, PageRevision $revision): RedirectResponse
   {
     $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
     abort_unless($revision->page_id === $page->id, 404);
@@ -83,20 +96,24 @@ class PageRevisionController extends Controller
         ->withErrors(['revision' => 'Page version candidates are not ready yet. Run the latest migrations.']);
     }
 
-    if ($this->revisionInspector->inspect($page, $revision)['health']['status'] === 'blocked') {
+    if ($request->restoreScope() === 'full_page' && $this->revisionInspector->inspect($page, $revision)['health']['status'] === 'blocked') {
       return redirect()
         ->route('admin.pages.revisions.show', [$page, $revision])
         ->withErrors(['revision' => 'This version cannot be restored because required referenced records are missing.']);
     }
 
-    $candidate = $this->candidateManager->create($page, $revision, request()->user());
+    try {
+      $candidate = $this->candidateManager->create($page, $revision, $request->user(), $request->restoreScope(), $request->restoreLocaleId());
+    } catch (PageLocaleRestoreException $exception) {
+      return redirect()->route('admin.pages.revisions.show', [$page, $revision, 'restore_scope' => $request->restoreScope(), 'locale_id' => $request->restoreLocaleId()])->withErrors(['candidate' => $exception->getMessage()]);
+    }
 
     return redirect()
-      ->route('admin.pages.revisions.show', [$page, $revision])
+      ->route('admin.pages.revisions.show', [$page, $revision, 'restore_scope' => $request->restoreScope(), 'locale_id' => $request->restoreLocaleId()])
       ->with('status', 'Restore candidate prepared. Preview it before applying it to the current page.')
       ->with('status_action', [
         'label' => 'Preview candidate',
-        'url' => route('admin.pages.preview', $candidate->candidatePage),
+        'url' => $candidate->previewUrl(),
       ]);
   }
 
@@ -107,10 +124,10 @@ class PageRevisionController extends Controller
     abort_unless($this->revisionManager->canRestore($request->user(), $page), 403);
 
     try {
-      $page = $this->candidateManager->apply($candidate, $request->user(), $request->confirmedTranslationRemovalLocaleIds());
+      $page = $this->candidateManager->apply($candidate, $request->user(), $request->confirmedTranslationRemovalLocaleIds(), $request->boolean('confirm_locale_restore'));
     } catch (RuntimeException $exception) {
       return redirect()
-        ->route('admin.pages.revisions.show', [$page, $candidate->page_revision_id])
+        ->route('admin.pages.revisions.show', [$page, $candidate->page_revision_id, 'restore_scope' => $candidate->restore_scope, 'locale_id' => $candidate->restore_locale_id])
         ->withErrors(['candidate' => $exception->getMessage()]);
     }
 
@@ -128,7 +145,7 @@ class PageRevisionController extends Controller
     $this->candidateManager->discard($candidate);
 
     return redirect()
-      ->route('admin.pages.revisions.show', [$page, $revisionId])
+      ->route('admin.pages.revisions.show', [$page, $revisionId, 'restore_scope' => $candidate->restore_scope, 'locale_id' => $candidate->restore_locale_id])
       ->with('status', 'Restore candidate discarded. The current page was not changed.');
   }
 }

@@ -2,7 +2,6 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
-use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -12,6 +11,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\PageRevisionController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRevisionController;
 use WebBlocks\Cms\Http\Requests\Admin\ApplyPageRevisionCandidateRequest as AdminApplyRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PagePreviewRequest;
+use WebBlocks\Cms\Http\Requests\Admin\PageRevisionScopeRequest;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\ApplyPageRevisionCandidateRequest as ApiApplyRequest;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
@@ -134,8 +134,10 @@ class PageRevisionTranslationRemovalTest extends TestCase
   {
     [$page, $revision, $german, $actor] = $this->fixture();
     $controller = app(InternalPageRevisionController::class);
-    $request = Request::create('/webadmin/api');
+    $request = PageRevisionScopeRequest::create('/webadmin/api');
     $request->setUserResolver(fn () => $actor);
+    $request->setContainer($this->app)->setRedirector($this->app['redirect']);
+    $request->validateResolved();
     $prepared = $controller->prepare($request, $page, $revision);
     $payload = $prepared->getData(true)['candidate'];
     $this->assertTrue($payload['translation_removal_confirmation_required']);
@@ -207,10 +209,9 @@ class PageRevisionTranslationRemovalTest extends TestCase
     $source = file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/pages/revisions/show.blade.php');
     $warningStart = strpos($source, "    @if (\$inspection['translation_removals'] !== [])");
     $warningEnd = strpos($source, '    @if ($candidate)', $warningStart);
-    $modalStart = strpos($source, "            <p>{{ \$text('apply_candidate_warning'");
-    $modalEnd = strpos($source, '        @endcomponent', $modalStart);
+    $modal = file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/pages/revisions/partials/apply-confirmation.blade.php');
     $text = fn ($key, $replace = []) => app(CmsTranslator::class)->admin('page_revisions.'.$key, 'en', $replace);
-    $html = app('blade.compiler')->render(substr($source, $warningStart, $warningEnd - $warningStart).substr($source, $modalStart, $modalEnd - $modalStart), compact('inspection', 'revision', 'text'));
+    $html = app('blade.compiler')->render(substr($source, $warningStart, $warningEnd - $warningStart).$modal, compact('inspection', 'revision', 'text', 'candidate'));
     $this->assertStringContainsString('German (de)', $html);
     $this->assertStringContainsString('/de/service', $html);
     $this->assertStringContainsString('name="translation_removal_locale_ids[]" value="'.$german->id.'"', $html);
@@ -218,7 +219,7 @@ class PageRevisionTranslationRemovalTest extends TestCase
     $this->assertStringNotContainsString('checked', $html);
 
     $inspection['translation_removals'] = [];
-    $html = app('blade.compiler')->render(substr($source, $warningStart, $warningEnd - $warningStart).substr($source, $modalStart, $modalEnd - $modalStart), compact('inspection', 'revision', 'text'));
+    $html = app('blade.compiler')->render(substr($source, $warningStart, $warningEnd - $warningStart).$modal, compact('inspection', 'revision', 'text', 'candidate'));
     $this->assertStringNotContainsString('name="confirm_translation_removal"', $html);
   }
 

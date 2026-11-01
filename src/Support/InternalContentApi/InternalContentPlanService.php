@@ -920,7 +920,7 @@ class InternalContentPlanService
     $copies = [];
 
     foreach ($blocks as $block) {
-      $attributes = Arr::except($block->portableAttributes(), ['id', 'parent_id', 'page_id', 'created_at', 'updated_at']);
+      $attributes = Arr::except($block->portableAttributes(), ['id', 'revision_key', 'parent_id', 'page_id', 'created_at', 'updated_at']);
       $attributes['page_id'] = $targetPage->id;
       $attributes['parent_id'] = null;
 
@@ -928,18 +928,20 @@ class InternalContentPlanService
         $attributes['status'] = $forcedStatus;
       }
 
-      $newBlock = Block::query()->create($attributes);
+      $newBlock = (new Block($attributes))->withRevisionIdentity($block->revision_key);
+      $newBlock->save();
       $newBlock->setRelation('page', $targetPage);
       $blockMap[$block->id] = $newBlock->id;
       $copies[$block->id] = $newBlock;
 
       foreach ($block->blockAssets as $blockAsset) {
-        $newBlockAsset = BlockAsset::query()->create([
+        $newBlockAsset = (new BlockAsset([
           'block_id' => $newBlock->id,
           'media_id' => $blockAsset->media_id,
           'role' => $blockAsset->role,
           'position' => $blockAsset->position,
-        ]);
+        ]))->withRevisionIdentity($blockAsset->revision_key);
+        $newBlockAsset->save();
 
         foreach ($blockAsset->galleryItemTranslations as $translation) {
           $newBlockAsset->galleryItemTranslations()->create(Arr::except(

@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use WebBlocks\Cms\Models\Concerns\HasRevisionIdentity;
 use WebBlocks\Cms\Models\Concerns\ReusesMediaRelationAliases;
 
 class BlockMedia extends CmsModel
 {
   use HasFactory;
+  use HasRevisionIdentity;
   use ReusesMediaRelationAliases;
 
   protected $table = 'block_media';

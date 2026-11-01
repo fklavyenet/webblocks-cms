@@ -407,7 +407,8 @@ class PageController extends Controller
       ->view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.pages.show', [
         ...$presenter->present($page, preview: true, locale: $translation?->locale),
         'previewMode' => true,
-        'revisionTranslationRemovals' => $restoreCandidate ? $this->revisionManager->translationRemovals($restoreCandidate->page, $restoreCandidate->revision) : [],
+        'localeRestoreCandidate' => $restoreCandidate && $restoreCandidate->restore_scope !== 'full_page' ? $restoreCandidate : null,
+        'revisionTranslationRemovals' => $restoreCandidate && $restoreCandidate->restore_scope === 'full_page' ? $this->revisionManager->translationRemovals($restoreCandidate->page, $restoreCandidate->revision) : [],
       ])
       ->header('X-Robots-Tag', 'noindex, nofollow');
   }

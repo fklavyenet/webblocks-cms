@@ -15,6 +15,11 @@ class PageRevisionCandidate extends CmsModel
 
   protected $fillable = [
     'page_id',
+    'restore_scope',
+    'restore_locale_id',
+    'source_fingerprint',
+    'revision_fingerprint',
+    'preview_fingerprint',
     'page_revision_id',
     'candidate_page_id',
     'created_by_user_id',
@@ -28,9 +33,27 @@ class PageRevisionCandidate extends CmsModel
   {
     return [
       'source_updated_at' => 'datetime',
+      'restore_locale_id' => 'integer',
       'applied_at' => 'datetime',
       'discarded_at' => 'datetime',
     ];
+  }
+
+  public function previewUrl(bool $absolute = true): ?string
+  {
+    if (! $this->candidatePage) {
+      return null;
+    }
+    $parameters = ['page' => $this->candidatePage];
+    if (($this->restore_scope ?? 'full_page') !== 'full_page') {
+      $code = Locale::find($this->restore_locale_id)?->code;
+      if ($code === null) {
+        return null;
+      }
+      $parameters['locale'] = $code;
+    }
+
+    return route('admin.pages.preview', $parameters, $absolute);
   }
 
   public function page(): BelongsTo

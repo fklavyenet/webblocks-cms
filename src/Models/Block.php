@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use WebBlocks\Cms\Models\Concerns\HasRevisionIdentity;
 use WebBlocks\Cms\Models\Concerns\ReusesMediaRelationAliases;
 use WebBlocks\Cms\Support\Applications\ApplicationDefinition;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
@@ -36,6 +37,7 @@ use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 class Block extends CmsModel
 {
   use HasFactory;
+  use HasRevisionIdentity;
   use ReindexesPublicSearch;
   use ReusesMediaRelationAliases;
 
