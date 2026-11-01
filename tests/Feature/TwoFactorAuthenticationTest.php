@@ -593,9 +593,9 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->assertSame(1, $xpath->query('//form[@id="two-factor-policy"]//p[@role="status" and @data-wb-policy-delivery-status]')->length);
     $this->assertSame(1, $xpath->query('//script[contains(@src, "/cms/js/admin/two-factor-policy.js")]')->length);
     if ($fixture = getenv('WEBBLOCKS_TWO_FACTOR_POLICY_FIXTURE')) {
-      // Export only the real synthetic policy card; no account/session chrome.
-      $fragment = $dom->saveHTML($xpath->query('//form[@id="two-factor-policy"]')->item(0));
-      file_put_contents($fixture, '<!doctype html><html lang="en" data-wb-theme="light"><body>'.$fragment.'</body></html>');
+      // Export both real synthetic Security cards; no account/session chrome.
+      $fragment = $dom->saveHTML($xpath->query('//div[@id="system-settings-security-panel"]')->item(0));
+      file_put_contents($fixture, '<!doctype html><html lang="en" data-wb-theme="light"><body><div class="wb-dashboard-shell"><aside class="wb-sidebar" aria-label="Synthetic sidebar"></aside><div class="wb-dashboard-body"><main class="wb-dashboard-main"><div class="wb-card"><div class="wb-card-body">'.$fragment.'</div></div></main></div></div></body></html>');
     }
   }
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.110.8
+
+- Arrange the Security tab’s two-factor policy and request-limit cards in a native WebBlocks UI 5/7 grid from 1200 px upward, stacking them on narrower screens. Keep independent card heights and save actions; use the full row for request limits when two-factor policy controls are unavailable.
+- Retain the asynchronous email-code workflow and existing validation, permissions and saved settings. No custom layout CSS, JavaScript or migration is required.
+
 ## 1.110.7
 
 - Keep mandatory two-factor role choices, account confirmation and email-code requests together in one policy card. Explain that removing a requirement does not disable verification on existing accounts.

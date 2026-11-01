@@ -50,6 +50,22 @@
         });
     };
     (async function () {
+        var panel = document.getElementById('system-settings-security-panel');
+        var limits = panel.querySelector('input[name="section"][value="security"]').closest('form');
+        var left = form.getBoundingClientRect();
+        var right = limits.getBoundingClientRect();
+        var row = form.parentElement.parentElement;
+        var gap = parseFloat(getComputedStyle(row).columnGap);
+        if (window.matchMedia('(min-width: 1200px)').matches) {
+            assert(Math.abs(left.top - right.top) < 1 && left.right < right.left, 'Cards are not top-aligned side by side');
+            assert(Math.abs((left.width + gap) / (right.width + gap) - 5 / 7) < 0.01, 'Incorrect 5/7 proportions');
+        } else {
+            assert(right.top >= left.bottom && Math.abs(right.width - left.width) < 1, 'Cards did not stack full-width');
+        }
+        assert(document.documentElement.scrollWidth <= window.innerWidth && panel.scrollWidth <= panel.clientWidth + 1, 'Horizontal page overflow');
+        assert([form, limits].every(function (card) { return card.scrollWidth <= card.clientWidth + 1; }), 'Card content overflow');
+        assert(limits.querySelectorAll('input[type="number"]').length === 8, 'Missing request limits');
+        assert(!limits.contains(button) && !form.contains(limits), 'Policy and limit form ownership mixed');
         button.click();
         button.click();
         assert(button.disabled && button.getAttribute('aria-busy') === 'true', 'Missing pending state');
@@ -76,7 +92,7 @@
         await delivered();
         preserved();
         assert(!status.classList.contains('wb-field-error') && calls === 6, 'Recovery after delivery failure');
-        output.textContent = 'PASS: async delivery, minimal request, retained password/code/roles, no navigation, duplicate suppression, countdown, offline/HTML/mail/throttle failures and retry.';
+        output.textContent = 'PASS: responsive 5/7 cards, independent forms, no overflow, async delivery, minimal request, retained password/code/roles, no navigation, duplicate suppression, countdown, offline/HTML/mail/throttle failures and retry.';
         output.dataset.result = 'pass';
     }()).catch(function (error) {
         output.textContent = 'FAIL: ' + error.message;
