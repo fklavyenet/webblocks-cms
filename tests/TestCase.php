@@ -6,10 +6,13 @@ use Illuminate\Foundation\Auth\User;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\DB;
 use Orchestra\Testbench\TestCase as Orchestra;
+use PHPUnit\Framework\Attributes\After;
+use PHPUnit\Framework\Attributes\Before;
 use WebBlocks\Cms\Models\Concerns\HasCmsAdminAccess;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Tests\Support\SqliteDatabaseSnapshot;
+use WebBlocks\Cms\Tests\Support\TestLifecycleProfile;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 abstract class TestCase extends Orchestra
@@ -17,6 +20,44 @@ abstract class TestCase extends Orchestra
   protected bool $cacheFreshDatabaseSchema = true;
 
   private static array $freshDatabaseSnapshots = [];
+
+  private int $profileStartedAt = 0;
+
+  #[Before(PHP_INT_MAX)]
+  protected function profileSetupStart(): void
+  {
+    $this->profileStartedAt = hrtime(true);
+  }
+
+  #[Before(PHP_INT_MIN)]
+  protected function profileSetupEnd(): void
+  {
+    TestLifecycleProfile::record(static::class.'::'.$this->nameWithDataSet(), 'full_setup', $this->profileStartedAt);
+    $this->profileStartedAt = hrtime(true);
+  }
+
+  #[After(PHP_INT_MAX)]
+  protected function profileTeardownStart(): void
+  {
+    TestLifecycleProfile::record(static::class.'::'.$this->nameWithDataSet(), 'test_body', $this->profileStartedAt);
+    $this->profileStartedAt = hrtime(true);
+  }
+
+  #[After(PHP_INT_MIN)]
+  protected function profileTeardownEnd(): void
+  {
+    TestLifecycleProfile::record(static::class.'::'.$this->nameWithDataSet(), 'full_teardown', $this->profileStartedAt);
+  }
+
+  protected function setUp(): void
+  {
+    TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'setup', fn () => parent::setUp());
+  }
+
+  protected function tearDown(): void
+  {
+    TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'teardown', fn () => parent::tearDown());
+  }
 
   public static function tearDownAfterClass(): void
   {
@@ -33,7 +74,7 @@ abstract class TestCase extends Orchestra
       || $paths !== dirname(__DIR__).'/database/migrations/fresh'
       || static::usesRefreshDatabaseTestingConcern()
       || ! $this->usesSqliteInMemoryDatabaseConnection()) {
-      parent::loadMigrationsFrom($paths);
+      TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'migration_bypass', fn () => parent::loadMigrationsFrom($paths), ['reason' => 'ineligible']);
 
       return;
     }
@@ -43,7 +84,7 @@ abstract class TestCase extends Orchestra
       || $connection->transactionLevel() !== 0
       || $database->inTransaction()
       || $database->query('SELECT count(*) FROM sqlite_master')->fetchColumn() !== 0) {
-      parent::loadMigrationsFrom($paths);
+      TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'migration_bypass', fn () => parent::loadMigrationsFrom($paths), ['reason' => 'nonempty_or_transaction']);
 
       return;
     }
@@ -51,19 +92,19 @@ abstract class TestCase extends Orchestra
     try {
       $key = hash('sha256', serialize($this->app['config']->all()));
     } catch (\Exception) {
-      parent::loadMigrationsFrom($paths);
+      TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'migration_bypass', fn () => parent::loadMigrationsFrom($paths), ['reason' => 'unserializable_config']);
 
       return;
     }
     $snapshot = self::$freshDatabaseSnapshots[static::class][$key] ?? null;
     if ($snapshot === null) {
-      parent::loadMigrationsFrom($paths);
-      self::$freshDatabaseSnapshots[static::class][$key] = SqliteDatabaseSnapshot::capture($database);
+      TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'migration_miss', fn () => parent::loadMigrationsFrom($paths), ['configuration' => $key]);
+      self::$freshDatabaseSnapshots[static::class][$key] = TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'snapshot_capture', fn () => SqliteDatabaseSnapshot::capture($database));
       // This connection is disposable. Do not run 21 reverse migrations just
       // before discarding it. Dedicated migration tests still exercise both ways.
       array_shift($this->cachedTestMigratorProcessors);
     } else {
-      $snapshot->restore($database);
+      TestLifecycleProfile::measure(static::class.'::'.$this->nameWithDataSet(), 'snapshot_hit', fn () => $snapshot->restore($database), ['configuration' => $key]);
     }
     $this->beforeApplicationDestroyed(fn () => $connection->disconnect());
   }

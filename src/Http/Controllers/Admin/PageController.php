@@ -363,6 +363,7 @@ class PageController extends Controller
       'canCreateSharedSlots' => app(CmsAuthorization::class)->allows(request()->user(), 'cms.shared-slots.manage', $page->site_id),
       'canManagePageAssets' => request()->user()->isSuperAdmin(),
       'pageAssetsTab' => $this->pageAssetsTabState($page),
+      'seoReport' => request()->attributes->get('cms_page_seo_report'),
       'layoutSlotComparison' => $layoutSlotComparison,
       'pagesIndexUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
       'pageReturnUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),

@@ -13,6 +13,7 @@
   // same known-value match.
   $resolvePageSettingsTab = static fn (?string $value): string => match ($value) {
     'overview' => 'overview',
+    'seo' => 'seo',
     'settings' => 'settings',
     'assets', 'page-assets' => 'assets',
     'layout-slots' => 'layout-slots',
@@ -22,6 +23,7 @@
   $settingsTab = $rawPageSettingsTab !== null
     ? $resolvePageSettingsTab(str_replace(['page-management-', '-panel'], '', $rawPageSettingsTab))
     : $resolvePageSettingsTab(request('tab'));
+  $settingsTab = is_array($seoReport ?? null) ? 'seo' : $settingsTab;
   $pagePublicUrl = $page->isPublished() ? $page->publicUrl() : null;
   $pagePreviewUrl = route('admin.pages.preview', $page);
   $pagesIndexUrl = $pagesIndexUrl ?? session('page_return_url') ?? route('admin.pages.index', ['site' => $page->site_id]);
@@ -56,7 +58,7 @@
   @include('webblocks-cms::admin.partials.flash')
 
   @push('page-management-card')
-  <div class="wb-card">
+  <div class="wb-card" id="page-management">
     <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
       <strong>{{ $adminText('page_management') }}</strong>
       <span class="wb-text-sm wb-text-muted">{{ $adminText('page_management_help') }}</span>
@@ -65,6 +67,7 @@
       <div class="wb-tabs" data-wb-tabs data-wb-tabs-field="[data-wb-page-settings-tab-input]">
         <div class="wb-tabs-nav" role="tablist" aria-label="{{ $adminText('page_management_sections') }}">
           <button type="button" class="wb-tabs-btn {{ $settingsTab === 'overview' ? 'is-active' : '' }}" data-wb-tab="page-management-overview-panel" aria-selected="{{ $settingsTab === 'overview' ? 'true' : 'false' }}" @if ($settingsTab !== 'overview') tabindex="-1" @endif>{{ $adminText('overview') }}</button>
+          <button type="button" class="wb-tabs-btn {{ $settingsTab === 'seo' ? 'is-active' : '' }}" data-wb-tab="page-management-seo-panel" aria-selected="{{ $settingsTab === 'seo' ? 'true' : 'false' }}" @if ($settingsTab !== 'seo') tabindex="-1" @endif>{{ $adminTranslator->get('seo.title', $adminLocale) }}</button>
           <button type="button" class="wb-tabs-btn {{ $settingsTab === 'settings' ? 'is-active' : '' }}" data-wb-tab="page-management-settings-panel" aria-selected="{{ $settingsTab === 'settings' ? 'true' : 'false' }}" @if ($settingsTab !== 'settings') tabindex="-1" @endif>{{ $adminText('settings') }}</button>
           @if ($canManagePageAssets || $page->pageAssets->isNotEmpty())
             <button type="button" class="wb-tabs-btn {{ $settingsTab === 'assets' ? 'is-active' : '' }}" data-wb-tab="page-management-assets-panel" aria-selected="{{ $settingsTab === 'assets' ? 'true' : 'false' }}" @if ($settingsTab !== 'assets') tabindex="-1" @endif>{{ $adminText('assets') }}</button>
@@ -159,6 +162,10 @@
                 </div>
               </div>
             @endif
+          </div>
+
+          <div class="wb-tabs-panel {{ $settingsTab === 'seo' ? 'is-active' : '' }}" id="page-management-seo-panel">
+            @include('webblocks-cms::admin.pages.partials.seo-check')
           </div>
 
           <div class="wb-tabs-panel {{ $settingsTab === 'settings' ? 'is-active' : '' }}" id="page-management-settings-panel">
@@ -365,6 +372,9 @@
                   @endif
                 </td>
                 <td>
+                  @if ($translation)
+                    <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'seo', 'seo_locale' => $locale->code, 'return_url' => $pageReturnUrl]) }}#page-management" class="wb-btn wb-btn-secondary">{{ $adminTranslator->get('seo.title', $adminLocale) }}</a>
+                  @endif
                   @if (! $canEditContent)
                     <span class="wb-text-sm wb-text-muted">{{ $adminText('locked_by_workflow') }}</span>
                   @elseif ($translation)

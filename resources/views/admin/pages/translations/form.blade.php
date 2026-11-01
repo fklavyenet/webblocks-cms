@@ -108,6 +108,9 @@
 
             <div class="wb-card-body wb-stack wb-gap-3">
                 <div class="wb-text-sm wb-text-muted">{{ $adminText('seo_help') }}</div>
+                @if ($translation->exists)
+                    <a class="wb-link" href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'seo', 'seo_locale' => $locale->code, 'return_url' => $pageReturnUrl]) }}#page-management">{{ $adminTranslator->get('seo.title', $adminLocale) }}</a>
+                @endif
 
                 <div class="wb-grid wb-grid-2">
                     <div class="wb-stack wb-gap-3">

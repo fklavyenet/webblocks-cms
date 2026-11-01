@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.111.0
+
+- Add an explicit per-page, per-language SEO check under Page management, with language-specific shortcuts from the translation table and translation SEO card. Inspect saved rendered content and keep technical issues, editorial suggestions and unavailable checks separate; findings never block publication.
+- Expose the identical report through `GET /webadmin/api/pages/{page}/seo-check` under `content.read` and existing page/site permissions. Include stable finding codes, explicit preview scope and incomplete-render states, private responses and all six panel languages. No report storage or migration is required.
+- Add opt-in test lifecycle and schema-cache profiling without changing test selection, isolation, assertions or migration coverage.
+
 ## 1.110.8
 
 - Arrange the Security tab’s two-factor policy and request-limit cards in a native WebBlocks UI 5/7 grid from 1200 px upward, stacking them on narrower screens. Keep independent card heights and save actions; use the full row for request limits when two-factor policy controls are unavailable.

@@ -32,6 +32,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\PageImportController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageLayoutController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageLayoutSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageRevisionController;
+use WebBlocks\Cms\Http\Controllers\Admin\PageSeoCheckController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageSiteMoveController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageTranslationController;
@@ -78,6 +79,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageAssetControlle
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRenderController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRevisionController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageSeoCheckController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageTranslationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPluginController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
@@ -182,6 +184,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::delete('/pages/{page}', [InternalContentResourceController::class, 'deletePage'])->middleware('internal-api.capability:pages.delete')->name('pages.delete');
     Route::delete('/pages/{page}/staged-update', [InternalContentResourceController::class, 'discardStagedUpdate'])->middleware('internal-api.capability:content.apply')->name('pages.staged-update.discard');
     Route::patch('/pages/{page}/layout', [InternalContentResourceController::class, 'updatePageLayout'])->middleware('internal-api.capability:content.apply')->name('pages.layout.update');
+    Route::get('/pages/{page}/seo-check', InternalPageSeoCheckController::class)->middleware('internal-api.capability:content.read')->name('pages.seo-check');
     Route::get('/pages/{page}/render', [InternalPageRenderController::class, 'show'])->middleware('internal-api.capability:content.read')->name('pages.render');
     Route::get('/pages/{page}/versions', [InternalPageRevisionController::class, 'index'])->middleware('internal-api.capability:content.read')->name('pages.versions.index');
     Route::get('/pages/{page}/versions/{revision}', [InternalPageRevisionController::class, 'show'])->middleware('internal-api.capability:content.read')->name('pages.versions.show');
@@ -381,6 +384,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::post('/pages/{page}/translations/{locale}', [PageTranslationController::class, 'store'])->name('pages.translations.store');
     Route::get('/pages/{page}/translations/{translation}/edit', [PageTranslationController::class, 'edit'])->name('pages.translations.edit');
     Route::put('/pages/{page}/translations/{translation}', [PageTranslationController::class, 'update'])->name('pages.translations.update');
+    Route::get('/pages/{page}/seo-check', PageSeoCheckController::class)->name('pages.seo-check');
     Route::resource('pages', PageController::class)->except([]);
     Route::resource('shared-slots', SharedSlotController::class)->parameters(['shared-slots' => 'shared_slot'])->except(['show'])->missing($missingSharedSlot);
     Route::get('media', [MediaController::class, 'index'])->name('media.index');
