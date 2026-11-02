@@ -12,6 +12,7 @@ use WebBlocks\Cms\Support\WebBlocks;
 final class BrowserFixtureServer
 {
   private const SCENARIOS = [
+    'editor-save' => ['EditorRecoveryTest', 'WEBBLOCKS_EDITOR_SAVE_FIXTURE', 'editor_save_browser_fixture'],
     'two-factor-policy' => ['TwoFactorAuthenticationTest', 'WEBBLOCKS_TWO_FACTOR_POLICY_FIXTURE', 'policy_card_keeps_delivery_with_confirmation'],
     'consent-admin' => ['ConsentManagementTest', 'WEBBLOCKS_CONSENT_ADMIN_FIXTURE', 'authorized_panel_users_can_open_all_three_screens_and_preview'],
     'system-picker' => ['CookieSettingsBlockTest', 'WEBBLOCKS_SYSTEM_PICKER_FIXTURE', 'system_picker_uses_the_system_flag'],
@@ -88,6 +89,7 @@ final class BrowserFixtureServer
       'dirty-overlay' => '/cms/js/admin/core.js',
       'asset-picker' => '/cms/js/admin/asset-picker.js',
       'rich-text' => '/cms/js/admin/rich-text-editor.js',
+      'editor-save' => '/cms/js/admin/editor-recovery.js',
       'editor-preview' => '/cms/js/admin/editor-preview.js',
       'two-factor-policy' => '/cms/js/admin/two-factor-policy.js',
       default => null,
@@ -97,6 +99,9 @@ final class BrowserFixtureServer
     }
     if ($scenario === 'consent-admin') {
       $assets[] = '/cms/js/admin/consent.js';
+    }
+    if ($scenario === 'editor-save') {
+      $assets[] = '/cms/js/admin/rich-text-editor.js';
     }
     if ($scenario === 'editor-preview') {
       $assets[] = '/cms/js/admin/editor-preview-frame.js';
@@ -108,6 +113,7 @@ final class BrowserFixtureServer
       $path === '/fixture.js' && $scenario === 'consent' => $root.'/tests/Browser/consent-fixture.js',
       $path === '/fixture.js' && $scenario === 'update-progress' => $root.'/tests/Browser/update-progress-fixture.js',
       in_array($path, $assets, true) => $root.'/public'.$path,
+      $path === '/fixture.js' && $scenario === 'editor-save' => $root.'/tests/Browser/editor-save-fixture.js',
       $path === '/fixture.js' && $scenario === 'editor-preview' => $root.'/tests/Browser/editor-preview-fixture.js',
       $path === '/fixture.js' && $scenario === 'dirty-overlay' => $root.'/tests/Browser/dirty-overlay-fixture.js',
       in_array($path, ['/fixture.css', '/fixture.js'], true) => $root.'/tests/Browser'.$path,
@@ -164,6 +170,7 @@ final class BrowserFixtureServer
         'consent-admin', 'system-picker' => 'core',
         'dirty-overlay' => 'core',
         'asset-picker' => 'asset-picker',
+        'editor-save' => 'editor-recovery',
         'editor-preview' => 'editor-preview',
         'two-factor-policy' => 'two-factor-policy',
         default => 'rich-text-editor',
@@ -175,6 +182,9 @@ final class BrowserFixtureServer
     }
     if ($scenario === 'consent') {
       $head .= '<link rel="stylesheet" href="/cms/css/public.css">';
+    }
+    if ($scenario === 'editor-save') {
+      $head .= '<script src="/cms/js/admin/rich-text-editor.js" defer></script>';
     }
     $head .= '<script src="/fixture.js" defer></script></head>';
     if ($scenario === 'update-progress') {

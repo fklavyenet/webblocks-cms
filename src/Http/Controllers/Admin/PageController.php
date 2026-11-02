@@ -414,7 +414,7 @@ class PageController extends Controller
       ->header('X-Robots-Tag', 'noindex, nofollow');
   }
 
-  public function update(PageRequest $request, Page $page): RedirectResponse
+  public function update(PageRequest $request, Page $page): RedirectResponse|JsonResponse
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
     abort_if($page->isRevisionRestoreCandidate(), 404);
@@ -463,7 +463,7 @@ class PageController extends Controller
       ]);
     }
 
-    return $redirect;
+    return app(EditorRecovery::class)->savedResponse($request, $redirect);
   }
 
   private function pageAssetsTabState(Page $page): array

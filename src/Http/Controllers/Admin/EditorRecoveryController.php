@@ -17,7 +17,7 @@ class EditorRecoveryController extends Controller
 
   public function show(EditorRecoveryRequest $request, Page $page, string $editingSession)
   {
-    return response()->json($this->recovery->current($request->user(), $page, $editingSession, $request->integer('block_id') ?: null, $request->validated('locale')))->header('Cache-Control', 'private, no-store');
+    return response()->json([...$this->recovery->current($request->user(), $page, $editingSession, $request->integer('block_id') ?: null, $request->validated('locale')), 'csrf_token' => $request->session()->token()])->header('Cache-Control', 'private, no-store');
   }
 
   public function store(EditorRecoveryRequest $request, Page $page, string $editingSession)

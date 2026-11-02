@@ -8,7 +8,7 @@
     ->keyBy('id');
   $galleryItemRows = collect(old($galleryItemsOldKey ?? 'gallery_items', []));
 
-  if ($galleryItemRows->isEmpty()) {
+  if (! \Illuminate\Support\Arr::has(session()->getOldInput(), $galleryItemsOldKey ?? 'gallery_items')) {
     $galleryItemRows = ($block->galleryItems() ?? collect())
       ->map(function ($item, $index) use ($activeLocale) {
         $translation = $item->galleryItemTranslations
@@ -71,6 +71,7 @@
 @endphp
 
 <div class="wb-stack wb-gap-4" data-wb-gallery-items-editor data-wb-gallery-field-prefix="{{ $rootPrefix ?? '' }}">
+  <input type="hidden" name="{{ $rootPrefix ? $rootPrefix.'[gallery_items]' : 'gallery_items' }}" value="">
   @if ($renderOwnCard)
     <div class="wb-card wb-card-accent">
       <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">

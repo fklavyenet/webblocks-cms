@@ -4,7 +4,7 @@
          data-endpoint="{{ $editorRecovery['endpoint'] }}" data-identity="{{ $editorRecovery['identity'] }}"
          data-locale="{{ $editorRecovery['locale'] }}" data-block-id="{{ $editorRecovery['block_id'] }}"
          data-roots="{{ $editorRecovery['roots'] }}"
-         @foreach (['ready', 'pending', 'protected', 'failed', 'available', 'paused', 'conflict', 'discarded'] as $message)
+         @foreach (['ready', 'pending', 'protected', 'failed', 'available', 'paused', 'conflict', 'discarded', 'saving', 'save_failed', 'auth_failed', 'validation_failed'] as $message)
              data-message-{{ $message }}="{{ __('webblocks-cms::recovery.'.$message) }}"
          @endforeach>
         <input type="hidden" name="_editor_recovery_session" value="{{ old('_editor_recovery_session') }}">
@@ -12,6 +12,9 @@
         <div class="wb-card-body wb-stack wb-gap-2">
             <strong>{{ __('webblocks-cms::recovery.title') }}</strong>
             <span class="wb-text-sm" data-recovery-status role="status" aria-live="polite">{{ __('webblocks-cms::recovery.ready') }}</span>
+            <ul class="wb-text-sm" data-recovery-errors></ul>
+            <a class="wb-link" href="{{ route('webblocks.auth.login') }}" target="_blank" rel="noopener noreferrer" data-recovery-login hidden>{{ __('webblocks-cms::recovery.sign_in') }}</a>
+            <a class="wb-link" href="{{ $editorRecovery['editor_url'] }}" target="_blank" rel="noopener noreferrer" data-recovery-saved-link hidden>{{ __('webblocks-cms::recovery.check_saved') }}</a>
             <span class="wb-text-sm wb-text-muted">{{ __('webblocks-cms::recovery.help') }}</span>
             <div class="wb-stack wb-gap-2" data-recovery-choice hidden>
                 <p class="wb-alert wb-alert-warning" data-recovery-conflict hidden>{{ __('webblocks-cms::recovery.conflict') }}</p>

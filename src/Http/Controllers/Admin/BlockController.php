@@ -378,7 +378,7 @@ class BlockController extends Controller
     ]);
   }
 
-  public function update(BlockRequest $request, Block $block): RedirectResponse
+  public function update(BlockRequest $request, Block $block): RedirectResponse|JsonResponse
   {
     [$contextSharedSlot, $existingPage] = $this->editingContext($block);
     $this->authorization->abortUnlessSiteAccess($request->user(), $contextSharedSlot ?? $block);
@@ -444,7 +444,7 @@ class BlockController extends Controller
       ]);
     }
 
-    return $redirect;
+    return app(EditorRecovery::class)->savedResponse($request, $redirect);
   }
 
   public function destroy(Request $request, Block $block): RedirectResponse

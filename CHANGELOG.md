@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.111.3
+
+- Preserve recovery-enabled page and block forms when saving encounters connection, timeout, session, validation or server errors. Show validation feedback without leaving the editor, and offer sign-in or saved-version checks in another tab. A lost response may follow a committed save; review the saved version before retrying.
+- Confirm the latest form values in recovery before saving, including typing made while a checkpoint request is pending. Prevent duplicate submissions, lock editing only during the actual save, and refresh the session CSRF token when retrying after sign-in. Redirect only after an explicit success response.
+- Keep an intentionally empty gallery empty after validation or recovery, while preserving partial removals, metadata and item order. Include all six panel languages and regression coverage. No migration is required; existing recovery scope remains unchanged.
+
 ## 1.111.2
 
 - Explain after removing a mandatory two-factor requirement that enrolled accounts still request verification at sign-in, and link directly to account verification settings. Keep account enrollment and the separate disable confirmation intact.

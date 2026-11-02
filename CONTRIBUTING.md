@@ -55,6 +55,7 @@ The browser fixtures use PHP's built-in server and the real Blade fragments expo
 ```sh
 php -S 127.0.0.1:8089 tests/Browser/parent-block-fixture.php
 php -S 127.0.0.1:8089 tests/Browser/dirty-overlay-fixture.php
+php -S 127.0.0.1:8089 tests/Browser/editor-save.php
 php -S 127.0.0.1:8089 tests/Browser/asset-picker-fixture.php
 php -S 127.0.0.1:8089 tests/Browser/rich-text-editor.php
 php -S 127.0.0.1:8089 tests/Browser/update-progress-fixture.php
@@ -73,6 +74,8 @@ The update-progress fixture uses the real rendered modal, shared progress script
 The consent fixtures use real public/admin fragments and the shipped UI. Public cases cover first visit, `?choice=accepted`, `?choice=rejected`, and `?choice=custom&storage-blocked=1`, with local synthetic embeds/scripts and intercepted consent writes. They check reopening without consent changes, saved and unsaved preferences, one-time content loads, withdrawal, failure handling and script reload requests. The admin fixture checks tabs, retained panel state, cookie rows and the service form action without submitting a mutation. Its `/general`, `/texts`, `/general-edit` and `/texts-edit` cases cover shared filter/list cards, icon actions, effective translations and dirty-close protection for individual field editors. Both report PASS/FAIL. The public fixture also covers the native Cookie Settings block, generated menu URL and explicit `?direct=1`/`#cookie-settings` entries. The System picker fixture exports the real picker with synthetic catalog data for tab, eligibility and badge checks.
 
 The two-factor-policy fixture renders both real Security cards in the bundled admin shell and intercepts email-code requests with synthetic responses. It checks 5/7 columns from 1200 px, full-width stacking below that breakpoint, independent form ownership, horizontal overflow, delivery, duplicate prevention, resend cooldown, offline/session/mail/throttle errors and retry while retaining the password, code and selected roles without navigation or a policy submission. It sends no email and changes no live account.
+
+The editor-save fixture renders the actual page settings and Rich Text block forms and executes the recovery/save script with controlled transport responses. It checks offline/timeout, 401/403/419, validation, server and malformed-success failures, retained values and retry controls, refreshed CSRF, typing during checkpoint requests, duplicate Save, explicit empty galleries and paused recovery. It performs no CMS writes and reports PASS/FAIL in the existing Chrome.
 
 The dirty-overlay fixture checks the real close guard on a rendered block form: untouched forms, asynchronous recovery metadata, tab changes, real edits, fragment reinitialization, hidden content fields and reverted edits. It reports PASS or FAIL without saving content or contacting recovery endpoints.
 

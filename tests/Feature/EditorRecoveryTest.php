@@ -3,6 +3,8 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -20,6 +22,7 @@ use WebBlocks\Cms\Queries\EditorRecovery\EditorRecoveryQuery;
 use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 use WebBlocks\Cms\Support\EditorRecovery\RecoveryFields;
 use WebBlocks\Cms\Support\EditorRecovery\RecoverySchema;
+use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
 class EditorRecoveryTest extends TestCase
@@ -46,6 +49,9 @@ class EditorRecoveryTest extends TestCase
   protected function setUp(): void
   {
     parent::setUp();
+    if (! class_exists(User::class)) {
+      class_alias(EditorRecoveryTestUser::class, User::class);
+    }
     $this->withoutMiddleware([RedirectIfNotInstalled::class]);
     $this->actor = User::forceCreate(['name' => 'Recovery administrator', 'email' => 'recovery@example.test', 'password' => 'unused', 'role' => 'super_admin', 'is_active' => true]);
     $this->actingAs($this->actor);
@@ -290,5 +296,182 @@ class EditorRecoveryTest extends TestCase
     }
     $this->putJson($this->url(), $payload)->assertStatus(429);
     $this->assertDatabaseCount('wbcms_editor_recoveries', 32);
+  }
+
+  #[Test]
+  public function asynchronous_saves_confirm_success_without_following_a_redirect_and_clear_only_the_matching_checkpoint(): void
+  {
+    $payload = $this->payload();
+    $this->putJson($this->url(), $payload)->assertOk();
+    $otherSession = (string) Str::uuid();
+    $this->putJson($this->url($otherSession), $payload)->assertOk();
+    $this->withHeader('X-WebBlocks-Editor-Save', '1')->putJson(route('admin.pages.update', $this->page), [
+      'title' => 'Confirmed page', 'slug' => 'confirmed-page', 'site_id' => $this->page->site_id,
+      '_editor_recovery_session' => $this->editingSession, '_editor_recovery_base' => $payload['base_fingerprint'],
+    ])->assertOk()->assertJsonPath('saved', true)->assertJsonPath('redirect', route('admin.pages.edit', $this->page))->assertHeader('Cache-Control', 'no-store, private');
+    $this->assertSame('Confirmed page', $this->page->fresh()->title);
+    $this->getJson($this->url())->assertGone();
+    $this->getJson($this->url($otherSession))->assertOk()->assertJsonPath('exists', true);
+  }
+
+  #[Test]
+  public function asynchronous_block_validation_keeps_the_checkpoint_and_success_returns_an_explicit_receipt(): void
+  {
+    $content = '<p>Latest <strong>Türkçe</strong> work</p>';
+    $payload = $this->payload(['content' => $content], ['block_id' => $this->block->id]);
+    $this->putJson($this->url(), $payload)->assertOk();
+    $input = ['page_id' => $this->page->id, 'block_type_id' => $this->block->block_type_id, 'slot_type_id' => $this->block->slot_type_id,
+      'sort_order' => -1, 'status' => 'draft', 'content' => $content,
+      '_editor_recovery_session' => $this->editingSession, '_editor_recovery_base' => $payload['base_fingerprint']];
+    $this->withHeader('X-WebBlocks-Editor-Save', '1')->putJson(route('admin.blocks.update', $this->block), $input)->assertUnprocessable()->assertJsonValidationErrors('sort_order');
+    $this->assertSame('Saved block', $this->block->fresh()->content);
+    $this->getJson($this->url(null, ['block_id' => $this->block->id]))->assertOk()->assertJsonPath('entries.0.value', base64_encode($content));
+    $this->putJson(route('admin.blocks.update', $this->block), [...$input, 'sort_order' => 0])->assertOk()->assertJsonPath('saved', true);
+    $this->assertSame($content, $this->block->fresh()->textTranslations()->firstOrFail()->content);
+    $this->getJson($this->url(null, ['block_id' => $this->block->id]))->assertGone();
+  }
+
+  #[Test]
+  public function runtime_save_failure_rolls_back_both_editorial_changes_and_checkpoint_cleanup(): void
+  {
+    $payload = $this->payload();
+    $this->putJson($this->url(), $payload)->assertOk();
+    $armed = true;
+    DB::connection()->beforeExecuting(function ($sql) use (&$armed): void {
+      if ($armed && str_starts_with(strtolower(ltrim($sql)), 'insert') && str_contains($sql, 'wbcms_page_revisions')) {
+        $armed = false;
+        throw new \RuntimeException('Synthetic revision write failure');
+      }
+    });
+    $this->withHeader('X-WebBlocks-Editor-Save', '1')->putJson(route('admin.pages.update', $this->page), [
+      'title' => 'Failed title', 'slug' => 'failed-title', 'site_id' => $this->page->site_id,
+      '_editor_recovery_session' => $this->editingSession, '_editor_recovery_base' => $payload['base_fingerprint'],
+    ])->assertStatus(500);
+    $this->assertFalse($armed);
+    $this->assertSame('Saved title', $this->page->fresh()->title);
+    $this->getJson($this->url())->assertOk()->assertJsonPath('exists', true);
+  }
+
+  #[Test]
+  public function recovery_reads_supply_the_current_csrf_token_after_reauthentication(): void
+  {
+    $this->putJson($this->url(), $this->payload())->assertOk();
+    $token = 'synthetic-refreshed-token';
+    $this->withSession(['_token' => $token])->getJson($this->url())->assertOk()->assertJsonPath('csrf_token', $token)->assertHeader('Cache-Control', 'no-store, private');
+    auth()->logout();
+    $this->withHeader('X-WebBlocks-Editor-Save', '1')->putJson(route('admin.pages.update', $this->page), ['title' => 'Not saved'])->assertUnauthorized()->assertJsonMissing(['saved' => true]);
+    $this->actingAs($this->actor)->getJson($this->url())->assertOk()->assertJsonPath('exists', true);
+  }
+
+  #[Test]
+  public function asynchronous_save_keeps_the_existing_csrf_boundary_and_checkpoint(): void
+  {
+    $this->putJson($this->url(), $this->payload())->assertOk();
+    if (class_exists(PreventRequestForgery::class)) {
+      $this->app->bind(PreventRequestForgery::class, fn ($app) => new class($app, $app['encrypter']) extends PreventRequestForgery
+      {
+        protected function runningUnitTests()
+        {
+        return false;
+        }
+      });
+    } else {
+      $this->app->bind(ValidateCsrfToken::class, fn ($app) => new class($app, $app['encrypter']) extends ValidateCsrfToken
+      {
+        protected function runningUnitTests()
+        {
+        return false;
+        }
+      });
+    }
+    $this->withSession(['_token' => 'synthetic-current-token'])->withHeader('X-WebBlocks-Editor-Save', '1')->putJson(route('admin.pages.update', $this->page), ['_token' => 'synthetic-expired-token', 'title' => 'Not saved', 'slug' => 'not-saved', 'site_id' => $this->page->site_id])->assertStatus(419);
+    $this->assertSame('Saved title', $this->page->fresh()->title);
+    $this->getJson($this->url())->assertOk()->assertJsonPath('exists', true);
+  }
+
+  #[Test]
+  public function empty_gallery_survives_native_validation_recovery_and_explicit_save(): void
+  {
+    $this->galleryFixture();
+    $slot = $this->page->slots()->firstOrFail();
+    $edit = route('admin.pages.slots.blocks', [$this->page, $slot, 'edit' => $this->block->id]);
+    $input = ['page_id' => $this->page->id, 'block_type_id' => $this->block->block_type_id, 'slot_type_id' => $this->block->slot_type_id,
+      'sort_order' => -1, 'status' => 'draft', 'gallery_items' => '', '_slot_block_mode' => 'edit', '_slot_block_id' => $this->block->id];
+    $this->from($edit)->put(route('admin.blocks.update', $this->block), $input)->assertRedirect($edit)->assertSessionHasErrors('sort_order');
+    $this->assertSame([], $this->renderedGalleryIds($this->get($edit)->assertOk()->getContent()));
+    $payload = $this->payload(['gallery_items[]' => null], ['block_id' => $this->block->id]);
+    $this->putJson($this->url(), $payload)->assertOk();
+    $restore = $this->postJson(strtok($this->url(), '?').'/restore', ['locale' => 'en', 'block_id' => $this->block->id])->assertOk();
+    $this->assertSame([], $this->renderedGalleryIds($this->get($restore->json('redirect'))->assertOk()->getContent()));
+    $this->assertCount(2, $this->block->fresh()->galleryItems());
+    $this->put(route('admin.blocks.update', $this->block), [...$input, 'sort_order' => 0])->assertRedirect()->assertSessionHasNoErrors();
+    $this->assertCount(0, $this->block->fresh()->galleryItems());
+  }
+
+  #[Test]
+  public function gallery_validation_retains_partial_removal_order_and_metadata(): void
+  {
+    $media = $this->galleryFixture();
+    $slot = $this->page->slots()->firstOrFail();
+    $edit = route('admin.pages.slots.blocks', [$this->page, $slot, 'edit' => $this->block->id]);
+    $items = [['media_id' => $media[1]->id, 'sort_order' => 0, 'alt_text' => 'Second visual', 'caption' => 'Independent caption']];
+    $input = ['page_id' => $this->page->id, 'block_type_id' => $this->block->block_type_id, 'slot_type_id' => $this->block->slot_type_id,
+      'sort_order' => -1, 'status' => 'draft', 'gallery_items' => $items, '_slot_block_mode' => 'edit', '_slot_block_id' => $this->block->id];
+    $this->from($edit)->put(route('admin.blocks.update', $this->block), $input)->assertSessionHasErrors('sort_order');
+    $response = $this->get($edit)->assertOk()->assertSee('Independent caption');
+    $this->assertSame([$media[1]->id], $this->renderedGalleryIds($response->getContent()));
+    $items[] = ['media_id' => $media[0]->id, 'sort_order' => 1];
+    $this->from($edit)->put(route('admin.blocks.update', $this->block), [...$input, 'gallery_items' => $items])->assertSessionHasErrors('sort_order');
+    $this->assertSame([$media[1]->id, $media[0]->id], $this->renderedGalleryIds($this->get($edit)->assertOk()->getContent()));
+  }
+
+  private function galleryFixture(): array
+  {
+    $type = BlockType::firstOrCreate(['slug' => 'gallery'], ['name' => 'Gallery', 'category' => 'media', 'source_type' => 'static', 'status' => 'published']);
+    $this->block->forceFill(['type' => 'gallery', 'block_type_id' => $type->id])->save();
+    $media = [];
+    foreach (range(0, 1) as $position) {
+      $media[$position] = Media::create(['disk' => 'public', 'path' => 'synthetic-gallery-'.$position.'.svg', 'filename' => 'synthetic-gallery-'.$position.'.svg', 'mime_type' => 'image/svg+xml', 'size' => 100, 'kind' => 'image', 'visibility' => 'public', 'title' => 'Synthetic gallery '.$position]);
+      $this->block->blockMedia()->create(['media_id' => $media[$position]->id, 'role' => 'gallery_item', 'position' => $position]);
+    }
+
+    return $media;
+  }
+
+  private function renderedGalleryIds(string $html): array
+  {
+    $document = new \DOMDocument;
+    @$document->loadHTML($html);
+    $rows = (new \DOMXPath($document))->query('//*[@data-wb-gallery-item-row and not(ancestor::template)]');
+
+    return array_map(fn ($row) => (int) $row->getAttribute('data-media-id'), iterator_to_array($rows));
+  }
+
+  #[Test]
+  public function editor_save_browser_fixture(): void
+  {
+    $response = $this->get(route('admin.pages.edit', [$this->page, 'tab' => 'settings']))->assertOk();
+    $document = new \DOMDocument;
+    @$document->loadHTML($response->getContent());
+    $form = (new \DOMXPath($document))->query('//*[@data-wb-editor-recovery]/ancestor::form')->item(0);
+    $this->assertNotNull($form);
+    $blockResponse = $this->get(route('admin.pages.slots.blocks', [$this->page, $this->page->slots()->firstOrFail(), 'edit' => $this->block->id]))->assertOk();
+    $blockDocument = new \DOMDocument;
+    @$blockDocument->loadHTML($blockResponse->getContent());
+    $blockForm = (new \DOMXPath($blockDocument))->query('//*[@data-wb-editor-recovery]/ancestor::form')->item(0);
+    $this->assertNotNull($blockForm);
+    if ($path = getenv('WEBBLOCKS_EDITOR_SAVE_FIXTURE')) {
+      file_put_contents($path, '<!doctype html><html lang="en"><body><h1>Editor save failure tests</h1><button type="button" id="run-save-tests">Run save tests</button><output id="save-test-results" aria-live="polite">Ready</output><div id="save-test-mount"></div><template id="save-test-form">'.$document->saveHTML($form).'</template><template id="save-test-block-form">'.$blockDocument->saveHTML($blockForm).'</template></body></html>');
+    }
+  }
+}
+
+class EditorRecoveryTestUser extends CmsSqlTestUser
+{
+  protected $table = 'users';
+
+  public function getForeignKey()
+  {
+    return 'user_id';
   }
 }

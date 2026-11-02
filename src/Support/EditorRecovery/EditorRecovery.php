@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Support\EditorRecovery;
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +56,7 @@ final class EditorRecovery
       'block_id' => $block?->id, 'locale' => $locale,
       'base' => old('_editor_recovery_base', $this->fingerprint($page)),
       'roots' => $block ? RecoveryFields::BLOCK_FIELDS : RecoveryFields::PAGE_FIELDS,
+      'editor_url' => $block ? route('admin.blocks.edit', ['block' => $block, 'locale' => $locale]) : route('admin.pages.edit', ['page' => $page, 'tab' => 'settings']),
     ];
   }
 
@@ -145,5 +148,14 @@ final class EditorRecovery
       $locale = (string) ($request->input('locale') ?: $page->availableSiteLocales()->firstWhere('is_default', true)?->code);
       $this->write->clear($request->user(), $page, $session, $block?->id, $locale);
     }
+  }
+
+  public function savedResponse(Request $request, RedirectResponse $redirect): RedirectResponse|JsonResponse
+  {
+    if ($request->header('X-WebBlocks-Editor-Save') !== '1' || ! $request->expectsJson()) {
+      return $redirect;
+    }
+
+    return response()->json(['saved' => true, 'redirect' => $redirect->getTargetUrl()])->header('Cache-Control', 'private, no-store');
   }
 }
