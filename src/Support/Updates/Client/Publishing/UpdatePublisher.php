@@ -286,13 +286,18 @@ final class UpdatePublisher
   private function verifyLatestRelease(string $product, string $channel, string $version, string $checksum, ?string $minimumClientVersion = null): array
   {
     $serverUrl = rtrim((string) config('publisher-client.server_url', ''), '/');
-    $latestPath = (string) config('publisher-client.latest_path', '/api/updates/latest');
+    $authenticated = (bool) config('publisher-client.publisher.authenticated_verification', false);
+    $latestPath = $authenticated ? '/api/updates/published-latest'
+      : (string) config('publisher-client.latest_path', '/api/updates/latest');
 
     try {
-      $response = Http::acceptJson()
+      $request = Http::acceptJson()->withoutRedirecting()
         ->timeout((int) config('publisher-client.timeout_seconds', 5))
-        ->connectTimeout((int) config('publisher-client.connect_timeout_seconds', 3))
-        ->get($serverUrl.$latestPath, ['product' => $product, 'channel' => $channel])
+        ->connectTimeout((int) config('publisher-client.connect_timeout_seconds', 3));
+      if ($authenticated) {
+        $request = $request->withToken($this->token());
+      }
+      $response = $request->get($serverUrl.$latestPath, ['product' => $product, 'channel' => $channel])
         ->throw();
     } catch (ConnectionException|RequestException $exception) {
       throw new RuntimeException('Update publisher latest verification failed: '.$exception->getMessage(), previous: $exception);

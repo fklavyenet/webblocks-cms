@@ -13,7 +13,7 @@ return [
     'current_version' => WebBlocks::VERSION,
     'telemetry' => [
         'enabled' => env('WEBBLOCKS_TELEMETRY', true),
-        'schema_version' => '1',
+        'schema_version' => '2',
     ],
     'timeout_seconds' => 5,
     'connect_timeout_seconds' => 3,

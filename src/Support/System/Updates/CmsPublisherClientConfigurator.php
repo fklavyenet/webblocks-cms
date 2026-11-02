@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\System\Updates;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Arr;
 use WebBlocks\Cms\Support\Updates\Client\Apply\PackageApplyStrategy;
+use WebBlocks\Cms\Support\Updates\Client\Contracts\TelemetryProvider;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\ConfigVersionResolver;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -17,6 +18,7 @@ final class CmsPublisherClientConfigurator
   {
     $this->configureTranslations();
     $this->app->bind(PackageApplyStrategy::class, CmsPackageApplyStrategy::class);
+    $this->app->bind(TelemetryProvider::class, InstallationTelemetry::class);
     $config = $this->app['config'];
     $runtimeRoot = dirname(__DIR__, 4);
 

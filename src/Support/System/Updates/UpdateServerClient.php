@@ -82,11 +82,16 @@ class UpdateServerClient
     }
 
     try {
-      $response = $request->get($serverUrl.$latestPath, array_merge([
+      $telemetry = $this->installationTelemetry->updateCheckPayload($product, $installedVersion, $channel);
+      if ($telemetry !== [] && str_starts_with($serverUrl, 'https://')) {
+        $request = $request->withHeaders(['X-WebBlocks-Telemetry' => json_encode($telemetry, JSON_THROW_ON_ERROR)]);
+      }
+      // Keep persistent identities outside URL logs and never forward on redirects.
+      $response = $request->withoutRedirecting()->get($serverUrl.$latestPath, [
         'product' => $product,
         'channel' => $channel,
         'installed_version' => $installedVersion,
-      ], $this->installationTelemetry->updateCheckPayload($product, $installedVersion, $channel)));
+      ]);
     } catch (ConnectionException $exception) {
       return $this->result(
         state: 'server_unreachable',

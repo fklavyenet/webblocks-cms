@@ -85,11 +85,17 @@ class UpdateServerClient
 
     try {
       $request = app(\WebBlocks\Cms\Support\Updates\Client\Contracts\UpdateRequestAuthorizer::class)->authorize($request, $serverUrl.$latestPath, 'check', ['product' => $product, 'channel' => $channel, 'installed_version' => $installedVersion]);
-      $response = $request->get($serverUrl.$latestPath, array_merge([
+      $telemetry = $this->telemetry->updateCheckPayload($product, $installedVersion, $channel);
+      if ($telemetry !== [] && str_starts_with($serverUrl, 'https://')) {
+        $request = $request->withHeaders(['X-WebBlocks-Telemetry' => json_encode($telemetry, JSON_THROW_ON_ERROR)]);
+      }
+      // Persistent pseudonyms belong in headers, never URL/access-log fields.
+      // A redirect must not forward them to a different server.
+      $response = $request->withoutRedirecting()->get($serverUrl.$latestPath, [
         'product' => $product,
         'channel' => $channel,
         'installed_version' => $installedVersion,
-      ], $this->telemetry->updateCheckPayload($product, $installedVersion, $channel)));
+      ]);
     } catch (UpdateAuthorizationException $exception) {
       return $this->configState('authorization_required', 'Update authorization required', $exception->userMessage(), $serverUrl, $product, $channel, $installedVersion);
     } catch (ConnectionException $exception) {

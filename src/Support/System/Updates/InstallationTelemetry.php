@@ -4,78 +4,32 @@ declare(strict_types=1);
 
 namespace WebBlocks\Cms\Support\System\Updates;
 
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
-use Throwable;
-use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\Updates\Client\Contracts\TelemetryProvider;
+use WebBlocks\Cms\Support\Updates\Client\Telemetry\FileInstallationTelemetry;
 
-final class InstallationTelemetry
+/** Use the same production identity for CMS panel and embedded Client checks. */
+final class InstallationTelemetry implements TelemetryProvider
 {
+  // Historical UUID setting is preserved; it is not a production identity.
   public const SETTING_KEY = 'telemetry.installation_id';
 
   public function enabled(): bool
   {
-    return filter_var(config('webblocks-updates.telemetry.enabled', true), FILTER_VALIDATE_BOOL);
+    return filter_var(config('webblocks-updates.telemetry.enabled', true), FILTER_VALIDATE_BOOL)
+      && app(FileInstallationTelemetry::class)->enabled();
   }
 
   public function installationId(): ?string
   {
-    if (! $this->enabled() || ! $this->settingsTableExists()) {
-      return null;
-    }
-
-    try {
-      $setting = SystemSetting::query()->firstOrCreate(
-        ['key' => self::SETTING_KEY],
-        ['value' => (string) Str::uuid()],
-      );
-    } catch (Throwable) {
-      return null;
-    }
-
-    $installationId = trim((string) $setting->value);
-
-    if ($installationId !== '') {
-      return $installationId;
-    }
-
-    $installationId = (string) Str::uuid();
-
-    try {
-      $setting->forceFill(['value' => $installationId])->save();
-    } catch (Throwable) {
-      return null;
-    }
-
-    return $installationId;
+    return $this->enabled()
+      ? app(FileInstallationTelemetry::class)->installationId('webblocks-cms')
+      : null;
   }
 
   public function updateCheckPayload(string $productKey, string $installedVersion, string $channel): array
   {
-    $installationId = $this->installationId();
-
-    if ($installationId === null) {
-      return [];
-    }
-
-    return [
-      'product_key' => $productKey,
-      'installed_version' => $installedVersion,
-      'channel' => $channel,
-      'installation_id' => $installationId,
-      'php_version' => PHP_VERSION,
-      'laravel_version' => Application::VERSION,
-      'telemetry_schema_version' => (string) config('webblocks-updates.telemetry.schema_version', '1'),
-    ];
-  }
-
-  private function settingsTableExists(): bool
-  {
-    try {
-      return Schema::hasTable('wbcms_system_settings');
-    } catch (Throwable) {
-      return false;
-    }
+    return $this->enabled()
+      ? app(FileInstallationTelemetry::class)->updateCheckPayload($productKey, $installedVersion, $channel)
+      : [];
   }
 }

@@ -286,6 +286,9 @@ return [
     */
     'publisher' => [
         'capabilities_path' => '/api/updates/capabilities',
+        // Owner-only metadata verification for products with licensed delivery.
+        // Requires Publisher's authenticated published-latest endpoint.
+        'authenticated_verification' => (bool) env('WEBBLOCKS_PUBLISHER_AUTHENTICATED_VERIFICATION', false),
         'token' => env('WEBBLOCKS_PUBLISHER_TOKEN'),
         'timeout_seconds' => 120,
         'connect_timeout_seconds' => 5,
@@ -384,7 +387,7 @@ return [
     */
     'telemetry' => [
         'enabled' => env('PUBLISHER_CLIENT_TELEMETRY', true),
-        'schema_version' => '1',
+        'schema_version' => '2',
     ],
 
 ];
