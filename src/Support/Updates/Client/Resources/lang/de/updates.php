@@ -95,4 +95,5 @@ return [
         'invalid_response' => 'Ungültige Server-Antwort',
         'incompatible' => 'Inkompatible Version',
     ],
+    'composer_package_failed' => 'Das gewählte Paket konnte nicht sicher installiert werden. Prüfen Sie vor einem erneuten Versuch das Update-Protokoll.',
 ];

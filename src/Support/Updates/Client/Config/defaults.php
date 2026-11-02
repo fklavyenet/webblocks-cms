@@ -88,8 +88,9 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Apply strategy — one engine, two modes (§7.1)
+    | Apply strategy — explicit product-selected modes (§7.1)
     |--------------------------------------------------------------------------
+    | 'composer-package' -> Composer resolves a directly required vendor package.
     | 'package'   -> replace only the configured product package directory.
     | 'full-root' -> replace the app root, skipping preserve_paths (standalone apps).
     */
@@ -139,6 +140,14 @@ return [
         // package: replacing vendor code outside Composer must also synchronize
         // Composer's lock/installed registries and regenerate installed.php.
         'sync_composer_metadata' => true,
+
+        // composer-package: choosing a release may advance an exact product pin
+        // through Composer require. Ranges and other requirements remain intact.
+        'composer_advance_exact_pin' => false,
+        'composer_update_dependencies' => true,
+        // A legacy parent can only restore the target package and registries.
+        // Resolve the lock first, forbid unrelated changes, then install it.
+        'composer_lock_only' => false,
 
         // package: after the staged artifact passes validation, copy trusted
         // files from legacy-compatible paths to their canonical installed

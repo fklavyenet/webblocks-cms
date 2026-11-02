@@ -1,6 +1,7 @@
 /.editorconfig export-ignore
 /AGENTS.md export-ignore
 .DS_Store export-ignore
+.gitkeep export-ignore
 /.claude export-ignore
 /.github export-ignore
 /.gitignore export-ignore

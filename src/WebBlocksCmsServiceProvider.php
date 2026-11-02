@@ -5,6 +5,7 @@ namespace WebBlocks\Cms;
 use FilesystemIterator;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
@@ -34,6 +35,7 @@ use WebBlocks\Cms\Console\CatalogRepairCommand;
 use WebBlocks\Cms\Console\ContactMailDiagnoseCommand;
 use WebBlocks\Cms\Console\DispatchSiteNotificationsCommand;
 use WebBlocks\Cms\Console\DoctorNativeLocalCommand;
+use WebBlocks\Cms\Console\FinalizeSystemUpdateCommand;
 use WebBlocks\Cms\Console\GenerateUpdateSigningKeyCommand;
 use WebBlocks\Cms\Console\ImportDemoMedia;
 use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
@@ -48,6 +50,7 @@ use WebBlocks\Cms\Console\PublishUpdateCommand;
 use WebBlocks\Cms\Console\RefreshSystemReportsCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
 use WebBlocks\Cms\Console\ResetTwoFactorCommand;
+use WebBlocks\Cms\Console\RunSystemUpdateCommand;
 use WebBlocks\Cms\Console\SchedulerSetupCommand;
 use WebBlocks\Cms\Console\SchedulerStatusCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
@@ -142,6 +145,7 @@ use WebBlocks\Cms\Support\System\BackupOperations;
 use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
+use WebBlocks\Cms\Support\System\Updates\CmsComposerBridge;
 use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateDownloader;
@@ -901,6 +905,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     SystemBackupRestoreCommand::class,
     SystemBackupCleanupCommand::class,
     SystemUpdateRunsCommand::class,
+    RunSystemUpdateCommand::class,
+    FinalizeSystemUpdateCommand::class,
     WorkAdminSystemUpdateCommand::class,
     SystemUpdatePruneRunsCommand::class,
   ];
@@ -1076,6 +1082,11 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->bootMigrations();
     $this->bootPublishing();
     $this->bootRuntimeAssetCompatibility();
+    $this->app['events']->listen(CommandStarting::class, function (CommandStarting $event): void {
+      if ($event->command === 'migrate') {
+        app(CmsComposerBridge::class)->beforeMigration($event);
+      }
+    });
 
     // Run after the whole application has booted so every route (including the
     // host app's own routes such as login/register) is registered and can be

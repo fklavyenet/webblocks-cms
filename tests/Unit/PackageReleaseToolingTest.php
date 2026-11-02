@@ -36,7 +36,7 @@ class PackageReleaseToolingTest extends TestCase
 
     $this->assertStringContainsString('HEAD:src/Support/WebBlocks.php', $prepare);
     $this->assertStringContainsString('scripts/release/build-package.sh', $prepare);
-    $this->assertStringContainsString('getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.98.7"', $prepare);
+    $this->assertStringContainsString('minimum-updater.php', $prepare);
     $this->assertStringContainsString('git archive --format=tar --worktree-attributes "${TREE}"', $builder);
     $this->assertStringContainsString("-x 'CHANGELOG.md'", $builder);
     $this->assertStringNotContainsString('docs/LICENSE', $surface);
@@ -51,6 +51,16 @@ class PackageReleaseToolingTest extends TestCase
     $this->assertStringNotContainsString('packages/webblocks-cms', $surface);
     $this->assertStringNotContainsString(' artisan ', $surface);
     $this->assertStringNotContainsString('legacy-harness', $surface);
+  }
+
+  public function test_bridge_is_reachable_from_old_updaters_and_later_releases_require_the_bridge(): void
+  {
+    $resolve = require __DIR__.'/../../scripts/release/minimum-updater.php';
+    $this->assertSame('1.112.1', $resolve('1.112.2'));
+    $this->assertSame('1.112.2', $resolve('1.112.3'));
+    $this->assertSame('1.112.2', $resolve('1.113.0'));
+    $this->expectException(\RuntimeException::class);
+    $resolve('1.112.3', '1.98.7');
   }
 
   /**

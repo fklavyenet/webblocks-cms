@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\ApplyStrategy;
+use WebBlocks\Cms\Support\Updates\Client\Contracts\TransactionalApplyStrategy;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\PostApplyRunner;
@@ -80,6 +81,7 @@ class SystemUpdater
 
     $workspace = null;
     $maintenanceEnabled = false;
+    $applyStarted = false;
     $backupHandle = null;
     $runRef = null;
     $output = [];
@@ -145,12 +147,17 @@ class SystemUpdater
       $output[] = 'Package extracted.';
       $this->heartbeat->beat();
 
+      if ($this->applyStrategy instanceof TransactionalApplyStrategy) {
+        $this->applyStrategy->prepare($stagedRoot, $output);
+      }
+
       $commandDir = base_path();
 
       $this->enterMaintenance($commandDir, $output);
       $maintenanceEnabled = true;
 
       $this->reporter()->phase('apply');
+      $applyStarted = true;
       $applyResult = $this->applyStrategy->apply($stagedRoot);
       $warningCount += $this->mergeStrategyOutput($applyResult, $output);
       $this->heartbeat->beat();
@@ -164,9 +171,6 @@ class SystemUpdater
 
       $this->reporter()->phase('verify_version');
       $warningCount += $this->verifyAppliedVersion($toVersion, $output);
-
-      $this->leaveMaintenance($commandDir, $output);
-      $maintenanceEnabled = false;
 
       $this->versionStore->persist($toVersion);
 
@@ -187,6 +191,9 @@ class SystemUpdater
         }
       }
 
+      $this->leaveMaintenance($commandDir, $output);
+      $maintenanceEnabled = false;
+
       $finishedAt = CarbonImmutable::now();
       $durationMs = (int) round($startedAt->diffInMilliseconds($finishedAt));
       $status = $warningCount > 0 ? RunStatus::SUCCESS_WITH_WARNINGS : RunStatus::SUCCESS;
@@ -199,7 +206,6 @@ class SystemUpdater
 
       $this->runRecorder->finish($runRef, $status, $summary, $outputText, $warningCount, $durationMs);
       $this->runRecorder->prune();
-      $this->composerMetadata->commit();
       $this->reporter()->endRun($status);
 
       Log::info('Publisher client update completed.', [
@@ -208,6 +214,11 @@ class SystemUpdater
         'status' => $status,
         'warning_count' => $warningCount,
       ]);
+
+      $this->composerMetadata->commit();
+      if ($this->applyStrategy instanceof TransactionalApplyStrategy) {
+        $this->applyStrategy->commit();
+      }
 
       return new UpdateResult(
         fromVersion: $fromVersion,
@@ -225,13 +236,25 @@ class SystemUpdater
       $this->recordRecoveryProgress(fn () => $this->reporter()->failStep());
       $this->composerMetadata->rollback($output);
 
-      if ($maintenanceEnabled) {
+      $recoveryComplete = true;
+      if ($this->applyStrategy instanceof TransactionalApplyStrategy
+        && $applyStarted && ! $maintenanceEnabled) {
+        // Receipt/log failures after maintenance exit still require a protected
+        // rollback. Observability failure must not block the down command.
         try {
-          $this->leaveMaintenance(base_path(), $output, recovering: true);
-          $output[] = 'Maintenance mode recovered after failure.';
+          $this->enterMaintenance(base_path(), $output, recovering: true);
+          $maintenanceEnabled = true;
         } catch (Throwable $recovery) {
-          $this->recordRecoveryProgress(fn () => $this->reporter()->failStep());
-          $output[] = 'Maintenance recovery failed: '.$recovery->getMessage();
+          $recoveryComplete = false;
+          $output[] = 'Maintenance could not be re-entered for recovery.';
+        }
+      }
+      if ($this->applyStrategy instanceof TransactionalApplyStrategy) {
+        try {
+          $this->applyStrategy->rollback($output);
+        } catch (Throwable $recovery) {
+          $recoveryComplete = false;
+          $output[] = 'Composer dependency recovery failed: '.$recovery->getMessage();
         }
       }
 
@@ -248,15 +271,31 @@ class SystemUpdater
             $status = RunStatus::RESTORED;
             $output[] = 'Pre-update backup restored after failure.';
           } else {
+            $recoveryComplete = false;
             $this->recordRecoveryProgress(fn () => $this->reporter()->failStep());
             $output[] = 'Pre-update backup restore did not complete.';
           }
         } catch (Throwable $restore) {
+          $recoveryComplete = false;
           $this->recordRecoveryProgress(fn () => $this->reporter()->failStep());
           $output[] = 'Pre-update backup restore failed: '.$restore->getMessage();
         }
       }
 
+      if ($maintenanceEnabled && $recoveryComplete) {
+        try {
+          $this->leaveMaintenance(base_path(), $output, recovering: true);
+          $output[] = 'Maintenance mode recovered after failure.';
+        } catch (Throwable $recovery) {
+          $this->recordRecoveryProgress(fn () => $this->reporter()->failStep());
+          $output[] = 'Maintenance recovery failed: '.$recovery->getMessage();
+        }
+      }
+
+      if (! $recoveryComplete) {
+        $status = RunStatus::FAILED;
+        $output[] = 'Maintenance was retained because recovery is incomplete.';
+      }
       $output[] = 'Update failed: '.$failure->getMessage();
 
       if ($runRef !== null) {
@@ -418,13 +457,17 @@ class SystemUpdater
     return 0;
   }
 
-  private function enterMaintenance(string $commandDir, array &$output): void
+  private function enterMaintenance(string $commandDir, array &$output, bool $recovering = false): void
   {
     if (! (bool) config('publisher-client.apply.maintenance_mode', true)) {
       return;
     }
 
-    $this->reporter()->phase('maintenance_down');
+    if ($recovering) {
+      $this->recordRecoveryProgress(fn () => $this->reporter()->phase('maintenance_down'));
+    } else {
+      $this->reporter()->phase('maintenance_down');
+    }
     $this->commandRunner->run(
       $this->commandRunner->artisanCommand(['down', '--render=errors::503']),
       $commandDir,

@@ -64,7 +64,7 @@ class PackageStatusCommand extends Command
 
     $this->line('Package: '.WebBlocksCmsServiceProvider::PACKAGE_COMPOSER_NAME);
     $this->line('Installed runtime version (authoritative): '.WebBlocks::version());
-    $this->line('Composer lock recorded version: '.($composerLockVersion ?? 'not found').' (only reflects the last real "composer install/update"; System Updates overwrite package files directly without touching composer.lock, so this drifts from the runtime version above and must not be used to determine what is actually installed)');
+    $this->line('Composer lock recorded version: '.($composerLockVersion ?? 'not found').' (Composer-managed updates must agree with the runtime version; older Publisher metadata may require a targeted Composer repair)');
     $this->line('Mode: read-only diagnostic only');
     $this->newLine();
 

@@ -95,4 +95,5 @@ return [
         'invalid_response' => 'Invalid server response',
         'incompatible' => 'Incompatible release',
     ],
+    'composer_package_failed' => 'The selected package could not be installed safely. Review the update log before retrying.',
 ];

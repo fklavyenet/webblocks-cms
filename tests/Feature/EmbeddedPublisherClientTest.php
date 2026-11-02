@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use WebBlocks\Cms\Support\Updates\Client\Apply\ComposerPackageApplyStrategy;
+use WebBlocks\Cms\Support\Updates\Client\Contracts\ApplyStrategy;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\PostApplyRunner;
@@ -24,7 +26,10 @@ class EmbeddedPublisherClientTest extends TestCase
     $this->assertInstanceOf(SystemUpdater::class, app(SystemUpdater::class));
 
     $this->assertSame('webblocks-cms', config('publisher-client.product'));
-    $this->assertSame('package', config('publisher-client.apply.strategy'));
+    $this->assertSame('composer-package', config('publisher-client.apply.strategy'));
+    $this->assertInstanceOf(ComposerPackageApplyStrategy::class, app(ApplyStrategy::class));
+    $this->assertFalse(config('publisher-client.apply.sync_composer_metadata'));
+    $this->assertTrue(config('publisher-client.apply.composer_advance_exact_pin'));
     $this->assertFalse((bool) config('publisher-client.apply.composer_install'));
     $this->assertFalse((bool) config('publisher-client.migrations.enabled'));
   }

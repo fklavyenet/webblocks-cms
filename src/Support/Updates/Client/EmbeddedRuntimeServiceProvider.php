@@ -52,6 +52,7 @@ final class EmbeddedRuntimeServiceProvider extends ServiceProvider
         $this->app->bind(ApplyStrategy::class, function ($app): ApplyStrategy {
             return match ((string) $app['config']->get('publisher-client.apply.strategy', 'package')) {
                 'full-root' => $app->make(FullRootApplyStrategy::class),
+                'composer-package' => $app->make(\WebBlocks\Cms\Support\Updates\Client\Apply\ComposerPackageApplyStrategy::class),
                 default => $app->make(PackageApplyStrategy::class),
             };
         });

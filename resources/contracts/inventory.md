@@ -1390,6 +1390,42 @@ package/backup/export formats and API serialization remain protocol contracts.
 
 ## Reliable System Update Tracking (1.98.9)
 
+From CMS 1.112.2, Publisher-managed CMS updates select the shared Client's
+`composer-package` strategy. Composer resolves and installs the selected release;
+the installed product file boundary must match the verified signed artifact.
+Publisher retains backup, migration, asset/catalog synchronization and final
+verification. Composer generates the lock and installed registries; CMS does not
+manually relabel their versions or patch generated autoload files in this mode.
+Choosing an update advances an exact CMS pin through Composer require; version
+ranges and unrelated root requirements are preserved. Source/path/linked installs,
+unsupported layouts, dependency conflicts and unavailable or mismatching releases
+are refused. A complete vendor and Composer recovery copy is kept until success;
+dependencies restore before database recovery and incomplete recovery retains
+maintenance. Existing other-product strategies are not automatically changed.
+
+`webblocks:updates:run` uses the same CMS-configured Publisher engine as the panel.
+After a separately managed Composer deployment, `webblocks:updates:finalize`
+checks lock/runtime agreement and runs discovery, package update migrations,
+cache/catalog/asset synchronization and installed-version persistence under the
+CMS update lock. It does not recreate a pre-deployment backup or supply automatic
+rollback for an earlier manual Composer command. Production CLI execution requires
+confirmation or `--force`.
+
+The 1.112.2 bridge automatically completes adoption from an older archive-based
+updater inside its package-specific migration subprocess. It requires a matching
+running SQL update, maintenance and a live held parent lock. The original active
+archive is reused, with its panel/API SQL checksum pin when present. Composer
+resolves the target lock first, verifies every unrelated installed package already
+matches that lock, then installs the target without changing other dependencies.
+Thus the legacy parent's original package/registry snapshots remain sufficient
+for a later failure. Normal requests and ordinary host migrations never perform
+this transition. No terminal command is required. Bridge recovery copies from a
+verified restored prior attempt may be pruned only by their matching SQL receipt.
+The bridge accepts the tested 1.112.1 updater; earlier versions first use the
+existing panel-compatible path to 1.112.1. Later releases require 1.112.2 and are
+reached through the normal compatible-release selection. These
+operations add no content-authoring capability, schema or publication authority.
+
 Panel updates are admitted as typed SQL operation records and executed by a detached
 CLI worker. The admission pins the release version/checksum and rejects overlapping
 or repeated execution. The Internal Content API retains its synchronous receipt

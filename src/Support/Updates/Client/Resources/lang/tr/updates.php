@@ -95,4 +95,5 @@ return [
         'invalid_response' => 'Geçersiz sunucu yanıtı',
         'incompatible' => 'Uyumsuz sürüm',
     ],
+    'composer_package_failed' => 'Seçilen paket güvenli biçimde kurulamadı. Yeniden denemeden önce güncelleme kaydını inceleyin.',
 ];

@@ -4588,6 +4588,17 @@ $translations = [
     'primary' => 'Primäre Schaltfläche',
     'secondary' => 'Sekundäre Schaltfläche',
   ],
+  'update_cli' => [
+    'bridge_failed' => 'Der automatische Composer-Übergang konnte nicht abgeschlossen werden. Vor einem erneuten Versuch muss das Update wiederhergestellt werden.',
+    'run_description' => 'Vollständiges CMS-Update mit Publisher und Composer ausführen',
+    'finalize_description' => 'CMS-Einrichtung nach einem manuellen Composer-Update abschließen',
+    'inconsistent' => 'CMS-Code und Composer-Einträge sind inkonsistent. Lösen Sie die gewünschte Version vor dem Abschluss mit Composer auf.',
+    'failed' => 'Das Update ist fehlgeschlagen. Prüfen Sie den letzten CMS-Update-Eintrag für Wiederherstellungsdetails.',
+    'locked' => 'Ein anderes CMS-Update wird ausgeführt.',
+    'finalized' => 'CMS-Update abgeschlossen.',
+    'finalize_failed' => 'CMS-Update konnte nicht abgeschlossen werden. Prüfen Sie vor einem erneuten Versuch die Composer-Konsistenz und den fehlgeschlagenen Bereitstellungsschritt.',
+    'composer_notice' => 'Updates installieren die gewählte Version mit Composer. Eine feste CMS-Version wird auf diese Version angehoben; Versionsbereiche und andere Anforderungen bleiben erhalten.',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

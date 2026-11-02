@@ -21,6 +21,7 @@ tar -C "${ROOT_DIR}" -cf - \
   config database phpunit.xml.dist pint.json public resources routes src stubs tests \
   | tar -xf - -C "${SOURCE_COPY}"
 composer create-project "laravel/laravel:^${LARAVEL_VERSION}.0" "${CONSUMER}" --no-interaction --prefer-dist --no-progress
+touch "${CONSUMER}/.webblocks-consumer-fixture"
 composer config --working-dir="${CONSUMER}" --json repositories.webblocks "{\"type\":\"path\",\"url\":\"${SOURCE_COPY}\",\"options\":{\"symlink\":false}}"
 COMPOSER_MIRROR_PATH_REPOS=1 composer require --working-dir="${CONSUMER}" 'fklavyenet/webblocks-cms:@dev' --no-interaction --prefer-dist --no-progress -W
 
@@ -63,3 +64,4 @@ php "${CONSUMER}/artisan" package:discover
 php "${CONSUMER}/artisan" about --only=environment
 php "${CONSUMER}/artisan" route:list > /dev/null
 php "${ROOT_DIR}/tests/Support/check-consumer-inventory.php" "${CONSUMER}"
+php "${ROOT_DIR}/tests/Support/check-consumer-composer-update.php" "${CONSUMER}" "${CONSUMER}/vendor/fklavyenet/webblocks-cms"

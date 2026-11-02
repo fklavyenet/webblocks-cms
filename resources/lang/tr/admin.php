@@ -4624,6 +4624,17 @@ $translations = [
     'primary' => 'Birincil düğme',
     'secondary' => 'İkincil düğme',
   ],
+  'update_cli' => [
+    'bridge_failed' => 'Otomatik Composer geçişi tamamlanamadı. Yeniden denemeden önce güncelleme geri alınmalıdır.',
+    'run_description' => 'Publisher ve Composer ile tam CMS güncellemesini çalıştır',
+    'finalize_description' => 'Elle yapılan Composer güncellemesinden sonra CMS kurulumunu tamamla',
+    'inconsistent' => 'CMS kodu ve Composer kayıtları tutarsız. Tamamlamadan önce hedef sürümü Composer ile çözümleyin.',
+    'failed' => 'Güncelleme başarısız oldu. Kurtarma ayrıntıları için son CMS güncelleme kaydını inceleyin.',
+    'locked' => 'Başka bir CMS güncellemesi çalışıyor.',
+    'finalized' => 'CMS güncellemesi tamamlandı.',
+    'finalize_failed' => 'CMS güncellemesi tamamlanamadı. Yeniden denemeden önce Composer tutarlılığını ve başarısız dağıtım adımını kontrol edin.',
+    'composer_notice' => 'Güncellemeler seçilen sürümü Composer ile kurar. Sabit CMS sürümü seçilen sürüme ilerler; sürüm aralıkları ve diğer gereksinimler korunur.',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

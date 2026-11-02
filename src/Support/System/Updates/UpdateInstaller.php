@@ -180,6 +180,16 @@ class UpdateInstaller
     app(CmsUpdateProgress::class)->stage('dependencies');
     $targetPath = $this->targetPath();
 
+    if (config('publisher-client.apply.strategy') === 'composer-package') {
+      $this->commandRunner->run(
+        $this->commandRunner->artisanCommand(['package:discover', '--no-interaction']),
+        $targetPath,
+        $output,
+      );
+
+      return;
+    }
+
     $this->normalizeComposerPackageMetadata($targetPath, $output);
 
     $this->commandRunner->run(

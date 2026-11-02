@@ -95,4 +95,5 @@ return [
         'invalid_response' => 'Risposta del server non valida',
         'incompatible' => 'Release incompatibile',
     ],
+    'composer_package_failed' => 'Impossibile installare in sicurezza il pacchetto selezionato. Consulta il registro prima di riprovare.',
 ];

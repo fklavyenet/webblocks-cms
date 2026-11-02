@@ -73,6 +73,7 @@
     </div>
 
     <div class="wb-card-body wb-stack wb-stack-4">
+      <p class="wb-text-sm wb-text-muted">{{ $adminText('update_cli.composer_notice') }}</p>
       @if ($failingChecks->isNotEmpty())
         <div class="wb-callout wb-callout-warning wb-stack wb-stack-2" data-webblocks-updates-preflight>
           <strong class="wb-callout-title">{{ $adminText('updates.preflight_title') }}</strong>

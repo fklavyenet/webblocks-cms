@@ -95,4 +95,5 @@ return [
         'invalid_response' => 'Réponse du serveur invalide',
         'incompatible' => 'Version incompatible',
     ],
+    'composer_package_failed' => 'Le paquet sélectionné n’a pas pu être installé en toute sécurité. Consultez le journal avant de réessayer.',
 ];

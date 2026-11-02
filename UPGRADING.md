@@ -1,5 +1,52 @@
 # Upgrading and Installation Topologies
 
+## 1.112.2: Composer-owned package updates
+
+Publisher still manages the complete update, including backups, maintenance,
+package migrations, assets, verification and recovery. It now asks Composer to
+resolve and install the selected CMS version and checks the installed runtime
+files against the signed Publisher artifact. Exact CMS pins advance through
+Composer; version ranges and unrelated host requirements are preserved. The
+Composer repository must already expose the selected release. Source/path/linked
+installations and nonstandard layouts use their own deployment workflow.
+
+Existing users can adopt this release from the panel. During the legacy updater's
+package-migration subprocess, the bridge automatically asks Composer to resolve
+this same release and repairs its canonical package records. The user does not
+run a terminal command. The bridge reuses the artifact already verified by the
+active update and checks its panel/API checksum pin. It requires the active SQL
+run, maintenance mode and the live parent lock; ordinary migrations or requests
+never start this transition.
+
+The bridge preserves every unrelated locked/installed dependency, so the old
+parent's package and Composer backups still cover all files changed by the
+transition. If it cannot complete, the parent fails and restores its update.
+Publish the Composer release before making the Publisher artifact available.
+CMS 1.112.1 installs this bridge directly; earlier versions first follow the
+existing compatible-release path to 1.112.1 in the panel. Later releases require
+the 1.112.2 bridge and are offered as the next ordinary panel update.
+
+Operators who independently choose a manual Composer deployment still own their
+pre-deployment backup, maintenance and rollback. After Composer updates the
+package, run `php artisan webblocks:updates:finalize --force` before leaving
+maintenance. This alternative is not required for the panel transition.
+
+After adoption, the complete terminal entry point is
+`php artisan webblocks:updates:run`; it uses the same engine as the panel.
+Separately managed Composer deployments use `webblocks:updates:finalize` for
+discovery, package update migrations, cache/catalog/assets and version persistence.
+The finalizer checks lock/runtime version and reference consistency before acting
+and shares the CMS update lock. Production CLI commands require confirmation or
+`--force`. Composer scripts and plugins are disabled in the managed package flow;
+product steps run explicitly. Composer must support minimal targeted updates.
+
+The managed flow preserves the complete vendor tree, original Composer files
+and Laravel bootstrap cache until final validation. Failed recovery keeps
+maintenance active. An interrupted `.publisher-recovery-*` copy requires operator
+review before another managed update; do not delete it to bypass that check.
+Publisher Client's existing other-product strategies remain unchanged. No
+Publisher server upgrade or new product repository is required by this change.
+
 ## 1.107.0: Site cookie and privacy management
 
 Run the normal package migrations. The update adds relational site consent settings, service overrides, translations and cookie descriptions, plus the External Content block. It requires no new Composer dependency or external consent platform.

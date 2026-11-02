@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.112.2
+
+- CMS updates keep the existing Publisher backup, migration and recovery flow while Composer resolves and installs the selected package release, including exact version pins, without manually relabelling lock or installed metadata.
+- Verify Composer-installed runtime files against the signed release and preserve the complete dependency tree through final update validation; failed recovery keeps maintenance active.
+- Add `webblocks:updates:run` for the complete terminal update and `webblocks:updates:finalize` for deployments that run Composer separately.
+- Complete the first transition automatically inside the existing panel update, using the legacy updater’s package-migration subprocess and preserving its rollback boundary. No terminal bootstrap is required; later releases use this bridge as their minimum updater.
+
 ## 1.112.1
 
 - Restore CMS production installation reporting to Publisher from both panel and embedded Client update checks. Repeated checks and channel changes use the same stable product-scoped identity instead of leaving CMS activity visible only as older installation-ID reports.

@@ -95,4 +95,5 @@ return [
         'invalid_response' => 'Respuesta del servidor no válida',
         'incompatible' => 'Versión incompatible',
     ],
+    'composer_package_failed' => 'No se pudo instalar el paquete seleccionado de forma segura. Revise el registro antes de reintentar.',
 ];

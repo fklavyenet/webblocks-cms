@@ -33,7 +33,8 @@ class ComposerRepoPreflight
    */
   public function check(): array
   {
-    if (! (bool) config('publisher-client.apply.composer_install', false)) {
+    if (! (bool) config('publisher-client.apply.composer_install', false)
+      && config('publisher-client.apply.strategy') !== 'composer-package') {
       return $this->result(relevant: false);
     }
 

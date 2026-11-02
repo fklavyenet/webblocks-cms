@@ -190,14 +190,8 @@ $archivePath = $argv[2];
 $payloadPath = $argv[3];
 $changelogPath = $argv[4];
 $checksum = trim(file_get_contents($archivePath.".sha256"));
-// Persist the retirement bridge floor for this and subsequent releases.
-$minimumClientVersion = getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: "1.98.7";
-if (! preg_match("/^[0-9]+\\.[0-9]+\\.[0-9]+$/", $minimumClientVersion)
-  || version_compare($minimumClientVersion, "1.98.7", "<")
-  || version_compare($minimumClientVersion, $version, ">")) {
-  fwrite(STDERR, "[webblocks-release-prepare] Minimum client version must preserve the 1.98.7 retirement bridge floor and not exceed this release.\n");
-  exit(1);
-}
+$minimumUpdater = require $argv[5];
+$minimumClientVersion = $minimumUpdater($version, getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: null);
 $notes = releaseNoteItemsForVersion($changelogPath, $version);
 // The first note is the headline (rendered as the summary/trigger); the rest
 // are the supporting highlights. Splitting here keeps the summary out of the
@@ -229,7 +223,7 @@ $payload = [
   ],
 ];
 file_put_contents($payloadPath, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
-' "${VERSION}" "${ARCHIVE_PATH}" "${PAYLOAD_PATH}" "${CHANGELOG_PATH}"
+' "${VERSION}" "${ARCHIVE_PATH}" "${PAYLOAD_PATH}" "${CHANGELOG_PATH}" "${ROOT_DIR}/scripts/release/minimum-updater.php"
 
 printf '[webblocks-release-prepare] Retained artifact root: %s\n' "${RELEASE_ROOT}"
 printf '[webblocks-release-prepare] Artifact: %s\n' "${ARCHIVE_PATH}"

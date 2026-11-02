@@ -10,6 +10,7 @@ namespace WebBlocks\Cms\Support\Updates\Client\Contracts;
  * The one part of the update pipeline that legitimately differs between product
  * types (§7.1): where extracted release files land on disk.
  *
+ *  - 'composer-package': resolve/install the product through Composer.
  *  - 'package'   : replace only the configured product package directory.
  *  - 'full-root' : replace the app root, skipping preserve_paths (standalone apps).
  *
@@ -20,7 +21,7 @@ namespace WebBlocks\Cms\Support\Updates\Client\Contracts;
 interface ApplyStrategy
 {
     /**
-     * Strategy identifier, e.g. 'package' | 'full-root'.
+     * Strategy identifier, e.g. 'composer-package' | 'package' | 'full-root'.
      */
     public function name(): string;
 

@@ -111,6 +111,23 @@ class UpdateInstallerPackageRollbackTest extends TestCase
     ));
   }
 
+  #[Test]
+  public function composer_strategy_discovers_packages_without_patching_composer_generated_files(): void
+  {
+    config()->set('publisher-client.apply.strategy', 'composer-package');
+    File::ensureDirectoryExists($this->targetPath.'/vendor/composer');
+    $metadata = '{"packages":[{"name":"fklavyenet/webblocks-cms","version":"v1.0.0"}]}';
+    File::put($this->targetPath.'/vendor/composer/installed.json', $metadata);
+    $runner = Mockery::mock(UpdateCommandRunner::class);
+    $runner->expects('artisanCommand')->with(['package:discover', '--no-interaction'])->andReturn(['php', 'artisan', 'package:discover', '--no-interaction']);
+    $runner->expects('run')->with(['php', 'artisan', 'package:discover', '--no-interaction'], $this->targetPath, Mockery::type('array'));
+    $runner->shouldNotReceive('composerCommand');
+    $installer = new UpdateInstaller($runner, Mockery::mock(UpdateMigrationRunner::class), Mockery::mock(InstallationGitRemoteGuard::class));
+    $output = [];
+    $installer->installDependencies($output);
+    $this->assertSame($metadata, File::get($this->targetPath.'/vendor/composer/installed.json'));
+  }
+
   private function newPackageRoot(string $markerContents): string
   {
     $packageRoot = $this->targetPath.'/incoming-package';

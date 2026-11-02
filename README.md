@@ -78,6 +78,12 @@ Review [Hosting Requirements](https://cms.webblocksui.com/docs/hosting-requireme
 
 ## Host integration
 
+For CMS 1.112.2 and later, the panel or `php artisan webblocks:updates:run` manages
+the complete Publisher update, delegating package installation to Composer.
+Running Composer separately requires `php artisan webblocks:updates:finalize`
+afterwards and a deployment-owned backup/maintenance procedure. Read
+[UPGRADING.md](UPGRADING.md) for first adoption from older updaters and recovery.
+
 The host remains the application boundary. It owns authentication decisions outside the CMS, environment configuration, database connectivity, scheduled work, mail and queue drivers, deployment, and backups. WebBlocks CMS uses the host User identity and adds CMS membership and role authorization; host product administrators are not automatically CMS administrators.
 
 After installation, open `/webadmin`. Package-owned CMS authentication uses `/webadmin/login` unless the host intentionally supplies an integrated authentication flow. `/cms` is reserved for published static assets and is not an admin prefix.

@@ -31,10 +31,14 @@ final class CmsPublisherClientConfigurator
     $config->set('publisher-client.apply.download_timeout_seconds', (int) config('webblocks-updates.installer.download_timeout_seconds', 120));
     $config->set('publisher-client.lock.name', (string) config('webblocks-updates.installer.lock_name', 'system-updates:run'));
     $config->set('publisher-client.lock.ttl_seconds', (int) config('webblocks-updates.installer.lock_ttl_seconds', 7200));
-    $config->set('publisher-client.apply.strategy', 'package');
+    $config->set('publisher-client.apply.strategy', 'composer-package');
     $config->set('publisher-client.apply.target_path', $runtimeRoot);
     $config->set('publisher-client.apply.enforce_active_runtime_target', true);
     $config->set('publisher-client.apply.composer_install', false);
+    $config->set('publisher-client.apply.sync_composer_metadata', false);
+    $config->set('publisher-client.apply.composer_advance_exact_pin', true);
+    $config->set('publisher-client.apply.composer_update_dependencies', true);
+    $config->set('publisher-client.apply.composer_lock_only', false);
     $config->set('publisher-client.apply.package_validation.allowed_roots', [
       'composer.json', 'LICENSE', 'src', 'routes', 'resources', 'database', 'config', 'public', 'stubs',
     ]);

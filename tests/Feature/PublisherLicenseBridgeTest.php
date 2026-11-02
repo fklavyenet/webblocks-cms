@@ -89,7 +89,7 @@ class PublisherLicenseBridgeTest extends TestCase
       $zipPath = $this->work.'/'.$kind.'.zip';
       $command = $kind === 'composer'
         ? 'composer archive --working-dir='.escapeshellarg($repo).' --format=zip --dir='.escapeshellarg($this->work).' --file=composer'
-        : 'git -C '.escapeshellarg($repo).' archive --format=zip --output='.escapeshellarg($zipPath).' HEAD';
+        : 'git -C '.escapeshellarg($repo).' archive --worktree-attributes --format=zip --output='.escapeshellarg($zipPath).' HEAD';
       $this->executeFixtureCommand($command.' 2>&1', $output, $code);
       $this->assertSame(0, $code, implode("\n", $output));
       $zip = new ZipArchive;
@@ -99,6 +99,7 @@ class PublisherLicenseBridgeTest extends TestCase
         $path = $zip->getNameIndex($i);
         $this->assertDoesNotMatchRegularExpression('~^(docs|tests|scripts)/~', $path);
         $this->assertStringNotContainsString('visual-fixtures/', $path);
+        $this->assertNotSame('.gitkeep', basename($path));
       }
       $zip->close();
     }
