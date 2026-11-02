@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.112.4
+
+- Complete the Composer-managed update after preparation release 1.112.3. Older installations receive the preparation update first and then this release through the panel, without a terminal command.
+- Resolve missing CMS dependencies with Composer under the new updater’s complete vendor/Composer recovery copy; preserve unrelated root requirements and verify installed runtime files against the signed release.
+- Require the 1.112.3 preparation updater for subsequent releases, superseding the failed single-step 1.112.2 transition on historically updated installations.
+
 ## 1.112.3
 
 - Prepare older panel installations for Composer-managed updates without starting Composer inside their legacy migration subprocess. Historical Publisher updates may have left required dependencies absent; a separate preparation release keeps rollback within the old updater’s actual backup boundary.
