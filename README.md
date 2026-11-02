@@ -78,7 +78,7 @@ Review [Hosting Requirements](https://cms.webblocksui.com/docs/hosting-requireme
 
 ## Host integration
 
-For CMS 1.112.2 and later, the panel or `php artisan webblocks:updates:run` manages
+After the CMS 1.112.3 preparation update, the panel or `php artisan webblocks:updates:run` manages
 the complete Publisher update, delegating package installation to Composer.
 Running Composer separately requires `php artisan webblocks:updates:finalize`
 afterwards and a deployment-owned backup/maintenance procedure. Read

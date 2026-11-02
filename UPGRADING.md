@@ -1,30 +1,28 @@
 # Upgrading and Installation Topologies
 
-## 1.112.2: Composer-owned package updates
+## 1.112.3–1.112.4: Composer-owned package updates
 
-Publisher still manages the complete update, including backups, maintenance,
-package migrations, assets, verification and recovery. It now asks Composer to
-resolve and install the selected CMS version and checks the installed runtime
-files against the signed Publisher artifact. Exact CMS pins advance through
-Composer; version ranges and unrelated host requirements are preserved. The
-Composer repository must already expose the selected release. Source/path/linked
-installations and nonstandard layouts use their own deployment workflow.
+Publisher manages backups, maintenance, migrations, assets, verification and
+recovery. Its new updater delegates package installation to Composer and checks
+installed runtime files against the signed artifact. Exact CMS pins advance
+through Composer; version ranges and unrelated root requirements are preserved.
 
-Existing users can adopt this release from the panel. During the legacy updater's
-package-migration subprocess, the bridge automatically asks Composer to resolve
-this same release and repairs its canonical package records. The user does not
-run a terminal command. The bridge reuses the artifact already verified by the
-active update and checks its panel/API checksum pin. It requires the active SQL
-run, maintenance mode and the live parent lock; ordinary migrations or requests
-never start this transition.
+Older archive-based updaters need two panel updates. Install preparation release
+1.112.3 first, then check for updates and install 1.112.4 or later. No terminal
+command is required. The preparation release installs the new update engine
+using the existing package/metadata rollback boundary. It does not start Composer
+inside the old updater's migration subprocess. The following update uses the new
+engine's full vendor/Composer snapshot to resolve missing CMS dependencies safely.
+Only after this following update is the legacy Composer state reconciled.
 
-The bridge preserves every unrelated locked/installed dependency, so the old
-parent's package and Composer backups still cover all files changed by the
-transition. If it cannot complete, the parent fails and restores its update.
-Publish the Composer release before making the Publisher artifact available.
-CMS 1.112.1 installs this bridge directly; earlier versions first follow the
-existing compatible-release path to 1.112.1 in the panel. Later releases require
-the 1.112.2 bridge and are offered as the next ordinary panel update.
+The 1.112.2 migration bridge incorrectly required all dependencies to exist
+already. Historically updated installations may be missing composer/semver even
+though their runtime reports 1.112.1. The bridge then rejected Composer's necessary
+addition and restored the backup. The new preparation path supersedes that
+bridge; do not retry 1.112.2 to repair this condition. Earlier CMS versions follow
+the existing compatible-release path to 1.112.1, then 1.112.3. Releases after
+1.112.3 require that preparation updater. Publish each Composer release before
+its corresponding Publisher artifact.
 
 Operators who independently choose a manual Composer deployment still own their
 pre-deployment backup, maintenance and rollback. After Composer updates the

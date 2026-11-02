@@ -4586,7 +4586,6 @@ $translations = [
     'secondary' => 'Pulsante secondario',
   ],
   'update_cli' => [
-    'bridge_failed' => 'Impossibile completare la transizione automatica a Composer. Ripristina l’aggiornamento prima di riprovare.',
     'run_description' => 'Esegui l’aggiornamento completo del CMS con Publisher e Composer',
     'finalize_description' => 'Completa la configurazione del CMS dopo un aggiornamento manuale con Composer',
     'inconsistent' => 'Il codice CMS e i dati Composer non sono coerenti. Risolvi la versione desiderata con Composer prima di completare.',

@@ -4857,7 +4857,6 @@ return [
     'secondary' => 'Secondary button',
   ],
   'update_cli' => [
-    'bridge_failed' => 'The automatic Composer transition could not finish. The update must be restored before retrying.',
     'run_description' => 'Run the complete CMS update with Publisher and Composer',
     'finalize_description' => 'Complete CMS setup after a manual Composer update',
     'inconsistent' => 'The CMS runtime and Composer records are inconsistent. Resolve the intended version with Composer before finalizing.',

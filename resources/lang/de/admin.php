@@ -4589,7 +4589,6 @@ $translations = [
     'secondary' => 'Sekundäre Schaltfläche',
   ],
   'update_cli' => [
-    'bridge_failed' => 'Der automatische Composer-Übergang konnte nicht abgeschlossen werden. Vor einem erneuten Versuch muss das Update wiederhergestellt werden.',
     'run_description' => 'Vollständiges CMS-Update mit Publisher und Composer ausführen',
     'finalize_description' => 'CMS-Einrichtung nach einem manuellen Composer-Update abschließen',
     'inconsistent' => 'CMS-Code und Composer-Einträge sind inkonsistent. Lösen Sie die gewünschte Version vor dem Abschluss mit Composer auf.',

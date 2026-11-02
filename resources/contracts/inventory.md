@@ -1411,20 +1411,18 @@ CMS update lock. It does not recreate a pre-deployment backup or supply automati
 rollback for an earlier manual Composer command. Production CLI execution requires
 confirmation or `--force`.
 
-The 1.112.2 bridge automatically completes adoption from an older archive-based
-updater inside its package-specific migration subprocess. It requires a matching
-running SQL update, maintenance and a live held parent lock. The original active
-archive is reused, with its panel/API SQL checksum pin when present. Composer
-resolves the target lock first, verifies every unrelated installed package already
-matches that lock, then installs the target without changing other dependencies.
-Thus the legacy parent's original package/registry snapshots remain sufficient
-for a later failure. Normal requests and ordinary host migrations never perform
-this transition. No terminal command is required. Bridge recovery copies from a
-verified restored prior attempt may be pruned only by their matching SQL receipt.
-The bridge accepts the tested 1.112.1 updater; earlier versions first use the
-existing panel-compatible path to 1.112.1. Later releases require 1.112.2 and are
-reached through the normal compatible-release selection. These
-operations add no content-authoring capability, schema or publication authority.
+Historical archive-based updaters first install preparation release 1.112.3 through
+the panel using their existing package/registry recovery boundary. No Composer
+operation is injected into their migration subprocess. The following update to
+1.112.4 or later runs through the new transactional engine and can add missing CMS
+dependencies under its complete vendor recovery copy. Only that following update
+reconciles legacy Composer state. No terminal bootstrap is required. Versions
+before 1.112.1 use the existing compatible-release path first; releases after
+1.112.3 require that preparation updater. The unsuccessful single-step 1.112.2
+bridge is superseded. This changes no authoring schema or publication authority.
+Update history shows the sanitized receipt summary and up to 20,000 retained log
+characters, preserving failure details that the earlier 4,000-character display
+hid.
 
 Panel updates are admitted as typed SQL operation records and executed by a detached
 CLI worker. The admission pins the release version/checksum and rejects overlapping

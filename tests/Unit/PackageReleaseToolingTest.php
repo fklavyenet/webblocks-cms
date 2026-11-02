@@ -57,8 +57,9 @@ class PackageReleaseToolingTest extends TestCase
   {
     $resolve = require __DIR__.'/../../scripts/release/minimum-updater.php';
     $this->assertSame('1.112.1', $resolve('1.112.2'));
-    $this->assertSame('1.112.2', $resolve('1.112.3'));
-    $this->assertSame('1.112.2', $resolve('1.113.0'));
+    $this->assertSame('1.112.1', $resolve('1.112.3'));
+    $this->assertSame('1.112.3', $resolve('1.112.4'));
+    $this->assertSame('1.112.3', $resolve('1.113.0'));
     $this->expectException(\RuntimeException::class);
     $resolve('1.112.3', '1.98.7');
   }

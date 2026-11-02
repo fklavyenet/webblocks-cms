@@ -4587,7 +4587,6 @@ $translations = [
     'secondary' => 'Bouton secondaire',
   ],
   'update_cli' => [
-    'bridge_failed' => 'La transition automatique vers Composer n’a pas pu être terminée. La mise à jour doit être restaurée avant une nouvelle tentative.',
     'run_description' => 'Exécuter la mise à jour complète du CMS avec Publisher et Composer',
     'finalize_description' => 'Terminer la configuration du CMS après une mise à jour manuelle avec Composer',
     'inconsistent' => 'Le code du CMS et les données Composer sont incohérents. Résolvez la version souhaitée avec Composer avant de terminer.',

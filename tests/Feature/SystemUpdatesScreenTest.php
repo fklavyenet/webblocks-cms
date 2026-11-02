@@ -61,6 +61,18 @@ class SystemUpdatesScreenTest extends TestCase
   }
 
   #[Test]
+  public function failed_receipts_show_the_summary_and_failure_after_long_command_output(): void
+  {
+    $run = $this->makeRun(12, '1.112.1', '1.112.2', SystemUpdateRun::STATUS_RESTORED,
+      str_repeat("Package discovery completed.\n", 180)."\nMissing dependency rejected; backup restored. token=fixture-private-value");
+    $run->summary = 'Package migration failed; backup restored.';
+    $html = $this->renderScreen($this->updateAvailableReport(), collect([$run]));
+    $this->assertStringContainsString('Package migration failed; backup restored.', $html);
+    $this->assertStringContainsString('Missing dependency rejected; backup restored.', $html);
+    $this->assertStringNotContainsString('fixture-private-value', $html);
+  }
+
+  #[Test]
   public function the_update_available_state_renders_the_v3_card(): void
   {
     $html = $this->renderScreen($this->updateAvailableReport(), runs: collect([

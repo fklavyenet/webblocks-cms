@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.112.3
+
+- Prepare older panel installations for Composer-managed updates without starting Composer inside their legacy migration subprocess. Historical Publisher updates may have left required dependencies absent; a separate preparation release keeps rollback within the old updater’s actual backup boundary.
+- Offer the subsequent release through the new transactional updater, which can install missing CMS dependencies while preserving the complete dependency recovery copy. Users continue through the panel without a terminal bootstrap.
+- Show the update receipt summary and the full retained log in history instead of truncating the display to its first 4,000 characters.
+
 ## 1.112.2
 
 - CMS updates keep the existing Publisher backup, migration and recovery flow while Composer resolves and installs the selected package release, including exact version pins, without manually relabelling lock or installed metadata.

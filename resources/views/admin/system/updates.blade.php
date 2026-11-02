@@ -290,7 +290,8 @@
             </button>
           </div>
           <div class="wb-modal-body">
-            <pre class="wb-text-xs">{{ $sanitizer->sanitize($run->output) }}</pre>
+            <p>{{ $sanitizer->sanitize($run->summary) }}</p>
+            <pre class="wb-text-xs">{{ $sanitizer->sanitize($run->output, 20000) }}</pre>
           </div>
         </div>
       </div>

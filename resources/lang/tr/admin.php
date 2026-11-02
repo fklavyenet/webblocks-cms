@@ -4625,7 +4625,6 @@ $translations = [
     'secondary' => 'İkincil düğme',
   ],
   'update_cli' => [
-    'bridge_failed' => 'Otomatik Composer geçişi tamamlanamadı. Yeniden denemeden önce güncelleme geri alınmalıdır.',
     'run_description' => 'Publisher ve Composer ile tam CMS güncellemesini çalıştır',
     'finalize_description' => 'Elle yapılan Composer güncellemesinden sonra CMS kurulumunu tamamla',
     'inconsistent' => 'CMS kodu ve Composer kayıtları tutarsız. Tamamlamadan önce hedef sürümü Composer ile çözümleyin.',
