@@ -4866,4 +4866,13 @@ return [
     'finalize_failed' => 'CMS update completion failed. Check Composer consistency and the failed deployment step before retrying.',
     'composer_notice' => 'Updates use Composer to install the selected release. Exact CMS version pins advance to that release; version ranges and other requirements are preserved.',
   ],
+  'update_chain' => [
+    'locked' => 'An update chain is already running or requires recovery review.',
+    'unavailable' => 'A complete verified update plan is unavailable.',
+    'failed' => 'The update step failed.',
+    'interrupted' => 'The update chain is interrupted. Review recovery before another update.',
+    'complete' => 'Updated to :version successfully.',
+    'stopped' => 'The update stopped at the verified version :version. Review the failed step before retrying.',
+    'progress' => 'Step :step/:total: :from → :to. Target: :target.',
+  ],
 ];

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Models\UpdateChainStep;
 use WebBlocks\Cms\Support\Updates\Client\Updates\RunHeartbeat;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -45,6 +46,9 @@ class CmsUpdateProgress
   public function completed(string $status, string $summary): void
   {
     if ($this->operationId !== null) {
+      if (AdminUpdateOperation::find($this->operationId)?->chain_protocol === 1) {
+        return; // Only the supervisor can finish a multi-step operation.
+      }
       AdminUpdateOperation::whereKey($this->operationId)->update(['status' => $status, 'summary' => $summary, 'finished_at' => now(), 'heartbeat_at' => now()]);
     }
   }
@@ -86,6 +90,15 @@ class CmsUpdateProgress
       $column = $table === 'wbcms_system_update_runs' ? 'id' : 'system_update_run_id';
       $rows[$table] = DB::table($table)->where($column, $this->runId)->get()->map(fn ($row) => (array) $row)->all();
     }
+    $operation = $this->operationId ? AdminUpdateOperation::find($this->operationId) : null;
+    if ($operation?->chain_protocol === 1) {
+      $chain = DB::table('wbcms_update_chain_steps')->where('operation_id', $operation->id)->get();
+      $ids = $chain->pluck('system_update_run_id')->filter()->all();
+      $rows['wbcms_system_update_runs'] = DB::table('wbcms_system_update_runs')->whereIn('id', $ids)->get()->map(fn ($row) => (array) $row)->all();
+      $rows['wbcms_admin_update_operations'] = [(array) DB::table('wbcms_admin_update_operations')->where('id', $operation->id)->first()];
+      $rows['wbcms_update_chain_steps'] = $chain->map(fn ($row) => (array) $row)->all();
+      $rows['wbcms_system_update_run_steps'] = DB::table('wbcms_system_update_run_steps')->whereIn('system_update_run_id', $ids)->get()->map(fn ($row) => (array) $row)->all();
+    }
     try {
       $restore();
     } finally {
@@ -108,7 +121,8 @@ class CmsUpdateProgress
       ? ($operationId ? AdminUpdateOperation::find($operationId) : (AdminUpdateOperation::whereIn('status', ['queued', 'running'])->first() ?? AdminUpdateOperation::latest('started_at')->first())) : null;
     $run = $operation ? ($operation->system_update_run_id ? SystemUpdateRun::find($operation->system_update_run_id) : null)
       : (Schema::hasTable('wbcms_system_update_runs') ? SystemUpdateRun::latest('id')->first() : null);
-    if (! $operationId) {
+    if (! $operationId && ($operation?->chain_protocol !== 1
+      || (! in_array($operation->status, ['queued', 'running', 'interrupted'], true) && ! $operation->recovery_required))) {
       $latest = Schema::hasTable('wbcms_system_update_runs') ? SystemUpdateRun::latest('id')->first() : null;
       if ($latest && (! $operation || ($operation->system_update_run_id !== null && $latest->id > $operation->system_update_run_id))) {
         $operation = null;
@@ -129,14 +143,23 @@ class CmsUpdateProgress
       ? DB::table('wbcms_system_update_run_steps')->where('system_update_run_id', $run->id)->orderByDesc('id')->first() : null;
     $started = $operation?->started_at ?? $run?->started_at;
 
+    $chain = $operation?->chain_protocol === 1;
+    $chainSteps = $chain ? UpdateChainStep::where('operation_id', $operation->id)->orderBy('position')->get() : collect();
+    $currentStep = $chainSteps->firstWhere('status', 'running') ?? $chainSteps->firstWhere('status', 'queued') ?? $chainSteps->last();
+
     return [
+      'chain_label' => $chain && $currentStep ? __('webblocks-cms::admin.update_chain.progress', ['step' => $currentStep->position,
+        'total' => $chainSteps->count(), 'from' => $currentStep->from_version, 'to' => $currentStep->version, 'target' => $operation->target_version]) : null,
+      'chain_steps' => $chainSteps->map(fn ($item) => ['position' => $item->position, 'from_version' => $item->from_version,
+        'version' => $item->version, 'status' => $item->status])->all(),
+      'checkpoint_version' => $chain ? $operation->last_verified_version : null,
       'state' => $state, 'running' => $active && $alive, 'terminal' => $terminal,
-      'message' => __('publisher-client::updates.progress.'.($state === 'failed' ? 'failure_message' : ($state === 'queued' ? 'running' : $state))),
+      'message' => $chain && $terminal ? $operation->summary : __('publisher-client::updates.progress.'.($state === 'failed' ? 'failure_message' : ($state === 'queued' ? 'running' : $state))),
       'operation_id' => $operation?->id, 'run_id' => $run?->id,
       'target_version' => $operation?->target_version ?? $run?->to_version,
       'installed_version' => $this->installedVersion($terminal),
-      'duration_ms' => $run?->duration_ms,
-      'elapsed_ms' => $run?->duration_ms ?? ($started ? max(0, (int) $started->diffInMilliseconds($operation?->finished_at ?? $run?->finished_at ?? now())) : null),
+      'duration_ms' => $chain ? ($operation->finished_at ? max(0, (int) $operation->started_at->diffInMilliseconds($operation->finished_at)) : null) : $run?->duration_ms,
+      'elapsed_ms' => $chain ? max(0, (int) $operation->started_at->diffInMilliseconds($operation->finished_at ?? now())) : ($run?->duration_ms ?? ($started ? max(0, (int) $started->diffInMilliseconds($operation?->finished_at ?? $run?->finished_at ?? now())) : null)),
       'steps' => $run && Schema::hasTable('wbcms_system_update_run_steps') ? DB::table('wbcms_system_update_run_steps')->where('system_update_run_id', $run->id)->orderBy('id')->get()->map(function ($row) use ($state, $terminal, $operation, $run): array {
         return ['phase' => $row->stage, 'label' => $this->labelForStage($row->stage),
           'state' => $row->state ?? ($row->finished_at ? 'complete' : ($state === 'interrupted' ? 'interrupted' : ($terminal ? 'failed' : 'running'))),

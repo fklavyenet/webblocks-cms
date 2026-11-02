@@ -4,7 +4,9 @@ namespace WebBlocks\Cms\Support\System\Updates;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Models\UpdateChainStep;
 
 class SystemUpdateRunRetention
 {
@@ -82,6 +84,14 @@ class SystemUpdateRunRetention
 
     if ($latestFailedRun && ! $this->latestSuccessIsNewerThan($latestFailedRun)) {
       $ids[] = $latestFailedRun->id;
+    }
+
+    if (Schema::hasTable('wbcms_update_chain_steps')) {
+      $operations = AdminUpdateOperation::where('chain_protocol', 1)
+        ->where(function ($query): void {
+        $query->whereIn('status', ['queued', 'running', 'interrupted'])->orWhere('recovery_required', true);
+        })->pluck('id');
+      $ids = array_merge($ids, UpdateChainStep::whereIn('operation_id', $operations)->whereNotNull('system_update_run_id')->pluck('system_update_run_id')->all());
     }
 
     return array_values(array_unique(array_merge($ids, $inProgressIds)));

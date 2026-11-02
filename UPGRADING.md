@@ -1,5 +1,19 @@
 # Upgrading and Installation Topologies
 
+## 1.113.0: automatic required update steps
+
+The panel and `webblocks:updates:run` require Publisher plan protocol 1. They pin
+one final target and execute only mandatory bridges in fresh PHP processes with
+continuous maintenance and a global lease. Every step retains backup, mandatory
+checksum/signature checks and fresh-runtime Composer verification before commit.
+The additive relational migration stores the parent and ordered step receipts;
+no JSON persistence is added. Failed steps restore their own last verified
+checkpoint. Unknown or incomplete recovery retains maintenance and blocks new
+updates until reviewed. The existing API keeps its single-step approval contract.
+Deploy Publisher plan support before enabling this release. Older engines need a
+normal update to obtain the coordinator; other products retain one-step behavior.
+
+
 ## 1.112.3–1.112.4: Composer-owned package updates
 
 Publisher manages backups, maintenance, migrations, assets, verification and

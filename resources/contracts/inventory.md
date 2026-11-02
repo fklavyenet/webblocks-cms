@@ -1424,6 +1424,22 @@ Update history shows the sanitized receipt summary and up to 20,000 retained log
 characters, preserving failure details that the earlier 4,000-character display
 hid.
 
+From 1.113.0 the panel and `webblocks:updates:run` use Publisher plan protocol 1.
+One admitted operation pins the final target and ordered required releases with
+checksum/signature identities. Optional releases are skipped; publication during
+execution does not expand the approved target. Each step boots a fresh PHP worker
+and verifies the newly installed CMS/Composer state in another fresh process
+before its transaction commits. A global lease and maintenance span the chain.
+Typed relational parent fields and `wbcms_update_chain_steps` are authoritative;
+parent completion, aggregate elapsed time and per-step receipts remain distinct.
+All audit rows survive a database rollback. Failure restores only the failed
+step's last verified checkpoint and stops; unknown child exits or incomplete
+recovery keep maintenance active and block new updates pending review. The
+single-step Internal Content API approval remains unchanged and cannot overlap
+an active or unresolved chain. Existing clients and other products keep their
+one-step behavior until they adopt a durable adapter. Older engines require an
+ordinary upgrade to acquire the coordinator; there is no retroactive chaining.
+
 Panel updates are admitted as typed SQL operation records and executed by a detached
 CLI worker. The admission pins the release version/checksum and rejects overlapping
 or repeated execution. The Internal Content API retains its synchronous receipt

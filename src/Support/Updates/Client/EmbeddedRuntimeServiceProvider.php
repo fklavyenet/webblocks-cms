@@ -34,6 +34,7 @@ final class EmbeddedRuntimeServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(\WebBlocks\Cms\Support\Updates\Client\Contracts\UpdateAdmission::class, \WebBlocks\Cms\Support\Updates\Client\Chains\UnrestrictedUpdateAdmission::class);
         $this->mergeConfigFrom(__DIR__.'/Config/defaults.php', 'publisher-client');
         $this->app['config']->set('publisher-client.distribution', 'embedded');
 

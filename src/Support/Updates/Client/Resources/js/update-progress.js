@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var elapsed = modal.querySelector('[data-update-elapsed]');
     var steps = modal.querySelector('[data-update-steps]');
     var stage = modal.querySelector('[data-update-stage]');
+    var chain = modal.querySelector('[data-update-chain]');
     var recheck = modal.querySelector('[data-update-recheck]');
     var returnLink = modal.querySelector('[data-update-return]');
     var health = opener.getAttribute('data-pc-health-url');
@@ -67,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
         footer.hidden = false;
     }
     function render(progress) {
+        if (chain) { chain.textContent = progress.chain_label || ''; chain.hidden = !progress.chain_label; }
         syncElapsed(Math.max(0, progress.elapsed_ms));
         loading.hidden = false;
         message.textContent = progress.message || label('running');
@@ -147,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function () {
         operation = id;
         remember(id);
         stopped = false;
-        deadline = Date.now() + 15 * 60 * 1000;
+        deadline = Date.now() + Math.max(900, Math.min(21600, Number(opener.getAttribute('data-pc-max-wait-seconds')) || 900)) * 1000;
         recheck.hidden = true;
         returnLink.hidden = true;
         loading.hidden = false;

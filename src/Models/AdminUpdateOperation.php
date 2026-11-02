@@ -12,5 +12,5 @@ class AdminUpdateOperation extends CmsModel
 
   protected $guarded = [];
 
-  protected $casts = ['started_at' => 'datetime', 'finished_at' => 'datetime', 'heartbeat_at' => 'datetime'];
+  protected $casts = ['started_at' => 'datetime', 'finished_at' => 'datetime', 'heartbeat_at' => 'datetime', 'chain_protocol' => 'integer', 'maintenance_owned' => 'boolean', 'recovery_required' => 'boolean'];
 }

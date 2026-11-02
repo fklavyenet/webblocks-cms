@@ -50,6 +50,7 @@ use WebBlocks\Cms\Console\RefreshSystemReportsCommand;
 use WebBlocks\Cms\Console\ResetPrimitiveBlocksCommand;
 use WebBlocks\Cms\Console\ResetTwoFactorCommand;
 use WebBlocks\Cms\Console\RunSystemUpdateCommand;
+use WebBlocks\Cms\Console\RunUpdateChainStepCommand;
 use WebBlocks\Cms\Console\SchedulerSetupCommand;
 use WebBlocks\Cms\Console\SchedulerStatusCommand;
 use WebBlocks\Cms\Console\SearchRebuildCommand;
@@ -68,6 +69,7 @@ use WebBlocks\Cms\Console\SystemBackupCleanupCommand;
 use WebBlocks\Cms\Console\SystemBackupRestoreCommand;
 use WebBlocks\Cms\Console\SystemUpdatePruneRunsCommand;
 use WebBlocks\Cms\Console\SystemUpdateRunsCommand;
+use WebBlocks\Cms\Console\VerifyUpdateChainCommand;
 use WebBlocks\Cms\Console\VisitorReportCleanupCommand;
 use WebBlocks\Cms\Console\WorkAdminSystemUpdateCommand;
 use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
@@ -144,6 +146,8 @@ use WebBlocks\Cms\Support\System\BackupOperations;
 use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
+use WebBlocks\Cms\Support\System\Updates\CmsChainAdmission;
+use WebBlocks\Cms\Support\System\Updates\CmsChainContext;
 use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateDownloader;
@@ -155,6 +159,7 @@ use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore as Clie
 use WebBlocks\Cms\Support\Updates\Client\Contracts\PostApplyRunner as ClientPostApplyRunner;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\ProgressReporter;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\RunRecorder as ClientRunRecorder;
+use WebBlocks\Cms\Support\Updates\Client\Contracts\UpdateAdmission;
 use WebBlocks\Cms\Support\Updates\Client\EmbeddedRuntimeServiceProvider;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateCommandRunner;
@@ -906,6 +911,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     RunSystemUpdateCommand::class,
     FinalizeSystemUpdateCommand::class,
     WorkAdminSystemUpdateCommand::class,
+    RunUpdateChainStepCommand::class,
+    VerifyUpdateChainCommand::class,
     SystemUpdatePruneRunsCommand::class,
   ];
 
@@ -1027,6 +1034,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->singleton(CmsUpdateProgress::class);
     $this->app->singleton(ProgressReporter::class, CmsProgressReporter::class);
     $this->app->singleton(CmsPackageRollback::class);
+    $this->app->singleton(CmsChainContext::class);
+    $this->app->bind(UpdateAdmission::class, CmsChainAdmission::class);
     $this->app->bind(UpdatePackageDownloader::class, CmsUpdateDownloader::class);
     $this->app->bind(UpdatePackageExtractor::class, CmsUpdateExtractor::class);
     $this->app->singleton(PersistentDocuments::class);

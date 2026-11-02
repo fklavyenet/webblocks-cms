@@ -31,7 +31,7 @@ class RunApiSystemUpdate
       return $this->replay($existing, $input);
     }
 
-    $lock = Cache::lock('system-updates:api-admission', max(900, (int) config('publisher-client.lock.ttl_seconds', 900)));
+    $lock = Cache::lock('system-updates:admission', max(900, (int) config('publisher-client.lock.ttl_seconds', 900)));
 
     if (! $lock->get()) {
       return ['http_status' => 409, 'ok' => false, 'code' => 'system_update_in_progress'];

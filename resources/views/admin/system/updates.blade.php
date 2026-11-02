@@ -39,6 +39,9 @@
     $canUpdate = ($report['can_update'] ?? false) === true;
     $state = (string) ($check['state'] ?? 'unknown');
     $latestVersion = $check['latest_version'] ?? null;
+    if ((bool) config('webblocks-updates.chains.enabled', true)) {
+      $latestVersion = $check['release']['update_path']['latest_version'] ?? $latestVersion;
+    }
     $updateAvailable = $state === 'update_available' && ! empty($latestVersion);
     $localNewer = $state === 'up_to_date'
       && is_string($latestVersion) && $latestVersion !== ''
@@ -311,6 +314,7 @@
                 <h3 class="wb-modal-title" id="pc-update-progress-title">{{ $adminText('updates.progress_title', ['version' => $modalVersion]) }}</h3>
             </div>
             <div class="wb-modal-body wb-stack wb-stack-3">
+                <p data-update-chain hidden class="wb-text-sm wb-text-muted" role="status"></p>
                 <div data-update-loading class="wb-stack wb-stack-3">
                     <strong data-update-stage id="pc-update-progress-stage" role="status" aria-live="polite" aria-atomic="true">{{ __('publisher-client::updates.progress.running') }}</strong>
                     <div class="wb-progress-bar wb-progress-bar-indeterminate" role="progressbar" aria-labelledby="pc-update-progress-stage">
@@ -331,7 +335,7 @@
     <button type="button" hidden id="pc-update-progress-open"
             data-wb-toggle="modal" data-wb-target="#pc-update-progress"
             data-active-operation="{{ in_array($updateProgress['state'] ?? '', ['queued', 'running', 'interrupted'], true) ? ($updateProgress['operation_id'] ?? '') : '' }}"
-            data-pc-admission="server" data-pc-health-url="{{ $healthRoute ?? '' }}"
+            data-pc-admission="server" data-pc-max-wait-seconds="21600" data-pc-health-url="{{ $healthRoute ?? '' }}"
             data-progress-unknown="{{ __('publisher-client::updates.progress.unknown') }}"
             data-progress-interrupted="{{ __('publisher-client::updates.progress.interrupted') }}"
             data-progress-auth="{{ __('publisher-client::updates.progress.auth') }}"

@@ -191,6 +191,7 @@ try {
   if (! is_string($binary)) {
     throw new RuntimeException('Composer is required for the real update consumer check.');
   }
+  file_put_contents($fixture.'/packages.php', '<?php return '.var_export($metadata, true).';');
   $run([PHP_BINARY, $binary, 'config', '--json', 'repositories.update-fixture', json_encode(['type' => 'package', 'package' => $metadata], JSON_THROW_ON_ERROR)]);
   $common = ['--with-dependencies', '--minimal-changes', '--prefer-dist', '--no-interaction', '--no-progress', '--no-scripts', '--no-plugins'];
   $run([PHP_BINARY, $binary, 'require', 'fklavyenet/webblocks-cms:'.$previous, ...$common]);
@@ -242,7 +243,8 @@ try {
   // Exact pinning is intentional in this fixture. Keep schema/lock validation
   // strict while excluding Composer's constraint-style advice.
   $run([PHP_BINARY, $binary, 'validate', '--strict', '--no-check-all']);
-  echo "Released 1.112.1 panel preparation, missing-dependency Composer transition, both rollback boundaries, clean reinstall and CLI completion passed.\n";
+  $run([PHP_BINARY, dirname($script).'/check-consumer-update-chain.php', $consumer, $fixture]);
+  echo "Released 1.112.1 preparation, missing-dependency cutover, fresh-process automatic chain, rollback, clean reinstall and CLI completion passed.\n";
 } finally {
   $filesystem->deleteDirectory($fixture);
 }

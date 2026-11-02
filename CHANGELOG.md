@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.113.0
+
+- Apply only required compatibility bridges through one admitted panel or terminal update. Pin the original final target and every signed artifact; run each step using a fresh PHP process.
+- Keep one exclusive chain lease, continuous maintenance, a relational parent/step journal and aggregate progress. A failed step restores its own last verified checkpoint; uncertain or incomplete recovery blocks another update.
+- Verify the newly installed CMS and Composer records in a fresh process before releasing each step’s dependency snapshot. Preserve all chain receipts across database recovery.
+- Include Publisher Client 1.5.0. Requires Publisher plan protocol 1; deploy the Publisher API before enabling this CMS release. Existing Internal Content API approvals remain single-step and cannot bypass an active chain.
+
 ## 1.112.4
 
 - Complete the Composer-managed update after preparation release 1.112.3. Older installations receive the preparation update first and then this release through the panel, without a terminal command.

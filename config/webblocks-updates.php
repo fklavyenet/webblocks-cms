@@ -4,6 +4,7 @@ use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
 use WebBlocks\Cms\Support\WebBlocks;
 
 return [
+    'chains' => ['enabled' => true],
     'enabled' => env('WEBBLOCKS_UPDATES_ENABLED', true),
     'server_url' => ReleaseDefaults::SERVER_URL,
     'latest_path' => ReleaseDefaults::LATEST_PATH,

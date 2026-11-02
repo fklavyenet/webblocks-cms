@@ -4596,6 +4596,15 @@ $translations = [
     'finalize_failed' => 'No se pudo completar la actualización. Compruebe la coherencia de Composer y el paso de despliegue fallido antes de reintentar.',
     'composer_notice' => 'Las actualizaciones usan Composer para instalar la versión seleccionada. La versión fija del CMS avanza a esa versión; se conservan los rangos de versiones y los demás requisitos.',
   ],
+  'update_chain' => [
+    'locked' => 'Ya hay una cadena de actualización en curso o pendiente de revisión de recuperación.',
+    'unavailable' => 'No hay un plan de actualización completo y verificado disponible.',
+    'failed' => 'El paso de actualización falló.',
+    'interrupted' => 'La cadena de actualización se interrumpió. Revise la recuperación antes de otra actualización.',
+    'complete' => 'Actualizado correctamente a :version.',
+    'stopped' => 'La actualización se detuvo en la versión verificada :version. Revise el paso fallido antes de reintentar.',
+    'progress' => 'Paso :step/:total: :from → :to. Destino: :target.',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

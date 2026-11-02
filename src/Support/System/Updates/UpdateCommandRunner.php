@@ -27,8 +27,16 @@ class UpdateCommandRunner
       ->start($command);
     while ($process->running()) {
       $process->ensureNotTimedOut();
-      app(RunHeartbeat::class)->beat();
-      app(CmsUpdateProgress::class)->beat();
+      try {
+        app(RunHeartbeat::class)->beat();
+        app(CmsUpdateProgress::class)->beat();
+      } catch (\Throwable $exception) {
+        // A database restore can briefly lock the supervisor's heartbeat store.
+        // Keep observing its child; the child's durable receipt decides recovery.
+        if (! app(CmsChainContext::class)->supervising) {
+          throw $exception;
+        }
+      }
       usleep(100000);
     }
     $result = $process->wait();

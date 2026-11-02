@@ -263,7 +263,7 @@ class SystemUpdateApiTest extends TestCase
   #[Test]
   public function admission_lock_and_unresolved_requests_block_new_execution(): void
   {
-    $lock = Cache::lock('system-updates:api-admission', 900);
+    $lock = Cache::lock('system-updates:admission', 900);
     $lock->get();
     $this->assertSame('system_update_in_progress', app(RunApiSystemUpdate::class)->execute($this->token(), $this->input())['code']);
     $lock->release();

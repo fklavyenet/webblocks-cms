@@ -14,9 +14,12 @@ use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateServerClient;
 
 class StartAdminSystemUpdate
 {
-  public function execute(int $userId): AdminUpdateOperation
+  public function execute(?int $userId): AdminUpdateOperation
   {
-    $lock = Cache::lock('system-updates:admin-admission', 30);
+    if ((bool) config('webblocks-updates.chains.enabled', true)) {
+      return app(StartCmsUpdateChain::class)->execute($userId);
+    }
+    $lock = Cache::lock('system-updates:admission', 30);
     if (! $lock->get()) {
     throw new UpdateException('An update is already being started.');
     }

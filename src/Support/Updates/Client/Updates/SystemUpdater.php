@@ -75,6 +75,7 @@ class SystemUpdater
       throw new UpdateException('Updates are disabled for this install.');
     }
 
+    app(\WebBlocks\Cms\Support\Updates\Client\Contracts\UpdateAdmission::class)->assertAllowed();
     $lock = $this->acquireLock();
     $this->armShutdownGuard();
     $this->heartbeat->beat();
@@ -296,6 +297,9 @@ class SystemUpdater
         $status = RunStatus::FAILED;
         $output[] = 'Maintenance was retained because recovery is incomplete.';
       }
+      if (! $recoveryComplete) {
+        $status = RunStatus::FAILED;
+      }
       $output[] = 'Update failed: '.$failure->getMessage();
 
       if ($runRef !== null) {
@@ -396,6 +400,9 @@ class SystemUpdater
 
   public function isLocked(): bool
   {
+    if (app(\WebBlocks\Cms\Support\Updates\Client\Contracts\UpdateAdmission::class)->blocked()) {
+      return true;
+    }
     $lock = Cache::lock($this->lockName(), 1);
 
     if ($lock->get()) {

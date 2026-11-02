@@ -9,6 +9,11 @@ SOURCE_COPY="${TEMP_DIR}/package-source"
 CONSUMER="${TEMP_DIR}/consumer"
 
 cleanup() {
+  local result=$?
+  if [ "${result}" -ne 0 ] && [ "${WEBBLOCKS_CMS_KEEP_FAILED_CONSUMER:-0}" = "1" ]; then
+    printf 'Retained disposable diagnostic consumer: %s\n' "${TEMP_DIR}"
+    return "${result}"
+  fi
   rm -rf "${TEMP_DIR}"
 }
 
@@ -64,4 +69,9 @@ php "${CONSUMER}/artisan" package:discover
 php "${CONSUMER}/artisan" about --only=environment
 php "${CONSUMER}/artisan" route:list > /dev/null
 php "${ROOT_DIR}/tests/Support/check-consumer-inventory.php" "${CONSUMER}"
-php "${ROOT_DIR}/tests/Support/check-consumer-composer-update.php" "${CONSUMER}" "${CONSUMER}/vendor/fklavyenet/webblocks-cms"
+if [ "${WEBBLOCKS_CMS_CHAIN_ONLY:-0}" = "1" ]; then
+  mkdir -p "${TEMP_DIR}/chain-fixture"
+  php "${ROOT_DIR}/tests/Support/check-consumer-update-chain.php" "${CONSUMER}" "${TEMP_DIR}/chain-fixture"
+else
+  php "${ROOT_DIR}/tests/Support/check-consumer-composer-update.php" "${CONSUMER}" "${CONSUMER}/vendor/fklavyenet/webblocks-cms"
+fi

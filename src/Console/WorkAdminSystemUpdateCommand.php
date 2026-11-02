@@ -10,6 +10,7 @@ use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Support\System\Updates\AdminApprovedUpdateClient;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
+use WebBlocks\Cms\Support\System\Updates\RunCmsUpdateChain;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateServerClient;
 
@@ -31,6 +32,11 @@ class WorkAdminSystemUpdateCommand extends Command
     }
     try {
       $operation = AdminUpdateOperation::findOrFail($id);
+      if ($operation->chain_protocol === 1) {
+        app(CmsPublisherClientConfigurator::class)->configure();
+
+        return app(RunCmsUpdateChain::class)->run($operation) ? self::SUCCESS : self::FAILURE;
+      }
       if ($operation->status !== 'queued') {
       return self::SUCCESS;
       }

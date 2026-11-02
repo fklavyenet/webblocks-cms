@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Support\Facades\Cache;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
+use WebBlocks\Cms\Support\System\Updates\CmsChainAdmission;
 use WebBlocks\Cms\Support\System\Updates\CmsComposerState;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
@@ -31,6 +32,11 @@ class FinalizeSystemUpdateCommand extends Command
     }
 
     $configurator->configure();
+    if (app(CmsChainAdmission::class)->blocked()) {
+      $this->error(__('webblocks-cms::admin.update_chain.locked'));
+
+      return self::FAILURE;
+    }
     $lock = Cache::lock((string) config('publisher-client.lock.name'), (int) config('publisher-client.lock.ttl_seconds', 7200));
     if (! $lock->get()) {
       $this->error(__('webblocks-cms::admin.update_cli.locked'));

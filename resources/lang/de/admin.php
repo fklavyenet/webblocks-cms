@@ -4598,6 +4598,15 @@ $translations = [
     'finalize_failed' => 'CMS-Update konnte nicht abgeschlossen werden. Prüfen Sie vor einem erneuten Versuch die Composer-Konsistenz und den fehlgeschlagenen Bereitstellungsschritt.',
     'composer_notice' => 'Updates installieren die gewählte Version mit Composer. Eine feste CMS-Version wird auf diese Version angehoben; Versionsbereiche und andere Anforderungen bleiben erhalten.',
   ],
+  'update_chain' => [
+    'locked' => 'Eine Aktualisierungskette läuft bereits oder erfordert eine Wiederherstellungsprüfung.',
+    'unavailable' => 'Ein vollständiger geprüfter Aktualisierungsplan ist nicht verfügbar.',
+    'failed' => 'Der Aktualisierungsschritt ist fehlgeschlagen.',
+    'interrupted' => 'Die Aktualisierungskette wurde unterbrochen. Prüfen Sie die Wiederherstellung vor einer weiteren Aktualisierung.',
+    'complete' => 'Erfolgreich auf :version aktualisiert.',
+    'stopped' => 'Die Aktualisierung wurde bei der geprüften Version :version angehalten. Prüfen Sie den fehlgeschlagenen Schritt vor einem erneuten Versuch.',
+    'progress' => 'Schritt :step/:total: :from → :to. Ziel: :target.',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

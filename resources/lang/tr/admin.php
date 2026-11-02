@@ -4634,6 +4634,15 @@ $translations = [
     'finalize_failed' => 'CMS güncellemesi tamamlanamadı. Yeniden denemeden önce Composer tutarlılığını ve başarısız dağıtım adımını kontrol edin.',
     'composer_notice' => 'Güncellemeler seçilen sürümü Composer ile kurar. Sabit CMS sürümü seçilen sürüme ilerler; sürüm aralıkları ve diğer gereksinimler korunur.',
   ],
+  'update_chain' => [
+    'locked' => 'Bir güncelleme zinciri zaten çalışıyor veya kurtarma incelemesi gerekiyor.',
+    'unavailable' => 'Doğrulanmış tam güncelleme planı alınamadı.',
+    'failed' => 'Güncelleme adımı başarısız oldu.',
+    'interrupted' => 'Güncelleme zinciri kesintiye uğradı. Yeni güncellemeden önce kurtarma durumunu inceleyin.',
+    'complete' => ':version sürümüne başarıyla güncellendi.',
+    'stopped' => 'Güncelleme doğrulanmış :version sürümünde durdu. Yeniden denemeden önce başarısız adımı inceleyin.',
+    'progress' => 'Adım :step/:total: :from → :to. Hedef: :target.',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

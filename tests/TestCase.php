@@ -186,6 +186,8 @@ abstract class TestCase extends Orchestra
 
   protected function defineEnvironment($app): void
   {
+    // Existing suites exercise the original single-step contract. Chain suites opt in explicitly.
+    $app['config']->set('webblocks-updates.chains.enabled', false);
     $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('w', 32)));
     $app['config']->set('cache.default', 'array');
     $app['config']->set('database.default', 'sqlite');

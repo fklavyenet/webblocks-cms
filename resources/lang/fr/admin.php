@@ -4596,6 +4596,15 @@ $translations = [
     'finalize_failed' => 'La finalisation a échoué. Vérifiez la cohérence de Composer et l’étape de déploiement en échec avant de réessayer.',
     'composer_notice' => 'Les mises à jour utilisent Composer pour installer la version sélectionnée. Une version CMS fixe passe à cette version ; les plages de versions et les autres exigences sont conservées.',
   ],
+  'update_chain' => [
+    'locked' => 'Une chaîne de mise à jour est déjà en cours ou nécessite un contrôle de récupération.',
+    'unavailable' => 'Aucun plan de mise à jour complet et vérifié n’est disponible.',
+    'failed' => 'L’étape de mise à jour a échoué.',
+    'interrupted' => 'La chaîne de mise à jour a été interrompue. Vérifiez la récupération avant une nouvelle mise à jour.',
+    'complete' => 'Mise à jour vers :version réussie.',
+    'stopped' => 'La mise à jour s’est arrêtée à la version vérifiée :version. Vérifiez l’étape en échec avant de réessayer.',
+    'progress' => 'Étape :step/:total : :from → :to. Cible : :target.',
+  ],
 ];
 
 return array_replace_recursive($translations, require __DIR__.'/admin-coverage.php', require __DIR__.'/admin-javascript.php');

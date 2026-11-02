@@ -3,6 +3,8 @@
 namespace WebBlocks\Cms\Support\Updates;
 
 use WebBlocks\Cms\Models\SystemUpdateRun;
+use WebBlocks\Cms\Models\UpdateChainStep;
+use WebBlocks\Cms\Support\System\Updates\CmsChainContext;
 use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
@@ -23,6 +25,9 @@ final class CmsClientRunRecorder implements RunRecorder
       'triggered_by_user_id' => $userId,
     ]);
     app(CmsUpdateProgress::class)->start($run);
+    if ($id = app(CmsChainContext::class)->stepId) {
+      UpdateChainStep::whereKey($id)->update(['system_update_run_id' => $run->id]);
+    }
 
     return $run;
   }
@@ -46,6 +51,9 @@ final class CmsClientRunRecorder implements RunRecorder
       'duration_ms' => $durationMs,
       'finished_at' => now(),
     ])->save();
+    if ($id = app(CmsChainContext::class)->stepId) {
+      UpdateChainStep::whereKey($id)->update(['status' => $status, 'finished_at' => now()]);
+    }
     app(CmsUpdateProgress::class)->completed($status, $summary);
   }
 
