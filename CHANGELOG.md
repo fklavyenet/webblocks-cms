@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.111.4
+
+- Preserve recovery-enabled page and block forms through connection, timeout, session, validation and server errors. Retain the latest typing during pending checkpoints, prevent duplicate saves and redirect only after confirmed success.
+- Keep intentionally empty galleries empty after validation or recovery, preserving partial removals, metadata and order. Include six-language feedback, session-token refresh and saved-version checks after an uncertain response.
+- Correct the maintenance regression test for Laravel 12's pre-rendered HTML response to JSON requests. Verify both supported response formats while retaining HTTP 503, Retry-After: 60, translated HTML and preboot rendering checks. No maintenance runtime behavior or migration changes.
+
 ## 1.111.3
 
 - Preserve recovery-enabled page and block forms when saving encounters connection, timeout, session, validation or server errors. Show validation feedback without leaving the editor, and offer sign-in or saved-version checks in another tab. A lost response may follow a committed save; review the saved version before retrying.

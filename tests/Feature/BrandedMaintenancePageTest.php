@@ -70,8 +70,14 @@ class BrandedMaintenancePageTest extends TestCase
       $this->artisan('down', ['--render' => CmsUpdateMaintenance::VIEW, '--retry' => CmsUpdateMaintenance::RETRY_AFTER, '--status' => 503])->assertSuccessful();
       $this->get('/tr/example?from=visitor')->assertStatus(503)->assertHeader('Retry-After', '60')
         ->assertSee('Kısa bir bakım yapıyoruz')->assertSee('Yeniden dene');
-      $this->getJson('/example')->assertStatus(503)->assertHeader('Retry-After', '60')
-        ->assertHeader('Content-Type', 'application/json')->assertDontSee('wb-error-shell');
+      $jsonRequest = $this->getJson('/example')->assertStatus(503)->assertHeader('Retry-After', '60');
+      // Laravel 12 returns its pre-rendered maintenance HTML even for JSON
+      // requests. Laravel 13 negotiates JSON after the application boots.
+      if (str_starts_with((string) $jsonRequest->headers->get('Content-Type'), 'application/json')) {
+        $jsonRequest->assertJsonStructure(['message'])->assertDontSee('wb-error-shell');
+      } else {
+        $jsonRequest->assertSee('wb-error-shell')->assertSee('Kısa bir bakım yapıyoruz');
+      }
 
       // Execute Laravel's generated entry point in a fresh process with no
       // Composer autoloader or application. This is the real update boundary.
