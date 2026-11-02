@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.112.1
+
+- Restore CMS production installation reporting to Publisher from both panel and embedded Client update checks. Repeated checks and channel changes use the same stable product-scoped identity instead of leaving CMS activity visible only as older installation-ID reports.
+- Send production telemetry in an HTTPS header, outside URL logs, and suppress reports in local, testing and staging environments. Preserve both existing telemetry opt-outs; no domains, owners, application keys or raw legacy UUIDs are sent.
+- Include Publisher Client 1.3.2 and regression coverage for identity recovery, shared panel/Client reporting, opt-outs and transport. No new migration is required. Install Publisher 0.3.84 to see separate legacy and production counts; updated production sites contribute after their next successful update check.
+
 ## 1.112.0
 
 - Extend confirmed-checkpoint saving and form recovery to new pages, new page-owned blocks, and page translation/SEO forms. Preserve current values through connection, timeout, session, validation and server failures, including changes typed while recovery is pending.

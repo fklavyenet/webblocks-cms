@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
     "document": "resources/contracts/inventory.md",
-    "product_version": "1.112.0",
+    "product_version": "1.112.1",
     "inventory_sha256": "f1a692e3a615e947f0f74ed030d466ea83d9f7a59953cfea2083826d9071f191",
-    "source_sha256": "994460b25f37991669f8093cb30ea7d2e34c67bb6d9d565650869dd07805969f",
+    "source_sha256": "65474e4ee177f8166eceae8cefb30981b0966a909f1a907012342e4cc1d64ad6",
     "review_outcome": "no-authoring-impact",
-    "review_note": "Changes affect update-check telemetry transport and identity only; block fields, content rendering, editor behavior, API permissions and plugin lifecycle are unchanged.",
+    "review_note": "Telemetry transport, identity and release version do not change block authoring, content rendering, permissions or plugin lifecycle.",
     "sources": {
         "composer.json": "f465433a91a9459ef43a2331d9adf8602207930e9e8afc7c262bf9f68461bdeb",
         "config/cms.php": "7e1f0ec1bc1df3054603e7394ca684c1a250d3a9d731bcd1ab3cdeba3fbc3c1e",
@@ -1878,7 +1878,7 @@
         "src/Support/Visitors/VisitorEventLogger.php": "d3604bb2b8a10de4912a866aaabb6d5c92be231f719c9b5433cb3aa4d22047b5",
         "src/Support/Visitors/VisitorReportRetention.php": "b5335a9c80f71260a369b503ba0bf6140342b2a492626777dca69099fef14213",
         "src/Support/Visitors/VisitorReportsQuery.php": "950f0a24d7aa722d6e171b3f57821fcb31af1811972071abf618e377d65619a9",
-        "src/Support/WebBlocks.php": "e3da1efe2b9a65a6e50292c49002ef8e8d4258f99121cbe362db46352ec8bf4e",
+        "src/Support/WebBlocks.php": "d584a9ba57471802de021076486473c2df06bbfe17e756251874774d9c4f853e",
         "src/Support/helpers.php": "d972cb707734997050f09ac1b65af9f8fd5a1029f18d98b9e1b4819f25fd043b",
         "src/WebBlocksCmsServiceProvider.php": "f46d728af684ccd815dd4195bc63336f870ecc12a236095e318fee85c9d6b908",
         "stubs/README.md": "3100275ae8eb8973105ddd8e288e2fc5dcfe0c459867838058efaead6dc2d926",
