@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Queries\EditorRecovery;
 
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Support\EditorRecovery\RecoveryFormContext;
 use WebBlocks\Cms\Support\Relational\SettingTree;
 
 final class EditorRecoveryQuery
@@ -13,7 +14,21 @@ final class EditorRecoveryQuery
     $query = DB::table('wbcms_editor_recoveries')->where('user_id', $user->id)->where('editing_session', $session);
     $row = ($lock ? $query->lockForUpdate() : $query)->first();
     if ($row) {
+      abort_unless(($row->form_kind ?? null) === null, 404);
       abort_unless((int) $row->page_id === (int) $page->id && (int) $row->site_id === (int) $page->site_id && ($row->block_id === null ? null : (int) $row->block_id) === $blockId && $row->locale === $locale, 404);
+    }
+
+    return $row;
+  }
+
+  public function findForm($user, RecoveryFormContext $context, string $session, bool $lock = false): ?object
+  {
+    $query = DB::table('wbcms_editor_recoveries')->where('user_id', $user->id)->where('editing_session', $session);
+    $row = ($lock ? $query->lockForUpdate() : $query)->first();
+    if ($row) {
+      foreach ($context->attributes() as $key => $value) {
+        abort_unless(($row->{$key} === null ? null : (string) $row->{$key}) === ($value === null ? null : (string) $value), 404);
+      }
     }
 
     return $row;

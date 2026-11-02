@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.112.0
+
+- Extend confirmed-checkpoint saving and form recovery to new pages, new page-owned blocks, and page translation/SEO forms. Preserve current values through connection, timeout, session, validation and server failures, including changes typed while recovery is pending.
+- Bind unfinished work to its site, page, block type, slot, parent and language. Recheck current permissions and content conflicts on restore and Save; keep separate forms and contexts isolated. Recovery creates no content, revision or publication.
+- Resume an already completed save after a lost response without sending another creation request. Retain any additional unsaved edits for review and rotate completed creation intents when opening a fresh form.
+- Add typed SQL recovery context/completion columns and allow recovery before a page exists. Run the included update migration; no JSON persistence is added. Include six-language guidance and browser, permission, rollback and migration regression coverage.
+
 ## 1.111.4
 
 - Preserve recovery-enabled page and block forms through connection, timeout, session, validation and server errors. Retain the latest typing during pending checkpoints, prevent duplicate saves and redirect only after confirmed success.

@@ -38,6 +38,7 @@
                 @csrf
 
                 <div class="wb-card-body">
+                    @include('webblocks-cms::admin.partials.editor-recovery', ['editorRecovery' => app(\WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery::class)->form(request()->user(), ['form_kind' => 'new-block', 'page_id' => old('page_id', $block->page_id), 'block_type_id' => $selectedBlockType->id, 'slot_type_id' => old('slot_type_id', $block->slot_type_id), 'parent_id' => old('parent_id', $block->parent_id), 'locale' => request('locale') ?: \WebBlocks\Cms\Models\Locale::query()->where('is_default', true)->value('code')]), 'recoveryPage' => null])
                     @include('webblocks-cms::admin.blocks._form', [
                         'assetPickerAssets' => $assetPickerAssets ?? collect(),
                         'assetPickerFolders' => $assetPickerFolders ?? collect(),

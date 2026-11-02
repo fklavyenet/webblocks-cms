@@ -460,8 +460,28 @@ class EditorRecoveryTest extends TestCase
     @$blockDocument->loadHTML($blockResponse->getContent());
     $blockForm = (new \DOMXPath($blockDocument))->query('//*[@data-wb-editor-recovery]/ancestor::form')->item(0);
     $this->assertNotNull($blockForm);
+    $turkish = Locale::firstOrCreate(['code' => 'tr'], ['name' => 'Turkish', 'is_enabled' => true, 'is_default' => false]);
+    $this->page->site->locales()->syncWithoutDetaching([$turkish->id => ['is_enabled' => true]]);
+    $otherSite = Site::create(['name' => 'Other synthetic studio', 'handle' => 'other-recovery-fixture']);
+    $otherSite->locales()->syncWithoutDetaching([Locale::where('code', 'en')->value('id') => ['is_enabled' => true]]);
+    $newForms = '';
+    $routes = [
+      'new-page' => route('admin.pages.create', ['site' => $this->page->site_id]),
+      'new-block' => route('admin.pages.slots.blocks', [$this->page, $this->page->slots()->firstOrFail(), 'block_type_id' => $this->block->block_type_id]),
+      'new-block-unbound' => route('admin.blocks.create', ['block_type_id' => $this->block->block_type_id]),
+      'new-translation' => route('admin.pages.translations.create', [$this->page, $turkish]),
+      'translation' => route('admin.pages.translations.edit', [$this->page, $this->page->defaultTranslation()]),
+    ];
+    foreach ($routes as $kind => $url) {
+      $html = $this->get($url)->assertOk()->getContent();
+      $newDocument = new \DOMDocument;
+      @$newDocument->loadHTML($html);
+      $newForm = (new \DOMXPath($newDocument))->query('//*[@data-wb-editor-recovery]/ancestor::form')->item(0);
+      $this->assertNotNull($newForm, $kind.' must render recovery.');
+      $newForms .= '<template id="save-test-'.$kind.'">'.$newDocument->saveHTML($newForm).'</template>';
+    }
     if ($path = getenv('WEBBLOCKS_EDITOR_SAVE_FIXTURE')) {
-      file_put_contents($path, '<!doctype html><html lang="en"><body><h1>Editor save failure tests</h1><button type="button" id="run-save-tests">Run save tests</button><output id="save-test-results" aria-live="polite">Ready</output><div id="save-test-mount"></div><template id="save-test-form">'.$document->saveHTML($form).'</template><template id="save-test-block-form">'.$blockDocument->saveHTML($blockForm).'</template></body></html>');
+      file_put_contents($path, '<!doctype html><html lang="en"><body><h1>Editor save failure tests</h1><button type="button" id="run-save-tests">Run save tests</button><output id="save-test-results" aria-live="polite">Ready</output><div id="save-test-mount"></div><template id="save-test-form">'.$document->saveHTML($form).'</template><template id="save-test-block-form">'.$blockDocument->saveHTML($blockForm).'</template>'.$newForms.'</body></html>');
     }
   }
 }

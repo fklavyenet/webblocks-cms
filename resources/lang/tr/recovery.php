@@ -10,7 +10,7 @@ return [
   'paused' => 'Kayıtlı içerik kullanılıyor. Önceki kurtarma kaydı korunuyor. Yeni düzenlemeleri korumak için onu geri yükleyin veya silin.',
   'conflict' => 'Kayıtlı içerik değişmiş. Bu form değerlerini geri yüklemeden önce güncel kayıtlı içeriği inceleyin. Kaydetme ayrı bir adımdır.',
   'discarded' => 'Kurtarma kaydı silindi.',
-  'help' => 'Mevcut taslak ve aşamalı güncelleme sayfaları içindir. Dosyalar ve kimlik bilgisi alanları saklanmaz. Kurtarma kayıtları yedi gün sonra silinir. Geri yükleme formu doldurur; değişiklikleri Kaydet ile kalıcılaştırın.',
+  'help' => 'Korumalı içerik formları içindir. Dosyalar ve kimlik bilgisi alanları saklanmaz. Kurtarma kayıtları yedi gün sonra silinir. Geri yükleme formu doldurur; değişiklikleri Kaydet ile kalıcılaştırın.',
   'reviewed' => 'Değişen kayıtlı içeriği inceledim.',
   'restore' => 'Form değerlerini geri yükle',
   'discard' => 'Kurtarma kaydını sil',

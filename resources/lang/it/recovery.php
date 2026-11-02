@@ -10,7 +10,7 @@ return [
   'paused' => 'Si usa il contenuto salvato. Il punto di recupero precedente viene conservato. Ripristinalo o scartalo per proteggere nuove modifiche.',
   'conflict' => 'Il contenuto salvato è cambiato. Esamina il contenuto salvato attuale prima di ripristinare questi valori. Il salvataggio è un passaggio separato.',
   'discarded' => 'Punto di recupero scartato.',
-  'help' => 'Per bozze esistenti e aggiornamenti preparati. File e credenziali sono esclusi. I punti scadono dopo sette giorni. Ripristinare compila il modulo; usa Salva per conservare le modifiche.',
+  'help' => 'Per i moduli di contenuto protetti. File e credenziali sono esclusi. I punti scadono dopo sette giorni. Ripristinare compila il modulo; usa Salva per conservare le modifiche.',
   'reviewed' => 'Ho esaminato il contenuto salvato che è cambiato.',
   'restore' => 'Ripristina i valori del modulo',
   'discard' => 'Scarta il punto di recupero',

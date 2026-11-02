@@ -10,7 +10,7 @@ return [
   'paused' => 'Se usa el contenido guardado. Se conserva el punto de recuperación anterior. Restáuralo o descártalo para proteger nuevas ediciones.',
   'conflict' => 'El contenido guardado ha cambiado. Revisa el contenido guardado actual antes de restaurar estos valores. Guardar es un paso aparte.',
   'discarded' => 'Punto de recuperación descartado.',
-  'help' => 'Para borradores existentes y actualizaciones preparadas. Se excluyen archivos y credenciales. Los puntos caducan a los siete días. Restaurar rellena el formulario; usa Guardar para conservar los cambios.',
+  'help' => 'Para los formularios de contenido protegidos. Se excluyen archivos y credenciales. Los puntos caducan a los siete días. Restaurar rellena el formulario; usa Guardar para conservar los cambios.',
   'reviewed' => 'He revisado el contenido guardado que ha cambiado.',
   'restore' => 'Restaurar valores del formulario',
   'discard' => 'Descartar punto de recuperación',

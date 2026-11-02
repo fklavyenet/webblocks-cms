@@ -5,12 +5,16 @@ namespace WebBlocks\Cms\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery;
 use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 
 class ApplyEditorRecovery
 {
   public function handle(Request $request, Closure $next)
   {
+    if ($request->isMethod('GET') && $request->query('_editor_form_restore') !== null) {
+      app(EditorFormRecovery::class)->consumeRestore($request);
+    }
     if ($request->isMethod('GET') && $request->query('_editor_recovery_restore') !== null) {
       $name = $request->route()?->getName();
       abort_unless(in_array($name, ['admin.pages.edit', 'admin.blocks.edit', 'admin.pages.slots.blocks'], true), 404);

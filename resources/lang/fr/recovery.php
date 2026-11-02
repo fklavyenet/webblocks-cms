@@ -10,7 +10,7 @@ return [
   'paused' => 'Le contenu enregistré est utilisé. Le point de récupération précédent est conservé. Restaurez-le ou abandonnez-le pour protéger de nouvelles modifications.',
   'conflict' => 'Le contenu enregistré a changé. Examinez le contenu enregistré actuel avant de restaurer ces valeurs. L’enregistrement reste une étape distincte.',
   'discarded' => 'Point de récupération abandonné.',
-  'help' => 'Pour les brouillons existants et les mises à jour préparées. Les fichiers et identifiants sont exclus. Les points expirent après sept jours. Restaurer remplit le formulaire ; utilisez Enregistrer pour conserver les modifications.',
+  'help' => 'Pour les formulaires de contenu protégés. Les fichiers et identifiants sont exclus. Les points expirent après sept jours. Restaurer remplit le formulaire ; utilisez Enregistrer pour conserver les modifications.',
   'reviewed' => 'J’ai examiné le contenu enregistré qui a changé.',
   'restore' => 'Restaurer les valeurs du formulaire',
   'discard' => 'Abandonner le point de récupération',

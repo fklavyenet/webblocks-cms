@@ -36,6 +36,7 @@ use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Blocks\ParentBlockOptionPresenter;
+use WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery;
 use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 use WebBlocks\Cms\Support\ListingViews\ListingViewState;
 use WebBlocks\Cms\Support\Pages\PageBulkDeleter;
@@ -256,11 +257,13 @@ class PageController extends Controller
     ]);
   }
 
-  public function store(PageRequest $request): RedirectResponse
+  public function store(PageRequest $request): RedirectResponse|JsonResponse
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), (int) $request->validated('site_id'));
 
     $page = DB::transaction(function () use ($request) {
+      $recovery = app(EditorFormRecovery::class);
+      $context = $recovery->guardSave($request, 'new-page', ['site_id' => $request->integer('site_id'), 'locale' => Locale::query()->where('is_default', true)->value('code')]);
       $data = $request->validatedData();
       $blocks = $data['blocks'] ?? [];
       $translation = $data['translation'];
@@ -289,12 +292,14 @@ class PageController extends Controller
         event: 'page_created',
       );
 
+      $recovery->completeSave($request, $context, $page);
+
       return $page;
     });
 
-    return redirect()
+    return app(EditorRecovery::class)->savedResponse($request, redirect()
       ->route('admin.pages.edit', $page)
-      ->with('status', 'Page saved as draft.');
+      ->with('status', 'Page saved as draft.'));
   }
 
   public function edit(Page $page): View

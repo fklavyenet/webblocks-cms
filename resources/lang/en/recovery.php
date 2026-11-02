@@ -10,7 +10,7 @@ return [
   'paused' => 'Using saved content. The earlier checkpoint is kept. Restore or discard it to protect new edits.',
   'conflict' => 'Saved content changed. Review the current saved content before restoring these form values. Saving is a separate step.',
   'discarded' => 'Recovery checkpoint discarded.',
-  'help' => 'For existing draft and staged pages. Files and credential fields are excluded. Checkpoints expire after seven days. Restore fills the form; use Save to persist changes.',
+  'help' => 'For protected editorial forms. Files and credential fields are excluded. Checkpoints expire after seven days. Restore fills the form; use Save to persist changes.',
   'reviewed' => 'I have reviewed the changed saved content.',
   'restore' => 'Restore form values',
   'discard' => 'Discard checkpoint',

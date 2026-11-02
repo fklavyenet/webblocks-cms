@@ -60,4 +60,18 @@ final class RecoverySchema
       });
     }
   }
+
+  public static function extendForms(): void
+  {
+    if (! Schema::hasTable('wbcms_editor_recoveries') || Schema::hasColumn('wbcms_editor_recoveries', 'form_kind')) {
+      return;
+    }
+    Schema::table('wbcms_editor_recoveries', function (Blueprint $table): void {
+      $table->unsignedBigInteger('page_id')->nullable()->change();
+      $table->string('form_kind', 24)->nullable();
+      foreach (['block_type_id', 'slot_type_id', 'parent_block_id', 'translation_id', 'completed_page_id', 'completed_block_id', 'completed_translation_id'] as $column) {
+        $table->unsignedBigInteger($column)->nullable();
+      }
+    });
+  }
 }

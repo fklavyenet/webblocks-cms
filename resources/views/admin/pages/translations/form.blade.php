@@ -12,7 +12,7 @@
   $siteName = $page->site?->name ?? $adminText('site');
   $localizedPageTitle = $adminText($translation->exists ? 'edit_title' : 'create_title', ['title' => $page->title, 'locale' => strtoupper($locale->code)]);
   $currentPath = old('path', $translation->path ?: ($translation->slug ? \WebBlocks\Cms\Models\PageTranslation::pathFromSlug($translation->slug) : ($locale->is_default ? '/' : '/'.$locale->code)));
-  $selectedOgImage = old('og_image_media_id', old('og_image_asset_id'))
+  $selectedOgImage = \Illuminate\Support\Arr::has(session()->getOldInput(), 'og_image_media_id') || \Illuminate\Support\Arr::has(session()->getOldInput(), 'og_image_asset_id')
     ? $assetPickerAssets->firstWhere('id', (int) old('og_image_media_id', old('og_image_asset_id')))
     : $translation->ogImage;
 @endphp
@@ -35,6 +35,7 @@
             @method($formMethod)
         @endif
         <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
+        @include('webblocks-cms::admin.partials.editor-recovery', ['editorRecovery' => app(\WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery::class)->form(request()->user(), ['form_kind' => $translation->exists ? 'translation' : 'new-translation', 'page_id' => $page->id, 'translation_id' => $translation->id, 'locale' => $locale->code]), 'recoveryPage' => null])
 
         <div class="wb-card">
             <div class="wb-card-body">

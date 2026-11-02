@@ -66,6 +66,9 @@
                         <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
                     @endunless
 
+                    @if ($isCreateMode && empty($sharedSlot ?? null))
+                        @include('webblocks-cms::admin.partials.editor-recovery', ['editorRecovery' => app(\WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery::class)->form(request()->user(), ['form_kind' => 'new-block', 'page_id' => $page->id, 'block_type_id' => $slotModalSelectedBlockType->id, 'slot_type_id' => $slot->slot_type_id, 'parent_id' => $slotModalBlock->parent_id, 'locale' => $activeLocale->code]), 'recoveryPage' => null])
+                    @endif
                     @if ($isEditMode)
                         @include('webblocks-cms::admin.partials.editor-recovery', ['recoveryPage' => $page, 'recoveryBlock' => $slotModalBlock, 'recoveryLocale' => $activeLocale->code])
                         @include('webblocks-cms::admin.partials.editor-preview', ['previewPage' => $page, 'previewBlock' => $slotModalBlock, 'previewLocale' => $activeLocale->code])

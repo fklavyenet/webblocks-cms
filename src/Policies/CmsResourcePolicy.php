@@ -34,6 +34,11 @@ final class CmsResourcePolicy
     if ($this->acl->isSuperAdmin($user)) {
     return;
     }
+    if (! $api && in_array($name, ['editor-forms.recovery.show', 'editor-forms.recovery.store', 'editor-forms.recovery.destroy', 'editor-forms.recovery.restore'], true)) {
+      // These panel-only endpoints validate their typed context first, then
+      // enforce EditorFormRecoveryPolicy for every read and write operation.
+      return;
+    }
     if (str_starts_with($name, 'listing-views.')) {
       abort_unless(app(ListingViewPolicy::class)->listing($user, (string) $request->route('listing')), 403);
 

@@ -12,6 +12,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController as AdminContac
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
 use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentAuthoringController;
 use WebBlocks\Cms\Http\Controllers\Admin\DynamicContentController;
+use WebBlocks\Cms\Http\Controllers\Admin\EditorFormRecoveryController;
 use WebBlocks\Cms\Http\Controllers\Admin\EditorPreviewController;
 use WebBlocks\Cms\Http\Controllers\Admin\EditorRecoveryController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationAssetController;
@@ -369,6 +370,10 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::put('privacy/{site}/texts', [ConsentController::class, 'texts'])->name('consent.texts.update');
     Route::get('reports/visitors', [VisitorReportController::class, 'index'])->middleware('can:view-visitor-reports')->name('reports.visitors.index');
     Route::post('/pages/{page}/editor-preview', EditorPreviewController::class)->middleware('throttle:20,1')->name('pages.editor.preview');
+    Route::get('/editor-form-recovery/{editingSession}', [EditorFormRecoveryController::class, 'show'])->whereUuid('editingSession')->name('editor-forms.recovery.show');
+    Route::put('/editor-form-recovery/{editingSession}', [EditorFormRecoveryController::class, 'store'])->whereUuid('editingSession')->middleware('throttle:60,1')->name('editor-forms.recovery.store');
+    Route::delete('/editor-form-recovery/{editingSession}', [EditorFormRecoveryController::class, 'destroy'])->whereUuid('editingSession')->name('editor-forms.recovery.destroy');
+    Route::post('/editor-form-recovery/{editingSession}/restore', [EditorFormRecoveryController::class, 'restore'])->whereUuid('editingSession')->name('editor-forms.recovery.restore');
     Route::get('/pages/{page}/editor-recovery/{editingSession}', [EditorRecoveryController::class, 'show'])->whereUuid('editingSession')->name('pages.recovery.show');
     Route::put('/pages/{page}/editor-recovery/{editingSession}', [EditorRecoveryController::class, 'store'])->whereUuid('editingSession')->middleware('throttle:60,1')->name('pages.recovery.store');
     Route::delete('/pages/{page}/editor-recovery/{editingSession}', [EditorRecoveryController::class, 'destroy'])->whereUuid('editingSession')->name('pages.recovery.destroy');

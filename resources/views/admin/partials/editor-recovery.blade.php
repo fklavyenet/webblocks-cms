@@ -1,12 +1,17 @@
-@php($editorRecovery = $recoveryPage ? app(\WebBlocks\Cms\Support\EditorRecovery\EditorRecovery::class)->form(request()->user(), $recoveryPage, $recoveryBlock ?? null, $recoveryLocale ?? null) : null)
+@php($editorRecovery = $editorRecovery ?? ($recoveryPage ? app(\WebBlocks\Cms\Support\EditorRecovery\EditorRecovery::class)->form(request()->user(), $recoveryPage, $recoveryBlock ?? null, $recoveryLocale ?? null) : null))
 @if ($editorRecovery)
     <div class="wb-card wb-card-muted" data-wb-editor-recovery
          data-endpoint="{{ $editorRecovery['endpoint'] }}" data-identity="{{ $editorRecovery['identity'] }}"
          data-locale="{{ $editorRecovery['locale'] }}" data-block-id="{{ $editorRecovery['block_id'] }}"
          data-roots="{{ $editorRecovery['roots'] }}"
+         data-form-context="{{ isset($editorRecovery['context']) ? json_encode($editorRecovery['context'], JSON_THROW_ON_ERROR) : '' }}"
+         data-context-fields="{{ $editorRecovery['context_fields'] ?? '' }}"
          @foreach (['ready', 'pending', 'protected', 'failed', 'available', 'paused', 'conflict', 'discarded', 'saving', 'save_failed', 'auth_failed', 'validation_failed'] as $message)
              data-message-{{ $message }}="{{ __('webblocks-cms::recovery.'.$message) }}"
          @endforeach>
+        @if (isset($editorRecovery['context']))
+            <input type="hidden" name="_editor_form_kind" value="{{ $editorRecovery['context']['form_kind'] }}">
+        @endif
         <input type="hidden" name="_editor_recovery_session" value="{{ old('_editor_recovery_session') }}">
         <input type="hidden" name="_editor_recovery_base" value="{{ $editorRecovery['base'] }}">
         <div class="wb-card-body wb-stack wb-gap-2">

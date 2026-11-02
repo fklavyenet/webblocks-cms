@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,8 @@ use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
+use WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery;
+use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
@@ -55,7 +58,7 @@ class PageTranslationController extends Controller
     ]);
   }
 
-  public function store(PageTranslationRequest $request, Page $page, Locale $locale): RedirectResponse
+  public function store(PageTranslationRequest $request, Page $page, Locale $locale): RedirectResponse|JsonResponse
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
@@ -63,7 +66,9 @@ class PageTranslationController extends Controller
     abort_if($page->site->enabledLocales()->where((new Locale)->qualifyColumn('id'), $locale->id)->doesntExist(), 404);
 
     DB::transaction(function () use ($request, $page, $locale): void {
-      $page->translations()->updateOrCreate(
+      $recovery = app(EditorFormRecovery::class);
+      $context = $recovery->guardSave($request, 'new-translation', ['page_id' => $page->id, 'locale' => $locale->code]);
+      $translation = $page->translations()->updateOrCreate(
         ['locale_id' => $locale->id],
         $request->validatedTranslation(),
       );
@@ -77,14 +82,15 @@ class PageTranslationController extends Controller
         'Page translation was added for locale '.$locale->code.'.',
         event: 'page_updated',
       );
+      $recovery->completeSave($request, $context, $page, translation: $translation);
     });
 
-    return redirect()
+    return app(EditorRecovery::class)->savedResponse($request, redirect()
       ->route('admin.pages.edit', array_filter([
         'page' => $page,
         'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
       ], fn (mixed $value) => $value !== null && $value !== ''))
-      ->with('status', 'Translation added successfully.');
+      ->with('status', 'Translation added successfully.'));
   }
 
   public function edit(Page $page, PageTranslation $translation): View
@@ -110,7 +116,7 @@ class PageTranslationController extends Controller
     ]);
   }
 
-  public function update(PageTranslationRequest $request, Page $page, PageTranslation $translation): RedirectResponse
+  public function update(PageTranslationRequest $request, Page $page, PageTranslation $translation): RedirectResponse|JsonResponse
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), $page);
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
@@ -119,6 +125,8 @@ class PageTranslationController extends Controller
     abort_if($page->site->enabledLocales()->where((new Locale)->qualifyColumn('id'), $translation->locale_id)->doesntExist(), 404);
 
     DB::transaction(function () use ($request, $page, $translation): void {
+      $recovery = app(EditorFormRecovery::class);
+      $context = $recovery->guardSave($request, 'translation', ['page_id' => $page->id, 'locale' => $translation->locale->code, 'translation_id' => $translation->id]);
       $translation->update($request->validatedTranslation());
       $page->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
 
@@ -129,14 +137,15 @@ class PageTranslationController extends Controller
         'Page translation was updated for locale '.$translation->locale->code.'.',
         event: 'page_updated',
       );
+      $recovery->completeSave($request, $context, $page, translation: $translation);
     });
 
-    return redirect()
+    return app(EditorRecovery::class)->savedResponse($request, redirect()
       ->route('admin.pages.edit', array_filter([
         'page' => $page,
         'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
       ], fn (mixed $value) => $value !== null && $value !== ''))
-      ->with('status', 'Translation updated successfully.');
+      ->with('status', 'Translation updated successfully.'));
   }
 
   private function assetPickerAssets()

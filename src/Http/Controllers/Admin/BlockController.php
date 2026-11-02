@@ -28,6 +28,7 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery;
 use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -233,7 +234,7 @@ class BlockController extends Controller
     ]);
   }
 
-  public function store(BlockRequest $request): RedirectResponse
+  public function store(BlockRequest $request): RedirectResponse|JsonResponse
   {
     $data = $request->validatedData();
     $localeCode = $data['locale'] ?? null;
@@ -246,6 +247,8 @@ class BlockController extends Controller
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
     $block = DB::transaction(function () use ($page, $columnItems, $featureItems, $linkListItems, $data, $localeCode, $sharedSlot) {
+      $recovery = app(EditorFormRecovery::class);
+      $context = $recovery->guardSave(request(), 'new-block', ['page_id' => $page->id, 'block_type_id' => $data['block_type_id'], 'slot_type_id' => $data['slot_type_id'], 'parent_id' => $data['parent_id'] ?? null, 'locale' => $localeCode ?: $page->availableSiteLocales()->firstWhere('is_default', true)?->code]);
       $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
       $this->syncColumnItems($block, $columnItems, $localeCode);
       $this->syncFeatureItems($block, $featureItems, $localeCode);
@@ -272,6 +275,8 @@ class BlockController extends Controller
         );
       }
 
+      $recovery->completeSave(request(), $context, $page, $block);
+
       return $block;
     });
 
@@ -297,7 +302,7 @@ class BlockController extends Controller
       ]);
     }
 
-    return $redirect;
+    return app(EditorRecovery::class)->savedResponse($request, $redirect);
   }
 
   public function edit(Request $request, Block $block): View

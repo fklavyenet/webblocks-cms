@@ -19,6 +19,7 @@
             @csrf
 
             <div class="wb-card-body">
+                @include('webblocks-cms::admin.partials.editor-recovery', ['editorRecovery' => app(\WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery::class)->form(request()->user(), ['form_kind' => 'new-page', 'site_id' => old('site_id', $selectedSiteId), 'locale' => \WebBlocks\Cms\Models\Locale::query()->where('is_default', true)->value('code')]), 'recoveryPage' => null])
                 @include('webblocks-cms::admin.pages._form')
             </div>
 

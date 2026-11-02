@@ -3,7 +3,7 @@
     var active = new Set();
     var restoredUrl = new URL(window.location.href);
     if (restoredUrl.searchParams.has('_editor_recovery_ticket')) {
-        ['_editor_recovery_restore', '_editor_recovery_ticket', '_editor_recovery_block'].forEach(function (key) { restoredUrl.searchParams.delete(key); });
+        ['_editor_recovery_restore', '_editor_recovery_ticket', '_editor_recovery_block', '_editor_form_restore'].forEach(function (key) { restoredUrl.searchParams.delete(key); });
         history.replaceState(null, '', restoredUrl.href);
     }
 
@@ -28,13 +28,18 @@
         var baseField = root.querySelector('[name="_editor_recovery_base"]');
         var previousSession = sessionField.value;
         var roots = new Set(root.dataset.roots.split(' '));
-        var storageKey = 'wb-editor-recovery:' + root.dataset.identity;
+        var formContext = root.dataset.formContext ? JSON.parse(root.dataset.formContext) : null;
+        var contextFields = (root.dataset.contextFields || '').split(' ').filter(Boolean);
+        var contextId = formContext ? JSON.stringify(context()) : '';
+        var contextChanged = root.dataset.contextChanged === 'true'; delete root.dataset.contextChanged;
+        var storageKey = 'wb-editor-recovery:' + root.dataset.identity + (contextId ? ':' + contextId : '');
         var session, release, timer, interval, inFlight = null, initialized = false;
         var sequence = 0, paused = false, conflict = false, submitting = false, saving = false, loading = false;
         var lastProtected = null, protectedUntil = 0, initialSnapshot = null, stopped = false;
         var controller = null, saveController = null, saveError = false;
+        var listeners = new AbortController();
         var item = { root: root, stop: function () {
-            stopped = true; delete root.dataset.recoveryBound; clearTimeout(timer); clearInterval(interval);
+            stopped = true; listeners.abort(); delete root.dataset.recoveryBound; clearTimeout(timer); clearInterval(interval);
             if (controller) controller.abort();
             if (saveController) saveController.abort();
             if (release) release();
@@ -71,6 +76,15 @@
         }
 
         function context() {
+            if (formContext) {
+                var current = Object.assign({}, formContext), fields = new FormData(form);
+                contextFields.forEach(function (name) {
+                    var value = fields.get(name);
+                    if (value === null || value === '') delete current[name];
+                    else current[name] = String(value);
+                });
+                return current;
+            }
             var data = { locale: root.dataset.locale };
             if (root.dataset.blockId) data.block_id = Number(root.dataset.blockId);
             return data;
@@ -93,6 +107,7 @@
                     var error = new Error('Recovery request failed'); error.status = response.status; throw error;
                 }
                 var result = await response.json();
+                if (stopped) throw new DOMException('Editor context changed', 'AbortError');
                 if (method === 'GET' && typeof result.csrf_token === 'string') {
                     form.querySelectorAll('[name="_token"]').forEach(function (field) { field.value = result.csrf_token; });
                     var meta = document.querySelector('meta[name="csrf-token"]');
@@ -140,6 +155,11 @@
             try {
             sessionField.value = session;
             var data = await api('GET');
+            if (data.completed) { var completed = new Error('Completed editing session'); completed.status = 410; throw completed; }
+            if (formContext) {
+                if (typeof data.base_fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(data.base_fingerprint)) throw new Error('Invalid recovery context');
+                baseField.value = data.base_fingerprint;
+            }
             sequence = Number(data.sequence || 0);
             protectedUntil = Number(data.expires_at_ms || 0);
             var currentSnapshot = JSON.stringify(entries());
@@ -150,7 +170,7 @@
                     message(currentSnapshot === lastProtected ? 'protected' : 'pending', data.saved_at);
                     if (currentSnapshot !== lastProtected) checkpoint(true);
                 } else offer(data);
-            } else if (previousSession === session || currentSnapshot !== initialSnapshot) checkpoint(true);
+            } else if (contextChanged || previousSession === session || currentSnapshot !== initialSnapshot) checkpoint(true);
             else message('ready');
             } finally { loading = false; }
         }
@@ -173,7 +193,7 @@
             });
         }
 
-        review.addEventListener('change', function () { restore.disabled = conflict && !review.checked; });
+        review.addEventListener('change', function () { restore.disabled = conflict && !review.checked; }, { signal: listeners.signal });
         restore.addEventListener('click', async function () {
             if (stopped) return;
             if (conflict && !review.checked) return;
@@ -186,7 +206,7 @@
                 else message('failed');
                 restore.disabled = conflict && !review.checked;
             }
-        });
+        }, { signal: listeners.signal });
         root.querySelector('[data-recovery-discard]').addEventListener('click', async function () {
             if (stopped) return;
             try {
@@ -197,19 +217,24 @@
                 session = crypto.randomUUID(); sessionStorage.setItem(storageKey, session);
                 await Promise.resolve(); acquire();
             } catch (error) { message('failed'); }
-        });
+        }, { signal: listeners.signal });
         root.querySelector('[data-recovery-continue]').addEventListener('click', function () {
             if (stopped) return;
             paused = true; message('paused');
-        });
+        }, { signal: listeners.signal });
         function changed() {
+            if (stopped) return;
+            if (formContext && !saving && JSON.stringify(context()) !== contextId) {
+                item.stop(); sessionField.value = ''; baseField.value = '';
+                root.dataset.contextChanged = 'true'; initialize(root); return;
+            }
             if (!initialized || paused || stopped || saving) return;
             saveError = false;
             if (JSON.stringify(entries()) === lastProtected) { message('protected'); return; }
             message('pending'); clearTimeout(timer); timer = setTimeout(function () { checkpoint(); }, 1500);
         }
-        form.addEventListener('input', changed);
-        form.addEventListener('change', changed);
+        form.addEventListener('input', changed, { signal: listeners.signal });
+        form.addEventListener('change', changed, { signal: listeners.signal });
         function failure(error, attemptedSave) {
             if (stopped) return;
             saveError = false;
@@ -263,6 +288,15 @@
                 if (paused) { message('paused'); return; }
                 // GET refreshes the current session's CSRF token after sign-in in another tab.
                 var current = await api('GET');
+                if (current.completed) {
+                    if (typeof current.redirect !== 'string' || !current.redirect) throw new Error('Invalid completed destination');
+                    var completedUrl = new URL(current.redirect, window.location.href);
+                    if (completedUrl.origin !== window.location.origin) throw new Error('Invalid completed destination');
+                    root.querySelector('[data-recovery-saved-link]').href = completedUrl.href;
+                    if (JSON.stringify(entries()) !== lastProtected) { attemptedSave = true; throw new Error('Review edits made after the completed save'); }
+                    paused = true; clearTimeout(timer); clearInterval(interval);
+                    window.location.assign(completedUrl.href); return;
+                }
                 if (current.conflict) { offer(current); return; }
                 if (inFlight && !await inFlight) return;
                 do {
@@ -296,10 +330,10 @@
             finally {
                 clearTimeout(timeout); saveController = null;
                 if (unlock) unlock();
-                form.removeAttribute('aria-busy');
+                if (!stopped) form.removeAttribute('aria-busy');
                 saving = false; submitting = false;
             }
-        }, true);
+        }, { capture: true, signal: listeners.signal });
         initialSnapshot = JSON.stringify(entries());
         interval = setInterval(function () {
             if (initialized) checkpoint();
