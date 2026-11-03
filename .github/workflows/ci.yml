@@ -73,6 +73,9 @@ jobs:
         laravel: ['12', '13']
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Consumer fixtures archive released bridge tags, including v1.112.1.
+          fetch-depth: 0
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'

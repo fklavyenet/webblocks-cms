@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.114.0
+
+- Turn saved-page SEO findings into editing links with bounded output examples, rendered metadata provenance and stale-report warnings. Preserve the selected content language and keep findings separate from publication controls.
+- Add Sites → site → SEO with explicit background audits, page/language/status/finding filters, same-language title and description comparisons, and separate missing-translation and fallback suggestions. Pause, resume and retry work without presenting partial evidence as complete.
+- Trace rendered internal links and navigation definitions to their source. Review native missing, unpublished, protected, wrong-language and legacy/noncanonical targets; suggest current native URLs and identify published pages with no incoming links in the declared scan scope. Respect locale paths, public mounts and Automatic Pages ownership.
+- Run the included typed audit-storage migration and keep the Laravel scheduler active for webblocks:seo:work. Recover interrupted batches through SQL leases and prune old evidence in the worker. Panel/API access preserves site and source-read permissions, and all six panel languages are included.
+- These checks inspect saved content. They do not crawl live HTTP targets, inspect Google indexing or Search Console data, rewrite content, or publish pages. Incomplete, unavailable and stale evidence stays explicit.
+
 ## 1.113.0
 
 - Apply only required compatibility bridges through one admitted panel or terminal update. Pin the original final target and every signed artifact; run each step using a fresh PHP process.

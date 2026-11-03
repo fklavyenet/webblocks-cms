@@ -47,12 +47,33 @@ class AutomaticUpdateChainTest extends TestCase
       'artifact_url' => 'https://fixture.example.test/'.$to.'.zip'];
   }
 
+  private function bridgeVersion(): string
+  {
+    [$major, $minor] = array_map('intval', explode('.', WebBlocks::version()));
+
+    return $major.'.'.($minor + 1).'.0';
+  }
+
+  private function targetVersion(): string
+  {
+    $major = (int) explode('.', WebBlocks::version())[0];
+
+    return ($major + 1).'.0.0';
+  }
+
+  private function followingVersion(): string
+  {
+    $major = (int) explode('.', WebBlocks::version())[0];
+
+    return ($major + 1).'.1.0';
+  }
+
   private function admit(): AdminUpdateOperation
   {
     $from = WebBlocks::version();
     Http::fake(['*/api/updates/plan*' => Http::response(['data' => ['protocol_version' => 1,
-      'product' => 'webblocks-cms', 'channel' => 'stable', 'installed_version' => $from, 'target_version' => '2.0.0',
-      'steps' => [$this->step($from, '1.114.0'), $this->step('1.114.0', '2.0.0')]]])]);
+      'product' => 'webblocks-cms', 'channel' => 'stable', 'installed_version' => $from, 'target_version' => $this->targetVersion(),
+      'steps' => [$this->step($from, $this->bridgeVersion()), $this->step($this->bridgeVersion(), $this->targetVersion())]]])]);
 
     return app(StartCmsUpdateChain::class)->execute(null, false);
   }
@@ -60,9 +81,9 @@ class AutomaticUpdateChainTest extends TestCase
   public function test_admission_pins_final_target_and_all_steps_in_relational_records(): void
   {
     $operation = $this->admit();
-    $this->assertSame('2.0.0', $operation->target_version);
+    $this->assertSame($this->targetVersion(), $operation->target_version);
     $this->assertSame(WebBlocks::version(), $operation->last_verified_version);
-    $this->assertSame(['1.114.0', '2.0.0'], UpdateChainStep::where('operation_id', $operation->id)->orderBy('position')->pluck('version')->all());
+    $this->assertSame([$this->bridgeVersion(), $this->targetVersion()], UpdateChainStep::where('operation_id', $operation->id)->orderBy('position')->pluck('version')->all());
     $this->expectException(UpdateException::class);
     $this->admit();
   }
@@ -82,7 +103,7 @@ class AutomaticUpdateChainTest extends TestCase
   {
     $operation = $this->admit();
     $operation->update(['status' => 'running', 'started_at' => now()->subSeconds(90), 'heartbeat_at' => now()]);
-    $run = SystemUpdateRun::create(['from_version' => WebBlocks::version(), 'to_version' => '1.114.0',
+    $run = SystemUpdateRun::create(['from_version' => WebBlocks::version(), 'to_version' => $this->bridgeVersion(),
       'status' => 'success', 'duration_ms' => 1000, 'started_at' => now()->subSeconds(5)]);
     $progress = app(CmsUpdateProgress::class);
     $progress->operation($operation->id);
@@ -93,13 +114,13 @@ class AutomaticUpdateChainTest extends TestCase
     $this->assertSame('running', $operation->fresh()->status);
     $this->assertGreaterThanOrEqual(90000, $payload['elapsed_ms']);
     $this->assertCount(2, $payload['chain_steps']);
-    $this->assertStringContainsString('2.0.0', $payload['chain_label']);
+    $this->assertStringContainsString($this->targetVersion(), $payload['chain_label']);
   }
 
   public function test_database_rollback_preserves_the_parent_and_every_chain_receipt(): void
   {
     $operation = $this->admit();
-    $operation->update(['status' => 'running', 'last_verified_version' => '1.114.0']);
+    $operation->update(['status' => 'running', 'last_verified_version' => $this->bridgeVersion()]);
     $runs = [];
     foreach (UpdateChainStep::where('operation_id', $operation->id)->orderBy('position')->get() as $step) {
       $run = SystemUpdateRun::create(['from_version' => $step->from_version, 'to_version' => $step->version,
@@ -118,7 +139,7 @@ class AutomaticUpdateChainTest extends TestCase
     });
     $this->assertSame(2, SystemUpdateRun::count());
     $this->assertSame(2, UpdateChainStep::count());
-    $this->assertSame('1.114.0', $operation->fresh()->last_verified_version);
+    $this->assertSame($this->bridgeVersion(), $operation->fresh()->last_verified_version);
     $this->assertSame('running', $operation->fresh()->status);
   }
 
@@ -132,9 +153,9 @@ class AutomaticUpdateChainTest extends TestCase
       $probe = Cache::lock('system-updates:run', 1);
       $this->assertFalse($probe->get());
       UpdateChainStep::where('operation_id', $operation->id)->where('position', 1)->update(['status' => 'success']);
-      $operation->update(['last_verified_version' => '1.114.0']);
+      $operation->update(['last_verified_version' => $this->bridgeVersion()]);
 
-      return '1.114.0';
+      return $this->bridgeVersion();
     });
     $executor->expects('execute')->with(2, Mockery::type('array'))->andReturnUsing(function () use ($operation): string {
       UpdateChainStep::where('operation_id', $operation->id)->where('position', 2)->update(['status' => 'restored']);
@@ -143,7 +164,7 @@ class AutomaticUpdateChainTest extends TestCase
     $this->app->bind(CmsChainStepExecutor::class, fn () => $executor);
     $this->assertFalse(app(RunCmsUpdateChain::class)->run($operation));
     $this->assertSame('restored', $operation->fresh()->status);
-    $this->assertSame('1.114.0', $operation->fresh()->last_verified_version);
+    $this->assertSame($this->bridgeVersion(), $operation->fresh()->last_verified_version);
     $this->assertFalse($operation->fresh()->recovery_required);
     $this->assertFalse(app(CmsChainAdmission::class)->blocked());
   }
@@ -213,10 +234,10 @@ class AutomaticUpdateChainTest extends TestCase
   public function test_terminal_chain_does_not_hide_a_later_independent_api_run(): void
   {
     $operation = $this->admit();
-    $earlier = SystemUpdateRun::create(['from_version' => WebBlocks::version(), 'to_version' => '2.0.0',
+    $earlier = SystemUpdateRun::create(['from_version' => WebBlocks::version(), 'to_version' => $this->targetVersion(),
       'status' => 'success', 'started_at' => now()]);
     $operation->update(['status' => 'success', 'system_update_run_id' => $earlier->id, 'finished_at' => now()]);
-    $later = SystemUpdateRun::create(['from_version' => '2.0.0', 'to_version' => '2.1.0',
+    $later = SystemUpdateRun::create(['from_version' => $this->targetVersion(), 'to_version' => $this->followingVersion(),
       'status' => 'success', 'started_at' => now()]);
     $this->assertSame($later->id, app(CmsUpdateProgress::class)->payload()['run_id']);
     $this->assertSame($operation->id, app(CmsUpdateProgress::class)->payload($operation->id)['operation_id']);
