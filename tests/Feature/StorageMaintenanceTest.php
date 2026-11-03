@@ -16,6 +16,7 @@ use WebBlocks\Cms\Http\Requests\InternalContentApi\MaintenanceCleanupSettingsReq
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Jobs\JobRegistry;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\MaintenanceCleanupResult;
@@ -135,13 +136,14 @@ class StorageMaintenanceTest extends TestCase
   #[Test]
   public function scheduler_registers_daily_files_and_weekly_content_history_with_overlap_protection(): void
   {
-    $events = collect(app(Schedule::class)->events())->filter(fn ($event) => str_contains((string) $event->command, 'system:cleanup'));
-    $this->assertCount(5, $events);
-    foreach ($events as $event) {
-      $this->assertStringContainsString('--scheduled', $event->command);
-      $this->assertTrue($event->withoutOverlapping);
-      $this->assertTrue($event->onOneServer);
-      $this->assertSame(str_contains($event->command, 'page-revisions') ? '30 4 * * 0' : (str_contains($event->command, 'shared-slot-revisions') ? '45 4 * * 0' : (str_contains($event->command, 'asset-revisions') ? '0 4 * * *' : (str_contains($event->command, 'media-variants') ? '10 4 * * *' : '20 4 * * *'))), $event->expression);
+    $events = collect(app(Schedule::class)->events())->filter(fn ($event) => str_contains((string) $event->command, 'webblocks:jobs:work'));
+    $this->assertCount(1, $events);
+    $this->assertTrue($events->first()->withoutOverlapping);
+    $this->assertStringContainsString('--scheduled', $events->first()->command);
+    $jobs = app(JobRegistry::class)->all();
+    foreach (['asset-revisions' => '0 4 * * *', 'media-variants' => '10 4 * * *', 'temporary-workspaces' => '20 4 * * *', 'page-revisions' => '30 4 * * 0', 'shared-slot-revisions' => '45 4 * * 0'] as $category => $cron) {
+      $this->assertSame($cron, $jobs['cleanup-'.$category]->cron);
+      $this->assertFalse($jobs['cleanup-'.$category]->web);
     }
   }
 

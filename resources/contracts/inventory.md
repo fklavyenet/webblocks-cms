@@ -2288,7 +2288,7 @@ Sites → site → SEO provides an explicit saved-content site audit. The page S
 
 Audit evidence is typed relational SQL: runs, enabled-language scope rows, page/language work units, findings and links. At most one current active run per site is admitted under a site lock, and the worker prunes superseded evidence to ten recent runs. Cascading history cleanup never runs in the enqueue web request; older rows can remain until a worker advances. Page/language work units include unpublished pages, while Shared Slot source pages and revision restore candidates are excluded as standalone targets. Missing page translations are separate editorial findings. Every language also has a distinct navigation-definition work unit; totals are provisional during inventory. Filters accept `audit`, `locale`, `page_id` (0 for navigation definitions), `status`, `category`, `code` and `link_state`. `per_page` is 1–100 (default 25); `pages_page`, `findings_page` and `links_page` paginate independently. Panel tabs, validation-error redirects and action redirects retain the selected result panel. Validation redirects preserve the selected audit only when it belongs to this site.
 
-The host Laravel scheduler invokes `webblocks:seo:work` every minute. No host queue driver, daemon, cron installation or web-request scanning is introduced. A command invocation considers at most ten runs within a 40-second soft deadline. Each run advances bounded inventory (50 pages), inspection or finalization batches; rendering retains its existing provider budgets, and an individual in-progress render cannot be preempted by the soft deadline. SQL worker leases exclude concurrent commits, expire after interruption, and reject results from paused/replaced workers. Pause/resume preserves progress. Retry rechecks incomplete rendered evidence and recomputes duplicate/incoming-link findings; an interrupted inventory resumes inventory. Failed rendering is unavailable evidence, with no exception text stored or returned. A run is complete only after inventory, inspection and cross-page finalization finish; partial work never asserts completeness.
+From 1.115.0 the host Laravel scheduler invokes `webblocks:jobs:work --scheduled` every minute; its SEO adapter and the retained `webblocks:seo:work` command share run admission. Explicit panel POST steps can also advance one authorized site audit without cron. GET and Refresh results never process work. No queue driver or daemon is required. The common CLI pass has a 40-second soft budget; web steps have a five-second soft budget. Each run advances bounded inventory (50 pages), inspection or finalization batches; rendering retains its existing provider budgets, and an individual in-progress render cannot be preempted by the soft deadline. SQL worker leases exclude concurrent commits, expire after interruption, and reject results from paused/replaced workers. Pause/resume preserves progress. Retry rechecks incomplete rendered evidence and recomputes duplicate/incoming-link findings; an interrupted inventory resumes inventory. Failed rendering is unavailable evidence, with no exception text stored or returned. A run is complete only after inventory, inspection and cross-page finalization finish; partial work never asserts completeness.
 
 Cross-page comparison groups nonempty normalized rendered titles and descriptions within the same content language, across the selected site's inspected page states. Same-language duplicates, missing page translations, site-description fallback and absent block translation rows are separate editorial suggestions. An absent block-language row is reported only for a rendered block that has another translation row; this does not certify complete field-by-field translation fidelity. Published Shared Slot blocks retain the public renderer's existing inclusion/fallback behavior.
 
@@ -2297,3 +2297,72 @@ Link evidence records the source page, language, block/owner or navigation ident
 A `no_incoming_links` suggestion means no edge from another inspected published native source to that page/language was found. Self-links, draft source pages, draft block branches, protected source pages and navigation definitions do not count; `is_public_source` exposes this distinction on link rows. It is not a claim about every real link on the site. Incomplete renders, external sources, Automatic detail records, scripts, iframe contents and unexamined sources may hide real incoming links. HTML inspection stays bounded to 2 MiB/20,000 elements; each page records at most 2,000 rendered links and each language at most 2,000 visible navigation definitions. Truncation is explicit and makes the applicable work unit partial. Query strings, fragments and URL userinfo are not persisted as link evidence.
 
 Reports identify check times, CMS version, source generation and scope. Content, shared navigation, locale, media and rendering-setting writes through Laravel rotate a connection-wide SQL generation, including raw/bulk writes; token usage writes to shared document tables are excluded. Generation changes roll back with their transaction. This is conservative: an unrelated site edit can also invalidate a run. Changed sources stop ongoing work as stale; completed historical results also show stale on read and no longer assert completeness. Runtime version, configured public mount and application URL participate. Direct database writes outside Laravel, independently changing external provider records and unversioned template changes are not automatically detected; rerun after such changes. No saved-preview result certifies live delivery, robots/sitemap behavior, Google indexing or ranking. Live HTTP inspection, Search Console integration and improvement/outcome tracking are separate future work.
+
+### Jobs and automation workspace 1.115.0
+
+`GET /webadmin/jobs` exposes Jobs, Run history and Automatic execution through native
+WebBlocks UI tabs. System task execution and setup require an active Super admin.
+Site operators with all SEO source-read permissions can view and advance only
+SEO runs for their permitted sites. JobRequest and JobPolicy authorize every
+POST again. No general command, class, path or free-form task arguments are
+accepted. This workspace is session-only; content API tokens do not acquire
+execution authority through content.read.
+
+Code-owned JobDefinition records supply a stable key, translated label, cron,
+owner, allowed scopes, web-batch support and side-effect classification.
+PluginDefinition::jobs accepts definitions owned and prefixed by that plugin.
+Only enabled plugins contribute runnable tasks. New plugin schedules default
+to explicit opt-in; existing Memberships billing cadence remains enabled.
+Global task switches do not override a domain's own opt-ins, consent, retention,
+recipient, order or payment safeguards. Existing commands share admission through
+JobCommandBridge; manual CLI execution does not create automatic tick evidence.
+
+JobRun, attempts, automatic settings and tick evidence use typed SQL columns.
+Run admission is serialized with a unique active identity; automatic due slots
+also have a unique identity across trigger sources. A SQL lease excludes another
+worker and fences replaced workers' result writes. Queued, running, paused,
+complete, failed and cancelled are explicit states. Exception bodies, recipients,
+raw command output and credentials are not retained. Domain records remain the
+authority for effects and partial outcomes; execution leases alone are not an
+exactly-once transport guarantee. Run and attempt history is disposable;
+terminal history is pruned by the worker to 30 days and at most 100 records per
+job/site scope; active work is preserved. Pause/cancel requests made during an
+active step are recorded and applied at its boundary. A finished step wins over
+a late stop request and completed effects are never represented as undone.
+Expired or replaced workers cannot overwrite a later pause or cancellation.
+SEO partial evidence can finish task execution while retaining an explicit
+partial-result reason; it is not misreported as a worker crash.
+
+SEO and the connection probe support explicit short panel POST steps. Opening a
+page or refreshing results never starts processing. Closing the tab keeps saved
+progress; automatic work continues only when an external trigger exists. Existing
+unbounded notification, maintenance and plugin command adapters are CLI-only and
+are identified as such; HTTP availability does not establish their execution.
+The common command processes bounded selections within a soft 40-second budget;
+a current indivisible CLI operation may run longer. Web steps use a five-second
+soft budget subject to existing render/provider timeout limits.
+
+The automatic setup tab retains installation-specific hosting commands and offers
+an explicit fixed-command CLI setup bridge only for a supported non-root process
+running as the application owner. Unsupported process, account and cron contexts
+retain the hosting instructions. Setup reuses current CLI duplicate/ambiguity,
+lock, context recheck and readback safeguards. Updates never install OS tasks or
+change saved destructive cleanup opt-ins without the operator's action.
+
+An opt-in POST `/webblocks-jobs/tick` accepts HTTPS and a dedicated Bearer key;
+it has no session/CSRF exemption on panel mutations and cannot call arbitrary
+Artisan or host tasks. The key is shown once, stored only as a hash, rotated or
+revoked through explicit system actions, and never embedded in a URL. An external
+service must POST every minute. Source rate limits, due-slot admission, shared
+leases and short web steps bound execution. Only web-compatible jobs run here.
+Laravel CLI and HTTP ticks are recorded separately from panel execution. Automatic
+health requires completed probes in two distinct recent automatic minutes; manual
+runs, key creation and cron installation never establish runtime health.
+
+Navigation is composed by AdminNavigation with stable group identities and existing
+plugin group aliases. Jobs and automation is under Maintenance; SEO audits has a
+permission-filtered site selector under communication/reports. Content, access,
+privacy, structure/design and system groups retain their individual route and
+permission checks. Existing route URLs and plugin operation groups are preserved.
+Metadata and progress summaries prefer row-heading tables; technical fingerprints
+are available in optional details without recreating expanded label/value stacks.

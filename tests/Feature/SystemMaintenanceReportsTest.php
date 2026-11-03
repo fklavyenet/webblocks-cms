@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Queries\SystemHealthQuery;
 use WebBlocks\Cms\Queries\SystemHealthSiteQuery;
+use WebBlocks\Cms\Support\Jobs\JobRegistry;
 use WebBlocks\Cms\Support\System\BackupArchiveValidation;
 use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
 use WebBlocks\Cms\Support\System\BackupRetentionPlan;
@@ -579,8 +580,9 @@ class SystemMaintenanceReportsTest extends TestCase
     $this->artisan('system:reports:refresh')->assertSuccessful();
     $reports->shouldReceive('refresh')->once()->andThrow(new RuntimeException('SENTINEL_PRIVATE'));
     $this->artisan('system:reports:refresh')->expectsOutput(__('webblocks-cms::maintenance_reports.refresh_failed'))->assertFailed();
-    $events = collect(app(Schedule::class)->events())->filter(fn ($event) => str_contains($event->command ?? '', 'system:reports:refresh'));
+    $events = collect(app(Schedule::class)->events())->filter(fn ($event) => str_contains($event->command ?? '', 'webblocks:jobs:work'));
     $this->assertCount(1, $events);
-    $this->assertSame('*/5 * * * *', $events->first()->expression);
+    $this->assertSame('* * * * *', $events->first()->expression);
+    $this->assertSame('*/5 * * * *', app(JobRegistry::class)->get('reports')->cron);
   }
 }

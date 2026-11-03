@@ -72,6 +72,7 @@ use WebBlocks\Cms\Console\SystemUpdateRunsCommand;
 use WebBlocks\Cms\Console\VerifyUpdateChainCommand;
 use WebBlocks\Cms\Console\VisitorReportCleanupCommand;
 use WebBlocks\Cms\Console\WorkAdminSystemUpdateCommand;
+use WebBlocks\Cms\Console\WorkJobsCommand;
 use WebBlocks\Cms\Console\WorkSeoAuditsCommand;
 use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
 use WebBlocks\Cms\Http\Middleware\PreventAdministrativeIndexing;
@@ -145,7 +146,6 @@ use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\BackupOperations;
-use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 use WebBlocks\Cms\Support\System\Updates\CmsChainAdmission;
@@ -243,6 +243,10 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'emails/two-factor.blade.php',
     'emails/themes/verification.blade.php',
     'admin/system/partials/verification-email.blade.php',
+    'admin/system/jobs.blade.php',
+    'admin/system/job-runs.blade.php',
+    'admin/system/job-token.blade.php',
+    'admin/sites/seo-index.blade.php',
     'admin/runtime-status.blade.php',
     'admin/system/plugins/recovery.blade.php',
     'auth/forgot-password.blade.php',
@@ -590,6 +594,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'cms/js/admin/api-token-capabilities.js',
     'cms/js/admin/builder-items.js',
     'cms/js/admin/core.js',
+    'cms/js/admin/jobs.js',
     'cms/js/admin/consent.js',
     'cms/js/admin/embedded-application-settings.js',
     'cms/js/admin/gallery-items.js',
@@ -625,6 +630,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'cms/js/admin/api-token-capabilities.js',
     'cms/js/admin/builder-items.js',
     'cms/js/admin/core.js',
+    'cms/js/admin/jobs.js',
     'cms/js/admin/consent.js',
     'cms/js/admin/embedded-application-settings.js',
     'cms/js/admin/gallery-items.js',
@@ -875,6 +881,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
 
   public const PACKAGE_CONSOLE_COMMANDS = [
     WorkSeoAuditsCommand::class,
+    WorkJobsCommand::class,
     ResetTwoFactorCommand::class,
     BlockSettingsAuditCommand::class,
     PruneEditorRecoveriesCommand::class,
@@ -1208,46 +1215,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         ->everyMinute();
 
       $this->app->make(Schedule::class)
-        ->command('webblocks:notifications:dispatch')
-        ->everyMinute()
-        ->withoutOverlapping(5);
+        ->command('webblocks:jobs:work', ['--scheduled' => true])->everyMinute()->withoutOverlapping(15);
 
-      $this->app->make(Schedule::class)
-        ->command('webblocks:editor-recovery:prune')
-        ->dailyAt('03:15')
-        ->withoutOverlapping();
-
-      $this->app->make(Schedule::class)
-        ->command('visitors:cleanup')
-        ->dailyAt('03:45')
-        ->withoutOverlapping(1440)
-        ->onOneServer();
-
-      $this->app->make(Schedule::class)->command('webblocks:seo:work')->everyMinute()->withoutOverlapping(3);
-
-      $this->app->make(Schedule::class)->command('system:reports:refresh')->everyFiveMinutes()->withoutOverlapping(15);
-
-      foreach (MaintenanceCleanup::RUNNABLE as $category) {
-        $event = $this->app->make(Schedule::class)
-          ->command('system:cleanup', [$category, '--scheduled'])
-          ->withoutOverlapping()
-          ->onOneServer();
-        if (in_array($category, ['page-revisions', 'shared-slot-revisions'], true)) {
-          $event->weeklyOn(0, $category === 'page-revisions' ? '04:30' : '04:45');
-        } else {
-          $event->dailyAt(match ($category) {
-            'asset-revisions' => '04:00',
-            'media-variants' => '04:10',
-            default => '04:20',
-          });
-        }
-      }
-
-      $this->app->make(Schedule::class)
-        ->command('system:backups:cleanup', ['--scheduled'])
-        ->dailyAt('03:30')
-        ->withoutOverlapping()
-        ->onOneServer();
     });
   }
 

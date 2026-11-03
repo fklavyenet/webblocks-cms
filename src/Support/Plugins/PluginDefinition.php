@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\Plugins;
 
 use WebBlocks\Cms\Support\ContentSources\ContentSourceDefinition;
+use WebBlocks\Cms\Support\Jobs\JobDefinition;
 
 class PluginDefinition
 {
@@ -62,6 +63,21 @@ class PluginDefinition
 
   /** @var array<int, class-string> */
   private array $commands = [];
+
+  /** @var array<JobDefinition> */
+  private array $jobs = [];
+
+  public function jobs(array $jobs): self
+  {
+    $this->jobs = $jobs;
+
+    return $this;
+  }
+
+  public function jobsList(): array
+  {
+    return $this->jobs;
+  }
 
   /** @var array<int, string> */
   private array $migrations = [];
@@ -1021,6 +1037,7 @@ class PluginDefinition
       'public_routes_count' => count($this->publicRoutes),
       'webhook_routes_count' => count($this->webhookRoutes),
       'commands_count' => count($this->commands),
+      'jobs_count' => count($this->jobs),
       'migrations_count' => count($this->migrations),
       'dashboard_widgets_count' => count($this->dashboardWidgets),
       'system_cards_count' => count($this->systemCards),

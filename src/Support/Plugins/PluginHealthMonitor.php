@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\Plugins;
 
 use Throwable;
+use WebBlocks\Cms\Support\Jobs\JobAutomation;
 
 class PluginHealthMonitor
 {
@@ -50,7 +51,7 @@ class PluginHealthMonitor
     }
 
     if ($result instanceof PluginHealthResult) {
-      return $result;
+      return $this->withJobs($plugin, $result);
     }
 
     if (is_array($result)) {
@@ -74,6 +75,23 @@ class PluginHealthMonitor
   public function healthArrayFor(PluginDefinition $plugin): array
   {
     return $this->healthFor($plugin)->toArray();
+  }
+
+  private function withJobs(PluginDefinition $plugin, PluginHealthResult $result): PluginHealthResult
+  {
+    if ($plugin->jobsList() === []) {
+      return $result;
+    }
+    $checks = $result->checks;
+    $failed = false;
+    foreach ($plugin->jobsList() as $job) {
+      $state = app(JobAutomation::class)->jobStatus($job->key);
+      $failed = $failed || $state === 'failed';
+      $checks[] = ['name' => __($job->label), 'status' => $state === 'failed' ? PluginHealthResult::WARNING : ($state === 'verified' ? PluginHealthResult::HEALTHY : PluginHealthResult::UNKNOWN),
+        'message' => __('webblocks-cms::jobs.'.($state === 'failed' ? 'states.failed' : $state)).' · '.__('webblocks-cms::jobs.title')];
+    }
+
+    return PluginHealthResult::withChecks($failed ? PluginHealthResult::WARNING : $result->status, $result->message, $checks);
   }
 
   private function resolveReporter(callable|string $reporter): callable

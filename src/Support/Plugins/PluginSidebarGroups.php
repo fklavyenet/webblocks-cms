@@ -33,7 +33,7 @@ class PluginSidebarGroups
       $groupKey = match ($groupName) {
       'System' => 'system', 'Maintenance' => 'maintenance', default => 'plugin-'.Str::slug($groupName)
       };
-      $index = collect($groups)->search(fn ($group) => ($group['key'] ?? null) === $groupKey || $group['label'] === $groupName);
+      $index = collect($groups)->search(fn ($group) => ($group['key'] ?? null) === $groupKey);
       if ($index === false) {
         $groups[] = [
           'key' => $groupKey,

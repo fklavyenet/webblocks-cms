@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Console;
 
 use Illuminate\Console\Command;
 use Throwable;
+use WebBlocks\Cms\Support\Jobs\JobCommandBridge;
 use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 
 class RefreshSystemReportsCommand extends Command
@@ -13,6 +14,11 @@ class RefreshSystemReportsCommand extends Command
   protected $description = 'Refresh cached CMS maintenance and health reports outside panel requests';
 
   public function handle(SystemMaintenanceReports $reports): int
+  {
+    return JobCommandBridge::run('reports', fn () => $this->work($reports));
+  }
+
+  private function work(SystemMaintenanceReports $reports): int
   {
     try {
       $reports->refresh();

@@ -19,6 +19,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationController;
 use WebBlocks\Cms\Http\Controllers\Admin\EngagementController;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController;
+use WebBlocks\Cms\Http\Controllers\Admin\JobController;
 use WebBlocks\Cms\Http\Controllers\Admin\ListingViewController;
 use WebBlocks\Cms\Http\Controllers\Admin\LocaleController;
 use WebBlocks\Cms\Http\Controllers\Admin\MaintenanceCleanupController;
@@ -90,6 +91,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSiteNotificationController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSystemHealthController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSystemUpdateController;
+use WebBlocks\Cms\Http\Controllers\JobTickController;
 use WebBlocks\Cms\Http\Middleware\AllowPagePreviewAccess;
 use WebBlocks\Cms\Http\Middleware\ApplyEditorRecovery;
 use WebBlocks\Cms\Http\Middleware\CoalesceSearchIndexing;
@@ -103,6 +105,9 @@ $internalApiCsrfMiddleware = [
   'Illuminate\\Foundation\\Http\\Middleware\\ValidateCsrfToken',
   'Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken',
 ];
+
+Route::post('webblocks-jobs/tick', JobTickController::class)
+  ->middleware(['install.required', 'throttle:12,1'])->name('webblocks.jobs.tick');
 
 Route::middleware(['web', 'install.required', 'throttle:internal-content-api'])
   ->prefix('webadmin/api')
@@ -429,6 +434,13 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::patch('/blocks/{block}/status', [BlockController::class, 'updateStatus'])->name('blocks.status.update');
     Route::get('/blocks', [BlockController::class, 'index'])->name('blocks.index')->middleware('can:access-system');
     Route::resource('blocks', BlockController::class)->except(['show', 'index']);
+    Route::get('jobs', [JobController::class, 'index'])->name('jobs.index');
+    Route::get('seo-audits', [JobController::class, 'seo'])->name('jobs.seo');
+    Route::post('jobs', [JobController::class, 'store'])->middleware('throttle:12,1')->name('jobs.store');
+    Route::post('jobs/{jobRun}/step', [JobController::class, 'step'])->middleware('throttle:60,1')->name('jobs.step');
+    Route::post('jobs/{jobRun}/transition', [JobController::class, 'transition'])->name('jobs.transition');
+    Route::post('jobs/automation/{operation}', [JobController::class, 'automation'])->where('operation', 'install|rotate|disable|schedule')->middleware('throttle:6,1')->name('jobs.automation');
+    Route::post('sites/{site}/seo-audits/{seoAudit}/work', [SiteSeoAuditController::class, 'work'])->middleware('throttle:60,1')->name('sites.seo-audits.work');
     Route::get('sites/{site}/seo', [SiteSeoAuditController::class, 'index'])->name('sites.seo-audits.index');
     Route::post('sites/{site}/seo-audits', [SiteSeoAuditController::class, 'store'])->name('sites.seo-audits.store');
     Route::post('sites/{site}/seo-audits/{seoAudit}/{action}', [SiteSeoAuditController::class, 'transition'])->where('action', 'pause|resume|retry')->name('sites.seo-audits.transition');

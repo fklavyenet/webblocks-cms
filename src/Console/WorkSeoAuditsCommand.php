@@ -5,6 +5,9 @@ namespace WebBlocks\Cms\Console;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\SeoAudit;
+use WebBlocks\Cms\Support\Jobs\JobRegistry;
+use WebBlocks\Cms\Support\Jobs\JobRunner;
+use WebBlocks\Cms\Support\Jobs\JobSchema;
 use WebBlocks\Cms\Support\Seo\SiteSeoAuditWorker;
 
 final class WorkSeoAuditsCommand extends Command
@@ -23,7 +26,14 @@ final class WorkSeoAuditsCommand extends Command
       if (microtime(true) >= $deadline) {
         break;
       }
-      $worker->advance($id, (int) $this->option('limit'), max(1, (int) ($deadline - microtime(true))));
+      if (JobSchema::ready()) {
+        $audit = SeoAudit::findOrFail($id);
+        $runner = app(JobRunner::class);
+        $run = $runner->request('seo', $audit->site_id, $audit->id, source: 'cli');
+        $runner->advance($run, 'cli', max(1, (int) ($deadline - microtime(true))), step: fn ($run, $seconds) => app(JobRegistry::class)->seoStep($run, $seconds, (int) $this->option('limit')));
+      } else {
+        $worker->advance($id, (int) $this->option('limit'), max(1, (int) ($deadline - microtime(true))));
+      }
     }
 
     return self::SUCCESS;

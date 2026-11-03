@@ -39,15 +39,15 @@
       <div class="wb-card-header"><h4 id="seo-scope-heading" class="wb-m-0 wb-text-base wb-font-semibold">{{ $seoText('scope') }}</h4></div>
       <div class="wb-card-body wb-stack wb-gap-2">
         <p>{{ $seoReport['blocks_publication_note'] }}</p>
-        <dl class="wb-stack wb-gap-1">
-          <dt>{{ $seoText('language') }}</dt><dd>{{ strtoupper($seoReport['locale']) }}</dd>
-          <dt>{{ $seoText('checked_at') }}</dt><dd><time datetime="{{ $seoReport['checked_at'] }}">{{ $seoReport['checked_at'] }}</time></dd>
-          <dt>{{ $seoText('page_status') }}</dt><dd>{{ $page->workflowLabel() }}</dd>
-          <dt>{{ $seoText('public_url') }}</dt><dd>{{ $seoReport['public_url'] ?? '—' }}</dd>
+        <div class="wb-table-wrap"><table class="wb-table"><tbody>
+          <tr><th scope="row">{{ $seoText('language') }}</th><td>{{ strtoupper($seoReport['locale']) }}</td></tr>
+          <tr><th scope="row">{{ $seoText('checked_at') }}</th><td><time datetime="{{ $seoReport['checked_at'] }}">{{ $seoReport['checked_at'] }}</time></td></tr>
+          <tr><th scope="row">{{ $seoText('page_status') }}</th><td>{{ $page->workflowLabel() }}</td></tr>
+          <tr><th scope="row">{{ $seoText('public_url') }}</th><td>{{ $seoReport['public_url'] ?? '—' }}</td></tr>
           @foreach (['title', 'description'] as $seoMetadata)
-            <dt>{{ $seoText('metadata_'.$seoMetadata) }}</dt><dd>{{ $seoReport['metadata'][$seoMetadata]['value'] ?? '—' }} <span class="wb-text-sm wb-text-muted">({{ $seoText('metadata_sources.'.$seoReport['metadata'][$seoMetadata]['source']) }}{{ $seoMetadata === 'title' ? ' · '.$seoText('site_label') : '' }})</span></dd>
+            <tr><th scope="row">{{ $seoText('metadata_'.$seoMetadata) }}</th><td>{{ $seoReport['metadata'][$seoMetadata]['value'] ?? '—' }} <span class="wb-text-sm wb-text-muted">({{ $seoText('metadata_sources.'.$seoReport['metadata'][$seoMetadata]['source']) }}{{ $seoMetadata === 'title' ? ' · '.$seoText('site_label') : '' }})</span></td></tr>
           @endforeach
-        </dl>
+        </tbody></table></div>
         @if ($canEditContent && $seoTranslation)
           <a class="wb-link" href="{{ route('admin.pages.translations.edit', ['page' => $page, 'translation' => $seoTranslation, 'return_url' => $pageReturnUrl]) }}#translation-seo-heading">{{ $seoText('edit_translation') }}</a>
         @endif

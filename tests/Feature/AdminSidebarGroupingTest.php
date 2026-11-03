@@ -89,16 +89,16 @@ class AdminSidebarGroupingTest extends TestCase
   {
     $xpath = $this->sidebar($this->user());
     $groups = $this->sidebarGroups($xpath);
-    $this->assertSame(['Content tools', 'Contact & analytics', 'Users & access', 'Cookies and Privacy', 'System', 'Maintenance'], array_keys($groups));
-    $this->assertSame(['/webadmin/blocks', '/webadmin/dynamic-content', '/webadmin/shared-slots', '/webadmin/navigation'], $this->paths($xpath, $groups['Content tools']));
-    $this->assertSame(['/webadmin/contact-messages', '/webadmin/engagement', '/webadmin/reports/visitors'], $this->paths($xpath, $groups['Contact & analytics']));
+    $this->assertSame(['Content', 'Contact & analytics', 'Users & access', 'Cookies and Privacy', 'Structure and design', 'System', 'Maintenance'], array_keys($groups));
+    $this->assertSame(['/webadmin/pages', '/webadmin/media', '/webadmin/blocks', '/webadmin/dynamic-content', '/webadmin/shared-slots', '/webadmin/navigation', '/webadmin/assets'], $this->paths($xpath, $groups['Content']));
+    $this->assertSame(['/webadmin/contact-messages', '/webadmin/engagement', '/webadmin/reports/visitors', '/webadmin/seo-audits'], $this->paths($xpath, $groups['Contact & analytics']));
     $this->assertSame(['/webadmin/users', '/webadmin/access/roles', '/webadmin/system/api-tokens'], $this->paths($xpath, $groups['Users & access']));
     $this->assertSame(['/webadmin/privacy', '/webadmin/privacy/services', '/webadmin/privacy/texts'], $this->paths($xpath, $groups['Cookies and Privacy']));
     $this->assertNotContains('/webadmin/users', $this->paths($xpath, $groups['System']));
     $this->assertNotContains('/webadmin/system/api-tokens', $this->paths($xpath, $groups['System']));
     $nav = $xpath->query('//aside[@id="admin-sidebar"]/nav')->item(0);
     $primary = $xpath->query('./div[1]', $nav)->item(0);
-    $this->assertSame(['/webadmin', '/webadmin/sites', '/webadmin/pages', '/webadmin/media', '/webadmin/assets'], $this->paths($xpath, $primary));
+    $this->assertSame(['/webadmin', '/webadmin/sites'], $this->paths($xpath, $primary));
     $allPaths = $this->paths($xpath, $nav);
     $this->assertSame($allPaths, array_values(array_unique($allPaths)));
     $bundledIcons = array_column(json_decode(file_get_contents(dirname(__DIR__, 2).'/public/cms/webblocks-ui/'.WebBlocks::UI_VERSION.'/webblocks-icons.json'), true), 'css_class');
@@ -114,7 +114,7 @@ class AdminSidebarGroupingTest extends TestCase
   public function active_routes_open_only_their_own_group_including_nested_screens(): void
   {
     $user = $this->user();
-    foreach (['admin.dynamic-content.index' => 'Content tools', 'admin.engagement.index' => 'Contact & analytics', 'admin.access.inspect' => 'Users & access', 'admin.system.api-tokens.index' => 'Users & access', 'admin.system.settings.edit' => 'System', 'admin.system.health.index' => 'Maintenance'] as $route => $expectedGroup) {
+    foreach (['admin.dynamic-content.index' => 'Content', 'admin.engagement.index' => 'Contact & analytics', 'admin.access.inspect' => 'Users & access', 'admin.system.api-tokens.index' => 'Users & access', 'admin.system.settings.edit' => 'System', 'admin.system.health.index' => 'Maintenance'] as $route => $expectedGroup) {
       $xpath = $this->sidebar($user, $route);
       $openGroups = array_filter($this->sidebarGroups($xpath), fn ($group) => $group->hasAttribute('data-wb-nav-group-open'));
       $this->assertSame([$expectedGroup], array_keys($openGroups), $route);
@@ -123,8 +123,8 @@ class AdminSidebarGroupingTest extends TestCase
     }
     foreach (['admin.media.edit', 'admin.site-assets.index'] as $route) {
       $xpath = $this->sidebar($user, $route);
-      $this->assertSame([], array_filter($this->sidebarGroups($xpath), fn ($group) => $group->hasAttribute('data-wb-nav-group-open')));
-      $this->assertSame(1, $xpath->query('//aside[@id="admin-sidebar"]/nav/div[1]/a[@aria-current="page"]')->length);
+      $this->assertSame(['Content'], array_keys(array_filter($this->sidebarGroups($xpath), fn ($group) => $group->hasAttribute('data-wb-nav-group-open'))));
+      $this->assertSame(1, $xpath->query('//aside[@id="admin-sidebar"]/nav/div[@data-wb-nav-group]//a[@aria-current="page"]')->length);
     }
   }
 
@@ -140,10 +140,10 @@ class AdminSidebarGroupingTest extends TestCase
     $user->sites()->attach($site->id, ['role_id' => $role->id]);
     $xpath = $this->sidebar($user, 'admin.media.index');
     $groups = $this->sidebarGroups($xpath);
-    $this->assertSame(['Content tools', 'Contact & analytics'], array_keys($groups));
-    $this->assertSame(['/webadmin/navigation'], $this->paths($xpath, $groups['Content tools']));
+    $this->assertSame(['Content', 'Contact & analytics'], array_keys($groups));
+    $this->assertSame(['/webadmin/media', '/webadmin/navigation'], $this->paths($xpath, $groups['Content']));
     $this->assertSame(['/webadmin/reports/visitors'], $this->paths($xpath, $groups['Contact & analytics']));
-    $this->assertSame(['/webadmin', '/webadmin/media'], $this->paths($xpath, $xpath->query('//aside[@id="admin-sidebar"]/nav/div[1]')->item(0)));
+    $this->assertSame(['/webadmin'], $this->paths($xpath, $xpath->query('//aside[@id="admin-sidebar"]/nav/div[1]')->item(0)));
     DB::table('wbcms_acl_role_permissions')->where('role_id', $role->id)->whereIn('permission', ['cms.media.read', 'cms.navigation.read'])->delete();
     $xpath = $this->sidebar($user);
     $this->assertSame(['Contact & analytics'], array_keys($this->sidebarGroups($xpath)));
@@ -171,7 +171,7 @@ class AdminSidebarGroupingTest extends TestCase
     $root->forceFill(['admin_locale' => 'tr'])->save();
     $xpath = $this->sidebar($root, 'plugins.chat.inbox.index');
     $groups = $this->sidebarGroups($xpath);
-    $this->assertArrayHasKey('İçerik Araçları', $groups);
+    $this->assertArrayHasKey('İçerik', $groups);
     $this->assertArrayHasKey('Kullanıcılar ve Erişim', $groups);
     $this->assertContains('/synthetic-chat/setup', $this->paths($xpath, $groups['Sistem']));
     $this->assertContains('/synthetic-chat/health', $this->paths($xpath, $groups['Bakım']));
@@ -201,12 +201,12 @@ class AdminSidebarGroupingTest extends TestCase
   {
     $registry = new PluginRegistry(['example' => true]);
     $registry->register(PluginDefinition::make('example')->label('Example')->version('1.0.0')->icon('plug')
-      ->menu([PluginMenuItem::make('items')->label('Example items')->group('Content tools')->route('plugins.example.items.index')]));
+      ->menu([PluginMenuItem::make('items')->label('Example items')->group('Content')->route('plugins.example.items.index')]));
     $this->app->instance(PluginRegistry::class, $registry);
     Route::get('/synthetic-example/items', fn () => 'Fixture')->name('plugins.example.items.index');
     Route::getRoutes()->refreshNameLookups();
     $xpath = $this->sidebar($this->user(), 'plugins.example.items.index');
-    $groups = $xpath->query('//aside[@id="admin-sidebar"]/nav/div[@data-wb-nav-group][button/span[@class="wb-nav-group-label"]="Content tools"]');
+    $groups = $xpath->query('//aside[@id="admin-sidebar"]/nav/div[@data-wb-nav-group][button/span[@class="wb-nav-group-label"]="Content"]');
     $this->assertSame(2, $groups->length);
     $this->assertNotContains('/synthetic-example/items', $this->paths($xpath, $groups->item(0)));
     $this->assertFalse($groups->item(0)->hasAttribute('data-wb-nav-group-open'));

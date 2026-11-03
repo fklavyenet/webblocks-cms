@@ -364,25 +364,25 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                                             </div>
                                         </div>
 
-                                        <dl class="wb-api-token-activity-meta">
-                                            <div>
-                                                <dt>{{ $adminText('capability') }}</dt>
-                                                <dd>
+                                        <div class="wb-table-wrap"><table class="wb-table"><tbody>
+
+                                                <tr><th scope="row">{{ $adminText('capability') }}</th>
+                                                <td>
                                                     @if ($activity->required_capability)
                                                         <code>{{ $activity->required_capability }}</code>
                                                     @else
                                                         <span class="wb-text-muted">{{ $adminText('none') }}</span>
                                                     @endif
-                                                </dd>
-                                            </div>
+                                                </td></tr>
+
 
                                             @if ($activity->user_agent)
-                                                <div class="wb-api-token-activity-user-agent">
-                                                    <dt>{{ $adminText('user_agent') }}</dt>
-                                                    <dd title="{{ $activity->user_agent }}">{{ Str::limit($activity->user_agent, 140) }}</dd>
-                                                </div>
+
+                                                    <tr><th scope="row">{{ $adminText('user_agent') }}</th>
+                                                    <td>user_agent }}">{{ Str::limit($activity->user_agent, 140) }}</td></tr>
+
                                             @endif
-                                        </dl>
+                                        </tbody></table></div>
                                     </div>
                                 </article>
                             @endforeach

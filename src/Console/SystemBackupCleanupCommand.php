@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Console;
 
 use Illuminate\Console\Command;
+use WebBlocks\Cms\Support\Jobs\JobCommandBridge;
 use WebBlocks\Cms\Support\System\SystemBackupCleanup;
 
 class SystemBackupCleanupCommand extends Command
@@ -12,6 +13,15 @@ class SystemBackupCleanupCommand extends Command
   protected $description = 'Preview or apply the configured WebBlocks CMS automatic backup cleanup policy';
 
   public function handle(SystemBackupCleanup $cleanup): int
+  {
+    if ($this->option('dry-run')) {
+    return $this->work($cleanup);
+    }
+
+    return JobCommandBridge::run('backups-cleanup', fn () => $this->work($cleanup));
+  }
+
+  private function work(SystemBackupCleanup $cleanup): int
   {
     $dryRun = (bool) $this->option('dry-run');
     $result = $dryRun ? $cleanup->preview() : $cleanup->run((bool) $this->option('force'), source: $this->option('scheduled') ? 'scheduled' : 'manual');

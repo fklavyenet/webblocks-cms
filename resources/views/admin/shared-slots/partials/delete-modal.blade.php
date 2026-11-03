@@ -19,24 +19,24 @@
 ])
     <p>{{ $adminText('delete_confirm_prefix') }} <strong>{{ $sharedSlot->name }}</strong>? {{ $adminText('cannot_be_undone') }}</p>
 
-    <dl class="wb-stack wb-gap-2 wb-text-sm">
-        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-            <dt class="wb-text-muted">{{ $adminText('handle') }}</dt>
-            <dd><code>{{ $sharedSlot->handle }}</code></dd>
-        </div>
-        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-            <dt class="wb-text-muted">{{ $adminText('slot') }}</dt>
-            <dd>{{ $sharedSlot->slotLabel() }}</dd>
-        </div>
-        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-            <dt class="wb-text-muted">{{ $adminText('page_layout') }}</dt>
-            <dd>{{ $sharedSlot->publicShellLabel() }}</dd>
-        </div>
-        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-            <dt class="wb-text-muted">{{ $adminText('site') }}</dt>
-            <dd>{{ $sharedSlot->site?->name }}</dd>
-        </div>
-    </dl>
+    <div class="wb-table-wrap"><table class="wb-table"><tbody>
+
+            <tr><th scope="row">{{ $adminText('handle') }}</th>
+            <td><code>{{ $sharedSlot->handle }}</code></td></tr>
+
+
+            <tr><th scope="row">{{ $adminText('slot') }}</th>
+            <td>{{ $sharedSlot->slotLabel() }}</td></tr>
+
+
+            <tr><th scope="row">{{ $adminText('page_layout') }}</th>
+            <td>{{ $sharedSlot->publicShellLabel() }}</td></tr>
+
+
+            <tr><th scope="row">{{ $adminText('site') }}</th>
+            <td>{{ $sharedSlot->site?->name }}</td></tr>
+
+    </tbody></table></div>
 
     @if ($referenceCount > 0)
         <div class="wb-alert wb-alert-danger">

@@ -15,16 +15,16 @@
 ])
     <p>{{ $adminText('restore_confirm_prefix') }} <strong>{{ $adminText('revision_title', ['id' => $revision->id]) }}</strong> {{ $adminText('restore_confirm_infix') }} <strong>{{ $sharedSlot->name }}</strong>?</p>
 
-    <dl class="wb-stack wb-gap-2 wb-text-sm">
-        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-            <dt class="wb-text-muted">{{ $adminText('created') }}</dt>
-            <dd>{{ $revision->created_at?->format('Y-m-d H:i') }}</dd>
-        </div>
-        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-            <dt class="wb-text-muted">{{ $adminText('event') }}</dt>
-            <dd>{{ $revision->eventText() }}</dd>
-        </div>
-    </dl>
+    <div class="wb-table-wrap"><table class="wb-table"><tbody>
+
+            <tr><th scope="row">{{ $adminText('created') }}</th>
+            <td>{{ $revision->created_at?->format('Y-m-d H:i') }}</td></tr>
+
+
+            <tr><th scope="row">{{ $adminText('event') }}</th>
+            <td>{{ $revision->eventText() }}</td></tr>
+
+    </tbody></table></div>
 
     <div class="wb-alert wb-alert-warning">
         {{ $adminText('restore_warning') }}

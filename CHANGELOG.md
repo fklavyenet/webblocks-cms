@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.115.0
+
+- Add Jobs and automation with SQL execution history, shared admission and leases, explicit manual steps, and per-job automatic opt-ins. Core notifications, maintenance and supported plugin jobs share the registry; existing CLI entry points retain their policies and use the same execution admission.
+- Complete saved-content SEO audits from explicit short panel requests without requiring cron. Preserve progress across visits and keep automatic execution evidence separate from manual runs.
+- Add a panel scheduler setup flow for supported application accounts, hosting command instructions, and an opt-in HTTPS POST trigger with a revocable, hashed, single-purpose key. Require two separate automatic minutes with completed probe work before verifying a connection. Existing unbounded tasks remain CLI-only and are identified in the workspace.
+- Group administration navigation by content, communication and reports, access, privacy, structure and design, system, and maintenance. Add Jobs and automation under Maintenance and a site-scoped SEO entry under reports; preserve plugin groups, route URLs and permissions.
+- Replace expanded SEO and Automatic Pages metadata stacks with compact WebBlocks UI tables and keep long source identifiers in technical details. Record the compact-summary presentation rule for future admin work.
+
 ## 1.114.0
 
 - Turn saved-page SEO findings into editing links with bounded output examples, rendered metadata provenance and stale-report warnings. Preserve the selected content language and keep findings separate from publication controls.

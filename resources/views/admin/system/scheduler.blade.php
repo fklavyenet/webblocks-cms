@@ -5,6 +5,7 @@
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $text('title'), 'heading' => $text('title')])
 @section('content')
+    <p><a class="wb-btn wb-btn-primary" href="{{ route('admin.jobs.index', ['tab' => 'automation']) }}">{{ __('webblocks-cms::jobs.title') }}</a></p>
     @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title'), 'description' => $text('description')])
     <div class="wb-stack wb-gap-4">
         <section class="wb-card" aria-labelledby="scheduler-evidence-title">

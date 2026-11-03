@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Console;
 
 use Illuminate\Console\Command;
+use WebBlocks\Cms\Support\Jobs\JobCommandBridge;
 use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
@@ -13,6 +14,15 @@ class MaintenanceCleanupCommand extends Command
   protected $description = 'Preview or run safe WebBlocks CMS maintenance cleanup categories';
 
   public function handle(MaintenanceCleanup $cleanup): int
+  {
+    if (! $this->argument('category') || $this->option('dry-run')) {
+    return $this->work($cleanup);
+    }
+
+    return JobCommandBridge::run('cleanup-'.(string) $this->argument('category'), fn () => $this->work($cleanup));
+  }
+
+  private function work(MaintenanceCleanup $cleanup): int
   {
     $category = (string) ($this->argument('category') ?: '');
     if ($this->option('scheduled') && $category === '') {

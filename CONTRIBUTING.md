@@ -44,6 +44,20 @@ or a `role="group"` container with a visible heading referenced by
 where useful. Validation and action redirects must retain the relevant panel;
 links to settings must open the panel containing their destination.
 
+Admin status, progress and metadata summaries must not use a full-width vertical
+stack that places each label and value on separate lines with large gaps. This
+includes unstyled or widely spaced `dl` / `dt` / `dd` lists and equivalent card,
+paragraph or grid compositions. Short records must remain compact and easy to
+scan. Prefer native WebBlocks UI tables: row headings and values for one record,
+column headings for repeated records. A compact status/action strip, progress
+indicator or aligned label/value rows may be used when they better fit the task.
+Cards may group a section; do not turn every property into a separate card.
+On narrow screens, keep each label adjacent to its value and preserve semantic
+headings. This is a presentation rule, not a blanket ban on semantic `dl` markup.
+Put long technical identifiers in an optional details area; preserve access to
+the full value without forcing horizontal page overflow. Review existing
+summaries against this rule whenever their screen is changed.
+
 Release push runs the same pre-push gates once for explicitly named branch/tag refs and verifies both remotes. Its Composer alias disables only the outer 300-second Composer timeout; a PHP runner bounds the complete push/verification flow to 900 seconds. Default SSH transport uses keepalive while the full suite runs; explicit operator `GIT_SSH_COMMAND` or `GIT_SSH` settings are preserved. This does not skip checks or change global Composer/SSH configuration.
 
 The package compatibility fixture uses a disposable Git index and object directory with the checkout's immutable objects as read-only alternates. It includes reviewed untracked runtime sources and tracked edits/deletions, builds the real archive and exercises the installed bridge updater. It does not copy the entire checkout or change its index, object store, branches or tags. Distinct Composer and Git export checks are retained.

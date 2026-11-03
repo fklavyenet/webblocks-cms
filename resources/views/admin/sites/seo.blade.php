@@ -4,6 +4,7 @@
   $seoText = static fn (string $key, array $replace = []) => $adminTranslator->get('seo.'.$key, $adminLocale, $replace);
   $workspaceText = static fn (string $key) => $adminTranslator->get('seo_workspace.'.$key, $adminLocale);
   $seoTab = $filters['tab'] ?? 'findings';
+  $j = fn ($key) => $adminTranslator->get('jobs.'.$key, $adminLocale);
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $seoText('audit_title').' · '.$site->name, 'heading' => $seoText('audit_title')])
 @section('content')
@@ -13,17 +14,21 @@
     'actions' => '<a class="wb-btn wb-btn-secondary" href="'.e(route('admin.sites.edit', $site)).'">'.e($workspaceText('back_to_site')).'</a>',
   ])
   @include('webblocks-cms::admin.partials.flash')
+  @if (! ($seoAutomatic ?? false))<p class="wb-alert wb-alert-info">{{ $j('connection_missing') }}</p>@endif
   <div class="wb-stack wb-gap-4" data-wb-seo-workspace>
     <section class="wb-card" aria-labelledby="seo-audit-scope">
       <div class="wb-card-header"><h2 id="seo-audit-scope" class="wb-m-0 wb-text-base">{{ $seoText('scope') }}</h2></div>
-      <div class="wb-card-body wb-stack wb-gap-3">
-        <p>{{ $seoText('saved_scope') }}</p>
-        <p>{{ $seoText('audit_scope') }}</p>
-        <p class="wb-text-sm wb-text-muted">{{ $workspaceText('worker_help') }}</p>
+      <div class="wb-card-body wb-stack wb-gap-2">
+        <p class="wb-m-0">{{ $seoText('saved_scope') }}</p>
+        <details><summary>{{ $j('scope_details') }}</summary><p>{{ $seoText('audit_scope') }}</p></details>
         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
           <form method="POST" action="{{ route('admin.sites.seo-audits.store', $site) }}">@csrf<input type="hidden" name="tab" value="{{ $seoTab }}" data-wb-seo-tab><button class="wb-btn wb-btn-primary" type="submit">{{ $workspaceText('start') }}</button></form>
+          <a class="wb-link" href="{{ route('admin.jobs.index', ['tab' => 'automation']) }}">{{ $j('title') }}</a>
           <a class="wb-btn wb-btn-secondary" data-wb-seo-refresh href="{{ route('admin.sites.seo-audits.index', ['site' => $site, ...$filters]) }}">{{ $workspaceText('refresh') }}</a>
           @if ($audit)
+            @if (in_array($audit['state'], ['queued', 'running'], true) && \WebBlocks\Cms\Support\Jobs\JobSchema::ready())
+              <div data-wb-job-runner data-error="{{ $j('error') }}"><button class="wb-btn wb-btn-primary" type="button" data-wb-job-start data-url="{{ route('admin.sites.seo-audits.work', ['site' => $site, 'seoAudit' => $audit['id']]) }}">{{ $j('run') }}</button><p role="status" aria-live="polite" data-wb-job-status></p></div>
+            @endif
             @foreach (match ($audit['state']) { 'queued', 'running' => ['pause'], 'paused' => ['resume'], 'partial', 'failed' => ['retry'], default => [] } as $seoAction)
               <form method="POST" action="{{ route('admin.sites.seo-audits.transition', ['site' => $site, 'seoAudit' => $audit['id'], 'action' => $seoAction]) }}">@csrf<input type="hidden" name="tab" value="{{ $seoTab }}" data-wb-seo-tab><button class="wb-btn wb-btn-secondary" type="submit">{{ $workspaceText($seoAction) }}</button></form>
             @endforeach
@@ -39,14 +44,14 @@
       <section class="wb-card" aria-labelledby="seo-audit-progress">
         <div class="wb-card-header"><h2 id="seo-audit-progress" class="wb-m-0 wb-text-base">{{ $workspaceText('progress') }} #{{ $audit['id'] }}</h2></div>
         <div class="wb-card-body wb-stack wb-gap-2">
-          <p>{{ $workspaceText('states.'.$audit['state']) }} · {{ $workspaceText('phases.'.$audit['phase']) }} · {{ $audit['processed'] }} / {{ $audit['total'] }}</p>
-          <p class="wb-text-sm wb-text-muted">{{ $workspaceText('task_scope') }}</p>
-          <dl class="wb-stack wb-gap-1">
-            <dt>{{ $workspaceText('started_at') }}</dt><dd>{{ $audit['created_at'] }}</dd>
-            <dt>{{ $workspaceText('completed_at') }}</dt><dd>{{ $audit['completed_at'] ?? '—' }}</dd>
-            <dt>{{ $workspaceText('version') }}</dt><dd>{{ $audit['cms_version'] }} · <code>{{ $audit['source_version'] }}</code></dd>
-            <dt>{{ $seoText('language') }}</dt><dd>{{ $audit['locales']->implode(', ') }}</dd>
-          </dl>
+          <div class="wb-table-wrap"><table class="wb-table"><tbody>
+            <tr><th scope="row">{{ $j('state') }}</th><td>{{ $workspaceText('states.'.$audit['state']) }} · {{ $workspaceText('phases.'.$audit['phase']) }}</td></tr>
+            <tr><th scope="row">{{ $j('progress') }}</th><td>{{ $audit['phase'] === 'inventory' ? $j('preparing') : $audit['processed'].' / '.$audit['total'] }}</td></tr>
+            <tr><th scope="row">{{ $j('requested') }}</th><td><time datetime="{{ $audit['created_at'] }}">{{ \Illuminate\Support\Carbon::parse($audit['created_at'])->setTimezone(config('app.timezone'))->format('Y-m-d H:i T') }}</time></td></tr>
+            <tr><th scope="row">{{ $workspaceText('completed_at') }}</th><td>{{ $audit['completed_at'] ? \Illuminate\Support\Carbon::parse($audit['completed_at'])->setTimezone(config('app.timezone'))->format('Y-m-d H:i T') : '—' }}</td></tr>
+            <tr><th scope="row">{{ $seoText('language') }}</th><td>{{ $audit['locales']->implode(', ') }}</td></tr>
+          </tbody></table></div>
+          <details><summary>{{ $j('details') }}</summary><p>{{ $workspaceText('task_scope') }}</p><p>{{ $workspaceText('version') }}: {{ $audit['cms_version'] }}</p><textarea class="wb-textarea" readonly rows="2" aria-label="{{ $workspaceText('version') }}">{{ $audit['source_version'] }}</textarea></details>
         </div>
       </section>
       <form method="GET" action="{{ route('admin.sites.seo-audits.index', $site) }}" class="wb-card">
@@ -109,3 +114,5 @@
     @endif
   </div>
 @endsection
+
+@push('scripts')<script src="{{ asset('cms/js/admin/jobs.js') }}" defer></script>@endpush

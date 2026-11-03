@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Console;
 
 use Illuminate\Console\Command;
+use WebBlocks\Cms\Support\Jobs\JobCommandBridge;
 use WebBlocks\Cms\Support\Visitors\VisitorReportRetention;
 
 class VisitorReportCleanupCommand extends Command
@@ -12,6 +13,15 @@ class VisitorReportCleanupCommand extends Command
   protected $description = 'Roll up expired visitor records and apply visitor report retention';
 
   public function handle(VisitorReportRetention $retention): int
+  {
+    if ($this->option('dry-run')) {
+    return $this->work($retention);
+    }
+
+    return JobCommandBridge::run('visitors-cleanup', fn () => $this->work($retention));
+  }
+
+  private function work(VisitorReportRetention $retention): int
   {
     $policy = $retention->policy();
     if (! $policy['ready']) {
