@@ -72,6 +72,7 @@ use WebBlocks\Cms\Console\SystemUpdateRunsCommand;
 use WebBlocks\Cms\Console\VerifyUpdateChainCommand;
 use WebBlocks\Cms\Console\VisitorReportCleanupCommand;
 use WebBlocks\Cms\Console\WorkAdminSystemUpdateCommand;
+use WebBlocks\Cms\Console\WorkSeoAuditsCommand;
 use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
 use WebBlocks\Cms\Http\Middleware\PreventAdministrativeIndexing;
 use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
@@ -139,6 +140,7 @@ use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Relational\RelationalDocuments;
 use WebBlocks\Cms\Support\Relational\StructuredSettings;
 use WebBlocks\Cms\Support\Relational\TokenRelations;
+use WebBlocks\Cms\Support\Seo\SeoSourceVersion;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
@@ -415,6 +417,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/sites/domains/index.blade.php',
     'admin/sites/domains/partials/manage-modal.blade.php',
     'admin/sites/domains/partials/remove-modal.blade.php',
+    'admin/sites/seo.blade.php',
     'admin/sites/form.blade.php',
     'admin/sites/index.blade.php',
     'admin/sites/assets.blade.php',
@@ -523,6 +526,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'admin/sites/domains/index.blade.php',
     'admin/sites/domains/partials/manage-modal.blade.php',
     'admin/sites/domains/partials/remove-modal.blade.php',
+    'admin/sites/seo.blade.php',
     'admin/sites/form.blade.php',
     'admin/sites/index.blade.php',
     'admin/sites/assets.blade.php',
@@ -870,6 +874,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const ICON_SYNC_COMMAND_NAME = 'icons:sync-webblocks-ui';
 
   public const PACKAGE_CONSOLE_COMMANDS = [
+    WorkSeoAuditsCommand::class,
     ResetTwoFactorCommand::class,
     BlockSettingsAuditCommand::class,
     PruneEditorRecoveriesCommand::class,
@@ -986,6 +991,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->scoped(SiteLocaleValidation::class);
     $this->app->singleton(PageListCache::class);
     $this->app->singleton(NavigationCache::class);
+    $this->app->singleton(SeoSourceVersion::class);
     // Resolve the current scope at call time, including from long-lived helpers.
     // Pivot/raw writes bypass model events; they must invalidate negative lookups too.
     $this->app['events']->listen(QueryExecuted::class, static function (QueryExecuted $query): void {
@@ -998,6 +1004,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       }
       $app->make(PageListCache::class)->onQuery($query);
       $app->make(NavigationCache::class)->onQuery($query);
+      $app->make(SeoSourceVersion::class)->onQuery($query);
     });
     $this->app['events']->listen(TransactionRolledBack::class, static function (): void {
       $app = app();
@@ -1215,6 +1222,8 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         ->dailyAt('03:45')
         ->withoutOverlapping(1440)
         ->onOneServer();
+
+      $this->app->make(Schedule::class)->command('webblocks:seo:work')->everyMinute()->withoutOverlapping(3);
 
       $this->app->make(Schedule::class)->command('system:reports:refresh')->everyFiveMinutes()->withoutOverlapping(15);
 

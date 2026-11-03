@@ -75,7 +75,7 @@
       .'<span>'.$title.'</span>';
   };
 
-  $renderDrawerItems = function ($items) use (&$renderDrawerItems, $isItemActive, $renderItemContent) {
+  $renderDrawerItems = function ($items) use (&$renderDrawerItems, $isItemActive, $renderItemContent, $block) {
     $html = '';
 
     foreach ($items as $item) {
@@ -95,7 +95,7 @@
       }
 
       $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
-      $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.'>'.$renderItemContent($item).'</a>';
+      $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.\WebBlocks\Cms\Support\Seo\SeoHtmlEvidence::navigationAttribute((int) $item->id, $block).'>'.$renderItemContent($item).'</a>';
     }
 
     return $html;
@@ -124,7 +124,7 @@
           $childTarget = $child->target ? ' target="'.e($child->target).'" rel="noopener noreferrer"' : '';
 
           if ($childUrl) {
-            $html .= '<a class="wb-dropdown-item'.($childActive ? ' is-active' : '').'" href="'.e($childUrl).'"'.($childActive ? ' aria-current="page"' : '').$childTarget.'>'.e($child->resolvedTitle()).'</a>';
+            $html .= '<a class="wb-dropdown-item'.($childActive ? ' is-active' : '').'" href="'.e($childUrl).'"'.($childActive ? ' aria-current="page"' : '').$childTarget.\WebBlocks\Cms\Support\Seo\SeoHtmlEvidence::navigationAttribute((int) $child->id, $block).'>'.e($child->resolvedTitle()).'</a>';
           }
         }
 
@@ -139,7 +139,7 @@
 
       $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
       $html .= '<li class="wb-navbar-nav-item">';
-      $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.'>'.$renderItemContent($item).'</a>';
+      $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.\WebBlocks\Cms\Support\Seo\SeoHtmlEvidence::navigationAttribute((int) $item->id, $block).'>'.$renderItemContent($item).'</a>';
       $html .= '</li>';
     }
 

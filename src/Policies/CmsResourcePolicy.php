@@ -31,6 +31,11 @@ final class CmsResourcePolicy
     if (! str_starts_with($route, 'admin.') && ! $api) {
     return;
     } // Plugin permissions have their own registered contract.
+    if (str_starts_with($name, 'sites.seo-audits.')) {
+      abort_unless($request->route('site') instanceof Site && app(SiteSeoPolicy::class)->access($request, $request->route('site')), 403);
+
+      return;
+    }
     if ($this->acl->isSuperAdmin($user)) {
     return;
     }

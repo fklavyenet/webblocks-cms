@@ -557,6 +557,58 @@
         syncAssignedSites();
     });
 
+    function bindSeoEvidence() {
+        var freshness = document.querySelector('[data-wb-seo-freshness]');
+        if (freshness) {
+            var stopped = false;
+            async function checkFreshness() {
+                if (stopped || document.hidden || !freshness.isConnected) return;
+                var timeout;
+                try {
+                    var controller = new AbortController();
+                    timeout = window.setTimeout(function () { controller.abort(); }, 8000);
+                    var response = await fetch(freshness.dataset.wbSeoFreshness, {
+                        credentials: 'same-origin', cache: 'no-store',
+                        headers: { Accept: 'application/json' }, signal: controller.signal
+                    });
+                    window.clearTimeout(timeout);
+                    if (!response.ok) { stopped = true; throw new Error(); }
+                    var result = await response.json();
+                    if (!result || result.ok !== true || typeof result.stale !== 'boolean') throw new Error();
+                    var unavailable = document.querySelector('[data-wb-seo-freshness-unavailable]');
+                    if (unavailable) unavailable.hidden = true;
+                    if (result.stale) {
+                        var warning = document.querySelector('[data-wb-seo-stale]');
+                        if (warning) warning.hidden = false;
+                        stopped = true;
+                    }
+                } catch (_) {
+                    // An unavailable freshness check is not a fresh result.
+                    var unavailable = document.querySelector('[data-wb-seo-freshness-unavailable]');
+                    if (unavailable) unavailable.hidden = false;
+                } finally {
+                    window.clearTimeout(timeout);
+                }
+            }
+            var timer = window.setInterval(checkFreshness, 15000);
+            window.addEventListener('pagehide', function () { stopped = true; window.clearInterval(timer); }, { once: true });
+            checkFreshness();
+        }
+        document.addEventListener('wb:tabs:change', function (event) {
+            var workspace = event.target.closest('[data-wb-seo-workspace]');
+            if (!workspace || !event.detail || !event.detail.tabId) return;
+            var tab = event.detail.tabId.replace(/^seo-/, '');
+            if (['pages', 'findings', 'links'].indexOf(tab) < 0) return;
+            workspace.querySelectorAll('[data-wb-seo-tab]').forEach(function (field) { field.value = tab; });
+            workspace.querySelectorAll('[data-wb-seo-refresh]').forEach(function (link) {
+                var url = new URL(link.href, window.location.href);
+                url.searchParams.set('tab', tab);
+                link.href = url.href;
+            });
+        });
+    }
+
+    bindSeoEvidence();
     bindAdminTransientUiReset();
     bindAdminHistoryModalLinks();
     bindSiteHandleAutosuggest();

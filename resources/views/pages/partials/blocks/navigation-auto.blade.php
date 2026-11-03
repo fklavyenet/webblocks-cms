@@ -15,7 +15,7 @@
     ->buildPublicMenuTree($menuKey, $siteScope)
     ->filter(fn ($item) => $item->isVisible() && (! $item->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($item->page)) && ! $linksToUnpublishedPage($item));
 
-  $renderNavigationBranch = function ($branch, bool $buttonRoot = false) use (&$renderNavigationBranch, $linksToUnpublishedPage) {
+  $renderNavigationBranch = function ($branch, bool $buttonRoot = false) use (&$renderNavigationBranch, $linksToUnpublishedPage, $block) {
     $html = '';
 
     foreach ($branch as $item) {
@@ -32,7 +32,7 @@
 
       if ($url) {
         $class = $buttonRoot ? 'wb-btn wb-btn-secondary' : 'wb-link';
-        $html .= '<a href="'.e($url).'" class="'.$class.'"'.$target.'>'.$label.'</a>';
+        $html .= '<a href="'.e($url).'" class="'.$class.'"'.$target.\WebBlocks\Cms\Support\Seo\SeoHtmlEvidence::navigationAttribute((int) $item->id, $block).'>'.$label.'</a>';
       } else {
         $html .= '<span>'.$label.'</span>';
       }

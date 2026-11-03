@@ -28,6 +28,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Policies\SiteSeoPolicy;
 use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
@@ -369,6 +370,7 @@ class PageController extends Controller
       'canManagePageAssets' => request()->user()->isSuperAdmin(),
       'pageAssetsTab' => $this->pageAssetsTabState($page),
       'seoReport' => request()->attributes->get('cms_page_seo_report'),
+      'canInspectSiteSeo' => $page->site && app(SiteSeoPolicy::class)->access(request(), $page->site),
       'layoutSlotComparison' => $layoutSlotComparison,
       'pagesIndexUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),
       'pageReturnUrl' => $this->pageIndexState->returnUrl(request(), $page->site_id),

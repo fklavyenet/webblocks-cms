@@ -33,6 +33,10 @@
     $actions[] = '<a href="'.route('admin.pages.index', ['site' => $site->id]).'" class="wb-btn wb-btn-secondary">'.e($adminText('open_pages')).'</a>';
   }
 
+  if ($site->exists && ($canInspectSeo ?? false)) {
+    $actions[] = '<a href="'.route('admin.sites.seo-audits.index', $site).'" class="wb-btn wb-btn-secondary">'.e($adminTranslator->get('seo.audit_title', $adminLocale)).'</a>';
+  }
+
   $pageHeaderActions = $actions !== []
     ? '<div class="wb-cluster wb-cluster-2">'.implode('', $actions).'</div>'
     : '';

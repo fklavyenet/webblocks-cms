@@ -32,7 +32,7 @@
             </div>
         </div>
     @elseif ($href !== null)
-        <a href="{{ $href }}" class="{{ $nested ? 'wb-nav-group-item' : 'wb-sidebar-link' }}{{ $isActive ? ' is-active' : '' }}"@if ($isActive) aria-current="page"@endif @if ($target) target="_blank" rel="noopener noreferrer"@endif>
+        <a{!! \WebBlocks\Cms\Support\Seo\SeoHtmlEvidence::navigationAttribute((int) $item->id, $block) !!} href="{{ $href }}" class="{{ $nested ? 'wb-nav-group-item' : 'wb-sidebar-link' }}{{ $isActive ? ' is-active' : '' }}"@if ($isActive) aria-current="page"@endif @if ($target) target="_blank" rel="noopener noreferrer"@endif>
             @if ($icon !== null)
                 <i class="wb-icon wb-icon-{{ $icon }} wb-sidebar-icon" aria-hidden="true"></i>
             @endif

@@ -10,6 +10,12 @@ final class CmsTable
    * @var array<int, string>
    */
   public const TABLES = [
+    'seo_source_versions',
+    'seo_audits',
+    'seo_audit_locales',
+    'seo_audit_pages',
+    'seo_audit_findings',
+    'seo_audit_links',
     'page_list_cache_versions',
     'navigation_cache_versions',
     'consent_settings',

@@ -15,6 +15,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Policies\SiteSeoPolicy;
 use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Queries\SiteDeletionAvailabilityQuery;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
@@ -102,6 +103,7 @@ class SiteController extends Controller
       'assetPickerFolders' => $this->assetPickerFolders(),
       'canManageSiteSettings' => true,
       'canManageDomains' => false,
+      'canInspectSeo' => false,
       'siteTab' => Site::normalizeAdminFormTab(request()->query('tab', old('_site_tab', 'site'))),
       'timezoneOptions' => $this->systemSettings->timezoneOptions(),
       'systemTimezone' => $this->systemSettings->timezone(),
@@ -171,6 +173,7 @@ class SiteController extends Controller
       'canEditCustomHead' => app(CmsAuthorization::class)->allows(request()->user(), 'cms.legacy.site-assets.write', $site->id),
       'canManageSiteSettings' => $canManageSiteSettings,
       'canManageDomains' => $canManageDomains,
+      'canInspectSeo' => app(SiteSeoPolicy::class)->access(request(), $site),
       'siteTab' => $siteTab,
       'timezoneOptions' => $this->systemSettings->timezoneOptions(),
       'systemTimezone' => $this->systemSettings->timezone(),

@@ -3,6 +3,8 @@
 namespace WebBlocks\Cms\Support\Seo;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
+use Illuminate\Support\Str;
 use Throwable;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
@@ -20,8 +22,9 @@ final class PageSeoReport
     private readonly CmsTranslator $translator,
   ) {}
 
-  public function run(Page $page, string $locale, string $messageLocale = 'en'): array
+  public function run(Page $page, string $locale, string $messageLocale = 'en', bool $includeLinks = false): array
   {
+    $sourceVersion = app(SeoSourceVersion::class)->current();
     abort_if($page->isSharedSlotSourcePage() || $page->isRevisionRestoreCandidate(), 404);
     $graph = $page->fresh(['site', 'translations.locale', 'slots.slotType', 'slots.sharedSlot', 'pageAssets',
       'blocks.blockType', 'blocks.slotType', 'blocks.asset', 'blocks.blockAssets.asset',
@@ -43,7 +46,11 @@ final class PageSeoReport
       $runtime->setLaravelSession($originalRequest->session());
     }
     $runtime->attributes->set('cms_editor_preview', true);
+    $marker = 'seo-'.Str::random(24);
+    $runtime->attributes->set('cms_seo_marker', $marker);
+    $runtime->setRouteResolver(fn () => tap(new Route('GET', '/', fn () => null), fn ($route) => $route->bind($runtime)->setParameter('locale', $locale)));
     $result = ['technical' => [], 'editorial' => [], 'not_checked' => []];
+    $evidence = ['title' => null, 'description' => null, 'links' => [], 'locations' => []];
     try {
       app()->instance('request', $runtime);
       app()->setLocale($locale);
@@ -54,6 +61,10 @@ final class PageSeoReport
         'previewMode' => false,
       ])->render();
       $result = $this->check->inspect($html, $locale);
+      $evidence = app(SeoHtmlEvidence::class)->inspect($html, $marker);
+      if ($includeLinks && ($evidence['links_truncated'] ?? false)) {
+        $result['not_checked'][] = 'links_truncated';
+      }
       if ($runtime->attributes->get('cms_editor_preview_issues', []) !== []) {
         $result['not_checked'][] = 'dynamic_content_incomplete';
       }
@@ -68,6 +79,12 @@ final class PageSeoReport
     foreach (['technical', 'editorial'] as $category) {
       foreach ($result[$category] as &$finding) {
         $finding['message'] = $this->translator->get('seo.findings.'.$finding['code'], $messageLocale, ['count' => $finding['count']]);
+        $finding['examples'] = app(SeoHtmlEvidence::class)->examples($finding['code'], $evidence);
+        foreach ($finding['examples'] as &$example) {
+          $example['action'] = app(SeoFindingTarget::class)->for($graph, $locale, $finding['code'], $example['block_id'] ?? null, $example['origin'] ?? null);
+        }
+        unset($example);
+        $finding['action'] = $finding['examples'][0]['action'] ?? app(SeoFindingTarget::class)->for($graph, $locale, $finding['code']);
       }
       unset($finding);
     }
@@ -85,6 +102,14 @@ final class PageSeoReport
       'public_url' => $url,
       'checked_at' => now()->toIso8601String(),
       'cms_version' => WebBlocks::version(),
+      'source_version' => $sourceVersion,
+      'stale' => ! hash_equals($sourceVersion, app(SeoSourceVersion::class)->current()),
+      'metadata' => [
+        'title' => ['value' => $evidence['title'], 'source' => trim((string) $translation->seo_title) !== '' ? 'translation_seo_title' : 'translation_name', 'site_label' => true],
+        'description' => ['value' => $evidence['description'], 'source' => trim((string) $translation->seo_description) !== '' ? 'translation_seo_description' : (trim((string) $graph->site?->seo_description) !== '' ? 'site_fallback' : 'empty')],
+      ],
+      ...($includeLinks ? ['links' => $evidence['links']] : []),
+      ...($includeLinks ? ['rendered_block_ids' => array_values(array_unique(array_filter(array_map(fn ($row) => $row['evidence']['block_id'] ?? null, $evidence['locations']))))] : []),
       'blocks_publication' => 'page_owned_including_drafts_shared_published',
       'blocks_publication_draft_count' => $graph->blocks->where('status', '!=', 'published')->count(),
       'blocks_publication_note' => $this->translator->get('seo.saved_scope', $messageLocale),

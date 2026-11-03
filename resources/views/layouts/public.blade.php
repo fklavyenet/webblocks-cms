@@ -135,7 +135,9 @@
 
         {{-- Operator-authored custom head markup (verification meta, SEO, analytics). Trusted, raw. --}}
         @if ($customHeadHtml !== '')
-            {!! $customHeadHtml !!}
+            @if ($headSeoMarker = request()->attributes->get('cms_seo_marker'))<!--{{ $headSeoMarker }}:site-head-->@endif
+        {!! $customHeadHtml !!}
+        @if ($headSeoMarker)<!--/{{ $headSeoMarker }}:site-head-->@endif
         @endif
     </head>
     <body class="{{ $publicBodyClass ?? 'wb-public-body' }}" data-wb-public-theme="{{ $publicThemePreset }}">

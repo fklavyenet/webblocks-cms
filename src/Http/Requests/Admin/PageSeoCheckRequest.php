@@ -37,7 +37,7 @@ final class PageSeoCheckRequest extends FormRequest
     $page = $this->route('page');
     $locales = $page->availableSiteLocales()->whereIn('id', $page->translations()->pluck('locale_id'))->pluck('code')->all();
 
-    return ['locale' => ['required', 'string', Rule::in($locales)]];
+    return ['locale' => ['required', 'string', Rule::in($locales)], 'source_version' => [$this->routeIs('admin.pages.seo-check.freshness', 'internal-content-api.pages.seo-check.freshness') ? 'required' : 'sometimes', 'string', 'regex:/^[a-f0-9]{64}$/D']];
   }
 
   public function messages(): array
