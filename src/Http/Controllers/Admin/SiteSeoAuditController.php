@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\SeoAudit;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Queries\SiteSeoAuditQuery;
 use WebBlocks\Cms\Support\Jobs\JobAutomation;
+use WebBlocks\Cms\Support\Jobs\JobProgress;
 use WebBlocks\Cms\Support\Jobs\JobRunner;
 use WebBlocks\Cms\Support\Jobs\JobSchema;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
@@ -48,11 +49,16 @@ final class SiteSeoAuditController
   {
     abort_unless(JobSchema::ready(), 409);
     $run = $runner->request('seo', $site->id, $seoAudit->id, $request->user()->id);
-    $runner->advance($run);
+    $run = $runner->advance($run);
     $seoAudit->refresh();
 
-    return response()->json(['state' => $seoAudit->state, 'processed' => $seoAudit->processed, 'total' => $seoAudit->total,
-      'message' => __('webblocks-cms::seo_workspace.states.'.$seoAudit->state)])->header('Cache-Control', 'private, no-store');
+    $locale = app(AdminLocaleResolver::class)->locale();
+
+    return response()->json([...JobProgress::payload($run), 'state' => $seoAudit->state,
+      'processed' => $seoAudit->processed, 'total' => $seoAudit->phase === 'inventory' ? null : $seoAudit->total,
+      'message' => trans('webblocks-cms::seo_workspace.states.'.$seoAudit->state, [], $locale),
+      'phase_label' => trans('webblocks-cms::seo_workspace.phases.'.$seoAudit->phase, [], $locale),
+    ])->header('Cache-Control', 'private, no-store');
   }
 
   private function result(SiteSeoAuditRequest $request, SeoAudit $audit): JsonResponse|RedirectResponse

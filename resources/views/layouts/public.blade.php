@@ -149,6 +149,13 @@
             @include('webblocks-cms::admin.pages.revisions.partials.translation-removal-warning', ['translationRemovals' => $revisionTranslationRemovals ?? []])
         @endif
 
+        @if (session('contact_form_success_message'))
+            <div class="wb-alert wb-alert-success wb-m-3" role="status" aria-live="polite">
+                <strong>{{ $publicText('toast.contact_message_sent') }}</strong>
+                <span>{{ session('contact_form_success_message') }}</span>
+            </div>
+        @endif
+
         @if (! isset($page))
             @yield('content')
         @else
@@ -238,18 +245,6 @@
             <script src="{{ asset('cms/js/public/application-runtime.js') }}?v={{ filemtime($applicationRuntimePath) }}" defer></script>
         @endif
         <div id="wb-overlay-root" class="wb-overlay-root">
-            <div class="wb-toast-container wb-toast-container-top-right">
-                @if (session('contact_form_success_message'))
-                    <div class="wb-toast wb-toast-success" role="status" aria-live="polite">
-                        <div class="wb-toast-body">
-                            <strong class="wb-toast-title">{{ $publicText('toast.contact_message_sent') }}</strong>
-                            <span>{{ session('contact_form_success_message') }}</span>
-                        </div>
-                        <button type="button" class="wb-toast-close" aria-label="{{ $publicText('toast.dismiss_message') }}" data-wb-dismiss="toast"></button>
-                    </div>
-                @endif
-            </div>
-
             @include('webblocks-cms::search.partials.modal')
 
             @if ($resolvedSite)

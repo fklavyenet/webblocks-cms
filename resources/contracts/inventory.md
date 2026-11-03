@@ -2407,3 +2407,29 @@ retention, due appointment reminders and stale pending Commerce order expiry
 have explicit manual adapters in their matching plugin releases. Large Campaigns
 sends remain CLI-only with clear setup guidance. Free/manual Memberships needs
 no timer; existing consented recurring subscriptions retain billing automation.
+
+### Manual progress and persistent feedback 1.116.1
+
+Explicit SEO and web-compatible job start/resume actions open one shared native
+WebBlocks UI modal. It shows keep-tab-open guidance, saved counts, a real or
+indeterminate progress bar and a compact table. Elapsed time measures the current
+screen session. Only one browser work POST is active; duplicate presentations of
+the same run do not start another driver. Passive page and progress GET requests
+never advance work. GET `/webadmin/jobs/{jobRun}/progress` applies the same scoped
+job authorization and returns localized saved state with no-store caching.
+
+Pause and exit, Escape, backdrop and close controls wait for the active POST,
+then request an authorized pause. Pending lease transitions are verified through
+passive reads before the dialog closes. Transport or identity failure stops
+further steps and links to saved results without claiming a successful pause or
+replaying effects. Completion remains visible until explicit close or viewing
+results, with the outcome retained in the page. Existing server scheduling and
+optional independent execution policies are unchanged.
+
+CMS-generated feedback uses persistent in-page native alerts rather than toast
+notifications. Block publication outcomes remain beside their switch; failures
+restore its previous value. Public contact submission success stays in normal
+page flow. The admin layout exposes a hidden `data-wb-page-feedback` region for
+compatible plugin notifications; alerts use escaped text and do not expire on a
+timer. Shipped WebBlocks UI toast primitives and explicitly authored trusted HTML
+overlays remain supported, without generating CMS feedback toasts.

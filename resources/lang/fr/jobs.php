@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'progress_title' => 'Progression de l’opération',
+  'keep_open' => 'Gardez cet onglet ouvert pendant l’opération. Pour quitter, utilisez Suspendre et quitter. Les étapes terminées sont conservées.',
+  'operation' => 'Opération',
+  'elapsed_session' => 'Temps dans cet écran',
+  'pausing' => 'Suspension ; attente de la fin de l’étape en cours.',
+  'pause_exit' => 'Suspendre et quitter',
+  'pause_error' => 'La suspension n’a pas pu être confirmée. Cet écran n’enverra plus d’étapes. Actualisez les résultats avant de continuer.',
+  'view_results' => 'Voir les résultats',
+  'close' => 'Fermer',
   'manual_limit' => 'Cette analyse dépasse les limites manuelles. Utilisez la commande CLI de nettoyage.',
   'manual_profile' => 'Le fonctionnement manuel ne nécessite ni cron ni worker de file.',
   'hosting_help' => 'L’automatisation est facultative. Un hébergement mutualisé nécessite cron et une CLI PHP compatible ; un VPS peut utiliser cron ou un planificateur géré. Configurez un déclencheur dans le panneau de l’hébergeur, puis vérifiez ici deux minutes automatiques. Le CMS n’installe aucun service système. Les commandes planifiées indiquées ne nécessitent ni worker permanent ni Redis.',

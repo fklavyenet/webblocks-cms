@@ -438,6 +438,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('seo-audits', [JobController::class, 'seo'])->name('jobs.seo');
     Route::post('jobs', [JobController::class, 'store'])->middleware('throttle:12,1')->name('jobs.store');
     Route::post('jobs/{jobRun}/step', [JobController::class, 'step'])->middleware('throttle:60,1')->name('jobs.step');
+    Route::get('jobs/{jobRun}/progress', [JobController::class, 'progress'])->middleware('throttle:60,1')->name('jobs.progress');
     Route::post('jobs/{jobRun}/transition', [JobController::class, 'transition'])->name('jobs.transition');
     Route::post('jobs/automation/{operation}', [JobController::class, 'automation'])->where('operation', 'rotate|disable|schedule')->middleware('throttle:6,1')->name('jobs.automation');
     Route::post('sites/{site}/seo-audits/{seoAudit}/work', [SiteSeoAuditController::class, 'work'])->middleware('throttle:60,1')->name('sites.seo-audits.work');

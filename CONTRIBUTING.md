@@ -58,6 +58,19 @@ Put long technical identifiers in an optional details area; preserve access to
 the full value without forcing horizontal page overflow. Review existing
 summaries against this rule whenever their screen is changed.
 
+CMS and first-party plugin admin feedback uses persistent native `wb-alert`
+messages in page content or next to the action. Do not use toast notifications or
+hide feedback automatically. Success and failure must remain visible and be
+announced with an appropriate status/alert live region.
+
+Multi-step manual work uses the shared native `wb-modal` progress dialog: explain
+that the tab must remain open, show truthful counts (indeterminate until known),
+a compact summary and elapsed time for this screen. Keep completion/errors until
+an explicit close or results link. Native close controls, Escape and backdrop
+requests pause at a step boundary; confirm the saved pause outcome before closing.
+A connection error must stop further requests without inventing a successful pause.
+Progress GET requests are passive and authorized independently.
+
 Release push runs the same pre-push gates once for explicitly named branch/tag refs and verifies both remotes. Its Composer alias disables only the outer 300-second Composer timeout; a PHP runner bounds the complete push/verification flow to 900 seconds. Default SSH transport uses keepalive while the full suite runs; explicit operator `GIT_SSH_COMMAND` or `GIT_SSH` settings are preserved. This does not skip checks or change global Composer/SSH configuration.
 
 The package compatibility fixture uses a disposable Git index and object directory with the checkout's immutable objects as read-only alternates. It includes reviewed untracked runtime sources and tracked edits/deletions, builds the real archive and exercises the installed bridge updater. It does not copy the entire checkout or change its index, object store, branches or tags. Distinct Composer and Git export checks are retained.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.116.1
+
+- Show manual SEO and shared jobs in a native progress modal with keep-tab-open guidance, real counts, elapsed time and persistent results. Close, Escape and backdrop actions wait for the current step and confirm a safe pause; uncertain outcomes direct operators to saved results.
+- Add passive, authorized job progress reads for deferred pause verification. Keep partial SEO evidence distinct from a successful execution.
+- Replace block-status and public contact-form toasts with persistent in-page feedback. Record persistent feedback and progress dialog rules for administration and first-party plugins.
+
 ## 1.116.0
 
 - Make manual panel execution independent of scheduler setup. Explicit SEO start/resume/retry and job requests continue through short browser steps, update progress and preserve committed work when the tab closes.

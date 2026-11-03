@@ -6,10 +6,12 @@
         return token ? token.getAttribute('content') : '';
     }
 
-    function toast(message, type) {
-        if (window.WBToast && typeof window.WBToast.show === 'function') {
-            window.WBToast.show(message, { type: type, duration: type === 'success' ? 2500 : 4000 });
-        }
+    function feedback(form, message, type) {
+        var status = form.querySelector('[data-wb-block-status-message]');
+        if (!status) return;
+        status.className = 'wb-alert wb-alert-' + type + ' wb-text-sm';
+        status.textContent = message;
+        status.hidden = false;
     }
 
     function renderStatus(form, published) {
@@ -26,6 +28,8 @@
 
         var form = toggle.closest('[data-wb-block-status-form]');
         var published = toggle.checked;
+        var message = form.querySelector('[data-wb-block-status-message]');
+        if (message) message.hidden = true;
         toggle.disabled = true;
 
         window.fetch(form.action, {
@@ -42,12 +46,12 @@
             return response.json().catch(function () { return {}; }).then(function (data) {
                 if (!response.ok || data.success === false) throw new Error(data.message || form.dataset.errorMessage);
                 renderStatus(form, published);
-                toast(data.message || form.dataset.successMessage, 'success');
+                feedback(form, data.message || (published ? form.dataset.publishedMessage : form.dataset.draftMessage), 'success');
             });
         }).catch(function (error) {
             toggle.checked = !published;
             renderStatus(form, !published);
-            toast(error.message || form.dataset.errorMessage, 'danger');
+            feedback(form, error.message || form.dataset.errorMessage, 'danger');
         }).then(function () {
             toggle.disabled = false;
         });

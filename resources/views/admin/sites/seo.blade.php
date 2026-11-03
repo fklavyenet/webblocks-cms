@@ -21,16 +21,16 @@
       <div class="wb-card-body wb-stack wb-gap-2">
         <p class="wb-m-0">{{ $seoText('saved_scope') }}</p>
         <details><summary>{{ $j('scope_details') }}</summary><p>{{ $seoText('audit_scope') }}</p></details>
-        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+        <div class="wb-cluster wb-cluster-2 wb-flex-wrap" data-wb-job-controls>
           <form method="POST" action="{{ route('admin.sites.seo-audits.store', $site) }}">@csrf<input type="hidden" name="tab" value="{{ $seoTab }}" data-wb-seo-tab><button class="wb-btn wb-btn-primary" type="submit">{{ $workspaceText('start') }}</button></form>
           <a class="wb-link" href="{{ route('admin.jobs.index', ['tab' => 'automation']) }}">{{ $j('title') }}</a>
           <a class="wb-btn wb-btn-secondary" data-wb-seo-refresh href="{{ route('admin.sites.seo-audits.index', ['site' => $site, ...$filters]) }}">{{ $workspaceText('refresh') }}</a>
           @if ($audit)
             @if (in_array($audit['state'], ['queued', 'running'], true) && \WebBlocks\Cms\Support\Jobs\JobSchema::ready())
-              <div data-wb-job-runner data-autostart="{{ (int) session('seo_manual_run') === $audit['id'] ? 'true' : 'false' }}" data-error="{{ $j('error') }}"><button class="wb-btn wb-btn-primary" type="button" data-wb-job-start data-url="{{ route('admin.sites.seo-audits.work', ['site' => $site, 'seoAudit' => $audit['id']]) }}">{{ $j('run') }}</button><p role="status" aria-live="polite" data-wb-job-status></p></div>
+              <div data-wb-job-runner data-subject-id="{{ $audit['id'] }}" data-label="{{ $j('seo') }} · {{ $site->name }}" data-autostart="{{ (int) session('seo_manual_run') === $audit['id'] ? 'true' : 'false' }}" data-error="{{ $j('error') }}"><button class="wb-btn wb-btn-primary" type="button" data-wb-job-start data-url="{{ route('admin.sites.seo-audits.work', ['site' => $site, 'seoAudit' => $audit['id']]) }}">{{ $j('run') }}</button><p role="status" aria-live="polite" data-wb-job-status></p></div>
             @endif
             @foreach (match ($audit['state']) { 'queued', 'running' => ['pause'], 'paused' => ['resume'], 'partial', 'failed' => ['retry'], default => [] } as $seoAction)
-              <form method="POST" action="{{ route('admin.sites.seo-audits.transition', ['site' => $site, 'seoAudit' => $audit['id'], 'action' => $seoAction]) }}">@csrf<input type="hidden" name="tab" value="{{ $seoTab }}" data-wb-seo-tab><button class="wb-btn wb-btn-secondary" type="submit">{{ $workspaceText($seoAction) }}</button></form>
+              <form data-wb-job-transition method="POST" action="{{ route('admin.sites.seo-audits.transition', ['site' => $site, 'seoAudit' => $audit['id'], 'action' => $seoAction]) }}">@csrf<input type="hidden" name="tab" value="{{ $seoTab }}" data-wb-seo-tab><button class="wb-btn wb-btn-secondary" type="submit">{{ $workspaceText($seoAction) }}</button></form>
             @endforeach
           @endif
         </div>
@@ -116,3 +116,5 @@
 @endsection
 
 @push('scripts')<script src="{{ asset('cms/js/admin/jobs.js') }}?v={{ \WebBlocks\Cms\Support\WebBlocks::VERSION }}" defer></script>@endpush
+
+@push('overlays')@include('webblocks-cms::admin.partials.job-progress')@endpush

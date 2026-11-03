@@ -24,6 +24,7 @@ final class BrowserFixtureServer
     'asset-picker' => ['AssetPickerViewTest', 'WEBBLOCKS_ASSET_PICKER_FIXTURE', 'picker_results_remain_inert'],
     'rich-text' => ['RichTextEditorViewTest', 'WEBBLOCKS_RICH_TEXT_FIXTURE', 'editor_controls_and_shared_dialogs'],
     'editor-preview' => ['EditorPreviewTest', 'WEBBLOCKS_EDITOR_PREVIEW_FIXTURE', 'editor_panel_browser_fixture'],
+    'job-progress' => ['JobExecutionTest', 'WEBBLOCKS_JOB_PROGRESS_FIXTURE', 'job_progress_browser_fixture'],
     'update-progress' => ['SystemUpdatesScreenTest', 'WEBBLOCKS_UPDATE_PROGRESS_FIXTURE', 'shared_progress_asset_and_server_admission'],
   ];
 
@@ -84,6 +85,7 @@ final class BrowserFixtureServer
       '/cms/css/public.css',
     ];
     $script = match ($scenario) {
+      'job-progress' => '/cms/js/admin/jobs.js',
       'consent-admin', 'system-picker' => '/cms/js/admin/core.js',
       'consent' => '/cms/js/privacy-consent-sync.js',
       'dirty-overlay' => '/cms/js/admin/core.js',
@@ -100,6 +102,9 @@ final class BrowserFixtureServer
     if ($scenario === 'consent-admin') {
       $assets[] = '/cms/js/admin/consent.js';
     }
+    if ($scenario === 'job-progress') {
+      $assets[] = '/cms/js/admin/block-list-actions.js';
+    }
     if ($scenario === 'editor-save') {
       $assets[] = '/cms/js/admin/rich-text-editor.js';
     }
@@ -107,6 +112,7 @@ final class BrowserFixtureServer
       $assets[] = '/cms/js/admin/editor-preview-frame.js';
     }
     $file = match (true) {
+      $path === '/fixture.js' && $scenario === 'job-progress' => $root.'/tests/Browser/job-progress-fixture.js',
       $path === '/fixture.js' && $scenario === 'two-factor-policy' => $root.'/tests/Browser/two-factor-policy-fixture.js',
       $path === '/progress.js' && $scenario === 'update-progress' => $root.'/src/Support/Updates/Client/Resources/js/update-progress.js',
       $path === '/fixture.js' && $scenario === 'consent-admin' => $root.'/tests/Browser/consent-admin-fixture.js',
@@ -165,7 +171,7 @@ final class BrowserFixtureServer
       $head .= '<link rel="stylesheet" href="'.$css.'">';
     }
     $head .= '<script src="/cms/webblocks-ui/'.$version.'/webblocks-ui.js" defer></script>';
-    if (! in_array($scenario, ['parent', 'update-progress', 'retention', 'scheduler', 'consent'], true)) {
+    if (! in_array($scenario, ['parent', 'job-progress', 'update-progress', 'retention', 'scheduler', 'consent'], true)) {
       $script = match ($scenario) {
         'consent-admin', 'system-picker' => 'core',
         'dirty-overlay' => 'core',
@@ -187,6 +193,12 @@ final class BrowserFixtureServer
       $head .= '<script src="/cms/js/admin/rich-text-editor.js" defer></script>';
     }
     $head .= '<script src="/fixture.js" defer></script></head>';
+    if ($scenario === 'job-progress') {
+      $head = str_replace('</head>', '<script src="/cms/js/admin/jobs.js" defer></script><script src="/cms/js/admin/block-list-actions.js" defer></script></head>', $head);
+      // Fixture responses stay inside the test page; production scripts render the real dialog.
+      $html = preg_replace('~<head>.*?</head>|<script[^>]+src="[^"]+"[^>]*></script>~s', '', $html);
+      $html = str_replace('http://localhost/', '/', $html);
+    }
     if ($scenario === 'update-progress') {
       $head = str_replace('</head>', '<script src="/progress.js" defer></script></head>', $head);
     }

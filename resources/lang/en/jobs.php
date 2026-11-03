@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'progress_title' => 'Operation progress',
+  'keep_open' => 'Please keep this tab open while the operation runs. To leave, use Pause and exit. Completed steps are preserved.',
+  'operation' => 'Operation',
+  'elapsed_session' => 'Time in this screen',
+  'pausing' => 'Pausing; waiting for the current step to finish.',
+  'pause_exit' => 'Pause and exit',
+  'pause_error' => 'The pause could not be confirmed. This screen will send no more steps. Refresh results before continuing.',
+  'view_results' => 'View results',
+  'close' => 'Close',
   'manual_limit' => 'This storage scan exceeds manual limits. Use the CLI cleanup command.',
   'manual_profile' => 'Manual operation is available without cron or a queue worker.',
   'hosting_help' => 'Automatic operation is optional. Shared hosting needs an available cron feature and compatible PHP CLI; a VPS can use cron or a managed scheduler. Configure one trigger in your hosting panel, then verify two automatic minutes here. The CMS does not install operating-system services. A continuously running worker and Redis are not required for the scheduled commands shown here.',

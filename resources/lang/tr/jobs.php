@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'progress_title' => 'İşlem ilerlemesi',
+  'keep_open' => 'İşlem sürerken lütfen bu sekmeyi açık tutun. Ayrılmak için Duraklat ve çık seçeneğini kullanın. Tamamlanan adımlar korunur.',
+  'operation' => 'İşlem',
+  'elapsed_session' => 'Bu ekranda geçen süre',
+  'pausing' => 'Duraklatılıyor; mevcut adımın bitmesi bekleniyor.',
+  'pause_exit' => 'Duraklat ve çık',
+  'pause_error' => 'Duraklatma doğrulanamadı. Bu ekrandan başka adım gönderilmeyecek. Devam etmeden önce sonuçları yenileyin.',
+  'view_results' => 'Sonuçları görüntüle',
+  'close' => 'Kapat',
   'manual_limit' => 'Bu depolama taraması elle çalışma sınırını aşıyor. CLI temizlik komutunu kullanın.',
   'manual_profile' => 'Manuel kullanım için cron veya kuyruk işçisi gerekmez.',
   'hosting_help' => 'Otomatik çalışma isteğe bağlıdır. Shared hosting için açık bir cron özelliği ve uyumlu PHP CLI gerekir; VPS üzerinde cron veya yönetilen zamanlayıcı kullanılabilir. Hosting panelinde tek tetikleyici tanımlayın, ardından burada iki otomatik dakikayı doğrulayın. CMS işletim sistemi servisi kurmaz. Buradaki zamanlanmış komutlar için sürekli işçi veya Redis gerekmez.',

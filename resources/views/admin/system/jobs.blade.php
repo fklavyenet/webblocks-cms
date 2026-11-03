@@ -70,6 +70,7 @@
     @endif
 @endsection
 @push('overlays')
+    @include('webblocks-cms::admin.partials.job-progress')
     @if ($system && $ready)
         @foreach ($definitions as $definition)
             @component('webblocks-cms::admin.partials.destructive-confirmation-modal', ['id' => 'job-schedule-'.$loop->index, 'title' => $label($definition), 'description' => $j('toggle'), 'action' => route('admin.jobs.automation', 'schedule'), 'method' => 'POST', 'submitLabel' => $j('confirm')])

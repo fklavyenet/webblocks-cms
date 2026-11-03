@@ -168,6 +168,86 @@ class JobExecutionTest extends TestCase
   }
 
   #[Test]
+  public function progress_reads_are_passive_scoped_and_json_pause_waits_for_the_saved_boundary(): void
+  {
+    $site = $this->site();
+    $other = $this->site();
+    for ($i = 0; $i < 12; $i++) {
+    Page::create(['site_id' => $site->id, 'title' => 'Synthetic '.$i, 'slug' => 'unit-'.$i, 'status' => 'published']);
+    }
+    $audit = app(ManageSeoAudit::class)->start($site);
+    $runner = app(JobRunner::class);
+    $run = $runner->request('seo', $site->id, $audit->id);
+    $this->actor('editor', [$site->id]);
+    $url = '/webadmin/jobs/'.$run->id;
+    $this->getJson($url.'/progress')->assertOk()->assertJsonPath('run_id', $run->id)->assertJsonPath('state', 'queued')
+      ->assertJsonPath('pause_url', url($url.'/transition'))->assertHeader('Cache-Control', 'no-store, private');
+    $this->assertDatabaseCount('wbcms_job_attempts', 0);
+    $this->assertDatabaseCount('wbcms_seo_audit_pages', 0);
+    $foreign = $runner->request('seo', $other->id, app(ManageSeoAudit::class)->start($other)->id);
+    $this->getJson('/webadmin/jobs/'.$foreign->id.'/progress')->assertForbidden();
+    $this->postJson('/webadmin/jobs/'.$foreign->id.'/transition', ['action' => 'pause'])->assertForbidden();
+    $run->update(['lease_until' => now()->addMinute(), 'lease_token' => 'synthetic-owner']);
+    $this->postJson($url.'/transition', ['action' => 'pause'])->assertOk()->assertJsonPath('state', 'queued')->assertJsonPath('requested_state', 'paused');
+    $this->assertSame('queued', $audit->fresh()->state);
+    $this->getJson($url.'/progress')->assertOk()->assertJsonPath('requested_state', 'paused');
+    $this->assertDatabaseCount('wbcms_job_attempts', 0);
+    $run->update(['lease_until' => now()->subSecond(), 'lease_token' => null]);
+    $this->postJson($url.'/step')->assertOk()->assertJsonPath('state', 'paused')->assertJsonPath('requested_state', null);
+    $this->assertSame('paused', $audit->fresh()->state);
+    $this->getJson($url.'/progress')->assertOk()->assertJsonPath('state', 'paused');
+    $this->postJson($url.'/transition', ['action' => 'resume'])->assertOk()->assertJsonPath('state', 'queued');
+  }
+
+  #[Test]
+  public function work_responses_keep_domain_warnings_and_localized_modal_messages(): void
+  {
+    $site = $this->site();
+    $actor = $this->actor('editor', [$site->id]);
+    $actor->forceFill(['admin_locale' => 'tr'])->save();
+    $audit = app(ManageSeoAudit::class)->start($site);
+    $response = $this->postJson('/webadmin/sites/'.$site->id.'/seo-audits/'.$audit->id.'/work')->assertOk();
+    $run = JobRun::firstOrFail();
+    $response->assertJsonPath('run_id', $run->id)->assertJsonPath('subject_id', $audit->id)
+      ->assertJsonPath('progress_url', route('admin.jobs.progress', $run));
+    $run->update(['state' => 'complete', 'reason' => 'partial']);
+    $this->getJson('/webadmin/jobs/'.$run->id.'/progress')->assertOk()->assertJsonPath('state', 'complete')
+      ->assertJsonPath('message', trans('webblocks-cms::jobs.states.complete', [], 'tr'))
+      ->assertJsonPath('notice', trans('webblocks-cms::seo_workspace.incomplete', [], 'tr'));
+  }
+
+  #[Test]
+  public function job_progress_browser_fixture_uses_the_real_dialog_and_runner(): void
+  {
+    $this->actor();
+    $this->post('/webadmin/jobs', ['job_key' => 'probe'])->assertRedirect();
+    $response = $this->get('/webadmin/jobs')->assertOk()->assertSee('data-wb-job-modal', false)
+      ->assertSee('Pause and exit')->assertSee('Please keep this tab open')->assertDontSee('wb-toast');
+    if ($path = getenv('WEBBLOCKS_JOB_PROGRESS_FIXTURE')) {
+    $control = '<form data-wb-block-status-form action="/synthetic-block-status" data-published-label="Published" data-draft-label="Draft" data-published-message="Published" data-draft-message="Draft" data-error-message="Not saved"><input type="checkbox" data-wb-block-status-toggle aria-label="Synthetic block status"><span data-wb-block-status-label>Draft</span><p data-wb-block-status-message role="status" hidden></p></form>';
+    file_put_contents($path, str_replace('</main>', $control.'</main>', $response->getContent()));
+    }
+  }
+
+  #[Test]
+  public function contact_success_is_escaped_persistent_page_feedback_outside_overlays(): void
+  {
+    $site = $this->site();
+    session()->put('contact_form_success_message', 'Received <strong>literally</strong>');
+    $html = view('webblocks-cms::layouts.public', ['site' => $site, 'publicLocaleCode' => 'en'])->render();
+    $dom = new \DOMDocument;
+    @$dom->loadHTML($html);
+    $xpath = new \DOMXPath($dom);
+    $alerts = $xpath->query('//div[contains(@class,"wb-alert-success") and @role="status"]');
+    $this->assertCount(1, $alerts);
+    $this->assertStringContainsString('Received <strong>literally</strong>', $alerts->item(0)->textContent);
+    $this->assertSame(0, $xpath->query('.//strong[text()="literally"]', $alerts->item(0))->length);
+    $this->assertSame(0, $xpath->query('ancestor::*[@id="wb-overlay-root"]', $alerts->item(0))->length);
+    $this->assertFalse($alerts->item(0)->hasAttribute('data-wb-toast'));
+    $this->assertStringNotContainsString('wb-toast', $html);
+  }
+
+  #[Test]
   public function admissions_are_idempotent_and_live_leases_exclude_other_workers(): void
   {
     $calls = 0;

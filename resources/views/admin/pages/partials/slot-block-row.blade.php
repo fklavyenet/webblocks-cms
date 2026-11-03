@@ -81,7 +81,7 @@
             @endif
         </td>
         <td class="wb-admin-slot-block-status-cell">
-            <form method="POST" action="{{ route('admin.blocks.status.update', $block) }}" data-wb-block-status-form data-published-label="{{ $inlineBlocksText('published') }}" data-draft-label="{{ $inlineBlocksText('draft') }}" data-error-message="{{ $inlineBlocksText('status_update_failed') }}">
+            <form method="POST" action="{{ route('admin.blocks.status.update', $block) }}" data-wb-block-status-form data-published-message="{{ $inlineBlocksText('status_published') }}" data-draft-message="{{ $inlineBlocksText('status_draft') }}" data-published-label="{{ $inlineBlocksText('published') }}" data-draft-label="{{ $inlineBlocksText('draft') }}" data-error-message="{{ $inlineBlocksText('status_update_failed') }}">
                 @csrf
                 @method('PATCH')
                 <input type="hidden" name="return_url" value="{{ request('return_url') }}">
@@ -99,6 +99,7 @@
                         {{ $block->status === 'published' ? $inlineBlocksText('published') : $inlineBlocksText('draft') }}
                     </span>
                 </label>
+                <p class="wb-alert wb-text-sm" role="status" aria-live="polite" data-wb-block-status-message hidden></p>
                 <noscript><button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">{{ $inlineBlocksText('save_status') }}</button></noscript>
             </form>
         </td>

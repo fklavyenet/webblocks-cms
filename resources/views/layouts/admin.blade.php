@@ -323,6 +323,7 @@
 
                 <main class="wb-dashboard-main">
                     <div class="wb-stack wb-stack-6">
+                        <div data-wb-page-feedback hidden></div>
                         @yield('content')
                         @if ($pluginAppearanceCard)
                             @include('webblocks-cms::admin.system.plugins.partials.appearance')

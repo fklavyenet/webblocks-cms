@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'progress_title' => 'Avanzamento operazione',
+  'keep_open' => 'Mantieni aperta questa scheda durante l’operazione. Per uscire usa Sospendi ed esci. I passi completati vengono conservati.',
+  'operation' => 'Operazione',
+  'elapsed_session' => 'Tempo in questa schermata',
+  'pausing' => 'Sospensione; attesa del completamento del passo corrente.',
+  'pause_exit' => 'Sospendi ed esci',
+  'pause_error' => 'Impossibile confermare la sospensione. Questa schermata non invierà altri passi. Aggiorna i risultati prima di continuare.',
+  'view_results' => 'Visualizza risultati',
+  'close' => 'Chiudi',
   'manual_limit' => 'La scansione supera i limiti manuali. Usa il comando CLI di pulizia.',
   'manual_profile' => 'L’uso manuale non richiede cron né un worker della coda.',
   'hosting_help' => 'L’automazione è facoltativa. L’hosting condiviso necessita di cron disponibile e PHP CLI compatibile; un VPS può usare cron o uno scheduler gestito. Configura un attivatore nel pannello hosting e verifica qui due minuti automatici. Il CMS non installa servizi del sistema operativo. I comandi pianificati indicati non richiedono worker permanenti né Redis.',

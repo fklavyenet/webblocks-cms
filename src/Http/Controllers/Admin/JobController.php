@@ -8,6 +8,7 @@ use WebBlocks\Cms\Http\Requests\Admin\JobRequest;
 use WebBlocks\Cms\Models\JobRun;
 use WebBlocks\Cms\Queries\JobQuery;
 use WebBlocks\Cms\Support\Jobs\JobAutomation;
+use WebBlocks\Cms\Support\Jobs\JobProgress;
 use WebBlocks\Cms\Support\Jobs\JobRegistry;
 use WebBlocks\Cms\Support\Jobs\JobRunner;
 use WebBlocks\Cms\Support\Jobs\JobSchema;
@@ -45,15 +46,22 @@ final class JobController
     abort_unless(app(JobRegistry::class)->get($jobRun->job_key)?->web, 409);
     $run = $runner->advance($jobRun);
 
-    return response()->json(['state' => $run->state, 'processed' => $run->processed, 'total' => $run->total,
-      'message' => __('webblocks-cms::jobs.states.'.$run->state)])->header('Cache-Control', 'private, no-store');
+    return response()->json(JobProgress::payload($run))->header('Cache-Control', 'private, no-store');
+  }
+
+  public function progress(JobRequest $request, JobRun $jobRun)
+  {
+    return response()->json(JobProgress::payload($jobRun))->header('Cache-Control', 'private, no-store');
   }
 
   public function transition(JobRequest $request, JobRun $jobRun)
   {
     app(TransitionJobRun::class)->execute($jobRun, (string) $request->validated('action'));
+    if ($request->expectsJson()) {
+      return response()->json(JobProgress::payload($jobRun->refresh()))->header('Cache-Control', 'private, no-store');
+    }
 
-    return redirect()->route('admin.jobs.index');
+    return redirect()->route('admin.jobs.index')->with('job_manual_run', $request->validated('action') === 'resume' ? $jobRun->id : null);
   }
 
   public function automation(JobRequest $request, string $operation, JobAutomation $automation)

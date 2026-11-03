@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'progress_title' => 'Progreso de la operación',
+  'keep_open' => 'Mantenga esta pestaña abierta durante la operación. Para salir, use Pausar y salir. Los pasos completados se conservan.',
+  'operation' => 'Operación',
+  'elapsed_session' => 'Tiempo en esta pantalla',
+  'pausing' => 'Pausando; esperando que termine el paso actual.',
+  'pause_exit' => 'Pausar y salir',
+  'pause_error' => 'No se pudo confirmar la pausa. Esta pantalla no enviará más pasos. Actualice los resultados antes de continuar.',
+  'view_results' => 'Ver resultados',
+  'close' => 'Cerrar',
   'manual_limit' => 'El análisis supera los límites manuales. Use el comando CLI de limpieza.',
   'manual_profile' => 'El uso manual no necesita cron ni un trabajador de colas.',
   'hosting_help' => 'La automatización es opcional. El alojamiento compartido necesita cron disponible y PHP CLI compatible; un VPS puede usar cron o un programador administrado. Configure un disparador en el panel del alojamiento y verifique aquí dos minutos automáticos. El CMS no instala servicios del sistema operativo. Los comandos programados indicados no necesitan un trabajador permanente ni Redis.',

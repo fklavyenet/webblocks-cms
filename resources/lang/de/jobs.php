@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'progress_title' => 'Fortschritt der Aufgabe',
+  'keep_open' => 'Bitte lassen Sie diesen Tab während der Ausführung geöffnet. Verwenden Sie zum Verlassen Pausieren und schließen. Abgeschlossene Schritte bleiben erhalten.',
+  'operation' => 'Aufgabe',
+  'elapsed_session' => 'Zeit in diesem Fenster',
+  'pausing' => 'Pausieren; der aktuelle Schritt wird noch abgeschlossen.',
+  'pause_exit' => 'Pausieren und schließen',
+  'pause_error' => 'Die Pause konnte nicht bestätigt werden. Dieses Fenster sendet keine weiteren Schritte. Aktualisieren Sie die Ergebnisse vor dem Fortfahren.',
+  'view_results' => 'Ergebnisse anzeigen',
+  'close' => 'Schließen',
   'manual_limit' => 'Diese Speicherprüfung überschreitet die manuellen Grenzen. Verwenden Sie den CLI-Bereinigungsbefehl.',
   'manual_profile' => 'Für den manuellen Betrieb sind weder Cron noch ein Queue-Worker erforderlich.',
   'hosting_help' => 'Automatisierung ist optional. Shared Hosting benötigt eine verfügbare Cron-Funktion und eine passende PHP-CLI; auf einem VPS sind Cron oder ein verwalteter Scheduler möglich. Richten Sie einen Auslöser im Hosting-Panel ein und prüfen Sie hier zwei automatische Minuten. Das CMS installiert keine Betriebssystemdienste. Die aufgeführten geplanten Befehle benötigen weder einen dauerhaften Worker noch Redis.',
