@@ -1,6 +1,19 @@
 <?php
 
 return [
+  'manual_limit' => 'El análisis supera los límites manuales. Use el comando CLI de limpieza.',
+  'manual_profile' => 'El uso manual no necesita cron ni un trabajador de colas.',
+  'hosting_help' => 'La automatización es opcional. El alojamiento compartido necesita cron disponible y PHP CLI compatible; un VPS puede usar cron o un programador administrado. Configure un disparador en el panel del alojamiento y verifique aquí dos minutos automáticos. El CMS no instala servicios del sistema operativo. Los comandos programados indicados no necesitan un trabajador permanente ni Redis.',
+  'web_unavailable' => 'Esta tarea no dispone aquí de pasos manuales. Use su pantalla de función o las instrucciones de alojamiento.',
+  'policy_changed' => 'La política ha cambiado. Cancele esta ejecución y revise la nueva política antes de comenzar otra.',
+  'feature_manual_help' => 'Use la pantalla de la función para las operaciones manuales. La ejecución programada del servidor es opcional.',
+  'seo_help' => 'Al pulsar Ejecutar en esta pantalla se envían pasos cortos continuamente. No hace falta un disparador cada minuto. Cerrar la página detiene los siguientes pasos manuales y guarda el progreso. Continuar independientemente requiere automatización opcional.',
+  'visitors_help' => 'Procesa visitas antiguas en grupos pequeños conforme a la retención y conserva los totales diarios. No elimina visitas recientes.',
+  'recovery_help' => 'Elimina puntos de recuperación caducados en grupos pequeños. Conserva las ediciones actuales recuperables.',
+  'notifications_help' => 'Las notificaciones inmediatas se envían al llegar mensajes. Los envíos agrupados y resúmenes diarios necesitan ejecución automática; para uso solo manual, elija entrega inmediata y desactive el resumen diario.',
+  'actions' => 'Acciones',
+  'automatic_optional' => 'Active automatización solo para funciones que necesiten ejecución independiente. Una instalación manual no está en mal estado por carecer de automatización.',
+
   'server_missing' => 'La programación del servidor no está verificada. Las tareas del servidor esperan; las del panel y HTTP pueden ejecutarse.',
   'stop_pending' => 'Parada solicitada; primero finalizará el paso actual.',
   'next_check' => 'Próxima comprobación programada',
@@ -22,7 +35,7 @@ return [
   'run' => 'Ejecutar en esta pantalla',
   'enqueue' => 'Solicitar ejecución',
   'manual_help' => 'Esta pantalla envía pasos breves solo después de iniciar. Al cerrarla se conserva el progreso; la ejecución automática requiere una conexión.',
-  'cli_only' => 'Requiere el programador del servidor; no dispone de un adaptador web por pasos.',
+  'cli_only' => 'Use la pantalla de la función o su comando CLI; este espacio no permite ejecutarla manualmente.',
   'effects' => 'Esta tarea puede enviar mensajes o modificar registros según su política actual.',
   'confirm' => 'Confirmar esta operación',
   'cancel' => 'Cancelar',
@@ -44,7 +57,7 @@ return [
   'http' => 'HTTP automático',
   'panel' => 'Ejecución manual del panel',
   'verification_help' => 'La verificación requiere dos ejecuciones automáticas en minutos distintos. Las manuales no verifican el programador. La conexión no garantiza el éxito de cada tarea o mensaje.',
-  'install' => 'Conectar programador del servidor',
+  'install' => 'Configuración del alojamiento',
   'install_help' => 'Revise primero las tareas existentes. Solo se instala una entrada cron de la cuenta de la aplicación en hosts compatibles; nunca root u otra cuenta.',
   'hosting' => 'Comandos del alojamiento',
   'rotate' => 'Activar HTTP y generar una clave nueva',

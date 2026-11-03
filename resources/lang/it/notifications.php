@@ -53,7 +53,7 @@ return [
   'health_setup' => 'Il gestore del server o provider deve eseguire Laravel schedule:run ogni minuto con l’account applicativo e PHP CLI corretto. Usa il cron dell’hosting o webblocks:scheduler:setup --install; gli aggiornamenti non lo installano silenziosamente.',
   'health_guide' => 'Leggi le istruzioni del pianificatore',
   'health_install_title' => 'Prima delle notifiche pianificate',
-  'health_install_help' => 'I nuovi siti usano notifiche raggruppate e un riepilogo giornaliero. Servono posta in uscita funzionante, APP_URL corretta, il pianificatore Laravel ogni minuto e cache condivisa con blocchi atomici per più processi. Verifica il pianificatore dopo l’installazione.',
+  'health_install_help' => 'I nuovi siti usano avvisi immediati senza riepilogo giornaliero. Le email richiedono trasporto funzionante e APP_URL corretta. Avvisi raggruppati e riepiloghi richiedono anche invio periodico; segui la guida facoltativa di hosting. Gli avvisi nel pannello non richiedono scheduler.',
   'health_dispatch_failed' => 'Elaborazione delle notifiche non riuscita. Verifica il pianificatore e i risultati di invio.',
   'health_notifications_optional' => 'Le notifiche immediate senza riepilogo giornaliero non richiedono invii pianificati. Lo stato resta visibile per la manutenzione in background.',
   'panel_title' => 'Notifiche del pannello',

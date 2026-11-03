@@ -12,6 +12,7 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Models\JobRun;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\SeoAudit;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Jobs\JobAutomation;
 use WebBlocks\Cms\Support\Jobs\JobDefinition;
@@ -82,7 +83,8 @@ class JobExecutionTest extends TestCase
     $site = $this->site();
     Page::create(['site_id' => $site->id, 'title' => 'Synthetic', 'slug' => 'sample', 'status' => 'published']);
     $this->actor('editor', [$site->id]);
-    $audit = app(ManageSeoAudit::class)->start($site);
+    $this->post('/webadmin/sites/'.$site->id.'/seo-audits')->assertSessionHas('seo_manual_run');
+    $audit = SeoAudit::latest('id')->firstOrFail();
     $this->get('/webadmin/sites/'.$site->id.'/seo')->assertOk()->assertSee('Run in this screen')->assertDontSee('<dl', false);
     $this->assertDatabaseCount('wbcms_job_runs', 0);
     $this->assertDatabaseCount('wbcms_seo_audit_pages', 0);
@@ -115,6 +117,54 @@ class JobExecutionTest extends TestCase
     $this->postJson('/webadmin/jobs', ['job_key' => 'notifications'])->assertStatus(422);
     $this->post('/webadmin/jobs', ['job_key' => 'probe'])->assertRedirect();
     $this->get('/webadmin/jobs?tab=automation')->assertOk()->assertSee('Jobs and automation')->assertSee('jobs-automation', false);
+  }
+
+  #[Test]
+  public function automatic_ticks_do_not_take_over_manual_runs_and_changed_policy_pauses_before_work(): void
+  {
+    $calls = 0;
+    $policy = 'first';
+    // Capture mutable policy by reference to model an operator changing saved settings.
+    $this->registry([new JobDefinition('guarded', 'test', function () use (&$calls) {
+      $calls++;
+
+      return ['state' => 'running', 'processed' => $calls];
+    }, '* * * * *', web: true, automatic: false, guard: function () use (&$policy) {
+    return hash('sha256', $policy);
+    })]);
+    $runner = app(JobRunner::class);
+    $run = $runner->request('guarded');
+    $runner->tick('cli');
+    $this->assertSame(0, $calls);
+    $this->assertSame('running', $runner->advance($run)->state);
+    $policy = 'second';
+    $this->assertSame('paused', $runner->advance($run)->state);
+    $this->assertSame('policy_changed', $run->reason);
+    $this->assertSame(1, $calls);
+    $this->assertDatabaseCount('wbcms_job_attempts', 1);
+  }
+
+  #[Test]
+  public function manual_installations_have_no_implicit_domain_automation_or_web_cron_installer(): void
+  {
+    $this->site();
+    $registry = app(JobRegistry::class);
+    foreach ($registry->all() as $job) {
+      if ($job->key !== 'probe') {
+      $this->assertFalse($registry->automatic($job), $job->key);
+      }
+    }
+    $this->assertFalse(app(JobAutomation::class)->status()['has_automatic']);
+    $this->actor();
+    $this->get('/webadmin/jobs')->assertOk()->assertSee('Manual operation is available without cron or a queue worker.');
+    $this->post('/webadmin/jobs/automation/install', ['confirmed' => 1])->assertNotFound();
+    $this->post('/webadmin/jobs', ['job_key' => 'reports'])->assertSessionHasErrors('job_key');
+    $this->assertDatabaseCount('wbcms_job_runs', 0);
+    $this->post('/webadmin/jobs', ['job_key' => 'editor-recovery', 'confirmed' => 1])->assertSessionHas('job_manual_run');
+    $this->get('/webadmin/jobs')->assertOk()->assertSee('data-autostart="true"', false);
+    $this->get('/webadmin/jobs')->assertOk()->assertDontSee('data-autostart="true"', false);
+    DB::table('wbcms_job_settings')->insert(['job_key' => 'seo', 'automatic' => true]);
+    $this->assertTrue($registry->automatic($registry->get('seo')));
   }
 
   #[Test]
@@ -157,7 +207,7 @@ class JobExecutionTest extends TestCase
   #[Test]
   public function http_is_separate_authenticated_automatic_evidence_and_rotation_revokes_previous_key(): void
   {
-    $this->registry([new JobDefinition('probe', 'test', fn () => ['state' => 'complete'], '* * * * *', web: true)]);
+    $this->registry([new JobDefinition('probe', 'test', fn () => ['state' => 'complete'], '* * * * *', web: true, automatic: true)]);
     $service = app(JobAutomation::class);
     $first = $service->rotate();
     $this->assertStringNotContainsString($first, (string) DB::table('wbcms_job_automation')->value('token_hash'));
@@ -232,7 +282,7 @@ class JobExecutionTest extends TestCase
   #[Test]
   public function manual_cli_does_not_establish_automatic_health_and_failed_probe_does_not_verify_a_tick(): void
   {
-    $this->registry([new JobDefinition('probe', 'test', fn () => ['state' => 'failed'], '* * * * *', web: true)]);
+    $this->registry([new JobDefinition('probe', 'test', fn () => ['state' => 'failed'], '* * * * *', web: true, automatic: true)]);
     $this->artisan('webblocks:jobs:work')->assertSuccessful();
     $this->assertDatabaseCount('wbcms_job_ticks', 0);
     app(JobRunner::class)->tick('cli');
@@ -302,7 +352,7 @@ class JobExecutionTest extends TestCase
   #[Test]
   public function leased_or_disabled_work_cannot_starve_an_available_job(): void
   {
-    $this->registry([new JobDefinition('synthetic', 'test', fn () => ['state' => 'complete'], web: true)]);
+    $this->registry([new JobDefinition('synthetic', 'test', fn () => ['state' => 'complete'], web: true, automatic: true)]);
     $runner = app(JobRunner::class);
     for ($i = 1; $i <= 25; $i++) {
       $run = $runner->request('synthetic', subject: $i);

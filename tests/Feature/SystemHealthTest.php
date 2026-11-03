@@ -76,7 +76,7 @@ class SystemHealthTest extends TestCase
   private function site(string $handle = 'northstar', bool $scheduled = true): Site
   {
     Locale::firstOrCreate(['code' => 'en'], ['name' => 'English', 'is_default' => true, 'is_enabled' => true]);
-    $site = Site::create(['name' => ucfirst($handle), 'handle' => $handle, 'domain' => $handle.'.example.test', 'is_primary' => Site::count() === 0, 'notification_settings' => $scheduled ? SiteNotificationPolicy::DEFAULTS : SiteNotificationPolicy::LEGACY]);
+    $site = Site::create(['name' => ucfirst($handle), 'handle' => $handle, 'domain' => $handle.'.example.test', 'is_primary' => Site::count() === 0, 'notification_settings' => $scheduled ? array_replace(SiteNotificationPolicy::DEFAULTS, ['notification_frequency' => 'batched', 'daily_summary' => true]) : SiteNotificationPolicy::LEGACY]);
     Page::create(['site_id' => $site->id, 'title' => 'Home', 'slug' => 'home', 'status' => 'published']);
 
     return $site;

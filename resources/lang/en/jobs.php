@@ -1,6 +1,19 @@
 <?php
 
 return [
+  'manual_limit' => 'This storage scan exceeds manual limits. Use the CLI cleanup command.',
+  'manual_profile' => 'Manual operation is available without cron or a queue worker.',
+  'hosting_help' => 'Automatic operation is optional. Shared hosting needs an available cron feature and compatible PHP CLI; a VPS can use cron or a managed scheduler. Configure one trigger in your hosting panel, then verify two automatic minutes here. The CMS does not install operating-system services. A continuously running worker and Redis are not required for the scheduled commands shown here.',
+  'web_unavailable' => 'This task has no manual steps in this workspace. Use its feature screen or follow the hosting instructions.',
+  'policy_changed' => 'The policy changed. Cancel this run and review the new policy before starting again.',
+  'feature_manual_help' => 'Use the feature screen for manual operations. Scheduled server execution is optional.',
+  'seo_help' => 'Run in this screen sends short steps continuously after you click it. No minutely trigger is needed. Closing the page stops further manual steps; progress is saved. Independent continuation requires optional automation.',
+  'visitors_help' => 'Processes expired visitor records in small batches, preserving daily totals under the current retention policy. It does not erase recent visits.',
+  'recovery_help' => 'Removes expired recovery checkpoints in small batches. Current recoverable edits are kept.',
+  'notifications_help' => 'Immediate notifications run when messages arrive. Batched notifications and daily summaries need automatic execution; select immediate delivery and disable the daily summary for manual-only installations.',
+  'actions' => 'Actions',
+  'automatic_optional' => 'Enable automation only for features that need independent execution. Unconfigured automation does not make a manual installation unhealthy.',
+
   'server_missing' => 'Server scheduling is not verified. Server-only tasks remain waiting; panel and HTTP jobs can still run.',
   'stop_pending' => 'Stop requested; the current step will finish first.',
   'next_check' => 'Next scheduled check',
@@ -22,7 +35,7 @@ return [
   'run' => 'Run in this screen',
   'enqueue' => 'Request execution',
   'manual_help' => 'This screen sends short work steps only after you start it. Closing it preserves progress; automatic execution continues only when connected.',
-  'cli_only' => 'Requires the server scheduler; this task has no bounded web adapter.',
+  'cli_only' => 'Use the feature screen or its CLI command; this workspace cannot execute this task manually.',
   'effects' => 'This task can send messages or change stored records under its existing policy.',
   'confirm' => 'Confirm this operation',
   'cancel' => 'Cancel',
@@ -44,7 +57,7 @@ return [
   'http' => 'Automatic HTTP',
   'panel' => 'Manual panel execution',
   'verification_help' => 'Verification requires two completed automatic ticks in different minutes. Manual runs do not verify the scheduler. A working connection does not guarantee every job or message succeeds.',
-  'install' => 'Connect server scheduler',
+  'install' => 'Hosting setup',
   'install_help' => 'Review existing hosting and system tasks first. This installs one application-account cron entry only on supported hosts; never root or another account.',
   'hosting' => 'Hosting setup commands',
   'rotate' => 'Enable HTTP and generate a new key',

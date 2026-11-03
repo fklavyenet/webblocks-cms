@@ -326,6 +326,9 @@ class SystemHealthQuery
 
   private function schedulingCheck(array $snapshot, bool $required): array
   {
+    if (! $required) {
+      return Health::check('scheduling', 'not_applicable', 'scheduler_optional', 'admin.system.health.index');
+    }
     $state = $snapshot['status'];
     $status = match ($state) {
     'healthy' => 'healthy', 'failed' => $required ? 'critical' : 'warning', 'delayed' => $required ? 'warning' : 'not_applicable', default => $required ? 'unknown' : 'not_applicable'

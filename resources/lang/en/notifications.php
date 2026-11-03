@@ -53,7 +53,7 @@ return [
   'health_setup' => 'Your server administrator or hosting provider must configure Laravel schedule:run every minute, under the application user and matching CLI PHP version. Standard hosting cron or the optional webblocks:scheduler:setup --install command can establish this connection; updates never install it silently.',
   'health_guide' => 'Read scheduler setup instructions',
   'health_install_title' => 'Before using scheduled notifications',
-  'health_install_help' => 'New sites default to batched notifications and a daily summary. They require a working outbound mail transport, a correct APP_URL, the Laravel scheduler every minute, and a shared cache with atomic locks when multiple workers run. Verify scheduler health after installation.',
+  'health_install_help' => 'New sites use immediate notifications with daily summaries off. Outbound email needs a working mail transport and correct APP_URL. Batched notifications or daily summaries additionally need periodic dispatch; follow the optional hosting setup guide. Manual panel notifications need no scheduler.',
   'health_dispatch_failed' => 'Notification processing failed. Check recorded scheduler health and delivery outcomes.',
   'health_notifications_optional' => 'Immediate-only notifications with daily summaries disabled do not require scheduled delivery. Scheduler status remains visible for background maintenance.',
   'panel_title' => 'Panel notifications',

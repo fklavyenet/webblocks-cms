@@ -59,7 +59,7 @@ class PanelNotificationsTest extends TestCase
 
   private function site(string $handle, bool $scheduled = false): Site
   {
-    return Site::create(['name' => $handle, 'handle' => $handle, 'notification_settings' => $scheduled ? SiteNotificationPolicy::DEFAULTS : SiteNotificationPolicy::LEGACY]);
+    return Site::create(['name' => $handle, 'handle' => $handle, 'notification_settings' => $scheduled ? array_replace(SiteNotificationPolicy::DEFAULTS, ['notification_frequency' => 'batched', 'daily_summary' => true]) : SiteNotificationPolicy::LEGACY]);
   }
 
   private function message(Site $site, string $status = 'new'): ContactMessage

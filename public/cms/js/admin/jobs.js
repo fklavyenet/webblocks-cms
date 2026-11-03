@@ -21,6 +21,13 @@
                     var result = await response.json();
                     status.textContent = result.message || '';
                     if (Number(result.total) > 0) status.textContent += ' · ' + result.processed + ' / ' + result.total;
+                    var summary = host.closest('tr') || document.querySelector('[data-wb-job-summary]');
+                    if (summary) {
+                        var stateCell = summary.querySelector('[data-wb-job-state]');
+                        var progressCell = summary.querySelector('[data-wb-job-progress]');
+                        if (stateCell) stateCell.textContent = result.message || '';
+                        if (progressCell && Number(result.total) > 0) progressCell.textContent = result.processed + ' / ' + result.total;
+                    }
                     if (!['queued', 'running'].includes(result.state)) {
                         running = false;
                         window.location.reload();
@@ -35,6 +42,7 @@
                 button.disabled = false;
             }
         });
+        if (host.dataset.autostart === 'true') button.click();
         window.addEventListener('pagehide', function () { running = false; });
     });
 }());

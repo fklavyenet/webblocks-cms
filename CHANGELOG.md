@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.116.0
+
+- Make manual panel execution independent of scheduler setup. Explicit SEO start/resume/retry and job requests continue through short browser steps, update progress and preserve committed work when the tab closes.
+- Add bounded manual visitor retention and expired editor-recovery cleanup, with policy-change protection for guarded jobs. Keep existing feature screens for other manual maintenance and reject unsupported panel task requests.
+- Start new sites with immediate notifications and daily summaries off, preserving existing policies and explicit automation switches. Treat optional scheduling as optional in health checks.
+- Replace the web cron installer with portable shared-hosting/VPS instructions and feature-specific automation guidance. Independent scheduling and the scoped HTTP trigger remain opt-in.
+
 ## 1.115.0
 
 - Add Jobs and automation with SQL execution history, shared admission and leases, explicit manual steps, and per-job automatic opt-ins. Core notifications, maintenance and supported plugin jobs share the registry; existing CLI entry points retain their policies and use the same execution admission.

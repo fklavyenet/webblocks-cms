@@ -1,6 +1,19 @@
 <?php
 
 return [
+  'manual_limit' => 'Bu depolama taraması elle çalışma sınırını aşıyor. CLI temizlik komutunu kullanın.',
+  'manual_profile' => 'Manuel kullanım için cron veya kuyruk işçisi gerekmez.',
+  'hosting_help' => 'Otomatik çalışma isteğe bağlıdır. Shared hosting için açık bir cron özelliği ve uyumlu PHP CLI gerekir; VPS üzerinde cron veya yönetilen zamanlayıcı kullanılabilir. Hosting panelinde tek tetikleyici tanımlayın, ardından burada iki otomatik dakikayı doğrulayın. CMS işletim sistemi servisi kurmaz. Buradaki zamanlanmış komutlar için sürekli işçi veya Redis gerekmez.',
+  'web_unavailable' => 'Bu çalışma alanında bu işin manuel adımları yok. Özelliğin kendi ekranını veya hosting yönergelerini kullanın.',
+  'policy_changed' => 'Politika değişti. Bu çalışmayı iptal edin; yeniden başlatmadan önce yeni politikayı inceleyin.',
+  'feature_manual_help' => 'Manuel işlemler için özelliğin kendi ekranını kullanın. Zamanlanmış sunucu çalışması isteğe bağlıdır.',
+  'seo_help' => 'Bu ekranda çalıştır seçeneği, tıkladıktan sonra kısa adımları kesintisiz gönderir. Dakikalık tetikleyici gerekmez. Sayfayı kapatmak sonraki manuel adımları durdurur; ilerleme saklanır. Bağımsız devam için isteğe bağlı otomasyon gerekir.',
+  'visitors_help' => 'Saklama politikasına göre eski ziyaret kayıtlarını küçük gruplarla işler ve günlük toplamları korur. Yakın tarihli ziyaretleri silmez.',
+  'recovery_help' => 'Süresi dolmuş kurtarma kayıtlarını küçük gruplarla temizler. Güncel kurtarılabilir düzenlemeler korunur.',
+  'notifications_help' => 'Anlık bildirimler mesaj geldiğinde gönderilir. Biriktirilmiş bildirimler ve günlük özet otomatik çalışma ister; yalnızca manuel kurulumda anlık gönderimi seçip günlük özeti kapatın.',
+  'actions' => 'İşlemler',
+  'automatic_optional' => 'Otomasyonu yalnızca bağımsız çalışma isteyen özellikler için açın. Otomasyon kurulmaması manuel kurulumu sağlıksız yapmaz.',
+
   'server_missing' => 'Sunucu zamanlaması doğrulanmadı. Yalnızca sunucuda çalışan işler bekler; panel ve HTTP işleri çalışabilir.',
   'stop_pending' => 'Durdurma istendi; önce mevcut adım tamamlanacak.',
   'next_check' => 'Sonraki planlı kontrol',
@@ -22,7 +35,7 @@ return [
   'run' => 'Bu ekranda çalıştır',
   'enqueue' => 'Çalıştırma isteği oluştur',
   'manual_help' => 'Bu ekran, başlattıktan sonra kısa işlem adımları gönderir. Kapatınca ilerleme korunur; otomatik çalışma yalnızca bağlantı varsa sürer.',
-  'cli_only' => 'Sunucu zamanlayıcısı gerekli; bu işin kısa web adımları desteği yok.',
+  'cli_only' => 'Özellik ekranını veya CLI komutunu kullanın; bu çalışma alanı bu işi elle çalıştıramaz.',
   'effects' => 'Bu iş mevcut politikasına göre mesaj gönderebilir veya kayıtları değiştirebilir.',
   'confirm' => 'Bu işlemi onayla',
   'cancel' => 'İptal',
@@ -44,7 +57,7 @@ return [
   'http' => 'Otomatik HTTP',
   'panel' => 'Panelden elle çalıştırma',
   'verification_help' => 'Doğrulama farklı iki dakikada tamamlanan otomatik çalışmayı gerektirir. Elle çalışma zamanlayıcıyı doğrulamaz. Bağlantının çalışması tüm işlerin veya mesajların başarılı olduğunu göstermez.',
-  'install' => 'Sunucu zamanlayıcısını bağla',
+  'install' => 'Hosting kurulumu',
   'install_help' => 'Önce mevcut hosting ve sistem görevlerini inceleyin. Desteklenen sunucuda yalnızca uygulama hesabına bir cron kaydı eklenir; root veya başka hesap kullanılmaz.',
   'hosting' => 'Hosting kurulum komutları',
   'rotate' => 'HTTP’yi aç ve yeni anahtar üret',

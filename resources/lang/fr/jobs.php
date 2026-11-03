@@ -1,6 +1,19 @@
 <?php
 
 return [
+  'manual_limit' => 'Cette analyse dépasse les limites manuelles. Utilisez la commande CLI de nettoyage.',
+  'manual_profile' => 'Le fonctionnement manuel ne nécessite ni cron ni worker de file.',
+  'hosting_help' => 'L’automatisation est facultative. Un hébergement mutualisé nécessite cron et une CLI PHP compatible ; un VPS peut utiliser cron ou un planificateur géré. Configurez un déclencheur dans le panneau de l’hébergeur, puis vérifiez ici deux minutes automatiques. Le CMS n’installe aucun service système. Les commandes planifiées indiquées ne nécessitent ni worker permanent ni Redis.',
+  'web_unavailable' => 'Cette tâche ne propose pas d’étapes manuelles dans cet espace. Utilisez son écran dédié ou les instructions d’hébergement.',
+  'policy_changed' => 'La politique a changé. Annulez cette exécution et examinez la nouvelle politique avant de recommencer.',
+  'feature_manual_help' => 'Utilisez l’écran dédié pour les opérations manuelles. L’exécution planifiée sur le serveur est facultative.',
+  'seo_help' => 'Après un clic sur Exécuter dans cet écran, des étapes courtes sont envoyées en continu. Aucun déclenchement par minute n’est nécessaire. Fermer la page arrête les étapes manuelles suivantes ; la progression est conservée. Une poursuite indépendante nécessite l’automatisation facultative.',
+  'visitors_help' => 'Traite les anciennes visites par petits lots selon la conservation et préserve les totaux quotidiens. Les visites récentes restent intactes.',
+  'recovery_help' => 'Supprime les points de récupération expirés par petits lots. Les modifications actuelles récupérables sont conservées.',
+  'notifications_help' => 'Les notifications immédiates partent à l’arrivée des messages. Les envois groupés et résumés quotidiens nécessitent une exécution automatique. Pour un usage uniquement manuel, choisissez l’envoi immédiat sans résumé quotidien.',
+  'actions' => 'Actions',
+  'automatic_optional' => 'Activez l’automatisation seulement pour les fonctions nécessitant une exécution indépendante. Son absence ne rend pas une installation manuelle défaillante.',
+
   'server_missing' => 'La planification serveur n’est pas vérifiée. Les tâches serveur restent en attente ; celles du panneau et HTTP peuvent fonctionner.',
   'stop_pending' => 'Arrêt demandé ; l’étape actuelle se terminera d’abord.',
   'next_check' => 'Prochain contrôle planifié',
@@ -22,7 +35,7 @@ return [
   'run' => 'Exécuter sur cet écran',
   'enqueue' => 'Demander une exécution',
   'manual_help' => 'Cet écran envoie de courtes étapes après le démarrage. La fermeture conserve la progression ; une connexion est nécessaire pour poursuivre automatiquement.',
-  'cli_only' => 'Nécessite le planificateur du serveur ; aucun adaptateur web par étapes disponible.',
+  'cli_only' => 'Utilisez l’écran de la fonction ou sa commande CLI ; cette tâche ne peut pas être exécutée manuellement ici.',
   'effects' => 'Cette tâche peut envoyer des messages ou modifier des enregistrements selon sa politique actuelle.',
   'confirm' => 'Confirmer cette opération',
   'cancel' => 'Annuler',
@@ -44,7 +57,7 @@ return [
   'http' => 'HTTP automatique',
   'panel' => 'Exécution manuelle du panneau',
   'verification_help' => 'La vérification exige deux passages automatiques à des minutes différentes. Les exécutions manuelles ne vérifient pas le planificateur. La connexion ne garantit pas le succès de chaque tâche ou message.',
-  'install' => 'Connecter le planificateur du serveur',
+  'install' => 'Configuration de l’hébergement',
   'install_help' => 'Vérifiez les tâches existantes. Une seule entrée cron du compte applicatif est installée sur les hôtes compatibles, jamais sous root ou un autre compte.',
   'hosting' => 'Commandes de configuration hébergeur',
   'rotate' => 'Activer HTTP et générer une nouvelle clé',

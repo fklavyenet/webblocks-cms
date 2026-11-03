@@ -89,7 +89,7 @@ class SchedulerHealthTest extends TestCase
   #[Test]
   public function site_policy_selects_the_dependency_and_the_panel_explains_unverified_health(): void
   {
-    $site = Site::create(['name' => 'Northstar', 'handle' => 'northstar']);
+    $site = Site::create(['name' => 'Northstar', 'handle' => 'northstar', 'notification_settings' => array_replace(SiteNotificationPolicy::DEFAULTS, ['notification_frequency' => 'batched', 'daily_summary' => true])]);
     $this->assertTrue($this->health()->forSite($site)['required']);
     $this->view('webblocks-cms::admin.partials.scheduler-health', ['site' => $site])
       ->assertSee('Not yet verified')->assertSee('wb-alert-warning', false)->assertSee('server administrator');

@@ -165,7 +165,7 @@ class SiteNotificationTest extends TestCase
   #[Test]
   public function full_retains_subject_body_and_reply_to_and_batch_contents(): void
   {
-    $site = $this->site(['notification_mode' => 'full', 'daily_summary' => false]);
+    $site = $this->site(['notification_mode' => 'full', 'notification_frequency' => 'batched', 'daily_summary' => false]);
     $this->send($this->message($site));
     $this->assertSame('New contact message: SentinelSubject', $this->sent[0]->getSubject());
     $this->assertSame('sentinel-visitor@example.test', $this->sent[0]->getReplyTo()[0]->getAddress());
@@ -180,7 +180,7 @@ class SiteNotificationTest extends TestCase
   #[Test]
   public function batches_send_first_immediately_then_once_at_due_time_and_use_current_policy(): void
   {
-    $site = $this->site(['notification_mode' => 'full', 'daily_summary' => false]);
+    $site = $this->site(['notification_mode' => 'full', 'notification_frequency' => 'batched', 'daily_summary' => false]);
     $this->send($this->message($site));
     $this->send($second = $this->message($site));
     $this->send($third = $this->message($site));
@@ -202,7 +202,7 @@ class SiteNotificationTest extends TestCase
   #[Test]
   public function daily_delivery_and_summaries_use_site_timezone_counts_and_one_attempt_per_day(): void
   {
-    $site = $this->site(['notification_frequency' => 'daily']);
+    $site = $this->site(['notification_frequency' => 'daily', 'daily_summary' => true]);
     $this->send($first = $this->message($site));
     $this->send($this->message($site));
     $first->update(['status' => 'read']);
@@ -227,8 +227,8 @@ class SiteNotificationTest extends TestCase
   #[Test]
   public function recipients_sites_opt_out_and_spam_are_isolated(): void
   {
-    $one = $this->site(['daily_summary' => false]);
-    $two = $this->site(['daily_summary' => false]);
+    $one = $this->site(['notification_frequency' => 'batched', 'daily_summary' => false]);
+    $two = $this->site(['notification_frequency' => 'batched', 'daily_summary' => false]);
     $this->send($this->message($one, 'first@example.test'));
     $this->send($this->message($one, 'second@example.test'));
     $this->send($this->message($two, 'third@example.test'));
@@ -326,7 +326,7 @@ class SiteNotificationTest extends TestCase
     $site = $this->site();
     $other = $this->site();
     $token = app(CmsApiTokenIssuer::class)->issue('Synthetic settings', capabilities: ['content.read', 'site-settings.write'], allowedSiteIds: [$site->id])->plainToken;
-    $this->withToken($token)->getJson('/webadmin/api/sites/'.$site->id.'/notifications')->assertOk()->assertJsonPath('notification_settings.notification_mode', 'alert_only')->assertJsonPath('scheduler_health.required', true)->assertJsonPath('scheduler_health.status', 'unverified');
+    $this->withToken($token)->getJson('/webadmin/api/sites/'.$site->id.'/notifications')->assertOk()->assertJsonPath('notification_settings.notification_mode', 'alert_only')->assertJsonPath('notification_settings.notification_frequency', 'immediate')->assertJsonPath('notification_settings.daily_summary', false)->assertJsonPath('scheduler_health.required', false);
     $this->getJson('/webadmin/api/sites/'.$other->id.'/notifications')->assertForbidden();
     $this->patchJson('/webadmin/api/sites/'.$other->id.'/notifications', ['notification_mode' => 'full'])->assertForbidden();
     $this->patchJson('/webadmin/api/sites/'.$site->id.'/notifications', ['notification_mode' => 'bad'])->assertUnprocessable();

@@ -59,7 +59,7 @@ final class SiteSeoAuditController
   {
     return $this->privateResponse($this->api($request)
       ? response()->json(['ok' => true, 'audit' => ['id' => $audit->id, 'site_id' => $audit->site_id, 'state' => $audit->state, 'phase' => $audit->phase]], 202)
-      : redirect()->route('admin.sites.seo-audits.index', ['site' => $audit->site_id, 'audit' => $audit->id, 'tab' => $request->validated('tab') ?? 'findings']));
+      : redirect()->route('admin.sites.seo-audits.index', ['site' => $audit->site_id, 'audit' => $audit->id, 'tab' => $request->validated('tab') ?? 'findings'])->with('seo_manual_run', in_array($audit->state, ['queued', 'running'], true) ? $audit->id : null));
   }
 
   private function api(SiteSeoAuditRequest $request): bool

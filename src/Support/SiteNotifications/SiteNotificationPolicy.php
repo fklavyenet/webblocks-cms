@@ -10,7 +10,7 @@ use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 
 final class SiteNotificationPolicy
 {
-  public const DEFAULTS = ['notification_mode' => 'alert_only', 'notification_frequency' => 'batched', 'batch_minutes' => 10, 'daily_summary' => true, 'summary_hour' => 9];
+  public const DEFAULTS = ['notification_mode' => 'alert_only', 'notification_frequency' => 'immediate', 'batch_minutes' => 10, 'daily_summary' => false, 'summary_hour' => 9];
 
   public const LEGACY = ['notification_mode' => 'full', 'notification_frequency' => 'immediate', 'batch_minutes' => 10, 'daily_summary' => false, 'summary_hour' => 9];
 

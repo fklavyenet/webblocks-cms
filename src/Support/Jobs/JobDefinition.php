@@ -17,8 +17,10 @@ final class JobDefinition
     public readonly bool $effects = false,
     public readonly ?string $owner = null,
     public readonly ?Closure $scopes = null,
-    public readonly bool $automatic = true,
+    public readonly bool $automatic = false,
     public readonly ?string $destination = null,
+    public readonly ?string $help = null,
+    public readonly ?Closure $guard = null,
   ) {
     if (! preg_match('/^[a-z0-9][a-z0-9.:-]{0,119}$/D', $key)) {
       throw new \InvalidArgumentException('Invalid job key.');

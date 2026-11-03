@@ -1,6 +1,19 @@
 <?php
 
 return [
+  'manual_limit' => 'Diese Speicherprüfung überschreitet die manuellen Grenzen. Verwenden Sie den CLI-Bereinigungsbefehl.',
+  'manual_profile' => 'Für den manuellen Betrieb sind weder Cron noch ein Queue-Worker erforderlich.',
+  'hosting_help' => 'Automatisierung ist optional. Shared Hosting benötigt eine verfügbare Cron-Funktion und eine passende PHP-CLI; auf einem VPS sind Cron oder ein verwalteter Scheduler möglich. Richten Sie einen Auslöser im Hosting-Panel ein und prüfen Sie hier zwei automatische Minuten. Das CMS installiert keine Betriebssystemdienste. Die aufgeführten geplanten Befehle benötigen weder einen dauerhaften Worker noch Redis.',
+  'web_unavailable' => 'Diese Aufgabe bietet hier keine manuellen Schritte. Verwenden Sie den Funktionsbereich oder die Hosting-Anleitung.',
+  'policy_changed' => 'Die Richtlinie wurde geändert. Brechen Sie diesen Lauf ab und prüfen Sie die neue Richtlinie vor einem Neustart.',
+  'feature_manual_help' => 'Für manuelle Aktionen verwenden Sie den Funktionsbereich. Geplante Serverausführung ist optional.',
+  'seo_help' => 'Nach dem Klick auf Hier ausführen werden fortlaufend kurze Schritte gesendet. Ein minütlicher Auslöser ist nicht nötig. Beim Schließen enden weitere manuelle Schritte; der Fortschritt bleibt gespeichert. Unabhängige Fortsetzung erfordert optionale Automatisierung.',
+  'visitors_help' => 'Verarbeitet alte Besucherdaten in kleinen Gruppen gemäß Aufbewahrungsrichtlinie und erhält Tagessummen. Aktuelle Besuche werden nicht gelöscht.',
+  'recovery_help' => 'Entfernt abgelaufene Wiederherstellungspunkte in kleinen Gruppen. Aktuelle wiederherstellbare Änderungen bleiben erhalten.',
+  'notifications_help' => 'Sofortbenachrichtigungen werden beim Eingang einer Nachricht gesendet. Sammelbenachrichtigungen und Tagesübersichten benötigen automatische Ausführung. Für rein manuellen Betrieb wählen Sie sofortige Zustellung ohne Tagesübersicht.',
+  'actions' => 'Aktionen',
+  'automatic_optional' => 'Aktivieren Sie Automatisierung nur für Funktionen mit unabhängiger Ausführung. Eine fehlende Einrichtung macht den manuellen Betrieb nicht fehlerhaft.',
+
   'server_missing' => 'Die Server-Zeitplanung ist nicht bestätigt. Serveraufgaben warten; Panel- und HTTP-Aufgaben können weiterhin laufen.',
   'stop_pending' => 'Stopp angefordert; der aktuelle Schritt wird zuerst abgeschlossen.',
   'next_check' => 'Nächste geplante Prüfung',
@@ -22,7 +35,7 @@ return [
   'run' => 'Auf dieser Seite ausführen',
   'enqueue' => 'Ausführung anfordern',
   'manual_help' => 'Diese Seite sendet erst nach dem Start kurze Arbeitsschritte. Beim Schließen bleibt der Fortschritt erhalten; automatische Ausführung erfordert eine Verbindung.',
-  'cli_only' => 'Erfordert den Server-Zeitplaner; kein begrenzter Web-Adapter verfügbar.',
+  'cli_only' => 'Verwenden Sie die Funktionsseite oder den CLI-Befehl; diese Aufgabe lässt sich hier nicht manuell ausführen.',
   'effects' => 'Diese Aufgabe kann nach ihrer bestehenden Richtlinie Nachrichten senden oder Datensätze ändern.',
   'confirm' => 'Diesen Vorgang bestätigen',
   'cancel' => 'Abbrechen',
@@ -44,7 +57,7 @@ return [
   'http' => 'Automatisches HTTP',
   'panel' => 'Manuelle Panel-Ausführung',
   'verification_help' => 'Die Bestätigung erfordert zwei automatische Läufe in verschiedenen Minuten. Manuelle Läufe bestätigen den Zeitplaner nicht. Eine Verbindung garantiert nicht den Erfolg jeder Aufgabe oder Nachricht.',
-  'install' => 'Server-Zeitplaner verbinden',
+  'install' => 'Hosting-Einrichtung',
   'install_help' => 'Zuerst bestehende Hosting- und Systemaufgaben prüfen. Auf unterstützten Hosts wird nur ein Cron-Eintrag des Anwendungskontos eingerichtet; niemals root oder ein anderes Konto.',
   'hosting' => 'Hosting-Einrichtungsbefehle',
   'rotate' => 'HTTP aktivieren und neuen Schlüssel erzeugen',

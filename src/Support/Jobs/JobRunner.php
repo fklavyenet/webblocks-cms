@@ -22,13 +22,14 @@ class JobRunner
 
   public function request(string $key, ?int $site = null, ?int $subject = null, ?int $actor = null, string $source = 'panel', ?string $slot = null): JobRun
   {
-    if (! JobSchema::ready() || ! $this->registry->get($key)) {
+    $definition = $this->registry->get($key);
+    if (! JobSchema::ready() || ! $definition) {
       throw new \RuntimeException('Job unavailable.');
     }
     $active = hash('sha256', $key.'|'.$site.'|'.$subject);
 
     // Serialize admissions without relying on a cache driver's lock support.
-    return DB::transaction(function () use ($key, $site, $subject, $actor, $source, $slot, $active): JobRun {
+    return DB::transaction(function () use ($key, $site, $subject, $actor, $source, $slot, $active, $definition): JobRun {
       DB::table('wbcms_job_automation')->where('id', 1)->lockForUpdate()->first();
       $existing = JobRun::query()->where('active_key', $active)->first();
       if ($existing) {
@@ -39,7 +40,8 @@ class JobRunner
       }
 
       return JobRun::create(['job_key' => $key, 'site_id' => $site, 'subject_id' => $subject, 'requested_by' => $actor,
-        'source' => $source, 'active_key' => $active, 'slot_key' => $slot]);
+        'source' => $source, 'active_key' => $active, 'slot_key' => $slot,
+        'policy_hash' => $definition->guard ? ($definition->guard)() : null]);
     });
   }
 
@@ -50,10 +52,19 @@ class JobRunner
       return $run;
     }
     $token = (string) Str::uuid();
-    $claimed = DB::transaction(function () use ($run, $token, $source): bool {
+    $claimed = DB::transaction(function () use ($run, $token, $source, $definition): bool {
       $current = JobRun::query()->lockForUpdate()->find($run->id);
       if (! $current || ! in_array($current->state, ['queued', 'running'], true) || $current->lease_until?->isFuture()) {
         return false;
+      }
+      $hash = $definition->guard ? ($definition->guard)() : null;
+      if ($current->policy_hash !== null && $current->policy_hash !== $hash) {
+        $current->update(['state' => 'paused', 'reason' => 'policy_changed']);
+
+        return false;
+      }
+      if ($hash !== null && $current->policy_hash === null) {
+        $current->policy_hash = $hash;
       }
       $current->update(['state' => 'running', 'lease_token' => $token, 'lease_until' => now()->addMinutes(15), 'started_at' => $current->started_at ?? now()]);
       DB::table('wbcms_job_attempts')->where('run_id', $run->id)->whereNull('completed_at')->update(['state' => 'interrupted', 'reason' => 'lease_expired', 'completed_at' => now()]);
@@ -123,7 +134,13 @@ class JobRunner
     $automaticKeys = array_keys(array_filter($this->registry->all(), fn ($job) => $this->registry->automatic($job)));
     foreach (JobRun::query()->whereIn('job_key', $keys)->whereIn('state', ['queued', 'running'])
       ->where(fn ($q) => $q->whereNull('lease_until')->orWhere('lease_until', '<=', now()))
-      ->where(fn ($q) => $q->where('source', 'panel')->orWhereIn('job_key', $automaticKeys))
+      ->where(function ($q) use ($automatic, $automaticKeys): void {
+        if ($automatic) {
+          $q->whereIn('job_key', $automaticKeys);
+        } else {
+          $q->where('source', 'panel')->orWhereIn('job_key', $automaticKeys);
+        }
+      })
       ->orderBy('updated_at')->orderBy('id')->limit(20)->get() as $run) {
       if (microtime(true) >= $deadline) {
         break;

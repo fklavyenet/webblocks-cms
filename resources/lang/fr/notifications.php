@@ -53,7 +53,7 @@ return [
   'health_setup' => 'Votre administrateur serveur ou hébergeur doit exécuter Laravel schedule:run chaque minute avec le compte applicatif et PHP CLI adapté. Utilisez le cron de l’hébergement ou webblocks:scheduler:setup --install ; les mises à jour ne l’installent pas silencieusement.',
   'health_guide' => 'Lire les instructions du planificateur',
   'health_install_title' => 'Avant les notifications planifiées',
-  'health_install_help' => 'Les nouveaux sites utilisent des notifications regroupées et un résumé quotidien. Ils nécessitent un transport mail fonctionnel, une APP_URL correcte, le planificateur Laravel chaque minute et un cache partagé avec verrous atomiques pour plusieurs processus. Vérifiez le planificateur après installation.',
+  'health_install_help' => 'Les nouveaux sites utilisent les alertes immédiates sans résumé quotidien. Les e-mails nécessitent un transport opérationnel et une APP_URL correcte. Les alertes groupées et résumés nécessitent aussi un envoi périodique ; suivez le guide facultatif d’hébergement. Les notifications du panneau ne nécessitent pas de planificateur.',
   'health_dispatch_failed' => 'Échec du traitement des notifications. Vérifiez le planificateur et les résultats d’envoi.',
   'health_notifications_optional' => 'Les notifications immédiates sans résumé quotidien ne nécessitent pas d’envoi planifié. Le statut reste visible pour la maintenance en arrière-plan.',
   'panel_title' => 'Notifications du panneau',

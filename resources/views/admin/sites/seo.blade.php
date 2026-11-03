@@ -14,7 +14,7 @@
     'actions' => '<a class="wb-btn wb-btn-secondary" href="'.e(route('admin.sites.edit', $site)).'">'.e($workspaceText('back_to_site')).'</a>',
   ])
   @include('webblocks-cms::admin.partials.flash')
-  @if (! ($seoAutomatic ?? false))<p class="wb-alert wb-alert-info">{{ $j('connection_missing') }}</p>@endif
+  <p class="wb-alert wb-alert-info">{{ $j('seo_help') }}</p>
   <div class="wb-stack wb-gap-4" data-wb-seo-workspace>
     <section class="wb-card" aria-labelledby="seo-audit-scope">
       <div class="wb-card-header"><h2 id="seo-audit-scope" class="wb-m-0 wb-text-base">{{ $seoText('scope') }}</h2></div>
@@ -27,7 +27,7 @@
           <a class="wb-btn wb-btn-secondary" data-wb-seo-refresh href="{{ route('admin.sites.seo-audits.index', ['site' => $site, ...$filters]) }}">{{ $workspaceText('refresh') }}</a>
           @if ($audit)
             @if (in_array($audit['state'], ['queued', 'running'], true) && \WebBlocks\Cms\Support\Jobs\JobSchema::ready())
-              <div data-wb-job-runner data-error="{{ $j('error') }}"><button class="wb-btn wb-btn-primary" type="button" data-wb-job-start data-url="{{ route('admin.sites.seo-audits.work', ['site' => $site, 'seoAudit' => $audit['id']]) }}">{{ $j('run') }}</button><p role="status" aria-live="polite" data-wb-job-status></p></div>
+              <div data-wb-job-runner data-autostart="{{ (int) session('seo_manual_run') === $audit['id'] ? 'true' : 'false' }}" data-error="{{ $j('error') }}"><button class="wb-btn wb-btn-primary" type="button" data-wb-job-start data-url="{{ route('admin.sites.seo-audits.work', ['site' => $site, 'seoAudit' => $audit['id']]) }}">{{ $j('run') }}</button><p role="status" aria-live="polite" data-wb-job-status></p></div>
             @endif
             @foreach (match ($audit['state']) { 'queued', 'running' => ['pause'], 'paused' => ['resume'], 'partial', 'failed' => ['retry'], default => [] } as $seoAction)
               <form method="POST" action="{{ route('admin.sites.seo-audits.transition', ['site' => $site, 'seoAudit' => $audit['id'], 'action' => $seoAction]) }}">@csrf<input type="hidden" name="tab" value="{{ $seoTab }}" data-wb-seo-tab><button class="wb-btn wb-btn-secondary" type="submit">{{ $workspaceText($seoAction) }}</button></form>
@@ -41,12 +41,12 @@
     @else
       @if ($audit['stale'] || $audit['state'] === 'stale')<div class="wb-alert wb-alert-warning" role="status">{{ $seoText('stale_report') }}</div>@endif
       @if (! $audit['complete'])<div class="wb-alert wb-alert-info" role="status">{{ $workspaceText('incomplete') }}</div>@endif
-      <section class="wb-card" aria-labelledby="seo-audit-progress">
+      <section class="wb-card" aria-labelledby="seo-audit-progress" data-wb-job-summary>
         <div class="wb-card-header"><h2 id="seo-audit-progress" class="wb-m-0 wb-text-base">{{ $workspaceText('progress') }} #{{ $audit['id'] }}</h2></div>
         <div class="wb-card-body wb-stack wb-gap-2">
           <div class="wb-table-wrap"><table class="wb-table"><tbody>
-            <tr><th scope="row">{{ $j('state') }}</th><td>{{ $workspaceText('states.'.$audit['state']) }} · {{ $workspaceText('phases.'.$audit['phase']) }}</td></tr>
-            <tr><th scope="row">{{ $j('progress') }}</th><td>{{ $audit['phase'] === 'inventory' ? $j('preparing') : $audit['processed'].' / '.$audit['total'] }}</td></tr>
+            <tr><th scope="row">{{ $j('state') }}</th><td data-wb-job-state>{{ $workspaceText('states.'.$audit['state']) }} · {{ $workspaceText('phases.'.$audit['phase']) }}</td></tr>
+            <tr><th scope="row">{{ $j('progress') }}</th><td data-wb-job-progress>{{ $audit['phase'] === 'inventory' ? $j('preparing') : $audit['processed'].' / '.$audit['total'] }}</td></tr>
             <tr><th scope="row">{{ $j('requested') }}</th><td><time datetime="{{ $audit['created_at'] }}">{{ \Illuminate\Support\Carbon::parse($audit['created_at'])->setTimezone(config('app.timezone'))->format('Y-m-d H:i T') }}</time></td></tr>
             <tr><th scope="row">{{ $workspaceText('completed_at') }}</th><td>{{ $audit['completed_at'] ? \Illuminate\Support\Carbon::parse($audit['completed_at'])->setTimezone(config('app.timezone'))->format('Y-m-d H:i T') : '—' }}</td></tr>
             <tr><th scope="row">{{ $seoText('language') }}</th><td>{{ $audit['locales']->implode(', ') }}</td></tr>
@@ -115,4 +115,4 @@
   </div>
 @endsection
 
-@push('scripts')<script src="{{ asset('cms/js/admin/jobs.js') }}" defer></script>@endpush
+@push('scripts')<script src="{{ asset('cms/js/admin/jobs.js') }}?v={{ \WebBlocks\Cms\Support\WebBlocks::VERSION }}" defer></script>@endpush

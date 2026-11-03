@@ -164,6 +164,28 @@ class VisitorReportInsightsTest extends TestCase
   }
 
   #[Test]
+  public function panel_batches_preserve_rollups_across_repeated_steps_and_respect_the_shared_lock(): void
+  {
+    $this->event('2026-05-01 12:00:00');
+    $this->event('2026-05-01 13:00:00', ['is_bot' => true]);
+    $this->event('2020-01-01 12:00:00');
+    $recent = $this->event('2026-09-01 12:00:00');
+    $retention = app(VisitorReportRetention::class);
+    $lock = Cache::lock('cms:visitor-reports:retention', 60);
+    $this->assertTrue($lock->get());
+    $this->assertFalse($retention->runBatch(1)['complete']);
+    $this->assertSame(4, VisitorEvent::count());
+    $lock->release();
+    $this->assertFalse($retention->runBatch(1)['complete']);
+    $this->assertFalse($retention->runBatch(1)['complete']);
+    $this->assertTrue($retention->runBatch(1)['complete']);
+    $this->assertTrue($retention->runBatch(1)['complete']);
+    $this->assertSame([$recent->id], VisitorEvent::pluck('id')->all());
+    $this->assertSame(2, (int) DB::table('wbcms_visitor_daily_totals')->sum('page_views'));
+    $this->assertSame(1, (int) DB::table('wbcms_visitor_daily_totals')->sum('bot_page_views'));
+  }
+
+  #[Test]
   public function retention_honors_boundaries_disabled_mode_and_total_expiry(): void
   {
     $cutoff = CarbonImmutable::today()->subDays(90);

@@ -34,7 +34,7 @@ class SchedulerDashboardTest extends TestCase
 
   private function site(string $handle, bool $scheduled): Site
   {
-    return Site::create(['name' => $handle, 'handle' => $handle, 'notification_settings' => $scheduled ? SiteNotificationPolicy::DEFAULTS : SiteNotificationPolicy::LEGACY]);
+    return Site::create(['name' => $handle, 'handle' => $handle, 'notification_settings' => $scheduled ? array_replace(SiteNotificationPolicy::DEFAULTS, ['notification_frequency' => 'batched', 'daily_summary' => true]) : SiteNotificationPolicy::LEGACY]);
   }
 
   #[Test]
@@ -46,9 +46,9 @@ class SchedulerDashboardTest extends TestCase
     $this->assertFalse($data['health']['required']);
     $this->assertSame('unverified', $data['health']['status']);
     $this->view('webblocks-cms::admin.partials.dashboard-scheduler-health', ['notificationHealthSites' => $data['sites'], 'dashboardSchedulerHealth' => $data['health']])
-      ->assertSee('Scheduler and notification worker')->assertSee('Not yet verified')
+      ->assertSee('Scheduler and notification worker')->assertSee('Manual operation is available without cron or a queue worker.')
       ->assertSee('wb-alert-info', false)->assertSee('do not require scheduled delivery')
-      ->assertSee('href="https://cms.webblocksui.com/docs/installation#scheduled-notifications-and-scheduler-health"', false)
+      ->assertDontSee('Not yet verified')
       ->assertDontSee('/docs/docs/installation')
       ->assertDontSee('may remain pending');
   }

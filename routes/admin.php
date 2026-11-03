@@ -439,7 +439,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::post('jobs', [JobController::class, 'store'])->middleware('throttle:12,1')->name('jobs.store');
     Route::post('jobs/{jobRun}/step', [JobController::class, 'step'])->middleware('throttle:60,1')->name('jobs.step');
     Route::post('jobs/{jobRun}/transition', [JobController::class, 'transition'])->name('jobs.transition');
-    Route::post('jobs/automation/{operation}', [JobController::class, 'automation'])->where('operation', 'install|rotate|disable|schedule')->middleware('throttle:6,1')->name('jobs.automation');
+    Route::post('jobs/automation/{operation}', [JobController::class, 'automation'])->where('operation', 'rotate|disable|schedule')->middleware('throttle:6,1')->name('jobs.automation');
     Route::post('sites/{site}/seo-audits/{seoAudit}/work', [SiteSeoAuditController::class, 'work'])->middleware('throttle:60,1')->name('sites.seo-audits.work');
     Route::get('sites/{site}/seo', [SiteSeoAuditController::class, 'index'])->name('sites.seo-audits.index');
     Route::post('sites/{site}/seo-audits', [SiteSeoAuditController::class, 'store'])->name('sites.seo-audits.store');

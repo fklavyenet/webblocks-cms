@@ -32,9 +32,12 @@ final class JobController
     $definition = $registry->get((string) $request->validated('job_key'));
     abort_unless($definition && $definition->key !== 'seo', 422);
     abort_if($definition->effects && ! $request->boolean('confirmed'), 422);
+    if (! $definition->web) {
+      return redirect()->route('admin.jobs.index')->withErrors(['job_key' => __('webblocks-cms::jobs.web_unavailable')]);
+    }
     $run = $runner->request($definition->key, actor: $request->user()->id);
 
-    return redirect()->route('admin.jobs.index')->with('status', __('webblocks-cms::jobs.queued', ['id' => $run->id]));
+    return redirect()->route('admin.jobs.index')->with('status', __('webblocks-cms::jobs.queued', ['id' => $run->id]))->with('job_manual_run', $run->id);
   }
 
   public function step(JobRequest $request, JobRun $jobRun, JobRunner $runner)
@@ -71,8 +74,7 @@ final class JobController
       $automation->disable();
       $message = __('webblocks-cms::jobs.disabled');
     } else {
-      abort_unless($operation === 'install', 404);
-      $message = __('webblocks-cms::scheduler.result_'.$automation->install());
+      abort(404);
     }
 
     return redirect()->route('admin.jobs.index', ['tab' => 'automation'])->with('status', $message);

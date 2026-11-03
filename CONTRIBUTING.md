@@ -116,3 +116,14 @@ The review record fingerprints runtime sources, schemas, views, translations, an
 4. Refresh and check the generated snapshot using the documentation repository's `tools/inventory-snapshot.php`. Commit documentation separately, with its product version and content fingerprints. Keep public CMS publication as a separately approved operation.
 
 The mechanical snapshot also records the published catalog, child rules, renderer-root ownership, API write policy, and mobile-media support from the real product helpers. PHPUnit compares it against those helpers. Fingerprints require a new review; they do not prove the meaning of prose. The contributor and reviewer remain responsible for factual descriptions and review explanations. Keep secrets and machine-specific paths out of review notes.
+
+
+For scheduled features, provide an explicit manual panel path wherever the work
+can be safely bounded. A normal manual installation must work without cron or a
+queue worker. Start sequential POST steps only after an authorized operator
+request; keep committed progress when navigation stops further requests. Avoid
+web subprocesses that install operating-system services. Optional independent
+execution needs feature-specific hosting instructions and actual runtime
+verification. Preserve existing consented billing and saved policies; never
+silently enable new destructive or sending automation. Mark unsupported large
+workloads clearly and provide the existing CLI/hosting path.

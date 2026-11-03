@@ -3,9 +3,7 @@
 namespace WebBlocks\Cms\Support\Jobs;
 
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\Process\Process;
 use WebBlocks\Cms\Models\JobRun;
-use WebBlocks\Cms\Support\System\SchedulerHost;
 use WebBlocks\Cms\Support\System\SchedulerSetup;
 
 class JobAutomation
@@ -38,36 +36,11 @@ class JobAutomation
       $sources[$source] = ['verified' => $ticks->count() === 2 && ($source !== 'http' || $enabled), 'last' => $ticks->first()?->completed_at];
     }
 
-    return ['sources' => $sources, 'http_enabled' => $enabled,
-      'instructions' => app(SchedulerSetup::class)->instructions(), 'can_install' => $this->canInstall()];
-  }
+    $automatic = array_filter(app(JobRegistry::class)->all(), fn ($job) => $job->key !== 'probe' && app(JobRegistry::class)->automatic($job));
 
-  public function canInstall(): bool
-  {
-    $c = app(SchedulerHost::class)->context();
-
-    return $c['supported'] && $c['uid'] !== 0 && $c['uid'] === $c['owner'] && $c['readable'] && $c['writable'] && $c['php'] && function_exists('proc_open');
-  }
-
-  public function install(): string
-  {
-    if (! $this->canInstall()) {
-      return 'unsupported';
-    }
-    $c = app(SchedulerHost::class)->context();
-    $attempted = false;
-    try {
-      $process = new Process([$c['php'], $c['base'].'/artisan', 'webblocks:scheduler:setup', '--install', '--yes', '--json'], $c['base']);
-      $process->setTimeout(25);
-      $attempted = true;
-      $process->run();
-      $output = json_decode($process->getOutput(), true);
-      $status = $output['status'] ?? null;
-
-      return in_array($status, ['running', 'existing', 'external', 'installed_unverified', 'write_unverified', 'write_failed', 'changed', 'conflict', 'busy', 'unavailable', 'unsupported', 'account', 'root'], true) ? $status : 'write_unverified';
-    } catch (\Throwable) {
-      return $attempted ? 'write_unverified' : 'unavailable';
-    }
+    return ['sources' => $sources, 'http_enabled' => $enabled, 'has_automatic' => $automatic !== [],
+      'server_required' => collect($automatic)->contains(fn ($job) => ! $job->web),
+      'instructions' => app(SchedulerSetup::class)->instructions()];
   }
 
   public function rotate(): string

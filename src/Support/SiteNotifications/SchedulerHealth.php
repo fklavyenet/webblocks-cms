@@ -79,6 +79,11 @@ class SchedulerHealth
     return $policy['notification_frequency'] !== 'immediate' || $policy['daily_summary'];
   }
 
+  public function requiredForInstallation(): bool
+  {
+    return Schema::hasTable('wbcms_sites') && Site::query()->get()->contains(fn ($site) => $this->requiredForSite($site));
+  }
+
   private function stale(Carbon $time): bool
   {
     return $time->lt(now()->subSeconds(self::STALE_AFTER_SECONDS));

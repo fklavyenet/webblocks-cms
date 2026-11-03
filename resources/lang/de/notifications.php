@@ -53,7 +53,7 @@ return [
   'health_setup' => 'Die Serververwaltung oder der Hosting-Anbieter muss Laravel schedule:run jede Minute mit dem Anwendungskonto und passendem CLI-PHP ausführen. Nutzen Sie Hosting-Cron oder optional webblocks:scheduler:setup --install; Updates richten dies nicht still ein.',
   'health_guide' => 'Anleitung zum Zeitplaner lesen',
   'health_install_title' => 'Vor geplanten Benachrichtigungen',
-  'health_install_help' => 'Neue Websites verwenden standardmäßig Sammelbenachrichtigungen und tägliche Zusammenfassungen. Erforderlich sind ein funktionierender Mailtransport, die korrekte APP_URL, der Laravel-Zeitplaner jede Minute und bei mehreren Prozessen ein gemeinsamer Cache mit atomaren Sperren. Nach der Installation den Zeitplaner prüfen.',
+  'health_install_help' => 'Neue Websites verwenden sofortige Hinweise ohne Tagesübersicht. E-Mail benötigt funktionierenden Mailtransport und die korrekte APP_URL. Gebündelte Hinweise oder Tagesübersichten benötigen zusätzlich regelmäßigen Versand; folgen Sie der optionalen Hosting-Anleitung. Panelhinweise benötigen keinen Scheduler.',
   'health_dispatch_failed' => 'Benachrichtigungsverarbeitung fehlgeschlagen. Prüfen Sie Zeitplaner und Versandresultate.',
   'health_notifications_optional' => 'Sofortige Benachrichtigungen ohne tägliche Zusammenfassungen benötigen keinen geplanten Versand. Der Zeitplanerstatus bleibt für Hintergrundwartung sichtbar.',
   'panel_title' => 'Panel-Benachrichtigungen',

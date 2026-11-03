@@ -1,6 +1,19 @@
 <?php
 
 return [
+  'manual_limit' => 'La scansione supera i limiti manuali. Usa il comando CLI di pulizia.',
+  'manual_profile' => 'L’uso manuale non richiede cron né un worker della coda.',
+  'hosting_help' => 'L’automazione è facoltativa. L’hosting condiviso necessita di cron disponibile e PHP CLI compatibile; un VPS può usare cron o uno scheduler gestito. Configura un attivatore nel pannello hosting e verifica qui due minuti automatici. Il CMS non installa servizi del sistema operativo. I comandi pianificati indicati non richiedono worker permanenti né Redis.',
+  'web_unavailable' => 'Questa attività non offre passaggi manuali in questa area. Usa la schermata della funzione o le istruzioni hosting.',
+  'policy_changed' => 'La politica è cambiata. Annulla questa esecuzione e controlla la nuova politica prima di ricominciare.',
+  'feature_manual_help' => 'Usa la schermata della funzione per le operazioni manuali. L’esecuzione pianificata sul server è facoltativa.',
+  'seo_help' => 'Dopo il clic su Esegui in questa schermata vengono inviati continuamente brevi passaggi. Non serve un attivatore ogni minuto. Chiudere la pagina interrompe i passaggi manuali successivi e conserva i progressi. Continuare indipendentemente richiede l’automazione facoltativa.',
+  'visitors_help' => 'Elabora le visite meno recenti in piccoli gruppi secondo la conservazione, mantenendo i totali giornalieri. Non elimina le visite recenti.',
+  'recovery_help' => 'Elimina i punti di ripristino scaduti in piccoli gruppi. Conserva le modifiche correnti recuperabili.',
+  'notifications_help' => 'Le notifiche immediate partono all’arrivo dei messaggi. Gli invii raggruppati e i riepiloghi giornalieri richiedono esecuzione automatica; per il solo uso manuale scegli l’invio immediato e disattiva il riepilogo.',
+  'actions' => 'Azioni',
+  'automatic_optional' => 'Attiva l’automazione solo per funzioni che richiedono esecuzione indipendente. La sua assenza non rende difettosa un’installazione manuale.',
+
   'server_missing' => 'La pianificazione del server non è verificata. Le attività server restano in attesa; quelle del pannello e HTTP possono funzionare.',
   'stop_pending' => 'Arresto richiesto; il passaggio attuale terminerà prima.',
   'next_check' => 'Prossimo controllo pianificato',
@@ -22,7 +35,7 @@ return [
   'run' => 'Esegui in questa schermata',
   'enqueue' => 'Richiedi esecuzione',
   'manual_help' => 'Questa schermata invia brevi passaggi dopo l’avvio. Chiudendola i progressi restano salvati; per continuare automaticamente serve una connessione.',
-  'cli_only' => 'Richiede lo scheduler del server; non è disponibile un adattatore web a passaggi limitati.',
+  'cli_only' => 'Usa la schermata della funzione o il comando CLI; questo spazio non può eseguire manualmente il lavoro.',
   'effects' => 'Questa attività può inviare messaggi o modificare dati secondo le regole esistenti.',
   'confirm' => 'Conferma questa operazione',
   'cancel' => 'Annulla',
@@ -44,7 +57,7 @@ return [
   'http' => 'HTTP automatico',
   'panel' => 'Esecuzione manuale dal pannello',
   'verification_help' => 'La verifica richiede due esecuzioni automatiche in minuti diversi. Quelle manuali non verificano lo scheduler. La connessione non garantisce il successo di ogni attività o messaggio.',
-  'install' => 'Collega lo scheduler del server',
+  'install' => 'Configurazione hosting',
   'install_help' => 'Controlla prima le attività esistenti. Negli host compatibili viene installata una sola voce cron dell’account applicativo; mai root o altri account.',
   'hosting' => 'Comandi di configurazione hosting',
   'rotate' => 'Attiva HTTP e genera una nuova chiave',

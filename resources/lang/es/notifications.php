@@ -53,7 +53,7 @@ return [
   'health_setup' => 'El administrador o proveedor debe ejecutar Laravel schedule:run cada minuto con la cuenta de la aplicación y PHP CLI adecuado. Use cron del alojamiento o webblocks:scheduler:setup --install; las actualizaciones no lo instalan silenciosamente.',
   'health_guide' => 'Leer las instrucciones del programador',
   'health_install_title' => 'Antes de usar notificaciones programadas',
-  'health_install_help' => 'Los sitios nuevos usan notificaciones agrupadas y un resumen diario. Requieren correo saliente operativo, APP_URL correcta, el programador Laravel cada minuto y caché compartida con bloqueos atómicos si hay varios procesos. Verifica el programador después de instalar.',
+  'health_install_help' => 'Los sitios nuevos usan avisos inmediatos sin resumen diario. El correo requiere transporte operativo y APP_URL correcta. Los avisos agrupados o resúmenes diarios necesitan además despacho periódico; siga la guía opcional de alojamiento. Los avisos del panel no necesitan programador.',
   'health_dispatch_failed' => 'Error al procesar notificaciones. Revisa el programador y los resultados de envío.',
   'health_notifications_optional' => 'Las notificaciones inmediatas sin resumen diario no requieren envío programado. El estado sigue visible para el mantenimiento en segundo plano.',
   'panel_title' => 'Notificaciones del panel',

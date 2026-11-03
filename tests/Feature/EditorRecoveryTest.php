@@ -22,6 +22,7 @@ use WebBlocks\Cms\Queries\EditorRecovery\EditorRecoveryQuery;
 use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 use WebBlocks\Cms\Support\EditorRecovery\RecoveryFields;
 use WebBlocks\Cms\Support\EditorRecovery\RecoverySchema;
+use WebBlocks\Cms\Support\Jobs\JobRunner;
 use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -282,6 +283,29 @@ class EditorRecoveryTest extends TestCase
     $this->actingAs($writer)->putJson($this->url(), $payload)->assertForbidden();
     $this->assertTrue($revoked);
     $this->assertDatabaseCount('wbcms_editor_recoveries', 0);
+  }
+
+  #[Test]
+  public function panel_cleanup_deletes_only_expired_checkpoints_in_bounded_steps(): void
+  {
+    $payload = $this->payload();
+    $this->putJson($this->url(), $payload)->assertOk();
+    foreach (range(1, 201) as $index) {
+      DB::table('wbcms_editor_recoveries')->insert(['user_id' => $this->actor->id, 'page_id' => $this->page->id, 'site_id' => $this->page->site_id,
+        'editing_session' => (string) Str::uuid(), 'locale' => 'en', 'base_fingerprint' => $payload['base_fingerprint'],
+        'expires_at' => now()->subSecond(), 'created_at' => now(), 'updated_at' => now()]);
+    }
+    $runner = app(JobRunner::class);
+    $run = $runner->request('editor-recovery');
+    $runner->advance($run);
+    $this->assertSame('running', $run->state);
+    $this->assertSame(200, $run->processed);
+    $this->assertDatabaseCount('wbcms_editor_recoveries', 2);
+    $runner->advance($run);
+    $this->assertSame('complete', $run->state);
+    $this->assertSame(201, $run->processed);
+    $this->assertDatabaseCount('wbcms_editor_recoveries', 1);
+    $this->getJson($this->url())->assertOk()->assertJsonPath('exists', true);
   }
 
   #[Test]

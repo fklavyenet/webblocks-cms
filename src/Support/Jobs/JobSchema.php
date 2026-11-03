@@ -48,6 +48,9 @@ final class JobSchema
         $t->timestamp('completed_at')->nullable();
       });
     }
+    if (! Schema::hasColumn('wbcms_job_runs', 'policy_hash')) {
+      Schema::table('wbcms_job_runs', fn (Blueprint $t) => $t->char('policy_hash', 64)->nullable());
+    }
     if (! Schema::hasTable('wbcms_job_automation')) {
       Schema::create('wbcms_job_automation', function (Blueprint $t): void {
         $t->unsignedTinyInteger('id')->primary();
@@ -76,7 +79,7 @@ final class JobSchema
 
   public static function ready(): bool
   {
-    return Schema::hasTable('wbcms_job_runs') && Schema::hasTable('wbcms_job_attempts')
+    return Schema::hasColumn('wbcms_job_runs', 'policy_hash') && Schema::hasTable('wbcms_job_attempts')
       && Schema::hasTable('wbcms_job_automation') && Schema::hasTable('wbcms_job_ticks') && Schema::hasTable('wbcms_job_settings');
   }
 

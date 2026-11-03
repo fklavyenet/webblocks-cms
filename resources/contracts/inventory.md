@@ -2366,3 +2366,44 @@ privacy, structure/design and system groups retain their individual route and
 permission checks. Existing route URLs and plugin operation groups are preserved.
 Metadata and progress summaries prefer row-heading tables; technical fingerprints
 are available in optional details without recreating expanded label/value stacks.
+
+
+### Manual-first execution 1.116.0
+
+Fresh installations do not require cron, a daemon or a queue worker for ordinary
+editing and manual maintenance. New sites use immediate notifications with daily
+summaries off; existing saved notification policies and explicit job switches
+are preserved. Batched notifications and daily summaries still require periodic
+dispatch and show that requirement. Optional missing scheduling does not mark a
+manual installation unhealthy.
+
+An explicit panel request starts sequential short POST steps in that screen.
+SEO start/resume/retry and manual job requests flash a one-response start marker;
+opening a URL or refreshing results alone never processes work. The browser
+continues until completion, a stop/error or navigation away, without a minutely
+trigger. Closing the tab preserves committed progress; Run in this screen can
+resume it. The state/progress table updates during execution. Independent
+continuation requires an enabled job and a hosting trigger; automatic ticks do
+not take over panel runs whose automatic switch is off.
+
+Visitor retention and expired editor-recovery cleanup now support bounded manual
+steps (up to 500 event/total records and 200 checkpoints respectively). Visitor
+rollup and deletion commit atomically under the existing shared retention lock;
+recent events and recoverable edits remain. Existing Cleanup, Backups and System
+Health manual screens remain the entry points for their domain operations.
+CLI-only tasks cannot be requested into a waiting panel run. JobDefinition adds
+optional translated help and a policy fingerprint guard; new definitions default to automatic execution off. The nullable typed SQL
+policy_hash column stops guarded work as paused/policy_changed when its saved
+policy changes between steps; cancel and review before starting a new run. No
+persistent JSON state or general command execution is added.
+
+The automatic setup tab explains shared-hosting cron/PHP CLI and VPS scheduling,
+source verification and the optional scoped HTTP adapter. It no longer installs
+OS cron from a web process. Hosting remains responsible for OS setup; the
+existing explicit CLI setup helper remains available. Manual work and creating
+an HTTP key do not verify independent execution. Plugin job help explains
+optional automation, existing manual paths and CLI-only limitations. Forms
+retention, due appointment reminders and stale pending Commerce order expiry
+have explicit manual adapters in their matching plugin releases. Large Campaigns
+sends remain CLI-only with clear setup guidance. Free/manual Memberships needs
+no timer; existing consented recurring subscriptions retain billing automation.

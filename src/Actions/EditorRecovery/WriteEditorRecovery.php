@@ -127,4 +127,14 @@ final class WriteEditorRecovery
 
     return DB::table('wbcms_editor_recoveries')->where('expires_at', '<=', now())->delete();
   }
+
+  public function expireBatch(int $limit = 200): int
+  {
+    if (! Schema::hasTable('wbcms_editor_recoveries')) {
+      return 0;
+    }
+    $ids = DB::table('wbcms_editor_recoveries')->where('expires_at', '<=', now())->orderBy('id')->limit(max(1, min(200, $limit)))->pluck('id');
+
+    return DB::table('wbcms_editor_recoveries')->whereIn('id', $ids)->where('expires_at', '<=', now())->delete();
+  }
 }

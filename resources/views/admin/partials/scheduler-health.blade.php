@@ -1,6 +1,6 @@
 @php($schedulerHealth = $schedulerHealth ?? app(\WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth::class)->forSite($site))
 <div class="wb-alert {{ $schedulerHealth['required'] && in_array($schedulerHealth['status'], ['unverified', 'delayed', 'failed', 'unavailable'], true) ? 'wb-alert-warning' : 'wb-alert-info' }}">
-<strong>{{ __('webblocks-cms::notifications.health_title') }}: {{ __('webblocks-cms::notifications.health_'.$schedulerHealth['status']) }}</strong>
+<strong>{{ $schedulerHealth['required'] ? __('webblocks-cms::notifications.health_title').': '.__('webblocks-cms::notifications.health_'.$schedulerHealth['status']) : __('webblocks-cms::jobs.manual_profile') }}</strong>
 <p>{{ __('webblocks-cms::notifications.panel_delivery_help') }}</p>
 @if ($schedulerHealth['required'] && in_array($schedulerHealth['status'], ['unverified', 'delayed', 'failed', 'unavailable'], true))
 <p>{{ __('webblocks-cms::notifications.health_impact') }}</p>
@@ -8,10 +8,12 @@
 @if (! $schedulerHealth['required'])
 <p>{{ __('webblocks-cms::notifications.health_notifications_optional') }}</p>
 @endif
+@if ($schedulerHealth['required'])
 <p>{{ __('webblocks-cms::notifications.health_last_seen') }}: {{ $schedulerHealth['last_seen_at'] ?? __('webblocks-cms::notifications.health_no_record') }}</p>
 <p>{{ __('webblocks-cms::notifications.health_last_completed') }}: {{ $schedulerHealth['last_completed_at'] ?? __('webblocks-cms::notifications.health_no_record') }}</p>
 <p>{{ __('webblocks-cms::notifications.health_setup') }}</p>
 <p><a class="wb-link" href="{{ app(\WebBlocks\Cms\Support\Admin\DocumentationUrlResolver::class)->url(app()->getLocale()) }}/installation#scheduled-notifications-and-scheduler-health">{{ __('webblocks-cms::notifications.health_guide') }}</a></p>
+@endif
 </div>
 
 @if (! empty($schedulerSetupUrl))
