@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.118.1
+
+- Show the server's safe, localized rejection reason in the System Update progress modal instead of a generic Failed message. Preserve the legacy error field, existing admission locks and history; rejected requests do not start another update.
+- Preserve keyboard focus and natural content height in native builder disclosures, and remove the remaining duplicate language-form disclosure indicator.
+
 ## 1.118.0
 
 - Bundle WebBlocks UI 2.34.0 locally, including native disclosures, UI-owned chevrons, corrected modal/drawer focus, inactive-slide focus protection and compact shared assets.

@@ -71,7 +71,10 @@ class SystemUpdateController extends Controller
       return redirect()->route('admin.system.updates.index')->with('status', __('webblocks-cms::admin.updates.waiting_body'));
     } catch (UpdateException $exception) {
       if ($request->expectsJson()) {
-      return response()->json(['error' => $exception->userMessage()], 409);
+        return response()->json([
+          'message' => $exception->userMessage(),
+          'error' => $exception->userMessage(),
+        ], 409);
       }
 
       return redirect()

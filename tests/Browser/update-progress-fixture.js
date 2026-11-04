@@ -73,13 +73,14 @@
             form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
             assert(posts === 1, 'Duplicate submit never starts another update');
             if (scenario === 'auth' || scenario === 'rejected') {
-                response(post, scenario === 'auth' ? 419 : 409, { message: 'Synthetic admission rejected' });
+                response(post, scenario === 'auth' ? 419 : 409, { message: 'Synthetic admission rejected', error: 'Synthetic admission rejected' });
                 await wait(50);
                 var failedAt = seconds();
                 await wait(1100);
                 assert(seconds() === failedAt && bar.hidden, 'Rejected admission freezes the timer and stops activity');
                 assert(!modal.querySelector('[data-update-return]').hidden, 'Rejected admission offers a return link');
                 if (scenario === 'auth') { assert(message.textContent === opener.getAttribute('data-progress-auth') && modal.querySelector('[data-update-recheck]').hidden, 'Authentication failure retains its exact message without retrying'); }
+                if (scenario === 'rejected') { assert(!message.hidden && message.textContent === 'Synthetic admission rejected' && modal.classList.contains('is-open'), 'Rejected admission keeps the server explanation visible in the open modal'); }
                 assert(opens === 1 && posts === 1 && requests.length === 0, 'Rejected admission neither reopens nor polls nor reposts');
                 document.getElementById('test-status').textContent = 'PASS ' + scenario + '\n' + checks.join('\n');
                 return;
