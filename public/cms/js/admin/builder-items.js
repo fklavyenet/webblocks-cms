@@ -80,7 +80,7 @@
             return;
         }
 
-        var expanded = !body.hidden;
+        var expanded = body.classList.contains('is-open');
 
         toggleButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
         toggleButton.setAttribute('title', expanded ? i18n('collapse-item') : i18n('expand-item'));
@@ -186,8 +186,8 @@
             var itemRow = toggleButton.closest('[data-wb-builder-item-row]');
             var body = itemRow ? itemRow.querySelector('[data-wb-builder-item-body]') : null;
 
-            if (body) {
-                body.hidden = !body.hidden;
+            if (body && window.WBCollapse) {
+                window.WBCollapse.toggle(body.id);
                 syncBuilderItemToggle(itemRow);
             }
 

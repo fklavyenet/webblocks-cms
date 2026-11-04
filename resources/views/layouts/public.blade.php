@@ -83,6 +83,8 @@
         ])
         @if (($previewMode ?? false) || ($systemPageRuntime ?? false))
             <meta name="robots" content="noindex, nofollow">
+        @elseif (request()->boolean('cms_search'))
+            <meta name="robots" content="noindex">
         @endif
 
         {{-- Public CSS assets --}}

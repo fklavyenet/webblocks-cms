@@ -87,17 +87,18 @@
         </div>
     </div>
 
-    <details class="wb-card wb-card-muted" @if ($showAdvancedTrustedHtml) open @endif>
-        <summary class="wb-card-header">
+    <details class="wb-card-muted wb-collapse-panel" @if ($showAdvancedTrustedHtml) open @endif>
+        <summary class="wb-collapse-trigger">
             <span class="wb-cluster wb-cluster-between wb-cluster-2">
                 <span class="wb-stack wb-gap-1">
                     <strong>{{ $pageLayoutSlotFormText('advanced_trusted_layout_html') }}</strong>
                     <span class="wb-text-sm wb-text-muted">{{ $pageLayoutSlotFormText('advanced_trusted_layout_html_help') }}</span>
                 </span>
-                <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
+
             </span>
         </summary>
-        <div class="wb-card-body wb-stack wb-gap-3">
+        <div class="wb-collapse-body">
+        <div class="wb-stack wb-gap-3">
             <div class="wb-text-sm wb-text-muted wb-stack wb-gap-1">
                 <div>{{ $pageLayoutSlotFormText('before_slot_html_help') }}</div>
                 <div>{{ $pageLayoutSlotFormText('slot_start_html_help') }}</div>
@@ -128,6 +129,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </details>
 
     <div class="wb-card">

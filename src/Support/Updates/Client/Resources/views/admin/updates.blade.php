@@ -119,19 +119,19 @@
                                 $hasBody = ! empty($entry['groups']) || ! empty($entry['fallback_notes']);
                                 $open = $loop->first && $hasBody;
                             @endphp
-                            <div class="wb-accordion-item{{ $open ? ' is-open' : '' }}">
-                                @if ($hasBody)
-                                    <button class="wb-accordion-trigger{{ $open ? ' is-open' : '' }}" type="button" aria-expanded="{{ $open ? 'true' : 'false' }}" aria-controls="pc-release-{{ $loop->iteration }}">
+                            @if ($hasBody)
+                <details class="wb-accordion-item" @if ($open) open @endif>
+                                    <summary class="wb-accordion-trigger">
                                         <span class="wb-cluster wb-cluster-2">
                                             <strong>{{ $entry['version'] }}</strong>
                                             @if (! empty($entry['summary']))
                                                 <span class="wb-text-sm wb-text-muted">{{ $entry['summary'] }}</span>
                                             @endif
                                         </span>
-                                        <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
-                                    </button>
-                                    <div class="wb-accordion-content{{ $open ? ' is-open' : '' }}" id="pc-release-{{ $loop->iteration }}">
-                                        <div class="wb-accordion-body wb-stack wb-stack-2 wb-mt-3">
+                                    </summary>
+                                    <div class="wb-accordion-body">
+                                    <div id="pc-release-{{ $loop->iteration }}">
+                                        <div class="wb-stack wb-stack-2">
                                             @foreach (($entry['groups'] ?? []) as $group)
                                                 <h4 class="wb-text-sm"><strong>{{ $group['label'] }}</strong></h4>
                                                 <ul class="wb-text-sm">
@@ -145,7 +145,9 @@
                                             @endforeach
                                         </div>
                                     </div>
-                                @else
+                                </div>
+                                </details>
+                  @else
                                     {{-- Version-only entry: a plain padded row, not a clickable trigger. --}}
                                     <div class="wb-list-item wb-cluster wb-cluster-2">
                                         <strong>{{ $entry['version'] }}</strong>
@@ -154,7 +156,6 @@
                                         @endif
                                     </div>
                                 @endif
-                            </div>
                         @endforeach
                     </div>
                 </div>
@@ -183,13 +184,13 @@
 
             @if (! empty($currentNotes['has_notes']) && (! empty($currentNotes['groups']) || ! empty($currentNotes['summary'])))
                 <div class="wb-accordion" data-wb-accordion>
-                    <div class="wb-accordion-item">
-                        <button class="wb-accordion-trigger" type="button" aria-expanded="false" aria-controls="pc-current-notes">
+                    <details class="wb-accordion-item">
+                        <summary class="wb-accordion-trigger">
                             <span>{{ __('publisher-client::updates.whats_in_this', ['version' => $check['installed_version'] ?? '']) }}</span>
-                            <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
-                        </button>
-                        <div class="wb-accordion-content" id="pc-current-notes">
-                            <div class="wb-accordion-body wb-stack wb-stack-2 wb-mt-3">
+                        </summary>
+                        <div class="wb-accordion-body">
+                        <div id="pc-current-notes">
+                            <div class="wb-stack wb-stack-2">
                                 @if (! empty($currentNotes['summary']))
                                     <p class="wb-text-sm">{{ $currentNotes['summary'] }}</p>
                                 @endif
@@ -204,19 +205,20 @@
                             </div>
                         </div>
                     </div>
+                    </details>
                 </div>
             @endif
         @endif
 
         @if (! empty($runs))
             <div class="wb-accordion" data-wb-accordion>
-                <div class="wb-accordion-item">
-                    <button class="wb-accordion-trigger" type="button" aria-expanded="false" aria-controls="pc-update-history">
+                <details class="wb-accordion-item">
+                    <summary class="wb-accordion-trigger">
                         <span>{{ __('publisher-client::updates.history_title') }} ({{ count($runs) }})</span>
-                        <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
-                    </button>
-                    <div class="wb-accordion-content" id="pc-update-history">
-                        <div class="wb-accordion-body">
+                    </summary>
+                    <div class="wb-accordion-body">
+                    <div id="pc-update-history">
+                        <div>
                             <div class="wb-table-wrap wb-mt-3">
                                 <table class="wb-table">
                                     <thead>
@@ -250,6 +252,7 @@
                         </div>
                     </div>
                 </div>
+                </details>
             </div>
         @endif
     </div>

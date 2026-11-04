@@ -52,6 +52,7 @@ class PublicPagePresenter
 
     $slots = $this->separateHeaderNavbarsFromSiblingBlocks($slots);
     $slots = $this->orderSlotsForLayout($page, $slots);
+    $this->prioritySlider($slots)?->setAttribute('render_slider_priority', true);
     $applicationAssets = $this->applicationAssetCollector->collect($slots);
     if ($page->site) {
       $urls = [];
@@ -80,6 +81,27 @@ class PublicPagePresenter
         ->unique()
         ->implode(' '),
     ];
+  }
+
+  private function prioritySlider(Collection $slots): ?Block
+  {
+    // Only the leading content branch is a plausible above-the-fold carousel.
+    // A later slider, or one following another content block, gets no high hint.
+    $slot = $slots->first(fn (array $slot) => ! in_array($slot['slug'], ['header', 'sidebar', 'footer'], true)
+      && $slot['blocks']->isNotEmpty());
+    $block = $slot === null ? null : $slot['blocks']->first();
+    while ($block instanceof Block) {
+      if ($block->typeSlug() === 'slider') {
+        return $block;
+      }
+      if (! in_array($block->typeSlug(), ['section', 'container', 'stack'], true)
+        || $block->setting('content_collection') !== null || ! $block->relationLoaded('children')) {
+        break;
+      }
+      $block = $block->children->first();
+    }
+
+    return null;
   }
 
   private function pageBodyClass(Page $page): string
@@ -354,6 +376,7 @@ class PublicPagePresenter
         $block->setAttribute('render_locale_code', $page->currentTranslation?->locale?->code);
         $block->setAttribute('render_slot_slug', $slotSlug);
         $block->setAttribute('render_preview', $preview);
+        $block->setAttribute('render_slider_priority', false);
 
         if ($block->relationLoaded('children')) {
           $children = $block->getRelation('children');

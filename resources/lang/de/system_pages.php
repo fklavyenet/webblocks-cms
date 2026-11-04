@@ -12,6 +12,8 @@ return [
   'prepare' => 'Entwurf vorbereiten',
   'edit' => 'Design bearbeiten',
   'screen' => 'Ansicht',
+  'technical_details' => 'Technische Details',
+  'technical_identifier' => 'Technische Kennung',
   'state' => 'Design',
   'default' => 'Integriertes Design',
   'prepared' => 'Systemseite als Entwurf vorbereitet. Prüfe Layout und gemeinsame Slots vor der Veröffentlichung.',

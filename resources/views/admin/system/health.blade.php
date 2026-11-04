@@ -85,9 +85,9 @@
                             @include('webblocks-cms::admin.partials.scheduler-health', ['schedulerHealth' => $health['scheduler']])
                         @endif
                         <div class="wb-accordion" data-wb-accordion>
-                            <div class="wb-accordion-item">
-                                <button type="button" class="wb-accordion-trigger" aria-expanded="false" aria-controls="health-{{ $category }}-details"><span>{{ $text('details') }}</span><i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i></button>
-                                <div class="wb-accordion-content" id="health-{{ $category }}-details"><div class="wb-accordion-body wb-stack wb-stack-3">
+                            <details class="wb-accordion-item">
+                                <summary class="wb-accordion-trigger"><span>{{ $text('details') }}</span></summary><div class="wb-accordion-body">
+                                <div id="health-{{ $category }}-details"><div class="wb-stack wb-stack-3">
                                     @foreach ($result['checks'] as $check)
                                         <div class="wb-stack wb-stack-1">
                                             <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap"><span class="wb-status-pill {{ $badge($check['status']) }}">{{ $text('statuses.'.$check['status']) }}</span><a href="{{ $link($check) }}">{{ $text('review') }}</a></div>
@@ -97,6 +97,7 @@
                                     @endforeach
                                 </div></div>
                             </div>
+                            </details>
                         </div>
                     </div>
                 </section>
@@ -122,9 +123,9 @@
 
         <div class="wb-card"><div class="wb-card-body">
             <div class="wb-accordion" data-wb-accordion>
-                <div class="wb-accordion-item">
-                    <button type="button" class="wb-accordion-trigger" aria-expanded="false" aria-controls="health-history"><span>{{ $text('recent_operations') }}</span><i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i></button>
-                    <div class="wb-accordion-content" id="health-history"><div class="wb-accordion-body">
+                <details class="wb-accordion-item">
+                    <summary class="wb-accordion-trigger"><span>{{ $text('recent_operations') }}</span></summary><div class="wb-accordion-body">
+                    <div id="health-history"><div>
                         @if ($health['operations'] === [])
                             <p class="wb-text-muted">{{ $text('no_operations') }}</p>
                         @else
@@ -136,9 +137,10 @@
                         @endif
                     </div></div>
                 </div>
-                <div class="wb-accordion-item">
-                    <button type="button" class="wb-accordion-trigger" aria-expanded="false" aria-controls="health-information"><span>{{ $text('system_details') }}</span><i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i></button>
-                    <div class="wb-accordion-content" id="health-information"><div class="wb-accordion-body">
+                </details>
+                <details class="wb-accordion-item">
+                    <summary class="wb-accordion-trigger"><span>{{ $text('system_details') }}</span></summary><div class="wb-accordion-body">
+                    <div id="health-information"><div>
                         <div class="wb-table-wrap"><table class="wb-table wb-table-striped"><thead><tr><th scope="col">{{ $translator->admin('system_information.property', $locale) }}</th><th scope="col">{{ $translator->admin('system_information.value', $locale) }}</th></tr></thead><tbody>
                             @foreach ($health['information'] as $key => $value)
                                 <tr><th scope="row" class="wb-table-key">{{ $translator->admin('system_information.'.$key, $locale) }}</th><td>{{ $key === 'debug_mode' ? $translator->admin('system_information.'.($value ? 'enabled' : 'disabled'), $locale) : $value }}</td></tr>
@@ -146,6 +148,7 @@
                         </tbody></table></div>
                     </div></div>
                 </div>
+                </details>
             </div>
         </div></div>
     </div>

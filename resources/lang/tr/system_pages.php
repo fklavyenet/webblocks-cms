@@ -12,6 +12,8 @@ return [
   'prepare' => 'Taslak hazırla',
   'edit' => 'Tasarımı düzenle',
   'screen' => 'Ekran',
+  'technical_details' => 'Teknik ayrıntılar',
+  'technical_identifier' => 'Teknik kimlik',
   'state' => 'Tasarım',
   'default' => 'Yerleşik tasarım',
   'prepared' => 'Sistem sayfası taslak olarak hazırlandı. Yayımlamadan önce layout ve ortak slotları inceleyin.',

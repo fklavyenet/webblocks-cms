@@ -53,14 +53,15 @@
                     $groupDescription = $adminTextOr('groups.'.$groupLocaleKey.'.description', (string) ($group['description'] ?? ''));
                 @endphp
 
-                <details class="wb-api-token-capability-group" data-wb-capability-group>
-                    <summary class="wb-api-token-capability-summary" id="{{ $groupId }}">
+                <details class="wb-collapse-panel" data-wb-capability-group>
+                    <summary class="wb-collapse-trigger" id="{{ $groupId }}">
                         <span class="wb-api-token-capability-summary-copy">
                             <strong>{{ $groupLabel }}</strong>
                             <span class="wb-text-sm wb-text-muted">{{ $groupDescription }}</span>
                         </span>
                         <span class="wb-status-pill {{ $groupSelectedCount > 0 ? 'wb-status-active' : 'wb-status-info' }}" data-wb-capability-group-count>{{ $groupSelectedCount }}/{{ count($groupCapabilities) }}</span>
                     </summary>
+                    <div class="wb-collapse-body">
 
                     <div class="wb-api-token-capability-list" aria-labelledby="{{ $groupId }}">
                         @foreach ($groupCapabilities as $capability)
@@ -80,6 +81,7 @@
                             </label>
                         @endforeach
                     </div>
+                </div>
                 </details>
             @endforeach
         </div>

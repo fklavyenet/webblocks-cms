@@ -1,12 +1,12 @@
 <?php
 
 return [
-  'title' => 'Unfertige Arbeit',
+  'title' => 'Ungespeicherte Änderungen wiederherstellen',
   'ready' => 'Noch kein Wiederherstellungspunkt erforderlich.',
   'pending' => 'Ungespeicherte Änderungen warten auf einen Wiederherstellungspunkt.',
   'protected' => 'Wiederherstellungspunkt bestätigt:',
   'failed' => 'Die Wiederherstellung konnte nicht bestätigt werden. Lassen Sie diesen Tab geöffnet und versuchen Sie das Speichern erneut, sobald die Verbindung verfügbar ist.',
-  'available' => 'Unfertige Arbeit verfügbar vom',
+  'available' => 'Ungespeicherte Formularwerte verfügbar vom',
   'paused' => 'Gespeicherter Inhalt wird verwendet. Der frühere Wiederherstellungspunkt bleibt erhalten. Stellen Sie ihn wieder her oder verwerfen Sie ihn, um neue Änderungen zu sichern.',
   'conflict' => 'Der gespeicherte Inhalt wurde geändert. Prüfen Sie den aktuellen gespeicherten Inhalt, bevor Sie diese Formularwerte wiederherstellen. Speichern ist ein separater Schritt.',
   'discarded' => 'Wiederherstellungspunkt verworfen.',

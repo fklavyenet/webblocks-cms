@@ -1,12 +1,12 @@
 <?php
 
 return [
-  'title' => 'Unfinished work',
+  'title' => 'Recover unsaved changes',
   'ready' => 'No recovery checkpoint needed yet.',
   'pending' => 'Unsaved changes are waiting for a recovery checkpoint.',
   'protected' => 'Recovery checkpoint confirmed:',
   'failed' => 'Recovery could not be confirmed. Keep this tab open and retry Save when the connection is available.',
-  'available' => 'Unfinished work is available from',
+  'available' => 'Unsaved form values are available from',
   'paused' => 'Using saved content. The earlier checkpoint is kept. Restore or discard it to protect new edits.',
   'conflict' => 'Saved content changed. Review the current saved content before restoring these form values. Saving is a separate step.',
   'discarded' => 'Recovery checkpoint discarded.',

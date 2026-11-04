@@ -1,12 +1,12 @@
 <?php
 
 return [
-  'title' => 'Lavoro incompleto',
+  'title' => 'Recupera le modifiche non salvate',
   'ready' => 'Non è ancora necessario un punto di recupero.',
   'pending' => 'Le modifiche non salvate attendono un punto di recupero.',
   'protected' => 'Punto di recupero confermato:',
   'failed' => 'Impossibile confermare il recupero. Tieni aperta questa scheda e riprova a salvare quando la connessione è disponibile.',
-  'available' => 'È disponibile lavoro incompleto del',
+  'available' => 'Sono disponibili valori del modulo non salvati del',
   'paused' => 'Si usa il contenuto salvato. Il punto di recupero precedente viene conservato. Ripristinalo o scartalo per proteggere nuove modifiche.',
   'conflict' => 'Il contenuto salvato è cambiato. Esamina il contenuto salvato attuale prima di ripristinare questi valori. Il salvataggio è un passaggio separato.',
   'discarded' => 'Punto di recupero scartato.',

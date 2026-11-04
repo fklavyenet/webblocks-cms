@@ -1,6 +1,9 @@
 @php
-    $mediaUrl = $block->publicBackgroundMediaUrl();
     $media = $block->media;
+    $sources = app(\WebBlocks\Cms\Support\Media\PublicMediaSources::class)->forImage($media);
+    $mediaUrl = $sources['url'];
+    $mobileMedia = $block->mobileMedia();
+    $mobileSources = app(\WebBlocks\Cms\Support\Media\PublicMediaSources::class)->forImage($mobileMedia);
     $mediaAlt = trim((string) ($block->setting('media_alt') ?? $media?->alt_text ?? $media?->title ?? ''));
     $mediaFitClass = $block->sliderBackgroundFitClass() ?? $block->parent?->sliderBackgroundFitClass();
     $contentPositionClass = $block->setting('content_position') !== null
@@ -32,19 +35,31 @@
     @if ($label !== '') aria-label="{{ $label }}"@endif
 >
     @if ($mediaUrl !== null)
-        @if ($block->publicMobileMediaUrl() !== null)
+        @if ($mobileSources['url'] !== null || $sources['webp'] !== null)
             <picture>
-                @include('webblocks-cms::pages.partials.blocks._mobile-image-source', ['mobileVariant' => null])
+                @if ($mobileSources['url'] !== null)
+                    @if ($mobileSources['webp'] !== null)
+                        <source media="{{ \WebBlocks\Cms\Support\Blocks\MobileBlockMedia::MEDIA_QUERY }}" type="image/webp" srcset="{{ $mobileSources['webp'] }}" sizes="100vw" @if ($mobileMedia?->width) width="{{ $mobileMedia->width }}" @endif @if ($mobileMedia?->height) height="{{ $mobileMedia->height }}" @endif>
+                    @endif
+                    <source media="{{ \WebBlocks\Cms\Support\Blocks\MobileBlockMedia::MEDIA_QUERY }}" srcset="{{ $mobileSources['srcset'] ?? $mobileSources['url'] }}" sizes="100vw" @if ($mobileMedia?->width) width="{{ $mobileMedia->width }}" @endif @if ($mobileMedia?->height) height="{{ $mobileMedia->height }}" @endif>
+                @endif
+                @if ($sources['webp'] !== null)
+                    <source type="image/webp" srcset="{{ $sources['webp'] }}" sizes="100vw">
+                @endif
         @endif
         <img
             class="{{ $mediaClasses }}"
             src="{{ $mediaUrl }}"
+            @if ($sources['srcset']) srcset="{{ $sources['srcset'] }}" sizes="100vw" @endif
             alt="{{ $mediaAlt }}"
+            loading="eager"
+            fetchpriority="{{ $slideImagePriority ?? 'auto' }}"
+            decoding="async"
             @if ($media?->width) width="{{ $media->width }}"@endif
             @if ($media?->height) height="{{ $media->height }}"@endif
             style="{{ $block->publicBackgroundMediaPositionStyle() }}"
         >
-        @if ($block->publicMobileMediaUrl() !== null)
+        @if ($mobileSources['url'] !== null || $sources['webp'] !== null)
             </picture>
         @endif
     @endif

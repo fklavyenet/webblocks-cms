@@ -12,6 +12,8 @@ return [
   'prepare' => 'Preparar borrador',
   'edit' => 'Editar diseño',
   'screen' => 'Pantalla',
+  'technical_details' => 'Detalles técnicos',
+  'technical_identifier' => 'Identificador técnico',
   'state' => 'Diseño',
   'default' => 'Diseño integrado',
   'prepared' => 'Página del sistema preparada como borrador. Revisa el diseño y los slots compartidos antes de publicar.',

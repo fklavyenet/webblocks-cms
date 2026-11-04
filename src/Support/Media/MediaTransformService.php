@@ -23,12 +23,13 @@ class MediaTransformService
 
     $definition = config('media_transforms.variants.'.$variant);
 
-    if (! is_array($definition) || ! $this->supports($media)) {
+    if (! is_array($definition) || ! $this->supports($media, $definition)) {
       return $original;
     }
 
     if (($definition['fit'] ?? 'contain') === 'contain'
-      && (int) $media->width <= (int) ($definition['width'] ?? 0)) {
+      && ! isset($definition['format'])
+      && $this->outputDimensions($media, $definition) === [(int) $media->width, (int) $media->height]) {
       return $original;
     }
 
@@ -153,9 +154,13 @@ class MediaTransformService
     return $result;
   }
 
-  private function supports(Media $media): bool
+  private function supports(Media $media, array $definition): bool
   {
     $extension = strtolower((string) $media->extension);
+    if (! in_array($extension, ['png', 'webp', 'jpg', 'jpeg'], true)) {
+      return false;
+    }
+    $extension = $definition['format'] ?? $extension;
     $writer = match ($extension) {
       'png' => 'imagepng',
       'webp' => 'imagewebp',
@@ -168,12 +173,12 @@ class MediaTransformService
 
   private function path(Media $media, string $variant, array $definition): string
   {
-    return 'media/transforms/'.$media->getKey().'/'.substr($this->fingerprint($media, $definition), 0, 16).'/'.$variant.'.'.strtolower((string) $media->extension);
+    return 'media/transforms/'.$media->getKey().'/'.substr($this->fingerprint($media, $definition), 0, 16).'/'.$variant.'.'.($definition['format'] ?? strtolower((string) $media->extension));
   }
 
   private function existingResult(Media $media, string $variant, array $definition): ?MediaTransformResult
   {
-    if (! $this->supports($media)) {
+    if (! $this->supports($media, $definition)) {
       return null;
     }
 
@@ -207,9 +212,9 @@ class MediaTransformService
       return [max(1, (int) floor($configuredWidth * $scale)), max(1, (int) floor($configuredHeight * $scale))];
     }
 
-    $width = min($configuredWidth, $sourceWidth);
+    $scale = min(1, $configuredWidth / $sourceWidth, $configuredHeight !== null ? $configuredHeight / $sourceHeight : 1);
 
-    return [$width, max(1, (int) round($sourceHeight * ($width / $sourceWidth)))];
+    return [max(1, (int) round($sourceWidth * $scale)), max(1, (int) round($sourceHeight * $scale))];
   }
 
   private function generate(Media $media, string $path, array $definition): ?MediaTransformResult
@@ -257,7 +262,8 @@ class MediaTransformService
         return null;
       }
 
-      if (strtolower((string) $media->extension) === 'png') {
+      $format = $definition['format'] ?? strtolower((string) $media->extension);
+      if (in_array($format, ['png', 'webp'], true)) {
         imagealphablending($target, false);
         imagesavealpha($target, true);
       }
@@ -269,7 +275,7 @@ class MediaTransformService
       ob_start();
       $buffering = true;
       $quality = (int) ($definition['quality'] ?? 85);
-      $written = match (strtolower((string) $media->extension)) {
+      $written = match ($format) {
         'png' => imagepng($target, null, 6),
         'webp' => imagewebp($target, null, $quality),
         default => imagejpeg($target, null, $quality),

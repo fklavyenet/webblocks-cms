@@ -12,6 +12,8 @@ return [
   'prepare' => 'Préparer un brouillon',
   'edit' => 'Modifier le design',
   'screen' => 'Écran',
+  'technical_details' => 'Détails techniques',
+  'technical_identifier' => 'Identifiant technique',
   'state' => 'Design',
   'default' => 'Design intégré',
   'prepared' => 'Page système préparée en brouillon. Vérifiez la mise en page et les slots partagés avant publication.',

@@ -43,7 +43,7 @@
                                         @if ($service['description'])<p>{{ $service['description'] }}</p>@endif
                                         @if ($service['privacy_url'])<a href="{{ $service['privacy_url'] }}" target="_blank" rel="noopener noreferrer">{{ $ct['privacy'] }}</a>@endif
                                         @if ($service['cookies'] !== [])
-                                            <details><summary>{{ $ct['cookies'] }}</summary><ul>@foreach ($service['cookies'] as $cookie)<li>{{ $cookie['name'] }} · {{ $cookie['path'] }} @if ($cookie['duration'])· {{ $ct['duration'] }}: {{ $cookie['duration'] }}@endif</li>@endforeach</ul></details>
+                                            <details class="wb-collapse-panel"><summary class="wb-collapse-trigger">{{ $ct['cookies'] }}</summary><div class="wb-collapse-body"><ul>@foreach ($service['cookies'] as $cookie)<li>{{ $cookie['name'] }} · {{ $cookie['path'] }} @if ($cookie['duration'])· {{ $ct['duration'] }}: {{ $cookie['duration'] }}@endif</li>@endforeach</ul></div></details>
                                         @endif
                                     </div>
                                 @endforeach

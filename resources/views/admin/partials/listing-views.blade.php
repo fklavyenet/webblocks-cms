@@ -23,12 +23,12 @@
         @endif
         <p class="wb-text-sm wb-text-muted" data-wb-listing-view-pending hidden>{{ $viewText('pending') }}</p>
         <div class="wb-accordion" data-wb-accordion>
-            <div class="wb-accordion-item">
-                <button type="button" class="wb-accordion-trigger" aria-expanded="false" aria-controls="listing-view-management">
+            <details class="wb-accordion-item">
+                <summary class="wb-accordion-trigger">
                     <span>{{ $viewText('manage') }}</span>
-                    <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
-                </button>
-                <div class="wb-accordion-content" id="listing-view-management">
+                </summary>
+                <div class="wb-accordion-body">
+                <div id="listing-view-management">
                     <div class="wb-form-grid wb-mt-3">
                         <p class="wb-text-sm wb-text-muted">{{ $viewText('help') }}</p>
                         <form method="POST" action="{{ route('admin.listing-views.store', $viewRoute) }}" class="wb-admin-listing-view-form">
@@ -99,6 +99,7 @@
                     </div>
                 </div>
             </div>
+            </details>
         </div>
     </div>
 </div>

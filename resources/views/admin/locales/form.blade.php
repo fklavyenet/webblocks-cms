@@ -53,12 +53,13 @@
                                 <div class="wb-text-sm wb-text-muted">{{ $localesFormText('locale_help') }}</div>
                             </div>
 
-                            <details class="wb-card wb-card-muted" data-wb-locale-custom @if (! $customFieldsHidden) open @endif>
-                                <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+                            <details class="wb-card-muted wb-collapse-panel" data-wb-locale-custom @if (! $customFieldsHidden) open @endif>
+                                <summary class="wb-collapse-trigger">
                                     <span>{{ $localesFormText('use_custom_details') }}</span>
                                     <span class="wb-icon wb-icon-chevron-down" aria-hidden="true"></span>
                                 </summary>
-                                <div class="wb-card-body wb-stack wb-gap-3">
+                                <div class="wb-collapse-body">
+                                <div class="wb-stack wb-gap-3">
                                     <div class="wb-stack-2 wb-field">
                                         <label for="locale_code">{{ $localesFormText('code') }}</label>
                                         <input id="locale_code" name="code" class="wb-input" type="text" value="{{ old('code', $locale->code) }}" data-wb-locale-custom-input>
@@ -71,6 +72,7 @@
 
                                     <div class="wb-text-sm wb-text-muted">{{ $localesFormText('custom_help') }}</div>
                                 </div>
+                            </div>
                             </details>
                         </div>
 

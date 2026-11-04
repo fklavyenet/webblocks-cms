@@ -23,11 +23,12 @@
                         $groupId = $permissionPrefix.'-group-'.$loop->index;
                         $groupSelectedCount = count(array_intersect($selectedPermissions, $items->keys()->all()));
                     @endphp
-                    <details class="wb-api-token-capability-group" @if (! $readOnly) data-wb-capability-group @endif>
-                        <summary class="wb-api-token-capability-summary" id="{{ $groupId }}">
+                    <details class="wb-collapse-panel" @if (! $readOnly) data-wb-capability-group @endif>
+                        <summary class="wb-collapse-trigger" id="{{ $groupId }}">
                             <span class="wb-api-token-capability-summary-copy"><strong>{{ __('webblocks-cms::acl.groups.'.$group) }}</strong></span>
                             <span class="wb-status-pill {{ $groupSelectedCount > 0 ? 'wb-status-active' : 'wb-status-info' }}" @if (! $readOnly) data-wb-capability-group-count @endif>{{ $readOnly ? $items->count() : $groupSelectedCount.'/'.$items->count() }}</span>
                         </summary>
+                        <div class="wb-collapse-body">
                         <div class="wb-api-token-capability-list" aria-labelledby="{{ $groupId }}">
                             @foreach ($items as $key => $definition)
                                 @if ($readOnly)
@@ -44,6 +45,7 @@
                                 @endif
                             @endforeach
                         </div>
+                    </div>
                     </details>
                 @endforeach
             </div>

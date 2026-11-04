@@ -82,7 +82,7 @@ class CmsRoleFormTest extends TestCase
     $new = $this->get('/webadmin/access/roles/create')->assertOk()->assertSee('wb-page-header-title', false);
     $new->assertSee('data-wb-capability-field="permissions[]"', false)->assertSee('cms/js/admin/api-token-capabilities.js', false);
     $xpath = $this->document($new->getContent());
-    $this->assertSame(count(array_unique(array_column(app(PermissionCatalog::class)->editable(), 'group'))), $xpath->query('//details[contains(@class, "wb-api-token-capability-group")]')->length);
+    $this->assertSame(count(array_unique(array_column(app(PermissionCatalog::class)->editable(), 'group'))), $xpath->query('//details[@data-wb-capability-group]')->length);
     $this->assertSame(0, $xpath->query('//details[@open]')->length);
     $this->assertSame([], $this->checkedPermissions($xpath));
     $this->assertSame(count(app(PermissionCatalog::class)->editable()), $xpath->query('//input[@name="permissions[]"]')->length);

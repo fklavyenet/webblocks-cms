@@ -84,12 +84,12 @@
         </div>
     </div>
 
-    <details class="wb-card wb-contact-message-detail" id="contact-message-details">
-        <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+    <details class="wb-contact-message-detail wb-collapse-panel" id="contact-message-details">
+        <summary class="wb-collapse-trigger">
             <strong>{{ $adminText('technical_details') }}</strong>
-            <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
         </summary>
-        <div class="wb-card-body wb-stack wb-gap-3">
+        <div class="wb-collapse-body">
+        <div class="wb-stack wb-gap-3">
             <section class="wb-stack wb-gap-2" aria-labelledby="contact-submission-heading">
                 <h3 id="contact-submission-heading" class="wb-contact-message-subject">{{ $adminText('submission_details') }}</h3>
                 <div class="wb-table-wrap">
@@ -155,6 +155,7 @@
             </section>
 
         </div>
+    </div>
     </details>
 @endsection
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.118.0
+
+- Bundle WebBlocks UI 2.34.0 locally, including native disclosures, UI-owned chevrons, corrected modal/drawer focus, inactive-slide focus protection and compact shared assets.
+- Align administration, public Accordion and compatibility disclosures with native WebBlocks UI accordion/collapse structures. Preserve initial open states, independent nested panels, permission selections, no-JavaScript disclosure and update-history content; remove duplicate CMS chevrons and disclosure styling. Builder item toggles use the shared collapse API while block-tree visibility retains its hierarchy and filtering rules.
+- Serve proportional small logo derivatives and responsive desktop/mobile Slide images with optional WebP, original-format fallbacks and a high-priority hint only for a leading carousel's first slide. Preserve transparency, original media URLs and full-size Gallery Viewer links.
+- Mark public search redirects, JSON results and flagged HTML result requests noindex across locales and pagination without changing normal content indexability, search validation or request budgets.
+- Show readable localized System Page names with optional technical details, and label editor recovery as Recover unsaved changes in all six panel languages.
+
 ## 1.117.3
 
 - Use the native WebBlocks UI accordion for System pages, with a visible rotating chevron, keyboard-operable trigger and labelled panel.

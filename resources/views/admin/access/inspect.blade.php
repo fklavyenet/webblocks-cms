@@ -58,11 +58,12 @@
             @else
                 <div class="wb-api-token-capability-groups wb-items-start">
                     @foreach ($permissionGroups as $group => $items)
-                        <details class="wb-api-token-capability-group" @if ($filters['q'] !== '' || $filters['status'] !== '') open @endif>
-                            <summary class="wb-api-token-capability-summary" id="acl-inspect-group-{{ $loop->index }}">
+                        <details class="wb-collapse-panel" @if ($filters['q'] !== '' || $filters['status'] !== '') open @endif>
+                            <summary class="wb-collapse-trigger" id="acl-inspect-group-{{ $loop->index }}">
                                 <span class="wb-api-token-capability-summary-copy"><strong>{{ __('webblocks-cms::acl.groups.'.$group) }}</strong></span>
                                 <span class="wb-status-pill wb-status-info">{{ $items->count() }}</span>
                             </summary>
+                            <div class="wb-collapse-body">
                             <div class="wb-api-token-capability-list" aria-labelledby="acl-inspect-group-{{ $loop->index }}">
                                 @foreach ($items as $key => $definition)
                                     <div class="wb-api-token-capability-option wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap" data-acl-permission="{{ $key }}" data-acl-granted="{{ $definition['allowed'] ? 'true' : 'false' }}">
@@ -71,6 +72,7 @@
                                     </div>
                                 @endforeach
                             </div>
+                        </div>
                         </details>
                     @endforeach
                 </div>

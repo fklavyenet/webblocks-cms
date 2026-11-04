@@ -12,6 +12,8 @@ return [
   'prepare' => 'Prepare draft',
   'edit' => 'Edit design',
   'screen' => 'Screen',
+  'technical_details' => 'Technical details',
+  'technical_identifier' => 'Technical identifier',
   'state' => 'Design',
   'default' => 'Built-in design',
   'prepared' => 'System page prepared as a draft. Review its layout and shared slots before publishing.',

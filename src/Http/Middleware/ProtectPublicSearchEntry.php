@@ -18,6 +18,7 @@ final class ProtectPublicSearchEntry
     app(PublicSearchRequest::class);
     $response = app(ThrottleRequests::class)->handle($request, $next, 'cms-public-search');
     $response->headers->set('Cache-Control', 'private, no-store');
+    $response->headers->set('X-Robots-Tag', 'noindex'.($response->headers->has('X-Robots-Tag') ? ', '.$response->headers->get('X-Robots-Tag') : ''));
 
     return $response;
   }

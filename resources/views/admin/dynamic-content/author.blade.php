@@ -31,7 +31,7 @@
 @endif
 @endif
 @if ($page && $isDraft && $source->isCollection())
-<details class="wb-card wb-mb-4"><summary class="wb-card-header">{{ $a('starter') }}</summary><div class="wb-card-body"><p>{{ $a('starter_help') }}</p><form method="POST" action="{{ route('admin.dynamic-content.starter') }}" class="wb-stack wb-gap-2">@csrf<input type="hidden" name="source" value="{{ $source->handle() }}"><input type="hidden" name="page_id" value="{{ $page->id }}"><label for="author-slot">{{ $d('slot') }}</label><select id="author-slot" name="slot_id" class="wb-select" required>@foreach ($slots as $slot)<option value="{{ $slot->id }}">{{ $slot->slotType?->name }}</option>@endforeach</select><button class="wb-btn wb-btn-secondary" type="submit" @disabled($slots->isEmpty())>{{ $a('create_starter') }}</button></form></div></details>
+<details class="wb-mb-4 wb-collapse-panel"><summary class="wb-collapse-trigger">{{ $a('starter') }}</summary><div class="wb-collapse-body"><div><p>{{ $a('starter_help') }}</p><form method="POST" action="{{ route('admin.dynamic-content.starter') }}" class="wb-stack wb-gap-2">@csrf<input type="hidden" name="source" value="{{ $source->handle() }}"><input type="hidden" name="page_id" value="{{ $page->id }}"><label for="author-slot">{{ $d('slot') }}</label><select id="author-slot" name="slot_id" class="wb-select" required>@foreach ($slots as $slot)<option value="{{ $slot->id }}">{{ $slot->slotType?->name }}</option>@endforeach</select><button class="wb-btn wb-btn-secondary" type="submit" @disabled($slots->isEmpty())>{{ $a('create_starter') }}</button></form></div></div></details>
 @endif
 @if ($block && (! $source->isCollection() || $templateId))
 <form method="POST" action="{{ route('admin.dynamic-content.save') }}" class="wb-stack wb-gap-4">

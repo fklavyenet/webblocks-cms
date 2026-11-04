@@ -358,13 +358,13 @@
                                     @foreach (['top_campaigns' => 'campaign', 'source_breakdown' => 'source', 'medium_breakdown' => 'medium'] as $key => $field)
                                         @php($quality = $report['campaign_quality'][$key])
                                         @if ($quality['flagged_page_views'] > 0)
-                                            <div class="wb-accordion-item">
-                                                <button type="button" class="wb-accordion-trigger" data-wb-accordion-trigger aria-expanded="false" aria-controls="visitor-utm-{{ $field }}" id="visitor-utm-{{ $field }}-trigger">
+                                            <details class="wb-accordion-item">
+                                                <summary class="wb-accordion-trigger" data-wb-accordion-trigger id="visitor-utm-{{ $field }}-trigger">
                                                     <span>{{ $adminText($field) }} · {{ $insightText('campaign_quality_views', ['views' => number_format($quality['flagged_page_views'])]) }}</span>
-                                                    <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
-                                                </button>
-                                                <div class="wb-accordion-content" id="visitor-utm-{{ $field }}" role="region" aria-labelledby="visitor-utm-{{ $field }}-trigger">
+                                                </summary>
                                                 <div class="wb-accordion-body">
+                                                <div id="visitor-utm-{{ $field }}" role="region" aria-labelledby="visitor-utm-{{ $field }}-trigger">
+                                                <div>
                                                 <div class="wb-table-wrap"><table class="wb-table wb-table-striped">
                                                     <thead><tr>
                                                         <th scope="col">{{ $insightText('campaign_quality_value') }}</th>
@@ -383,6 +383,7 @@
                                                 </table></div>
                                                 </div></div>
                                             </div>
+                                            </details>
                                         @endif
                                     @endforeach
                                     </div>

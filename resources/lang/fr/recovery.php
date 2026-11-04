@@ -1,12 +1,12 @@
 <?php
 
 return [
-  'title' => 'Travail inachevé',
+  'title' => 'Récupérer les modifications non enregistrées',
   'ready' => 'Aucun point de récupération nécessaire pour le moment.',
   'pending' => 'Les modifications non enregistrées attendent un point de récupération.',
   'protected' => 'Point de récupération confirmé :',
   'failed' => 'La récupération n’a pas pu être confirmée. Gardez cet onglet ouvert et réessayez d’enregistrer lorsque la connexion sera disponible.',
-  'available' => 'Du travail inachevé est disponible depuis le',
+  'available' => 'Des valeurs de formulaire non enregistrées sont disponibles depuis le',
   'paused' => 'Le contenu enregistré est utilisé. Le point de récupération précédent est conservé. Restaurez-le ou abandonnez-le pour protéger de nouvelles modifications.',
   'conflict' => 'Le contenu enregistré a changé. Examinez le contenu enregistré actuel avant de restaurer ces valeurs. L’enregistrement reste une étape distincte.',
   'discarded' => 'Point de récupération abandonné.',

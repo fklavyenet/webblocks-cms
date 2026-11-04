@@ -13,7 +13,19 @@
     @if ($page->isSystemPage())
         <div class="wb-alert wb-alert-info" role="status">{{ __('webblocks-cms::system_pages.editor_help') }}</div>
         @if ($systemPageKey ?? null)
-            <table class="wb-table wb-table-break"><tbody><tr><th scope="row">{{ __('webblocks-cms::system_pages.screen') }}</th><td><code>{{ $systemPageKey }}</code></td></tr></tbody></table>
+            <table class="wb-table wb-table-break"><tbody><tr><th scope="row">{{ __('webblocks-cms::system_pages.screen') }}</th><td>{{ $systemPageLabel ?? $page->title }}</td></tr></tbody></table>
+            <div class="wb-accordion" data-wb-accordion>
+                <details class="wb-accordion-item">
+                    <summary class="wb-accordion-trigger" id="system-page-details-trigger">
+                        <span>{{ __('webblocks-cms::system_pages.technical_details') }}</span>
+                    </summary>
+                    <div class="wb-accordion-body">
+                    <div id="system-page-details-panel" role="region" aria-labelledby="system-page-details-trigger">
+                        <table class="wb-table wb-table-break"><tbody><tr><th scope="row">{{ __('webblocks-cms::system_pages.technical_identifier') }}</th><td><code>{{ $systemPageKey }}</code></td></tr></tbody></table>
+                    </div>
+                </div>
+                </details>
+            </div>
         @endif
     @endif
     <div class="wb-grid wb-grid-2">

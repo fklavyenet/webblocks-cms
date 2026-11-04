@@ -20,7 +20,7 @@
       <div class="wb-card-header"><h2 id="seo-audit-scope" class="wb-m-0 wb-text-base">{{ $seoText('scope') }}</h2></div>
       <div class="wb-card-body wb-stack wb-gap-2">
         <p class="wb-m-0">{{ $seoText('saved_scope') }}</p>
-        <details><summary>{{ $j('scope_details') }}</summary><p>{{ $seoText('audit_scope') }}</p></details>
+        <details class="wb-collapse-panel"><summary class="wb-collapse-trigger">{{ $j('scope_details') }}</summary><div class="wb-collapse-body"><p>{{ $seoText('audit_scope') }}</p></div></details>
         <div class="wb-cluster wb-cluster-2 wb-flex-wrap" data-wb-job-controls>
           <form method="POST" action="{{ route('admin.sites.seo-audits.store', $site) }}">@csrf<input type="hidden" name="tab" value="{{ $seoTab }}" data-wb-seo-tab><button class="wb-btn wb-btn-primary" type="submit">{{ $workspaceText('start') }}</button></form>
           <a class="wb-link" href="{{ route('admin.jobs.index', ['tab' => 'automation']) }}">{{ $j('title') }}</a>
@@ -51,7 +51,7 @@
             <tr><th scope="row">{{ $workspaceText('completed_at') }}</th><td>{{ $audit['completed_at'] ? \Illuminate\Support\Carbon::parse($audit['completed_at'])->setTimezone(config('app.timezone'))->format('Y-m-d H:i T') : '—' }}</td></tr>
             <tr><th scope="row">{{ $seoText('language') }}</th><td>{{ $audit['locales']->implode(', ') }}</td></tr>
           </tbody></table></div>
-          <details><summary>{{ $j('details') }}</summary><p>{{ $workspaceText('task_scope') }}</p><p>{{ $workspaceText('version') }}: {{ $audit['cms_version'] }}</p><textarea class="wb-textarea" readonly rows="2" aria-label="{{ $workspaceText('version') }}">{{ $audit['source_version'] }}</textarea></details>
+          <details class="wb-collapse-panel"><summary class="wb-collapse-trigger">{{ $j('details') }}</summary><div class="wb-collapse-body"><p>{{ $workspaceText('task_scope') }}</p><p>{{ $workspaceText('version') }}: {{ $audit['cms_version'] }}</p><textarea class="wb-textarea" readonly rows="2" aria-label="{{ $workspaceText('version') }}">{{ $audit['source_version'] }}</textarea></div></details>
         </div>
       </section>
       <form method="GET" action="{{ route('admin.sites.seo-audits.index', $site) }}" class="wb-card">

@@ -12,6 +12,8 @@ return [
   'prepare' => 'Prepara bozza',
   'edit' => 'Modifica design',
   'screen' => 'Schermata',
+  'technical_details' => 'Dettagli tecnici',
+  'technical_identifier' => 'Identificativo tecnico',
   'state' => 'Design',
   'default' => 'Design integrato',
   'prepared' => 'Pagina di sistema preparata come bozza. Controlla layout e slot condivisi prima di pubblicare.',

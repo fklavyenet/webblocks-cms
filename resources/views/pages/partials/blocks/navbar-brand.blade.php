@@ -7,7 +7,8 @@
     $target = $block->navbarBrandTarget() === '_blank';
     $title = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title');
     $subtitle = $block->stringValueOrNull($block->subtitle) ?? $block->translatedTextFieldValue('subtitle');
-    $logoUrl = $block->asset?->isImage() ? $block->asset?->url() : null;
+    $logoSources = app(\WebBlocks\Cms\Support\Media\PublicMediaSources::class)->forImage($block->asset, logo: true);
+    $logoUrl = $logoSources['url'];
     $hasCopy = $title !== null || $subtitle !== null;
     $accessibleLabel = $block->navbarBrandAccessibleLabel();
     $logoAlt = $title ?? $accessibleLabel ?? '';
@@ -17,7 +18,14 @@
 @if ($logoUrl !== null || $hasCopy)
     <a href="{{ $href }}" class="wb-navbar-brand" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"@if ($linkLabel) aria-label="{{ $linkLabel }}"@endif @if ($target) target="_blank" rel="noopener noreferrer"@endif>
         @if ($logoUrl !== null)
-            <img src="{{ $logoUrl }}" alt="{{ $logoAlt }}">
+            @if ($logoSources['webp'])
+                <picture class="wb-flex">
+                    <source type="image/webp" srcset="{{ $logoSources['webp'] }}">
+            @endif
+            <img src="{{ $logoUrl }}" @if ($block->asset?->width) width="{{ $block->asset->width }}" @endif @if ($block->asset?->height) height="{{ $block->asset->height }}" @endif decoding="async" alt="{{ $logoAlt }}">
+            @if ($logoSources['webp'])
+                </picture>
+            @endif
         @endif
 
         @if ($hasCopy)

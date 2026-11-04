@@ -58,6 +58,16 @@ Put long technical identifiers in an optional details area; preserve access to
 the full value without forcing horizontal page overflow. Review existing
 summaries against this rule whenever their screen is changed.
 
+Disclosure panels use the bundled WebBlocks UI accordion/collapse contracts.
+Prefer `details.wb-accordion-item > summary.wb-accordion-trigger` for groups and
+`details.wb-collapse-panel > summary.wb-collapse-trigger` for independent panels,
+with one native body wrapper. Native `open` owns initial and current state; do
+not duplicate it with summary button roles, tabindex or aria-expanded. Keep
+interactive controls out of summaries. UI owns chevrons and spacing; remove
+manual disclosure icons and local styling. External builder controls use
+`WBCollapse`; table-tree filtering and ancestor visibility remain CMS domain
+logic. Preserve independent nested state and script-free native disclosure.
+
 CMS and first-party plugin admin feedback uses persistent native `wb-alert`
 messages in page content or next to the action. Do not use toast notifications or
 hide feedback automatically. Success and failure must remain visible and be

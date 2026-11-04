@@ -116,13 +116,13 @@
         </div>
     </div>
 
-    <details class="wb-card">
-        <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+    <details class="wb-collapse-panel">
+        <summary class="wb-collapse-trigger">
             <strong>{{ $adminText('capabilities') }}</strong>
-            <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
         </summary>
+        <div class="wb-collapse-body">
 
-        <div class="wb-card-body">
+        <div>
             <div class="wb-table-wrap">
                 <table class="wb-table">
                     <tbody>
@@ -139,15 +139,16 @@
                 </table>
             </div>
         </div>
+    </div>
     </details>
 
-    <details class="wb-card">
-        <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+    <details class="wb-collapse-panel">
+        <summary class="wb-collapse-trigger">
             <strong>{{ $adminText('technical_details') }}</strong>
-            <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
         </summary>
+        <div class="wb-collapse-body">
 
-        <div class="wb-card-body">
+        <div>
             <div class="wb-table-wrap">
                 <table class="wb-table">
                     <tbody>
@@ -168,6 +169,7 @@
                 </table>
             </div>
         </div>
+    </div>
     </details>
 
     <section class="wb-card">
@@ -204,18 +206,19 @@
     @endif
 
     @if (($plugin['health']['checks'] ?? []) !== [])
-        <details class="wb-card">
-            <summary class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+        <details class="wb-collapse-panel">
+            <summary class="wb-collapse-trigger">
                 <strong>{{ $adminText('health') }}</strong>
-                <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
             </summary>
+            <div class="wb-collapse-body">
 
-            <div class="wb-card-body wb-stack wb-gap-2">
+            <div class="wb-stack wb-gap-2">
                 @include('webblocks-cms::admin.system.plugins.partials.health-checks', [
                     'health' => $plugin['health'],
                     'healthText' => static fn (string $key) => $adminText('health_'.$key),
                 ])
             </div>
+        </div>
         </details>
     @endif
 

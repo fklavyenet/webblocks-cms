@@ -1,12 +1,12 @@
 @if ($activeSite && $canCreatePage)
 <div class="wb-card wb-accordion" data-wb-accordion>
-    <div class="wb-accordion-item">
-        <button type="button" class="wb-accordion-trigger" id="system-pages-trigger" aria-expanded="false" aria-controls="system-pages-panel">
+    <details class="wb-accordion-item">
+        <summary class="wb-accordion-trigger" id="system-pages-trigger">
             <span>{{ __('webblocks-cms::system_pages.title') }}</span>
-            <i class="wb-icon wb-icon-chevron-down wb-accordion-icon" aria-hidden="true"></i>
-        </button>
-        <div class="wb-accordion-content" id="system-pages-panel" role="region" aria-labelledby="system-pages-trigger">
-            <div class="wb-card-body wb-stack wb-gap-3">
+        </summary>
+        <div class="wb-accordion-body">
+        <div id="system-pages-panel" role="region" aria-labelledby="system-pages-trigger">
+            <div class="wb-stack wb-gap-3">
                 <p>{{ __('webblocks-cms::system_pages.help') }}</p>
                 <div class="wb-table-wrap">
                     <table class="wb-table">
@@ -38,5 +38,6 @@
             </div>
         </div>
     </div>
+    </details>
 </div>
 @endif

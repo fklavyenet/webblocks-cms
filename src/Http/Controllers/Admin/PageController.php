@@ -54,6 +54,7 @@ use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRegistry;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -354,10 +355,14 @@ class PageController extends Controller
       ]);
     $layoutSlotComparison = $this->pageLayoutSlotComparison->compare($page);
     $pageOwnedBlockPublishingSummary = $this->pageOwnedBlockPublisher->summary($page);
+    $systemPageKey = app(SystemPageRenderer::class)->identity($page);
 
     return view('webblocks-cms::admin.pages.edit', [
       'page' => $page,
-      'systemPageKey' => app(SystemPageRenderer::class)->identity($page),
+      'systemPageKey' => $systemPageKey,
+      'systemPageLabel' => $systemPageKey
+        ? (app(SystemPageRegistry::class)->find($systemPageKey)?->label(app(AdminLocaleResolver::class)->locale()) ?? $page->title)
+        : null,
       'sites' => Site::query()
         ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, request()->user()))
         ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])

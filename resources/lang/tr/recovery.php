@@ -1,12 +1,12 @@
 <?php
 
 return [
-  'title' => 'Tamamlanmamış çalışma',
+  'title' => 'Kaydedilmemiş değişiklikleri kurtar',
   'ready' => 'Henüz kurtarma kaydı gerekmiyor.',
   'pending' => 'Kaydedilmemiş değişiklikler kurtarma kaydı bekliyor.',
   'protected' => 'Kurtarma kaydı doğrulandı:',
   'failed' => 'Kurtarma kaydı doğrulanamadı. Bu sekmeyi açık tutun ve bağlantı sağlandığında Kaydet işlemini yeniden deneyin.',
-  'available' => 'Tamamlanmamış çalışma mevcut:',
+  'available' => 'Kaydedilmemiş form değerleri mevcut:',
   'paused' => 'Kayıtlı içerik kullanılıyor. Önceki kurtarma kaydı korunuyor. Yeni düzenlemeleri korumak için onu geri yükleyin veya silin.',
   'conflict' => 'Kayıtlı içerik değişmiş. Bu form değerlerini geri yüklemeden önce güncel kayıtlı içeriği inceleyin. Kaydetme ayrı bir adımdır.',
   'discarded' => 'Kurtarma kaydı silindi.',

@@ -31,10 +31,10 @@
             </div>
         @endif
 
-        <div class="wb-stack-2">
+        <div class="wb-accordion">
             @foreach ($items as $item)
-                <details>
-                    <summary>{{ $item['title'] }}</summary>
+                <details class="wb-accordion-item">
+                    <summary class="wb-accordion-trigger">{{ $item['title'] }}</summary><div class="wb-accordion-body">
                     <div>
                         @if ($item['is_rich_text'])
                             {!! nl2br(e($item['content'])) !!}
@@ -42,6 +42,7 @@
                             {{ $item['content'] }}
                         @endif
                     </div>
+                </div>
                 </details>
             @endforeach
         </div>

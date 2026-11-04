@@ -33,7 +33,10 @@
     <div class="wb-slider-viewport">
         <div class="wb-slider-track">
             @foreach ($slides as $slide)
-                @include('webblocks-cms::pages.partials.block', ['block' => $slide])
+                @include('webblocks-cms::pages.partials.block', [
+                    'block' => $slide,
+                    'slideImagePriority' => $loop->first && $block->getAttribute('render_slider_priority') === true ? 'high' : 'low',
+                ])
             @endforeach
         </div>
     </div>

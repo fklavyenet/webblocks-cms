@@ -28,7 +28,8 @@ class PublicSearchController extends Controller
     $query = $this->search->normalize($request->validated('q'));
 
     return redirect($home.'?'.http_build_query(['cms_search' => 1, 'q' => $query]).'#site-search')
-      ->header('Cache-Control', 'private, no-store');
+      ->header('Cache-Control', 'private, no-store')
+      ->header('X-Robots-Tag', 'noindex');
   }
 
   public function json(PublicSearchRequest $request): JsonResponse
@@ -54,7 +55,7 @@ class PublicSearchController extends Controller
       'minimum_query_length' => $search['state'] === 'short'
         ? $this->translator->public('search.minimum_query_length', $localeCode, ['count' => $minimumLength])
         : null,
-    ]);
+    ])->header('X-Robots-Tag', 'noindex');
   }
 
   public function resolveSearch(PublicSearchRequest $request): array

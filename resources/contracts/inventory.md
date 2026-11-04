@@ -353,7 +353,7 @@ The current published core catalog contains 57 rows:
 | Admin-editable content | No visible parent copy; optional editor-only `layout_name`. |
 | Settings | `height`: auto, fill, viewport, large, medium, small, custom; optional `min_height`; `aspect_ratio`: 16/9, 4/3, 1/1; `interval_ms`: 1000–30000; booleans `autoplay`, `pause_on_hover`, `show_arrows`, `show_dots`, `loop`, `swipe`, `keyboard`; `overlay`: none/default, soft, medium, dark, strong; `content_position`: center/default, center-left, center-right, top-left, top-center, top-right, bottom-left, bottom-center, bottom-right; `content_width`: medium/default, narrow, wide, full; `text_color`: auto/default, light, dark; `background_fit`: cover/default or contain. Transition is currently normalized to slide. |
 | Children | Only `slide`; at least one Slide required. |
-| HTML | Root-owning `<section class="wb-slider …" data-wb-slider data-wb-public-block-type="slider">` with viewport, track, optional arrows, and dots. |
+| HTML | Root-owning `<section class="wb-slider …" data-wb-slider data-wb-public-block-type="slider">` with viewport, track, optional arrows, and dots. The first slide receives `fetchpriority="high"` only when its Slider is the leading content branch after header/sidebar slots; nested Section, Container and Stack leading branches are eligible. Other slides use `low`. Sources remain eager and directly addressable; interaction, focus and autoplay remain WebBlocks UI-owned. |
 | Example appearance | Full-width hero carousel, card-contained slider, or background-media panels with editable child content. |
 | Avoid | Static image galleries. |
 
@@ -365,7 +365,7 @@ The current published core catalog contains 57 rows:
 | Admin-editable content | No direct visible copy; optional editor-only `layout_name` and shared `aria_label`. |
 | Settings | Background image `media_id`; `background_position`; `background_overlay` (`none`, `soft`, `medium`, `strong` — each renders a distinct scrim since WebBlocks UI 2.22.0; before that `medium` collapsed onto `strong`); `content_position`: center/default, center-left, center-right, top-left, top-center, top-right, bottom-left, bottom-center, bottom-right; `content_width`; `text_color`; `background_fit`. |
 | Children | Any supported structured child type; a background-only Slide is allowed. Normal parent is Slider. |
-| HTML | Root-owning `<article class="wb-slide …" data-wb-public-block-type="slide">[img.wb-slide-media]<div class="wb-slide-content">…</div></article>`. |
+| HTML | Root-owning `<article class="wb-slide …" data-wb-public-block-type="slide">[optional picture > img.wb-slide-media]<div class="wb-slide-content">…</div></article>`. Public raster media uses aspect-preserving 640/1280/1920-width candidates, measured widths, `sizes="100vw"`, intrinsic dimensions and asynchronous decoding. Optional WebP sources require successful GD conversion and precede original-format fallbacks. Mobile sources up to 768px precede desktop sources. Missing/private mobile media, unsupported codecs and failed transforms retain the existing fallback. Position, fit and overlay remain shared. |
 | Example appearance | Background product photo with nested Header, Plain Text, and Button Link content. |
 | Avoid | Standalone top-level use when no carousel semantics are intended. |
 
@@ -741,7 +741,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | --- | --- |
 | Editable content | `translations.title`, `translations.subtitle`; shared URL, target, aria label. |
 | Settings and variants | `url`; `target`: _self or _blank; `aria_label`. |
-| Children/media | Optional image `media_id` for logo. |
+| Children/media | Optional image `media_id` for logo. Public raster logos use a contain derivative bounded by 1024×128 pixels, preserving ratio and alpha without enlargement. A successfully generated WebP source is optional; original-format fallback, SVG URLs and intrinsic proportions are retained. |
 | HTML | Generic wrapper plus `<a class="wb-navbar-brand">` with optional image and identity copy. |
 | Example appearance | Logo, site name, and concise tagline. |
 
@@ -763,7 +763,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | --- | --- |
 | Editable content | `translations.title`, `translations.subtitle`; shared URL, target, aria label. |
 | Settings and variants | Same safe link contract as Navbar Brand. |
-| Children/media | Optional image `media_id` for logo. |
+| Children/media | Optional image `media_id` for logo. Public raster logos use a contain derivative bounded by 1024×128 pixels, preserving ratio and alpha without enlargement. A successfully generated WebP source is optional; original-format fallback, SVG URLs and intrinsic proportions are retained. |
 | HTML | Generic wrapper plus `<a class="wb-sidebar-brand">` with logo and identity copy. |
 | Example appearance | Documentation logo/title at the top of a sidebar. |
 
@@ -809,6 +809,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Query contract | HTML and JSON search accept an optional text `q`, defaulting to at most 200 characters and 20 normalized words. An active Super admin can change both bounds under System → Settings → Security (1–2,000 characters; 1–100 words). Invalid type, length or word count returns localized validation JSON with `422`, including for HTML requests, using the effective bounds without redirecting to the invalid GET URL. Missing or empty queries retain the empty-search state. |
 | Request budgets | Search endpoints share IP-based minute/hour limits across HTML, JSON and locales (defaults 30/minute and 300/hour). Public CMS pages and legacy page redirects share separate defaults of 120/minute and 1800/hour, including CMS pages served before a redirect plugin catch-all. Host-owned routes, static/plugin assets, robots and sitemaps do not consume these budgets. Saved Super admin Security settings take precedence over `cms.public_rate_limits`; removing overrides restores installation configuration. Invalid saved values and nonpositive configuration fall back without disabling protection. Exceeding a budget returns `429` with `Retry-After`. |
 | Interaction | Submitting `search-form` opens the existing search modal with the entered query. Header Actions uses the same modal. Direct `/search?q=...` entries redirect to the localized site home with the normalized query, `cms_search=1` and `#site-search`. There is no standalone HTML search screen. `/search.json` and localized/mounted variants remain the data endpoints. Without JavaScript the ordinary page contains an inline results/form fragment for `cms_search=1`, subject to the same query validation and search budgets. A host-owned home must include the CMS public overlays/fallbacks to provide this experience. |
+| Search indexability | Compatibility search redirects, JSON results and their localized/mounted variants send `X-Robots-Tag: noindex`. CMS HTML responses with `cms_search=1` send the same header and a robots `noindex` meta tag, including empty and paginated searches. Ordinary content requests, including plain `q` parameters without the search flag, keep their existing indexability. No robots.txt disallow or request-budget change is introduced. |
 | Example appearance | Site search field in a header or page. |
 
 ### `sidebar-footer` — Sidebar Footer
@@ -1802,7 +1803,7 @@ Overlay close confirmation compares editable form values with their opening stat
 
 Recovery headers, ordered scalar form values and typed document nodes are SQL records, independently keyed by owner, site, page, optional block, content locale and editing session. Structured settings text is decomposed into typed nodes rather than a packed JSON checkpoint. Limits are 32 active sessions per user, 512 controls, 256 KiB of decoded field names/values and 4,096 structured nodes per checkpoint. Updates expire after seven days; daily scheduled pruning and `webblocks:editor-recovery:prune` remove expired records and children. Cleared markers prevent delayed requests from recreating discarded or successfully saved checkpoints during their remaining lifecycle.
 
-The panel reports pending, confirmed or unavailable recovery, then offers Restore, Discard or Continue with saved content. Continuing retains the earlier checkpoint and pauses new checkpoint writes until that checkpoint is restored or discarded. A browser tab lock and a tab-local scalar session pointer separate editing sessions; browser storage contains no form content. Initial network failures are retried, while only the last confirmed values are guaranteed after an interruption. Restore rechecks current account activity, site, operation grants, locale and workflow. Shared ACL locks and post-lock authorization protect checkpoint writes, restores and recovered saves from revoked authority. A fingerprint of saved page identity and its revision snapshot detects changed content. Conflict restoration requires explicit review; normal Save checks the current fingerprint again.
+The recovery card is labelled Recover unsaved changes (localized in every panel language). It reports pending, confirmed or unavailable recovery, then offers Restore, Discard or Continue with saved content. Continuing retains the earlier checkpoint and pauses new checkpoint writes until that checkpoint is restored or discarded. A browser tab lock and a tab-local scalar session pointer separate editing sessions; browser storage contains no form content. Initial network failures are retried, while only the last confirmed values are guaranteed after an interruption. Restore rechecks current account activity, site, operation grants, locale and workflow. Shared ACL locks and post-lock authorization protect checkpoint writes, restores and recovered saves from revoked authority. A fingerprint of saved page identity and its revision snapshot detects changed content. Conflict restoration requires explicit review; normal Save checks the current fingerprint again.
 
 A one-use, one-minute restore intent applies form values only to the authorized editor GET request, without placing them in shared cross-tab session flash. Requests use the existing session/CSRF boundary and private no-store responses. Successful Save clears only the matching form/session in its editorial transaction; failed Save retains recovery. Restored media IDs display current authorized names/previews, including empty selections. Absent dynamic bindings remain literal; incomplete existing bindings are still shown and rejected by the existing validation rules.
 
@@ -2232,7 +2233,9 @@ The existing API search-refresh middleware continues to coalesce index work.
 
 ## Bounded measurement presentation
 
-CMS 1.106.5 bundles WebBlocks UI 2.32.0, including native `meter.wb-meter`
+CMS 1.118.0 bundles WebBlocks UI 2.34.0, including native accordion/collapse,
+UI-owned disclosure chevrons, corrected modal/drawer focus containment, inactive
+slider focus protection and native `meter.wb-meter`
 for bounded measurements such as a poll choice percentage. Plugins render valid
 `min`, `max` and `value` attributes, accessible names and visible localized values;
 UI supplies themed native track/fill styling without JavaScript or inline CSS.
@@ -2442,7 +2445,7 @@ System Pages are regular editable page records with `page_type=system`, bound by
 
 Core definitions are `core:error-404` and `core:error-503`. Enabled plugins may declare their own definitions with `PluginDefinition::systemPages`, keyed by a local handle and containing a translated `label` key, public route-name suffixes and optional `blocks` creation recipes declared in PHP. Each recipe uses `type` (`hero`, `header`, `plain_text`, `button_link`), namespaced translation keys in `translations` (`title`, `subtitle`, `eyebrow`, `content`), native `settings` and `variant`, and optional `children` accepted by its native parent. These trusted-code recipes are never a persistent page authority: they create ordinary editable rows once. Older declarations without recipes receive a generic translated Hero starter; plugin acceptance requires meaningful screen-specific defaults. Core prefixes these routes and keys with the owning plugin; disabled plugins cannot supply an active definition. There is one design per site/screen, never a page per token, customer or order. No host-specific registrations belong in core.
 
-The existing page editor manages layout, Shared Slot bindings, authored blocks, translations, preview, revisions and workflow. Its Translations table uses the plural Actions heading and compact SEO, edit and add icon links, named by localized action and language; existing route, locale and workflow authorization behavior is retained. Normal content and Shared Slot capabilities continue to apply. Saving retains the system type and site; generic duplication and cross-site moves are refused. System records have no ordinary public path and never appear as public navigation, page-list, sitemap, search-index or site SEO-audit entries. The page/slot/block API can edit a prepared design using its existing capabilities; preparing the screen binding currently belongs to the Pages panel.
+The existing page editor manages layout, Shared Slot bindings, authored blocks, translations, preview, revisions and workflow. Its Screen summary shows the registered screen name in the panel language, falling back to the saved page title when the definition is unavailable. The technical binding key is retained only in a collapsed, labelled native Technical details accordion with a visible chevron. Its Translations table uses the plural Actions heading and compact SEO, edit and add icon links, named by localized action and language; existing route, locale and workflow authorization behavior is retained. Normal content and Shared Slot capabilities continue to apply. Saving retains the system type and site; generic duplication and cross-site moves are refused. System records have no ordinary public path and never appear as public navigation, page-list, sitemap, search-index or site SEO-audit entries. The page/slot/block API can edit a prepared design using its existing capabilities; preparing the screen binding currently belongs to the Pages panel.
 
 Only a published design replaces the built-in screen. A plugin controller keeps its route parameters, authorization, signed URLs, transaction logic, forms, status and response headers; the CMS public layout surrounds the existing content with the selected design. Feature-provided title/metadata remain in effect. Authored Main content precedes required plugin runtime content. The four first-party integrations omit their repeated static heading when Main supplies editorial content; record-dependent product titles, order/payment states and secure forms remain runtime-owned. Error screens use authored Main blocks as their content rather than appending a second immutable default message. Removing/disabling Main cannot remove the functional form/result: a Main region is supplied before Footer if missing. Core error previews show saved native editorial blocks, with no unrelated form placeholder. Plugin previews show saved blocks plus a clearly identified functional placeholder without executing customer transactions. Preview never fabricates unsaved editorial blocks or writes content. Ordinary editor forms open with saved text prefilled and save through the native block update route. Removing or editing blocks is reflected in preview. Public error designs require published Main blocks; until then the built-in public error screen remains available. There is no separate default-content fill endpoint or editor action. Shared Slot site, layout, slot and publication compatibility checks remain unchanged. Unconfigured, draft, archived and unavailable-plugin designs leave the built-in feature appearance in place.
 
@@ -2460,3 +2463,25 @@ duplicated there. Contact/analytics, Users/access, Cookies and Privacy, Structur
 and design, System, Maintenance and plugin groups keep their existing organization.
 SEO audits remains under Contact/analytics and Jobs and automation under Maintenance.
 This changes navigation placement, not permissions or route ownership.
+
+
+## Native disclosure ownership
+
+Administration, consent fallbacks, the public compatibility Accordion renderer
+and bundled update-client views use WebBlocks UI 2.34.0 disclosures. Groups use
+`details.wb-accordion-item > summary.wb-accordion-trigger` inside `wb-accordion`;
+independent panels use `details.wb-collapse-panel > summary.wb-collapse-trigger`.
+Each item has one native body wrapper. Native `open` preserves initial state and
+independent nested panels without JavaScript; multiple items may remain open.
+UI owns the decorative chevron, body spacing and modal/drawer focus boundaries.
+There are no manually supplied disclosure chevrons or duplicate summary button
+roles/aria-expanded/tabindex. Form controls and actions stay outside summaries.
+Permission selections, filtered initial openings, consent submission, saved-view
+forms and update-history entries preserve their existing behavior. Version-only
+release notes remain ordinary rows rather than empty disclosures.
+
+Builder item bodies use the existing `WBCollapse.toggle` API with stable,
+editor/index-scoped panel ids; order, deletion and form values remain CMS-owned.
+The flat block-tree table retains its hierarchy, search, persisted expansion and
+ancestor visibility rules rather than hiding table rows through generic panel
+CSS. No new authoring field, block catalog entry or persistence is introduced.

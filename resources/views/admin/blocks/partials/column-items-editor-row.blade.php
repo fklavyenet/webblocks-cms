@@ -15,6 +15,7 @@
     $contentPlaceholder = $contentPlaceholder ?? $columnItemRowText('content_placeholder');
     $enableAdminSortable = $enableAdminSortable ?? false;
     $rowPrefix = is_numeric($index) ? "{$inputName}[{$index}]" : "{$inputName}[__INDEX__]";
+    $collapseId = 'builder-item-'.\Illuminate\Support\Str::slug($editorKey).'-'.\Illuminate\Support\Str::uuid().'-'.$index;
     $rowSortOrder = is_numeric($index) ? ($columnItem->sort_order ?? $index) : '__INDEX__';
     $itemSettings = is_array($columnItem->settings ?? null) ? $columnItem->settings : json_decode((string) ($columnItem->settings ?? ''), true);
     $itemSettings = is_array($itemSettings) ? $itemSettings : [];
@@ -44,12 +45,13 @@
         <div class="wb-action-group">
             <button type="button" class="wb-action-btn" data-wb-builder-item-move="up" title="{{ $columnItemRowText('move_up') }}" aria-label="{{ $columnItemRowText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
             <button type="button" class="wb-action-btn" data-wb-builder-item-move="down" title="{{ $columnItemRowText('move_down') }}" aria-label="{{ $columnItemRowText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn" data-wb-builder-item-toggle title="{{ $columnItemRowText('collapse_item') }}" aria-label="{{ $columnItemRowText('collapse_item') }}" aria-expanded="true"><i class="wb-icon wb-icon-minus" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-builder-item-toggle aria-controls="{{ $collapseId }}" title="{{ $columnItemRowText('collapse_item') }}" aria-label="{{ $columnItemRowText('collapse_item') }}" aria-expanded="true"><i class="wb-icon wb-icon-minus" aria-hidden="true"></i></button>
             <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-builder-item-remove title="{{ $columnItemRowText('remove_item') }}" aria-label="{{ $columnItemRowText('remove_item') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
         </div>
     </div>
 
-    <div class="wb-card-body wb-stack wb-gap-3" data-wb-builder-item-body="{{ $editorKey }}">
+    <div class="wb-collapse is-open" id="{{ $collapseId }}" data-wb-builder-item-body="{{ $editorKey }}">
+      <div class="wb-collapse-body wb-card-body wb-stack wb-gap-3">
         <input type="hidden" name="{{ $rowPrefix }}[id]" value="{{ is_numeric($index) ? $columnItem->id : '' }}">
         <input type="hidden" name="{{ $rowPrefix }}[block_type_id]" value="{{ $itemBlockType?->id }}">
         <input type="hidden" name="{{ $rowPrefix }}[sort_order]" value="{{ $rowSortOrder }}" data-wb-builder-item-sort="{{ $editorKey }}" @if ($enableAdminSortable) data-admin-sortable-order @endif>
@@ -117,5 +119,6 @@
                 <input type="hidden" name="{{ $rowPrefix }}[is_system]" value="0">
             </div>
         </div>
+      </div>
     </div>
 </div>

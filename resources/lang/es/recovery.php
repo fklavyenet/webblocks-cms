@@ -1,12 +1,12 @@
 <?php
 
 return [
-  'title' => 'Trabajo sin terminar',
+  'title' => 'Recuperar cambios sin guardar',
   'ready' => 'Aún no hace falta un punto de recuperación.',
   'pending' => 'Los cambios sin guardar esperan un punto de recuperación.',
   'protected' => 'Punto de recuperación confirmado:',
   'failed' => 'No se pudo confirmar la recuperación. Mantenga esta pestaña abierta e intente guardar cuando vuelva la conexión.',
-  'available' => 'Hay trabajo sin terminar del',
+  'available' => 'Hay valores del formulario sin guardar del',
   'paused' => 'Se usa el contenido guardado. Se conserva el punto de recuperación anterior. Restáuralo o descártalo para proteger nuevas ediciones.',
   'conflict' => 'El contenido guardado ha cambiado. Revisa el contenido guardado actual antes de restaurar estos valores. Guardar es un paso aparte.',
   'discarded' => 'Punto de recuperación descartado.',
