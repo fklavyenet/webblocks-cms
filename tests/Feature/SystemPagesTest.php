@@ -27,6 +27,7 @@ use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use WebBlocks\Cms\Support\Sites\ExportImport\ImportDataMapper;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportDataBuilder;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportOptions;
+use WebBlocks\Cms\Support\SystemPages\SystemPageBlocks;
 use WebBlocks\Cms\Support\SystemPages\SystemPageDefinition;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRegistry;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
@@ -320,6 +321,18 @@ class SystemPagesTest extends TestCase
     new SystemPageDefinition('synthetic:screen', 'synthetic::screen.title', blocks: [
       ['type' => 'html', 'translations' => ['content' => 'synthetic::screen.body']],
     ]);
+  }
+
+  #[Test]
+  public function legacy_sample_blocks_keep_the_requested_locale_when_the_page_translation_is_missing(): void
+  {
+    $page = $this->prepare('core:error-404');
+    $page->load('site', 'translations.locale');
+    $page->setRelation('currentTranslation', $page->defaultTranslation());
+    $sample = app(SystemPageBlocks::class)->sample($page, app(SystemPageRegistry::class)->find('core:error-404'), 'tr');
+    $this->assertSame('tr', $sample->first()->renderLocaleCode());
+    $this->assertSame('tr', $sample->first()->children->first()->renderLocaleCode());
+    $this->assertSame('Bu sayfa mevcut değil', $sample->first()->title);
   }
 }
 

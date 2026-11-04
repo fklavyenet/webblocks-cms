@@ -88,6 +88,7 @@ final class SystemPageBlocks
     ]);
     $block->setRelation('blockType', $type)->setRelation('renderPage', $page)->setRelation('page', $page);
     $block->setAttribute('render_locale_code', $locale);
+    $block->setAttribute('requested_locale_code', $locale);
     $block->setAttribute('render_preview', true);
     $block->setRelation('children', collect($recipe['children'] ?? [])->map(fn ($child) => $this->sampleBlock($page, $child, $locale)));
 
