@@ -150,7 +150,7 @@
         @endif
 
         @if (session('contact_form_success_message'))
-            <div class="wb-alert wb-alert-success wb-m-3" role="status" aria-live="polite">
+            <div class="wb-alert wb-alert-success wb-mt-3 wb-mb-3" role="status" aria-live="polite">
                 <strong>{{ $publicText('toast.contact_message_sent') }}</strong>
                 <span>{{ session('contact_form_success_message') }}</span>
             </div>
