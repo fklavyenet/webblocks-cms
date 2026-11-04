@@ -30,7 +30,6 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Models\SystemPage;
 use WebBlocks\Cms\Policies\SiteSeoPolicy;
-use WebBlocks\Cms\Policies\SystemPagePolicy;
 use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
@@ -53,7 +52,6 @@ use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
-use WebBlocks\Cms\Support\SystemPages\SystemPageBlocks;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRegistry;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -360,9 +358,6 @@ class PageController extends Controller
     return view('webblocks-cms::admin.pages.edit', [
       'page' => $page,
       'systemPageKey' => app(SystemPageRenderer::class)->identity($page),
-      'canAddSystemPageDefaults' => app(SystemPagePolicy::class)->addDefaults(request(), $page)
-        && app(SystemPageRegistry::class)->find(app(SystemPageRenderer::class)->identity($page) ?? '')
-        && app(SystemPageBlocks::class)->canAdd($page),
       'sites' => Site::query()
         ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, request()->user()))
         ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])

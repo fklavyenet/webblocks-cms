@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.117.2
+
+- Create System Pages with their native block content and translations in the initial preparation transaction, ready to edit through the ordinary Main block editor.
+- Remove the separate default-content fill action and unsaved sample-block rendering. Preview and public designs use saved native blocks; unpublished error content keeps the built-in public fallback until its blocks are published.
+- Verify that core and plugin starter content opens prefilled in the native block editor, can be saved through the normal form, and remains unchanged on repeated preparation.
+
 ## 1.117.1
 
 - Prepare System Pages with ordinary editable CMS blocks and enabled-locale translation rows instead of an empty Main slot. Default text and links are native block content, with no JSON template/content store.

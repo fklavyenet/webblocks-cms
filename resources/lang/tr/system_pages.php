@@ -20,8 +20,4 @@ return [
   'preview' => 'İlgili özelliğin formu veya sonucu çalışırken burada görünür. Bu önizleme müşteri, hesap veya ödeme verisi içermez.',
   'maintenance_help' => 'Birincil sitenin yayımlanmış bakım tasarımı CMS güncellemelerinden önce render edilir. Kaydedilen HTML, uygulama ve veritabanı olmadan çalışır. Diğer siteler de bu kurulum geneli bakım yanıtını paylaşır.',
   'feature_intro' => 'Lütfen aşağıdaki bilgileri inceleyin.',
-  'add_defaults' => 'Varsayılan içeriği ekle',
-  'defaults_help' => 'Bu taslağın Main slotunda henüz blok yok. Ekranın varsayılan CMS bloklarını ekleyip Blokları Düzenle ile düzenleyebilirsiniz. Layout ve ortak slotlar korunur.',
-  'defaults_added' => 'Varsayılan CMS blokları taslak olarak eklendi. Hazır olduğunda inceleyip ayrıca yayımlayın.',
-  'defaults_unavailable' => 'Varsayılanlar yalnızca Main slotu sayfaya ait ve boş olan bir taslağa eklenebilir.',
 ];

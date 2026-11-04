@@ -160,7 +160,7 @@
             @php
                 $systemPageRuntime = true;
                 $systemPageContent = ($systemPagePreview ?? false)
-                    ? app(\WebBlocks\Cms\Support\SystemPages\SystemPageRenderer::class)->previewContent($page, $slots ?? [], $publicLocaleCode ?? app()->getLocale())
+                    ? app(\WebBlocks\Cms\Support\SystemPages\SystemPageRenderer::class)->previewContent($page, $publicLocaleCode ?? app()->getLocale())
                     : $__env->yieldContent('content');
             @endphp
         @endif

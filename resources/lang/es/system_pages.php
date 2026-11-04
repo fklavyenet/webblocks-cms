@@ -20,8 +20,4 @@ return [
   'preview' => 'El formulario o resultado de la función aparece aquí durante su uso. Esta vista previa no contiene datos de clientes, cuentas o pagos.',
   'maintenance_help' => 'El diseño de mantenimiento publicado del sitio principal se genera antes de actualizar el CMS. El HTML guardado funciona sin la aplicación ni la base de datos. Los demás sitios comparten esta respuesta de mantenimiento global.',
   'feature_intro' => 'Revise la información que aparece a continuación.',
-  'add_defaults' => 'Añadir contenido predeterminado',
-  'defaults_help' => 'Este borrador aún no tiene bloques Main. Añada los bloques CMS predeterminados y edítelos con Editar bloques. Se conservan el diseño y los espacios compartidos.',
-  'defaults_added' => 'Los bloques CMS predeterminados se añadieron como borradores. Revíselos y publíquelos explícitamente.',
-  'defaults_unavailable' => 'El contenido predeterminado requiere un borrador con un espacio Main vacío perteneciente a la página.',
 ];

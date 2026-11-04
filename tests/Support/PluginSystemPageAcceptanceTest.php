@@ -48,10 +48,17 @@ class PluginSystemPageAcceptanceTest extends SystemPagesTest
             $this->assertNotEmpty($text->title);
             $this->assertNotEmpty($text->content);
             $this->assertStringNotContainsString('::', $text->title.$text->content);
+            $main = $page->slots()->where('slot_type_id', $hero->slot_type_id)->firstOrFail();
+            $editor = route('admin.pages.slots.blocks', [$page, $main, 'edit' => $hero->id, 'locale' => 'en']);
+            $this->get($editor)->assertOk()->assertSee('value="'.e($text->title).'"', false)->assertSee($text->content);
             $preview = $this->get('/webadmin/pages/'.$page->id.'/preview')->assertOk()->assertSee($text->title)->assertSee($text->content);
             $this->assertSame('draft', $page->fresh()->status);
             $originalCount = $page->blocks()->count();
-            $text->update(['title' => 'Edited native screen '.$screen->key]);
+            $this->put(route('admin.blocks.update', $hero), [
+                'page_id' => $page->id, 'block_type_id' => $hero->block_type_id, 'slot_type_id' => $hero->slot_type_id,
+                'sort_order' => 0, 'status' => 'draft', 'locale' => 'en',
+                'title' => 'Edited native screen '.$screen->key, 'content' => $text->content, 'layout' => 'left', 'title_tag' => 'h1',
+            ])->assertRedirect()->assertSessionHasNoErrors();
             $this->get('/webadmin/pages/'.$page->id.'/preview')->assertOk()->assertSee('Edited native screen '.$screen->key);
             $same = app(PrepareSystemPage::class)->execute($site, $screen, auth()->user());
             $this->assertSame($page->id, $same->id);

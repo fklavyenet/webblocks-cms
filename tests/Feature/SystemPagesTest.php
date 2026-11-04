@@ -27,7 +27,6 @@ use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use WebBlocks\Cms\Support\Sites\ExportImport\ImportDataMapper;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportDataBuilder;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportOptions;
-use WebBlocks\Cms\Support\SystemPages\SystemPageBlocks;
 use WebBlocks\Cms\Support\SystemPages\SystemPageDefinition;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRegistry;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
@@ -128,6 +127,7 @@ class SystemPagesTest extends TestCase
     $this->assertSame(Page::TYPE_SYSTEM, $page->fresh()->page_type);
     $page = $page->fresh();
     $this->assertSame('docs', $page->publicShellPreset());
+    $page->blocks()->update(['status' => 'published']);
     $page->update(['status' => 'published']);
     $this->get('/missing-with-shared-header')->assertNotFound()->assertSee('Shared system header')->assertSee('wb-dashboard-shell', false);
   }
@@ -241,12 +241,21 @@ class SystemPagesTest extends TestCase
     $this->assertSame($hero->id, $button->parent_id);
     $this->assertSame('/', $button->buttonLinkUrl());
     $this->assertNull($hero->getRawOriginal('content'));
+    $main = $page->slots()->where('slot_type_id', $hero->slot_type_id)->firstOrFail();
+    $edit = route('admin.pages.slots.blocks', [$page, $main, 'edit' => $hero->id, 'locale' => 'en']);
+    $this->get($edit)->assertOk()->assertSee('value="This page does not exist"', false)
+      ->assertSee('The page you are looking for may have moved or never existed.');
     $count = Block::count();
     $this->get('/webadmin/pages/'.$page->id.'/preview')->assertOk()
       ->assertSee('This page does not exist')->assertSee('Back to homepage')
       ->assertDontSee('The feature’s form or result appears here');
     $this->assertSame($count, Block::count());
-    $hero->textTranslations()->firstOrFail()->update(['title' => 'Our edited error title', 'content' => 'Our edited explanation']);
+    $this->put(route('admin.blocks.update', $hero), [
+      'page_id' => $page->id, 'block_type_id' => $hero->block_type_id, 'slot_type_id' => $hero->slot_type_id,
+      'sort_order' => 0, 'status' => 'draft', 'locale' => 'en',
+      'title' => 'Our edited error title', 'content' => 'Our edited explanation', 'layout' => 'left', 'title_tag' => 'h1',
+    ])->assertRedirect()->assertSessionHasNoErrors();
+    $this->get($edit)->assertOk()->assertSee('value="Our edited error title"', false)->assertSee('Our edited explanation');
     $button->textTranslations()->firstOrFail()->update(['title' => 'Return to our home']);
     $page->blocks()->update(['status' => 'published']);
     $page->update(['status' => 'published']);
@@ -256,41 +265,24 @@ class SystemPagesTest extends TestCase
   }
 
   #[Test]
-  public function legacy_empty_drafts_have_a_read_only_sample_and_an_explicit_non_destructive_fill_action(): void
+  public function preview_reflects_saved_block_removal_without_creating_replacement_content(): void
   {
     $page = $this->prepare('core:error-404');
     $page->blocks()->delete();
-    $page->update(['settings' => ['public_shell' => 'docs']]);
-    $header = $page->slots()->whereHas('slotType', fn ($query) => $query->where('slug', 'header'))->firstOrFail();
-    $header->update(['source_type' => 'disabled']);
-    $this->get('/webadmin/pages/'.$page->id.'/edit')->assertOk()->assertSee('Add default content');
-    $this->get('/webadmin/pages/'.$page->id.'/preview')->assertOk()->assertSee('This page does not exist')->assertSee('Back to homepage');
+    $this->get('/webadmin/pages/'.$page->id.'/preview')->assertOk()
+      ->assertDontSee('This page does not exist')->assertDontSee('Back to homepage');
     $this->assertSame(0, $page->blocks()->count());
-    $this->post(route('admin.pages.system.defaults', $page))->assertRedirect()->assertSessionHasNoErrors();
-    $this->assertSame('docs', $page->fresh()->publicShellPreset());
-    $this->assertSame('disabled', $header->fresh()->source_type);
-    $this->assertSame('draft', $page->fresh()->status);
-    $this->assertSame(2, $page->blocks()->count());
-    $this->post(route('admin.pages.system.defaults', $page))->assertSessionHasErrors('system_page');
-    $this->assertSame(2, $page->blocks()->count());
-    $this->get('/webadmin/pages/'.$page->id.'/edit')->assertOk()->assertDontSee('Add default content');
-    $page->update(['status' => 'published']);
-    $this->post(route('admin.pages.system.defaults', $page))->assertForbidden();
   }
 
   #[Test]
-  public function adding_defaults_cannot_replace_main_sources_or_cross_site_permissions(): void
+  public function public_errors_use_published_blocks_and_keep_the_builtin_error_until_they_are_published(): void
   {
     $page = $this->prepare('core:error-404');
-    $page->blocks()->delete();
-    $main = $page->slots()->whereHas('slotType', fn ($query) => $query->where('slug', 'main'))->firstOrFail();
-    $main->update(['source_type' => 'disabled']);
-    $this->post(route('admin.pages.system.defaults', $page))->assertSessionHasErrors('system_page');
-    $this->assertSame(0, $page->blocks()->count());
-    $main->update(['source_type' => 'page']);
-    $user = User::forceCreate(['name' => 'Unassigned editor', 'email' => 'default-editor@example.test', 'password' => 'unused', 'role' => 'editor', 'is_active' => true]);
-    $this->actingAs($user)->post(route('admin.pages.system.defaults', $page))->assertForbidden();
-    $this->assertSame(0, $page->blocks()->count());
+    $page->blocks()->where('type', 'hero')->firstOrFail()->textTranslations()->firstOrFail()->update(['title' => 'Draft error content']);
+    $page->update(['status' => 'published']);
+    $this->get('/missing-with-draft-blocks')->assertNotFound()->assertSee('wb-error-shell', false)->assertDontSee('Draft error content');
+    $page->blocks()->update(['status' => 'published']);
+    $this->get('/missing-with-published-blocks')->assertNotFound()->assertSee('Draft error content')->assertDontSee('wb-error-shell', false);
   }
 
   #[Test]
@@ -321,18 +313,6 @@ class SystemPagesTest extends TestCase
     new SystemPageDefinition('synthetic:screen', 'synthetic::screen.title', blocks: [
       ['type' => 'html', 'translations' => ['content' => 'synthetic::screen.body']],
     ]);
-  }
-
-  #[Test]
-  public function legacy_sample_blocks_keep_the_requested_locale_when_the_page_translation_is_missing(): void
-  {
-    $page = $this->prepare('core:error-404');
-    $page->load('site', 'translations.locale');
-    $page->setRelation('currentTranslation', $page->defaultTranslation());
-    $sample = app(SystemPageBlocks::class)->sample($page, app(SystemPageRegistry::class)->find('core:error-404'), 'tr');
-    $this->assertSame('tr', $sample->first()->renderLocaleCode());
-    $this->assertSame('tr', $sample->first()->children->first()->renderLocaleCode());
-    $this->assertSame('Bu sayfa mevcut değil', $sample->first()->title);
   }
 }
 

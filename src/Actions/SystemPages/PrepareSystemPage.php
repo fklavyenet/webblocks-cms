@@ -38,7 +38,7 @@ final class PrepareSystemPage
       }
       app(PageLayoutSlotSyncer::class)->seedInitialSlots($page, 'default');
       SystemPage::create(['site_id' => $site->id, 'key' => $definition->key, 'page_id' => $page->id]);
-      app(SystemPageBlocks::class)->add($page, $definition);
+      app(SystemPageBlocks::class)->seed($page, $definition);
       app(PageRevisionManager::class)->capture($page->fresh(), $user, 'System page prepared', 'A draft system page design was prepared.', event: 'page_created');
 
       return $page;

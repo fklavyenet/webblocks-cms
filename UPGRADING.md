@@ -1,17 +1,16 @@
 # Upgrading and Installation Topologies
 
-## 1.117.1: native System Page default content
+## 1.117.2: System Pages start with editable native content
 
-New System Page drafts contain editable native blocks. Existing designs are not
-changed by the update. For an older draft with an empty page-owned Main slot,
-open its editor and use **Add default content**, then **Edit Blocks**. Layout and
-Shared Slot bindings remain intact. Default blocks are drafts; review and publish
-them with the page through the normal workflow. No additional migration is needed.
+In Pages, choose a site and prepare a System Page. Its initial draft already
+contains native CMS blocks and translations. Use **Main → Edit Blocks** to edit
+the prepared content and the usual page settings for layout and Shared Slots.
+The normal editor opens with the saved default text filled in. Previews render
+saved blocks; publication uses the ordinary page and block workflow.
 
-Core error previews now display default or saved native content. Updated plugin
-releases provide screen-specific native starters; runtime forms and transaction
-state remain feature-owned. On older compatible CMS versions the plugin's guarded
-integration preserves its existing rendering. Native starters require CMS 1.117.1.
+No additional migration is needed. The native starter declarations supplied by
+Commerce 0.17.5, Campaigns 0.7.8, Appointments 0.16.5 and Memberships 0.2.5 remain
+supported. Runtime forms and transaction state stay feature-owned.
 
 ## 1.117.0: System Pages and modal tools
 

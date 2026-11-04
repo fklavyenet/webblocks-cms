@@ -118,10 +118,13 @@ blocks declared through `PluginDefinition::systemPages` in PHP. Preparing a desi
 must create ordinary editable block/translation rows. JSON templates, encoded JSON
 content and a separate plugin-owned static page-content store are not accepted.
 Preserve the site's existing page editor, layouts, Shared Slots, revisions and
-publication workflow. An empty technical preview placeholder alone is insufficient.
+publication workflow. An empty technical preview placeholder alone is insufficient. Create starter
+content in the initial page transaction and render saved blocks in preview; do
+not synthesize unsaved editorial copy or require a separate content-fill step.
 
 Acceptance checks must cover first preparation, meaningful read-only preview,
-editing the native blocks, explicit publication, repeated preparation without
+prefilled native editor fields, saving through the normal block form, explicit
+publication, repeated preparation without
 replacement, and preservation of existing designs. Keep record-specific forms,
 signed links, authorization and transaction state in feature controllers; never run
 those actions or expose live customer/payment/token data for a design preview.

@@ -404,7 +404,6 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::get('/pages/{page}/seo-check/freshness', PageSeoFreshnessController::class)->name('pages.seo-check.freshness');
     Route::get('/pages/{page}/seo-check', PageSeoCheckController::class)->name('pages.seo-check');
     Route::post('/pages/system', [SystemPageController::class, 'store'])->name('pages.system.store');
-    Route::post('/pages/{page}/system-defaults', [SystemPageController::class, 'defaults'])->name('pages.system.defaults');
     Route::resource('pages', PageController::class)->except([]);
     Route::resource('shared-slots', SharedSlotController::class)->parameters(['shared-slots' => 'shared_slot'])->except(['show'])->missing($missingSharedSlot);
     Route::get('media', [MediaController::class, 'index'])->name('media.index');

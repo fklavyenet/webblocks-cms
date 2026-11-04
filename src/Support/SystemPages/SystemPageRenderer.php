@@ -64,26 +64,10 @@ final class SystemPageRenderer
     return collect($slots)->contains(fn ($slot) => ($slot['slug'] ?? null) === 'main' && collect($slot['blocks'] ?? [])->isNotEmpty());
   }
 
-  public function defaultContent(Page $page, string $locale): string
+  public function previewContent(Page $page, string $locale): string
   {
-    $definition = app(SystemPageRegistry::class)->find($this->identity($page) ?? '');
-    if (! $definition) {
-      return '';
-    }
-
-    return view('webblocks-cms::pages.partials.slot', ['page' => $page, 'renderWrapper' => false, 'slot' => [
-      'slug' => 'main', 'blocks' => app(SystemPageBlocks::class)->sample($page, $definition, $locale),
-    ]])->render();
-  }
-
-  public function previewContent(Page $page, iterable $slots, string $locale): string
-  {
-    $content = $this->hasContent($slots) ? '' : $this->defaultContent($page, $locale);
-    if (! in_array($this->identity($page), ['core:error-404', 'core:error-503'], true)) {
-      $content .= view('webblocks-cms::pages.partials.system-page-preview', ['locale' => $locale])->render();
-    }
-
-    return $content;
+    return in_array($this->identity($page), ['core:error-404', 'core:error-503'], true)
+      ? '' : view('webblocks-cms::pages.partials.system-page-preview', ['locale' => $locale])->render();
   }
 
   /** The controller retains its form, status, headers and all authorization. */
@@ -143,8 +127,13 @@ final class SystemPageRenderer
         return null;
       }
 
+      $data = $this->data($page, $locale->code);
+      if (! $data['systemPageHasContent']) {
+        return null;
+      }
+
       return view('webblocks-cms::errors.system', [
-        ...$this->data($page, $locale->code), 'systemError' => 'not_found', 'systemErrorCode' => 404,
+        ...$data,
         'publicLocaleCode' => $locale->code, 'previewMode' => false,
       ])->render();
     } catch (Throwable) {
@@ -166,10 +155,13 @@ final class SystemPageRenderer
       $page = $site ? $this->design($site, 'core:error-503') : null;
       if ($page && ! app(PublicPageAccess::class)->protected($page)) {
         $locale = app(LocaleResolver::class)->default()->code;
-        $html = view('webblocks-cms::errors.system', [
-          ...$this->data($page, $locale), 'systemError' => 'maintenance', 'systemErrorCode' => 503,
-          'publicLocaleCode' => $locale, 'systemMaintenance' => true,
-        ])->render();
+        $data = $this->data($page, $locale);
+        if ($data['systemPageHasContent']) {
+          $html = view('webblocks-cms::errors.system', [
+            ...$data,
+            'publicLocaleCode' => $locale, 'systemMaintenance' => true,
+          ])->render();
+        }
       }
     } catch (Throwable) {
       // The built-in static template remains available when design rendering fails.
