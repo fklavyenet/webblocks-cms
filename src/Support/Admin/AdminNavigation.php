@@ -126,19 +126,11 @@ final class AdminNavigation
             // Keep the established plugin buckets independent of the new core headings.
             $sidebarGroups = app(PluginSidebarGroups::class)->appendTo($sidebarGroups, $user, $adminLocale);
             $sidebarGroups = array_values(array_filter([...$coreGroups, ...$sidebarGroups], fn ($group) => $group['items'] !== []));
-    $top = collect($menuItems);
-    $content = collect($sidebarGroups)->firstWhere('key', 'content-tools') ?? ['key' => 'content-tools', 'icon' => 'wb-icon-blocks', 'items' => []];
-    $content['label'] = $adminTranslator->get('jobs.content', $adminLocale);
-    $content['items'] = [...$top->whereIn('route', ['admin.pages.index', 'admin.media.index'])->all(), ...$content['items'], ...$top->where('route', 'admin.site-assets.index')->all()];
-    if (! collect($sidebarGroups)->contains('key', 'content-tools')) {
-      $sidebarGroups[] = $content;
-    }
-    $menuItems = $top->whereIn('route', ['admin.dashboard', 'admin.sites.index'])->values()->all();
     $structureRoutes = ['admin.page-layouts.index', 'admin.slot-types.index', 'admin.block-types.index', 'admin.system.icons.index'];
     $structure = [];
     foreach ($sidebarGroups as &$group) {
       if ($group['key'] === 'content-tools') {
-      $group = $content;
+        $group['label'] = $adminTranslator->get('jobs.content', $adminLocale);
       }
       if ($group['key'] === 'system') {
         $structure = array_values(array_filter($group['items'], fn ($item) => in_array($item['route'], $structureRoutes, true)));

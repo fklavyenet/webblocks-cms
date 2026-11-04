@@ -323,7 +323,7 @@
     </div>
     <div class="wb-card-body">
       <div class="wb-table-wrap">
-        <table class="wb-table wb-table-striped wb-table-hover">
+        <table class="wb-table wb-table-striped wb-table-hover" aria-label="{{ $adminText('translations') }}">
           <thead>
             <tr>
               <th>{{ $adminText('locale') }}</th>
@@ -331,7 +331,7 @@
               <th>{{ $adminText('slug') }}</th>
               <th>{{ $adminText('path') }}</th>
               <th>{{ $adminText('open') }}</th>
-              <th>{{ $adminText('action') }}</th>
+              <th>{{ $adminText('actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -372,16 +372,18 @@
                   @endif
                 </td>
                 <td>
-                  @if ($translation)
-                    <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'seo', 'seo_locale' => $locale->code, 'return_url' => $pageReturnUrl]) }}#page-management" class="wb-btn wb-btn-secondary">{{ $adminTranslator->get('seo.title', $adminLocale) }}</a>
-                  @endif
-                  @if (! $canEditContent)
-                    <span class="wb-text-sm wb-text-muted">{{ $adminText('locked_by_workflow') }}</span>
-                  @elseif ($translation)
-                    <a href="{{ route('admin.pages.translations.edit', ['page' => $page, 'translation' => $translation, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-secondary">{{ $adminText('edit_translation') }}</a>
-                  @else
-                    <a href="{{ route('admin.pages.translations.create', ['page' => $page, 'locale' => $locale, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-secondary">{{ $adminText('add_translation') }}</a>
-                  @endif
+                  <div class="wb-action-group">
+                    @if ($translation)
+                      <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'seo', 'seo_locale' => $locale->code, 'return_url' => $pageReturnUrl]) }}#page-management" class="wb-action-btn" title="{{ $adminTranslator->get('seo.title', $adminLocale) }}: {{ $locale->name }}" aria-label="{{ $adminTranslator->get('seo.title', $adminLocale) }}: {{ $locale->name }}"><i class="wb-icon wb-icon-search" aria-hidden="true"></i></a>
+                    @endif
+                    @if (! $canEditContent)
+                      <span class="wb-text-sm wb-text-muted">{{ $adminText('locked_by_workflow') }}</span>
+                    @elseif ($translation)
+                      <a href="{{ route('admin.pages.translations.edit', ['page' => $page, 'translation' => $translation, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn" title="{{ $adminText('edit_translation') }}: {{ $locale->name }}" aria-label="{{ $adminText('edit_translation') }}: {{ $locale->name }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                    @else
+                      <a href="{{ route('admin.pages.translations.create', ['page' => $page, 'locale' => $locale, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn" title="{{ $adminText('add_translation') }}: {{ $locale->name }}" aria-label="{{ $adminText('add_translation') }}: {{ $locale->name }}"><i class="wb-icon wb-icon-plus" aria-hidden="true"></i></a>
+                    @endif
+                  </div>
                 </td>
               </tr>
             @endforeach

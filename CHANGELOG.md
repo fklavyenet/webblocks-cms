@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.117.3
+
+- Use the native WebBlocks UI accordion for System pages, with a visible rotating chevron, keyboard-operable trigger and labelled panel.
+- Name the Translations action column Actions and use compact SEO, edit and add icons with localized action/language labels while retaining their existing destinations and workflow permissions.
+- Restore Pages, Media and Assets as direct sidebar links after Dashboard and Sites. Keep grouped content tools, contact/analytics, access, consent, structure, system, maintenance and plugin navigation intact.
+
 ## 1.117.2
 
 - Create System Pages with their native block content and translations in the initial preparation transaction, ready to edit through the ordinary Main block editor.
