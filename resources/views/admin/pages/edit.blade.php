@@ -220,6 +220,16 @@
   </div>
   @endpush
 
+  @if ($canAddSystemPageDefaults ?? false)
+    <div class="wb-alert wb-alert-info" role="status">
+      <p>{{ __('webblocks-cms::system_pages.defaults_help') }}</p>
+      <form method="POST" action="{{ route('admin.pages.system.defaults', $page) }}">
+        @csrf
+        <button class="wb-btn wb-btn-secondary" type="submit">{{ __('webblocks-cms::system_pages.add_defaults') }}</button>
+      </form>
+    </div>
+  @endif
+  @error('system_page')<div class="wb-alert wb-alert-danger" role="alert">{{ $message }}</div>@enderror
   @include('webblocks-cms::admin.pages.partials.slots-card', [
     'page' => $page,
     'slotTypes' => $slotTypes,

@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Models\SystemPage;
+use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -26,6 +27,7 @@ use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use WebBlocks\Cms\Support\Sites\ExportImport\ImportDataMapper;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportDataBuilder;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportOptions;
+use WebBlocks\Cms\Support\SystemPages\SystemPageDefinition;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRegistry;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
 use WebBlocks\Cms\Support\Updates\CmsUpdateMaintenance;
@@ -52,6 +54,7 @@ class SystemPagesTest extends TestCase
     parent::setUp();
     $this->withoutMiddleware(EnsureInstalled::class);
     app(CoreLayoutCatalogSyncer::class)->sync();
+    app(CoreBlockTypeCatalogSyncer::class)->sync();
     Locale::firstOrCreate(['code' => 'en'], ['name' => 'English', 'is_default' => true, 'is_enabled' => true]);
     $this->site = Site::create(['name' => 'Synthetic system site', 'handle' => 'system-test', 'is_primary' => true]);
     if (! class_exists('App\\Models\\User')) {
@@ -100,6 +103,7 @@ class SystemPagesTest extends TestCase
   {
     $page = $this->prepare('core:error-404');
     $this->marker($page, 'Custom error introduction');
+    $page->blocks()->update(['status' => 'published']);
     $page->update(['status' => Page::STATUS_PUBLISHED]);
     $this->get('/missing-after-publish')->assertNotFound()->assertSee('Custom error introduction')->assertSee('This page does not exist')->assertHeader('X-Robots-Tag', 'noindex, nofollow');
     $this->get('/'.$page->slug)->assertNotFound();
@@ -223,6 +227,99 @@ class SystemPagesTest extends TestCase
     $page->update(['status' => 'archived']);
     CmsUpdateMaintenance::arguments();
     $this->assertFileDoesNotExist(SystemPageRenderer::maintenancePath());
+  }
+
+  #[Test]
+  public function defaults_are_editable_native_blocks_and_preview_uses_the_same_content_without_writes(): void
+  {
+    $page = $this->prepare('core:error-404');
+    $this->assertSame(['hero', 'button_link'], $page->blocks()->orderBy('id')->pluck('type')->all());
+    $this->assertSame(['draft'], $page->blocks()->distinct()->pluck('status')->all());
+    $hero = $page->blocks()->where('type', 'hero')->firstOrFail();
+    $button = $page->blocks()->where('type', 'button_link')->firstOrFail();
+    $this->assertSame($hero->id, $button->parent_id);
+    $this->assertSame('/', $button->buttonLinkUrl());
+    $this->assertNull($hero->getRawOriginal('content'));
+    $count = Block::count();
+    $this->get('/webadmin/pages/'.$page->id.'/preview')->assertOk()
+      ->assertSee('This page does not exist')->assertSee('Back to homepage')
+      ->assertDontSee('The feature’s form or result appears here');
+    $this->assertSame($count, Block::count());
+    $hero->textTranslations()->firstOrFail()->update(['title' => 'Our edited error title', 'content' => 'Our edited explanation']);
+    $button->textTranslations()->firstOrFail()->update(['title' => 'Return to our home']);
+    $page->blocks()->update(['status' => 'published']);
+    $page->update(['status' => 'published']);
+    $response = $this->get('/missing-edited-error')->assertNotFound()->assertSee('Our edited error title')
+      ->assertSee('Our edited explanation')->assertSee('Return to our home')->assertDontSee('This page does not exist');
+    $this->assertSame(1, substr_count($response->getContent(), 'Our edited error title</h1>'));
+  }
+
+  #[Test]
+  public function legacy_empty_drafts_have_a_read_only_sample_and_an_explicit_non_destructive_fill_action(): void
+  {
+    $page = $this->prepare('core:error-404');
+    $page->blocks()->delete();
+    $page->update(['settings' => ['public_shell' => 'docs']]);
+    $header = $page->slots()->whereHas('slotType', fn ($query) => $query->where('slug', 'header'))->firstOrFail();
+    $header->update(['source_type' => 'disabled']);
+    $this->get('/webadmin/pages/'.$page->id.'/edit')->assertOk()->assertSee('Add default content');
+    $this->get('/webadmin/pages/'.$page->id.'/preview')->assertOk()->assertSee('This page does not exist')->assertSee('Back to homepage');
+    $this->assertSame(0, $page->blocks()->count());
+    $this->post(route('admin.pages.system.defaults', $page))->assertRedirect()->assertSessionHasNoErrors();
+    $this->assertSame('docs', $page->fresh()->publicShellPreset());
+    $this->assertSame('disabled', $header->fresh()->source_type);
+    $this->assertSame('draft', $page->fresh()->status);
+    $this->assertSame(2, $page->blocks()->count());
+    $this->post(route('admin.pages.system.defaults', $page))->assertSessionHasErrors('system_page');
+    $this->assertSame(2, $page->blocks()->count());
+    $this->get('/webadmin/pages/'.$page->id.'/edit')->assertOk()->assertDontSee('Add default content');
+    $page->update(['status' => 'published']);
+    $this->post(route('admin.pages.system.defaults', $page))->assertForbidden();
+  }
+
+  #[Test]
+  public function adding_defaults_cannot_replace_main_sources_or_cross_site_permissions(): void
+  {
+    $page = $this->prepare('core:error-404');
+    $page->blocks()->delete();
+    $main = $page->slots()->whereHas('slotType', fn ($query) => $query->where('slug', 'main'))->firstOrFail();
+    $main->update(['source_type' => 'disabled']);
+    $this->post(route('admin.pages.system.defaults', $page))->assertSessionHasErrors('system_page');
+    $this->assertSame(0, $page->blocks()->count());
+    $main->update(['source_type' => 'page']);
+    $user = User::forceCreate(['name' => 'Unassigned editor', 'email' => 'default-editor@example.test', 'password' => 'unused', 'role' => 'editor', 'is_active' => true]);
+    $this->actingAs($user)->post(route('admin.pages.system.defaults', $page))->assertForbidden();
+    $this->assertSame(0, $page->blocks()->count());
+  }
+
+  #[Test]
+  public function maintenance_preview_has_editable_default_copy_without_an_unrelated_form_placeholder(): void
+  {
+    $page = $this->prepare('core:error-503');
+    $this->get('/webadmin/pages/'.$page->id.'/preview')->assertOk()
+      ->assertSee('We are carrying out a brief update')->assertSee('We are updating our website.')
+      ->assertDontSee('The feature’s form or result appears here');
+    $this->assertFalse(app()->isDownForMaintenance());
+    $page->blocks()->where('type', 'hero')->firstOrFail()->textTranslations()->firstOrFail()->update(['title' => 'Our maintenance announcement']);
+    $page->blocks()->update(['status' => 'published']);
+    $page->update(['status' => 'published']);
+    CmsUpdateMaintenance::arguments();
+    $html = file_get_contents(SystemPageRenderer::maintenancePath());
+    $this->assertStringContainsString('Our maintenance announcement', $html);
+    $this->assertStringNotContainsString('We are carrying out a brief update', $html);
+  }
+
+  #[Test]
+  public function default_home_links_respect_the_public_mount_and_reject_non_native_recipes(): void
+  {
+    config()->set('webblocks-cms.public.mount', 'content');
+    $page = $this->prepare('core:error-404');
+    $this->assertSame('/content', $page->blocks()->where('type', 'button_link')->firstOrFail()->buttonLinkUrl());
+    $this->get('/webadmin/pages/'.$page->id.'/preview')->assertOk()->assertSee('href="/content"', false);
+    $this->expectException(\InvalidArgumentException::class);
+    new SystemPageDefinition('synthetic:screen', 'synthetic::screen.title', blocks: [
+      ['type' => 'html', 'translations' => ['content' => 'synthetic::screen.body']],
+    ]);
   }
 }
 

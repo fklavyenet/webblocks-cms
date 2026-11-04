@@ -19,4 +19,9 @@ return [
   'editor_help' => 'Dies ist eine Systemseite. Verwalte hier Layout, gemeinsame Slots und umgebende Inhalte. Der funktionale Inhalt folgt dem verfassten Inhalt in Main und lässt sich nicht durch Bearbeiten von Blöcken entfernen. Diese Seite hat keine eigene öffentliche Adresse.',
   'preview' => 'Hier erscheint zur Laufzeit das Formular oder Ergebnis der Funktion. Diese Vorschau enthält keine Kunden-, Konto- oder Zahlungsdaten.',
   'maintenance_help' => 'Das veröffentlichte Wartungsdesign der primären Website wird vor CMS-Updates gerendert. Das gespeicherte HTML funktioniert ohne Anwendung oder Datenbank. Andere Websites teilen diese installationsweite Wartungsantwort.',
+  'feature_intro' => 'Bitte prüfen Sie die folgenden Informationen.',
+  'add_defaults' => 'Standardinhalt hinzufügen',
+  'defaults_help' => 'Dieser Entwurf hat noch keine Main-Blöcke. Fügen Sie die CMS-Standardblöcke hinzu und bearbeiten Sie diese mit Blöcke bearbeiten. Layout und gemeinsame Slots bleiben erhalten.',
+  'defaults_added' => 'CMS-Standardblöcke als Entwürfe hinzugefügt. Prüfen und anschließend ausdrücklich veröffentlichen.',
+  'defaults_unavailable' => 'Standardinhalte können nur einem Entwurf mit leerem, seiteneigenem Main-Slot hinzugefügt werden.',
 ];

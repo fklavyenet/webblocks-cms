@@ -30,19 +30,14 @@
     </div>
 
     <div class="wb-card-body wb-stack wb-gap-3">
-        <div class="wb-grid wb-grid-3">
-            <div class="wb-stack wb-gap-1">
-                <span class="wb-text-sm wb-text-muted">{{ $layoutSlotSummaryText('page_layout') }}</span>
-                <strong>{{ $layoutLabel }}</strong>
-            </div>
-            <div class="wb-stack wb-gap-1">
-                <span class="wb-text-sm wb-text-muted">{{ $layoutSlotSummaryText('layout_slots') }}</span>
-                <strong>{{ $layoutSlotComparison['layout_slot_count'] ?? 0 }}</strong>
-            </div>
-            <div class="wb-stack wb-gap-1">
-                <span class="wb-text-sm wb-text-muted">{{ $layoutSlotSummaryText('page_slots') }}</span>
-                <strong>{{ $layoutSlotComparison['page_slot_count'] ?? 0 }}</strong>
-            </div>
+        <div class="wb-table-wrap">
+            <table class="wb-table">
+                <tbody>
+                    <tr><th scope="row">{{ $layoutSlotSummaryText('page_layout') }}</th><td>{{ $layoutLabel }}</td></tr>
+                    <tr><th scope="row">{{ $layoutSlotSummaryText('layout_slots') }}</th><td>{{ $layoutSlotComparison['layout_slot_count'] ?? 0 }}</td></tr>
+                    <tr><th scope="row">{{ $layoutSlotSummaryText('page_slots') }}</th><td>{{ $layoutSlotComparison['page_slot_count'] ?? 0 }}</td></tr>
+                </tbody>
+            </table>
         </div>
 
         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.117.1
+
+- Prepare System Pages with ordinary editable CMS blocks and enabled-locale translation rows instead of an empty Main slot. Default text and links are native block content, with no JSON template/content store.
+- Show meaningful 404 and maintenance previews using the same native content as the public screen. Edited error copy replaces the default message rather than preceding an immutable duplicate.
+- Offer an explicit Add default content action for older empty draft designs, preserving layout, Shared Slots and revisions; never overwrite existing Main content or publish automatically.
+- Add translated native starter-block declarations for plugins, keep previews free of real transactions and record plugin public-screen development/acceptance requirements.
+
 ## 1.117.0
 
 - Manage visitor-facing system screen designs from Pages, with a System badge, a page-type filter, explicit draft preparation and the existing layout, Shared Slot, translation, preview and publication controls.

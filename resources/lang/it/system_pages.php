@@ -19,4 +19,9 @@ return [
   'editor_help' => 'Questa è una pagina di sistema. Gestisci qui layout, slot condivisi e contenuti circostanti. Il contenuto funzionale segue il contenuto redatto in Main e non può essere rimosso modificando i blocchi. Questa pagina non ha un indirizzo pubblico indipendente.',
   'preview' => 'Il modulo o risultato della funzionalità appare qui durante il funzionamento. Questa anteprima non contiene dati di clienti, account o pagamenti.',
   'maintenance_help' => 'Il design di manutenzione pubblicato del sito principale viene generato prima degli aggiornamenti del CMS. Il codice HTML salvato funziona senza applicazione o database. Gli altri siti condividono questa risposta di manutenzione globale.',
+  'feature_intro' => 'Consulta le informazioni seguenti.',
+  'add_defaults' => 'Aggiungi contenuto predefinito',
+  'defaults_help' => 'Questa bozza non contiene blocchi Main. Aggiungi i blocchi CMS predefiniti e modificali con Modifica blocchi. Layout e slot condivisi vengono mantenuti.',
+  'defaults_added' => 'Blocchi CMS predefiniti aggiunti come bozze. Controllali e pubblicali esplicitamente.',
+  'defaults_unavailable' => 'I contenuti predefiniti richiedono una bozza con uno slot Main vuoto appartenente alla pagina.',
 ];

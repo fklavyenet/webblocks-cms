@@ -19,4 +19,9 @@ return [
   'editor_help' => 'Cette page système permet de gérer la mise en page, les slots partagés et le contenu environnant. Le contenu fonctionnel suit le contenu rédigé dans Main et ne peut pas être supprimé en modifiant les blocs. Cette page ne possède pas sa propre adresse publique.',
   'preview' => 'Le formulaire ou résultat de la fonctionnalité apparaît ici en fonctionnement. Cet aperçu ne contient aucune donnée client, de compte ou de paiement.',
   'maintenance_help' => 'Le design de maintenance publié du site principal est rendu avant les mises à jour du CMS. Le HTML enregistré fonctionne sans application ni base de données. Les autres sites partagent cette réponse de maintenance globale.',
+  'feature_intro' => 'Veuillez consulter les informations ci-dessous.',
+  'add_defaults' => 'Ajouter le contenu par défaut',
+  'defaults_help' => 'Ce brouillon ne contient aucun bloc Main. Ajoutez les blocs CMS par défaut, puis modifiez-les avec Modifier les blocs. La mise en page et les emplacements partagés sont conservés.',
+  'defaults_added' => 'Les blocs CMS par défaut ont été ajoutés en brouillon. Vérifiez-les puis publiez explicitement.',
+  'defaults_unavailable' => 'Le contenu par défaut nécessite un brouillon avec un emplacement Main vide appartenant à la page.',
 ];

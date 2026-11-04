@@ -160,7 +160,7 @@
             @php
                 $systemPageRuntime = true;
                 $systemPageContent = ($systemPagePreview ?? false)
-                    ? '<div class="wb-alert wb-alert-info" role="status">'.e(__('webblocks-cms::system_pages.preview')).'</div>'
+                    ? app(\WebBlocks\Cms\Support\SystemPages\SystemPageRenderer::class)->previewContent($page, $slots ?? [], $publicLocaleCode ?? app()->getLocale())
                     : $__env->yieldContent('content');
             @endphp
         @endif

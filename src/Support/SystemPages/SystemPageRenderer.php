@@ -54,7 +54,36 @@ final class SystemPageRenderer
       $page->setRelation('currentTranslation', $translation);
     }
 
-    return [...app(PublicPagePresenter::class)->present($page, locale: $locale), 'systemPageRuntime' => true];
+    $data = app(PublicPagePresenter::class)->present($page, locale: $locale);
+
+    return [...$data, 'systemPageRuntime' => true, 'systemPageHasContent' => $this->hasContent($data['slots'])];
+  }
+
+  private function hasContent(iterable $slots): bool
+  {
+    return collect($slots)->contains(fn ($slot) => ($slot['slug'] ?? null) === 'main' && collect($slot['blocks'] ?? [])->isNotEmpty());
+  }
+
+  public function defaultContent(Page $page, string $locale): string
+  {
+    $definition = app(SystemPageRegistry::class)->find($this->identity($page) ?? '');
+    if (! $definition) {
+      return '';
+    }
+
+    return view('webblocks-cms::pages.partials.slot', ['page' => $page, 'renderWrapper' => false, 'slot' => [
+      'slug' => 'main', 'blocks' => app(SystemPageBlocks::class)->sample($page, $definition, $locale),
+    ]])->render();
+  }
+
+  public function previewContent(Page $page, iterable $slots, string $locale): string
+  {
+    $content = $this->hasContent($slots) ? '' : $this->defaultContent($page, $locale);
+    if (! in_array($this->identity($page), ['core:error-404', 'core:error-503'], true)) {
+      $content .= view('webblocks-cms::pages.partials.system-page-preview', ['locale' => $locale])->render();
+    }
+
+    return $content;
   }
 
   /** The controller retains its form, status, headers and all authorization. */
@@ -63,7 +92,8 @@ final class SystemPageRenderer
     $values = $view->getData();
     if (isset($values['page'])) {
       if ($values['page']->isSystemPage() && ($values['previewMode'] ?? false)) {
-        $view->with('systemPageRuntime', true)->with('systemPagePreview', true);
+        $view->with('systemPageRuntime', true)->with('systemPagePreview', true)
+          ->with('systemPageHasContent', $this->hasContent($values['slots'] ?? []));
       }
 
       return;

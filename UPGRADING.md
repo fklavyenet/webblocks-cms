@@ -1,5 +1,18 @@
 # Upgrading and Installation Topologies
 
+## 1.117.1: native System Page default content
+
+New System Page drafts contain editable native blocks. Existing designs are not
+changed by the update. For an older draft with an empty page-owned Main slot,
+open its editor and use **Add default content**, then **Edit Blocks**. Layout and
+Shared Slot bindings remain intact. Default blocks are drafts; review and publish
+them with the page through the normal workflow. No additional migration is needed.
+
+Core error previews now display default or saved native content. Updated plugin
+releases provide screen-specific native starters; runtime forms and transaction
+state remain feature-owned. On older compatible CMS versions the plugin's guarded
+integration preserves its existing rendering. Native starters require CMS 1.117.1.
+
 ## 1.117.0: System Pages and modal tools
 
 Run the normal package update migrations to create the relational system-screen bindings. In Pages, select a site and prepare a System Page draft before configuring its layout and Shared Slots. No design is published automatically. Updated first-party plugin releases declare their screens; older plugin releases retain their built-in rendering.

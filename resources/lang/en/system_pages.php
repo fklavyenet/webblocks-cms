@@ -19,4 +19,9 @@ return [
   'editor_help' => 'This is a system page. Manage its layout, shared slots and surrounding content here. The screen’s functional content appears after the authored content in Main; it cannot be removed by editing blocks. This page has no independent public slug.',
   'preview' => 'The feature’s form or result appears here at runtime. This preview contains no customer, account or payment data.',
   'maintenance_help' => 'The published maintenance design of the primary site is rendered before CMS updates. Its saved HTML works without the application or database. Other sites share this installation-wide maintenance response.',
+  'feature_intro' => 'Please review the information below.',
+  'add_defaults' => 'Add default content',
+  'defaults_help' => 'This draft has no Main blocks yet. Add the screen’s default CMS blocks, then edit them with Edit Blocks. Layout and Shared Slots are kept.',
+  'defaults_added' => 'Default CMS blocks added as drafts. Review and publish explicitly when ready.',
+  'defaults_unavailable' => 'Defaults can only be added to a draft with an empty, page-owned Main slot.',
 ];

@@ -111,6 +111,24 @@ The dirty-overlay fixture checks the real close guard on a rendered block form: 
 - Rich text: paste headings, paragraphs, nested lists and table cells; confirm readable copy and safe markup. Check keyboard and toolbar undo/redo after blur, code formatting and selection restoration, link create/edit/remove, grouped typing, redo branching and IME composition.
 - Rich-text focus mode: check word count, nested link dialogs, form submission values, Escape returning to the host modal, independent fields, mobile layout/overflow and browser errors.
 
+## Plugin public screen acceptance
+
+Visitor-facing plugin System Pages must start with meaningful, translated native CMS
+blocks declared through `PluginDefinition::systemPages` in PHP. Preparing a design
+must create ordinary editable block/translation rows. JSON templates, encoded JSON
+content and a separate plugin-owned static page-content store are not accepted.
+Preserve the site's existing page editor, layouts, Shared Slots, revisions and
+publication workflow. An empty technical preview placeholder alone is insufficient.
+
+Acceptance checks must cover first preparation, meaningful read-only preview,
+editing the native blocks, explicit publication, repeated preparation without
+replacement, and preservation of existing designs. Keep record-specific forms,
+signed links, authorization and transaction state in feature controllers; never run
+those actions or expose live customer/payment/token data for a design preview.
+Do not repeat immutable static headings after the editable Main content. Confirm
+fallback rendering on compatible older CMS and disabled/unconfigured designs.
+See the canonical plugin development guide for the recipe contract.
+
 ## Runtime inventory review
 
 `resources/contracts/inventory.md` is the product-owned source of truth for AI authoring. Update it in the same product change as supported block fields, variants, enums, media, children, render behavior, editor behavior, API permissions, or plugin lifecycle changes. The copy in the documentation repository is a generated version snapshot; never fix product behavior by editing that copy first.

@@ -575,7 +575,7 @@ class PluginDefinition
     return $this->apiRoutes;
   }
 
-  /** @param array<string, array{label: string, routes: array<string>}> $pages */
+  /** @param array<string, array{label: string, routes: array<string>, blocks?: array}> $pages */
   public function systemPages(array $pages): self
   {
     $definitions = [];
@@ -586,7 +586,7 @@ class PluginDefinition
         throw new PluginException('Each system screen must own distinct public routes.');
       }
       $claimedRoutes = [...$claimedRoutes, ...$routes];
-      $definition = new SystemPageDefinition($this->handle.':'.$handle, $page['label'], $routes);
+      $definition = new SystemPageDefinition($this->handle.':'.$handle, $page['label'], $routes, $page['blocks'] ?? []);
       $definitions[$definition->key] = $definition;
     }
     $this->systemPages = $definitions;
