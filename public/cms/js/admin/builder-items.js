@@ -80,7 +80,7 @@
             return;
         }
 
-        var expanded = body.classList.contains('is-open');
+        var expanded = body.open;
 
         toggleButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
         toggleButton.setAttribute('title', expanded ? i18n('collapse-item') : i18n('expand-item'));
@@ -141,6 +141,12 @@
         }
     });
 
+    document.addEventListener('toggle', function (event) {
+        if (event.target.matches('details[data-wb-builder-item-body]')) {
+            syncBuilderItemToggle(event.target.closest('[data-wb-builder-item-row]'));
+        }
+    }, true);
+
     document.addEventListener('click', function (event) {
         var addButton = event.target.closest('[data-wb-builder-item-add]');
         var moveButton = event.target.closest('[data-wb-builder-item-move]');
@@ -186,8 +192,7 @@
             var itemRow = toggleButton.closest('[data-wb-builder-item-row]');
             var body = itemRow ? itemRow.querySelector('[data-wb-builder-item-body]') : null;
 
-            if (body && window.WBCollapse) {
-                window.WBCollapse.toggle(body.id);
+            if (body) {
                 syncBuilderItemToggle(itemRow);
             }
 

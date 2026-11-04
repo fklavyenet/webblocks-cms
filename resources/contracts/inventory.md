@@ -2480,8 +2480,12 @@ Permission selections, filtered initial openings, consent submission, saved-view
 forms and update-history entries preserve their existing behavior. Version-only
 release notes remain ordinary rows rather than empty disclosures.
 
-Builder item bodies use the existing `WBCollapse.toggle` API with stable,
-editor/index-scoped panel ids; order, deletion and form values remain CMS-owned.
+Builder item bodies use native details panels controlled through the existing
+`WBCollapse.toggle` API with render-unique, editor/index-scoped panel ids. Their
+native summary is hidden because the external header toggle remains available
+beside reorder/delete actions; closed native bodies leave the keyboard sequence
+and open bodies have natural height without a legacy CSS ceiling. Panel ids stay
+unchanged during reordering; order, deletion and form values remain CMS-owned.
 The flat block-tree table retains its hierarchy, search, persisted expansion and
 ancestor visibility rules rather than hiding table rows through generic panel
 CSS. No new authoring field, block catalog entry or persistence is introduced.

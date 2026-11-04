@@ -40,7 +40,7 @@ class NativeDisclosureTest extends TestCase
     @$document->loadHTML($public.$permissions.$builder);
     $xpath = new DOMXPath($document);
     $this->assertSame(2, $xpath->query('//details[contains(@class,"wb-accordion-item")]/summary[contains(@class,"wb-accordion-trigger")]')->length);
-    $this->assertSame(1, $xpath->query('//details[contains(@class,"wb-collapse-panel")]/summary[contains(@class,"wb-collapse-trigger")]')->length);
+    $this->assertSame(2, $xpath->query('//details[contains(@class,"wb-collapse-panel")]/summary[contains(@class,"wb-collapse-trigger")]')->length);
     $this->assertSame(0, $xpath->query('//summary[@aria-expanded or @role="button" or @tabindex]')->length);
     $this->assertSame(1, $xpath->query('//input[@name="permissions[]" and @value="cms.pages.read" and @checked]')->length);
     $this->assertSame(0, $xpath->query('//summary//input | //summary//button | //summary//a')->length);
@@ -48,7 +48,7 @@ class NativeDisclosureTest extends TestCase
       $this->assertSame(1, $xpath->query('./summary', $details)->length);
       $this->assertSame(1, $xpath->query('./div[contains(@class,"-body")]', $details)->length);
     }
-    $body = $xpath->query('//*[@data-wb-builder-item-body and contains(@class,"is-open")]')->item(0);
+    $body = $xpath->query('//*[@data-wb-builder-item-body and @open]')->item(0);
     $toggle = $xpath->query('//button[@data-wb-builder-item-toggle]')->item(0);
     $this->assertSame($body->getAttribute('id'), $toggle->getAttribute('aria-controls'));
     $this->assertStringStartsWith('builder-item-column-item-', $body->getAttribute('id'));
