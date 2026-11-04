@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.119.0
+
+- Add provider-independent, permission-checked diagnostic reports with explicit category selection, exact preview/download and expiring user-bound artifacts. Export controlled runtime/update fields, saved health counts and optional error fingerprints without raw messages, credentials or content.
+- Link reports from Health and Update history and keep the health status summary compact. Support tickets and provider connections remain optional plugin features.
+
 ## 1.118.2
 
 - Keep unfinished update runs, panel operations, API requests and unresolved chain steps visible outside the recent-history limit, with their receipts protected from pruning and saved status shown separately from worker evidence.

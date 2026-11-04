@@ -18,6 +18,7 @@
     @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title'), 'description' => $text('description')])
     @include('webblocks-cms::admin.partials.flash')
     @include('webblocks-cms::admin.partials.maintenance-refresh-feedback')
+    <p><a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.diagnostics.index') }}">{{ $translator->get('diagnostics.prepare', $locale) }}</a></p>
 
     <div class="wb-stack wb-stack-4">
         <div class="wb-card">
@@ -38,16 +39,11 @@
         ])
         <p class="wb-text-sm wb-text-muted">{{ $text('filter_help') }}</p>
 
-        <div class="wb-grid wb-grid-3 wb-gap-4">
+        <div class="wb-card"><div class="wb-card-body"><div class="wb-table-wrap"><table class="wb-table"><tbody>
             @foreach (['critical', 'warning', 'unknown'] as $status)
-                <div class="wb-card">
-                    <div class="wb-card-body wb-stack wb-stack-2">
-                        <span class="wb-text-sm wb-text-muted">{{ $text('summary.'.$status) }}</span>
-                        <strong class="wb-text-2xl">{{ number_format($health['counts'][$status]) }}</strong>
-                    </div>
-                </div>
+                <tr><th scope="row" class="wb-table-key">{{ $text('summary.'.$status) }}</th><td>{{ number_format($health['counts'][$status]) }}</td></tr>
             @endforeach
-        </div>
+        </tbody></table></div></div></div>
 
         <section class="wb-card" aria-labelledby="health-attention-title">
             <div class="wb-card-header"><h2 class="wb-card-title" id="health-attention-title">{{ $text('attention') }}</h2></div>

@@ -69,6 +69,8 @@
     @include('webblocks-cms::admin.partials.flash')
   </div>
 
+  <p><a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.diagnostics.index') }}">{{ $adminTranslator->get('diagnostics.prepare', $adminLocale) }}</a></p>
+
   <section class="wb-card">
     <div class="wb-card-header wb-cluster wb-cluster-between">
       <h2 class="wb-card-title">{{ $adminText('updates.title') }}</h2>
@@ -262,6 +264,7 @@
                           <td class="wb-text-sm">{{ $run->durationLabel() }}</td>
                           <td class="wb-text-sm">{{ optional($run->finished_at)->format('Y-m-d H:i') ?? optional($run->started_at)->format('Y-m-d H:i') ?? '—' }}</td>
                           <td class="wb-table-actions">
+                            <a class="wb-action-btn" href="{{ route('admin.system.diagnostics.index', ['run_id' => $run->id]) }}" title="{{ $adminTranslator->get('diagnostics.title', $adminLocale) }}" aria-label="{{ $adminTranslator->get('diagnostics.title', $adminLocale) }}"><i class="wb-icon wb-icon-file-text" aria-hidden="true"></i></a>
                             @if ($run->output)
                               <button type="button" class="wb-icon-btn" data-wb-toggle="modal" data-wb-target="#wb-run-log-{{ $run->id }}" aria-label="{{ $adminText('updates.view_log') }}">
                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>

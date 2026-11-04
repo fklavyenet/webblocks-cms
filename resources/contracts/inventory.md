@@ -1106,6 +1106,28 @@ Do not use site CSS to:
 - rebuild a missing layout with fragile absolute positioning;
 - hardcode light-only colors that break Light/Dark/Auto mode.
 
+## Provider independent diagnostic reports
+
+System operators with `access-system` may explicitly prepare installation diagnostic
+reports from System Health or Updates. Category selection and preparation consent
+precede collection. The provider-independent report schema is
+`webblocks-diagnostics/1`; UTF-8 serialized reports are limited to 64 KiB.
+Prepared previews are encrypted, installation- and user-bound, and expire after
+30 minutes. Download validates the existing artifact and never recollects data.
+
+Reports expose controlled runtime version/limit fields, a selected or latest update
+run's status and timings, installed plugin manifest versions/state, saved health
+counts with their measurement time, and optional bounded error timestamps/severity/
+fingerprints. Unavailable or stale evidence remains explicit. Collection does not
+refresh health, boot plugin reporters, probe a provider, execute updates or repair
+the installation. Raw update summaries/output, log messages/context, content,
+credentials, environment files, cookies and host filesystem paths are excluded.
+No public diagnostic route or Internal Content API capability is added.
+
+Support provider discovery, credentials, tickets, consented transport and external
+support links remain owned by the optional Support plugin. Downloading a report
+requires no provider connection or Support installation.
+
 ## Administrator dashboard and quick settings
 
 The administrator dashboard uses compact, responsive three-column summary and

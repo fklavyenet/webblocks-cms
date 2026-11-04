@@ -55,6 +55,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SiteSeoAuditController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController;
 use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemBackupController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemDiagnosticReportController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemHealthController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemInformationController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemPageController;
@@ -526,6 +527,9 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
       Route::get('system/scheduler', [SystemHealthController::class, 'scheduler'])->name('system.scheduler.index');
       Route::get('system/health', [SystemHealthController::class, 'index'])->name('system.health.index');
+      Route::get('system/diagnostics', [SystemDiagnosticReportController::class, 'index'])->name('system.diagnostics.index');
+      Route::post('system/diagnostics', [SystemDiagnosticReportController::class, 'prepare'])->middleware('throttle:6,1')->name('system.diagnostics.prepare');
+      Route::post('system/diagnostics/download', [SystemDiagnosticReportController::class, 'download'])->name('system.diagnostics.download');
       Route::post('system/health/refresh', [SystemHealthController::class, 'refresh'])->middleware('throttle:6,1')->name('system.health.refresh');
       Route::get('system/information', SystemInformationController::class)->name('system.information');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
