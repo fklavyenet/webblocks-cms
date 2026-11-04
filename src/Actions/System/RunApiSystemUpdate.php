@@ -13,7 +13,9 @@ use WebBlocks\Cms\Support\System\Updates\ApiUpdateRunRecorder;
 use WebBlocks\Cms\Support\System\Updates\ApprovedUpdateServerClient;
 use WebBlocks\Cms\Support\System\Updates\ApprovedUpdateTargetChanged;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
+use WebBlocks\Cms\Support\System\Updates\CmsUpdateAdmissionContext;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunReconciler;
+use WebBlocks\Cms\Support\System\Updates\UpdateWorkerEvidence;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\RunRecorder;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateServerClient;
@@ -69,12 +71,13 @@ class RunApiSystemUpdate
         'target_version' => $input['target_version'],
         'checksum_sha256' => $input['checksum_sha256'],
         'status' => 'running',
-      ]);
+      ] + app(UpdateWorkerEvidence::class)->capture('wbcms_system_update_requests'));
       $engine = app()->makeWith(SystemUpdater::class, [
         'client' => new ApprovedUpdateServerClient(app(UpdateServerClient::class), $receipt),
         'runRecorder' => new ApiUpdateRunRecorder(app(RunRecorder::class), $receipt),
       ]);
 
+      app(CmsUpdateAdmissionContext::class)->requestId = $receipt->id;
       try {
         $engine->run((int) $token->created_by_user_id);
       } catch (Throwable $exception) {
@@ -88,6 +91,8 @@ class RunApiSystemUpdate
           $receipt->code = 'system_update_requires_attention';
         }
         $receipt->save();
+      } finally {
+        app(CmsUpdateAdmissionContext::class)->requestId = null;
       }
 
       app(SystemUpdateRunReconciler::class)->reconcileReceipt($receipt);

@@ -1,0 +1,41 @@
+<?php
+
+return [
+  'step' => 'Étape',
+  'queued' => 'En attente',
+  'title' => 'Mises à jour inachevées',
+  'help' => 'Ces entrées restent visibles au-delà de la limite de l’historique récent. Vérifiez leur état enregistré avant une autre mise à jour.',
+  'record' => 'Entrée',
+  'version' => 'Version',
+  'saved_status' => 'État enregistré',
+  'evidence' => 'Preuves du processus',
+  'actions' => 'Actions',
+  'details' => 'Examiner la restauration',
+  'operator' => 'Opérateur nº :id',
+  'guidance' => 'Demandez au responsable de l’hébergement de vérifier les processus et le point de contrôle du code et de la base, puis de restaurer une sauvegarde vérifiée si nécessaire. Une identité absente ou un résultat incertain exige une enquête manuelle. Cet écran ne certifie pas la restauration et ne relance aucune mise à jour.',
+  'reconcile' => 'Marquer comme interrompu',
+  'reason' => 'Note de vérification',
+  'confirm_help' => 'L’arrêt du processus a été vérifié. Cette action consigne l’interruption et conserve l’exigence de restauration. Les journaux, versions et durées d’origine sont préservés. Aucun point de contrôle n’est restauré et aucune nouvelle mise à jour n’est autorisée.',
+  'refused' => 'L’état a changé, un verrou est détenu ou les preuves du processus/de restauration sont incertaines. Aucun rapprochement enregistré. Vérifiez les entrées actuelles.',
+  'reconciled' => ':count entrée(s) marquée(s) comme interrompue(s). Une vérification de restauration reste nécessaire avant une autre mise à jour.',
+  'kinds' => [
+    'run' => 'Exécution',
+    'operation' => 'Opération du panneau',
+    'request' => 'Requête API',
+  ],
+  'states' => [
+    'active' => 'Preuves d’activité',
+    'stopped' => 'Processus arrêté',
+    'unknown' => 'État non confirmé',
+    'recovery' => 'Vérification de restauration requise',
+  ],
+  'reasons' => [
+    'worker_dead' => 'Le processus enregistré est absent du même hôte démarré. Son point de contrôle reste à examiner.',
+    'other_work' => 'Une autre entrée inachevée présente des preuves de processus actif ou invérifiable.',
+    'worker_unknown' => 'L’identité du processus ne peut pas être vérifiée sur cet hôte. PID absent, autre hôte/démarrage ou inspection indisponible ne prouvent pas son arrêt.',
+    'worker_alive' => 'Le processus enregistré est toujours présent.',
+    'heartbeat_fresh' => 'Un signal récent du processus est présent.',
+    'lock_held' => 'Un verrou d’admission, de mise à jour ou de processus est détenu ou invérifiable.',
+    'recovery_required' => 'Une chaîne non résolue ou une exigence de restauration demeure. Examinez son point de contrôle avant toute modification.',
+  ],
+];

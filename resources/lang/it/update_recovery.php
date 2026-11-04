@@ -1,0 +1,41 @@
+<?php
+
+return [
+  'step' => 'Passo',
+  'queued' => 'In coda',
+  'title' => 'Aggiornamenti incompleti',
+  'help' => 'Queste voci restano visibili oltre il limite della cronologia recente. Verificare lo stato salvato prima di un altro aggiornamento.',
+  'record' => 'Voce',
+  'version' => 'Versione',
+  'saved_status' => 'Stato salvato',
+  'evidence' => 'Prove del processo',
+  'actions' => 'Azioni',
+  'details' => 'Esamina i dettagli di ripristino',
+  'operator' => 'Operatore n. :id',
+  'guidance' => 'Chiedere al responsabile hosting di verificare i processi e il punto di controllo di codice e database e di ripristinare un backup verificato se necessario. Identità assente o risultati incerti richiedono un’indagine manuale. Questa schermata non certifica il ripristino e non riesegue aggiornamenti.',
+  'reconcile' => 'Segna come interrotto',
+  'reason' => 'Nota di verifica',
+  'confirm_help' => 'L’arresto del processo è stato verificato. L’azione registra l’interruzione e mantiene il ripristino richiesto. Log, versioni e tempi originali vengono conservati. Nessun punto di controllo viene ripristinato e nessun nuovo aggiornamento viene autorizzato.',
+  'refused' => 'Lo stato è cambiato, un blocco è occupato oppure le prove del processo/ripristino sono incerte. Nessuna riconciliazione salvata. Verificare le voci attuali.',
+  'reconciled' => ':count voce/voci segnate come interrotte. La verifica del ripristino resta necessaria prima di un altro aggiornamento.',
+  'kinds' => [
+    'run' => 'Esecuzione',
+    'operation' => 'Operazione del pannello',
+    'request' => 'Richiesta API',
+  ],
+  'states' => [
+    'active' => 'Prove di attività',
+    'stopped' => 'Processo arrestato',
+    'unknown' => 'Stato non confermato',
+    'recovery' => 'Verifica del ripristino richiesta',
+  ],
+  'reasons' => [
+    'worker_dead' => 'Il processo registrato è assente sullo stesso host e avvio. Il punto di controllo richiede ancora una verifica.',
+    'other_work' => 'Un’altra voce incompleta presenta prove di processo attivo o non verificabile.',
+    'worker_unknown' => 'L’identità del processo non è verificabile su questo host. PID assente, host/avvio diverso o ispezione non disponibile non dimostrano l’arresto.',
+    'worker_alive' => 'Il processo registrato è ancora presente.',
+    'heartbeat_fresh' => 'È presente un segnale recente del processo.',
+    'lock_held' => 'Un blocco di ammissione, aggiornamento o processo è occupato o non verificabile.',
+    'recovery_required' => 'Resta una catena irrisolta o un requisito di ripristino. Esaminare il punto di controllo prima di ulteriori modifiche.',
+  ],
+];

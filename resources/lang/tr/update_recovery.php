@@ -1,0 +1,41 @@
+<?php
+
+return [
+  'step' => 'Adım',
+  'queued' => 'Sırada',
+  'title' => 'Tamamlanmamış güncellemeler',
+  'help' => 'Bu kayıtlar son geçmiş sınırından bağımsız görünür. Yeni güncellemeden önce kayıtlı durumlarını inceleyin.',
+  'record' => 'Kayıt',
+  'version' => 'Sürüm',
+  'saved_status' => 'Kayıtlı durum',
+  'evidence' => 'Worker kanıtı',
+  'actions' => 'İşlemler',
+  'details' => 'Kurtarma ayrıntılarını incele',
+  'operator' => 'Operatör #:id',
+  'guidance' => 'Hosting sorumlusundan worker süreçlerini ve kurulu kod/veritabanı kontrol noktasını doğrulamasını, gerektiğinde doğrulanmış yedekten kurtarma yapmasını isteyin. Eksik worker kimliği veya belirsiz sonuçlar elle inceleme gerektirir. Bu ekran kurtarmayı doğrulayamaz veya güncellemeyi yeniden çalıştıramaz.',
+  'reconcile' => 'Kesintiye uğradı olarak işaretle',
+  'reason' => 'İnceleme notu',
+  'confirm_help' => 'Worker sürecinin durduğu doğrulandı. Bu işlem kesintiyi kaydeder ve kurtarma gereksinimini korur. Özgün günlükler, sürümler ve çalışma zamanları korunur. Kontrol noktası geri yüklenmez ve yeni güncellemeye izin verilmez.',
+  'refused' => 'Kayıtlı durum değişti, bir kilit tutuluyor veya worker/kurtarma kanıtı belirsiz. Uzlaştırma kaydedilmedi. Güncel kayıtları inceleyin.',
+  'reconciled' => ':count kayıt kesintiye uğradı olarak işaretlendi. Yeni güncellemeden önce kurtarma incelemesi hâlâ gereklidir.',
+  'kinds' => [
+    'run' => 'Çalıştırma',
+    'operation' => 'Panel işlemi',
+    'request' => 'API isteği',
+  ],
+  'states' => [
+    'active' => 'Etkinlik kanıtı var',
+    'stopped' => 'Worker durmuş',
+    'unknown' => 'Durum doğrulanamadı',
+    'recovery' => 'Kurtarma incelemesi gerekli',
+  ],
+  'reasons' => [
+    'worker_dead' => 'Kayıtlı süreç aynı sunucu başlatmasında mevcut değil. Kontrol noktası yine de incelenmelidir.',
+    'other_work' => 'Başka bir tamamlanmamış kayıtta etkin veya doğrulanamayan worker kanıtı var.',
+    'worker_unknown' => 'Worker kimliği bu sunucuda doğrulanamıyor. Eksik PID, farklı sunucu/başlatma veya kullanılamayan süreç incelemesi durduğunu kanıtlamaz.',
+    'worker_alive' => 'Kayıtlı worker süreci hâlâ mevcut.',
+    'heartbeat_fresh' => 'Yakın tarihli worker heartbeat bilgisi var.',
+    'lock_held' => 'Bir başlangıç, güncelleme veya worker kilidi tutuluyor ya da denetlenemiyor.',
+    'recovery_required' => 'Çözümlenmemiş bir zincir veya kurtarma gereksinimi var. Başka değişiklikten önce kontrol noktasını inceleyin.',
+  ],
+];

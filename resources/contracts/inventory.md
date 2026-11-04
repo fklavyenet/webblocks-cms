@@ -1451,8 +1451,35 @@ The modal tracks the operation identity, elapsed time and most recent phase,
 reconnects after transient HTTP/transport failures, and resumes on returning to the
 screen. Only a terminal server result ends tracking; success also requires the
 installed target version. Missing/stale worker evidence is **Status unconfirmed**,
-not proof of success or failure. Historic unfinished runs remain stored unchanged
-and are shown as unconfirmed when no current run heartbeat identifies them.
+not proof of success or failure. The open Unfinished updates table lists pending,
+queued, running and interrupted SQL runs, operations and API receipts independently
+of the recent-history limit, including operations with no run and chains with
+unfinished child steps under a terminal parent. Retention protects these records,
+recovery-flagged records and runs referenced by unresolved operations/chains.
+History keeps saved statuses; worker evidence is displayed separately.
+
+CMS-owned adapters capture typed worker PID, booted-host/PID-namespace identity and SQL heartbeat
+fields for new executions. Passive review evaluates these alongside cache heartbeats,
+admission/run/worker locks and related receipts. Missing identity, another host or
+boot, unavailable inspection, contradictory evidence and held locks do not prove
+stoppage. Boot identity inspection currently uses Linux procfs plus POSIX; unsupported
+hosts retain an unconfirmed state. No process is killed and no lock is forcibly
+released by review. Active or unverified unrelated workers also prevent reconciliation.
+
+Only an explicit system-authorized POST with a bounded review reason can record a
+verified stopped non-chain group as interrupted. It rechecks evidence under owned
+admission, run and worker locks plus a SQL transaction; expired ownership or changed
+evidence refuses the action. A typed relational reconciliation journal retains actor,
+time, prior/new states, worker/heartbeat and lock evidence, and review reason. Original
+logs, summaries, versions and execution times remain unchanged. Interruption always
+retains recovery_required: it is not a verified checkpoint or permission to replay.
+All engine admission paths continue to block unresolved runs, other admitted
+operations/requests and recovery requirements; only the current process's admitted
+request/claimed worker context is exempt from its own receipt. Chains are reviewed
+through their parent/step checkpoints and are not cleared by this action. Unknown
+legacy records require hosting-owner investigation and verified backup/checkpoint
+recovery. There is no automatic state repair, recovery certification or replay from
+this screen; API status keeps requires_attention for reconciled recovery receipts.
 
 Only the existing authenticated, system-authorized status route is exempted from
 rendered maintenance mode. Public pages and other admin paths remain in maintenance.

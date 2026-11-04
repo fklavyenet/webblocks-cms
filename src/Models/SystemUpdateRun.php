@@ -38,11 +38,17 @@ class SystemUpdateRun extends CmsModel
     'finished_at',
     'duration_ms',
     'triggered_by_user_id',
+    'worker_pid',
+    'worker_host',
+    'heartbeat_at',
+    'recovery_required',
   ];
 
   protected $casts = [
     'started_at' => 'datetime',
     'finished_at' => 'datetime',
+    'heartbeat_at' => 'datetime',
+    'recovery_required' => 'boolean',
   ];
 
   public function triggeredBy(): BelongsTo

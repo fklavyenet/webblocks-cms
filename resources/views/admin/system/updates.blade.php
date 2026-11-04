@@ -76,6 +76,7 @@
     </div>
 
     <div class="wb-card-body wb-stack wb-stack-4">
+      @include('webblocks-cms::admin.system.partials.update-attention')
       <p class="wb-text-sm wb-text-muted">{{ $adminText('update_cli.composer_notice') }}</p>
       @if ($failingChecks->isNotEmpty())
         <div class="wb-callout wb-callout-warning wb-stack wb-stack-2" data-webblocks-updates-preflight>

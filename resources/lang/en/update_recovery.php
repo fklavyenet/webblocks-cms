@@ -1,0 +1,41 @@
+<?php
+
+return [
+  'step' => 'Step',
+  'queued' => 'Queued',
+  'title' => 'Unfinished updates',
+  'help' => 'These records stay visible outside the recent history limit. Check their saved state before starting another update.',
+  'record' => 'Record',
+  'version' => 'Version',
+  'saved_status' => 'Saved status',
+  'evidence' => 'Worker evidence',
+  'actions' => 'Actions',
+  'details' => 'Review recovery details',
+  'operator' => 'Operator #:id',
+  'guidance' => 'Ask the hosting owner to verify workers and the installed code/database checkpoint, and recover from a verified backup when needed. Missing worker identity or uncertain results require manual investigation. This screen cannot certify recovery or replay an update.',
+  'reconcile' => 'Mark interrupted',
+  'reason' => 'Review note',
+  'confirm_help' => 'The worker was verified stopped. This action records interruption and keeps recovery required. Original logs, versions and execution times are preserved. It does not restore a checkpoint or permit another update.',
+  'refused' => 'The saved state changed, a lock is held, or worker/recovery evidence is uncertain. No reconciliation was saved. Review the current records.',
+  'reconciled' => ':count record(s) marked interrupted. Recovery review is still required before another update.',
+  'kinds' => [
+    'run' => 'Run',
+    'operation' => 'Panel operation',
+    'request' => 'API request',
+  ],
+  'states' => [
+    'active' => 'Active evidence',
+    'stopped' => 'Worker stopped',
+    'unknown' => 'Status unconfirmed',
+    'recovery' => 'Recovery review required',
+  ],
+  'reasons' => [
+    'worker_dead' => 'The recorded process is absent on the same booted host. Its checkpoint still needs review.',
+    'other_work' => 'Another unfinished record has live or unverifiable worker evidence.',
+    'worker_unknown' => 'The worker identity cannot be verified on this host. Missing PID, another host/boot or unavailable process inspection does not prove it stopped.',
+    'worker_alive' => 'The recorded worker process is still present.',
+    'heartbeat_fresh' => 'A recent worker heartbeat is present.',
+    'lock_held' => 'An admission, update or worker lock is held or cannot be checked.',
+    'recovery_required' => 'An unresolved chain or recovery requirement remains. Review its checkpoint before further changes.',
+  ],
+];

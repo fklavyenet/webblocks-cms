@@ -27,20 +27,26 @@ class CmsUpdateProgress
 
   public function beat(): void
   {
-    if ($this->operationId === null || microtime(true) - $this->lastBeat < 5) {
+    if (($this->operationId === null && $this->runId === null) || microtime(true) - $this->lastBeat < 5) {
     return;
     }
     $this->lastBeat = microtime(true);
-    AdminUpdateOperation::whereKey($this->operationId)->update(['heartbeat_at' => now()]);
+    if ($this->operationId !== null) {
+      AdminUpdateOperation::whereKey($this->operationId)->update(['heartbeat_at' => now()]);
+    }
+    if ($this->runId !== null && app(UpdateWorkerEvidence::class)->available('wbcms_system_update_runs')) {
+      SystemUpdateRun::whereKey($this->runId)->update(['heartbeat_at' => now()]);
+    }
   }
 
   public function start(SystemUpdateRun $run): void
   {
     $this->runId = (int) $run->id;
+    $this->lastBeat = 0;
     if ($this->operationId !== null) {
       AdminUpdateOperation::whereKey($this->operationId)->update(['system_update_run_id' => $run->id]);
-      $this->beat();
     }
+    $this->beat();
   }
 
   public function completed(string $status, string $summary): void

@@ -8,6 +8,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsChainContext;
 use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
+use WebBlocks\Cms\Support\System\Updates\UpdateWorkerEvidence;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\RunRecorder;
 
 final class CmsClientRunRecorder implements RunRecorder
@@ -23,7 +24,7 @@ final class CmsClientRunRecorder implements RunRecorder
       'summary' => 'Update started.',
       'started_at' => now(),
       'triggered_by_user_id' => $userId,
-    ]);
+    ] + app(UpdateWorkerEvidence::class)->capture('wbcms_system_update_runs'));
     app(CmsUpdateProgress::class)->start($run);
     if ($id = app(CmsChainContext::class)->stepId) {
       UpdateChainStep::whereKey($id)->update(['system_update_run_id' => $run->id]);

@@ -1,0 +1,41 @@
+<?php
+
+return [
+  'step' => 'Schritt',
+  'queued' => 'Eingereiht',
+  'title' => 'Unvollständige Aktualisierungen',
+  'help' => 'Diese Einträge bleiben unabhängig vom Verlaufslimit sichtbar. Prüfen Sie ihren gespeicherten Zustand vor einer weiteren Aktualisierung.',
+  'record' => 'Eintrag',
+  'version' => 'Version',
+  'saved_status' => 'Gespeicherter Status',
+  'evidence' => 'Prozessnachweise',
+  'actions' => 'Aktionen',
+  'details' => 'Wiederherstellungsdetails prüfen',
+  'operator' => 'Bediener #:id',
+  'guidance' => 'Lassen Sie den Hosting-Verantwortlichen Prozesse sowie den Prüfpunkt von Code und Datenbank kontrollieren und bei Bedarf eine geprüfte Sicherung wiederherstellen. Fehlende Prozessidentität oder unklare Ergebnisse erfordern eine manuelle Untersuchung. Diese Ansicht bestätigt keine Wiederherstellung und wiederholt keine Aktualisierung.',
+  'reconcile' => 'Als unterbrochen markieren',
+  'reason' => 'Prüfnotiz',
+  'confirm_help' => 'Der Prozess wurde als beendet bestätigt. Die Aktion dokumentiert die Unterbrechung; die Wiederherstellungsprüfung bleibt erforderlich. Originalprotokolle, Versionen und Laufzeiten bleiben erhalten. Es wird kein Prüfpunkt wiederhergestellt und keine weitere Aktualisierung freigegeben.',
+  'refused' => 'Der Zustand wurde geändert, eine Sperre ist belegt oder die Prozess-/Wiederherstellungsnachweise sind unklar. Kein Abgleich wurde gespeichert. Prüfen Sie die aktuellen Einträge.',
+  'reconciled' => ':count Eintrag/Einträge als unterbrochen markiert. Vor einer weiteren Aktualisierung bleibt eine Wiederherstellungsprüfung erforderlich.',
+  'kinds' => [
+    'run' => 'Lauf',
+    'operation' => 'Panelvorgang',
+    'request' => 'API-Anfrage',
+  ],
+  'states' => [
+    'active' => 'Aktivitätsnachweise',
+    'stopped' => 'Prozess beendet',
+    'unknown' => 'Status unbestätigt',
+    'recovery' => 'Wiederherstellungsprüfung erforderlich',
+  ],
+  'reasons' => [
+    'worker_dead' => 'Der gespeicherte Prozess ist auf demselben gestarteten Host nicht vorhanden. Sein Prüfpunkt muss trotzdem geprüft werden.',
+    'other_work' => 'Ein anderer unvollständiger Eintrag hat aktive oder nicht prüfbare Prozessnachweise.',
+    'worker_unknown' => 'Die Prozessidentität kann auf diesem Host nicht geprüft werden. Fehlende PID, ein anderer Host/Systemstart oder fehlende Prozessprüfung beweisen kein Prozessende.',
+    'worker_alive' => 'Der gespeicherte Prozess ist noch vorhanden.',
+    'heartbeat_fresh' => 'Ein aktueller Prozess-Heartbeat liegt vor.',
+    'lock_held' => 'Eine Zulassungs-, Update- oder Prozesssperre ist belegt oder nicht prüfbar.',
+    'recovery_required' => 'Eine ungeklärte Kette oder Wiederherstellungsanforderung besteht. Prüfen Sie vor weiteren Änderungen den Prüfpunkt.',
+  ],
+];

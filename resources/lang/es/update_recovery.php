@@ -1,0 +1,41 @@
+<?php
+
+return [
+  'step' => 'Paso',
+  'queued' => 'En cola',
+  'title' => 'Actualizaciones sin terminar',
+  'help' => 'Estos registros permanecen visibles fuera del límite del historial reciente. Revise su estado guardado antes de otra actualización.',
+  'record' => 'Registro',
+  'version' => 'Versión',
+  'saved_status' => 'Estado guardado',
+  'evidence' => 'Pruebas del proceso',
+  'actions' => 'Acciones',
+  'details' => 'Revisar detalles de recuperación',
+  'operator' => 'Operador n.º :id',
+  'guidance' => 'Pida al responsable del alojamiento que verifique los procesos y el punto de control del código y la base de datos, y que recupere una copia verificada si hace falta. La identidad ausente o los resultados inciertos requieren una investigación manual. Esta pantalla no certifica la recuperación ni repite actualizaciones.',
+  'reconcile' => 'Marcar como interrumpido',
+  'reason' => 'Nota de revisión',
+  'confirm_help' => 'Se verificó la detención del proceso. Esta acción registra la interrupción y mantiene la recuperación requerida. Se conservan registros, versiones y tiempos originales. No se restaura ningún punto de control ni se permite otra actualización.',
+  'refused' => 'El estado cambió, hay un bloqueo o las pruebas del proceso/recuperación son inciertas. No se guardó la conciliación. Revise los registros actuales.',
+  'reconciled' => ':count registro(s) marcado(s) como interrumpido(s). Sigue siendo necesaria una revisión de recuperación antes de otra actualización.',
+  'kinds' => [
+    'run' => 'Ejecución',
+    'operation' => 'Operación del panel',
+    'request' => 'Solicitud API',
+  ],
+  'states' => [
+    'active' => 'Pruebas de actividad',
+    'stopped' => 'Proceso detenido',
+    'unknown' => 'Estado sin confirmar',
+    'recovery' => 'Revisión de recuperación requerida',
+  ],
+  'reasons' => [
+    'worker_dead' => 'El proceso registrado está ausente en el mismo servidor y arranque. Su punto de control aún requiere revisión.',
+    'other_work' => 'Otro registro sin terminar tiene pruebas de proceso activo o no verificable.',
+    'worker_unknown' => 'No se puede verificar la identidad del proceso en este servidor. Un PID ausente, otro servidor/arranque o una inspección no disponible no prueban su detención.',
+    'worker_alive' => 'El proceso registrado sigue presente.',
+    'heartbeat_fresh' => 'Hay una señal reciente del proceso.',
+    'lock_held' => 'Un bloqueo de admisión, actualización o proceso está ocupado o no se puede verificar.',
+    'recovery_required' => 'Queda una cadena sin resolver o una recuperación pendiente. Revise su punto de control antes de otros cambios.',
+  ],
+];

@@ -26,6 +26,7 @@ final class BrowserFixtureServer
     'editor-preview' => ['EditorPreviewTest', 'WEBBLOCKS_EDITOR_PREVIEW_FIXTURE', 'editor_panel_browser_fixture'],
     'job-progress' => ['JobExecutionTest', 'WEBBLOCKS_JOB_PROGRESS_FIXTURE', 'job_progress_browser_fixture'],
     'update-progress' => ['SystemUpdatesScreenTest', 'WEBBLOCKS_UPDATE_PROGRESS_FIXTURE', 'shared_progress_asset_and_server_admission'],
+    'update-attention' => ['UnfinishedSystemUpdateTest', 'WEBBLOCKS_UPDATE_ATTENTION_FIXTURE', 'attention_browser_fixture'],
   ];
 
   public static function run(string $scenario): void
@@ -118,6 +119,7 @@ final class BrowserFixtureServer
       $path === '/fixture.js' && $scenario === 'consent-admin' => $root.'/tests/Browser/consent-admin-fixture.js',
       $path === '/fixture.js' && $scenario === 'consent' => $root.'/tests/Browser/consent-fixture.js',
       $path === '/fixture.js' && $scenario === 'update-progress' => $root.'/tests/Browser/update-progress-fixture.js',
+      $path === '/fixture.js' && $scenario === 'update-attention' => $root.'/tests/Browser/update-attention-fixture.js',
       in_array($path, $assets, true) => $root.'/public'.$path,
       $path === '/fixture.js' && $scenario === 'editor-save' => $root.'/tests/Browser/editor-save-fixture.js',
       $path === '/fixture.js' && $scenario === 'editor-preview' => $root.'/tests/Browser/editor-preview-fixture.js',
@@ -171,7 +173,7 @@ final class BrowserFixtureServer
       $head .= '<link rel="stylesheet" href="'.$css.'">';
     }
     $head .= '<script src="/cms/webblocks-ui/'.$version.'/webblocks-ui.js" defer></script>';
-    if (! in_array($scenario, ['parent', 'job-progress', 'update-progress', 'retention', 'scheduler', 'consent'], true)) {
+    if (! in_array($scenario, ['parent', 'job-progress', 'update-progress', 'update-attention', 'retention', 'scheduler', 'consent'], true)) {
       $script = match ($scenario) {
         'consent-admin', 'system-picker' => 'core',
         'dirty-overlay' => 'core',

@@ -27,7 +27,8 @@ class RunCmsUpdateChain
     }
     try {
       if (! AdminUpdateOperation::whereKey($operation->id)->where('chain_protocol', 1)->where('status', 'queued')
-        ->update(['status' => 'running', 'worker_pid' => getmypid(), 'heartbeat_at' => now()])) {
+        ->update(['status' => 'running', 'worker_pid' => getmypid(), 'heartbeat_at' => now()]
+          + app(UpdateWorkerEvidence::class)->capture('wbcms_admin_update_operations'))) {
         return in_array($operation->fresh()->status, ['success', 'success_with_warnings'], true);
       }
       $operation->refresh();

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Models\UpdateChainStep;
+use WebBlocks\Cms\Queries\System\UnfinishedSystemUpdates;
 
 class SystemUpdateRunRetention
 {
@@ -23,10 +24,11 @@ class SystemUpdateRunRetention
       $query->with('triggeredBy');
     }
 
-    return $query
+    $latestIds = SystemUpdateRun::query()->orderByDesc('started_at')->orderByDesc('id')->limit($this->keep($keep))->pluck('id')->all();
+
+    return $query->whereIn('id', array_unique(array_merge($latestIds, app(UnfinishedSystemUpdates::class)->runIds())))
       ->orderByDesc('started_at')
       ->orderByDesc('id')
-      ->limit($this->keep($keep))
       ->get();
   }
 
@@ -94,7 +96,7 @@ class SystemUpdateRunRetention
       $ids = array_merge($ids, UpdateChainStep::whereIn('operation_id', $operations)->whereNotNull('system_update_run_id')->pluck('system_update_run_id')->all());
     }
 
-    return array_values(array_unique(array_merge($ids, $inProgressIds)));
+    return array_values(array_unique(array_merge($ids, $inProgressIds, app(UnfinishedSystemUpdates::class)->runIds())));
   }
 
   private function latestSuccessIsNewerThan(SystemUpdateRun $run): bool

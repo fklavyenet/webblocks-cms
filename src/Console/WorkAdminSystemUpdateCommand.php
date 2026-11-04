@@ -9,8 +9,10 @@ use Throwable;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Support\System\Updates\AdminApprovedUpdateClient;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
+use WebBlocks\Cms\Support\System\Updates\CmsUpdateAdmissionContext;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\RunCmsUpdateChain;
+use WebBlocks\Cms\Support\System\Updates\UpdateWorkerEvidence;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateServerClient;
 
@@ -32,6 +34,7 @@ class WorkAdminSystemUpdateCommand extends Command
     }
     try {
       $operation = AdminUpdateOperation::findOrFail($id);
+      app(CmsUpdateAdmissionContext::class)->operationId = $operation->id;
       if ($operation->chain_protocol === 1) {
         app(CmsPublisherClientConfigurator::class)->configure();
 
@@ -41,7 +44,8 @@ class WorkAdminSystemUpdateCommand extends Command
       return self::SUCCESS;
       }
       app(CmsPublisherClientConfigurator::class)->configure();
-      $operation->update(['status' => 'running', 'worker_pid' => getmypid(), 'heartbeat_at' => now()]);
+      $operation->update(['status' => 'running', 'worker_pid' => getmypid(), 'heartbeat_at' => now()]
+        + app(UpdateWorkerEvidence::class)->capture('wbcms_admin_update_operations'));
       app(CmsUpdateProgress::class)->operation($id);
       $engine = app()->makeWith(SystemUpdater::class, ['client' => new AdminApprovedUpdateClient(app(UpdateServerClient::class), $operation)]);
       try {
@@ -59,6 +63,7 @@ class WorkAdminSystemUpdateCommand extends Command
         return self::FAILURE;
       }
     } finally {
+    app(CmsUpdateAdmissionContext::class)->operationId = null;
     $lock->release();
     }
   }

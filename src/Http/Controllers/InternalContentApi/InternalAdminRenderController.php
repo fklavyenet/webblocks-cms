@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
+use WebBlocks\Cms\Support\System\Updates\SystemUpdateAttention;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -38,6 +39,8 @@ class InternalAdminRenderController extends Controller
     $html = view('webblocks-cms::admin.system.updates', [
       'report' => $report,
       'runs' => $this->runRetention->retainedRuns(),
+      'unfinishedUpdates' => app(SystemUpdateAttention::class)->rows(),
+      'canReconcileUpdates' => false,
       'preflight' => $report['checks'] ?? [],
       'checkedAt' => $checkedAt,
     ])->render();

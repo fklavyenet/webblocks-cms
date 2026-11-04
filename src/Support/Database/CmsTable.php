@@ -138,6 +138,7 @@ final class CmsTable
     'system_update_runs',
     'system_update_run_steps',
     'system_update_requests',
+    'update_reconciliations',
     'visitor_events',
     'visitor_daily_totals',
   ];

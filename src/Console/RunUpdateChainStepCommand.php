@@ -10,6 +10,7 @@ use WebBlocks\Cms\Models\UpdateChainStep;
 use WebBlocks\Cms\Support\System\Updates\CmsChainContext;
 use WebBlocks\Cms\Support\System\Updates\CmsPinnedChainClient;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
+use WebBlocks\Cms\Support\System\Updates\CmsUpdateAdmissionContext;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
@@ -42,6 +43,7 @@ class RunUpdateChainStepCommand extends Command
       return self::FAILURE;
     }
     app(CmsChainContext::class)->stepId = $step->id;
+    app(CmsUpdateAdmissionContext::class)->operationId = $operation->id;
     config()->set('publisher-client.lock.name', config('publisher-client.lock.name').':chain:'.$id.':'.$step->position);
     // The supervisor owns maintenance and the public update lease across all steps.
     config()->set('publisher-client.apply.maintenance_mode', false);
@@ -70,6 +72,7 @@ class RunUpdateChainStepCommand extends Command
 
       return self::FAILURE;
     } finally {
+      app(CmsUpdateAdmissionContext::class)->operationId = null;
       app(CmsChainContext::class)->stepId = null;
     }
   }

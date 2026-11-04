@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.118.2
+
+- Keep unfinished update runs, panel operations, API requests and unresolved chain steps visible outside the recent-history limit, with their receipts protected from pruning and saved status shown separately from worker evidence.
+- Record typed worker identity and durable heartbeats, and review process, host boot/PID namespace, locks and related receipts together. Missing or conflicting evidence remains unconfirmed; review does not kill processes or forcibly release locks.
+- Let system administrators explicitly record verified stopped non-chain work as interrupted with a required review note and a transactional audit trail. Recheck evidence and lock ownership before saving, preserve original logs and timings, and keep recovery required until hosting-owner checkpoint review. Unresolved work continues to block further updates across panel, CLI and API paths.
+
 ## 1.118.1
 
 - Show the server's safe, localized rejection reason in the System Update progress modal instead of a generic Failed message. Preserve the legacy error field, existing admission locks and history; rejected requests do not start another update.

@@ -10,14 +10,18 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\View\View;
+use WebBlocks\Cms\Actions\System\ReconcileStoppedSystemUpdate;
 use WebBlocks\Cms\Actions\System\StartAdminSystemUpdate;
+use WebBlocks\Cms\Http\Requests\Admin\ReconcileSystemUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest;
+use WebBlocks\Cms\Policies\SystemUpdateRecoveryPolicy;
 use WebBlocks\Cms\Support\Database\CmsTableCompatibilityViews;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
+use WebBlocks\Cms\Support\System\Updates\SystemUpdateAttention;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunReconciler;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
@@ -39,6 +43,8 @@ class SystemUpdateController extends Controller
       'report' => $report,
       'schedulerNeedsSetup' => app(SchedulerHealth::class)->snapshot()['scheduler_status'] !== 'healthy',
       'runs' => $this->displayRuns(),
+      'unfinishedUpdates' => app(SystemUpdateAttention::class)->rows(),
+      'canReconcileUpdates' => app(SystemUpdateRecoveryPolicy::class)->reconcile($request->user()),
       'preflight' => $report['checks'] ?? [],
       'checkedAt' => is_string($checkedAt)
         ? now()->parse($checkedAt)
@@ -96,17 +102,26 @@ class SystemUpdateController extends Controller
     return response()->json($payload)->header('Cache-Control', 'no-store');
   }
 
+  public function reconcile(ReconcileSystemUpdateRequest $request): RedirectResponse|JsonResponse
+  {
+    try {
+      $input = $request->validated();
+      $count = app(ReconcileStoppedSystemUpdate::class)->execute($input['record_type'], $input['record_id'], (int) $request->user()->getKey(), $input['reason']);
+      $message = __('webblocks-cms::update_recovery.reconciled', ['count' => $count]);
+
+      return $request->expectsJson()
+        ? response()->json(['message' => $message, 'count' => $count])->header('Cache-Control', 'no-store')
+        : redirect()->route('admin.system.updates.index')->with('status', $message);
+    } catch (UpdateException $exception) {
+      return $request->expectsJson()
+        ? response()->json(['message' => $exception->userMessage(), 'error' => $exception->userMessage()], 409)->header('Cache-Control', 'no-store')
+        : redirect()->route('admin.system.updates.index')->withErrors(['system_update' => $exception->userMessage()])->withInput();
+    }
+  }
+
   private function displayRuns(): Collection
   {
-    $progress = app(CmsUpdateProgress::class)->payload();
-
-    return app(SystemUpdateRunRetention::class)->retainedRuns()->map(function ($run) use ($progress) {
-      if ($run->status === 'running' && (! $progress['running'] || $progress['run_id'] !== $run->id)) {
-        $run->status = 'interrupted';
-      }
-
-      return $run;
-    });
+    return app(SystemUpdateRunRetention::class)->retainedRuns();
   }
 
   private function reconcileVerifiedPostApplyFailure(): void

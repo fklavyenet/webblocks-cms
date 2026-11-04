@@ -155,6 +155,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsChainAdmission;
 use WebBlocks\Cms\Support\System\Updates\CmsChainContext;
 use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
+use WebBlocks\Cms\Support\System\Updates\CmsUpdateAdmissionContext;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateDownloader;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateExtractor;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
@@ -1053,6 +1054,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->singleton(ProgressReporter::class, CmsProgressReporter::class);
     $this->app->singleton(CmsPackageRollback::class);
     $this->app->singleton(CmsChainContext::class);
+    $this->app->singleton(CmsUpdateAdmissionContext::class);
     $this->app->bind(UpdateAdmission::class, CmsChainAdmission::class);
     $this->app->bind(UpdatePackageDownloader::class, CmsUpdateDownloader::class);
     $this->app->bind(UpdatePackageExtractor::class, CmsUpdateExtractor::class);

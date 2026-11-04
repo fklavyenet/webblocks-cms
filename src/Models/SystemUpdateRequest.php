@@ -12,6 +12,6 @@ class SystemUpdateRequest extends CmsModel
 
   protected function casts(): array
   {
-    return ['result' => 'array', 'finished_at' => 'datetime'];
+    return ['result' => 'array', 'finished_at' => 'datetime', 'heartbeat_at' => 'datetime', 'recovery_required' => 'boolean'];
   }
 }

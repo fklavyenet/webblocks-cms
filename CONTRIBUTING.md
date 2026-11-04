@@ -96,6 +96,7 @@ php -S 127.0.0.1:8089 tests/Browser/editor-save.php
 php -S 127.0.0.1:8089 tests/Browser/asset-picker-fixture.php
 php -S 127.0.0.1:8089 tests/Browser/rich-text-editor.php
 php -S 127.0.0.1:8089 tests/Browser/update-progress-fixture.php
+php -S 127.0.0.1:8089 tests/Browser/update-attention.php
 php -S 127.0.0.1:8089 tests/Browser/consent-fixture.php
 php -S 127.0.0.1:8089 tests/Browser/consent-admin-fixture.php
 php -S 127.0.0.1:8089 tests/Browser/system-picker-fixture.php
@@ -107,6 +108,8 @@ Open `http://127.0.0.1:8089/` in a new tab of the already-open Chrome. These too
 PHP tests cover localized parent choices/order/selection in full and fragment editors, inert picker rows and initial media selections, rich-text field/form ownership, shared dialogs, toolbar controls and server-side rich-text sanitization. They do not execute browser JavaScript. Preserve the following browser checks during an authorized visual QA session:
 
 The update-progress fixture uses the real rendered modal, shared progress script and bundled WebBlocks UI. It intercepts all update/status requests with synthetic responses; its read-only server rejects mutations. The default case tests delayed server admission, monotonic elapsed time, fixed modal height, unavailable/foreign status, interruption/recheck and verified completion. Query cases `resume`, `client`, `legacy`, `auth` and `rejected` cover an existing operation, client-owned admission, older product views and admission failures. Each case reports PASS or FAIL on the page. These browser checks are optional and separate from the PHP-only CI suite.
+
+The update-attention fixture renders the compact unfinished-update table and native review modal with synthetic stopped-worker evidence. It checks the required review reason and retained recovery warning without submitting a reconciliation. PHP tests exercise authorization, retention, live/unknown workers, locks, evidence changes and atomic audit/status writes.
 
 The consent fixtures use real public/admin fragments and the shipped UI. Public cases cover first visit, `?choice=accepted`, `?choice=rejected`, and `?choice=custom&storage-blocked=1`, with local synthetic embeds/scripts and intercepted consent writes. They check reopening without consent changes, saved and unsaved preferences, one-time content loads, withdrawal, failure handling and script reload requests. The admin fixture checks tabs, retained panel state, cookie rows and the service form action without submitting a mutation. Its `/general`, `/texts`, `/general-edit` and `/texts-edit` cases cover shared filter/list cards, icon actions, effective translations and dirty-close protection for individual field editors. Both report PASS/FAIL. The public fixture also covers the native Cookie Settings block, generated menu URL and explicit `?direct=1`/`#cookie-settings` entries. The System picker fixture exports the real picker with synthetic catalog data for tab, eligibility and badge checks.
 
