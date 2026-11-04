@@ -40,7 +40,7 @@
         <div class="wb-cluster">
             @if ($showSearch && $searchPath)
                 <a
-                    href="{{ $searchPath }}"
+                    href="{{ $routeResolver->homePath($currentLocaleCode, $currentSite) }}?cms_search=1#site-search"
                     class="wb-btn wb-btn-ghost wb-btn-icon"
                     data-wb-public-search-open
                     aria-label="{{ $searchLabel }}"

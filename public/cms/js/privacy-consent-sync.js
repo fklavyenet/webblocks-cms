@@ -158,7 +158,7 @@
             try {
                 var destination = new URL(link.href, window.location.href);
                 var preferences = new URL(config.preferencesUrl, window.location.href);
-                return destination.origin === preferences.origin && destination.pathname === preferences.pathname && !destination.search;
+                return destination.origin === preferences.origin && destination.pathname === preferences.pathname && !destination.search && (!preferences.hash || destination.hash === preferences.hash);
             } catch (error) { return false; }
         }
 

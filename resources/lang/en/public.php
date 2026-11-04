@@ -15,7 +15,7 @@ return [
     'no_results' => 'No results matched :query.',
     'count' => ':count result for :query.',
     'count_plural' => ':count results for :query.',
-    'unavailable' => 'Search is temporarily unavailable. You can still use the search page.',
+    'unavailable' => 'Search is temporarily unavailable. Please try again.',
     'untitled' => 'Untitled',
   ],
   'theme' => [

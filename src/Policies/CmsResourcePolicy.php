@@ -243,7 +243,7 @@ final class CmsResourcePolicy
       if (in_array($action, ['destroy', 'bulk-destroy', 'delete'], true) && ! str_starts_with($name, 'blocks.') && ! str_contains($name, '.blocks.')) {
       return 'cms.pages.delete';
       }
-      if ($name === 'pages.store' || str_contains($name, '.duplicate.') || str_contains($name, '.import.')) {
+      if (in_array($name, ['pages.store', 'pages.system.store'], true) || str_contains($name, '.duplicate.') || str_contains($name, '.import.')) {
       return 'cms.pages.create';
       }
 

@@ -32,6 +32,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
 use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemPage;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
@@ -875,7 +876,7 @@ class ImportDataMapper
         'page_type' => $pageData['page_type'] ?? 'default',
         'page_type_id' => $pageTypeSlug ? PageType::query()->where('slug', $pageTypeSlug)->value('id') : null,
         'layout_id' => $layoutSlug ? Layout::query()->where('slug', $layoutSlug)->value('id') : null,
-        'status' => $pageData['status'] ?? 'draft',
+        'status' => ($pageData['page_type'] ?? '') === Page::TYPE_SYSTEM ? Page::STATUS_DRAFT : ($pageData['status'] ?? 'draft'),
         'settings' => Page::sanitizeSettings($pageData['settings'] ?? null, $pageData['public_shell'] ?? null),
         'created_by_user_id' => null,
         'updated_by_user_id' => null,
@@ -885,6 +886,13 @@ class ImportDataMapper
         'created_at' => $pageData['created_at'] ?? null,
         'updated_at' => $pageData['updated_at'] ?? null,
       ]);
+      if ($page->isSystemPage()) {
+        $key = $pageData['system_page_key'] ?? null;
+        if (! is_string($key) || ! preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*$/D', $key)) {
+          throw new RuntimeException('A system page import requires a valid screen identity.');
+        }
+        SystemPage::create(['site_id' => $site->id, 'key' => $key, 'page_id' => $page->id]);
+      }
       app(PublicPageAccess::class)->importRule($page, $pageData['access_rule'] ?? null);
 
       $page->translations()->delete();

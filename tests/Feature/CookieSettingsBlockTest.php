@@ -116,7 +116,7 @@ class CookieSettingsBlockTest extends TestCase
   {
     $html = view('webblocks-cms::pages.partials.blocks.cookie-settings', ['block' => $this->block($locale, 'secondary')])->render();
     $path = ($locale === 'en' ? '' : '/'.$locale).'/privacy-consent/preferences';
-    $this->assertStringContainsString('href="'.$path.'"', $html);
+    $this->assertStringContainsString('href="#cookie-settings"', $html);
     $this->assertStringContainsString($label, $html);
     $this->assertStringContainsString('wb-btn wb-btn-secondary', $html);
     $this->assertStringContainsString('aria-controls="wbCookiePreferences"', $html);
@@ -143,12 +143,11 @@ class CookieSettingsBlockTest extends TestCase
   public function direct_entry_renders_one_preference_center_without_granting_consent(string $locale, string $label): void
   {
     $path = ($locale === 'en' ? '' : '/'.$locale).'/privacy-consent/preferences';
-    $response = $this->get($path)->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow');
-    $response->assertSee($label)->assertDontSee('name="services[youtube]"', false)->assertCookieMissing('webblocks_consent_'.$this->site->id);
+    $home = $locale === 'en' ? '/' : '/'.$locale;
+    $response = $this->get($path)->assertRedirect($home.'#cookie-settings');
+    $response->assertCookieMissing('webblocks_consent_'.$this->site->id);
     $this->assertStringContainsString('private', $response->headers->get('Cache-Control'));
-    $this->assertStringContainsString('Cookie', $response->headers->get('Vary'));
-    $this->assertSame(1, substr_count($response->getContent(), 'id="wbCookiePreferences"'));
-    $response->assertSee('data-cms-consent-auto-open', false)->assertSee('<noscript>', false)->assertSee('method="POST"', false);
+
   }
 
   #[Test]
@@ -157,14 +156,14 @@ class CookieSettingsBlockTest extends TestCase
     $service = app(SaveConsentService::class)->execute($this->site, 'synthetic-service', ['name' => 'Synthetic', 'category' => 'preferences']);
     $path = '/tr/privacy-consent/preferences';
     foreach (['stale' => false, $service->revision => true] as $revision => $expected) {
-      $response = $this->post($path, ['status' => 'accepted', 'revisions' => ['synthetic-service' => $revision]])->assertRedirect($path)->assertSessionHas('cms_consent_saved', true);
+      $response = $this->post($path, ['status' => 'accepted', 'revisions' => ['synthetic-service' => $revision]])->assertRedirect('/tr#cookie-settings')->assertSessionHas('cms_consent_saved', true);
       $cookie = $response->getCookie('webblocks_consent_'.$this->site->id);
       $this->assertNotNull($cookie);
       $this->assertTrue($cookie->isHttpOnly());
       $state = app(ConsentState::class)->read(Request::create('/', cookies: [$cookie->getName() => $cookie->getValue()]), $this->site, app(ConsentConfiguration::class)->publicServices($this->site));
       $this->assertSame($expected, $state['services']['synthetic-service']);
     }
-    $response = $this->post($path, ['status' => 'rejected', 'revisions' => ['synthetic-service' => $service->revision], 'services' => ['synthetic-service' => '1']])->assertRedirect($path);
+    $response = $this->post($path, ['status' => 'rejected', 'revisions' => ['synthetic-service' => $service->revision], 'services' => ['synthetic-service' => '1']])->assertRedirect('/tr#cookie-settings');
     $cookie = $response->getCookie('webblocks_consent_'.$this->site->id);
     $state = app(ConsentState::class)->read(Request::create('/', cookies: [$cookie->getName() => $cookie->getValue()]), $this->site, app(ConsentConfiguration::class)->publicServices($this->site));
     $this->assertFalse($state['services']['synthetic-service']);
@@ -177,7 +176,7 @@ class CookieSettingsBlockTest extends TestCase
     $this->site->locales()->updateExistingPivot(Locale::where('code', 'tr')->value('id'), ['is_enabled' => false]);
     $this->get('/tr/privacy-consent/preferences')->assertNotFound();
     $other = Site::create(['name' => 'Other site', 'handle' => 'other-preferences']);
-    $this->post('/privacy-consent/preferences', ['status' => 'rejected', 'site_id' => $other->id, 'return_to' => 'https://example.test/'])->assertRedirect('/privacy-consent/preferences')->assertCookie('webblocks_consent_'.$this->site->id)->assertCookieMissing('webblocks_consent_'.$other->id);
+    $this->post('/privacy-consent/preferences', ['status' => 'rejected', 'site_id' => $other->id, 'return_to' => 'https://example.test/'])->assertRedirect('/#cookie-settings')->assertCookie('webblocks_consent_'.$this->site->id)->assertCookieMissing('webblocks_consent_'.$other->id);
   }
 
   #[Test]
@@ -201,7 +200,7 @@ class CookieSettingsBlockTest extends TestCase
     $this->assertSame('', $normalized['url']);
     $item = NavigationItem::create($normalized);
     $this->assertSame('Cookie settings', $item->resolvedTitle());
-    $this->assertSame('/privacy-consent/preferences', $item->resolvedUrl());
+    $this->assertSame('#cookie-settings', $item->resolvedUrl());
     $response = $this->withToken($this->token())->postJson('/webadmin/api/navigation-menus/footer/items', ['site_id' => $this->site->id, 'link_type' => 'cookie_settings'])->assertCreated();
     $this->withToken($this->token())->patchJson('/webadmin/api/navigation-menus/footer/items/'.$item->id, ['site_id' => $this->site->id, 'link_type' => 'cookie_settings', 'target' => '_blank'])->assertUnprocessable();
     $this->assertStringContainsString('cookie_settings', view('webblocks-cms::admin.navigation._form', ['item' => $item, 'site' => $this->site, 'menuOptions' => NavigationItem::menuOptions(), 'parents' => collect(), 'pages' => collect()])->render());

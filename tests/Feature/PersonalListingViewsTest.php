@@ -134,7 +134,7 @@ class PersonalListingViewsTest extends TestCase
     $this->assertSame(1, $response->viewData('pages')->currentPage());
     $this->assertSame($before, DB::table('wbcms_page_revisions')->count());
     $this->assertDatabaseCount('wbcms_pages', 3);
-    $this->assertDatabaseCount('wbcms_listing_view_filters', 5);
+    $this->assertDatabaseCount('wbcms_listing_view_filters', 6);
     $this->assertDatabaseHas('wbcms_listing_view_columns', ['view_id' => $id, 'position' => 0, 'column_name' => 'updated']);
     $this->index(['site' => $this->site->id, 'saved_view' => $id, 'columns' => 'status', 'status' => 'published'])->assertOk()->assertSee('The applied configuration differs');
   }
@@ -264,7 +264,7 @@ class PersonalListingViewsTest extends TestCase
     }
     $this->postJson($url, [...$this->payload(), 'name' => 'Too many'])->assertUnprocessable();
     $this->assertDatabaseCount('wbcms_listing_views', 50);
-    $this->assertDatabaseCount('wbcms_listing_view_filters', 5);
+    $this->assertDatabaseCount('wbcms_listing_view_filters', 6);
   }
 
   #[Test]

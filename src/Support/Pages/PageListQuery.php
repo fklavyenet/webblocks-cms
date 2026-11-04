@@ -92,7 +92,7 @@ class PageListQuery
       ->where('site_id', $site->id)
       ->where('status', Page::STATUS_PUBLISHED)
       // Shared Slot source pages are internal: never routed, never listed.
-      ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+      ->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])
       ->whereHas('translations', function ($translationQuery) use ($localeId, $pathPrefix): void {
         $translationQuery
           ->where('locale_id', $localeId)

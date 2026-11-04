@@ -35,6 +35,7 @@ class PageDuplicator
     Collection $translations,
     bool $disableIncompatibleSharedSlots = false,
   ): PageDuplicateResult {
+    abort_if($page->isSystemPage(), 422);
     $page->loadMissing([
       'site',
       'translations.locale',

@@ -1,0 +1,22 @@
+<?php
+
+return [
+    'promotion_boundary' => 'Sistem sayfası tasarımları Site Import ile aktarılır. Site Promotion için yalnızca içerik sayfalarını dışa aktarın.',
+  'title' => 'Sistem sayfaları',
+  'badge' => 'Sistem',
+  'type' => 'Sayfa türü',
+  'all' => 'Tüm sayfa türleri',
+  'ordinary' => 'İçerik',
+  'not_found' => 'Sayfa bulunamadı (404)',
+  'maintenance' => 'Bakım (503)',
+  'prepare' => 'Taslak hazırla',
+  'edit' => 'Tasarımı düzenle',
+  'screen' => 'Ekran',
+  'state' => 'Tasarım',
+  'default' => 'Yerleşik tasarım',
+  'prepared' => 'Sistem sayfası taslak olarak hazırlandı. Yayımlamadan önce layout ve ortak slotları inceleyin.',
+  'help' => 'Sistem ekranları yayımlanmış sayfa tasarımını kullanır. Taslak hazırlamak canlı ekranı değiştirmez. Adresleri ve işlemleri ilgili özellik yönetir.',
+  'editor_help' => 'Bu bir sistem sayfasıdır. Layout, ortak slotlar ve çevreleyen içeriği buradan yönetin. İşlevsel içerik Main slotundaki yazılmış içeriğin ardından görünür; blokları düzenleyerek kaldırılamaz. Bu sayfanın bağımsız bir public adresi yoktur.',
+  'preview' => 'İlgili özelliğin formu veya sonucu çalışırken burada görünür. Bu önizleme müşteri, hesap veya ödeme verisi içermez.',
+  'maintenance_help' => 'Birincil sitenin yayımlanmış bakım tasarımı CMS güncellemelerinden önce render edilir. Kaydedilen HTML, uygulama ve veritabanı olmadan çalışır. Diğer siteler de bu kurulum geneli bakım yanıtını paylaşır.',
+];

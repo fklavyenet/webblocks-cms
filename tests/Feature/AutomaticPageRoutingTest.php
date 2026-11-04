@@ -291,7 +291,7 @@ class AutomaticPageRoutingTest extends TestCase
       $this->getJson('http://library.test'.$prefix.'/search.json?q=Only'.($locale === 'en' ? 'tr' : 'en'))
         ->assertOk()->assertJsonPath('count', 0);
     }
-    $this->get('http://library.test/tr/search?q=Onlytr')->assertOk()->assertSee('brand-new tr')->assertSee('/tr/library/brand-new')->assertDontSee('Existing tr');
+    $this->get('http://library.test/tr/search?q=Onlytr')->assertRedirect('/tr?cms_search=1&q=Onlytr#site-search');
     $this->assertSame(1, Page::count());
     RoutingPublicationFixture::$calls = [];
     $this->getJson('http://library.test/search.json')->assertOk()->assertJsonPath('count', 0);

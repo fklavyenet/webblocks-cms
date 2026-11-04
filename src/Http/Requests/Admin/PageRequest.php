@@ -54,7 +54,7 @@ class PageRequest extends FormRequest
       : null;
 
     return [
-      'site_id' => ['required', 'integer', 'exists:wbcms_sites,id'],
+      'site_id' => ['required', 'integer', 'exists:wbcms_sites,id', ...($page?->isSystemPage() ? [Rule::in([$page->site_id])] : [])],
       'title' => ['required', 'string', 'max:255'],
       'slug' => [
         'required',
@@ -145,7 +145,7 @@ class PageRequest extends FormRequest
     $data = $this->validated();
     $page = $this->route('page');
     $page = $page instanceof Page ? $page : null;
-    $data['page_type'] = 'default';
+    $data['page_type'] = $page?->isSystemPage() ? Page::TYPE_SYSTEM : Page::TYPE_DEFAULT;
     $data['status'] = $page instanceof Page ? $page->status : Page::STATUS_DRAFT;
     $existingSettings = $page?->settings;
     $existingSettings = is_array($existingSettings) ? $existingSettings : [];

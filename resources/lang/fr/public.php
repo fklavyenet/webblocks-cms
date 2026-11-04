@@ -15,7 +15,7 @@ return [
     'no_results' => 'Aucun résultat pour :query.',
     'count' => ':count résultat pour :query.',
     'count_plural' => ':count résultats pour :query.',
-    'unavailable' => 'La recherche est temporairement indisponible. Vous pouvez toujours utiliser la page de recherche.',
+    'unavailable' => 'La recherche est temporairement indisponible. Veuillez réessayer.',
     'untitled' => 'Sans titre',
   ],
   'theme' => [

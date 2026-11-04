@@ -278,7 +278,7 @@ class InternalContentApiOperations
       } else {
         $page = Page::query()->find((int) $pageId);
 
-        if (! $page || ($site && (int) $page->site_id !== (int) $site->id)) {
+        if (! $page || $page->isSystemPage() || ($site && (int) $page->site_id !== (int) $site->id)) {
           $errors[] = $this->error($path.'.page_id', 'Selected page must belong to the selected site.');
         } else {
           $resolvedPageId = $page->id;

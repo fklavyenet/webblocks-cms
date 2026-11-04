@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
+use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\Page;
 
 /**
@@ -25,6 +26,9 @@ class ExportablePages
       // Shared-slot source pages are machinery behind a shared slot rather
       // than content anyone chooses, and the exporter skips them anyway.
       ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+      ->when(Schema::hasTable('wbcms_system_pages'),
+        fn ($query) => $query->where(fn ($pages) => $pages->where('page_type', '!=', Page::TYPE_SYSTEM)->orWhereHas('systemPage')),
+        fn ($query) => $query->where('page_type', '!=', Page::TYPE_SYSTEM))
       ->with('translations')
       ->orderBy('site_id')
       ->orderBy('id')

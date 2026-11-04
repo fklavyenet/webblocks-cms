@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Support\Updates;
 
+use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
+
 final class CmsUpdateMaintenance
 {
   public const VIEW = 'webblocks-cms::errors.503';
@@ -16,6 +18,8 @@ final class CmsUpdateMaintenance
 
   public static function arguments(): array
   {
+    app(SystemPageRenderer::class)->prepareMaintenance();
+
     return ['down', '--render='.self::VIEW, '--status=503', '--retry='.self::RETRY_AFTER];
   }
 }

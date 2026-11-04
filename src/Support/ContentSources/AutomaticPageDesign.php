@@ -10,7 +10,7 @@ final class AutomaticPageDesign
   public function page(AutomaticPageRule $rule): ?Page
   {
     return Page::query()->visibleInAdmin()->where('site_id', $rule->site_id)
-      ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)->find($rule->template_page_id);
+      ->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])->find($rule->template_page_id);
   }
 
   public function connections(Page $page, ContentSourceDefinition $entity): array

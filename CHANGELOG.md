@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.117.0
+
+- Manage visitor-facing system screen designs from Pages, with a System badge, a page-type filter, explicit draft preparation and the existing layout, Shared Slot, translation, preview and publication controls.
+- Keep search and cookie preferences on the current page as modals. Redirect former standalone HTML addresses to the localized home with the appropriate modal fragment; preserve search queries, technical endpoints and no-JavaScript in-page fallbacks.
+- Add site-scoped 404 designs and a pre-rendered primary-site 503 design for the installation-wide maintenance gate. Preserve error status, host-owned error templates and defensive built-in fallbacks.
+- Let enabled plugins declare their public screens without core-specific routes. Preserve feature-owned forms, transaction checks, signatures, response status and headers; keep required runtime content present even when Main is absent.
+- Store screen bindings relationally, keep imported designs in draft and exclude System Pages from ordinary public routing, search, sitemap, navigation and automatic-page templates. Use Site Import for these designs; the existing path-based Site Promotion flow rejects packages containing System Pages.
+
 ## 1.116.1
 
 - Show manual SEO and shared jobs in a native progress modal with keep-tab-open guidance, real counts, elapsed time and persistent results. Close, Escape and backdrop actions wait for the current step and confirm a safe pause; uncertain outcomes direct operators to saved results.

@@ -108,7 +108,7 @@ class PublicRequestHardeningTest extends TestCase
     foreach (['', '?q=', '?q='.str_repeat('ü', 200), '?q='.urlencode(implode(' ', range(1, 20)))] as $query) {
       $this->getJson('http://example.test/search.json'.$query)->assertOk();
     }
-    $this->get('http://example.test/search?q=normal')->assertOk();
+    $this->get('http://example.test/search?q=normal')->assertRedirect();
   }
 
   #[Test]
@@ -139,7 +139,7 @@ class PublicRequestHardeningTest extends TestCase
     $this->get('http://example.test/robots.txt')->assertOk();
     $this->get('http://example.test/cms/plugins/missing/file.js')->assertNotFound();
     $this->travel(61)->seconds();
-    $this->get('http://example.test/search')->assertOk();
+    $this->get('http://example.test/search')->assertRedirect();
     $this->travel(61)->seconds();
     $this->getJson('http://example.test/search.json')->assertStatus(429);
   }

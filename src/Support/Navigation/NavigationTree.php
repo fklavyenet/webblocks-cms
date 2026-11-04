@@ -35,7 +35,7 @@ class NavigationTree
   {
     return $items->filter(fn (NavigationItem $item) => $item->visibility !== NavigationItem::VISIBILITY_HIDDEN
       && ($item->link_type !== NavigationItem::LINK_PAGE || $item->page !== null)
-      && (! $item->page || ($item->page->status === Page::STATUS_PUBLISHED && $item->page->page_type !== Page::TYPE_SHARED_SLOT_SOURCE && (int) $item->page->site_id === $siteId && ! app(PublicPageAccess::class)->protected($item->page))))
+      && (! $item->page || ($item->page->status === Page::STATUS_PUBLISHED && ! in_array($item->page->page_type, [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM], true) && (int) $item->page->site_id === $siteId && ! app(PublicPageAccess::class)->protected($item->page))))
       ->map(function (NavigationItem $item) use ($siteId): NavigationItem {
         $item->setRelation('children', $this->publicItems($item->children, $siteId));
 

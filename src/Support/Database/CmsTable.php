@@ -10,6 +10,7 @@ final class CmsTable
    * @var array<int, string>
    */
   public const TABLES = [
+    'system_pages',
     'seo_source_versions',
     'seo_audits',
     'seo_audit_locales',

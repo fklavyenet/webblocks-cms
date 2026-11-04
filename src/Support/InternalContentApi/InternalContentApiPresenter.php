@@ -20,6 +20,7 @@ use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
+use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
 
 class InternalContentApiPresenter
 {
@@ -151,6 +152,7 @@ class InternalContentApiPresenter
       'site' => $page->relationLoaded('site') && $page->site ? $this->site($page->site) : null,
       'status' => $page->status,
       'page_type' => $page->page_type,
+      'system_page_key' => app(SystemPageRenderer::class)->identity($page),
       'layout' => $page->publicShellPreset(),
       'title' => $page->name,
       'slug' => $page->slug,

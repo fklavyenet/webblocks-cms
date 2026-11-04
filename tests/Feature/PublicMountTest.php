@@ -121,9 +121,7 @@ class PublicMountTest extends TestCase
       ->assertJsonPath('results.0.url', '/wb/visitor-support')
       ->assertJsonPath('results.0.excerpt', 'Live help and visitor chat');
     $this->get('https://mounted.test/wb/search?q=live%20chat')
-      ->assertOk()
-      ->assertSee('Visitor support')
-      ->assertSee('Live help and visitor chat');
+      ->assertRedirect('/wb/?cms_search=1&q=live+chat#site-search');
   }
 
   private function site(string $domain, bool $primary = false): array

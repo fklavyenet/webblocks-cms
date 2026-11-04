@@ -13,7 +13,7 @@ final class ListingViewDefinition
   public function defaults(string $listing): array
   {
     return $listing === 'pages'
-      ? ['site' => 'all', 'search' => '', 'status' => '', 'sort' => 'created_at', 'direction' => 'desc']
+      ? ['site' => 'all', 'search' => '', 'status' => '', 'type' => '', 'sort' => 'created_at', 'direction' => 'desc']
       : ['folder_id' => '', 'search' => '', 'kind' => '', 'usage' => '', 'sort' => 'updated_at', 'direction' => 'desc', 'view' => 'list'];
   }
 
@@ -49,6 +49,7 @@ final class ListingViewDefinition
     $sorts = array_keys(AdminTableSort::for($listing)->columns());
     $this->ensure(in_array($values['sort'], $sorts, true) && in_array($values['direction'], ['asc', 'desc'], true));
     if ($listing === 'pages') {
+      $this->ensure(in_array($values['type'], ['', 'content', 'system'], true));
       $this->ensure(in_array($values['status'], ['', 'draft', 'in_review', 'published', 'archived'], true));
       if ($values['site'] !== 'all') {
         $site = ctype_digit($values['site']) ? Site::query()->find((int) $values['site']) : null;

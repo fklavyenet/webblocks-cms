@@ -10,6 +10,12 @@
 @endphp
 
 <div class="wb-stack wb-gap-4">
+    @if ($page->isSystemPage())
+        <div class="wb-alert wb-alert-info" role="status">{{ __('webblocks-cms::system_pages.editor_help') }}</div>
+        @if ($systemPageKey ?? null)
+            <table class="wb-table wb-table-break"><tbody><tr><th scope="row">{{ __('webblocks-cms::system_pages.screen') }}</th><td><code>{{ $systemPageKey }}</code></td></tr></tbody></table>
+        @endif
+    @endif
     <div class="wb-grid wb-grid-2">
         <div class="wb-stack-4 wb-gap-1">
             <div class="wb-stack-2 wb-field">
@@ -33,7 +39,7 @@
             </div>
             <div class="wb-stack-2 wb-field">
                 <label for="slug">{{ $pageFormText('slug') }}</label>
-                <input id="slug" name="slug" @disabled(! $canEditContent) class="wb-input" type="text" value="{{ old('slug', $page->slug) }}">
+                <input id="slug" name="slug" @readonly($page->isSystemPage()) @disabled(! $canEditContent) class="wb-input" type="text" value="{{ old('slug', $page->slug) }}">
             </div>
         </div>
         <div class="wb-stack wb-gap-2">

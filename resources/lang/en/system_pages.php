@@ -1,0 +1,22 @@
+<?php
+
+return [
+    'promotion_boundary' => 'System Page designs require Site Import. For Site Promotion, export only content pages.',
+  'title' => 'System pages',
+  'badge' => 'System',
+  'type' => 'Page type',
+  'all' => 'All page types',
+  'ordinary' => 'Content',
+  'not_found' => 'Page not found (404)',
+  'maintenance' => 'Maintenance (503)',
+  'prepare' => 'Prepare draft',
+  'edit' => 'Edit design',
+  'screen' => 'Screen',
+  'state' => 'Design',
+  'default' => 'Built-in design',
+  'prepared' => 'System page prepared as a draft. Review its layout and shared slots before publishing.',
+  'help' => 'System screens use the published page design. Preparing a draft does not change the live screen. Their addresses and processing remain managed by the feature.',
+  'editor_help' => 'This is a system page. Manage its layout, shared slots and surrounding content here. The screen’s functional content appears after the authored content in Main; it cannot be removed by editing blocks. This page has no independent public slug.',
+  'preview' => 'The feature’s form or result appears here at runtime. This preview contains no customer, account or payment data.',
+  'maintenance_help' => 'The published maintenance design of the primary site is rendered before CMS updates. Its saved HTML works without the application or database. Other sites share this installation-wide maintenance response.',
+];

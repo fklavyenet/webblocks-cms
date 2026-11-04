@@ -5,7 +5,7 @@
   var activeRequest = 0;
   var copy = {
     helper: 'Enter a search term to find published content for this site and locale.',
-    unavailable: 'Search is temporarily unavailable. You can still use the search page.',
+    unavailable: 'Search is temporarily unavailable. Please try again.',
     count: '__count__ result for __query__.',
     countPlural: '__count__ results for __query__.',
     untitled: 'Untitled'
@@ -71,7 +71,7 @@
     var closeButtons = document.querySelectorAll('[data-wb-public-search-close]');
     var triggers = document.querySelectorAll('[data-wb-public-search-open]');
 
-    if (!overlay || !modal || !form || !input || !loading || !count || !message || !results || triggers.length === 0) {
+    if (!overlay || !modal || !form || !input || !loading || !count || !message || !results) {
       return;
     }
 
@@ -213,14 +213,6 @@
       }, 180);
     }
 
-    function syncFormAction(path) {
-      if (!path) {
-        return;
-      }
-
-      form.setAttribute('action', path);
-    }
-
     function setBackdropVisible(visible) {
       var backdrop = overlay.querySelector('.wb-overlay-backdrop');
 
@@ -231,8 +223,8 @@
       backdrop.hidden = !visible;
     }
 
-    function openModal(initialQuery, path) {
-      syncFormAction(path);
+    function openModal(initialQuery) {
+
       setBackdropVisible(true);
       modal.hidden = false;
       modal.classList.add(ACTIVE_CLASS);
@@ -263,13 +255,28 @@
       setLoading(false);
     }
 
+    document.querySelectorAll('[data-wb-public-search-inline]').forEach(function (inlineForm) {
+      inlineForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var queryInput = inlineForm.querySelector('[name="q"]');
+        openModal(queryInput ? queryInput.value : '');
+      });
+    });
+
+    function openFromHash() {
+      if (window.location.hash === '#site-search') {
+        openModal(new URLSearchParams(window.location.search).get('q') || '');
+      }
+    }
+    window.addEventListener('hashchange', openFromHash);
+    openFromHash();
+
     triggers.forEach(function (trigger) {
       trigger.addEventListener('click', function (event) {
         event.preventDefault();
 
         var currentQuery = new URLSearchParams(window.location.search).get('q') || '';
-        var href = trigger.getAttribute('href') || form.getAttribute('action') || '/search';
-        openModal(currentQuery, href);
+        openModal(currentQuery);
       });
     });
 

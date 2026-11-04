@@ -1,7 +1,12 @@
+@php
+    $systemMaintenancePath = \WebBlocks\Cms\Support\SystemPages\SystemPageRenderer::maintenancePath();
+@endphp
+@if (is_file($systemMaintenancePath))
+{!! file_get_contents($systemMaintenancePath) !!}
+@else
 {{-- Pre-rendered before update application. No site, database, session or plugin
      lookups: the saved HTML must work before the application can boot. --}}
 @php
-    use WebBlocks\Cms\Support\WebBlocks;
 
     $maintenanceLocale = str_replace('_', '-', app()->getLocale());
     $maintenanceTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
@@ -14,7 +19,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ $maintenanceText('title') }}</title>
         <link rel="icon" type="image/svg+xml" href="/cms/brand/favicon.svg">
-        <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
+        <link rel="stylesheet" href="{{ \WebBlocks\Cms\Support\WebBlocks::uiCssUrl() }}">
         <link rel="stylesheet" href="/cms/css/public.css">
     </head>
     <body class="wb-public-body" data-wb-public-theme="canvas">
@@ -33,3 +38,5 @@
         </div>
     </body>
 </html>
+
+@endif

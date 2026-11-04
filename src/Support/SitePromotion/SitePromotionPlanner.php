@@ -32,6 +32,9 @@ class SitePromotionPlanner
 
     $payload = $inspection->payload;
     $errors = array_values($inspection->errors);
+    if (collect($payload['pages'] ?? [])->contains(fn (array $page) => ($page['page_type'] ?? '') === Page::TYPE_SYSTEM)) {
+      $errors[] = __('webblocks-cms::system_pages.promotion_boundary');
+    }
     $warnings = array_values($inspection->warnings);
 
     if (($payload['site']['handle'] ?? null) === $targetSite->handle) {
@@ -236,7 +239,7 @@ class SitePromotionPlanner
   {
     $pages = Page::query()
       ->where('site_id', $site->id)
-      ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+      ->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])
       ->with('translations.locale')
       ->get();
 

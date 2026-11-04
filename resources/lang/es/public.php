@@ -15,7 +15,7 @@ return [
     'no_results' => 'Ningún resultado coincide con :query.',
     'count' => ':count resultado para :query.',
     'count_plural' => ':count resultados para :query.',
-    'unavailable' => 'La búsqueda no está disponible temporalmente. Aun así puedes usar la página de búsqueda.',
+    'unavailable' => 'La búsqueda no está disponible temporalmente. Inténtalo de nuevo.',
     'untitled' => 'Sin título',
   ],
   'theme' => [

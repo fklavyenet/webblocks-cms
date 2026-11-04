@@ -28,6 +28,8 @@ class Page extends CmsModel
 
   public const TYPE_DEFAULT = 'default';
 
+  public const TYPE_SYSTEM = 'system';
+
   public const TYPE_SHARED_SLOT_SOURCE = 'shared_slot_source';
 
   private ?string $pendingDefaultTranslationName = null;
@@ -450,6 +452,16 @@ class Page extends CmsModel
   public function isPublished(): bool
   {
     return $this->status === self::STATUS_PUBLISHED;
+  }
+
+  public function isSystemPage(): bool
+  {
+    return $this->page_type === self::TYPE_SYSTEM;
+  }
+
+  public function systemPage(): HasOne
+  {
+    return $this->hasOne(SystemPage::class);
   }
 
   public function isSharedSlotSourcePage(): bool

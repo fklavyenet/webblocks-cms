@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\View;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
@@ -84,6 +85,7 @@ use WebBlocks\Cms\Http\Middleware\RequireInternalApiCapability;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\RevokeResetCmsSessions;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
+use WebBlocks\Cms\Http\Requests\PublicSearchRequest;
 use WebBlocks\Cms\Models\AutomaticPageRule;
 use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Models\Media;
@@ -141,6 +143,7 @@ use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Relational\RelationalDocuments;
 use WebBlocks\Cms\Support\Relational\StructuredSettings;
 use WebBlocks\Cms\Support\Relational\TokenRelations;
+use WebBlocks\Cms\Support\Search\PublicSearchResolver;
 use WebBlocks\Cms\Support\Seo\SeoSourceVersion;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationChannels;
@@ -155,6 +158,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateDownloader;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateExtractor;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
+use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
 use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager as ClientBackupManager;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore as ClientInstalledVersionStore;
@@ -1100,6 +1104,15 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     }
     $this->bootViews();
     $this->bootNotFoundView();
+    \Illuminate\Support\Facades\View::composer('webblocks-cms::layouts.public', function (View $view): void {
+      app(SystemPageRenderer::class)->compose($view);
+    });
+    \Illuminate\Support\Facades\View::composer('webblocks-cms::search.partials.noscript', function (View $view): void {
+      if (request()->boolean('cms_search') && ! ($view->getData()['previewMode'] ?? false)) {
+        $data = app(PublicSearchResolver::class)->resolve(app(PublicSearchRequest::class));
+        $view->with($data);
+      }
+    });
     $this->bootMigrations();
     $this->bootPublishing();
     $this->bootRuntimeAssetCompatibility();
@@ -1566,7 +1579,11 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
           return null;
         }
 
-        return response()->view('webblocks-cms::errors.404', ['request' => $request], 404);
+        $systemHtml = app(SystemPageRenderer::class)->notFound($request);
+
+        return $systemHtml !== null
+          ? response($systemHtml, 404)->header('X-Robots-Tag', 'noindex, nofollow')->header('Cache-Control', 'private, no-store')
+          : response()->view('webblocks-cms::errors.404', ['request' => $request], 404);
       });
     });
   }

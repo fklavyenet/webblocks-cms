@@ -1,5 +1,14 @@
 # Upgrading and Installation Topologies
 
+## 1.117.0: System Pages and modal tools
+
+Run the normal package update migrations to create the relational system-screen bindings. In Pages, select a site and prepare a System Page draft before configuring its layout and Shared Slots. No design is published automatically. Updated first-party plugin releases declare their screens; older plugin releases retain their built-in rendering.
+
+Former search and cookie-preference HTML URLs redirect to the localized home and open the existing modal. JSON search and consent form endpoints remain available. A host-owned homepage must include the CMS public overlays and fallback fragments to provide this redirected experience.
+
+The maintenance gate uses the primary site's published 503 design, rendered before the update starts; its saved HTML works while the application and database are unavailable. This response is installation-wide. Transfer System Page designs through Site Import; exclude them from packages intended for the existing path-based Site Promotion workflow.
+
+
 ## 1.113.0: automatic required update steps
 
 The panel and `webblocks:updates:run` require Publisher plan protocol 1. They pin

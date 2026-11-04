@@ -109,19 +109,19 @@ class NavigationCacheTest extends TestCase
     $f = $this->fixture();
     NavigationItem::create(['site_id' => $f['site']->id, 'menu_key' => 'primary', 'link_type' => 'cookie_settings', 'position' => 3]);
     $block = $f['blocks']['navigation-auto'];
-    $this->assertStringContainsString('/privacy-consent/preferences', $this->render($block));
+    $this->assertStringContainsString('#cookie-settings', $this->render($block));
     $generation = DB::table(NavigationCache::TABLE)->value('generation');
     app(UpdateConsentSettings::class)->settings($f['site'], ['enabled' => false]);
     $this->request();
     [$html, $queries] = $this->measure($block, 'menu-consent-disabled');
     $this->assertSame(0, $queries);
-    $this->assertStringNotContainsString('/privacy-consent/preferences', $html);
+    $this->assertStringNotContainsString('#cookie-settings', $html);
     $this->assertSame($generation, DB::table(NavigationCache::TABLE)->value('generation'));
     app(UpdateConsentSettings::class)->settings($f['site'], ['enabled' => true]);
     $this->request('tr');
     [$html, $queries] = $this->measure($block, 'menu-consent-enabled-tr');
     $this->assertSame(0, $queries);
-    $this->assertStringContainsString('/tr/privacy-consent/preferences', $html);
+    $this->assertStringContainsString('#cookie-settings', $html);
   }
 
   #[Test]

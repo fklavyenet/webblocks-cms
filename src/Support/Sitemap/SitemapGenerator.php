@@ -136,7 +136,7 @@ class SitemapGenerator
     $pages = app(PublicPageAccess::class)->scopePublic(Page::query())
       ->with(['site', 'translations.locale'])
       ->where('site_id', $site->id)
-      ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+      ->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])
       ->where('status', Page::STATUS_PUBLISHED)
       ->orderBy('id')
       ->get()

@@ -15,7 +15,7 @@ return [
     'no_results' => 'Nessun risultato corrisponde a :query.',
     'count' => ':count risultato per :query.',
     'count_plural' => ':count risultati per :query.',
-    'unavailable' => 'La ricerca non è temporaneamente disponibile. Puoi comunque usare la pagina di ricerca.',
+    'unavailable' => 'La ricerca non è temporaneamente disponibile. Riprova.',
     'untitled' => 'Senza titolo',
   ],
   'theme' => [

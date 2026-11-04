@@ -100,7 +100,7 @@ final class SiteSeoAuditWorker
 
   private function inventory(SeoAudit $audit, string $token): void
   {
-    $pages = Page::query()->where('site_id', $audit->site_id)->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+    $pages = Page::query()->where('site_id', $audit->site_id)->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])
       ->where('id', '>', $audit->cursor)->where('id', '<=', $audit->upper_page_id)->orderBy('id')->limit(50)->get();
     $locales = DB::table('wbcms_seo_audit_locales')->where('audit_id', $audit->id)->pluck('locale');
     $rows = [];

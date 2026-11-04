@@ -3,7 +3,7 @@
 namespace WebBlocks\Cms\Http\Requests;
 
 use WebBlocks\Cms\Support\Consent\ConsentConfiguration;
-use WebBlocks\Cms\Support\Consent\ConsentPreferencesLink;
+use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Sites\SiteResolver;
 
 class PublicConsentFormRequest extends PublicConsentRequest
@@ -15,7 +15,11 @@ class PublicConsentFormRequest extends PublicConsentRequest
 
   protected function getRedirectUrl(): string
   {
-    return app(ConsentPreferencesLink::class)->url(app(SiteResolver::class)->current($this), $this->route('locale'));
+    $site = app(SiteResolver::class)->current($this);
+    $routes = app(PageRouteResolver::class);
+    $home = $routes->homePath($this->route('locale'), $site) ?? $routes->homePath(null, $site);
+
+    return url($home ?? '/').'#cookie-settings';
   }
 
   protected function prepareForValidation(): void

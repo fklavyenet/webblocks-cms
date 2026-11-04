@@ -15,14 +15,14 @@ class SearchablePageResolver
   {
     return app(PublicPageAccess::class)->scopePublic(Page::query())
       ->where('status', Page::STATUS_PUBLISHED)
-      ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+      ->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])
       ->when($site, fn (Builder $query) => $query->where('site_id', $site->id))
       ->when($pageId, fn (Builder $query) => $query->whereKey($pageId));
   }
 
   public function shouldIndex(Page $page): bool
   {
-    return $page->isPublished() && ! $page->isSharedSlotSourcePage() && ! app(PublicPageAccess::class)->protected($page);
+    return $page->isPublished() && ! $page->isSharedSlotSourcePage() && ! $page->isSystemPage() && ! app(PublicPageAccess::class)->protected($page);
   }
 
   public function loadForIndexing(Page $page): Page

@@ -15,7 +15,7 @@ return [
     'no_results' => ':query icin sonuc bulunamadi.',
     'count' => ':query icin :count sonuc.',
     'count_plural' => ':query icin :count sonuc.',
-    'unavailable' => 'Arama gecici olarak kullanilamiyor. Arama sayfasini kullanmaya devam edebilirsiniz.',
+    'unavailable' => 'Arama geçici olarak kullanılamıyor. Lütfen yeniden deneyin.',
     'untitled' => 'Basliksiz',
   ],
   'theme' => [

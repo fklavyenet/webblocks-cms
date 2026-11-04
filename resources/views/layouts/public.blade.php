@@ -81,7 +81,7 @@
             'hreflangPage' => $page ?? null,
             'hreflangSite' => $resolvedSite,
         ])
-        @if ($previewMode ?? false)
+        @if (($previewMode ?? false) || ($systemPageRuntime ?? false))
             <meta name="robots" content="noindex, nofollow">
         @endif
 
@@ -156,15 +156,33 @@
             </div>
         @endif
 
+        @if (($systemPageRuntime ?? false) || (isset($page) && $page->isSystemPage() && ($previewMode ?? false)))
+            @php
+                $systemPageRuntime = true;
+                $systemPageContent = ($systemPagePreview ?? false)
+                    ? '<div class="wb-alert wb-alert-info" role="status">'.e(__('webblocks-cms::system_pages.preview')).'</div>'
+                    : $__env->yieldContent('content');
+            @endphp
+        @endif
         @if (! isset($page))
             @yield('content')
         @else
         @php
+            $systemPageContent = $systemPageContent ?? null;
             $publicShell = $page->resolvedPublicShellType();
             $slotCollection = collect($slots ?? []);
-            $renderSlot = function (array $slot) use ($page) {
+            if (($systemPageRuntime ?? false) && ! $slotCollection->contains('slug', 'main')) {
+                $main = ['slug' => 'main', 'blocks' => collect(), 'wrapper' => ['element' => 'main', 'attributes' => ['class' => 'wb-container']]];
+                $footerIndex = $slotCollection->search(fn ($slot) => ($slot['slug'] ?? null) === 'footer');
+                $slotCollection->splice($footerIndex === false ? $slotCollection->count() : $footerIndex, 0, [$main]);
+            }
+            $systemContentRendered = false;
+            $renderSlot = function (array $slot) use ($page, $systemPageContent, &$systemContentRendered) {
                 $wrapper = is_array($slot['wrapper'] ?? null) ? $slot['wrapper'] : [];
                 $tag = $wrapper['element'] ?? 'div';
+                if ($systemPageContent !== null && ($slot['slug'] ?? null) === 'main' && $tag === 'main' && preg_match('/<main(?:\s|>)/i', $systemPageContent)) {
+                    $tag = 'div';
+                }
                 $beforeHtml = $wrapper['before_html'] ?? null;
                 $startHtml = $wrapper['start_html'] ?? null;
                 $endHtml = $wrapper['end_html'] ?? null;
@@ -175,6 +193,10 @@
                     ->all();
 
                 $content = view('webblocks-cms::pages.partials.slot', ['slot' => $slot, 'page' => $page, 'renderWrapper' => false])->render();
+                if ($systemPageContent !== null && ($slot['slug'] ?? null) === 'main' && ! $systemContentRendered) {
+                    $content .= $systemPageContent;
+                    $systemContentRendered = true;
+                }
 
                 // A promoted header navbar (PublicPagePresenter) turns this wrapper
                 // into the navbar element itself and renders the navbar's children
@@ -244,6 +266,14 @@
         @if ($applicationAssets['has_applications'] && is_file($applicationRuntimePath))
             <script src="{{ asset('cms/js/public/application-runtime.js') }}?v={{ filemtime($applicationRuntimePath) }}" defer></script>
         @endif
+        @unless ($systemMaintenance ?? false)
+        @include('webblocks-cms::search.partials.noscript')
+        @if ($resolvedSite)
+            @php($consent = app(\WebBlocks\Cms\Support\Consent\ConsentPresenter::class)->forSite($resolvedSite, $publicLocaleCode ?? app()->getLocale(), (bool) ($previewMode ?? false)))
+            @if ($consent['enabled'] && ! ($previewMode ?? false))
+                @include('webblocks-cms::partials.consent-noscript')
+            @endif
+        @endif
         <div id="wb-overlay-root" class="wb-overlay-root">
             @include('webblocks-cms::search.partials.modal')
 
@@ -258,5 +288,6 @@
                 {!! $overlayHtml !!}
             @endforeach
         </div>
+        @endunless
     </body>
 </html>

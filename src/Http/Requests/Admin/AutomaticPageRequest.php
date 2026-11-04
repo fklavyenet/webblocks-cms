@@ -26,7 +26,7 @@ final class AutomaticPageRequest extends FormRequest
   public function rules(): array
   {
     $rule = $this->route('automaticPage');
-    $page = fn () => Rule::exists('wbcms_pages', 'id')->where('site_id', $this->integer('site_id'))->whereNot('page_type', Page::TYPE_SHARED_SLOT_SOURCE);
+    $page = fn () => Rule::exists('wbcms_pages', 'id')->where('site_id', $this->integer('site_id'))->whereNot('page_type', Page::TYPE_SHARED_SLOT_SOURCE)->whereNot('page_type', Page::TYPE_SYSTEM);
 
     return ['name' => ['required', 'string', 'max:160'], 'site_id' => ['required', 'integer'],
       'source_handle' => ['required', 'string', 'max:160'], 'template_page_id' => ['required', 'integer', $page()],
@@ -53,7 +53,7 @@ final class AutomaticPageRequest extends FormRequest
         $validator->errors()->add('base_path', __('webblocks-cms::automatic-pages.invalid_path'));
       }
       $site = Site::query()->findOrFail($this->integer('site_id'));
-      $page = Page::query()->visibleInAdmin()->where('site_id', $site->id)->find($this->integer('template_page_id'));
+      $page = Page::query()->visibleInAdmin()->where('page_type', '!=', Page::TYPE_SYSTEM)->where('site_id', $site->id)->find($this->integer('template_page_id'));
       $configuration = $page ? app(PublicationSources::class)->find($this->input('source_handle'), $site, $this->user(), $page) : null;
       if (! $configuration) {
         $validator->errors()->add('source_handle', __('webblocks-cms::automatic-pages.source_unavailable'));

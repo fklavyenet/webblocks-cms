@@ -44,7 +44,7 @@ class NavigationItemRequest extends FormRequest
         'exists:wbcms_navigation_items,id',
         Rule::notIn([$navigation?->id]),
       ],
-      'page_id' => ['nullable', 'integer', 'exists:wbcms_pages,id'],
+      'page_id' => ['nullable', 'integer', Rule::exists('wbcms_pages', 'id')->where(fn ($query) => $query->where('page_type', '!=', Page::TYPE_SYSTEM))],
       'title' => ['nullable', 'string', 'max:255'],
       'locale' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'exists:wbcms_locales,code'],
       'link_type' => ['required', 'string', Rule::in(NavigationItem::linkTypes())],

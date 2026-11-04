@@ -57,6 +57,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemBackupController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemHealthController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemInformationController;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemPageController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemPluginController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
@@ -402,6 +403,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::put('/pages/{page}/translations/{translation}', [PageTranslationController::class, 'update'])->name('pages.translations.update');
     Route::get('/pages/{page}/seo-check/freshness', PageSeoFreshnessController::class)->name('pages.seo-check.freshness');
     Route::get('/pages/{page}/seo-check', PageSeoCheckController::class)->name('pages.seo-check');
+    Route::post('/pages/system', [SystemPageController::class, 'store'])->name('pages.system.store');
     Route::resource('pages', PageController::class)->except([]);
     Route::resource('shared-slots', SharedSlotController::class)->parameters(['shared-slots' => 'shared_slot'])->except(['show'])->missing($missingSharedSlot);
     Route::get('media', [MediaController::class, 'index'])->name('media.index');

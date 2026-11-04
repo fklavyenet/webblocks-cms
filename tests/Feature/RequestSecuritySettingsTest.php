@@ -234,7 +234,7 @@ class RequestSecuritySettingsTest extends TestCase
     $this->getJson('http://example.test/search.json')->assertOk();
     $this->get('http://example.test/de/search')->assertStatus(429);
     $this->travel(61)->seconds();
-    $this->get('http://example.test/search')->assertOk();
+    $this->get('http://example.test/search')->assertRedirect();
     $this->travel(61)->seconds();
     $this->getJson('http://example.test/de/search.json')->assertStatus(429);
     $this->get('http://example.test/')->assertOk();
@@ -270,7 +270,8 @@ class RequestSecuritySettingsTest extends TestCase
   {
     $this->saveLimits(['search_max_characters' => 10, 'search_max_words' => 2]);
     foreach (['/search', '/search.json', '/de/search', '/de/search.json'] as $path) {
-      $this->get('http://example.test'.$path.'?q='.str_repeat('ü', 10))->assertOk();
+      $response = $this->get('http://example.test'.$path.'?q='.str_repeat('ü', 10));
+      str_ends_with($path, '.json') ? $response->assertOk() : $response->assertRedirect();
       $this->get('http://example.test'.$path.'?q='.str_repeat('ü', 11))->assertStatus(422)->assertJsonValidationErrors('q');
       $this->get('http://example.test'.$path.'?q=a+b+c')->assertStatus(422)->assertJsonValidationErrors('q');
     }

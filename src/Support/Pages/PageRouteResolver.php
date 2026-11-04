@@ -90,6 +90,9 @@ class PageRouteResolver
 
   public function pathFor(Page $page, Locale|string|null $locale = null, ?Site $site = null): ?string
   {
+    if ($page->isSystemPage()) {
+      return null;
+    }
     $resolvedSite = $site ?? $page->site;
     $resolvedLocale = $this->requestedLocale($locale, $resolvedSite);
 
@@ -224,7 +227,7 @@ class PageRouteResolver
         ->when($legacyPath, fn ($legacyQuery) => $legacyQuery->orWhere('path', $legacyPath)))
       ->whereHas('page', fn ($query) => $query
         ->where('site_id', $site->id)
-        ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+        ->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])
         ->where('status', 'published'))
       ->first();
 
@@ -356,7 +359,7 @@ class PageRouteResolver
       ->whereIn('path', $chunk)
       ->whereHas('page', fn ($query) => $query
         ->where('site_id', $site->id)
-        ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+        ->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])
         ->where('status', 'published'))
       ->get()->keyBy('path');
       foreach ($chunk as $path) {

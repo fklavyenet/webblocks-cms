@@ -357,7 +357,7 @@ class InternalNavigationController extends Controller
       } else {
         $page = Page::query()->with('translations')->find((int) $pageId);
 
-        if (! $page || (int) $page->site_id !== (int) $site->id) {
+        if (! $page || $page->isSystemPage() || (int) $page->site_id !== (int) $site->id) {
           $errors[] = $this->operations->error('navigation_item.page_id', 'Selected page must belong to the selected site.');
         } else {
           $updates['page_id'] = $page->id;

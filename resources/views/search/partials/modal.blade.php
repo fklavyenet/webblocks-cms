@@ -7,7 +7,7 @@
     $publicSearchSite = $publicRouteResolver->currentSite(request());
     $publicSearchLocale = $publicRouteResolver->currentLocale(request());
     $publicSearchLocaleCode = $publicLocaleCode ?? $publicSearchLocale->code;
-    $publicSearchSearchPath = $publicRouteResolver->searchPath($publicSearchLocale->code, $publicSearchSite);
+    $publicSearchSearchPath = $publicRouteResolver->homePath($publicSearchLocale->code, $publicSearchSite);
     $publicSearchJsonPath = $publicRouteResolver->searchJsonPath($publicSearchLocale->code, $publicSearchSite);
     $publicSearchSiteLabel = trim((string) ($publicSearchSite->display_name ?: $publicSearchSite->seo_title ?: $publicSearchSite->name));
     $publicSearchDescription = $publicSearchSiteLabel !== ''
@@ -51,6 +51,7 @@
 
                 <div class="wb-modal-body wb-stack wb-gap-4">
                     <form action="{{ $publicSearchSearchPath }}" method="GET" role="search" class="wb-stack wb-gap-4" data-wb-public-search-form data-search-path="{{ $publicSearchSearchPath }}" data-search-json-path="{{ $publicSearchJsonPath }}" data-search-copy="{{ $publicSearchCopyJson }}">
+                        <input type="hidden" name="cms_search" value="1">
                         <div class="wb-cluster wb-cluster-2 wb-items-end">
                             <div class="wb-stack wb-gap-1 wb-flex-1">
                                 <label for="{{ $publicSearchInputId }}">{{ $publicTranslator->public('search.query_label', $publicSearchLocaleCode) }}</label>

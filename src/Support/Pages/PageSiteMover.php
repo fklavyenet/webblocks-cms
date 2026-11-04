@@ -19,6 +19,7 @@ class PageSiteMover
 
   public function move(Page $page, Site $targetSite, User $actor): PageSiteMoveResult
   {
+    abort_if($page->isSystemPage(), 422);
     $page->loadMissing([
       'site',
       'translations.locale',

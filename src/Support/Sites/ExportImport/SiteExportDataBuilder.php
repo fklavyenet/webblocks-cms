@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Sites\ExportImport;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Symfony\Component\Finder\SplFileInfo;
 use WebBlocks\Cms\Models\Block;
@@ -53,6 +54,9 @@ class SiteExportDataBuilder
     $pages = Page::query()
       ->where('site_id', $site->id)
       ->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+      ->when(Schema::hasTable('wbcms_system_pages'),
+        fn ($query) => $query->where(fn ($pages) => $pages->where('page_type', '!=', Page::TYPE_SYSTEM)->orWhereHas('systemPage')),
+        fn ($query) => $query->where('page_type', '!=', Page::TYPE_SYSTEM))
       ->when($pageIds !== null, fn ($query) => $query->whereIn('id', $pageIds))
       ->with(['translations', 'slots.slotType', 'pageType', 'layout'])
       ->orderBy('id')
@@ -210,6 +214,7 @@ class SiteExportDataBuilder
         'title' => $page->defaultTranslation()?->name,
         'slug' => $page->defaultTranslation()?->slug,
         'page_type' => $page->page_type,
+        'system_page_key' => $page->isSystemPage() ? $page->systemPage?->key : null,
         'page_type_slug' => $page->page_type_id ? optional($page->pageType)->slug : null,
         'layout_slug' => $page->layout_id ? optional($page->layout)->slug : null,
         'status' => app(PublicPageAccess::class)->protected($page) ? Page::STATUS_DRAFT : $page->status,

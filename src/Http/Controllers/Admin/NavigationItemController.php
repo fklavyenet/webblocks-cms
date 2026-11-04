@@ -46,7 +46,7 @@ class NavigationItemController extends Controller
       'activeMenuKey' => $menuKey,
       'menuOptions' => NavigationItem::menuOptions(),
       'items' => $this->tree->buildMenuTree($menuKey, $site),
-      'pages' => Page::query()->visibleInAdmin()->where('site_id', $site->id)->with('translations')->orderByDefaultTranslation('name')->get(),
+      'pages' => Page::query()->visibleInAdmin()->where('page_type', '!=', Page::TYPE_SYSTEM)->where('site_id', $site->id)->with('translations')->orderByDefaultTranslation('name')->get(),
       'newItem' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_PAGE, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
       'newGroup' => new NavigationItem(['site_id' => $site->id, 'menu_key' => $menuKey, 'link_type' => NavigationItem::LINK_GROUP, 'visibility' => NavigationItem::VISIBILITY_VISIBLE]),
       'parentOptions' => $parentOptions,

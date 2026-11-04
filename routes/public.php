@@ -18,6 +18,7 @@ use WebBlocks\Cms\Http\Controllers\Public\RobotsController;
 use WebBlocks\Cms\Http\Controllers\Public\SitemapController;
 use WebBlocks\Cms\Http\Middleware\AddCmsIdentificationHeader;
 use WebBlocks\Cms\Http\Middleware\ProtectConsentResponse;
+use WebBlocks\Cms\Http\Middleware\ProtectPublicSearchEntry;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PublicMount;
@@ -26,7 +27,7 @@ use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 $publicMount = app(PublicMount::class);
 
 $publicPageMiddleware = ['web', 'install.required', AddCmsIdentificationHeader::class];
-$publicContentMiddleware = [...$publicPageMiddleware, ProtectConsentResponse::class, 'throttle:cms-public-pages'];
+$publicContentMiddleware = [...$publicPageMiddleware, ProtectPublicSearchEntry::class, ProtectConsentResponse::class, 'throttle:cms-public-pages'];
 $publicSearchMiddleware = [...$publicPageMiddleware, ProtectConsentResponse::class, 'throttle:cms-public-search'];
 
 Route::middleware($publicPageMiddleware)

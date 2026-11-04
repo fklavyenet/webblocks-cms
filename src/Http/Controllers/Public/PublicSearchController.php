@@ -3,13 +3,13 @@
 namespace WebBlocks\Cms\Http\Controllers\Public;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\PublicSearchRequest;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Search\PublicSearchQuery;
+use WebBlocks\Cms\Support\Search\PublicSearchResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
-use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class PublicSearchController extends Controller
 {
@@ -19,19 +19,16 @@ class PublicSearchController extends Controller
     private readonly CmsTranslator $translator,
   ) {}
 
-  public function __invoke(PublicSearchRequest $request): View
+  public function __invoke(PublicSearchRequest $request): RedirectResponse
   {
-    $search = $this->resolveSearch($request);
+    $site = $this->pageRouteResolver->currentSite($request);
+    $locale = $this->pageRouteResolver->currentLocale($request);
+    $home = $this->pageRouteResolver->homePath($locale->code, $site);
+    abort_unless($home, 404);
+    $query = $this->search->normalize($request->validated('q'));
 
-    return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::public.search.show', [
-      'site' => $search['site'],
-      'locale' => $search['locale'],
-      'query' => $search['query'],
-      'results' => $search['results'],
-      'state' => $search['state'],
-      'minimumLength' => $search['minimumLength'],
-      'searchPath' => $search['searchPath'],
-    ]);
+    return redirect($home.'?'.http_build_query(['cms_search' => 1, 'q' => $query]).'#site-search')
+      ->header('Cache-Control', 'private, no-store');
   }
 
   public function json(PublicSearchRequest $request): JsonResponse
@@ -60,29 +57,8 @@ class PublicSearchController extends Controller
     ]);
   }
 
-  private function resolveSearch(PublicSearchRequest $request): array
+  public function resolveSearch(PublicSearchRequest $request): array
   {
-    $site = $this->pageRouteResolver->currentSite($request);
-    $locale = $this->pageRouteResolver->currentLocale($request);
-    $query = $this->search->normalize($request->validated('q'));
-    $results = null;
-    $minimumLength = 2;
-    $state = $query === '' ? 'empty' : 'short';
-
-    if ($this->search->isSearchable($query, $minimumLength)) {
-      $results = $this->search->search($site, $locale, $query);
-      $state = $results->isEmpty() ? 'no-results' : 'results';
-    }
-
-    return [
-      'site' => $site,
-      'locale' => $locale,
-      'query' => $query,
-      'results' => $results,
-      'state' => $state,
-      'minimumLength' => $minimumLength,
-      'searchPath' => $this->pageRouteResolver->searchPath($locale->code, $site),
-      'searchJsonPath' => $this->pageRouteResolver->searchJsonPath($locale->code, $site),
-    ];
+    return app(PublicSearchResolver::class)->resolve($request);
   }
 }

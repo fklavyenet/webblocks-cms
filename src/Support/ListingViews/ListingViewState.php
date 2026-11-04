@@ -22,7 +22,7 @@ final class ListingViewState
   public function stored(object $view, $user): array
   {
     $definition = app(ListingViewDefinition::class);
-    if (count($view->filters) !== count($definition->defaults($view->listing))) {
+    if (count($view->filters) !== count($definition->defaults($view->listing)) && ! ($view->listing === 'pages' && ! array_key_exists('type', $view->filters) && count($view->filters) === count($definition->defaults('pages')) - 1)) {
       throw ValidationException::withMessages(['saved_view' => __('webblocks-cms::listing_views.invalid')]);
     }
 

@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Plugins;
 
 use WebBlocks\Cms\Support\ContentSources\ContentSourceDefinition;
 use WebBlocks\Cms\Support\Jobs\JobDefinition;
+use WebBlocks\Cms\Support\SystemPages\SystemPageDefinition;
 
 class PluginDefinition
 {
@@ -51,6 +52,8 @@ class PluginDefinition
 
   /** @var array<int, string|callable> */
   private array $publicRoutes = [];
+
+  private array $systemPages = [];
 
   /** @var array<int, string|callable> */
   private array $webhookRoutes = [];
@@ -570,6 +573,30 @@ class PluginDefinition
   public function apiRouteDefinitions(): array
   {
     return $this->apiRoutes;
+  }
+
+  /** @param array<string, array{label: string, routes: array<string>}> $pages */
+  public function systemPages(array $pages): self
+  {
+    $definitions = [];
+    $claimedRoutes = [];
+    foreach ($pages as $handle => $page) {
+      $routes = array_map(fn (string $route) => $this->publicRouteNamePrefix().'.'.$route, $page['routes']);
+      if ($routes === [] || count(array_unique($routes)) !== count($routes) || array_intersect($routes, $claimedRoutes) !== []) {
+        throw new PluginException('Each system screen must own distinct public routes.');
+      }
+      $claimedRoutes = [...$claimedRoutes, ...$routes];
+      $definition = new SystemPageDefinition($this->handle.':'.$handle, $page['label'], $routes);
+      $definitions[$definition->key] = $definition;
+    }
+    $this->systemPages = $definitions;
+
+    return $this;
+  }
+
+  public function systemPageDefinitions(): array
+  {
+    return $this->systemPages;
   }
 
   /**

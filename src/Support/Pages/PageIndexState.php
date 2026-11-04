@@ -17,6 +17,7 @@ class PageIndexState
     'site_id',
     'search',
     'status',
+    'type',
     'sort',
     'direction',
     'page',

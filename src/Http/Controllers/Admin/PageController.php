@@ -28,6 +28,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemPage;
 use WebBlocks\Cms\Policies\SiteSeoPolicy;
 use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
@@ -51,6 +52,8 @@ use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
+use WebBlocks\Cms\Support\SystemPages\SystemPageRegistry;
+use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -98,6 +101,7 @@ class PageController extends Controller
     $search = trim((string) $request->string('search'));
     $searchPageId = preg_match('/^#?(\d+)$/', $search, $matches) === 1 ? (int) $matches[1] : null;
     $status = $request->string('status')->toString();
+    $type = in_array($request->query('type'), ['content', 'system'], true) ? $request->query('type') : '';
     $detailsPageId = $request->integer('details');
     $tableSort = AdminTableSort::for('pages');
     $sort = $tableSort->key;
@@ -115,7 +119,7 @@ class PageController extends Controller
       $sort = 'created_at';
     }
 
-    $listingView = $listingState->context($request, 'pages', ['site' => $siteFilterValue, 'search' => $search, 'status' => $status, 'sort' => $sort, 'direction' => $direction], $listingColumns);
+    $listingView = $listingState->context($request, 'pages', ['site' => $siteFilterValue, 'search' => $search, 'status' => $status, 'type' => $type, 'sort' => $sort, 'direction' => $direction], $listingColumns);
 
     $siteLocaleCounts = $this->authorization->scopeSitesForUser(Site::query(), $request->user())
       ->withCount(['enabledLocales as locales_count'])
@@ -166,6 +170,8 @@ class PageController extends Controller
               }));
         });
       })
+      ->when($type === 'system', fn ($query) => $query->where('page_type', Page::TYPE_SYSTEM))
+      ->when($type === 'content', fn ($query) => $query->where('page_type', '!=', Page::TYPE_SYSTEM))
       ->when($status !== '', fn ($query) => $query->where('status', $status))
       ->when($activeSite, fn ($query) => $query->where('site_id', $activeSite->id))
       ->when($sort === 'title', fn ($query) => $query->orderByDefaultTranslation('name', $direction))
@@ -181,6 +187,7 @@ class PageController extends Controller
       'site' => $siteFilterValue,
       'search' => $search,
       'status' => $status,
+      'type' => $type,
       'sort' => $sort !== 'created_at' ? $sort : null,
       'direction' => $direction !== 'desc' ? $direction : null,
       'page' => $pageNumber !== null && $pageNumber > 1 ? (string) $pageNumber : null,
@@ -204,6 +211,8 @@ class PageController extends Controller
       && ($page->status !== Page::STATUS_PUBLISHED || $acl->allows($request->user(), 'cms.pages.delete-published', $page->site_id)))->modelKeys();
 
     return view('webblocks-cms::admin.pages.index', [
+      'systemPageDefinitions' => app(SystemPageRegistry::class)->all(),
+      'systemPageBindings' => $activeSite && Schema::hasTable('wbcms_system_pages') ? SystemPage::query()->with('page')->where('site_id', $activeSite->id)->get()->keyBy('key') : collect(),
       'listingView' => $listingView,
       'listingColumns' => $listingColumns,
       'canCreatePage' => $acl->allows($request->user(), 'cms.pages.create', $activeSite?->id),
@@ -216,6 +225,7 @@ class PageController extends Controller
       'filters' => [
         'search' => $search,
         'status' => $status,
+        'type' => $type,
         'site' => $siteFilterValue,
         'site_id' => $activeSite?->id ?? 0,
         'sort' => $sort,
@@ -328,15 +338,15 @@ class PageController extends Controller
 
     $canEditContent = $this->workflowManager->canEditContent(request()->user(), $page);
     $canViewRevisions = $this->revisionManager->canView(request()->user(), $page);
-    $canDuplicatePage = app(CmsAuthorization::class)->allows(request()->user(), 'cms.pages.create')
+    $canDuplicatePage = ! $page->isSystemPage() && app(CmsAuthorization::class)->allows(request()->user(), 'cms.pages.create')
       && Site::query()
         ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, request()->user()))
         ->exists();
-    $canMoveToAnotherSite = request()->user()?->isSuperAdmin()
+    $canMoveToAnotherSite = ! $page->isSystemPage() && (request()->user()?->isSuperAdmin()
       || (request()->user()?->isSiteAdmin() && Site::query()
         ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, request()->user()))
         ->whereKeyNot($page->site_id)
-        ->exists());
+        ->exists()));
 
     $slotBlockPreviews = $page->slots
       ->mapWithKeys(fn (PageSlot $slot) => [
@@ -347,6 +357,7 @@ class PageController extends Controller
 
     return view('webblocks-cms::admin.pages.edit', [
       'page' => $page,
+      'systemPageKey' => app(SystemPageRenderer::class)->identity($page),
       'sites' => Site::query()
         ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, request()->user()))
         ->with(['locales' => fn ($query) => $query->wherePivot('is_enabled', true)->orderByDesc('is_default')->orderBy('name')])
@@ -932,6 +943,10 @@ class PageController extends Controller
 
   private function hasMeaningfulPageIndexQuery(Request $request): bool
   {
+    if ($request->has('type')) {
+      return true;
+    }
+
     return collect(['site', 'site_id', 'search', 'status', 'sort', 'direction', 'page', 'saved_view', 'columns'])
       ->contains(fn (string $key) => $request->query($key) !== null && trim((string) $request->query($key)) !== '');
   }

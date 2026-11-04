@@ -1,0 +1,22 @@
+<?php
+
+return [
+    'promotion_boundary' => 'I design di sistema richiedono Site Import. Per Site Promotion, esporta solo pagine di contenuto.',
+  'title' => 'Pagine di sistema',
+  'badge' => 'Sistema',
+  'type' => 'Tipo di pagina',
+  'all' => 'Tutti i tipi di pagina',
+  'ordinary' => 'Contenuto',
+  'not_found' => 'Pagina non trovata (404)',
+  'maintenance' => 'Manutenzione (503)',
+  'prepare' => 'Prepara bozza',
+  'edit' => 'Modifica design',
+  'screen' => 'Schermata',
+  'state' => 'Design',
+  'default' => 'Design integrato',
+  'prepared' => 'Pagina di sistema preparata come bozza. Controlla layout e slot condivisi prima di pubblicare.',
+  'help' => 'Le schermate di sistema usano il design pubblicato. Preparare una bozza non modifica la schermata pubblica. Indirizzi e operazioni restano gestiti dalla funzionalità.',
+  'editor_help' => 'Questa è una pagina di sistema. Gestisci qui layout, slot condivisi e contenuti circostanti. Il contenuto funzionale segue il contenuto redatto in Main e non può essere rimosso modificando i blocchi. Questa pagina non ha un indirizzo pubblico indipendente.',
+  'preview' => 'Il modulo o risultato della funzionalità appare qui durante il funzionamento. Questa anteprima non contiene dati di clienti, account o pagamenti.',
+  'maintenance_help' => 'Il design di manutenzione pubblicato del sito principale viene generato prima degli aggiornamenti del CMS. Il codice HTML salvato funziona senza applicazione o database. Gli altri siti condividono questa risposta di manutenzione globale.',
+];

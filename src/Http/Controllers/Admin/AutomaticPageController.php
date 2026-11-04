@@ -66,7 +66,7 @@ final class AutomaticPageController
   private function form(AutomaticPageRule $rule, Request $request, Collection $sites, PublicationSources $sources): View
   {
     $choices = $sources->options($rule->site, $request->user());
-    $pages = Page::query()->visibleInAdmin()->where('site_id', $rule->site_id)->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)->with('translations.locale')->orderBy('id')->get();
+    $pages = Page::query()->visibleInAdmin()->where('site_id', $rule->site_id)->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])->with('translations.locale')->orderBy('id')->get();
     $locales = $rule->site->enabledLocales()->get();
 
     $configuration = $choices[$rule->source_handle] ?? null;
@@ -132,7 +132,7 @@ final class AutomaticPageController
     $adoption = AutomaticPageAdoption::query()->where('automatic_page_rule_id', $automaticPage->id)->where('record_key', $input['record'])->first();
     $design = $adoption ? Page::query()->visibleInAdmin()->where('site_id', $automaticPage->site_id)->find($adoption->page_id) : null;
     if (! $design && $inspection['status'] === 'available') {
-      $design = Page::query()->visibleInAdmin()->where('site_id', $automaticPage->site_id)->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE)
+      $design = Page::query()->visibleInAdmin()->where('site_id', $automaticPage->site_id)->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])
         ->whereHas('translations', fn ($q) => $q->where('path', $automaticPage->base_path.'/'.$inspection['slug']))->first();
     }
 

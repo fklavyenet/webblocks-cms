@@ -10,12 +10,13 @@
     $clearUrl = route('admin.pages.index', ['reset' => 1]);
     // The site filter is a scope, not a narrowing filter: a site with no pages
     // really is empty, and "create your first page" is the right thing to say.
-    $hasActiveFilters = ($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '';
+    $hasActiveFilters = ($filters['search'] ?? '') !== '' || ($filters['status'] ?? '') !== '' || ($filters['type'] ?? '') !== '';
     $detailsBaseQuery = array_filter([
         ...app(\WebBlocks\Cms\Support\ListingViews\ListingViewState::class)->presentationQuery(request()),
         'site' => $filters['site'],
         'search' => $filters['search'] !== '' ? $filters['search'] : null,
         'status' => $filters['status'] !== '' ? $filters['status'] : null,
+        'type' => $filters['type'] ?: null,
         'sort' => $filters['sort'] !== 'created_at' ? $filters['sort'] : null,
         'direction' => $filters['direction'] !== 'desc' ? $filters['direction'] : null,
         'page' => $pages->currentPage() > 1 ? $pages->currentPage() : null,
@@ -38,6 +39,7 @@
     ])
 
     @include('webblocks-cms::admin.partials.flash')
+    @include('webblocks-cms::admin.pages.partials.system-pages')
     @include('webblocks-cms::admin.partials.listing-views', ['listingColumnLabels' => [
         'id' => $adminText('pages.columns.id'),
         'view' => $adminText('pages.columns.view'),
@@ -59,6 +61,7 @@
                     'placeholder' => $adminText('pages.search_placeholder'),
                 ],
                 'selects' => [
+                    ['id' => 'pages_type', 'name' => 'type', 'label' => __('webblocks-cms::system_pages.type'), 'selected' => $filters['type'], 'placeholder' => __('webblocks-cms::system_pages.all'), 'options' => ['content' => __('webblocks-cms::system_pages.ordinary'), 'system' => __('webblocks-cms::system_pages.badge')]],
                     [
                         'id' => 'pages_site_context',
                         'name' => 'site',
@@ -106,7 +109,7 @@
                         ],
                     ],
                 ],
-                'showReset' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc',
+                'showReset' => $filters['type'] !== '' || $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc',
                 'resetUrl' => $clearUrl,
                 'applyLabel' => $adminText('common.apply'),
                 'resetLabel' => $adminText('pages.clear_filters'),
@@ -209,6 +212,7 @@
                                         <div class="wb-admin-pages-page-meta">
                                             <div class="wb-admin-pages-title-row wb-cluster wb-cluster-2 wb-flex-wrap">
                                                 <strong>{{ $page->title }}</strong>
+                                                @if ($page->isSystemPage())<span class="wb-badge">{{ __('webblocks-cms::system_pages.badge') }}</span>@endif
                                                 @if ($showAllSites)
                                                     <span class="wb-status-pill {{ $page->site?->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $page->site?->name }}</span>
                                                     @if ($page->site?->canonicalDomain())
@@ -295,7 +299,8 @@
                                     ])
                                         <div class="wb-card wb-card-muted">
                                             <div class="wb-card-body wb-stack wb-gap-2">
-                                                <div><strong>{{ $page->title }}</strong></div>
+                                                <div><strong>{{ $page->title }}</strong>
+                                                @if ($page->isSystemPage())<span class="wb-badge">{{ __('webblocks-cms::system_pages.badge') }}</span>@endif</div>
                                                 <div class="wb-text-sm wb-text-muted">{{ $adminText('common.status') }} {{ $page->workflowLabel() }} | {{ $adminText('sites.singular') }} {{ $page->site?->name ?? '-' }}</div>
                                             </div>
                                         </div>

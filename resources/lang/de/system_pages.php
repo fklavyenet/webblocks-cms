@@ -1,0 +1,22 @@
+<?php
+
+return [
+    'promotion_boundary' => 'Systemseitendesigns benötigen Site Import. Exportiere für Site Promotion nur Inhaltsseiten.',
+  'title' => 'Systemseiten',
+  'badge' => 'System',
+  'type' => 'Seitentyp',
+  'all' => 'Alle Seitentypen',
+  'ordinary' => 'Inhalt',
+  'not_found' => 'Seite nicht gefunden (404)',
+  'maintenance' => 'Wartung (503)',
+  'prepare' => 'Entwurf vorbereiten',
+  'edit' => 'Design bearbeiten',
+  'screen' => 'Ansicht',
+  'state' => 'Design',
+  'default' => 'Integriertes Design',
+  'prepared' => 'Systemseite als Entwurf vorbereitet. Prüfe Layout und gemeinsame Slots vor der Veröffentlichung.',
+  'help' => 'Systemansichten verwenden das veröffentlichte Seitendesign. Ein Entwurf ändert die Liveansicht nicht. Adressen und Verarbeitung verwaltet die jeweilige Funktion.',
+  'editor_help' => 'Dies ist eine Systemseite. Verwalte hier Layout, gemeinsame Slots und umgebende Inhalte. Der funktionale Inhalt folgt dem verfassten Inhalt in Main und lässt sich nicht durch Bearbeiten von Blöcken entfernen. Diese Seite hat keine eigene öffentliche Adresse.',
+  'preview' => 'Hier erscheint zur Laufzeit das Formular oder Ergebnis der Funktion. Diese Vorschau enthält keine Kunden-, Konto- oder Zahlungsdaten.',
+  'maintenance_help' => 'Das veröffentlichte Wartungsdesign der primären Website wird vor CMS-Updates gerendert. Das gespeicherte HTML funktioniert ohne Anwendung oder Datenbank. Andere Websites teilen diese installationsweite Wartungsantwort.',
+];

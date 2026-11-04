@@ -1,24 +1,21 @@
+@if (request()->boolean('cms_search') && ! ($previewMode ?? false))
 @php
     $translator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
-    $localeCode = $locale?->code ?? ($publicLocaleCode ?? null);
+    $localeCode = $locale->code;
     $searchTitle = $translator->public('search.title', $localeCode);
     $searchDescription = $translator->public('search.description_default', $localeCode);
+    $searchHome = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class)->homePath($localeCode, $site);
 @endphp
+<noscript>
 
-@extends('webblocks-cms::layouts.public', [
-    'title' => $searchTitle,
-    'metaDescription' => $searchDescription,
-    'publicLocaleCode' => $localeCode,
-])
-
-@section('content')
     <div class="wb-container wb-container-lg wb-section wb-stack wb-gap-4">
         <header class="wb-content-header">
             <h1 class="wb-content-title">{{ $searchTitle }}</h1>
             <p class="wb-content-subtitle">{{ $searchDescription }}</p>
         </header>
 
-        <form action="{{ $searchPath }}" method="GET" role="search" class="wb-stack wb-gap-3">
+        <form action="{{ $searchHome }}" method="GET" role="search" class="wb-stack wb-gap-3">
+            <input type="hidden" name="cms_search" value="1">
             <div class="wb-cluster wb-cluster-2 wb-items-end">
                 <div class="wb-stack wb-gap-1 wb-flex-1">
                     <label for="public-search-query">{{ $translator->public('search.query_label', $localeCode) }}</label>
@@ -64,4 +61,5 @@
             </div>
         @endif
     </div>
-@endsection
+</noscript>
+@endif

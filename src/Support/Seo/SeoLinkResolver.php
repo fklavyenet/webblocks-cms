@@ -86,7 +86,7 @@ final class SeoLinkResolver
     $paths = array_unique([$path, '/p'.($path === '/' ? '' : $path), str_starts_with($path, '/p/') ? substr($path, 2) : $path]);
     $translation = PageTranslation::query()->with(['page.translations.locale', 'locale'])
       ->where('site_id', $site->id)->where('locale_id', $targetLocale->id)->whereIn('path', $paths)
-      ->whereHas('page', fn ($q) => $q->where('site_id', $site->id)->where('page_type', '!=', Page::TYPE_SHARED_SLOT_SOURCE))
+      ->whereHas('page', fn ($q) => $q->where('site_id', $site->id)->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM]))
       ->orderByRaw('case when path = ? then 0 else 1 end', [$path])->first();
     if (! $translation || $translation->page->isRevisionRestoreCandidate()) {
       return [...$result, 'state' => 'missing_page', 'target_locale' => $targetLocale->code];

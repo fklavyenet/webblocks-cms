@@ -32,11 +32,12 @@ class CookieSettingsMountedPreferencesTest extends TestCase
     foreach (['en', 'tr'] as $code) {
       $locale = Locale::firstOrCreate(['code' => $code], ['name' => $code, 'is_enabled' => true, 'is_default' => $code === 'en']);
       $site->locales()->syncWithoutDetaching([$locale->id => ['is_enabled' => true]]);
-      $url = app(ConsentPreferencesLink::class)->url($site, $code);
-      $this->assertSame('/knowledge'.($code === 'en' ? '' : '/tr').'/privacy-consent/preferences', $url);
-      $this->get($url)->assertOk()->assertSee('action="'.$url.'"', false)->assertCookieMissing('webblocks_consent_'.$site->id);
-      $this->post($url, ['status' => 'rejected'])->assertRedirect($url)->assertCookie('webblocks_consent_'.$site->id);
-      $this->withHeader('Referer', 'https://example.test/')->post($url, ['status' => 'invalid'])->assertRedirect($url)->assertSessionHasErrors('status');
+      $url = '/knowledge'.($code === 'en' ? '' : '/tr').'/privacy-consent/preferences';
+      $home = '/knowledge'.($code === 'en' ? '' : '/tr');
+      $this->assertSame('#cookie-settings', app(ConsentPreferencesLink::class)->url($site, $code));
+      $this->get($url)->assertRedirect($home.'#cookie-settings')->assertCookieMissing('webblocks_consent_'.$site->id);
+      $this->post($url, ['status' => 'rejected'])->assertRedirect($home.'#cookie-settings')->assertCookie('webblocks_consent_'.$site->id);
+      $this->withHeader('Referer', 'https://example.test/')->post($url, ['status' => 'invalid'])->assertRedirect($home.'#cookie-settings')->assertSessionHasErrors('status');
     }
   }
 }
