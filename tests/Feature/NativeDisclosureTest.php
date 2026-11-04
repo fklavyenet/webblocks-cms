@@ -74,6 +74,7 @@ class NativeDisclosureTest extends TestCase
         }
         $this->assertDoesNotMatchRegularExpression('/<button\b[^>]*class="[^"]*wb-accordion-trigger/s', $source, $file->getPathname());
         $this->assertStringNotContainsString('wb-accordion-icon', $source, $file->getPathname());
+        $this->assertDoesNotMatchRegularExpression('/<summary\b[^>]*>(?:(?!<\/summary>)[\s\S])*wb-icon-chevron-(?:up|down)/', $source, $file->getPathname());
       }
     }
   }

@@ -46,7 +46,7 @@ class AdminUiPrimitiveStructureTest extends TestCase
     }
 
     #[Test]
-    public function card_accordions_expose_a_chevron_in_their_summary(): void
+    public function disclosure_panels_delegate_indicators_to_webblocks_ui(): void
     {
         $root = dirname(__DIR__, 2);
 
@@ -58,15 +58,17 @@ class AdminUiPrimitiveStructureTest extends TestCase
         ] as $relativePath) {
             $view = file_get_contents($root.'/'.$relativePath);
 
-            preg_match_all('/<details\b[^>]*wb-card[^>]*>([\s\S]*?)<\/details>/', $view, $accordions);
+            preg_match_all('/<details\b[^>]*wb-collapse-panel[^>]*>([\s\S]*?)<\/details>/', $view, $accordions);
             $this->assertNotEmpty($accordions[1], $relativePath);
 
             foreach ($accordions[1] as $accordion) {
                 $this->assertMatchesRegularExpression(
-                    '/<summary\b[^>]*wb-card-header[^>]*>[\s\S]*?wb-icon-chevron-down[\s\S]*?<\/summary>/',
+                    '/<summary\b[^>]*wb-collapse-trigger[^>]*>[\s\S]*?<\/summary>/',
                     $accordion,
                     $relativePath,
                 );
+                $this->assertStringNotContainsString('wb-icon-chevron-down', $accordion);
+                $this->assertStringContainsString('wb-collapse-body', $accordion);
             }
         }
     }
@@ -79,7 +81,7 @@ class AdminUiPrimitiveStructureTest extends TestCase
         $this->assertStringContainsString("'actions' => \$pageActions", $view);
         $this->assertStringContainsString("@disabled(! \$plugin['migrations_pending'])", $view);
         $this->assertStringNotContainsString('<div class="wb-grid wb-grid-2">', $view);
-        $this->assertSame(3, substr_count($view, '<details class="wb-card">'));
+        $this->assertSame(3, substr_count($view, '<details class="wb-collapse-panel">'));
         $this->assertGreaterThanOrEqual(4, substr_count($view, '<table class="wb-table">'));
     }
 }

@@ -56,7 +56,6 @@
                             <details class="wb-card-muted wb-collapse-panel" data-wb-locale-custom @if (! $customFieldsHidden) open @endif>
                                 <summary class="wb-collapse-trigger">
                                     <span>{{ $localesFormText('use_custom_details') }}</span>
-                                    <span class="wb-icon wb-icon-chevron-down" aria-hidden="true"></span>
                                 </summary>
                                 <div class="wb-collapse-body">
                                 <div class="wb-stack wb-gap-3">
