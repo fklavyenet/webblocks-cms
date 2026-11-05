@@ -2,13 +2,19 @@
 
 namespace WebBlocks\Cms\Support\Mcp;
 
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Policies\McpPagePolicy;
+use WebBlocks\Cms\Queries\McpPageQuery;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Pages\PagePath;
@@ -17,17 +23,22 @@ use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 
 final class McpPages
 {
+  public const MAX_PAGE_NUMBER = 1000;
+
   public function __construct(
     private readonly InternalContentPlanService $plans,
     private readonly PageRevisionManager $revisions,
     private readonly BlockTranslationResolver $translations,
     private readonly McpConfiguration $config,
     private readonly McpBlockFields $fields,
+    private readonly McpPageQuery $query,
+    private readonly McpPagePolicy $policy,
+    private readonly BlockTypeApiAuthoringPolicy $authoring,
   ) {}
 
   public function page(int $siteId, array $input, bool $lock = false): Page
   {
-    $query = Page::query()->where('site_id', $siteId)->where('status', Page::STATUS_PUBLISHED);
+    $query = $this->query->publishedPages(Page::query(), $siteId);
     if (isset($input['page_id'])) {
       $query->whereKey($input['page_id']);
     } else {
@@ -41,7 +52,7 @@ final class McpPages
     }
 
     $page = $query->when($lock, fn ($query) => $query->lockForUpdate())->first();
-    if (! $page || $page->isSharedSlotSourcePage() || $page->isSystemPage()) {
+    if (! $page) {
       throw new McpToolException('page_missing');
     }
 
@@ -137,14 +148,40 @@ final class McpPages
     ];
   }
 
-  public function content(int $siteId, array $input): array
+  public function search(int $siteId, array $input): array
+  {
+    $site = Site::query()->find($siteId) ?? throw new McpToolException('page_missing');
+    $locale = app(LocaleResolver::class)->enabled($input['locale'], $site)
+      ?? throw new McpToolException('locale_unavailable');
+    $results = $this->query->search($siteId, $locale->id, $input['q'], $input['page'] ?? 1);
+
+    return [
+      'site_id' => $siteId,
+      'locale' => $locale->code,
+      'pages' => $results->getCollection()->map(fn (PageTranslation $translation) => $translation->only(['page_id', 'name', 'path']))->all(),
+      'next_page' => $results->hasMorePages() && $results->currentPage() < self::MAX_PAGE_NUMBER ? $results->currentPage() + 1 : null,
+    ];
+  }
+
+  public function content(User $user, int $siteId, array $input): array
   {
     $source = $this->page($siteId, $input);
     $locale = $this->locale($source, $input['locale']);
     $draft = $this->draft($source);
     $fingerprint = $this->fingerprint($source);
     $defaultLocale = app(LocaleResolver::class)->default()->id === $locale->id;
+    $version = $this->version($source, $fingerprint, $draft, $locale);
+    $verified = $draft ? $this->hasVerifiedBase($draft, $fingerprint) : null;
     $managed = $draft?->setting('staged_update.managed_slots', []);
+    $canReadMedia = $defaultLocale && $this->policy->readMedia($user, $siteId);
+    $writeBlocker = match (true) {
+      $draft && $draft->status !== Page::STATUS_DRAFT => 'conflict',
+      $draft && ! $verified => 'unverified_base',
+      $draft && ! $draft->translationForLocale($locale) => 'draft_locale_unavailable',
+      $this->hasHumanOnlyBlocks($source, $draft) => 'human_only_content',
+      ! ($draft ? $this->policy->editDraft($user, $draft, ! $defaultLocale) : $this->policy->writeLocale($user, $siteId, ! $defaultLocale)) => 'forbidden',
+      default => null,
+    };
     $draftBlocks = $draft ? $this->staticBlocks($draft)->groupBy('revision_key') : collect();
     $blocks = $this->staticBlocks($source)->filter($this->fields->supports(...))->sortBy('id')->values();
     $page = $input['page'] ?? 1;
@@ -152,12 +189,26 @@ final class McpPages
     return [
       'page_id' => $source->id,
       'locale' => $locale->code,
-      'version' => $this->version($source, $fingerprint, $draft, $locale),
-      'draft' => $draft ? ['id' => $draft->id, 'status' => $draft->status, 'source_verified' => $this->hasVerifiedBase($draft, $fingerprint), 'managed_slots' => $managed] : null,
-      'blocks' => $blocks->forPage($page, 10)->map(function (Block $block) use ($draftBlocks, $locale, $defaultLocale, $managed): array {
+      'version' => $version,
+      'draft' => $draft ? ['id' => $draft->id, 'status' => $draft->status, 'source_verified' => $verified, 'managed_slots' => $managed] : null,
+      'blocks' => $blocks->forPage($page, 10)->map(function (Block $block) use ($draft, $draftBlocks, $locale, $defaultLocale, $managed, $writeBlocker, $canReadMedia): array {
         $slot = $block->slotType?->slug;
-        $matches = $draftBlocks->get($block->revision_key, collect())->filter(fn (Block $copy) => $copy->slot_type_id === $block->slot_type_id && $copy->typeSlug() === $block->typeSlug());
-        $draftBlock = $matches->count() === 1 && in_array($slot, $managed ?? [], true) ? $matches->first() : null;
+        $matches = $this->matchingBlocks($block, $draftBlocks->get($block->revision_key, collect()));
+        $managedSlot = in_array($slot, $managed ?? [], true);
+        $draftBlock = $managedSlot && $matches->count() === 1 ? $matches->first() : null;
+        $blockedBy = $writeBlocker ?? match (true) {
+          ! $slot => 'block_unavailable',
+          $draft && ! $managedSlot => 'unmanaged_slot',
+          $draft && ! $draftBlock => 'block_unavailable',
+          default => null,
+        };
+        $supportsImage = $this->fields->acceptsImage($block);
+        $mediaBlocker = $blockedBy ?? match (true) {
+          ! $supportsImage => 'media_unavailable',
+          ! $defaultLocale => 'media_default_locale_required',
+          ! $canReadMedia => 'forbidden',
+          default => null,
+        };
 
         return [
           'block_id' => $block->id,
@@ -165,7 +216,13 @@ final class McpPages
           'slot' => $slot,
           'text' => (object) $this->fields->values($block, $locale),
           'draft_text' => $draftBlock ? (object) $this->fields->values($draftBlock, $locale) : null,
-          'accepts_media_id' => $defaultLocale && $this->fields->acceptsImage($block),
+          'accepts_media_id' => $defaultLocale && $supportsImage,
+          'write' => [
+            'text_fields' => $blockedBy === null ? $this->fields->textFields($block) : [],
+            'media_id' => $mediaBlocker === null,
+            'blocked_by' => $blockedBy,
+            'media_blocked_by' => $mediaBlocker,
+          ],
         ];
       })->values()->all(),
       'next_page' => $blocks->count() > $page * 10 ? $page + 1 : null,
@@ -220,6 +277,18 @@ final class McpPages
 
       return ! $block->setting('content_bindings');
     });
+  }
+
+  public function matchingBlocks(Block $source, Collection $candidates): Collection
+  {
+    return $candidates->filter(fn (Block $block) => $block->revision_key === $source->revision_key
+      && $block->slot_type_id === $source->slot_type_id && $block->typeSlug() === $source->typeSlug());
+  }
+
+  public function hasHumanOnlyBlocks(Page $source, ?Page $draft): bool
+  {
+    return $this->authoring->scopeHasHumanOnlyBlock($source->blocks)
+      || ($draft && $this->authoring->scopeHasHumanOnlyBlock($draft->blocks));
   }
 
   private function title(Page $page, Block $block, Locale $locale): string

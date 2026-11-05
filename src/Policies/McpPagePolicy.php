@@ -36,10 +36,15 @@ final class McpPagePolicy
       && $this->personal->canUse($user, CmsApiTokenCapabilities::MEDIA_READ);
   }
 
+  public function writeLocale(User $user, int $siteId, bool $translated): bool
+  {
+    return $this->write($user, $siteId)
+      && (! $translated || $this->acl->allows($user, 'cms.translations.update', $siteId));
+  }
+
   public function editDraft(User $user, Page $draft, bool $translated): bool
   {
-    return $this->write($user, $draft->site_id)
-      && $this->workflow->canEditContent($user, $draft)
-      && (! $translated || $this->acl->allows($user, 'cms.translations.update', $draft->site_id));
+    return $this->writeLocale($user, $draft->site_id, $translated)
+      && $this->workflow->canEditContent($user, $draft);
   }
 }

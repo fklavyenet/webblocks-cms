@@ -11,6 +11,8 @@ final class McpTools
 {
   private const READ = 'find_page';
 
+  private const SEARCH = 'search_pages';
+
   private const WRITE = 'update_draft_heading';
 
   private const PREVIEW = 'get_draft_preview';
@@ -33,7 +35,7 @@ final class McpTools
     $id = ['type' => 'integer', 'minimum' => 1];
 
     $version = ['type' => 'string', 'pattern' => '^[0-9a-f]{64}$'];
-    $page = ['type' => 'integer', 'minimum' => 1, 'maximum' => 1000];
+    $page = ['type' => 'integer', 'minimum' => 1, 'maximum' => McpPages::MAX_PAGE_NUMBER];
     $text = ['type' => 'string', 'maxLength' => 255];
     $copy = [
       'title' => $text,
@@ -69,6 +71,11 @@ final class McpTools
       ], ['locale', 'page_id', 'block_id', 'version'], [
         'anyOf' => [['required' => ['text']], ['required' => ['media_id']]],
       ]),
+      $this->descriptor(self::SEARCH, 'search_description', [
+        'locale' => $locale,
+        'q' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120],
+        'page' => $page,
+      ], ['locale', 'q']),
       $this->descriptor(self::MEDIA, 'media_description', [
         'q' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120], 'page' => $page,
       ], []),
@@ -78,7 +85,7 @@ final class McpTools
   public function scope(string $name): ?string
   {
     return match ($name) {
-      self::READ, self::PREVIEW => McpConfiguration::READ,
+      self::READ, self::SEARCH, self::PREVIEW => McpConfiguration::READ,
       self::WRITE => McpConfiguration::WRITE,
       self::CONTENT, self::EDIT, self::MEDIA => McpConfiguration::CONTENT,
       default => null,
@@ -91,9 +98,10 @@ final class McpTools
 
     return match ($name) {
       self::READ => $this->pages->read($grant['site'], $input),
+      self::SEARCH => $this->pages->search($grant['site'], $input),
       self::PREVIEW => $this->pages->preview($grant['site'], $input),
       self::WRITE => $this->updateBlock->handle($grant['user'], $grant['site'], $input, headingOnly: true),
-      self::CONTENT => $this->pages->content($grant['site'], $input),
+      self::CONTENT => $this->pages->content($grant['user'], $grant['site'], $input),
       self::EDIT => $this->updateBlock->handle($grant['user'], $grant['site'], $input),
       self::MEDIA => $this->media->find($grant['user'], $grant['site'], $input),
     };
@@ -104,13 +112,14 @@ final class McpTools
     $rules = $name === self::MEDIA ? [] : ['locale' => ['required', 'string', 'max:35']];
     $id = ['required', 'integer', 'min:1'];
     $version = ['required', 'string', 'regex:/\A[0-9a-f]{64}\z/'];
-    $page = ['sometimes', 'integer', 'min:1', 'max:1000'];
+    $page = ['sometimes', 'integer', 'min:1', 'max:'.McpPages::MAX_PAGE_NUMBER];
     $shortText = ['sometimes', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'];
     $rules += match ($name) {
       self::READ => [
         'page_id' => ['required_without:path', 'prohibits:path', 'integer', 'min:1'],
         'path' => ['required_without:page_id', 'string', 'max:255'],
       ],
+      self::SEARCH => ['q' => ['required', 'string', 'max:120', 'not_regex:/[\x00-\x1F\x7F]/'], 'page' => $page],
       self::PREVIEW => ['page_id' => $id],
       self::WRITE => [
         'page_id' => $id,

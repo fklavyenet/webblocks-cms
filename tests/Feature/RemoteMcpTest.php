@@ -58,7 +58,7 @@ class RemoteMcpTest extends TestCase
     $this->setMcp(true);
   }
 
-  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_six_tools(): void
+  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_seven_tools(): void
   {
     $this->get(self::ORIGIN.'/.well-known/oauth-protected-resource/webadmin/mcp')
       ->assertOk()->assertJsonPath('resource', self::MCP);
@@ -67,11 +67,14 @@ class RemoteMcpTest extends TestCase
       ->assertJsonPath('code_challenge_methods_supported', ['S256'])
       ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft']);
     $this->rpc('initialize', ['protocolVersion' => '2025-03-26'])->assertJsonPath('result.protocolVersion', '2025-03-26');
-    $this->rpc('tools/list')->assertJsonCount(6, 'result.tools')
+    $this->rpc('tools/list')->assertJsonCount(7, 'result.tools')
       ->assertJsonPath('result.tools.1.annotations.readOnlyHint', false)
       ->assertJsonPath('result.tools.3.annotations.readOnlyHint', true)
       ->assertJsonPath('result.tools.4.annotations.readOnlyHint', false)
-      ->assertJsonPath('result.tools.4.securitySchemes.0.scopes', ['pages:read', 'pages:write-content-draft']);
+      ->assertJsonPath('result.tools.4.securitySchemes.0.scopes', ['pages:read', 'pages:write-content-draft'])
+      ->assertJsonPath('result.tools.5.name', 'search_pages')
+      ->assertJsonPath('result.tools.5.annotations.readOnlyHint', true)
+      ->assertJsonPath('result.tools.5.securitySchemes.0.scopes', ['pages:read']);
     $this->tool('find_page', ['path' => '/', 'locale' => 'en'], status: 401)
       ->assertHeader('WWW-Authenticate')->assertJsonPath('result.structuredContent.code', 'auth_required')
       ->assertJsonPath('result._meta.mcp/www_authenticate.0', fn ($header) => str_contains($header, 'resource_metadata='));
@@ -80,6 +83,49 @@ class RemoteMcpTest extends TestCase
     $this->postJson('http://cms.example.test/webadmin/mcp', [])->assertNotFound();
     $this->setMcp(false);
     $this->postJson(self::MCP, [])->assertNotFound();
+  }
+
+  public function test_search_pages_paginates_only_the_authorized_sites_published_editorial_translations(): void
+  {
+    [$page] = $this->pageFixture(path: '/guides/start');
+    $site = $page->site;
+    for ($index = 1; $index <= 20; $index++) {
+      Page::create(['site_id' => $site->id, 'title' => 'Guides '.$index, 'slug' => 'guide-'.$index, 'status' => Page::STATUS_PUBLISHED]);
+    }
+    foreach ([Page::TYPE_SYSTEM, Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_DEFAULT] as $type) {
+      Page::create([
+        'site_id' => $site->id, 'title' => 'Guides '.$type, 'slug' => 'internal-'.$type, 'page_type' => $type,
+        'status' => $type === Page::TYPE_DEFAULT ? Page::STATUS_DRAFT : Page::STATUS_PUBLISHED,
+      ]);
+    }
+    Page::create([
+      'site_id' => $site->id, 'title' => 'Guides revision', 'slug' => 'revision', 'status' => Page::STATUS_PUBLISHED,
+      'settings' => ['revision_restore_candidate' => ['state' => 'preparing']],
+    ]);
+    $other = Site::create(['handle' => 'other', 'name' => 'Other']);
+    Page::create(['site_id' => $other->id, 'title' => 'Guides other', 'slug' => 'other', 'status' => Page::STATUS_PUBLISHED]);
+
+    $reference = ['q' => 'guides', 'locale' => 'en'];
+    $this->tool('search_pages', $reference, status: 401)->assertJsonPath('result.structuredContent.code', 'auth_required');
+    $token = $this->connect($this->operator(), $site->id, scope: 'pages:read');
+    $this->tool('search_pages', $reference, $token)
+      ->assertJsonCount(20, 'result.structuredContent.pages')
+      ->assertJsonPath('result.structuredContent.pages.0', ['page_id' => $page->id, 'name' => 'Home', 'path' => '/guides/start'])
+      ->assertJsonPath('result.structuredContent.next_page', 2);
+    $this->tool('search_pages', $reference + ['page' => 2], $token)
+      ->assertJsonCount(1, 'result.structuredContent.pages')
+      ->assertJsonPath('result.structuredContent.pages.0.name', 'Guides 20')
+      ->assertJsonPath('result.structuredContent.next_page', null);
+    $this->tool('search_pages', ['q' => 'Ana sayfa', 'locale' => 'tr'], $token)
+      ->assertJsonCount(1, 'result.structuredContent.pages')
+      ->assertJsonPath('result.structuredContent.pages.0.page_id', $page->id);
+    $this->tool('search_pages', ['q' => '%', 'locale' => 'en'], $token)
+      ->assertJsonCount(0, 'result.structuredContent.pages');
+    Locale::create(['code' => 'fr', 'name' => 'French', 'is_enabled' => true]);
+    $this->tool('search_pages', ['q' => 'Guides', 'locale' => 'fr'], $token)
+      ->assertJsonPath('result.structuredContent.code', 'locale_unavailable');
+    $this->tool('search_pages', $reference + ['page' => 1001], $token)
+      ->assertJsonPath('result.structuredContent.code', 'invalid_request');
   }
 
   public function test_oauth_binds_codes_to_pkce_callback_resource_and_one_site(): void
@@ -381,6 +427,41 @@ class RemoteMcpTest extends TestCase
 
     $this->assertSame('Inherited copy', $hero->textTranslations()->sole()->content);
     $this->assertSame(0, $rich->textTranslations()->count());
+  }
+
+  public function test_content_discovery_reports_fields_and_draft_slot_restrictions(): void
+  {
+    [$page, $hero] = $this->pageFixture();
+    $aside = SlotType::create(['slug' => 'aside', 'name' => 'Aside', 'status' => 'published', 'sort_order' => 1]);
+    $page->slots()->create(['slot_type_id' => $aside->id, 'source_type' => 'page', 'sort_order' => 1]);
+    $image = $page->blocks()->create(['type' => 'image', 'slot_type_id' => $aside->id, 'status' => 'published', 'sort_order' => 0]);
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $reference = ['page_id' => $page->id, 'locale' => 'en'];
+    $version = $this->tool('get_page_content', $reference, $token)
+      ->assertJsonPath('result.structuredContent.blocks.0.write.text_fields', ['title', 'subtitle', 'content'])
+      ->assertJsonPath('result.structuredContent.blocks.1.block_id', $image->id)
+      ->assertJsonPath('result.structuredContent.blocks.1.write.text_fields', ['caption', 'alt_text'])
+      ->assertJsonPath('result.structuredContent.blocks.1.write.media_id', true)
+      ->json('result.structuredContent.version');
+    $this->tool('get_page_content', ['page_id' => $page->id, 'locale' => 'tr'], $token)
+      ->assertJsonPath('result.structuredContent.blocks.1.write.text_fields', ['caption', 'alt_text'])
+      ->assertJsonPath('result.structuredContent.blocks.1.write.media_id', false)
+      ->assertJsonPath('result.structuredContent.blocks.1.write.media_blocked_by', 'media_default_locale_required');
+
+    $draftId = $this->tool('update_draft_block', $reference + [
+      'block_id' => $hero->id, 'version' => $version, 'text' => ['title' => 'New title'],
+    ], $token)->json('result.structuredContent.draft_id');
+    $this->tool('get_page_content', $reference, $token)
+      ->assertJsonPath('result.structuredContent.blocks.0.write.blocked_by', null)
+      ->assertJsonPath('result.structuredContent.blocks.1.write.text_fields', [])
+      ->assertJsonPath('result.structuredContent.blocks.1.write.media_id', false)
+      ->assertJsonPath('result.structuredContent.blocks.1.write.blocked_by', 'unmanaged_slot');
+
+    Page::findOrFail($draftId)->update(['status' => Page::STATUS_IN_REVIEW]);
+    $this->tool('get_page_content', $reference, $token)
+      ->assertJsonPath('result.structuredContent.blocks.0.write.text_fields', [])
+      ->assertJsonPath('result.structuredContent.blocks.0.write.media_id', false)
+      ->assertJsonPath('result.structuredContent.blocks.0.write.blocked_by', 'conflict');
   }
 
   public function test_image_selection_respects_the_site_and_keeps_alt_text_separate_from_caption(): void

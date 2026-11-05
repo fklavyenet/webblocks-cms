@@ -12,7 +12,6 @@ use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Policies\McpPagePolicy;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
-use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Formatting\SafeRichTextRenderer;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
@@ -28,7 +27,6 @@ final class UpdateDraftBlock
     private readonly McpPages $pages,
     private readonly McpPagePolicy $policy,
     private readonly InternalContentPlanService $plans,
-    private readonly BlockTypeApiAuthoringPolicy $blocks,
     private readonly BlockTranslationWriter $translations,
     private readonly McpBlockFields $fields,
     private readonly McpMedia $media,
@@ -63,8 +61,7 @@ final class UpdateDraftBlock
       $sourceBlock = $this->candidates($source, $headingOnly)->get($input['block_id']);
       $slot = $sourceBlock?->slotType?->slug;
       $unavailable = $headingOnly ? 'heading_unavailable' : 'block_unavailable';
-      if (! $slot || $this->blocks->scopeHasHumanOnlyBlock($source->blocks)
-        || ($draft && $this->blocks->scopeHasHumanOnlyBlock($draft->blocks))) {
+      if (! $slot || $this->pages->hasHumanOnlyBlocks($source, $draft)) {
         throw new McpToolException($unavailable);
       }
 
@@ -75,8 +72,7 @@ final class UpdateDraftBlock
       }
 
       $this->pages->locale($draft, $locale->code);
-      $matches = $this->candidates($draft, $headingOnly)->filter(fn (Block $block) => $block->revision_key === $sourceBlock->revision_key
-        && $block->slot_type_id === $sourceBlock->slot_type_id && $block->typeSlug() === $sourceBlock->typeSlug());
+      $matches = $this->pages->matchingBlocks($sourceBlock, $this->candidates($draft, $headingOnly));
       if ($matches->count() !== 1 || ! in_array($slot, $draft->setting('staged_update.managed_slots', []), true)) {
         throw new McpToolException($unavailable);
       }
