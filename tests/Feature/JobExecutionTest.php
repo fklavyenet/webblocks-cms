@@ -230,24 +230,6 @@ class JobExecutionTest extends TestCase
   }
 
   #[Test]
-  public function contact_success_is_escaped_persistent_page_feedback_outside_overlays(): void
-  {
-    $site = $this->site();
-    session()->put('contact_form_success_message', 'Received <strong>literally</strong>');
-    $html = view('webblocks-cms::layouts.public', ['site' => $site, 'publicLocaleCode' => 'en'])->render();
-    $dom = new \DOMDocument;
-    @$dom->loadHTML($html);
-    $xpath = new \DOMXPath($dom);
-    $alerts = $xpath->query('//div[contains(@class,"wb-alert-success") and @role="status"]');
-    $this->assertCount(1, $alerts);
-    $this->assertStringContainsString('Received <strong>literally</strong>', $alerts->item(0)->textContent);
-    $this->assertSame(0, $xpath->query('.//strong[text()="literally"]', $alerts->item(0))->length);
-    $this->assertSame(0, $xpath->query('ancestor::*[@id="wb-overlay-root"]', $alerts->item(0))->length);
-    $this->assertFalse($alerts->item(0)->hasAttribute('data-wb-toast'));
-    $this->assertStringNotContainsString('wb-toast', $html);
-  }
-
-  #[Test]
   public function admissions_are_idempotent_and_live_leases_exclude_other_workers(): void
   {
     $calls = 0;

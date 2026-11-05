@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.122.1
+
+- Show the contact form confirmation directly below the Send message button and return visitors to it after submission, without shifting the navigation.
+
 ## 1.122.0
 
 - Read supported localized block text in published pages and their update drafts through MCP.

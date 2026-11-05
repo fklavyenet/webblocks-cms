@@ -151,13 +151,6 @@
             @include('webblocks-cms::admin.pages.revisions.partials.translation-removal-warning', ['translationRemovals' => $revisionTranslationRemovals ?? []])
         @endif
 
-        @if (session('contact_form_success_message'))
-            <div class="wb-alert wb-alert-success wb-mt-3 wb-mb-3" role="status" aria-live="polite">
-                <strong>{{ $publicText('toast.contact_message_sent') }}</strong>
-                <span>{{ session('contact_form_success_message') }}</span>
-            </div>
-        @endif
-
         @if (($systemPageRuntime ?? false) || (isset($page) && $page->isSystemPage() && ($previewMode ?? false)))
             @php
                 $systemPageRuntime = true;
