@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Mcp;
 
 use Illuminate\Support\Facades\Validator;
 use stdClass;
+use WebBlocks\Cms\Actions\Mcp\CreatePageDraft;
 use WebBlocks\Cms\Actions\Mcp\UpdateDraftBlock;
 use WebBlocks\Cms\Models\Locale;
 
@@ -23,10 +24,13 @@ final class McpTools
 
   private const MEDIA = 'find_media';
 
+  private const CREATE = 'create_page_draft';
+
   public function __construct(
     private readonly McpPages $pages,
     private readonly UpdateDraftBlock $updateBlock,
     private readonly McpMedia $media,
+    private readonly CreatePageDraft $createDraft,
   ) {}
 
   public function descriptors(): array
@@ -79,6 +83,12 @@ final class McpTools
       $this->descriptor(self::MEDIA, 'media_description', [
         'q' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120], 'page' => $page,
       ], []),
+      $this->descriptor(self::CREATE, 'create_draft_description', [
+        'locale' => $locale,
+        'title' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 255],
+        'path' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 255],
+        'layout' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 100, 'default' => 'default'],
+      ], ['locale', 'title', 'path']),
     ];
   }
 
@@ -87,6 +97,7 @@ final class McpTools
     return match ($name) {
       self::READ, self::SEARCH, self::PREVIEW => McpConfiguration::READ,
       self::WRITE => McpConfiguration::WRITE,
+      self::CREATE => McpConfiguration::CREATE,
       self::CONTENT, self::EDIT, self::MEDIA => McpConfiguration::CONTENT,
       default => null,
     };
@@ -100,6 +111,7 @@ final class McpTools
       self::READ => $this->pages->read($grant['site'], $input),
       self::SEARCH => $this->pages->search($grant['site'], $input),
       self::PREVIEW => $this->pages->preview($grant['site'], $input),
+      self::CREATE => $this->createDraft->handle($grant['user'], $grant['site'], $input),
       self::WRITE => $this->updateBlock->handle($grant['user'], $grant['site'], $input, headingOnly: true),
       self::CONTENT => $this->pages->content($grant['user'], $grant['site'], $input),
       self::EDIT => $this->updateBlock->handle($grant['user'], $grant['site'], $input),
@@ -118,6 +130,11 @@ final class McpTools
       self::READ => [
         'page_id' => ['required_without:path', 'prohibits:path', 'integer', 'min:1'],
         'path' => ['required_without:page_id', 'string', 'max:255'],
+      ],
+      self::CREATE => [
+        'title' => ['required', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'],
+        'path' => ['required', 'string', 'max:255'],
+        'layout' => ['sometimes', 'required', 'string', 'max:100', 'regex:/\A[a-z0-9]+(?:[-_][a-z0-9]+)*\z/'],
       ],
       self::SEARCH => ['q' => ['required', 'string', 'max:120', 'not_regex:/[\x00-\x1F\x7F]/'], 'page' => $page],
       self::PREVIEW => ['page_id' => $id],
@@ -164,7 +181,7 @@ final class McpTools
 
   private function descriptor(string $name, string $description, array $properties, array $required, array $constraints = []): array
   {
-    $readOnly = ! in_array($name, [self::WRITE, self::EDIT], true);
+    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE], true);
     $scope = $this->scope($name);
     $scopes = $scope === McpConfiguration::READ ? [$scope] : [McpConfiguration::READ, $scope];
     $security = [['type' => 'oauth2', 'scopes' => $scopes]];
@@ -173,7 +190,8 @@ final class McpTools
       'name' => $name,
       'description' => __('webblocks-cms::mcp.'.$description),
       'inputSchema' => ['type' => 'object', 'properties' => $properties, 'required' => $required, 'additionalProperties' => false] + $constraints,
-      'annotations' => ['readOnlyHint' => $readOnly, 'destructiveHint' => ! $readOnly, 'openWorldHint' => false],
+      'annotations' => ['readOnlyHint' => $readOnly, 'destructiveHint' => ! $readOnly && $name !== self::CREATE, 'openWorldHint' => false]
+        + ($name === self::CREATE ? ['idempotentHint' => true] : []),
       'securitySchemes' => $security,
       '_meta' => ['securitySchemes' => $security],
     ];

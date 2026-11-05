@@ -92,6 +92,7 @@ final class McpController
     $allowed = $grant && match ($scope) {
       McpConfiguration::WRITE => $grant['write'],
       McpConfiguration::CONTENT => $grant['edit_content'],
+      McpConfiguration::CREATE => $grant['create_draft'],
       default => true,
     };
     if (! $allowed) {

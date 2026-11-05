@@ -243,8 +243,13 @@ final class McpPages
       'page_id' => $source->id,
       'draft_id' => $draft->id,
       'locale' => $locale->code,
-      'preview_url' => $this->config->origin().route('admin.pages.preview', ['page' => $draft, 'locale' => $locale->code], absolute: false),
+      'preview_url' => $this->draftPreviewUrl($draft, $locale),
     ];
+  }
+
+  public function draftPreviewUrl(Page $draft, Locale $locale): string
+  {
+    return $this->config->origin().route('admin.pages.preview', ['page' => $draft, 'locale' => $locale->code], absolute: false);
   }
 
   /** @return Collection<int, Block> */

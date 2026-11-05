@@ -30,6 +30,18 @@ final class McpPagePolicy
       && $this->personal->canUse($user, CmsApiTokenCapabilities::CONTENT_APPLY);
   }
 
+  public function createDraft(User $user, int $siteId): bool
+  {
+    return $this->read($user, $siteId)
+      && $this->acl->allows($user, 'cms.pages.create', $siteId)
+      && $this->personal->canUse($user, CmsApiTokenCapabilities::CONTENT_APPLY);
+  }
+
+  public function editTranslations(User $user, int $siteId): bool
+  {
+    return $this->acl->allows($user, 'cms.translations.update', $siteId);
+  }
+
   public function readMedia(User $user, int $siteId): bool
   {
     return $this->acl->allows($user, 'cms.media.read', $siteId)
@@ -39,7 +51,7 @@ final class McpPagePolicy
   public function writeLocale(User $user, int $siteId, bool $translated): bool
   {
     return $this->write($user, $siteId)
-      && (! $translated || $this->acl->allows($user, 'cms.translations.update', $siteId));
+      && (! $translated || $this->editTranslations($user, $siteId));
   }
 
   public function editDraft(User $user, Page $draft, bool $translated): bool

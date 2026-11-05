@@ -21,7 +21,9 @@ final class McpConfiguration
 
   public const CONTENT = 'pages:write-content-draft';
 
-  public const SCOPES = [self::READ, self::WRITE, self::CONTENT];
+  public const CREATE = 'pages:create-draft';
+
+  public const SCOPES = [self::READ, self::WRITE, self::CONTENT, self::CREATE];
 
   public function assertAvailable(Request $request): void
   {
@@ -45,7 +47,8 @@ final class McpConfiguration
   {
     return Schema::hasColumn('wbcms_mcp_oauth_clients', 'client_secret_hash')
       && Schema::hasTable('wbcms_mcp_oauth_redirects')
-      && Schema::hasColumns('wbcms_mcp_grants', ['oauth_client_id', 'redirect_hash', 'can_edit_content']);
+      && Schema::hasColumns('wbcms_mcp_grants', ['oauth_client_id', 'redirect_hash', 'can_edit_content', 'can_create_draft'])
+      && Schema::hasTable('wbcms_mcp_page_drafts');
   }
 
   public function origin(): string

@@ -85,10 +85,11 @@ final class McpOAuthController
     $scopes = explode(' ', $data['scope'] ?? '');
     $write = in_array(McpConfiguration::WRITE, $scopes, true);
     $editContent = in_array(McpConfiguration::CONTENT, $scopes, true);
+    $createDraft = in_array(McpConfiguration::CREATE, $scopes, true);
 
     if ($request->isMethod('GET')) {
       $sites = Site::query()->whereIn('id', $user->accessibleSiteIds())->orderBy('name')->get(['id', 'name'])
-        ->filter(fn (Site $site): bool => $this->allowed($user, $site->id, $write || $editContent));
+        ->filter(fn (Site $site): bool => $this->allowed($user, $site->id, $write || $editContent, $createDraft));
       abort_if($sites->isEmpty(), 403);
 
       $callbackHost = parse_url($redirect, PHP_URL_HOST);
@@ -97,7 +98,7 @@ final class McpOAuthController
       $callbackAddress = $callbackHost.($port === null ? '' : ':'.$port);
       $callbackOrigin = parse_url($redirect, PHP_URL_SCHEME).'://'.$callbackAddress;
 
-      return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'write', 'editContent', 'data', 'clientName', 'callbackAddress'), headers: [
+      return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'write', 'editContent', 'createDraft', 'data', 'clientName', 'callbackAddress'), headers: [
         // Chromium applies form-action to the redirect after the consent POST.
         'Content-Security-Policy' => "frame-ancestors 'none'; form-action 'self' {$callbackOrigin}; base-uri 'none'",
         'X-Frame-Options' => 'DENY',
@@ -107,8 +108,8 @@ final class McpOAuthController
     $result = ['error' => 'access_denied'];
     if ($data['decision'] === 'allow') {
       $siteId = (int) $data['site_id'];
-      abort_unless($this->allowed($user, $siteId, $write || $editContent), 403);
-      $result = ['code' => $this->grants->issue($user, $siteId, $write, $editContent, $data['code_challenge'], $client, $redirect)];
+      abort_unless($this->allowed($user, $siteId, $write || $editContent, $createDraft), 403);
+      $result = ['code' => $this->grants->issue($user, $siteId, $write, $editContent, $createDraft, $data['code_challenge'], $client, $redirect)];
     }
     $result += ['iss' => $this->config->resource(), 'state' => $data['state'] ?? null];
 
@@ -147,8 +148,9 @@ final class McpOAuthController
     return $token === null ? response()->json(['error' => 'invalid_grant'], 400) : response()->json($token);
   }
 
-  private function allowed(User $user, int $siteId, bool $write): bool
+  private function allowed(User $user, int $siteId, bool $write, bool $createDraft): bool
   {
-    return $write ? $this->policy->write($user, $siteId) : $this->policy->read($user, $siteId);
+    return ($write ? $this->policy->write($user, $siteId) : $this->policy->read($user, $siteId))
+      && (! $createDraft || $this->policy->createDraft($user, $siteId));
   }
 }

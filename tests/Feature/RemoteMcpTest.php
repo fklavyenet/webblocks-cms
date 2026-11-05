@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
@@ -58,23 +59,26 @@ class RemoteMcpTest extends TestCase
     $this->setMcp(true);
   }
 
-  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_seven_tools(): void
+  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_eight_tools(): void
   {
     $this->get(self::ORIGIN.'/.well-known/oauth-protected-resource/webadmin/mcp')
       ->assertOk()->assertJsonPath('resource', self::MCP);
     $this->get(self::ORIGIN.'/.well-known/oauth-authorization-server/webadmin/mcp')
       ->assertOk()->assertJsonPath('issuer', self::MCP)->assertJsonPath('registration_endpoint', self::MCP.'/register')
       ->assertJsonPath('code_challenge_methods_supported', ['S256'])
-      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft']);
+      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft']);
     $this->rpc('initialize', ['protocolVersion' => '2025-03-26'])->assertJsonPath('result.protocolVersion', '2025-03-26');
-    $this->rpc('tools/list')->assertJsonCount(7, 'result.tools')
+    $this->rpc('tools/list')->assertJsonCount(8, 'result.tools')
       ->assertJsonPath('result.tools.1.annotations.readOnlyHint', false)
       ->assertJsonPath('result.tools.3.annotations.readOnlyHint', true)
       ->assertJsonPath('result.tools.4.annotations.readOnlyHint', false)
       ->assertJsonPath('result.tools.4.securitySchemes.0.scopes', ['pages:read', 'pages:write-content-draft'])
       ->assertJsonPath('result.tools.5.name', 'search_pages')
       ->assertJsonPath('result.tools.5.annotations.readOnlyHint', true)
-      ->assertJsonPath('result.tools.5.securitySchemes.0.scopes', ['pages:read']);
+      ->assertJsonPath('result.tools.5.securitySchemes.0.scopes', ['pages:read'])
+      ->assertJsonPath('result.tools.7.name', 'create_page_draft')
+      ->assertJsonPath('result.tools.7.annotations.idempotentHint', true)
+      ->assertJsonPath('result.tools.7.securitySchemes.0.scopes', ['pages:read', 'pages:create-draft']);
     $this->tool('find_page', ['path' => '/', 'locale' => 'en'], status: 401)
       ->assertHeader('WWW-Authenticate')->assertJsonPath('result.structuredContent.code', 'auth_required')
       ->assertJsonPath('result._meta.mcp/www_authenticate.0', fn ($header) => str_contains($header, 'resource_metadata='));
@@ -126,6 +130,70 @@ class RemoteMcpTest extends TestCase
       ->assertJsonPath('result.structuredContent.code', 'locale_unavailable');
     $this->tool('search_pages', $reference + ['page' => 1001], $token)
       ->assertJsonPath('result.structuredContent.code', 'invalid_request');
+  }
+
+  public function test_page_draft_creation_requires_new_consent_and_replays_the_private_preview(): void
+  {
+    [$source, $hero] = $this->pageFixture();
+    $layout = PageLayout::create(['handle' => 'default', 'name' => 'Default', 'is_active' => true]);
+    $layout->layoutSlots()->create(['slot_type_id' => $hero->slot_type_id, 'slot_name' => 'main', 'label' => 'Main', 'is_active' => true]);
+    $user = $this->operator();
+    $input = ['locale' => 'tr', 'title' => 'MCP taslağı', 'path' => '/rehber/mcp'];
+    $oldToken = $this->connect($user, $source->site_id, scope: 'pages:read pages:write-content-draft');
+    $this->tool('create_page_draft', $input, $oldToken, 403)
+      ->assertJsonPath('result.structuredContent.code', 'auth_required')
+      ->assertJsonPath('result._meta.mcp/www_authenticate.0', fn ($header) => str_contains($header, 'scope="pages:read pages:create-draft"'));
+
+    $token = $this->connect($user, $source->site_id, scope: 'pages:read pages:create-draft');
+    $result = $this->tool('create_page_draft', $input, $token)
+      ->assertJsonPath('result.structuredContent.path', '/rehber/mcp')
+      ->json('result.structuredContent');
+    $renewedToken = $this->connect($user, $source->site_id, scope: 'pages:read pages:create-draft');
+    $this->tool('create_page_draft', array_replace($input, ['title' => ' MCP taslağı ', 'path' => 'rehber/mcp/', 'layout' => 'default']), $renewedToken)
+      ->assertJsonPath('result.structuredContent', $result);
+
+    $page = Page::findOrFail($result['draft_id']);
+    $this->assertSame($page->id, $result['page_id']);
+    $this->assertSame(Page::STATUS_DRAFT, $page->status);
+    $this->assertSame($user->id, $page->created_by_user_id);
+    $this->assertNull($page->published_at);
+    $this->assertSame($hero->slot_type_id, $page->slots()->sole()->slot_type_id);
+    $this->assertSame('tr', $page->translations()->sole()->locale->code);
+    $this->assertSame(1, $page->revisions()->count());
+    $this->assertSame(2, Page::count());
+    $this->assertSame(1, DB::table('wbcms_mcp_page_drafts')->count());
+
+    $this->get($result['preview_url'])->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')->assertSee('MCP taslağı');
+    app('auth')->forgetGuards();
+    $this->get($result['preview_url'])->assertRedirect();
+  }
+
+  public function test_page_draft_creation_distinguishes_path_conflicts_from_retries(): void
+  {
+    [$source] = $this->pageFixture();
+    PageLayout::create(['handle' => 'default', 'name' => 'Default', 'is_active' => true]);
+    $user = $this->operator();
+    $token = $this->connect($user, $source->site_id, scope: 'pages:read pages:create-draft');
+    $input = ['locale' => 'en', 'title' => 'MCP draft', 'path' => '/guides/mcp'];
+    $this->tool('create_page_draft', array_replace($input, ['path' => '/']), $token)
+      ->assertJsonPath('result.structuredContent.code', 'page_path_conflict');
+    $this->tool('create_page_draft', array_replace($input, ['path' => '/webadmin/test']), $token)
+      ->assertJsonPath('result.structuredContent.code', 'invalid_page_path');
+    $this->tool('create_page_draft', $input + ['layout' => 'missing'], $token)
+      ->assertJsonPath('result.structuredContent.code', 'layout_unavailable');
+    $this->tool('create_page_draft', array_replace($input, ['locale' => 'fr']), $token)
+      ->assertJsonPath('result.structuredContent.code', 'locale_unavailable');
+
+    $draftId = $this->tool('create_page_draft', $input, $token)->json('result.structuredContent.draft_id');
+    $this->tool('create_page_draft', array_replace($input, ['title' => 'Different draft']), $token)
+      ->assertJsonPath('result.structuredContent.code', 'page_path_conflict');
+    $otherToken = $this->connect($this->operator(), $source->site_id, scope: 'pages:read pages:create-draft');
+    $this->tool('create_page_draft', $input, $otherToken)->assertJsonPath('result.structuredContent.code', 'page_path_conflict');
+
+    Page::findOrFail($draftId)->delete();
+    $this->tool('create_page_draft', $input, $token)->assertJsonPath('result.structuredContent.code', 'created_draft_unavailable');
+    $this->assertSame(1, Page::count());
+    $this->assertSame(1, DB::table('wbcms_mcp_page_drafts')->count());
   }
 
   public function test_oauth_binds_codes_to_pkce_callback_resource_and_one_site(): void

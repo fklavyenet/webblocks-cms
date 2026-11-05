@@ -36,6 +36,9 @@
                             @if ($editContent)
                                 <li>{{ __('webblocks-cms::mcp.consent_content') }}</li>
                             @endif
+                            @if ($createDraft)
+                                <li>{{ __('webblocks-cms::mcp.consent_create_draft') }}</li>
+                            @endif
                         </ul>
                     </section>
 
