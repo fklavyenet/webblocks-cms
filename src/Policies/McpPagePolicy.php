@@ -30,7 +30,13 @@ final class McpPagePolicy
       && $this->personal->canUse($user, CmsApiTokenCapabilities::CONTENT_APPLY);
   }
 
-  public function editHeading(User $user, Page $draft, bool $translated): bool
+  public function readMedia(User $user, int $siteId): bool
+  {
+    return $this->acl->allows($user, 'cms.media.read', $siteId)
+      && $this->personal->canUse($user, CmsApiTokenCapabilities::MEDIA_READ);
+  }
+
+  public function editDraft(User $user, Page $draft, bool $translated): bool
   {
     return $this->write($user, $draft->site_id)
       && $this->workflow->canEditContent($user, $draft)

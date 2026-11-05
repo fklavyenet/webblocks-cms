@@ -10,6 +10,7 @@ use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
@@ -57,16 +58,20 @@ class RemoteMcpTest extends TestCase
     $this->setMcp(true);
   }
 
-  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_three_tools(): void
+  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_six_tools(): void
   {
     $this->get(self::ORIGIN.'/.well-known/oauth-protected-resource/webadmin/mcp')
       ->assertOk()->assertJsonPath('resource', self::MCP);
     $this->get(self::ORIGIN.'/.well-known/oauth-authorization-server/webadmin/mcp')
       ->assertOk()->assertJsonPath('issuer', self::MCP)->assertJsonPath('registration_endpoint', self::MCP.'/register')
-      ->assertJsonPath('code_challenge_methods_supported', ['S256']);
+      ->assertJsonPath('code_challenge_methods_supported', ['S256'])
+      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft']);
     $this->rpc('initialize', ['protocolVersion' => '2025-03-26'])->assertJsonPath('result.protocolVersion', '2025-03-26');
-    $this->rpc('tools/list')->assertJsonCount(3, 'result.tools')
-      ->assertJsonPath('result.tools.1.annotations.readOnlyHint', false);
+    $this->rpc('tools/list')->assertJsonCount(6, 'result.tools')
+      ->assertJsonPath('result.tools.1.annotations.readOnlyHint', false)
+      ->assertJsonPath('result.tools.3.annotations.readOnlyHint', true)
+      ->assertJsonPath('result.tools.4.annotations.readOnlyHint', false)
+      ->assertJsonPath('result.tools.4.securitySchemes.0.scopes', ['pages:read', 'pages:write-content-draft']);
     $this->tool('find_page', ['path' => '/', 'locale' => 'en'], status: 401)
       ->assertHeader('WWW-Authenticate')->assertJsonPath('result.structuredContent.code', 'auth_required')
       ->assertJsonPath('result._meta.mcp/www_authenticate.0', fn ($header) => str_contains($header, 'resource_metadata='));
@@ -318,6 +323,103 @@ class RemoteMcpTest extends TestCase
     $this->tool('find_page', $ref, $token, 401)->assertJsonPath('result.structuredContent.code', 'auth_required');
   }
 
+  public function test_existing_heading_grants_do_not_authorize_expanded_tools(): void
+  {
+    [$page] = $this->pageFixture();
+    $user = $this->operator();
+    $token = $this->connect($user, $page->site_id);
+    foreach (['get_page_content', 'update_draft_block', 'find_media'] as $name) {
+      $this->tool($name, [], $token, 403)->assertJsonPath('result.structuredContent.code', 'auth_required')
+        ->assertJsonPath('result._meta.mcp/www_authenticate.0', fn ($header) => str_contains($header, 'scope="pages:read pages:write-content-draft"'));
+    }
+
+    $auth = array_replace($this->authorizationRequest(), ['scope' => 'pages:read pages:write-content-draft']);
+    $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertOk()
+      ->assertSee('Read and edit supported localized block text');
+    $this->exchange($this->consent($page->site_id, $auth))->assertOk()
+      ->assertJsonPath('scope', 'pages:read pages:write-content-draft');
+  }
+
+  public function test_block_edits_preserve_inherited_copy_and_render_sanitized_content_in_the_draft(): void
+  {
+    [$page, $hero] = $this->pageFixture();
+    $hero->textTranslations()->whereNotNull('content')->delete();
+    $hero->textTranslations()->update(['subtitle' => 'Inherited eyebrow', 'content' => 'Inherited copy']);
+    $rich = $page->blocks()->create([
+      'type' => 'rich-text', 'slot_type_id' => $hero->slot_type_id, 'status' => 'published', 'sort_order' => 1,
+    ]);
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $reference = ['page_id' => $page->id, 'locale' => 'tr'];
+    $version = $this->tool('get_page_content', $reference, $token)
+      ->assertJsonPath('result.structuredContent.blocks.0.text.content', 'Inherited copy')
+      ->json('result.structuredContent.version');
+
+    $this->tool('update_draft_block', $reference + [
+      'block_id' => $hero->id, 'version' => $version, 'text' => ['url' => 'https://example.test/'],
+    ], $token)->assertJsonPath('result.structuredContent.code', 'invalid_request');
+    $this->assertSame(0, app(InternalContentPlanService::class)->stagedDrafts($page)->count());
+
+    $updated = $this->tool('update_draft_block', $reference + [
+      'block_id' => $hero->id, 'version' => $version, 'text' => ['content' => 'Yeni tanıtım'],
+    ], $token)->assertJsonPath('result.structuredContent.updated_fields', ['content'])->json('result.structuredContent');
+
+    $richEdit = $reference + ['block_id' => $rich->id, 'text' => ['content' => '<p>Yeni <strong>paragraf</strong></p><script>bad()</script>']];
+    $this->tool('update_draft_block', $richEdit + ['version' => $version], $token)
+      ->assertJsonPath('result.structuredContent.code', 'conflict');
+
+    $version = $this->tool('get_page_content', $reference, $token)
+      ->assertJsonPath('result.structuredContent.draft.managed_slots', ['main'])
+      ->assertJsonPath('result.structuredContent.blocks.0.draft_text.title', 'English heading')
+      ->assertJsonPath('result.structuredContent.blocks.0.draft_text.subtitle', 'Inherited eyebrow')
+      ->assertJsonPath('result.structuredContent.blocks.0.draft_text.content', 'Yeni tanıtım')
+      ->json('result.structuredContent.version');
+
+    $this->tool('update_draft_block', $richEdit + ['version' => $version], $token)
+      ->assertJsonPath('result.structuredContent.draft_id', $updated['draft_id']);
+    $this->get($updated['preview_url'])->assertOk()->assertSee('Yeni tanıtım')
+      ->assertSee('<p>Yeni <strong>paragraf</strong></p>', false)->assertDontSee('bad()');
+
+    $this->assertSame('Inherited copy', $hero->textTranslations()->sole()->content);
+    $this->assertSame(0, $rich->textTranslations()->count());
+  }
+
+  public function test_image_selection_respects_the_site_and_keeps_alt_text_separate_from_caption(): void
+  {
+    [$page, $hero] = $this->pageFixture();
+    $english = Locale::where('code', 'en')->firstOrFail();
+    $user = $this->operator();
+    $otherSite = Site::create(['handle' => 'other', 'name' => 'Other site']);
+    $image = $page->blocks()->create([
+      'type' => 'image', 'slot_type_id' => $hero->slot_type_id, 'status' => 'published', 'sort_order' => 1,
+    ]);
+    $image->imageTranslations()->create(['locale_id' => $english->id, 'caption' => 'Existing caption', 'alt_text' => 'Existing alt']);
+
+    $media = ['disk' => 'public', 'kind' => Media::KIND_IMAGE, 'visibility' => 'public', 'mime_type' => 'image/png', 'uploaded_by' => $user->id];
+    $available = Media::create($media + ['path' => 'example.png', 'filename' => 'example.png', 'original_name' => 'example.png', 'title' => 'MCP image']);
+    $foreign = Media::create($media + ['path' => 'other.png', 'filename' => 'other.png', 'original_name' => 'other.png', 'title' => 'MCP foreign image']);
+    $otherSite->update(['favicon_media_id' => $foreign->id]);
+
+    $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $this->tool('find_media', ['q' => 'MCP'], $token)->assertJsonCount(1, 'result.structuredContent.images')
+      ->assertJsonPath('result.structuredContent.images.0.media_id', $available->id);
+
+    $reference = ['page_id' => $page->id, 'locale' => 'en'];
+    $version = $this->tool('get_page_content', $reference, $token)->json('result.structuredContent.version');
+    $input = $reference + ['block_id' => $image->id, 'version' => $version, 'text' => ['alt_text' => 'A river at sunset']];
+    $this->tool('update_draft_block', $input + ['media_id' => $foreign->id], $token)
+      ->assertJsonPath('result.structuredContent.code', 'media_unavailable');
+    $this->assertSame(0, app(InternalContentPlanService::class)->stagedDrafts($page)->count());
+
+    $result = $this->tool('update_draft_block', $input + ['media_id' => $available->id], $token)
+      ->assertJsonPath('result.structuredContent.media_id', $available->id)->json('result.structuredContent');
+    $draftBlock = Block::findOrFail($result['block_id']);
+    $this->assertSame($available->id, $draftBlock->media_id);
+    $this->assertSame('Existing caption', $draftBlock->imageTranslations()->sole()->caption);
+    $this->assertSame('A river at sunset', $draftBlock->imageTranslations()->sole()->alt_text);
+    $this->assertNull($image->fresh()->media_id);
+    $this->assertSame('Existing alt', $image->imageTranslations()->sole()->alt_text);
+  }
+
   public static function headingTypes(): array
   {
     return ['header' => ['header'], 'content header' => ['content_header']];
@@ -346,10 +448,10 @@ class RemoteMcpTest extends TestCase
     return [$page, $heading];
   }
 
-  private function connect(User $user, int $siteId): string
+  private function connect(User $user, int $siteId, string $scope = 'pages:read pages:write-draft'): string
   {
     $this->actingAs($user, 'web');
-    $auth = array_replace($this->authorizationRequest(), ['scope' => 'pages:read pages:write-draft']);
+    $auth = array_replace($this->authorizationRequest(), ['scope' => $scope]);
 
     return $this->exchange($this->consent($siteId, $auth))->assertOk()->json('access_token');
   }

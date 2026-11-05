@@ -31,7 +31,7 @@ final class McpOAuthController
     return response()->json([
       'resource' => $this->config->resource(),
       'authorization_servers' => [$this->config->resource()],
-      'scopes_supported' => [McpConfiguration::READ, McpConfiguration::WRITE],
+      'scopes_supported' => McpConfiguration::SCOPES,
       'bearer_methods_supported' => ['header'],
     ]);
   }
@@ -49,7 +49,7 @@ final class McpOAuthController
       'grant_types_supported' => ['authorization_code'],
       'token_endpoint_auth_methods_supported' => McpOAuthClient::AUTH_METHODS,
       'code_challenge_methods_supported' => ['S256'],
-      'scopes_supported' => [McpConfiguration::READ, McpConfiguration::WRITE],
+      'scopes_supported' => McpConfiguration::SCOPES,
       'authorization_response_iss_parameter_supported' => true,
     ]);
   }
@@ -82,11 +82,13 @@ final class McpOAuthController
     $client = $request->client();
     $redirect = $data['redirect_uri'];
     abort_unless($user instanceof User, 403);
-    $write = in_array(McpConfiguration::WRITE, explode(' ', $data['scope'] ?? ''), true);
+    $scopes = explode(' ', $data['scope'] ?? '');
+    $write = in_array(McpConfiguration::WRITE, $scopes, true);
+    $editContent = in_array(McpConfiguration::CONTENT, $scopes, true);
 
     if ($request->isMethod('GET')) {
       $sites = Site::query()->whereIn('id', $user->accessibleSiteIds())->orderBy('name')->get(['id', 'name'])
-        ->filter(fn (Site $site): bool => $this->allowed($user, $site->id, $write));
+        ->filter(fn (Site $site): bool => $this->allowed($user, $site->id, $write || $editContent));
       abort_if($sites->isEmpty(), 403);
 
       $callbackHost = parse_url($redirect, PHP_URL_HOST);
@@ -95,7 +97,7 @@ final class McpOAuthController
       $callbackAddress = $callbackHost.($port === null ? '' : ':'.$port);
       $callbackOrigin = parse_url($redirect, PHP_URL_SCHEME).'://'.$callbackAddress;
 
-      return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'write', 'data', 'clientName', 'callbackAddress'), headers: [
+      return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'write', 'editContent', 'data', 'clientName', 'callbackAddress'), headers: [
         // Chromium applies form-action to the redirect after the consent POST.
         'Content-Security-Policy' => "frame-ancestors 'none'; form-action 'self' {$callbackOrigin}; base-uri 'none'",
         'X-Frame-Options' => 'DENY',
@@ -105,8 +107,8 @@ final class McpOAuthController
     $result = ['error' => 'access_denied'];
     if ($data['decision'] === 'allow') {
       $siteId = (int) $data['site_id'];
-      abort_unless($this->allowed($user, $siteId, $write), 403);
-      $result = ['code' => $this->grants->issue($user, $siteId, $write, $data['code_challenge'], $client, $redirect)];
+      abort_unless($this->allowed($user, $siteId, $write || $editContent), 403);
+      $result = ['code' => $this->grants->issue($user, $siteId, $write, $editContent, $data['code_challenge'], $client, $redirect)];
     }
     $result += ['iss' => $this->config->resource(), 'state' => $data['state'] ?? null];
 

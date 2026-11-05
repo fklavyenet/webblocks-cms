@@ -17,7 +17,7 @@ final class McpGrants
     private readonly McpPagePolicy $policy,
   ) {}
 
-  public function issue(User $user, int $siteId, bool $canWrite, string $challenge, McpOAuthClient $client, string $redirect): string
+  public function issue(User $user, int $siteId, bool $canWrite, bool $canEditContent, string $challenge, McpOAuthClient $client, string $redirect): string
   {
     $code = bin2hex(random_bytes(32));
     $this->grants()->where('expires_at', '<=', now())->delete();
@@ -25,6 +25,7 @@ final class McpGrants
       'user_id' => $user->getAuthIdentifier(),
       'site_id' => $siteId,
       'can_write' => $canWrite,
+      'can_edit_content' => $canEditContent,
       'client_fingerprint' => $this->config->clientFingerprint($client->id),
       'oauth_client_id' => $client->id,
       'redirect_hash' => hash('sha256', $redirect),
@@ -61,12 +62,16 @@ final class McpGrants
         'access_token' => $token,
         'token_type' => 'Bearer',
         'expires_in' => self::ACCESS_LIFETIME,
-        'scope' => McpConfiguration::READ.($grant->can_write ? ' '.McpConfiguration::WRITE : ''),
+        'scope' => implode(' ', array_filter([
+          McpConfiguration::READ,
+          $grant->can_write ? McpConfiguration::WRITE : null,
+          $grant->can_edit_content ? McpConfiguration::CONTENT : null,
+        ])),
       ];
     });
   }
 
-  /** @return array{user: User, site: int, write: bool}|null */
+  /** @return array{user: User, site: int, write: bool, edit_content: bool}|null */
   public function authenticate(#[\SensitiveParameter] ?string $token): ?array
   {
     if (! is_string($token) || ! preg_match('/\A[a-f0-9]{64}\z/', $token)) {
@@ -76,7 +81,12 @@ final class McpGrants
     $user = $grant && hash_equals($this->config->clientFingerprint($grant->oauth_client_id), $grant->client_fingerprint)
       ? $this->actor($grant) : null;
 
-    return $user ? ['user' => $user, 'site' => (int) $grant->site_id, 'write' => (bool) $grant->can_write] : null;
+    return $user ? [
+      'user' => $user,
+      'site' => (int) $grant->site_id,
+      'write' => (bool) $grant->can_write,
+      'edit_content' => (bool) $grant->can_edit_content,
+    ] : null;
   }
 
   public function connections(User $user): LengthAwarePaginator

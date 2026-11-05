@@ -3,7 +3,8 @@
 namespace WebBlocks\Cms\Support\Mcp;
 
 use Illuminate\Support\Facades\Validator;
-use WebBlocks\Cms\Actions\Mcp\UpdateDraftHeading;
+use stdClass;
+use WebBlocks\Cms\Actions\Mcp\UpdateDraftBlock;
 use WebBlocks\Cms\Models\Locale;
 
 final class McpTools
@@ -14,15 +15,34 @@ final class McpTools
 
   private const PREVIEW = 'get_draft_preview';
 
+  private const CONTENT = 'get_page_content';
+
+  private const EDIT = 'update_draft_block';
+
+  private const MEDIA = 'find_media';
+
   public function __construct(
     private readonly McpPages $pages,
-    private readonly UpdateDraftHeading $updateHeading,
+    private readonly UpdateDraftBlock $updateBlock,
+    private readonly McpMedia $media,
   ) {}
 
   public function descriptors(): array
   {
     $locale = ['type' => 'string', 'maxLength' => 35];
     $id = ['type' => 'integer', 'minimum' => 1];
+
+    $version = ['type' => 'string', 'pattern' => '^[0-9a-f]{64}$'];
+    $page = ['type' => 'integer', 'minimum' => 1, 'maximum' => 1000];
+    $text = ['type' => 'string', 'maxLength' => 255];
+    $copy = [
+      'title' => $text,
+      'subtitle' => $text,
+      'eyebrow' => $text,
+      'caption' => $text,
+      'alt_text' => $text,
+      'content' => ['type' => 'string', 'maxLength' => 8000],
+    ];
 
     return [
       $this->descriptor(self::READ, 'read_description', ['locale' => $locale, 'page_id' => $id, 'path' => ['type' => 'string', 'maxLength' => 255]], ['locale'], [
@@ -32,10 +52,26 @@ final class McpTools
         'locale' => $locale,
         'page_id' => $id,
         'block_id' => $id,
-        'version' => ['type' => 'string', 'pattern' => '^[0-9a-f]{64}$'],
+        'version' => $version,
         'title' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 255],
       ], ['locale', 'page_id', 'block_id', 'version', 'title']),
       $this->descriptor(self::PREVIEW, 'preview_description', ['locale' => $locale, 'page_id' => $id], ['locale', 'page_id']),
+      $this->descriptor(self::CONTENT, 'content_description', [
+        'locale' => $locale, 'page_id' => $id, 'page' => $page,
+      ], ['locale', 'page_id']),
+      $this->descriptor(self::EDIT, 'edit_description', [
+        'locale' => $locale,
+        'page_id' => $id,
+        'block_id' => $id,
+        'version' => $version,
+        'text' => ['type' => 'object', 'properties' => $copy, 'minProperties' => 1, 'additionalProperties' => false],
+        'media_id' => $id,
+      ], ['locale', 'page_id', 'block_id', 'version'], [
+        'anyOf' => [['required' => ['text']], ['required' => ['media_id']]],
+      ]),
+      $this->descriptor(self::MEDIA, 'media_description', [
+        'q' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120], 'page' => $page,
+      ], []),
     ];
   }
 
@@ -44,6 +80,7 @@ final class McpTools
     return match ($name) {
       self::READ, self::PREVIEW => McpConfiguration::READ,
       self::WRITE => McpConfiguration::WRITE,
+      self::CONTENT, self::EDIT, self::MEDIA => McpConfiguration::CONTENT,
       default => null,
     };
   }
@@ -55,14 +92,20 @@ final class McpTools
     return match ($name) {
       self::READ => $this->pages->read($grant['site'], $input),
       self::PREVIEW => $this->pages->preview($grant['site'], $input),
-      self::WRITE => $this->updateHeading->handle($grant['user'], $grant['site'], $input),
+      self::WRITE => $this->updateBlock->handle($grant['user'], $grant['site'], $input, headingOnly: true),
+      self::CONTENT => $this->pages->content($grant['site'], $input),
+      self::EDIT => $this->updateBlock->handle($grant['user'], $grant['site'], $input),
+      self::MEDIA => $this->media->find($grant['user'], $grant['site'], $input),
     };
   }
 
   private function validate(string $name, array $args): array
   {
-    $rules = ['locale' => ['required', 'string', 'max:35']];
+    $rules = $name === self::MEDIA ? [] : ['locale' => ['required', 'string', 'max:35']];
     $id = ['required', 'integer', 'min:1'];
+    $version = ['required', 'string', 'regex:/\A[0-9a-f]{64}\z/'];
+    $page = ['sometimes', 'integer', 'min:1', 'max:1000'];
+    $shortText = ['sometimes', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'];
     $rules += match ($name) {
       self::READ => [
         'page_id' => ['required_without:path', 'prohibits:path', 'integer', 'min:1'],
@@ -73,16 +116,36 @@ final class McpTools
         'page_id' => $id,
         'block_id' => $id,
         'title' => ['required', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'],
-        'version' => ['required', 'string', 'regex:/\A[0-9a-f]{64}\z/'],
+        'version' => $version,
+      ],
+      self::CONTENT => ['page_id' => $id, 'page' => $page],
+      self::MEDIA => ['q' => ['sometimes', 'required', 'string', 'max:120'], 'page' => $page],
+      self::EDIT => [
+        'page_id' => $id,
+        'block_id' => $id,
+        'version' => $version,
+        'text' => ['required_without:media_id', 'array:title,subtitle,eyebrow,caption,alt_text,content', 'min:1'],
+        'text.title' => $shortText,
+        'text.subtitle' => $shortText,
+        'text.eyebrow' => $shortText,
+        'text.caption' => $shortText,
+        'text.alt_text' => $shortText,
+        'text.content' => ['sometimes', 'string', 'max:8000', 'not_regex:/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/'],
+        'media_id' => ['required_without:text', 'integer', 'min:1'],
       ],
     };
 
+    if (($args['text'] ?? null) instanceof stdClass) {
+      $args['text'] = (array) $args['text'];
+    }
     $validator = Validator::make($args, $rules);
     if (array_diff_key($args, $rules) !== [] || $validator->fails()) {
       throw new McpToolException('invalid_request');
     }
     $data = $validator->validated();
-    $data['locale'] = Locale::normalizeCode($data['locale']) ?? throw new McpToolException('invalid_request');
+    if (isset($data['locale'])) {
+      $data['locale'] = Locale::normalizeCode($data['locale']) ?? throw new McpToolException('invalid_request');
+    }
     if (isset($data['title'])) {
       $data['title'] = trim($data['title']);
     }
@@ -92,8 +155,9 @@ final class McpTools
 
   private function descriptor(string $name, string $description, array $properties, array $required, array $constraints = []): array
   {
-    $readOnly = $name !== self::WRITE;
-    $scopes = $readOnly ? [McpConfiguration::READ] : [McpConfiguration::READ, McpConfiguration::WRITE];
+    $readOnly = ! in_array($name, [self::WRITE, self::EDIT], true);
+    $scope = $this->scope($name);
+    $scopes = $scope === McpConfiguration::READ ? [$scope] : [McpConfiguration::READ, $scope];
     $security = [['type' => 'oauth2', 'scopes' => $scopes]];
 
     return [

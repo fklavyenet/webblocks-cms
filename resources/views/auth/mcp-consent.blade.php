@@ -33,6 +33,9 @@
                             @if ($write)
                                 <li>{{ __('webblocks-cms::mcp.consent_write') }}</li>
                             @endif
+                            @if ($editContent)
+                                <li>{{ __('webblocks-cms::mcp.consent_content') }}</li>
+                            @endif
                         </ul>
                     </section>
 

@@ -22,6 +22,7 @@ final class McpPages
     private readonly PageRevisionManager $revisions,
     private readonly BlockTranslationResolver $translations,
     private readonly McpConfiguration $config,
+    private readonly McpBlockFields $fields,
   ) {}
 
   public function page(int $siteId, array $input, bool $lock = false): Page
@@ -136,6 +137,41 @@ final class McpPages
     ];
   }
 
+  public function content(int $siteId, array $input): array
+  {
+    $source = $this->page($siteId, $input);
+    $locale = $this->locale($source, $input['locale']);
+    $draft = $this->draft($source);
+    $fingerprint = $this->fingerprint($source);
+    $defaultLocale = app(LocaleResolver::class)->default()->id === $locale->id;
+    $managed = $draft?->setting('staged_update.managed_slots', []);
+    $draftBlocks = $draft ? $this->staticBlocks($draft)->groupBy('revision_key') : collect();
+    $blocks = $this->staticBlocks($source)->filter($this->fields->supports(...))->sortBy('id')->values();
+    $page = $input['page'] ?? 1;
+
+    return [
+      'page_id' => $source->id,
+      'locale' => $locale->code,
+      'version' => $this->version($source, $fingerprint, $draft, $locale),
+      'draft' => $draft ? ['id' => $draft->id, 'status' => $draft->status, 'source_verified' => $this->hasVerifiedBase($draft, $fingerprint), 'managed_slots' => $managed] : null,
+      'blocks' => $blocks->forPage($page, 10)->map(function (Block $block) use ($draftBlocks, $locale, $defaultLocale, $managed): array {
+        $slot = $block->slotType?->slug;
+        $matches = $draftBlocks->get($block->revision_key, collect())->filter(fn (Block $copy) => $copy->slot_type_id === $block->slot_type_id && $copy->typeSlug() === $block->typeSlug());
+        $draftBlock = $matches->count() === 1 && in_array($slot, $managed ?? [], true) ? $matches->first() : null;
+
+        return [
+          'block_id' => $block->id,
+          'type' => $block->typeSlug(),
+          'slot' => $slot,
+          'text' => (object) $this->fields->values($block, $locale),
+          'draft_text' => $draftBlock ? (object) $this->fields->values($draftBlock, $locale) : null,
+          'accepts_media_id' => $defaultLocale && $this->fields->acceptsImage($block),
+        ];
+      })->values()->all(),
+      'next_page' => $blocks->count() > $page * 10 ? $page + 1 : null,
+    ];
+  }
+
   public function preview(int $siteId, array $input): array
   {
     $source = $this->page($siteId, $input);
@@ -157,12 +193,18 @@ final class McpPages
   /** @return Collection<int, Block> */
   public function headings(Page $page): Collection
   {
+    return $this->staticBlocks($page)->filter(fn (Block $block) => in_array($block->typeSlug(), ['header', 'hero', 'content_header'], true));
+  }
+
+  /** @return Collection<int, Block> */
+  public function staticBlocks(Page $page): Collection
+  {
     $page->loadMissing(['slots', 'blocks.blockType', 'blocks.slotType']);
     $slots = $page->slots->filter(fn (PageSlot $slot) => $slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_PAGE)->keyBy('slot_type_id');
     $blocks = $page->blocks->keyBy('id');
 
     return $blocks->filter(function (Block $block) use ($slots, $blocks, $page): bool {
-      if (! in_array($block->typeSlug(), ['header', 'hero', 'content_header'], true) || ! $block->revision_key || ! $slots->has($block->slot_type_id)) {
+      if (! $block->revision_key || ! $slots->has($block->slot_type_id)) {
         return false;
       }
 

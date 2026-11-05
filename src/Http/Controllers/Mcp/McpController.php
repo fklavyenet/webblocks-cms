@@ -89,9 +89,14 @@ final class McpController
     }
 
     $grant = $this->grants->authenticate($request->bearerToken());
-    if (! $grant || ($scope === McpConfiguration::WRITE && ! $grant['write'])) {
+    $allowed = $grant && match ($scope) {
+      McpConfiguration::WRITE => $grant['write'],
+      McpConfiguration::CONTENT => $grant['edit_content'],
+      default => true,
+    };
+    if (! $allowed) {
       $error = $grant ? 'insufficient_scope' : 'invalid_token';
-      $required = $scope === McpConfiguration::WRITE ? McpConfiguration::READ.' '.McpConfiguration::WRITE : $scope;
+      $required = $scope === McpConfiguration::READ ? $scope : McpConfiguration::READ.' '.$scope;
       $challenge = 'Bearer resource_metadata="'.$this->config->origin().McpConfiguration::RESOURCE_METADATA
         .'", scope="'.$required.'", error="'.$error.'", error_description="WebBlocks CMS authorization is required"';
 
