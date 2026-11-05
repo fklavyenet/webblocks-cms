@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.121.0
+
+- Support automatic registration for OAuth clients that authenticate with a client secret and use PKCE for authorization.
+- Group site selection and requested permissions on the MCP consent screen, and wrap long lines in the update log.
+
 ## 1.120.1
 
 - Allow Chromium to return to the registered OAuth callback after WebBlocks MCP consent.

@@ -39,7 +39,7 @@ final class McpConfiguration
 
   public function hasOAuthSchema(): bool
   {
-    return Schema::hasTable('wbcms_mcp_oauth_clients')
+    return Schema::hasColumn('wbcms_mcp_oauth_clients', 'client_secret_hash')
       && Schema::hasTable('wbcms_mcp_oauth_redirects')
       && Schema::hasColumns('wbcms_mcp_grants', ['oauth_client_id', 'redirect_hash']);
   }

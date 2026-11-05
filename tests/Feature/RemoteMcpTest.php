@@ -120,7 +120,7 @@ class RemoteMcpTest extends TestCase
     $this->get($settingsUrl.'?tab=mcp')->assertOk()->assertSee(self::MCP);
     $this->put($settingsUrl.'/mcp', ['mcp_enabled' => '1'])->assertRedirect(route('admin.system.settings.edit', ['tab' => 'mcp']));
     $this->get(self::ORIGIN.'/.well-known/oauth-authorization-server/webadmin/mcp')
-      ->assertOk()->assertJsonPath('token_endpoint_auth_methods_supported', ['none']);
+      ->assertOk()->assertJsonPath('token_endpoint_auth_methods_supported', ['none', 'client_secret_post']);
     $this->registerClient('Client A', [self::REDIRECT]);
     $this->put($settingsUrl.'/mcp', ['mcp_enabled' => '0'])->assertRedirect();
     $this->postJson(self::MCP.'/register', ['redirect_uris' => [self::REDIRECT]])->assertNotFound();
@@ -139,7 +139,7 @@ class RemoteMcpTest extends TestCase
       ->assertBadRequest()->assertJsonPath('error', 'invalid_redirect_uri');
     $this->postJson(self::MCP.'/register', ['redirect_uris' => ['https://client.example.test/callback?%63ode=forged']])
       ->assertBadRequest()->assertJsonPath('error', 'invalid_redirect_uri');
-    $this->postJson(self::MCP.'/register', ['redirect_uris' => [self::REDIRECT], 'token_endpoint_auth_method' => 'client_secret_post'])
+    $this->postJson(self::MCP.'/register', ['redirect_uris' => [self::REDIRECT], 'token_endpoint_auth_method' => 'client_secret_basic'])
       ->assertBadRequest()->assertJsonPath('error', 'invalid_client_metadata');
 
     $this->actingAs($this->operator(), 'web');
@@ -160,6 +160,39 @@ class RemoteMcpTest extends TestCase
     $this->exchange($code, $credentials + ['code_verifier' => str_repeat('x', 43)])
       ->assertBadRequest()->assertJsonPath('error', 'invalid_grant');
     $token = $this->exchange($code, $credentials)->assertOk()->json('access_token');
+    $this->tool('find_page', ['path' => '/', 'locale' => 'en'], $token)->assertJsonPath('result.structuredContent.page_id', $page->id);
+  }
+
+  public function test_dynamic_registration_accepts_a_confidential_pkce_client_requesting_refresh(): void
+  {
+    [$page] = $this->pageFixture();
+    $registration = $this->postJson(self::MCP.'/register', [
+      'client_name' => 'ChatGPT',
+      'redirect_uris' => ['https://chatgpt.com/connector_platform_oauth_redirect'],
+      'grant_types' => ['authorization_code', 'refresh_token'],
+      'response_types' => ['code'],
+      'token_endpoint_auth_method' => 'client_secret_post',
+    ])->assertCreated()
+      ->assertJsonPath('grant_types', ['authorization_code'])
+      ->assertJsonPath('token_endpoint_auth_method', 'client_secret_post')
+      ->assertJsonPath('client_secret_expires_at', 0)
+      ->assertHeader('Cache-Control', 'no-store, private');
+    $id = $registration->json('client_id');
+    $secret = $registration->json('client_secret');
+    $this->assertMatchesRegularExpression('/\A[a-f0-9]{64}\z/', $secret);
+    $this->assertDatabaseHas('wbcms_mcp_oauth_clients', ['id' => $id, 'client_secret_hash' => hash('sha256', $secret)]);
+    $this->assertDatabaseEmpty('wbcms_mcp_grants');
+
+    $this->actingAs($this->operator(), 'web');
+    $redirect = $registration->json('redirect_uris.0');
+    $auth = array_replace($this->authorizationRequest($id), ['redirect_uri' => $redirect]);
+    $code = $this->consent($page->site_id, $auth);
+    $credentials = ['client_id' => $id, 'redirect_uri' => $redirect];
+    $this->exchange($code, $credentials)->assertBadRequest()->assertJsonPath('error', 'invalid_client');
+    $this->exchange($code, $credentials + ['client_secret' => 'incorrect'])->assertBadRequest()->assertJsonPath('error', 'invalid_client');
+    $this->exchange($code, $credentials + ['client_secret' => $secret, 'code_verifier' => str_repeat('z', 43)])
+      ->assertBadRequest()->assertJsonPath('error', 'invalid_grant');
+    $token = $this->exchange($code, $credentials + ['client_secret' => $secret])->assertOk()->assertJsonMissingPath('refresh_token')->json('access_token');
     $this->tool('find_page', ['path' => '/', 'locale' => 'en'], $token)->assertJsonPath('result.structuredContent.page_id', $page->id);
   }
 

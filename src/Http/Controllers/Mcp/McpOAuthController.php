@@ -14,6 +14,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Policies\McpPagePolicy;
 use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Mcp\McpGrants;
+use WebBlocks\Cms\Support\Mcp\McpOAuthClient;
 use WebBlocks\Cms\Support\Mcp\McpOAuthClients;
 
 final class McpOAuthController
@@ -46,7 +47,7 @@ final class McpOAuthController
       'registration_endpoint' => $issuer.'/register',
       'response_types_supported' => ['code'],
       'grant_types_supported' => ['authorization_code'],
-      'token_endpoint_auth_methods_supported' => ['none'],
+      'token_endpoint_auth_methods_supported' => McpOAuthClient::AUTH_METHODS,
       'code_challenge_methods_supported' => ['S256'],
       'scopes_supported' => [McpConfiguration::READ, McpConfiguration::WRITE],
       'authorization_response_iss_parameter_supported' => true,
@@ -57,15 +58,20 @@ final class McpOAuthController
   {
     $data = $request->validated();
     $name = $data['client_name'] ?? null;
-    $id = $this->clients->register($name, $data['redirect_uris']);
+    $method = $data['token_endpoint_auth_method'] ?? McpOAuthClient::PUBLIC_AUTH;
+    $secret = $method === McpOAuthClient::SECRET_POST ? bin2hex(random_bytes(32)) : null;
+    $id = $this->clients->register($name, $data['redirect_uris'], $secret);
 
     return response()->json(array_filter([
       'client_id' => $id,
+      'client_secret' => $secret,
+      'client_secret_expires_at' => $secret === null ? null : 0,
       'client_name' => $name,
       'redirect_uris' => $data['redirect_uris'],
+      // RFC 7591 allows the server to return only the grants it registered.
       'grant_types' => ['authorization_code'],
       'response_types' => ['code'],
-      'token_endpoint_auth_method' => 'none',
+      'token_endpoint_auth_method' => $method,
     ], fn (mixed $value): bool => $value !== null), 201);
   }
 
@@ -114,8 +120,9 @@ final class McpOAuthController
     $form = $request->request->all();
     $id = $form['client_id'] ?? null;
     $client = is_string($id) ? $this->clients->find($id) : null;
+    $secret = array_key_exists('client_secret', $form) ? ($form['client_secret'] ?? '') : null;
 
-    if (! $client || $request->headers->has('Authorization') || array_key_exists('client_secret', $form)) {
+    if (! $client || $request->headers->has('Authorization') || ! $client->acceptsSecret($secret)) {
       return response()->json(['error' => 'invalid_client'], 400);
     }
 

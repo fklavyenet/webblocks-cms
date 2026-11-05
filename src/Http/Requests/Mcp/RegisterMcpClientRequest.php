@@ -7,6 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Support\Mcp\McpConfiguration;
+use WebBlocks\Cms\Support\Mcp\McpOAuthClient;
 
 final class RegisterMcpClientRequest extends FormRequest
 {
@@ -25,9 +26,9 @@ final class RegisterMcpClientRequest extends FormRequest
           $fail('invalid_redirect_uri');
         }
       }],
-      'token_endpoint_auth_method' => ['sometimes', 'required', Rule::in(['none'])],
-      'grant_types' => ['sometimes', 'required', 'array', 'list', 'size:1'],
-      'grant_types.*' => ['required', Rule::in(['authorization_code'])],
+      'token_endpoint_auth_method' => ['sometimes', 'required', Rule::in(McpOAuthClient::AUTH_METHODS)],
+      'grant_types' => ['sometimes', 'required', 'array', 'list', 'max:2', 'contains:authorization_code'],
+      'grant_types.*' => ['required', 'distinct:strict', Rule::in(['authorization_code', 'refresh_token'])],
       'response_types' => ['sometimes', 'required', 'array', 'list', 'size:1'],
       'response_types.*' => ['required', Rule::in(['code'])],
     ];

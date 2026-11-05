@@ -1604,3 +1604,5 @@ input.wb-admin-table-grid-input:focus {
   .wb-cms-policy-table tr { border-bottom: 1px solid var(--wb-border); }
   .wb-cms-policy-table td, .wb-cms-policy-table th { border-bottom: 0; }
 }
+
+.wb-cms-update-log { white-space: pre-wrap; overflow-wrap: anywhere; }
