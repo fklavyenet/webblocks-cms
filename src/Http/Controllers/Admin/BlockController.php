@@ -28,6 +28,7 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery;
 use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
@@ -48,6 +49,7 @@ class BlockController extends Controller
     private readonly BlockPayloadWriter $blockPayloadWriter,
     private readonly BlockDeletionManager $blockDeletionManager,
     private readonly BlockTranslationResolver $blockTranslationResolver,
+    private readonly PageBlockStructure $blockStructure,
     private readonly PageRevisionManager $revisionManager,
     private readonly PageWorkflowManager $workflowManager,
     private readonly SharedSlotRevisionManager $sharedSlotRevisionManager,
@@ -539,18 +541,9 @@ class BlockController extends Controller
         return false;
       }
 
-      $orderedSiblings = $siblings->all();
-      $currentSibling = $orderedSiblings[$currentIndex];
-      $orderedSiblings[$currentIndex] = $orderedSiblings[$swapIndex];
-      $orderedSiblings[$swapIndex] = $currentSibling;
-
-      foreach ($orderedSiblings as $index => $sibling) {
-        if ($sibling->sort_order === $index) {
-          continue;
-        }
-
-        $sibling->update(['sort_order' => $index]);
-      }
+      $orderedIds = $siblings->pluck('id')->all();
+      [$orderedIds[$currentIndex], $orderedIds[$swapIndex]] = [$orderedIds[$swapIndex], $orderedIds[$currentIndex]];
+      $this->blockStructure->saveOrder($siblings, $orderedIds);
 
       if ($sharedSlot) {
         $this->sharedSlotSourcePages->rebuildAssignments($sharedSlot);

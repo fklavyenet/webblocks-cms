@@ -11,6 +11,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Policies\McpPagePolicy;
+use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\Formatting\SafeRichTextRenderer;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
@@ -30,6 +31,7 @@ final class EditDraftStructure
 
   public function __construct(
     private readonly McpPages $pages,
+    private readonly PageBlockStructure $structure,
     private readonly McpPagePolicy $policy,
     private readonly InternalContentPlanService $plans,
     private readonly InternalContentApiOperations $blocks,
@@ -176,18 +178,6 @@ final class EditDraftStructure
     return $this->pages->previewLink($page, $draft, $locale) + ['version' => $this->version($page, $draft, $locale)];
   }
 
-  private function siblings(Collection $blocks, PageSlot $slot, ?Block $parent): Collection
-  {
-    return $blocks->where('slot_type_id', $slot->slot_type_id)->whereStrict('parent_id', $parent?->id);
-  }
-
-  private function assertPlacement(?Block $parent, string $type): void
-  {
-    if ($parent && (! $parent->canAcceptMoreChildren() || ! $parent->canAcceptChildType($type))) {
-      throw new McpToolException('invalid_block_placement');
-    }
-  }
-
   private function add(Page $draft, PageSlot $slot, ?Block $parent, Collection $all, Locale $locale, array $input): Block
   {
     $type = $input['type'];
@@ -198,7 +188,9 @@ final class EditDraftStructure
     if ($type === 'rich-text' && isset($text['content'])) {
       $text['content'] = $this->richText->sanitize($text['content']);
     }
-    $this->assertPlacement($parent, $type);
+    if (! $this->structure->acceptsChild($parent, $type)) {
+      throw new McpToolException('invalid_block_placement');
+    }
 
     $errors = [];
     $warnings = [];
@@ -211,7 +203,7 @@ final class EditDraftStructure
       throw new McpToolException('invalid_block_placement');
     }
 
-    $order = ($this->siblings($all, $slot, $parent)->max('sort_order') ?? -1) + 1;
+    $order = ($this->structure->siblings($all, $slot->slot_type_id, $parent?->id)->max('sort_order') ?? -1) + 1;
 
     return $this->blocks->createPageSlotBlock($draft, $slot->slotType, $normalized, $locale->code, $parent, $order);
   }
@@ -223,37 +215,10 @@ final class EditDraftStructure
     if (! $origin || ! in_array($origin->slotType->slug, $managed, true)) {
       throw new McpToolException('structure_slot_unavailable');
     }
-    if ($block->slot_type_id === $slot->slot_type_id && $block->parent_id === $parent?->id) {
-      return $id;
-    }
-
-    // Restrict moves to types that do not require a particular ancestor.
-    // Validate the full subtree so a move cannot detach dynamic content.
-    $subtree = collect([$block]);
-    $visited = [];
-    $children = $all->groupBy('parent_id');
-    for ($i = 0; $i < $subtree->count(); $i++) {
-      $node = $subtree[$i];
-      if (isset($visited[$node->id]) || $node->id === $parent?->id || ! $editable->has($node->id)
-        || ! in_array($node->typeSlug(), self::MOVE_TYPES, true) || $node->slot_type_id !== $origin->slot_type_id) {
-        throw new McpToolException('invalid_block_placement');
-      }
-      $visited[$node->id] = true;
-      foreach ($children->get($node->id, []) as $child) {
-        $subtree->push($child);
-      }
-    }
-    if ($all->get($block->parent_id)?->typeSlug() === 'split') {
+    // MCP only moves types that do not depend on a specific ancestor.
+    $movable = $editable->filter(fn (Block $candidate) => in_array($candidate->typeSlug(), self::MOVE_TYPES, true));
+    if (! $this->structure->move($block, $slot->slot_type_id, $parent, $all, $movable)) {
       throw new McpToolException('invalid_block_placement');
-    }
-    $this->assertPlacement($parent, $block->typeSlug());
-
-    $order = ($this->siblings($all, $slot, $parent)->max('sort_order') ?? -1) + 1;
-    $block->update(['parent_id' => $parent?->id, 'slot_type_id' => $slot->slot_type_id, 'sort_order' => $order]);
-    foreach ($subtree->skip(1) as $child) {
-      if ($child->slot_type_id !== $slot->slot_type_id) {
-        $child->update(['slot_type_id' => $slot->slot_type_id]);
-      }
     }
 
     return $id;
@@ -262,18 +227,13 @@ final class EditDraftStructure
   private function reorder(PageSlot $slot, ?Block $parent, Collection $all, Collection $editable, array $ids): array
   {
     $ids = array_map('intval', $ids);
-    $siblings = $this->siblings($all, $slot, $parent);
-    if ($siblings->count() !== count($ids)
-      || array_diff($ids, $siblings->intersectByKeys($editable)->keys()->all()) !== []) {
+    $siblings = $this->structure->siblings($all, $slot->slot_type_id, $parent?->id);
+    if (! $this->structure->containsExactly($siblings, $ids)
+      || array_diff($ids, $editable->keys()->all()) !== []) {
       throw new McpToolException('invalid_block_order');
     }
 
-    foreach ($ids as $order => $id) {
-      $block = $siblings->get($id);
-      if ($block->sort_order !== $order) {
-        $block->update(['sort_order' => $order]);
-      }
-    }
+    $this->structure->saveOrder($siblings, $ids);
 
     return $ids;
   }

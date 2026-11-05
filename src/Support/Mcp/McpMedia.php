@@ -48,26 +48,10 @@ final class McpMedia
       throw new McpToolException('forbidden');
     }
 
-    $uses = [
-      'blocks.page' => 'site_id',
-      'blockMedia.block.page' => 'site_id',
-      'sitesUsingAsFavicon' => 'id',
-      'sitesUsingAsSocialImage' => 'id',
-      'pageTranslationsUsingAsOgImage.page' => 'site_id',
-    ];
-
     return $this->authorization->scopeMediaForUser(Media::query(), $user)
       ->where('kind', Media::KIND_IMAGE)->where('visibility', 'public')
-      ->where(function (Builder $query) use ($user, $siteId, $uses): void {
-        $query->where(function (Builder $unused) use ($user, $uses): void {
-          $unused->where('uploaded_by', $user->id);
-          foreach ($uses as $relation => $column) {
-            $unused->whereDoesntHave($relation);
-          }
-        });
-        foreach ($uses as $relation => $column) {
-          $query->orWhereHas($relation, fn (Builder $owner) => $owner->where($owner->qualifyColumn($column), $siteId));
-        }
-      });
+      ->where(fn (Builder $query) => $query
+        ->where(fn (Builder $unused) => $unused->where('uploaded_by', $user->id)->withoutSiteUsage())
+        ->orWhere(fn (Builder $siteMedia) => $siteMedia->usedBySites([$siteId])));
   }
 }

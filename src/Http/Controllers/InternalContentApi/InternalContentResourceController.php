@@ -28,6 +28,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
@@ -69,6 +70,7 @@ class InternalContentResourceController extends Controller
     private readonly LocaleOptionCatalog $localeOptionCatalog,
     private readonly InternalContentApiOperations $operations,
     private readonly PageRevisionManager $revisionManager,
+    private readonly PageBlockStructure $blockStructure,
     private readonly BlockDeletionManager $blockDeletionManager,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
     private readonly BlockTranslationRegistry $translationRegistry,
@@ -1547,43 +1549,27 @@ class InternalContentResourceController extends Controller
 
     $parentId = $parentIds->first();
 
-    $siblingIds = Block::query()
-      ->where('page_id', $page->id)
-      ->where('slot_type_id', $slotType->id)
-      ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
-      ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
-      ->pluck('id')
-      ->map(fn ($id) => (int) $id);
-
-    if ($siblingIds->sort()->values()->all() !== $blockIds->sort()->values()->all()) {
-      return $this->blockValidationError([
-        ['path' => 'blocks', 'message' => 'Submitted blocks must contain the full sibling group for one parent.'],
-      ]);
-    }
-
-    if ($this->apiAuthoringPolicy->blockIdsScopeHasHumanOnlyBlock($blockIds)) {
-      return $this->apiAuthoringPolicy->rejectionResponse('blocks');
-    }
-
-    DB::transaction(function () use ($page, $slotType, $blockIds, $parentId): void {
+    return DB::transaction(function () use ($page, $slotType, $blockIds, $parentId): JsonResponse {
       $siblings = Block::query()
         ->where('page_id', $page->id)
         ->where('slot_type_id', $slotType->id)
-        ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
-        ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
+        ->where('parent_id', $parentId)
+        ->orderBy('id')
         ->lockForUpdate()
         ->get(['id', 'sort_order']);
 
-      $positionMap = $blockIds->flip();
+      $orderedIds = $blockIds->all();
+      if (! $this->blockStructure->containsExactly($siblings, $orderedIds)) {
+        return $this->blockValidationError([
+          ['path' => 'blocks', 'message' => 'Submitted blocks must contain the full sibling group for one parent.'],
+        ]);
+      }
 
-      $siblings
-        ->sortBy(fn (Block $block) => $positionMap->get($block->id))
-        ->values()
-        ->each(function (Block $block, int $index): void {
-          if ($block->sort_order !== $index) {
-            $block->update(['sort_order' => $index]);
-          }
-        });
+      if ($this->apiAuthoringPolicy->blockIdsScopeHasHumanOnlyBlock($blockIds)) {
+        return $this->apiAuthoringPolicy->rejectionResponse('blocks');
+      }
+
+      $this->blockStructure->saveOrder($siblings, $orderedIds);
 
       $this->revisionManager->capture(
         $page->fresh(),
@@ -1593,9 +1579,9 @@ class InternalContentResourceController extends Controller
         event: 'block_reordered',
         source: 'internal-content-api',
       );
-    });
 
-    return $this->ok(['message' => 'Saved']);
+      return $this->ok(['message' => 'Saved']);
+    });
   }
 
   public function deleteSlotBlock(Request $request, Page $page, string $slot, Block $block): JsonResponse

@@ -13,8 +13,8 @@ use WebBlocks\Cms\Policies\McpPagePolicy;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Mcp\McpPages;
 use WebBlocks\Cms\Support\Mcp\McpToolException;
+use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
-use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Revisions\SnapshotContent;
@@ -25,7 +25,7 @@ final class CreatePageDraft
     private readonly McpPagePolicy $policy,
     private readonly LocaleResolver $locales,
     private readonly PageLayoutManager $layouts,
-    private readonly PageLayoutSlotSyncer $slots,
+    private readonly PageDraftInitializer $drafts,
     private readonly PageRevisionManager $revisions,
     private readonly McpPages $pages,
   ) {}
@@ -70,7 +70,7 @@ final class CreatePageDraft
           throw new McpToolException('created_draft_unavailable');
         }
 
-        return $this->result($page, $locale, $translation);
+        return $this->result($page, $locale, $translation->path);
       }
 
       if ($this->layouts->findByHandle($layout, includeInactive: false)?->handle !== $layout) {
@@ -83,39 +83,38 @@ final class CreatePageDraft
         throw new McpToolException('page_path_conflict');
       }
 
-      $page = Page::query()->create([
-        'site_id' => $siteId,
-        'status' => Page::STATUS_DRAFT,
-        'settings' => ['public_shell' => $layout],
-        'created_by_user_id' => $user->getAuthIdentifier(),
-        'updated_by_user_id' => $user->getAuthIdentifier(),
-      ]);
-
       try {
-        $translation = $page->translations()->create([
-          'locale_id' => $locale->id, 'name' => $input['title'], 'slug' => $slug, 'path' => $path,
-        ]);
+        $page = $this->drafts->create([
+          'site_id' => $siteId,
+          'settings' => ['public_shell' => $layout],
+          'created_by_user_id' => $user->getAuthIdentifier(),
+          'updated_by_user_id' => $user->getAuthIdentifier(),
+        ], [
+          'locale_id' => $locale->id,
+          'name' => $input['title'],
+          'slug' => $slug,
+          'path' => $path,
+        ], $layout);
       } catch (UniqueConstraintViolationException) {
         throw new McpToolException('page_path_conflict');
       }
 
-      $this->slots->seedInitialSlots($page, $layout);
       $this->revisions->capture($page, $user, event: 'page_created', source: 'mcp');
       DB::table('wbcms_mcp_page_drafts')->insert([
         'site_id' => $siteId, 'user_id' => $user->getAuthIdentifier(), 'request_hash' => $hash, 'page_id' => $page->id,
       ]);
 
-      return $this->result($page, $locale, $translation);
+      return $this->result($page, $locale, $path);
     }, attempts: 3);
   }
 
-  private function result(Page $page, Locale $locale, PageTranslation $translation): array
+  private function result(Page $page, Locale $locale, string $path): array
   {
     return [
       'page_id' => $page->id,
       'draft_id' => $page->id,
       'locale' => $locale->code,
-      'path' => $translation->path,
+      'path' => $path,
       'preview_url' => $this->pages->draftPreviewUrl($page, $locale),
     ];
   }

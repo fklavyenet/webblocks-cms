@@ -37,6 +37,7 @@ use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\Blocks\ParentBlockOptionPresenter;
 use WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery;
 use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
@@ -68,6 +69,7 @@ class PageController extends Controller
     private readonly BlockTranslationResolver $blockTranslationResolver,
     private readonly CurrentActorResolver $currentActorResolver,
     private readonly PageRevisionManager $revisionManager,
+    private readonly PageBlockStructure $blockStructure,
     private readonly PageIndexState $pageIndexState,
     private readonly PageLayoutManager $pageLayouts,
     private readonly PageLayoutSlotComparison $pageLayoutSlotComparison,
@@ -809,45 +811,24 @@ class PageController extends Controller
 
     $parentId = $parentIds->first();
 
-    $siblings = $this->authorization->scopeBlocksForUser(Block::query(), $request->user())
-      ->where('page_id', $page->id)
-      ->where('slot_type_id', $slot->slot_type_id)
-      ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
-      ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
-      ->orderBy('sort_order')
-      ->orderBy('id')
-      ->get(['id', 'sort_order']);
-
-    if ($siblings->count() !== $blockIds->count() || $siblings->pluck('id')->sort()->values()->all() !== $blockIds->sort()->values()->all()) {
-      return response()->json([
-        'message' => 'Submitted blocks must contain the full sibling group for one parent.',
-        'errors' => ['blocks' => ['Submitted blocks must contain the full sibling group for one parent.']],
-      ], 422);
-    }
-
-    DB::transaction(function () use ($page, $slot, $blockIds, $parentId, $request): void {
+    return DB::transaction(function () use ($page, $slot, $blockIds, $parentId, $request): JsonResponse {
       $siblings = $this->authorization->scopeBlocksForUser(Block::query(), $request->user())
         ->where('page_id', $page->id)
         ->where('slot_type_id', $slot->slot_type_id)
-        ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
-        ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
-        ->orderBy('sort_order')
+        ->where('parent_id', $parentId)
         ->orderBy('id')
         ->lockForUpdate()
         ->get(['id', 'sort_order']);
 
-      $positionMap = $blockIds->flip();
+      $orderedIds = $blockIds->all();
+      if (! $this->blockStructure->containsExactly($siblings, $orderedIds)) {
+        return response()->json([
+          'message' => 'Submitted blocks must contain the full sibling group for one parent.',
+          'errors' => ['blocks' => ['Submitted blocks must contain the full sibling group for one parent.']],
+        ], 422);
+      }
 
-      $siblings
-        ->sortBy(fn (Block $block) => $positionMap->get($block->id))
-        ->values()
-        ->each(function (Block $block, int $index): void {
-          if ($block->sort_order === $index) {
-            return;
-          }
-
-          $block->update(['sort_order' => $index]);
-        });
+      $this->blockStructure->saveOrder($siblings, $orderedIds);
 
       $this->revisionManager->capture(
         $page->fresh(),
@@ -856,12 +837,12 @@ class PageController extends Controller
         'Page block order was changed.',
         event: 'block_reordered',
       );
-    });
 
-    return response()->json([
-      'ok' => true,
-      'message' => 'Saved',
-    ]);
+      return response()->json([
+        'ok' => true,
+        'message' => 'Saved',
+      ]);
+    });
   }
 
   private function resolveSiteContext(Request $request, Collection $sites, bool $persist = true): array

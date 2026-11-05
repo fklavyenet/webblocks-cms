@@ -37,7 +37,7 @@ use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactConsentValidationException;
 use WebBlocks\Cms\Support\Mcp\McpConfiguration;
-use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
+use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
@@ -246,7 +246,7 @@ class InternalContentPlanService
     private readonly BlockPayloadWriter $blockPayloadWriter,
     private readonly BlockDeletionManager $blockDeletionManager,
     private readonly PageRevisionManager $pageRevisionManager,
-    private readonly PageLayoutSlotSyncer $slotSyncer,
+    private readonly PageDraftInitializer $drafts,
     private readonly InternalContentApiPresenter $presenter,
     private readonly InternalContentApiOperations $operations,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
@@ -521,28 +521,20 @@ class InternalContentPlanService
       }
 
       if ($plan['page'] !== null) {
-        $page = Page::query()->create([
+        $page = $this->drafts->create([
           'site_id' => $plan['site']['id'],
-          'page_type' => Page::TYPE_DEFAULT,
-          'status' => Page::STATUS_DRAFT,
           'settings' => Page::supportsSettingsColumn()
             ? array_filter([
               'public_shell' => $plan['layout']['handle'],
               'source_sync' => $plan['page_settings']['source_sync'] ?? null,
             ], fn ($value) => $value !== null)
             : null,
-        ]);
-
-        PageTranslation::query()->create([
-          'page_id' => $page->id,
-          'site_id' => $page->site_id,
+        ], [
           'locale_id' => $plan['locale']['id'],
           'name' => $plan['page']['title'],
           'slug' => $plan['page']['slug'],
           'path' => $plan['page']['path'],
-        ]);
-
-        $this->slotSyncer->seedInitialSlots($page, $plan['layout']['handle']);
+        ], $plan['layout']['handle']);
 
         $slotTypes = SlotType::query()->whereIn('slug', array_keys($plan['slots']))->get()->keyBy('slug');
 

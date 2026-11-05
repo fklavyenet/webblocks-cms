@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,6 +27,14 @@ class Media extends CmsModel
   public const KIND_DOCUMENT = 'document';
 
   public const KIND_OTHER = 'other';
+
+  private const SITE_USAGES = [
+    'blocks.page' => 'site_id',
+    'blockMedia.block.page' => 'site_id',
+    'sitesUsingAsFavicon' => 'id',
+    'sitesUsingAsSocialImage' => 'id',
+    'pageTranslationsUsingAsOgImage.page' => 'site_id',
+  ];
 
   protected $fillable = [
     'folder_id',
@@ -88,6 +97,24 @@ class Media extends CmsModel
   public function pageTranslationsUsingAsOgImage(): HasMany
   {
     return $this->hasMany(PageTranslation::class, 'og_image_media_id');
+  }
+
+  public function scopeUsedBySites(Builder $query, iterable $siteIds): Builder
+  {
+    return $query->where(function (Builder $usage) use ($siteIds): void {
+      foreach (self::SITE_USAGES as $relation => $column) {
+        $usage->orWhereHas($relation, fn (Builder $owner) => $owner->whereIn($owner->qualifyColumn($column), $siteIds));
+      }
+    });
+  }
+
+  public function scopeWithoutSiteUsage(Builder $query): Builder
+  {
+    foreach (array_keys(self::SITE_USAGES) as $relation) {
+      $query->whereDoesntHave($relation);
+    }
+
+    return $query;
   }
 
   public function url(): ?string
