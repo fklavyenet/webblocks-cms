@@ -17,18 +17,19 @@ final class McpGrants
     private readonly McpPagePolicy $policy,
   ) {}
 
-  public function issue(User $user, int $siteId, bool $canWrite, bool $canEditContent, bool $canCreateDraft, bool $canEditStructure, bool $canEditTranslations, string $challenge, McpOAuthClient $client, string $redirect): string
+  public function issue(User $user, int $siteId, array $scopes, string $challenge, McpOAuthClient $client, string $redirect): string
   {
     $code = bin2hex(random_bytes(32));
     $this->grants()->where('expires_at', '<=', now())->delete();
     $this->grants()->insert([
       'user_id' => $user->getAuthIdentifier(),
       'site_id' => $siteId,
-      'can_write' => $canWrite,
-      'can_edit_content' => $canEditContent,
-      'can_create_draft' => $canCreateDraft,
-      'can_edit_structure' => $canEditStructure,
-      'can_edit_translations' => $canEditTranslations,
+      'can_write' => in_array(McpConfiguration::WRITE, $scopes, true),
+      'can_edit_content' => in_array(McpConfiguration::CONTENT, $scopes, true),
+      'can_create_draft' => in_array(McpConfiguration::CREATE, $scopes, true),
+      'can_edit_structure' => in_array(McpConfiguration::STRUCTURE, $scopes, true),
+      'can_edit_translations' => in_array(McpConfiguration::TRANSLATION, $scopes, true),
+      'can_upload_media' => in_array(McpConfiguration::UPLOAD, $scopes, true),
       'client_fingerprint' => $this->config->clientFingerprint($client->id),
       'oauth_client_id' => $client->id,
       'redirect_hash' => hash('sha256', $redirect),
@@ -72,12 +73,13 @@ final class McpGrants
           $grant->can_create_draft ? McpConfiguration::CREATE : null,
           $grant->can_edit_structure ? McpConfiguration::STRUCTURE : null,
           $grant->can_edit_translations ? McpConfiguration::TRANSLATION : null,
+          $grant->can_upload_media ? McpConfiguration::UPLOAD : null,
         ])),
       ];
     });
   }
 
-  /** @return array{user: User, site: int, write: bool, edit_content: bool, create_draft: bool, edit_structure: bool, edit_translations: bool}|null */
+  /** @return array{user: User, site: int, write: bool, edit_content: bool, create_draft: bool, edit_structure: bool, edit_translations: bool, upload_media: bool}|null */
   public function authenticate(#[\SensitiveParameter] ?string $token): ?array
   {
     if (! is_string($token) || ! preg_match('/\A[a-f0-9]{64}\z/', $token)) {
@@ -95,6 +97,7 @@ final class McpGrants
       'create_draft' => (bool) $grant->can_create_draft,
       'edit_structure' => (bool) $grant->can_edit_structure,
       'edit_translations' => (bool) $grant->can_edit_translations,
+      'upload_media' => (bool) $grant->can_upload_media,
     ] : null;
   }
 

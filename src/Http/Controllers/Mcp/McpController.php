@@ -16,6 +16,10 @@ final class McpController
 {
   private const VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26'];
 
+  private const REQUEST_LIMIT = 16_384;
+
+  private const UPLOAD_REQUEST_LIMIT = 768 * 1024;
+
   public function __construct(
     private readonly McpConfiguration $config,
     private readonly McpGrants $grants,
@@ -31,7 +35,9 @@ final class McpController
     if (! $request->isMethod('POST')) {
       return response()->noContent(405, ['Allow' => 'POST']);
     }
-    if (! $request->isJson() || strlen($request->getContent()) > 16_384) {
+    $body = $request->getContent();
+    $size = strlen($body);
+    if (! $request->isJson() || $size > self::UPLOAD_REQUEST_LIMIT) {
       return $this->error(null, -32600, 'Invalid request.', 400);
     }
     $version = $request->header('MCP-Protocol-Version');
@@ -40,9 +46,18 @@ final class McpController
     }
 
     try {
-      $message = json_decode($request->getContent(), false, 20, JSON_THROW_ON_ERROR);
+      $message = json_decode($body, false, 20, JSON_THROW_ON_ERROR);
     } catch (JsonException) {
+      if ($size > self::REQUEST_LIMIT) {
+        return $this->error(null, -32600, 'Invalid request.', 400);
+      }
+
       return $this->error(null, -32700, 'Parse error.', 400);
+    }
+
+    if ($size > self::REQUEST_LIMIT
+      && (($message->method ?? null) !== 'tools/call' || ($message->params->name ?? null) !== McpTools::UPLOAD)) {
+      return $this->error(null, -32600, 'Invalid request.', 400);
     }
 
     if (! $message instanceof stdClass || ($message->jsonrpc ?? null) !== '2.0'
@@ -95,6 +110,7 @@ final class McpController
       McpConfiguration::CREATE => $grant['create_draft'],
       McpConfiguration::STRUCTURE => $grant['edit_structure'],
       McpConfiguration::TRANSLATION => $grant['edit_translations'],
+      McpConfiguration::UPLOAD => $grant['upload_media'],
       default => true,
     };
     if (! $allowed) {

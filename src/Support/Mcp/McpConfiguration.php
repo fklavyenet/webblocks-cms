@@ -27,7 +27,9 @@ final class McpConfiguration
 
   public const TRANSLATION = 'pages:write-draft-translation';
 
-  public const SCOPES = [self::READ, self::WRITE, self::CONTENT, self::CREATE, self::STRUCTURE, self::TRANSLATION];
+  public const UPLOAD = 'media:upload';
+
+  public const SCOPES = [self::READ, self::WRITE, self::CONTENT, self::CREATE, self::STRUCTURE, self::TRANSLATION, self::UPLOAD];
 
   public function assertAvailable(Request $request): void
   {
@@ -51,7 +53,7 @@ final class McpConfiguration
   {
     return Schema::hasColumn('wbcms_mcp_oauth_clients', 'client_secret_hash')
       && Schema::hasTable('wbcms_mcp_oauth_redirects')
-      && Schema::hasColumns('wbcms_mcp_grants', ['oauth_client_id', 'redirect_hash', 'can_edit_content', 'can_create_draft', 'can_edit_structure', 'can_edit_translations'])
+      && Schema::hasColumns('wbcms_mcp_grants', ['oauth_client_id', 'redirect_hash', 'can_edit_content', 'can_create_draft', 'can_edit_structure', 'can_edit_translations', 'can_upload_media'])
       && Schema::hasTable('wbcms_mcp_page_drafts')
       && Schema::hasTable('wbcms_staged_page_translation_fields');
   }

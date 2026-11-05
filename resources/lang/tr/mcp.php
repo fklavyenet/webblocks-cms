@@ -37,6 +37,7 @@ return [
   'consent_create_draft' => 'Seçilen sitede yeni sayfa taslakları oluştur ve özel önizlemeleri aç.',
   'consent_structure' => 'Seçilen sitede taslak blok yapısını oku, güncelleme taslağı hazırla ve blok ekle, taşı veya sırala.',
   'consent_translation' => 'Seçilen sitede taslakların yerelleştirilmiş sayfa kimliğini ve SEO alanlarını oku ve düzenle.',
+  'consent_upload' => 'Seçilen siteye bağlıyken herkese açık Medya Kütüphanesi’ne dosya yükle. Dosya adresini bilen herkes yüklenen dosyaya erişebilir.',
   'consent_duration' => 'Erişim bir saat sonra sona erer.',
   'site' => 'Site',
   'select_site' => 'Bir site seçin',
@@ -51,6 +52,7 @@ return [
   'content_description' => 'Yayındaki bir sayfanın ve güncelleme taslağının desteklenen yerelleştirilmiş blok alanlarını oku. Kaynak blok kimliklerini, düzenlenebilir alanları, yazma kısıtlarını, yönetilen yuvaları ve düzenleme sürümünü döndürür. Devam etmek için next_page değerini kullan.',
   'edit_description' => 'Kaynak bloğun güncelleme taslağında yalnızca gönderilen metin alanlarını düzenle veya mevcut bir görsel seç. Önce get_page_content aracını kullan ve dönen kaynak blok kimliğiyle güncel sürümü gönder. Görseller diller arasında ortaktır ve yalnızca varsayılan dilde seçilebilir. Özel önizleme bağlantısını döndürür.',
   'media_description' => 'Seçilen sitede kullanılan veya senin yüklediğin ve henüz kullanılmamış herkese açık görselleri bul. Başlığa veya özgün dosya adına göre ara. update_draft_block için medya kimliklerini döndürür.',
+  'upload_description' => 'Herkese açık Medya Kütüphanesi’ne bir dosya yükle ve medya kimliğini al. Dosya adını uzantısıyla birlikte ver ve dosyanın özgün baytlarını standart dolgulu base64 biçiminde gönder. Kodlama öncesi sınır 512 KiB’dir. SVG yüklenemez. Görseller için alternatif metni altyazıdan ayrı yaz.',
   'structure_description' => 'Sayfaya ait taslak yuvalarını, blok kimliklerini, kardeş sırasını, eklenebilir türleri ve güncel sürümü listele. Güncelleme taslağı için yayındaki kaynak sayfanın kimliğini, bağımsız taslak için yeni sayfanın kimliğini kullan. Diğer bloklar için next_page değerini izle.',
   'edit_structure_description' => 'Yayındaki sayfa için yönetilecek yuvaları seçerek güncelleme taslağı hazırla, blok ekle, mevcut bloğu hedef grubun sonuna taşı veya kardeş grubunun tamamını sırala. Önce get_draft_structure aracını çağır ve dönen sürümü ve taslak blok kimliklerini kullan. parent_id girilmezse işlem yuva kökünde yapılır. Yeni sürümü ve özel önizlemeyi döndürür.',
   'translation_description' => 'Yerelleştirilmiş sayfa kimliğini, SEO alanlarını, bekleyen taslak değişikliklerini ve düzenleme sürümünü oku. Bağımsız taslak kimliğini veya yayındaki kaynak sayfa kimliğini kullan.',
@@ -72,5 +74,7 @@ return [
   'invalid_block_placement' => 'Blok veya alt blokları bu hedefe yerleştirilemiyor.',
   'invalid_block_order' => 'Seçilen gruptaki düzenlenebilir kardeş blokların tamamını birer kez gönder.',
   'invalid_page_translation' => 'Sayfa çevirisi kaydedilemedi. Yerelleştirilmiş sayfa kimliğini, adresin kullanılabilirliğini ve SEO alanlarını kontrol et.',
+  'invalid_media_file' => '512 KiB’yi aşmayan desteklenen bir dosyayı geçerli base64 biçiminde gönder ve dosya türüyle eşleşen bir uzantı kullan. MCP üzerinden SVG yüklenemez.',
+  'media_upload_failed' => 'Dosya Medya Kütüphanesi’ne kaydedilemedi.',
   'forbidden' => 'CMS hesabınızın seçilen sitede bu işlemi yapma izni yok.',
 ];

@@ -37,6 +37,7 @@ return [
   'consent_create_draft' => 'Create new page drafts on the selected site and open private previews.',
   'consent_structure' => 'Read draft block structure, prepare update drafts, and add, move, or reorder blocks on the selected site.',
   'consent_translation' => 'Read and edit localized page identity and SEO in drafts on the selected site.',
+  'consent_upload' => 'Upload files to the public Media Library while connected to the selected site. Uploaded files can be accessed by anyone with the file URL.',
   'consent_duration' => 'Access expires after one hour.',
   'site' => 'Site',
   'select_site' => 'Choose a site',
@@ -51,6 +52,7 @@ return [
   'content_description' => 'Read supported localized block fields for a published page and its update draft. Returns source block IDs, writable fields, write restrictions, managed slots and a version for editing. Use next_page to continue.',
   'edit_description' => 'Update only the provided text fields of a source block in its staged update draft, or assign an existing image. Read get_page_content first and use its source block ID and fresh version. Images are shared across locales and can be selected only in the default locale. Returns a private preview URL.',
   'media_description' => 'Find public images already used by the selected site or uploaded by you and unused. Search by title or original filename. Returns media IDs for use in update_draft_block.',
+  'upload_description' => 'Upload one file to the public Media Library and return its media ID. Send the filename with its extension and the original bytes as standard padded base64, up to 512 KiB before encoding. SVG files are excluded. For images, write alt text independently of any caption.',
   'structure_description' => 'List page-owned draft slots, block IDs, sibling order, allowed add types, and the current version. Use the published source page ID for an update draft, or the new page ID for a standalone draft. Follow next_page to see more blocks.',
   'edit_structure_description' => 'Prepare a published page update draft with explicit managed slots, add a block, move an existing block to the end of a destination sibling group, or reorder a full sibling group. Read get_draft_structure first and use its current version and draft block IDs. Omitting parent_id targets the slot root. Returns the new version and private preview.',
   'translation_description' => 'Read localized page identity and SEO, pending draft fields, and the version required for an edit. Use a standalone draft ID or the published source page ID.',
@@ -72,5 +74,7 @@ return [
   'invalid_block_placement' => 'The block or its descendants cannot be placed at this destination.',
   'invalid_block_order' => 'Provide all editable siblings in the chosen group exactly once.',
   'invalid_page_translation' => 'The page translation could not be saved. Check the localized identity, available path, and SEO field values.',
+  'invalid_media_file' => 'Use valid base64 for a supported file up to 512 KiB and supply a filename with a matching extension. SVG is unavailable through MCP.',
+  'media_upload_failed' => 'The Media Library could not save the file.',
   'forbidden' => 'Your CMS account lacks permission for this operation on the selected site.',
 ];

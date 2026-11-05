@@ -9,7 +9,9 @@ use WebBlocks\Cms\Actions\Mcp\CreatePageDraft;
 use WebBlocks\Cms\Actions\Mcp\EditDraftStructure;
 use WebBlocks\Cms\Actions\Mcp\EditDraftTranslation;
 use WebBlocks\Cms\Actions\Mcp\UpdateDraftBlock;
+use WebBlocks\Cms\Actions\Mcp\UploadMedia;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Media\MediaUploadRules;
 use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
 
 final class McpTools
@@ -38,6 +40,10 @@ final class McpTools
 
   private const EDIT_TRANSLATION = 'update_draft_translation';
 
+  public const UPLOAD = 'upload_media';
+
+  private const UPLOAD_COPY_LIMIT = 2000;
+
   public function __construct(
     private readonly McpPages $pages,
     private readonly UpdateDraftBlock $updateBlock,
@@ -45,6 +51,7 @@ final class McpTools
     private readonly CreatePageDraft $createDraft,
     private readonly EditDraftStructure $structure,
     private readonly EditDraftTranslation $translation,
+    private readonly UploadMedia $upload,
   ) {}
 
   public function descriptors(): array
@@ -141,6 +148,14 @@ final class McpTools
       $this->descriptor(self::EDIT_TRANSLATION, 'edit_translation_description', [
         'locale' => $locale, 'page_id' => $id, 'version' => $version,
       ] + $translation, ['locale', 'page_id', 'version']),
+      $this->descriptor(self::UPLOAD, 'upload_description', [
+        'filename' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 255],
+        'content_base64' => ['type' => 'string', 'contentEncoding' => 'base64', 'minLength' => 4, 'maxLength' => UploadMedia::MAX_BASE64_LENGTH],
+        'title' => $text,
+        'alt_text' => $text,
+        'caption' => ['type' => 'string', 'maxLength' => self::UPLOAD_COPY_LIMIT],
+        'description' => ['type' => 'string', 'maxLength' => self::UPLOAD_COPY_LIMIT],
+      ], ['filename', 'content_base64']),
     ];
   }
 
@@ -152,6 +167,7 @@ final class McpTools
       self::CREATE => McpConfiguration::CREATE,
       self::STRUCTURE, self::EDIT_STRUCTURE => McpConfiguration::STRUCTURE,
       self::TRANSLATION, self::EDIT_TRANSLATION => McpConfiguration::TRANSLATION,
+      self::UPLOAD => McpConfiguration::UPLOAD,
       self::CONTENT, self::EDIT, self::MEDIA => McpConfiguration::CONTENT,
       default => null,
     };
@@ -174,12 +190,13 @@ final class McpTools
       self::CONTENT => $this->pages->content($grant['user'], $grant['site'], $input),
       self::EDIT => $this->updateBlock->handle($grant['user'], $grant['site'], $input),
       self::MEDIA => $this->media->find($grant['user'], $grant['site'], $input),
+      self::UPLOAD => $this->upload->handle($grant['user'], $grant['site'], $input),
     };
   }
 
   private function validate(string $name, array $args): array
   {
-    $rules = $name === self::MEDIA ? [] : ['locale' => ['required', 'string', 'max:35']];
+    $rules = in_array($name, [self::MEDIA, self::UPLOAD], true) ? [] : ['locale' => ['required', 'string', 'max:35']];
     $id = ['required', 'integer', 'min:1'];
     $version = ['required', 'string', 'regex:/\A[0-9a-f]{64}\z/'];
     $page = ['sometimes', 'integer', 'min:1', 'max:'.McpPages::MAX_PAGE_NUMBER];
@@ -206,6 +223,12 @@ final class McpTools
       self::CONTENT, self::STRUCTURE => ['page_id' => $id, 'page' => $page],
       self::EDIT_STRUCTURE => ['page_id' => $id, 'version' => $version] + $this->structureRules($args['operation'] ?? null),
       self::MEDIA => ['q' => ['sometimes', 'required', 'string', 'max:120'], 'page' => $page],
+      self::UPLOAD => [
+        'filename' => ['required', 'string', 'max:255', 'not_regex:~[/:\\\\\x00-\x1F\x7F]~'],
+        'content_base64' => ['required', 'string', 'max:'.UploadMedia::MAX_BASE64_LENGTH],
+        'caption' => [...MediaUploadRules::metadata()['caption'], 'max:'.self::UPLOAD_COPY_LIMIT],
+        'description' => [...MediaUploadRules::metadata()['description'], 'max:'.self::UPLOAD_COPY_LIMIT],
+      ] + MediaUploadRules::metadata(),
       self::EDIT => [
         'page_id' => $id,
         'block_id' => $id,
@@ -281,7 +304,7 @@ final class McpTools
 
   private function descriptor(string $name, string $description, array $properties, array $required, array $constraints = []): array
   {
-    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE, self::EDIT_STRUCTURE, self::EDIT_TRANSLATION], true);
+    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE, self::EDIT_STRUCTURE, self::EDIT_TRANSLATION, self::UPLOAD], true);
     $scope = $this->scope($name);
     $scopes = $scope === McpConfiguration::READ ? [$scope] : [McpConfiguration::READ, $scope];
     $security = [['type' => 'oauth2', 'scopes' => $scopes]];
@@ -290,8 +313,12 @@ final class McpTools
       'name' => $name,
       'description' => __('webblocks-cms::mcp.'.$description),
       'inputSchema' => ['type' => 'object', 'properties' => $properties, 'required' => $required, 'additionalProperties' => false] + $constraints,
-      'annotations' => ['readOnlyHint' => $readOnly, 'destructiveHint' => ! $readOnly && $name !== self::CREATE, 'openWorldHint' => false]
-        + ($name === self::CREATE ? ['idempotentHint' => true] : []),
+      'annotations' => ['readOnlyHint' => $readOnly, 'destructiveHint' => ! $readOnly && ! in_array($name, [self::CREATE, self::UPLOAD], true), 'openWorldHint' => false]
+        + match ($name) {
+          self::CREATE => ['idempotentHint' => true],
+          self::UPLOAD => ['idempotentHint' => false],
+          default => [],
+        },
       'securitySchemes' => $security,
       '_meta' => ['securitySchemes' => $security],
     ];

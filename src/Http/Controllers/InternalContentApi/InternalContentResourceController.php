@@ -46,9 +46,9 @@ use WebBlocks\Cms\Support\InternalContentApi\MediaContractRegistry;
 use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
-use WebBlocks\Cms\Support\Media\MediaMimeTypes;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Media\MediaUploader;
+use WebBlocks\Cms\Support\Media\MediaUploadRules;
 use WebBlocks\Cms\Support\Media\MediaUsageResolver;
 use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
@@ -1032,12 +1032,8 @@ class InternalContentResourceController extends Controller
   {
     $validator = Validator::make($request->all(), [
       'folder_id' => ['nullable', 'integer', 'exists:wbcms_media_folders,id'],
-      'file' => $this->mediaFileRules(),
-      'title' => ['nullable', 'string', 'max:255'],
-      'alt_text' => ['nullable', 'string', 'max:255'],
-      'caption' => ['nullable', 'string'],
-      'description' => ['nullable', 'string'],
-    ]);
+      'file' => MediaUploadRules::file(),
+    ] + MediaUploadRules::metadata());
 
     if ($validator->fails()) {
       return response()->json([
@@ -1115,12 +1111,8 @@ class InternalContentResourceController extends Controller
   public function replaceMedia(Request $request, Media $media): JsonResponse
   {
     $validator = Validator::make($request->all(), [
-      'file' => $this->mediaFileRules(),
-      'title' => ['nullable', 'string', 'max:255'],
-      'alt_text' => ['nullable', 'string', 'max:255'],
-      'caption' => ['nullable', 'string'],
-      'description' => ['nullable', 'string'],
-    ]);
+      'file' => MediaUploadRules::file(),
+    ] + MediaUploadRules::metadata());
 
     if ($validator->fails()) {
       return $this->validationErrors('invalid_media_replace', 'Media replace failed validation.', $validator->errors()->toArray());
@@ -1820,16 +1812,6 @@ class InternalContentResourceController extends Controller
         ->values()
         ->all(),
     ], 422);
-  }
-
-  private function mediaFileRules(): array
-  {
-    return [
-      'required',
-      'file',
-      'max:51200',
-      'mimetypes:'.MediaMimeTypes::rule(),
-    ];
   }
 
   private function directMediaKindsForBlockType(string $type): array

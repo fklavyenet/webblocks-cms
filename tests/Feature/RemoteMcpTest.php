@@ -4,12 +4,15 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Auth\EloquentUserProvider;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
@@ -60,16 +63,16 @@ class RemoteMcpTest extends TestCase
     $this->setMcp(true);
   }
 
-  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_twelve_tools(): void
+  public function test_discovery_is_opt_in_and_advertises_pkce_and_media_upload(): void
   {
     $this->get(self::ORIGIN.'/.well-known/oauth-protected-resource/webadmin/mcp')
       ->assertOk()->assertJsonPath('resource', self::MCP);
     $this->get(self::ORIGIN.'/.well-known/oauth-authorization-server/webadmin/mcp')
       ->assertOk()->assertJsonPath('issuer', self::MCP)->assertJsonPath('registration_endpoint', self::MCP.'/register')
       ->assertJsonPath('code_challenge_methods_supported', ['S256'])
-      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure', 'pages:write-draft-translation']);
+      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure', 'pages:write-draft-translation', 'media:upload']);
     $this->rpc('initialize', ['protocolVersion' => '2025-03-26'])->assertJsonPath('result.protocolVersion', '2025-03-26');
-    $this->rpc('tools/list')->assertJsonCount(12, 'result.tools')
+    $this->rpc('tools/list')->assertJsonCount(13, 'result.tools')
       ->assertJsonPath('result.tools.1.annotations.readOnlyHint', false)
       ->assertJsonPath('result.tools.3.annotations.readOnlyHint', true)
       ->assertJsonPath('result.tools.4.annotations.readOnlyHint', false)
@@ -81,7 +84,9 @@ class RemoteMcpTest extends TestCase
       ->assertJsonPath('result.tools.7.annotations.idempotentHint', true)
       ->assertJsonPath('result.tools.7.securitySchemes.0.scopes', ['pages:read', 'pages:create-draft'])
       ->assertJsonPath('result.tools.8.name', 'get_draft_structure')
-      ->assertJsonPath('result.tools.9.securitySchemes.0.scopes', ['pages:read', 'pages:write-draft-structure']);
+      ->assertJsonPath('result.tools.9.securitySchemes.0.scopes', ['pages:read', 'pages:write-draft-structure'])
+      ->assertJsonPath('result.tools.12.name', 'upload_media')
+      ->assertJsonPath('result.tools.12.securitySchemes.0.scopes', ['pages:read', 'media:upload']);
     $this->tool('find_page', ['path' => '/', 'locale' => 'en'], status: 401)
       ->assertHeader('WWW-Authenticate')->assertJsonPath('result.structuredContent.code', 'auth_required')
       ->assertJsonPath('result._meta.mcp/www_authenticate.0', fn ($header) => str_contains($header, 'resource_metadata='));
@@ -752,6 +757,101 @@ class RemoteMcpTest extends TestCase
     $this->assertSame('A river at sunset', $draftBlock->imageTranslations()->sole()->alt_text);
     $this->assertNull($image->fresh()->media_id);
     $this->assertSame('Existing alt', $image->imageTranslations()->sole()->alt_text);
+  }
+
+  public function test_upload_media_requires_consent_and_saves_the_original_file_and_independent_metadata(): void
+  {
+    Storage::fake('public');
+    [$page] = $this->pageFixture();
+    $user = $this->operator();
+    $bytes = UploadedFile::fake()->image('river.png', 50, 40)->get();
+    $input = ['filename' => 'river.png', 'content_base64' => base64_encode($bytes), 'alt_text' => 'A river at sunset', 'caption' => 'Photo from the park'];
+
+    $old = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $this->tool('upload_media', $input, $old, 403)
+      ->assertJsonPath('result.structuredContent.code', 'auth_required');
+
+    $auth = array_replace($this->authorizationRequest(), ['scope' => 'pages:read pages:write-content-draft media:upload']);
+    $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertOk()->assertSee(__('webblocks-cms::mcp.consent_upload'));
+    $token = $this->exchange($this->consent($page->site_id, $auth))->assertOk()
+      ->assertJsonPath('scope', $auth['scope'])->json('access_token');
+
+    $id = $this->tool('upload_media', $input, $token)
+      ->assertJsonPath('result.structuredContent.mime_type', 'image/png')
+      ->assertJsonPath('result.structuredContent.width', 50)
+      ->assertJsonPath('result.structuredContent.alt_text', $input['alt_text'])
+      ->assertJsonPath('result.structuredContent.caption', $input['caption'])
+      ->json('result.structuredContent.media_id');
+    $media = Media::findOrFail($id);
+    $this->assertSame($user->id, $media->uploaded_by);
+    $this->assertSame('public', $media->visibility);
+    $this->assertSame($bytes, Storage::disk('public')->get($media->path));
+    $this->tool('find_media', ['q' => 'river'], $token)
+      ->assertJsonPath('result.structuredContent.images.0.media_id', $id);
+    $this->tool('upload_media', [
+      'filename' => 'document.txt', 'content_base64' => base64_encode(str_repeat('a', 512 * 1024)),
+    ], $token)->assertJsonPath('result.structuredContent.size', 512 * 1024);
+  }
+
+  public function test_upload_media_rechecks_permission_for_the_consented_site(): void
+  {
+    Storage::fake('public');
+    [$page] = $this->pageFixture();
+    $otherSite = Site::create(['handle' => 'other', 'name' => 'Other site']);
+    $user = $this->cmsActor((new User)->forceFill(['role' => 'editor', 'is_active' => true]));
+    $reader = CmsRole::create(['name' => 'MCP reader', 'handle' => 'mcp-reader']);
+    $uploader = CmsRole::create(['name' => 'MCP uploader', 'handle' => 'mcp-uploader']);
+    foreach ([$reader, $uploader] as $role) {
+      foreach (['cms.panel.access', 'cms.pages.read'] as $permission) {
+        DB::table('wbcms_acl_role_permissions')->insert(['role_id' => $role->id, 'permission' => $permission]);
+      }
+    }
+    DB::table('wbcms_acl_role_permissions')->insert(['role_id' => $uploader->id, 'permission' => 'cms.media.upload']);
+    $user->sites()->attach([$page->site_id => ['role_id' => $uploader->id], $otherSite->id => ['role_id' => $reader->id]]);
+    $token = $this->connect($user, $page->site_id, scope: 'pages:read media:upload');
+    $auth = array_replace($this->authorizationRequest(), ['scope' => 'pages:read media:upload']);
+    $this->post(self::MCP.'/authorize', $auth + ['site_id' => $otherSite->id, 'decision' => 'allow'])->assertForbidden();
+
+    $user->sites()->updateExistingPivot($page->site_id, ['role_id' => $reader->id]);
+    $user->sites()->updateExistingPivot($otherSite->id, ['role_id' => $uploader->id]);
+    $this->tool('upload_media', ['filename' => 'note.txt', 'content_base64' => base64_encode('A note.')], $token)
+      ->assertJsonPath('result.structuredContent.code', 'forbidden');
+    $this->assertDatabaseEmpty('wbcms_media');
+    $this->assertSame([], Storage::disk('public')->allFiles());
+  }
+
+  public function test_upload_media_checks_file_type_size_and_cleans_up_failed_storage(): void
+  {
+    Storage::fake('public');
+    config(['webblocks-cms.media.allow_svg_uploads' => true]);
+    [$page] = $this->pageFixture();
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read media:upload');
+    $input = ['filename' => 'note.txt', 'content_base64' => base64_encode('A note.')];
+    $invalid = [
+      ['content_base64' => 'a==='],
+      ['content_base64' => base64_encode(str_repeat('a', 512 * 1024 + 1))],
+      ['filename' => 'note.php'],
+      ['filename' => 'note.png'],
+      ['filename' => 'note.svg', 'content_base64' => base64_encode('<svg xmlns="http://www.w3.org/2000/svg"></svg>')],
+    ];
+    foreach ($invalid as $changes) {
+      $this->tool('upload_media', $changes + $input, $token)
+        ->assertJsonPath('result.structuredContent.code', 'invalid_media_file');
+    }
+    $this->tool('upload_media', ['filename' => 'a\\b.txt'] + $input, $token)
+      ->assertJsonPath('result.structuredContent.code', 'invalid_request');
+    $this->rpc('ping', ['padding' => str_repeat('a', 17_000)])->assertBadRequest();
+    $this->assertDatabaseEmpty('wbcms_media');
+    $this->assertSame([], Storage::disk('public')->allFiles());
+
+    DB::connection()->beforeExecuting(function (string $sql): void {
+      if (str_starts_with($sql, 'insert into "wbcms_media"')) {
+        throw new \RuntimeException('Simulated Media Library write failure.');
+      }
+    });
+    $this->tool('upload_media', $input, $token)->assertJsonPath('result.structuredContent.code', 'media_upload_failed');
+    $this->assertDatabaseEmpty('wbcms_media');
+    $this->assertSame([], Storage::disk('public')->allFiles());
   }
 
   public static function headingTypes(): array

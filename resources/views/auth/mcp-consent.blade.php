@@ -45,6 +45,9 @@
                             @if ($editTranslations)
                                 <li>{{ __('webblocks-cms::mcp.consent_translation') }}</li>
                             @endif
+                            @if ($uploadMedia)
+                                <li>{{ __('webblocks-cms::mcp.consent_upload') }}</li>
+                            @endif
                         </ul>
                     </section>
 

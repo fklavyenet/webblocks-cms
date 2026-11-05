@@ -53,6 +53,12 @@ final class McpPagePolicy
       && $this->personal->canUse($user, CmsApiTokenCapabilities::MEDIA_READ);
   }
 
+  public function uploadMedia(User $user, int $siteId): bool
+  {
+    return $this->acl->allows($user, 'cms.media.upload', $siteId)
+      && $this->personal->canUse($user, CmsApiTokenCapabilities::MEDIA_UPLOAD);
+  }
+
   public function writeLocale(User $user, int $siteId, bool $translated): bool
   {
     return $this->write($user, $siteId)
