@@ -86,7 +86,8 @@ class RemoteMcpTest extends TestCase
     $auth = $this->authorizationRequest();
     $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertRedirect();
     $this->actingAs($user, 'web');
-    $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertOk()->assertSee('Choose a site');
+    $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertOk()->assertSee('Choose a site')
+      ->assertHeader('Content-Security-Policy', "frame-ancestors 'none'; form-action 'self' https://client.example.test; base-uri 'none'");
     $this->post(self::MCP.'/authorize', array_replace($auth, ['redirect_uri' => self::REDIRECT.'/unexpected', 'site_id' => $page->site_id, 'decision' => 'allow']))
       ->assertStatus(400);
     $code = $this->consent($page->site_id, $auth);
@@ -143,7 +144,8 @@ class RemoteMcpTest extends TestCase
 
     $this->actingAs($this->operator(), 'web');
     $auth = array_replace($this->authorizationRequest($first), ['redirect_uri' => $alternate]);
-    $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertOk()->assertSee('Client A')->assertSee('127.0.0.1');
+    $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertOk()->assertSee('Client A')->assertSee('127.0.0.1')
+      ->assertHeader('Content-Security-Policy', "frame-ancestors 'none'; form-action 'self' http://127.0.0.1:49200; base-uri 'none'");
     $this->post(self::MCP.'/authorize', array_replace($auth, ['redirect_uri' => $alternate.'1', 'decision' => 'deny']))->assertBadRequest();
     $this->post(self::MCP.'/authorize', $auth + ['decision' => 'deny'])->assertStatus(303)
       ->assertRedirect($alternate.'&error=access_denied&iss='.rawurlencode(self::MCP).'&state=state-from-client');

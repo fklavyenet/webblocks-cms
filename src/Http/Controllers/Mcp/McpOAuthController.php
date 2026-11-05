@@ -87,9 +87,11 @@ final class McpOAuthController
       $clientName = $client->name ?: $callbackHost;
       $port = parse_url($redirect, PHP_URL_PORT);
       $callbackAddress = $callbackHost.($port === null ? '' : ':'.$port);
+      $callbackOrigin = parse_url($redirect, PHP_URL_SCHEME).'://'.$callbackAddress;
 
       return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'write', 'data', 'clientName', 'callbackAddress'), headers: [
-        'Content-Security-Policy' => "frame-ancestors 'none'; form-action 'self'; base-uri 'none'",
+        // Chromium applies form-action to the redirect after the consent POST.
+        'Content-Security-Policy' => "frame-ancestors 'none'; form-action 'self' {$callbackOrigin}; base-uri 'none'",
         'X-Frame-Options' => 'DENY',
       ]);
     }
