@@ -20,7 +20,7 @@
                 </a>
             </div>
 
-            <form method="POST" action="{{ route('admin.pages.import.store') }}" enctype="multipart/form-data" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="{{ $pageImportText('discard_changes') }}">
+            <form method="POST" action="{{ route('admin.pages.import.store') }}" enctype="multipart/form-data" data-wb-modal-submit-progress="importing" class="wb-stack wb-gap-4" data-wb-admin-dirty-form data-wb-admin-dirty-close-confirm="{{ $pageImportText('discard_changes') }}">
                 @csrf
 
                 <input type="hidden" name="_page_import_modal" value="{{ $modalId }}">

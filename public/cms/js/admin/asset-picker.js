@@ -647,12 +647,14 @@
             return;
         }
 
-        var uploadRoot = pickerRootFromChild(uploadButton);
-        var fileInput = uploadRoot ? uploadRoot.querySelector('[data-wb-picker-upload-input]') : null;
-        var titleInput = uploadRoot ? uploadRoot.querySelector('[data-wb-picker-upload-title]') : null;
-        var status = uploadRoot ? uploadRoot.querySelector('[data-wb-picker-upload-status]') : null;
+        var uploadPanel = uploadButton.closest('[data-wb-picker-panel]');
+        if (!uploadPanel || uploadButton.getAttribute('aria-disabled') === 'true') return;
+        var fileInput = uploadPanel.querySelector('[data-wb-picker-upload-input]');
+        var titleInput = uploadPanel.querySelector('[data-wb-picker-upload-title]');
+        var status = uploadPanel.querySelector('[data-wb-picker-upload-status]');
+        var failure = uploadPanel.querySelector('[data-wb-picker-upload-error]');
 
-        if (!uploadRoot || !fileInput || !fileInput.files || !fileInput.files[0]) {
+        if (!fileInput?.files?.[0]) {
             if (status) {
                 status.textContent = i18n('choose-file-before-upload');
             }
@@ -668,37 +670,42 @@
 
         var token = document.querySelector('meta[name="csrf-token"]');
 
-        fetch('/webadmin/media', {
+        var finish = admin.beginMediaUploadFeedback?.(uploadPanel, uploadButton);
+        if (!finish) return;
+        failure.hidden = true;
+        status.hidden = true;
+        fileInput.disabled = true;
+        if (titleInput) titleInput.disabled = true;
+        function showFailure(message) {
+            finish();
+            fileInput.disabled = false;
+            if (titleInput) titleInput.disabled = false;
+            status.hidden = false;
+            failure.hidden = false;
+            failure.textContent = message;
+        }
+
+        fetch(uploadButton.dataset.wbPickerUploadSubmit, {
             method: 'POST',
-            headers: token ? { 'X-CSRF-TOKEN': token.getAttribute('content') } : {},
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token?.content || '' },
             body: formData,
             credentials: 'same-origin',
+            redirect: 'error',
         })
-            .then(function (response) {
-                if (response.redirected) {
-                    if (admin.redirectToLoginFromAdmin) {
-                        admin.redirectToLoginFromAdmin();
-                    }
+            .then(async function (response) {
+                if ([401, 419].includes(response.status) && admin.redirectToLoginFromAdmin) {
+                    admin.redirectToLoginFromAdmin();
                     return;
                 }
-
-                if (response.status === 401 || response.status === 403 || response.status === 419) {
-                    if (admin.redirectToLoginFromAdmin) {
-                        admin.redirectToLoginFromAdmin();
-                    }
+                if ([403, 413, 422].includes(response.status)) {
+                    showFailure(failure.dataset.rejected);
                     return;
                 }
-
-                if (!response.ok) {
-                    throw new Error(i18n('upload-failed'));
-                }
-
+                if (response.status !== 201 || (await response.json())?.uploaded !== true) throw new Error();
                 window.location.reload();
             })
             .catch(function () {
-                if (status) {
-                    status.textContent = 'Upload failed. Refresh and try again.';
-                }
+                showFailure(failure.dataset.unknown);
             });
     });
 
@@ -725,12 +732,11 @@
             return;
         }
 
-        var pickerRoot = pickerRootFromChild(uploadInput);
-        var status = pickerRoot ? pickerRoot.querySelector('[data-wb-picker-upload-status]') : null;
+        var status = uploadInput.closest('[data-wb-picker-panel]')?.querySelector('[data-wb-picker-upload-status]');
 
         if (status) {
             status.textContent = uploadInput.files && uploadInput.files[0]
-                ? uploadInput.files[0].name + ' ready to upload.'
+                ? uploadInput.files[0].name
                 : i18n('select-file-to-upload');
         }
     });

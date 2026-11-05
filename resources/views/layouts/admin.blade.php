@@ -337,6 +337,18 @@
             @stack('overlays')
         </div>
 
+        <template data-wb-modal-submit-feedback
+            @foreach (['saving', 'deleting', 'exporting', 'importing', 'uploading', 'fetching', 'sending', 'backing_up', 'restoring', 'cleaning', 'updating', 'uninstalling', 'starting'] as $message)
+                data-{{ $message }}="{{ $adminTranslator->get('modal-submit.'.$message, $adminLocale) }}"
+            @endforeach
+        >
+            <div class="wb-stack wb-gap-2 wb-mt-3">
+                <p class="wb-sr-only" role="status"></p>
+                <progress class="wb-progress-bar"></progress>
+                <p class="wb-text-sm wb-text-muted wb-m-0">{{ $adminTranslator->get('modal-submit.keep_open', $adminLocale) }}</p>
+            </div>
+        </template>
+
         <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
         @if (is_file($adminJsAssets['core']))
             <script src="{{ asset('cms/js/admin/core.js') }}?v={{ filemtime($adminJsAssets['core']) }}" defer></script>

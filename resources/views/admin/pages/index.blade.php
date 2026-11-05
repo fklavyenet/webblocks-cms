@@ -322,6 +322,7 @@
                 'id' => 'bulk-delete-pages-modal',
                 'title' => $adminText('pages.bulk_delete_title'),
                 'description' => $adminText('pages.bulk_delete_description'),
+                'pendingOperation' => 'deleting',
                 'action' => route('admin.pages.bulk-destroy'),
                 'method' => 'DELETE',
                 'submitLabel' => $adminText('common.delete_selected'),

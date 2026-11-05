@@ -6,6 +6,8 @@
     $adminLocale = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocale, $replace);
+    $jobText = static fn (string $key) => $adminTranslator->get('jobs.'.$key, $adminLocale);
+    $feedbackText = static fn (string $key) => $adminTranslator->get('modal-submit.'.$key, $adminLocale);
     $transferStatusLabel = static fn (?string $status) => $status ? $adminText('site_transfers.statuses.'.$status) : '-';
     $yesNoLabel = static fn (bool $value) => $value ? $adminText('common.yes') : $adminText('common.no');
 
@@ -187,10 +189,7 @@
             </div>
         </div>
     </div>
-    {{-- Progress modal: the import runs as a series of committed steps that the
-         browser drives, so this reports real phase and row counts rather than a
-         spinner. No dismiss while it runs; closing the tab pauses the import
-         instead of losing it, and the card offers Resume afterwards. --}}
+    {{-- The browser advances one committed step at a time. --}}
     @if ($siteImport->isValidated() || $siteImport->isResumable())
         <div
             class="wb-modal"
@@ -199,35 +198,37 @@
             aria-modal="true"
             aria-labelledby="wb-import-progress-title"
             data-wb-import-progress-modal
-            data-wb-return-url="{{ route('admin.site-transfers.imports.show', $siteImport) }}"
-            data-wb-busy-label="{{ $adminText('site_transfers.import_busy') }}"
+            data-busy="{{ $feedbackText('import_busy') }}"
+            data-complete="{{ $feedbackText('import_complete') }}"
+            data-paused="{{ $feedbackText('import_paused') }}"
+            data-pausing="{{ $jobText('pausing') }}"
+            data-preparing="{{ $jobText('preparing') }}"
+            data-unknown="{{ $feedbackText('unknown') }}"
+            data-failed="{{ $adminText('site_transfers.import_failed') }}"
             data-wb-phase-labels="{{ base64_encode(json_encode($importPhaseLabels, JSON_THROW_ON_ERROR)) }}"
             hidden
         >
             <div class="wb-modal-dialog">
                 <div class="wb-modal-header">
                     <h3 class="wb-modal-title" id="wb-import-progress-title">{{ $adminText('site_transfers.importing_title') }}</h3>
+                    <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('common.close') }}"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button>
                 </div>
                 <div class="wb-modal-body">
-                    <div class="wb-stack wb-gap-2" role="status" aria-live="polite" aria-atomic="true">
-                        <div class="wb-flex wb-items-center wb-justify-between wb-gap-3">
-                            <strong data-wb-import-phase>{{ $adminText('site_transfers.import_phases.starting') }}</strong>
-                            <span class="wb-text-sm wb-text-muted" data-wb-import-counter></span>
-                        </div>
-                        <div class="wb-progress-bar" data-wb-import-bar>
-                            <div class="wb-progress-bar-fill" data-wb-import-fill></div>
-                        </div>
-                        <span class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.import_keep_open') }}</span>
-                    </div>
-
-                    <div class="wb-alert wb-alert-danger wb-mt-3" data-wb-import-error hidden>
-                        <div class="wb-alert-title">{{ $adminText('site_transfers.import_failed') }}</div>
-                        <div data-wb-import-error-message></div>
+                    <div class="wb-stack wb-gap-3">
+                        <p class="wb-m-0" data-wb-import-keep-open>{{ $adminText('site_transfers.import_keep_open') }}</p>
+                        <progress class="wb-progress-bar" max="100" aria-labelledby="wb-import-phase" data-wb-import-bar></progress>
+                        <div class="wb-table-wrap"><table class="wb-table"><tbody>
+                            <tr><th scope="row">{{ $jobText('state') }}</th><td id="wb-import-phase" data-wb-import-phase role="status">{{ $adminText('site_transfers.import_phases.starting') }}</td></tr>
+                            <tr><th scope="row">{{ $jobText('progress') }}</th><td data-wb-import-counter>{{ $jobText('preparing') }}</td></tr>
+                            <tr><th scope="row">{{ $jobText('elapsed_session') }}</th><td><span role="timer" aria-live="off" data-wb-import-elapsed>0:00</span></td></tr>
+                        </tbody></table></div>
+                        <p class="wb-alert" role="status" data-wb-import-outcome hidden></p>
                     </div>
                 </div>
-                <div class="wb-modal-footer" data-wb-import-actions hidden>
-                    <button type="button" class="wb-btn wb-btn-primary" data-wb-import-retry>{{ $adminText('site_transfers.resume_import') }}</button>
-                    <a href="{{ route('admin.site-transfers.imports.show', $siteImport) }}" class="wb-btn wb-btn-secondary">{{ $adminText('site_transfers.import_close_and_review') }}</a>
+                <div class="wb-modal-footer">
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-import-pause>{{ $jobText('pause_exit') }}</button>
+                    <a href="{{ route('admin.site-transfers.imports.show', $siteImport) }}" class="wb-btn wb-btn-primary" data-wb-import-results hidden>{{ $jobText('view_results') }}</a>
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal" data-wb-import-close hidden>{{ $adminText('common.close') }}</button>
                 </div>
             </div>
         </div>

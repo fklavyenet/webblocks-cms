@@ -2505,6 +2505,17 @@ compatible plugin notifications; alerts use escaped text and do not expire on a
 timer. Shipped WebBlocks UI toast primitives and explicitly authored trusted HTML
 overlays remain supported, without generating CMS feedback toasts.
 
+From CMS 1.123.1, current-tab admin modal submissions show localized busy
+feedback after native validation and block repeat submissions while awaiting
+the response. Longer operations show a native indeterminate progress bar and
+keep-tab-open guidance. Native requests retain their form values, validation
+and redirects. Media picker uploads request an explicit JSON success receipt
+from the existing panel upload action and show an in-panel alert if the outcome
+is unknown. Site import keeps its saved phase and counts, stops between steps
+on a pause request, and retains the result in the modal until dismissal or
+opening the saved results. Rejected import input shows the validation message.
+A competing tab or unknown response stops the browser from sending further steps.
+
 
 ## System page designs
 

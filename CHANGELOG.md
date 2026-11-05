@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.123.1
+
+- Show when an admin dialog has submitted an action and prevent repeat submissions. Longer operations such as site export, media upload, backups, and plugin updates show an in-dialog progress indicator while the browser waits for the result.
+- Keep site import results visible until dismissed. Pausing waits for the current step to finish, and an unconfirmed result stops further requests and directs the operator to the saved results.
+
 ## 1.123.0
 
 - Expand MCP with localized page search and draft editing for blocks, translations, and SEO.

@@ -160,7 +160,7 @@
 
                                         @if ($plugin['can_update_from_catalog'])
                                             <div class="wb-modal wb-modal-lg" id="{{ $updateModalId }}" role="dialog" aria-modal="true" aria-labelledby="{{ $updateModalId }}-title" aria-describedby="{{ $updateModalId }}-body">
-                                                <form class="wb-modal-dialog" method="POST" action="{{ route('admin.system.plugins.update-from-catalog', $plugin['handle']) }}">
+                                                <form class="wb-modal-dialog" method="POST" action="{{ route('admin.system.plugins.update-from-catalog', $plugin['handle']) }}" data-wb-modal-submit-progress="updating">
                                                     @csrf
                                                     <div class="wb-modal-header">
                                                         <h2 class="wb-modal-title" id="{{ $updateModalId }}-title">{{ $systemPluginsIndexText('update_confirm_title', ['label' => $plugin['label']]) }}</h2>
@@ -181,8 +181,8 @@
 
                                                     <div class="wb-modal-footer">
                                                         <div class="wb-cluster wb-cluster-2">
-                                                            <button type="submit" class="wb-btn wb-btn-primary" data-wb-busy data-wb-busy-label="{{ $systemPluginsIndexText('update_in_progress') }}">
-                                                                <span data-wb-busy-text>{{ $systemPluginsIndexText('update_confirm_submit') }}</span>
+                                                            <button type="submit" class="wb-btn wb-btn-primary">
+                                                                {{ $systemPluginsIndexText('update_confirm_submit') }}
                                                             </button>
                                                             <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ $systemPluginsIndexText('update_confirm_cancel') }}</button>
                                                         </div>
@@ -220,6 +220,7 @@
                                                 'id' => $uninstallModalId,
                                                 'title' => $systemPluginsIndexText('uninstall_title', ['label' => $plugin['label']]),
                                                 'description' => $systemPluginsIndexText('uninstall_description'),
+                                                'pendingOperation' => 'uninstalling',
                                                 'action' => route('admin.system.plugins.uninstall', $plugin['handle']),
                                                 'method' => 'DELETE',
                                                 'submitLabel' => $systemPluginsIndexText('uninstall_plugin'),

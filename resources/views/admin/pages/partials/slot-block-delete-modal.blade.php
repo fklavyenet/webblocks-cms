@@ -137,7 +137,7 @@
                     </a>
                 </div>
 
-                <form method="POST" action="{{ $deleteAllAction }}">
+                <form method="POST" action="{{ $deleteAllAction }}" data-wb-modal-submit-progress="deleting">
                     @csrf
                     @method('DELETE')
                     <input type="hidden" name="return_url" value="{{ request('return_url') }}">

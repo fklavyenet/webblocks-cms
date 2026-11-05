@@ -9,6 +9,7 @@
     'id' => $modalId,
     'title' => $adminText('restore_title'),
     'description' => $adminText('restore_description'),
+    'pendingOperation' => 'restoring',
     'action' => route('admin.shared-slots.revisions.restore', [$sharedSlot, $revision]),
     'method' => 'POST',
     'submitLabel' => $adminText('restore_revision'),

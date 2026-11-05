@@ -344,6 +344,7 @@
                     'id' => 'bulk-delete-backups-modal',
                     'title' => $adminText('backups.delete_selected_title'),
                     'description' => $adminText('backups.delete_selected_description'),
+                    'pendingOperation' => 'deleting',
                     'action' => route('admin.system.backups.bulk-destroy'),
                     'method' => 'DELETE',
                     'submitLabel' => $adminText('common.delete_selected'),
@@ -383,6 +384,7 @@
         'id' => 'backups-cleanup-run-modal',
         'title' => $adminText('backups.clean_up_now'),
         'description' => $adminText('backups.cleanup_confirm_description'),
+        'pendingOperation' => 'cleaning',
         'action' => route('admin.system.backups.cleanup'),
         'method' => 'POST',
         'submitLabel' => $adminText('backups.clean_up_now'),
@@ -394,7 +396,7 @@
 
 @push('overlays')
     <div class="wb-modal" id="create-backup-retention-modal" role="dialog" aria-modal="true" aria-labelledby="create-backup-retention-title">
-        <div class="wb-modal-dialog"><form method="POST" action="{{ route('admin.system.backups.store') }}">
+        <div class="wb-modal-dialog"><form method="POST" action="{{ route('admin.system.backups.store') }}" data-wb-modal-submit-progress="backing_up">
             @csrf
             <div class="wb-modal-header"><h2 class="wb-modal-title" id="create-backup-retention-title">{{ $retentionText('create') }}</h2><button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('common.cancel') }}"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button></div>
             <div class="wb-modal-body">@include('webblocks-cms::admin.system.backups.retention-fields', ['retentionBackup' => null])</div>

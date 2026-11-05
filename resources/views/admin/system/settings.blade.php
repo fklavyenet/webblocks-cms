@@ -474,7 +474,7 @@
 
     <div class="wb-modal {{ $errors->has('recipient_email') ? 'is-open' : '' }}" id="settings-mail-test-modal" role="dialog" aria-modal="true" aria-labelledby="settings-mail-test-title">
         <div class="wb-modal-dialog">
-            <form method="POST" action="{{ route('admin.system.settings.mail.test') }}">
+            <form method="POST" action="{{ route('admin.system.settings.mail.test') }}" data-wb-modal-submit-progress="sending">
                 @csrf
                 <div class="wb-modal-header">
                     <h2 class="wb-modal-title" id="settings-mail-test-title">{{ $systemText('send_test_email') }}</h2>

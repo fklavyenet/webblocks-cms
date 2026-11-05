@@ -394,9 +394,10 @@
                     </div>
                   </div>
                   <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                    <span class="wb-text-sm wb-text-muted" data-wb-picker-upload-status>{{ $assetPickerText('select_file_to_upload') }}</span>
-                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit>{{ $assetPickerText('upload') }}</button>
+                    <span class="wb-text-sm wb-text-muted" role="status" data-wb-picker-upload-status>{{ $assetPickerText('select_file_to_upload') }}</span>
+                    <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit="{{ route('admin.media.store') }}">{{ $assetPickerText('upload') }}</button>
                   </div>
+                  <p class="wb-alert wb-alert-danger wb-m-0" role="alert" data-wb-picker-upload-error data-rejected="{{ $assetPickerTranslator->get('modal-submit.upload_rejected', $assetPickerAdminLocale) }}" data-unknown="{{ $assetPickerTranslator->get('modal-submit.unknown', $assetPickerAdminLocale) }}" hidden></p>
                 </div>
               </div>
             @endif
@@ -477,9 +478,10 @@
                 </div>
               </div>
               <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                <span class="wb-text-sm wb-text-muted" data-wb-picker-upload-status>{{ $assetPickerText('select_file_to_upload') }}</span>
-                <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit>{{ $assetPickerText('upload') }}</button>
+                <span class="wb-text-sm wb-text-muted" role="status" data-wb-picker-upload-status>{{ $assetPickerText('select_file_to_upload') }}</span>
+                <button type="button" class="wb-btn wb-btn-secondary" data-wb-picker-upload-submit="{{ route('admin.media.store') }}">{{ $assetPickerText('upload') }}</button>
               </div>
+              <p class="wb-alert wb-alert-danger wb-m-0" role="alert" data-wb-picker-upload-error data-rejected="{{ $assetPickerTranslator->get('modal-submit.upload_rejected', $assetPickerAdminLocale) }}" data-unknown="{{ $assetPickerTranslator->get('modal-submit.unknown', $assetPickerAdminLocale) }}" hidden></p>
             </div>
           </div>
         @endif

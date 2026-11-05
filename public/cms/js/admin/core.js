@@ -413,7 +413,7 @@
                 return;
             }
 
-            if (!form || !isDirtyForm(form)) {
+            if (event.defaultPrevented || !form || !isDirtyForm(form)) {
                 return;
             }
 
@@ -494,6 +494,104 @@
         if (window.WBBusySubmit && typeof window.WBBusySubmit.bind === 'function') {
             window.WBBusySubmit.bind();
         }
+    }
+
+    function bindModalSubmitFeedback() {
+        var template = document.querySelector('[data-wb-modal-submit-feedback]');
+        if (!template) return;
+
+        var pending = new Map();
+        var modalFor = function (element) { return element?.closest('.wb-modal'); };
+        var dismissSelector = '.wb-modal-close, [data-wb-dismiss="modal"], [data-wb-picker-close], [data-wb-picker-apply], [data-admin-form-actions-main] a, .wb-modal-footer a.wb-btn-secondary';
+
+        function start(surface, button, operation, progress, nativeSubmit) {
+            var label = template.getAttribute('data-' + operation);
+            if (pending.has(surface) || !label) return null;
+
+            var feedback = template.content.firstElementChild.cloneNode(true);
+            var status = feedback.querySelector('[role="status"]');
+            var modal = modalFor(surface);
+            var content = modal === surface ? modal.querySelector('.wb-modal-body') : surface;
+            var indicator = progress ? feedback : status;
+            var original = document.createDocumentFragment();
+            var originalLabel = button.getAttribute('aria-label');
+            var controls = [button].concat(Array.from(surface.querySelectorAll(dismissSelector))
+                .filter(function (control) { return modalFor(control) === modal; }));
+            var disabledStates = controls.map(function (control) {
+                var previous = control.getAttribute('aria-disabled');
+                control.setAttribute('aria-disabled', 'true');
+                return previous;
+            });
+
+            while (button.firstChild) original.append(button.firstChild);
+            button.textContent = label;
+            button.classList.add('is-busy');
+            if (originalLabel !== null) button.setAttribute('aria-label', label);
+
+            if (progress) feedback.querySelector('progress').setAttribute('aria-label', label);
+            (content || surface).append(indicator);
+            // Announce in a connected live region. Leave native submitter values intact.
+            var announce = window.setTimeout(function () { status.textContent = label; }, 0);
+            function finish() {
+                window.clearTimeout(announce);
+                indicator.remove();
+                button.replaceChildren(original);
+                button.classList.remove('is-busy');
+                controls.forEach(function (control, index) {
+                    if (disabledStates[index] === null) control.removeAttribute('aria-disabled');
+                    else control.setAttribute('aria-disabled', disabledStates[index]);
+                });
+                if (originalLabel !== null) button.setAttribute('aria-label', originalLabel);
+                pending.delete(surface);
+            }
+            pending.set(surface, {finish: finish, nativeSubmit: nativeSubmit});
+            return finish;
+        }
+
+        admin.beginMediaUploadFeedback = function (panel, button) {
+            return start(modalFor(panel) || panel, button, 'uploading', true, false);
+        };
+
+        // Block duplicates before any form-specific listener can run again.
+        document.addEventListener('submit', function (event) {
+            if (pending.has(modalFor(event.submitter) || modalFor(event.target))) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+        }, true);
+
+        // Run after CMS handlers so an intercepted save keeps its own feedback.
+        window.addEventListener('submit', function (event) {
+            var form = event.target;
+            if (event.defaultPrevented || !(form instanceof HTMLFormElement)) return;
+            var button = event.submitter || Array.from(form.elements).find(function (control) {
+                return control.tagName === 'BUTTON' && control.type === 'submit' && !control.disabled;
+            });
+            var modal = modalFor(button) || modalFor(form);
+            if (!modal || !button || button.tagName !== 'BUTTON') return;
+            var method = button.getAttribute('formmethod') || form.getAttribute('method');
+            var target = button.getAttribute('formtarget') || form.getAttribute('target');
+            if (method?.toLowerCase() !== 'post' || (target && target !== '_self')) return;
+
+            var progress = form.dataset.wbModalSubmitProgress;
+            var operation = progress || form.dataset.wbModalSubmitLabel
+                || (form.elements.namedItem('_method')?.value === 'DELETE' ? 'deleting' : 'saving');
+            start(modal, button, operation, Boolean(progress), true);
+        });
+
+        document.addEventListener('wb:overlay:close-request', function (event) {
+            if (pending.has(event.target)) event.preventDefault();
+        }, true);
+        document.addEventListener('click', function (event) {
+            var control = event.target.closest(dismissSelector);
+            if (!control || (!pending.has(modalFor(control)) && !pending.has(control.closest('[data-wb-picker-panel]')))) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }, true);
+        window.addEventListener('pageshow', function (event) {
+            if (!event.persisted) return;
+            pending.forEach(function (request) { if (request.nativeSubmit) request.finish(); });
+        });
     }
 
     function bindSubmitOnChange() {
@@ -617,5 +715,6 @@
     bindDirtyOverlayGuards();
     bindUpdateIndicator();
     bindBusySubmitButtons();
+    bindModalSubmitFeedback();
     bindSubmitOnChange();
 }());

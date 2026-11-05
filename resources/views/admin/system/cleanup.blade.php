@@ -349,6 +349,7 @@
     @foreach ($cards as $category => $card)
         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
             'id' => 'cleanup-'.$category.'-modal', 'title' => $card['title'], 'description' => $text('confirm'),
+            'pendingOperation' => 'cleaning',
             'action' => route('admin.system.cleanup.run', $category), 'method' => 'POST', 'submitLabel' => $text('clean_now'),
         ])
             <p>{{ $text('eligible', ['count' => $card['count'], 'size' => $formatBytes($card['bytes'])]) }}</p>
