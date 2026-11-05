@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,7 @@ use WebBlocks\Cms\Models\BlockButtonTranslation;
 use WebBlocks\Cms\Models\BlockContactFormTranslation;
 use WebBlocks\Cms\Models\BlockImageTranslation;
 use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
+use WebBlocks\Cms\Models\BlockPluginTranslation;
 use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
@@ -38,6 +40,7 @@ use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
+use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
 
 class InternalContentPlanService
@@ -715,9 +718,9 @@ class InternalContentPlanService
     return $block;
   }
 
-  public function prepareAuthoringDraft(Page $page, User $actor): Page
+  public function prepareAuthoringDraft(Page $page, User $actor, ?array $managedSlots = null, string $event = 'dynamic_content_draft_prepared'): Page
   {
-    return DB::transaction(function () use ($page, $actor): Page {
+    return DB::transaction(function () use ($page, $actor, $managedSlots, $event): Page {
       $page = Page::query()->lockForUpdate()->findOrFail($page->id);
       abort_unless($page->status === Page::STATUS_PUBLISHED, 409);
       $draft = $this->findReusableStagedPage($page);
@@ -728,10 +731,10 @@ class InternalContentPlanService
 
         return $draft;
       }
-      $slots = $page->slots()->with('slotType')->get()->filter(fn ($slot) => $slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_PAGE)->map(fn ($slot) => $slot->slotType->slug)->values()->all();
+      $slots = $managedSlots ?? $page->slots()->with('slotType')->get()->filter(fn ($slot) => $slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_PAGE)->map(fn ($slot) => $slot->slotType->slug)->values()->all();
       $draft = $this->createStagedPage($page, ['staged_update' => ['managed_slots' => $slots]]);
       $draft->forceFill(['created_by_user_id' => $actor->id, 'updated_by_user_id' => $actor->id])->save();
-      $this->pageRevisionManager->capture($draft, $actor, event: 'dynamic_content_draft_prepared');
+      $this->pageRevisionManager->capture($draft, $actor, event: $event);
 
       return $draft;
     });
@@ -837,20 +840,30 @@ class InternalContentPlanService
 
     $this->cloneBlocks($sourcePage, $stagedPage);
 
+    // This baseline is set once. Reusing a draft may refresh workflow metadata,
+    // but cannot make its existing content a copy of a newer published version.
+    if (config('webblocks-cms.mcp.enabled') && Schema::hasTable('wbcms_staged_page_bases')) {
+      DB::table('wbcms_staged_page_bases')->insert([
+        'page_id' => $stagedPage->id,
+        'source_fingerprint' => SnapshotContent::hash($this->pageRevisionManager->snapshotForInspection($sourcePage)),
+      ]);
+    }
+
     return $stagedPage;
   }
 
   private function findReusableStagedPage(Page $sourcePage): ?Page
   {
+    return $this->stagedDrafts($sourcePage)->where('status', Page::STATUS_DRAFT)->orderByDesc('id')->lockForUpdate()->first();
+  }
+
+  public function stagedDrafts(Page $sourcePage): Builder
+  {
     return Page::query()
       ->where('site_id', $sourcePage->site_id)
-      ->where('status', Page::STATUS_DRAFT)
       ->whereRuntimeSetting('staged_update.type', self::STAGED_UPDATE_TYPE)
       ->whereRuntimeSetting('staged_update.source_page_id', $sourcePage->id)
-      ->whereRuntimeSetting('staged_update.state', 'draft')
-      ->orderByDesc('id')
-      ->lockForUpdate()
-      ->first();
+      ->whereRuntimeSetting('staged_update.state', 'draft');
   }
 
   private function refreshReusableStagedMetadata(Page $stagedPage, Page $sourcePage, array $plan): void
@@ -918,7 +931,7 @@ class InternalContentPlanService
     $blocks = Block::query()
       ->where('page_id', $sourcePage->id)
       ->when($slotTypeIds !== null, fn ($query) => $query->whereIn('slot_type_id', $slotTypeIds))
-      ->with(['blockAssets.galleryItemTranslations', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+      ->with(['blockAssets.galleryItemTranslations', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations', 'pluginTranslations'])
       ->orderBy('id')
       ->lockForUpdate()
       ->get();
@@ -1015,6 +1028,15 @@ class InternalContentPlanService
         'submit_label' => $translation->submit_label,
         'success_message' => $translation->success_message,
         'consent_label' => $translation->consent_label,
+      ]);
+    }
+
+    foreach ($source->pluginTranslations as $translation) {
+      $this->cloneTranslation(BlockPluginTranslation::class, $target, [
+        'block_id' => $target->id,
+        'locale_id' => $translation->locale_id,
+        'field' => $translation->field,
+        'value' => $translation->value,
       ]);
     }
   }

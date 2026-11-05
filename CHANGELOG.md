@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.119.0
+
+- Add an opt-in remote MCP endpoint with CMS sign-in and site-scoped OAuth consent.
+- Find published pages, update localized headings in verified staged drafts, and open private previews.
+
 ## 1.118.2
 
 - Keep unfinished update runs, panel operations, API requests and unresolved chain steps visible outside the recent-history limit, with their receipts protected from pruning and saved status shown separately from worker evidence.

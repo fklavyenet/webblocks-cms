@@ -30,6 +30,18 @@ This contract describes the supported authoring surface of the reviewed package 
 
 Legacy renderer compatibility does not make an unpublished handle available for new authoring. Use the current catalog and field contracts rather than historical counts or implementation milestones.
 
+## Remote MCP Page Editing
+
+The CMS can expose a Streamable HTTP MCP endpoint at `/webadmin/mcp`. The host enables it with `WEBBLOCKS_CMS_MCP_ENABLED`, configures a preregistered OAuth client with `WEBBLOCKS_CMS_MCP_CLIENT_ID`, a random `WEBBLOCKS_CMS_MCP_CLIENT_SECRET` of at least 32 characters and the client's exact HTTPS `WEBBLOCKS_CMS_MCP_REDIRECT_URI`, and uses the HTTPS origin from `WEBBLOCKS_CMS_MCP_ORIGIN` or `APP_URL`. Serve the two OAuth discovery URLs under `/.well-known/` on that origin. The OAuth client is configured separately in the client application. CMS sign-in and any required two-factor verification precede consent for one site. OAuth uses authorization codes with PKCE S256 and one-hour access tokens. A connection can grant `pages:read` and optionally `pages:write-draft`. Each tool checks the current CMS permissions for the site, and localized writes also require the applicable translation permission.
+
+| Tool | Authoring contract |
+| --- | --- |
+| `find_page` | Find a published editorial page by ID or by its exact stored path for an enabled locale. Use `/` for the home page. Returns page identity, supported heading candidates, any active staged draft and a version covering the source and draft content. |
+| `update_draft_heading` | Provide the source page ID, source block ID, locale, new title and version returned by the read. Edits the localized title of a page-owned `header`, `hero` or `content_header` block inside a staged update, saves a revision and returns a private preview URL. Creates an update draft from the source if needed, with the selected heading's slot as its managed slot. |
+| `get_draft_preview` | Get the private CMS preview URL for the active update draft in the chosen locale. Opening it uses the CMS browser session and its existing preview access checks. |
+
+A new heading translation preserves the block copy inherited from its fallback. Locales without a heading translation continue to inherit the default. A write requires a fresh source and draft version. It preserves the existing draft's managed slots and verifies that the source still matches the immutable baseline recorded when the draft was created with MCP enabled. Older drafts without this baseline and drafts under review require operator review. Shared-slot blocks, source-driven heading candidates and pages containing human-only HTML blocks are excluded from writes. The tools expose no publishing capability.
+
 ## Non-Negotiable AI Authoring Rules
 
 1. Use structured blocks. Do not store a page, section, card collection, navigation shell, form, or visual component in Trusted HTML.
