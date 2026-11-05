@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
     "document": "resources/contracts/inventory.md",
-    "product_version": "1.120.0",
+    "product_version": "1.120.1",
     "inventory_sha256": "cf9fd1008c431e6c7123e1c30a01b73c5a1907eb098bbf773a68e121715676ce",
-    "source_sha256": "6ba0b00322a2712512815407062c32e4f81ec1a791ce0d4fe0776441b058896b",
+    "source_sha256": "84d34edd8d640e16b3faeaa672f852417fb0aeb038da7ae5f26e2dd81d749254",
     "review_outcome": "no-authoring-impact",
-    "review_note": "The browser navigation policy now permits the selected registered callback origin. OAuth grants, tool capabilities, page permissions and draft behavior are unchanged.",
+    "review_note": "The consent form can return to the registered OAuth callback origin without changing content fields, page permissions or tool behavior.",
     "sources": {
         "composer.json": "f465433a91a9459ef43a2331d9adf8602207930e9e8afc7c262bf9f68461bdeb",
         "config/cms.php": "7e1f0ec1bc1df3054603e7394ca684c1a250d3a9d731bcd1ab3cdeba3fbc3c1e",
@@ -2023,7 +2023,7 @@
         "src/Support/Visitors/VisitorEventLogger.php": "d3604bb2b8a10de4912a866aaabb6d5c92be231f719c9b5433cb3aa4d22047b5",
         "src/Support/Visitors/VisitorReportRetention.php": "5b76a7790e610ebfe2016b13c494d5ba86ff6e854e2a02cff4b06ac11ad240bb",
         "src/Support/Visitors/VisitorReportsQuery.php": "950f0a24d7aa722d6e171b3f57821fcb31af1811972071abf618e377d65619a9",
-        "src/Support/WebBlocks.php": "15511ff1fa1f7971b7154cece104e745a50bd0fb0fe31f34e92fd9f7f4a81bdc",
+        "src/Support/WebBlocks.php": "9ff9bb6112b61b783bf7b09feb9e4b8791c2f79deb93bfc702e9aa85c06c4297",
         "src/Support/helpers.php": "d972cb707734997050f09ac1b65af9f8fd5a1029f18d98b9e1b4819f25fd043b",
         "src/WebBlocksCmsServiceProvider.php": "0cb0f8c1cf5493fbcbb3f33715802c9cb06098f0ed660a44565a1e6e32b65d9e",
         "stubs/README.md": "3100275ae8eb8973105ddd8e288e2fc5dcfe0c459867838058efaead6dc2d926",

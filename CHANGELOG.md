@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.120.1
+
+- Allow Chromium to return to the registered OAuth callback after WebBlocks MCP consent.
+
 ## 1.120.0
 
 - Let Super admins enable and disable remote MCP from System Settings and copy the server URL.
