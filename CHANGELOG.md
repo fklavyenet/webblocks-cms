@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.122.0
+
+- Read supported localized block text in published pages and their update drafts through MCP.
+- Edit supported block copy, captions and alternative text in update drafts, and select existing public images within the authorized site. Draft edits return a private preview link.
+- Require a separate OAuth grant for the expanded tools and preserve the scope of existing connections.
+
 ## 1.121.0
 
 - Support automatic registration for OAuth clients that authenticate with a client secret and use PKCE for authorization.
