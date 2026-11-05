@@ -5,10 +5,6 @@ namespace WebBlocks\Cms\Actions\Mcp;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use WebBlocks\Cms\Models\Block;
-use WebBlocks\Cms\Models\BlockButtonTranslation;
-use WebBlocks\Cms\Models\BlockImageTranslation;
-use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Policies\McpPagePolicy;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
@@ -47,7 +43,7 @@ final class UpdateDraftBlock
         throw new McpToolException('conflict');
       }
 
-      $this->lockBlocks($source, $draft);
+      $this->pages->lockBlocks($source, $draft);
       $this->pages->assertEditableType($source);
       $locale = $this->pages->locale($source, $input['locale']);
       $sourceFingerprint = $this->pages->fingerprint($source);
@@ -73,7 +69,9 @@ final class UpdateDraftBlock
 
       $this->pages->locale($draft, $locale->code);
       $matches = $this->pages->matchingBlocks($sourceBlock, $this->candidates($draft, $headingOnly));
-      if ($matches->count() !== 1 || ! in_array($slot, $draft->setting('staged_update.managed_slots', []), true)) {
+      $managed = $draft->setting('staged_update.managed_slots', []);
+      if ($matches->count() !== 1 || ! in_array($slot, $managed, true)
+        || ! in_array($matches->first()->slotType?->slug, $managed, true)) {
         throw new McpToolException($unavailable);
       }
 
@@ -116,13 +114,5 @@ final class UpdateDraftBlock
   private function candidates(Page $page, bool $headingOnly): Collection
   {
     return $headingOnly ? $this->pages->headings($page) : $this->pages->staticBlocks($page)->filter($this->fields->supports(...));
-  }
-
-  private function lockBlocks(Page $source, ?Page $draft): void
-  {
-    $ids = Block::query()->whereIn('page_id', array_filter([$source->id, $draft?->id]))->orderBy('id')->lockForUpdate()->pluck('id');
-    foreach ([BlockTextTranslation::class, BlockButtonTranslation::class, BlockImageTranslation::class] as $model) {
-      $model::query()->whereIn('block_id', $ids)->orderBy('id')->lockForUpdate()->pluck('id');
-    }
   }
 }

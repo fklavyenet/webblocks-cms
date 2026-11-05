@@ -450,6 +450,10 @@ class InternalContentPlanService
           throw new \InvalidArgumentException('Source or staged page no longer resolves.');
         }
 
+        if ($this->splitsMovedBlockSlots($sourcePage, $stagedPage, $plan['staged_update']['promote_slots'], lock: true)) {
+          throw new \InvalidArgumentException('Promote both slots together when a block has moved between them.');
+        }
+
         $this->pageRevisionManager->capture(
           $sourcePage->fresh(),
           label: 'Pre Internal Content API staged update promote',
@@ -1680,8 +1684,28 @@ class InternalContentPlanService
     }
 
     $this->validatePromoteSlotSet($sourcePage, $stagedPage, $slots, $errors);
+    if ($sourcePage && $stagedPage && $this->splitsMovedBlockSlots($sourcePage, $stagedPage, $slots)) {
+      $errors[] = $this->error('plan.promote_slots', 'Promote both slots together when a block has moved between them.');
+    }
 
     return $slots;
+  }
+
+  private function splitsMovedBlockSlots(Page $source, Page $draft, array $slots, bool $lock = false): bool
+  {
+    $slotIds = SlotType::query()->whereIn('slug', $slots)->pluck('id')->all();
+    $blocks = Block::query()->whereIn('page_id', [$source->id, $draft->id])
+      ->whereNotNull('revision_key')->orderBy('id')
+      ->when($lock, fn ($query) => $query->lockForUpdate())
+      ->get(['id', 'page_id', 'slot_type_id', 'revision_key'])
+      ->groupBy('page_id');
+    $originals = $blocks->get($source->id, collect())->keyBy('revision_key');
+
+    return $blocks->get($draft->id, collect())->contains(function (Block $block) use ($originals, $slotIds): bool {
+      $original = $originals->get($block->revision_key);
+
+      return $original && in_array($original->slot_type_id, $slotIds, true) !== in_array($block->slot_type_id, $slotIds, true);
+    });
   }
 
   private function managedSlotsForStagedUpdate(array $input, ?Page $sourcePage, array &$errors): array

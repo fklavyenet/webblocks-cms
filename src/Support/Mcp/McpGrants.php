@@ -17,7 +17,7 @@ final class McpGrants
     private readonly McpPagePolicy $policy,
   ) {}
 
-  public function issue(User $user, int $siteId, bool $canWrite, bool $canEditContent, bool $canCreateDraft, string $challenge, McpOAuthClient $client, string $redirect): string
+  public function issue(User $user, int $siteId, bool $canWrite, bool $canEditContent, bool $canCreateDraft, bool $canEditStructure, string $challenge, McpOAuthClient $client, string $redirect): string
   {
     $code = bin2hex(random_bytes(32));
     $this->grants()->where('expires_at', '<=', now())->delete();
@@ -27,6 +27,7 @@ final class McpGrants
       'can_write' => $canWrite,
       'can_edit_content' => $canEditContent,
       'can_create_draft' => $canCreateDraft,
+      'can_edit_structure' => $canEditStructure,
       'client_fingerprint' => $this->config->clientFingerprint($client->id),
       'oauth_client_id' => $client->id,
       'redirect_hash' => hash('sha256', $redirect),
@@ -68,12 +69,13 @@ final class McpGrants
           $grant->can_write ? McpConfiguration::WRITE : null,
           $grant->can_edit_content ? McpConfiguration::CONTENT : null,
           $grant->can_create_draft ? McpConfiguration::CREATE : null,
+          $grant->can_edit_structure ? McpConfiguration::STRUCTURE : null,
         ])),
       ];
     });
   }
 
-  /** @return array{user: User, site: int, write: bool, edit_content: bool, create_draft: bool}|null */
+  /** @return array{user: User, site: int, write: bool, edit_content: bool, create_draft: bool, edit_structure: bool}|null */
   public function authenticate(#[\SensitiveParameter] ?string $token): ?array
   {
     if (! is_string($token) || ! preg_match('/\A[a-f0-9]{64}\z/', $token)) {
@@ -89,6 +91,7 @@ final class McpGrants
       'write' => (bool) $grant->can_write,
       'edit_content' => (bool) $grant->can_edit_content,
       'create_draft' => (bool) $grant->can_create_draft,
+      'edit_structure' => (bool) $grant->can_edit_structure,
     ] : null;
   }
 

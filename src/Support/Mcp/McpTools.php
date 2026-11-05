@@ -3,8 +3,10 @@
 namespace WebBlocks\Cms\Support\Mcp;
 
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use stdClass;
 use WebBlocks\Cms\Actions\Mcp\CreatePageDraft;
+use WebBlocks\Cms\Actions\Mcp\EditDraftStructure;
 use WebBlocks\Cms\Actions\Mcp\UpdateDraftBlock;
 use WebBlocks\Cms\Models\Locale;
 
@@ -26,11 +28,16 @@ final class McpTools
 
   private const CREATE = 'create_page_draft';
 
+  private const STRUCTURE = 'get_draft_structure';
+
+  private const EDIT_STRUCTURE = 'edit_draft_structure';
+
   public function __construct(
     private readonly McpPages $pages,
     private readonly UpdateDraftBlock $updateBlock,
     private readonly McpMedia $media,
     private readonly CreatePageDraft $createDraft,
+    private readonly EditDraftStructure $structure,
   ) {}
 
   public function descriptors(): array
@@ -49,6 +56,9 @@ final class McpTools
       'alt_text' => $text,
       'content' => ['type' => 'string', 'maxLength' => 8000],
     ];
+
+    $slot = ['type' => 'string', 'minLength' => 1, 'maxLength' => 100];
+    $parent = ['type' => ['integer', 'null'], 'minimum' => 1];
 
     return [
       $this->descriptor(self::READ, 'read_description', ['locale' => $locale, 'page_id' => $id, 'path' => ['type' => 'string', 'maxLength' => 255]], ['locale'], [
@@ -89,6 +99,29 @@ final class McpTools
         'path' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 255],
         'layout' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 100, 'default' => 'default'],
       ], ['locale', 'title', 'path']),
+      $this->descriptor(self::STRUCTURE, 'structure_description', [
+        'locale' => $locale, 'page_id' => $id, 'page' => $page,
+      ], ['locale', 'page_id']),
+      $this->descriptor(self::EDIT_STRUCTURE, 'edit_structure_description', [
+        'locale' => $locale,
+        'page_id' => $id,
+        'version' => $version,
+        'operation' => ['type' => 'string', 'enum' => ['prepare', 'add', 'move', 'reorder']],
+        'slots' => ['type' => 'array', 'items' => $slot, 'minItems' => 1, 'maxItems' => 32, 'uniqueItems' => true],
+        'slot' => $slot,
+        'parent_id' => $parent,
+        'type' => ['type' => 'string', 'enum' => EditDraftStructure::ADD_TYPES],
+        'text' => ['type' => 'object', 'properties' => $copy, 'additionalProperties' => false],
+        'block_id' => $id,
+        'block_ids' => ['type' => 'array', 'items' => $id, 'minItems' => 1, 'maxItems' => 500, 'uniqueItems' => true],
+      ], ['locale', 'page_id', 'version', 'operation'], [
+        'oneOf' => [
+          ['properties' => ['operation' => ['const' => 'prepare']], 'required' => ['slots']],
+          ['properties' => ['operation' => ['const' => 'add']], 'required' => ['slot', 'type']],
+          ['properties' => ['operation' => ['const' => 'move']], 'required' => ['slot', 'block_id']],
+          ['properties' => ['operation' => ['const' => 'reorder']], 'required' => ['slot', 'block_ids']],
+        ],
+      ]),
     ];
   }
 
@@ -98,6 +131,7 @@ final class McpTools
       self::READ, self::SEARCH, self::PREVIEW => McpConfiguration::READ,
       self::WRITE => McpConfiguration::WRITE,
       self::CREATE => McpConfiguration::CREATE,
+      self::STRUCTURE, self::EDIT_STRUCTURE => McpConfiguration::STRUCTURE,
       self::CONTENT, self::EDIT, self::MEDIA => McpConfiguration::CONTENT,
       default => null,
     };
@@ -112,6 +146,8 @@ final class McpTools
       self::SEARCH => $this->pages->search($grant['site'], $input),
       self::PREVIEW => $this->pages->preview($grant['site'], $input),
       self::CREATE => $this->createDraft->handle($grant['user'], $grant['site'], $input),
+      self::STRUCTURE => $this->structure->read($grant['site'], $input),
+      self::EDIT_STRUCTURE => $this->structure->handle($grant['user'], $grant['site'], $input),
       self::WRITE => $this->updateBlock->handle($grant['user'], $grant['site'], $input, headingOnly: true),
       self::CONTENT => $this->pages->content($grant['user'], $grant['site'], $input),
       self::EDIT => $this->updateBlock->handle($grant['user'], $grant['site'], $input),
@@ -144,7 +180,8 @@ final class McpTools
         'title' => ['required', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'],
         'version' => $version,
       ],
-      self::CONTENT => ['page_id' => $id, 'page' => $page],
+      self::CONTENT, self::STRUCTURE => ['page_id' => $id, 'page' => $page],
+      self::EDIT_STRUCTURE => ['page_id' => $id, 'version' => $version] + $this->structureRules($args['operation'] ?? null),
       self::MEDIA => ['q' => ['sometimes', 'required', 'string', 'max:120'], 'page' => $page],
       self::EDIT => [
         'page_id' => $id,
@@ -165,7 +202,8 @@ final class McpTools
       $args['text'] = (array) $args['text'];
     }
     $validator = Validator::make($args, $rules);
-    if (array_diff_key($args, $rules) !== [] || $validator->fails()) {
+    $topLevelRules = array_filter($rules, fn (string $key) => ! str_contains($key, '.'), ARRAY_FILTER_USE_KEY);
+    if (array_diff_key($args, $topLevelRules) !== [] || $validator->fails()) {
       throw new McpToolException('invalid_request');
     }
     $data = $validator->validated();
@@ -179,9 +217,37 @@ final class McpTools
     return $data;
   }
 
+  private function structureRules(mixed $operation): array
+  {
+    $slot = ['required', 'string', 'max:100'];
+    $placement = ['slot' => $slot, 'parent_id' => ['nullable', 'integer', 'min:1']];
+    $shortText = ['sometimes', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'];
+    $rules = match ($operation) {
+      'prepare' => ['slots' => ['required', 'array', 'list', 'min:1', 'max:32'], 'slots.*' => [...$slot, 'distinct']],
+      'add' => $placement + [
+        'type' => ['required', 'string', Rule::in(EditDraftStructure::ADD_TYPES)],
+        'text' => ['sometimes', 'array:title,subtitle,eyebrow,caption,alt_text,content'],
+        'text.title' => $shortText,
+        'text.subtitle' => $shortText,
+        'text.eyebrow' => $shortText,
+        'text.caption' => $shortText,
+        'text.alt_text' => $shortText,
+        'text.content' => ['sometimes', 'string', 'max:8000', 'not_regex:/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/'],
+      ],
+      'move' => $placement + ['block_id' => ['required', 'integer', 'min:1']],
+      'reorder' => $placement + [
+        'block_ids' => ['required', 'array', 'list', 'min:1', 'max:500'],
+        'block_ids.*' => ['required', 'integer', 'min:1', 'distinct'],
+      ],
+      default => throw new McpToolException('invalid_request'),
+    };
+
+    return ['operation' => ['required', 'string']] + $rules;
+  }
+
   private function descriptor(string $name, string $description, array $properties, array $required, array $constraints = []): array
   {
-    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE], true);
+    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE, self::EDIT_STRUCTURE], true);
     $scope = $this->scope($name);
     $scopes = $scope === McpConfiguration::READ ? [$scope] : [McpConfiguration::READ, $scope];
     $security = [['type' => 'oauth2', 'scopes' => $scopes]];

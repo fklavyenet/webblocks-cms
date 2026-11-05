@@ -6,6 +6,9 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockButtonTranslation;
+use WebBlocks\Cms\Models\BlockImageTranslation;
+use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
@@ -90,6 +93,16 @@ final class McpPages
     }
 
     return $drafts->first();
+  }
+
+  public function lockBlocks(Page $source, ?Page $draft): void
+  {
+    $pageIds = array_filter([$source->id, $draft?->id]);
+    PageSlot::query()->whereIn('page_id', $pageIds)->orderBy('id')->lockForUpdate()->pluck('id');
+    $ids = Block::query()->whereIn('page_id', $pageIds)->orderBy('id')->lockForUpdate()->pluck('id');
+    foreach ([BlockTextTranslation::class, BlockButtonTranslation::class, BlockImageTranslation::class] as $model) {
+      $model::query()->whereIn('block_id', $ids)->orderBy('id')->lockForUpdate()->pluck('id');
+    }
   }
 
   public function fingerprint(Page $page): string
@@ -195,7 +208,8 @@ final class McpPages
         $slot = $block->slotType?->slug;
         $matches = $this->matchingBlocks($block, $draftBlocks->get($block->revision_key, collect()));
         $managedSlot = in_array($slot, $managed ?? [], true);
-        $draftBlock = $managedSlot && $matches->count() === 1 ? $matches->first() : null;
+        $candidate = $matches->count() === 1 ? $matches->first() : null;
+        $draftBlock = $managedSlot && $candidate && in_array($candidate->slotType?->slug, $managed ?? [], true) ? $candidate : null;
         $blockedBy = $writeBlocker ?? match (true) {
           ! $slot => 'block_unavailable',
           $draft && ! $managedSlot => 'unmanaged_slot',
@@ -287,7 +301,7 @@ final class McpPages
   public function matchingBlocks(Block $source, Collection $candidates): Collection
   {
     return $candidates->filter(fn (Block $block) => $block->revision_key === $source->revision_key
-      && $block->slot_type_id === $source->slot_type_id && $block->typeSlug() === $source->typeSlug());
+      && $block->typeSlug() === $source->typeSlug());
   }
 
   public function hasHumanOnlyBlocks(Page $source, ?Page $draft): bool

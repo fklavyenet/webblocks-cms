@@ -31,9 +31,9 @@ final class McpBlockFields
     private readonly BlockTypeApiAuthoringPolicy $authoring,
   ) {}
 
-  public function textFields(Block $block): array
+  public function textFields(Block|string $block): array
   {
-    return self::COPY[$block->typeSlug()] ?? [];
+    return self::COPY[$block instanceof Block ? $block->typeSlug() : $block] ?? [];
   }
 
   public function acceptsImage(Block $block): bool

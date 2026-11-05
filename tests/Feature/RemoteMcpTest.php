@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
@@ -59,16 +60,16 @@ class RemoteMcpTest extends TestCase
     $this->setMcp(true);
   }
 
-  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_eight_tools(): void
+  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_ten_tools(): void
   {
     $this->get(self::ORIGIN.'/.well-known/oauth-protected-resource/webadmin/mcp')
       ->assertOk()->assertJsonPath('resource', self::MCP);
     $this->get(self::ORIGIN.'/.well-known/oauth-authorization-server/webadmin/mcp')
       ->assertOk()->assertJsonPath('issuer', self::MCP)->assertJsonPath('registration_endpoint', self::MCP.'/register')
       ->assertJsonPath('code_challenge_methods_supported', ['S256'])
-      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft']);
+      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure']);
     $this->rpc('initialize', ['protocolVersion' => '2025-03-26'])->assertJsonPath('result.protocolVersion', '2025-03-26');
-    $this->rpc('tools/list')->assertJsonCount(8, 'result.tools')
+    $this->rpc('tools/list')->assertJsonCount(10, 'result.tools')
       ->assertJsonPath('result.tools.1.annotations.readOnlyHint', false)
       ->assertJsonPath('result.tools.3.annotations.readOnlyHint', true)
       ->assertJsonPath('result.tools.4.annotations.readOnlyHint', false)
@@ -78,7 +79,9 @@ class RemoteMcpTest extends TestCase
       ->assertJsonPath('result.tools.5.securitySchemes.0.scopes', ['pages:read'])
       ->assertJsonPath('result.tools.7.name', 'create_page_draft')
       ->assertJsonPath('result.tools.7.annotations.idempotentHint', true)
-      ->assertJsonPath('result.tools.7.securitySchemes.0.scopes', ['pages:read', 'pages:create-draft']);
+      ->assertJsonPath('result.tools.7.securitySchemes.0.scopes', ['pages:read', 'pages:create-draft'])
+      ->assertJsonPath('result.tools.8.name', 'get_draft_structure')
+      ->assertJsonPath('result.tools.9.securitySchemes.0.scopes', ['pages:read', 'pages:write-draft-structure']);
     $this->tool('find_page', ['path' => '/', 'locale' => 'en'], status: 401)
       ->assertHeader('WWW-Authenticate')->assertJsonPath('result.structuredContent.code', 'auth_required')
       ->assertJsonPath('result._meta.mcp/www_authenticate.0', fn ($header) => str_contains($header, 'resource_metadata='));
@@ -194,6 +197,100 @@ class RemoteMcpTest extends TestCase
     $this->tool('create_page_draft', $input, $token)->assertJsonPath('result.structuredContent.code', 'created_draft_unavailable');
     $this->assertSame(1, Page::count());
     $this->assertSame(1, DB::table('wbcms_mcp_page_drafts')->count());
+  }
+
+  public function test_standalone_draft_structure_can_add_move_and_reorder_without_stale_or_partial_writes(): void
+  {
+    [$page, $hero] = $this->pageFixture();
+    $page->update(['status' => Page::STATUS_DRAFT]);
+    foreach (['stack', 'plain_text'] as $type) {
+      BlockType::create(['slug' => $type, 'name' => $type, 'status' => 'published']);
+    }
+    $user = $this->operator();
+    $old = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $reference = ['page_id' => $page->id, 'locale' => 'en'];
+    $this->tool('get_draft_structure', $reference, $old, 403)->assertJsonPath('result.structuredContent.code', 'auth_required');
+    $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-draft-structure');
+    $version = $this->tool('get_draft_structure', $reference, $token)
+      ->assertJsonPath('result.structuredContent.slots.0', ['name' => 'main', 'managed' => true])
+      ->json('result.structuredContent.version');
+
+    $stack = $this->tool('edit_draft_structure', $reference + [
+      'version' => $version, 'operation' => 'add', 'slot' => 'main', 'type' => 'stack',
+    ], $token)->assertJsonPath('result.structuredContent.draft_id', $page->id)->json('result.structuredContent');
+    $paragraph = $this->tool('edit_draft_structure', $reference + [
+      'version' => $stack['version'], 'operation' => 'add', 'slot' => 'main', 'type' => 'plain_text',
+      'text' => ['content' => 'MCP paragraph'],
+    ], $token)->assertJsonPath('result.structuredContent.draft_id', $page->id)->json('result.structuredContent');
+    $move = $reference + [
+      'operation' => 'move', 'slot' => 'main', 'parent_id' => $stack['block_ids'][0], 'block_id' => $paragraph['block_ids'][0],
+    ];
+    $this->tool('edit_draft_structure', $move + ['version' => $stack['version']], $token)
+      ->assertJsonPath('result.structuredContent.code', 'conflict');
+    $moved = $this->tool('edit_draft_structure', $move + ['version' => $paragraph['version']], $token)
+      ->assertJsonPath('result.structuredContent.block_ids', $paragraph['block_ids'])->json('result.structuredContent');
+    $this->assertSame($stack['block_ids'][0], Block::findOrFail($paragraph['block_ids'][0])->parent_id);
+
+    $this->tool('edit_draft_structure', array_replace($move, [
+      'block_id' => $stack['block_ids'][0], 'parent_id' => $paragraph['block_ids'][0], 'version' => $moved['version'],
+    ]), $token)->assertJsonPath('result.structuredContent.code', 'invalid_block_placement');
+    $reorder = $reference + ['version' => $moved['version'], 'operation' => 'reorder', 'slot' => 'main'];
+    $this->tool('edit_draft_structure', $reorder + ['block_ids' => [$hero->id]], $token)
+      ->assertJsonPath('result.structuredContent.code', 'invalid_block_order');
+    $order = [$stack['block_ids'][0], $hero->id];
+    $preview = $this->tool('edit_draft_structure', $reorder + ['block_ids' => $order], $token)
+      ->assertJsonPath('result.structuredContent.block_ids', $order)->json('result.structuredContent.preview_url');
+
+    $this->assertSame($order, $page->blocks()->whereNull('parent_id')->orderBy('sort_order')->pluck('id')->all());
+    $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
+    $this->assertSame(4, $page->revisions()->count());
+    $this->get($preview)->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')->assertSee('MCP paragraph');
+  }
+
+  public function test_staged_structure_moves_require_both_slots_to_be_promoted_together(): void
+  {
+    [$source, $hero] = $this->pageFixture();
+    $stack = $source->blocks()->create(['type' => 'stack', 'slot_type_id' => $hero->slot_type_id, 'status' => 'published']);
+    $hero->update(['parent_id' => $stack->id]);
+    $aside = SlotType::create(['slug' => 'aside', 'name' => 'Aside', 'status' => 'published', 'sort_order' => 1]);
+    $source->slots()->create(['slot_type_id' => $aside->id, 'source_type' => 'page', 'sort_order' => 1]);
+    $token = $this->connect($this->operator(), $source->site_id, scope: 'pages:read pages:write-content-draft pages:write-draft-structure');
+    $reference = ['page_id' => $source->id, 'locale' => 'en'];
+    $version = $this->tool('get_draft_structure', $reference, $token)
+      ->assertJsonPath('result.structuredContent.draft_id', null)->json('result.structuredContent.version');
+    $prepared = $this->tool('edit_draft_structure', $reference + [
+      'version' => $version, 'operation' => 'prepare', 'slots' => ['main', 'aside'],
+    ], $token)->json('result.structuredContent');
+    $tree = $this->tool('get_draft_structure', $reference, $token)
+      ->assertJsonPath('result.structuredContent.version', $prepared['version'])->json('result.structuredContent');
+    $draftStackId = collect($tree['blocks'])->firstWhere('type', 'stack')['block_id'];
+    $this->tool('edit_draft_structure', $reference + [
+      'version' => $tree['version'], 'operation' => 'move', 'slot' => 'aside', 'block_id' => $draftStackId,
+    ], $token)->assertJsonPath('result.structuredContent.draft_id', $prepared['draft_id']);
+    $this->assertSame($hero->slot_type_id, $hero->fresh()->slot_type_id);
+    $draftBlocks = Page::findOrFail($prepared['draft_id'])->blocks;
+    $this->assertSame([$aside->id], $draftBlocks->pluck('slot_type_id')->unique()->values()->all());
+    $this->assertSame($draftStackId, $draftBlocks->firstWhere('type', 'hero')->parent_id);
+    $contentVersion = $this->tool('get_page_content', $reference, $token)
+      ->assertJsonPath('result.structuredContent.blocks.0.write.blocked_by', null)->json('result.structuredContent.version');
+    $this->tool('update_draft_block', $reference + [
+      'version' => $contentVersion, 'block_id' => $hero->id, 'text' => ['title' => 'Moved hero'],
+    ], $token)->assertJsonPath('result.structuredContent.draft_id', $prepared['draft_id']);
+
+    $plans = app(InternalContentPlanService::class);
+    $promotion = [
+      'mode' => 'promote_staged_page_update', 'staged_page_id' => $prepared['draft_id'],
+      'expected_source_page_id' => $source->id, 'expected_source_path' => '/',
+    ];
+    $partial = $plans->validate(['plan' => $promotion + ['promote_slots' => ['aside']]]);
+    $this->assertFalse($partial->ok);
+    $this->assertContains('Promote both slots together when a block has moved between them.', array_column($partial->errors, 'message'));
+    $full = $plans->apply(['plan' => $promotion + ['promote_slots' => ['main', 'aside']]]);
+    $this->assertTrue($full->ok, json_encode($full->errors));
+    $published = $source->blocks()->get();
+    $this->assertSame([$aside->id], $published->pluck('slot_type_id')->unique()->values()->all());
+    $this->assertSame($published->firstWhere('type', 'stack')->id, $published->firstWhere('type', 'hero')->parent_id);
+    $this->assertSame('Moved hero', $published->firstWhere('type', 'hero')->textTranslations()->orderBy('locale_id')->firstOrFail()->title);
   }
 
   public function test_oauth_binds_codes_to_pkce_callback_resource_and_one_site(): void

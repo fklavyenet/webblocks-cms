@@ -93,6 +93,7 @@ final class McpController
       McpConfiguration::WRITE => $grant['write'],
       McpConfiguration::CONTENT => $grant['edit_content'],
       McpConfiguration::CREATE => $grant['create_draft'],
+      McpConfiguration::STRUCTURE => $grant['edit_structure'],
       default => true,
     };
     if (! $allowed) {
