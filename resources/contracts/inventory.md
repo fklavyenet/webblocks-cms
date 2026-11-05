@@ -32,7 +32,11 @@ Legacy renderer compatibility does not make an unpublished handle available for 
 
 ## Remote MCP Page Editing
 
-The CMS can expose a Streamable HTTP MCP endpoint at `/webadmin/mcp`. The host enables it with `WEBBLOCKS_CMS_MCP_ENABLED`, configures a preregistered OAuth client with `WEBBLOCKS_CMS_MCP_CLIENT_ID`, a random `WEBBLOCKS_CMS_MCP_CLIENT_SECRET` of at least 32 characters and the client's exact HTTPS `WEBBLOCKS_CMS_MCP_REDIRECT_URI`, and uses the HTTPS origin from `WEBBLOCKS_CMS_MCP_ORIGIN` or `APP_URL`. Serve the two OAuth discovery URLs under `/.well-known/` on that origin. The OAuth client is configured separately in the client application. CMS sign-in and any required two-factor verification precede consent for one site. OAuth uses authorization codes with PKCE S256 and one-hour access tokens. A connection can grant `pages:read` and optionally `pages:write-draft`. Each tool checks the current CMS permissions for the site, and localized writes also require the applicable translation permission.
+A Super admin enables the Streamable HTTP endpoint from **System Settings → MCP**. Copy the displayed server URL into a compatible MCP client. The canonical HTTPS origin comes from `APP_URL`. The host serves the two OAuth discovery URLs under `/.well-known/` on that origin. MCP is off by default.
+
+Compatible clients discover the registration endpoint and register independently using OAuth Dynamic Client Registration. They use authorization codes with PKCE S256 and exact registered HTTPS or local loopback callbacks. Registration grants no CMS access. CMS sign-in and any required two-factor verification precede explicit consent for one site. Access tokens expire after one hour. A connection can grant `pages:read` and optionally `pages:write-draft`. Each tool checks the current CMS permissions for the site, and localized writes also require the applicable translation permission.
+
+Users can revoke their own access from **Profile → MCP connections**. Revoking a client invalidates that user's pending codes and active tokens for that client across all sites. Turning MCP off suspends the service. Unexpired, unrevoked grants can resume when it is turned on again.
 
 | Tool | Authoring contract |
 | --- | --- |

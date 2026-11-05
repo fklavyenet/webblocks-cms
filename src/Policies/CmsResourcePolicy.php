@@ -53,7 +53,7 @@ final class CmsResourcePolicy
 
       return;
     }
-    if ($name === 'dashboard' || $name === 'profile.edit' || in_array($name, ['profile.update', 'profile.password.update', 'profile.locale.update'], true)) {
+    if ($name === 'dashboard' || $name === 'profile.edit' || in_array($name, ['profile.update', 'profile.password.update', 'profile.locale.update', 'profile.mcp-connections.index', 'profile.mcp-connections.destroy'], true)) {
     return;
     }
     abort_if(str_starts_with($name, 'pages.assets.'), 403);

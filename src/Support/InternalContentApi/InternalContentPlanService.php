@@ -36,6 +36,7 @@ use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactConsentValidationException;
+use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -842,7 +843,7 @@ class InternalContentPlanService
 
     // This baseline is set once. Reusing a draft may refresh workflow metadata,
     // but cannot make its existing content a copy of a newer published version.
-    if (config('webblocks-cms.mcp.enabled') && Schema::hasTable('wbcms_staged_page_bases')) {
+    if (app(McpConfiguration::class)->enabled() && Schema::hasTable('wbcms_staged_page_bases')) {
       DB::table('wbcms_staged_page_bases')->insert([
         'page_id' => $stagedPage->id,
         'source_fingerprint' => SnapshotContent::hash($this->pageRevisionManager->snapshotForInspection($sourcePage)),

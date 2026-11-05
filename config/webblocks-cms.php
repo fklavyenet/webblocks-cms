@@ -30,13 +30,6 @@ return [
         'max_login_attempts' => (int) env('WEBBLOCKS_CMS_MAX_LOGIN_ATTEMPTS', 5),
         'login_decay_seconds' => (int) env('WEBBLOCKS_CMS_LOGIN_DECAY_SECONDS', 60),
     ],
-    'mcp' => [
-        'enabled' => (bool) env('WEBBLOCKS_CMS_MCP_ENABLED', false),
-        'origin' => env('WEBBLOCKS_CMS_MCP_ORIGIN'),
-        'client_id' => env('WEBBLOCKS_CMS_MCP_CLIENT_ID'),
-        'client_secret' => env('WEBBLOCKS_CMS_MCP_CLIENT_SECRET'),
-        'redirect_uri' => env('WEBBLOCKS_CMS_MCP_REDIRECT_URI'),
-    ],
     'diagnostics' => [
         'load_routes' => env('WEBBLOCKS_CMS_DIAGNOSTICS_LOAD_ROUTES', false),
     ],

@@ -23,6 +23,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\JobController;
 use WebBlocks\Cms\Http\Controllers\Admin\ListingViewController;
 use WebBlocks\Cms\Http\Controllers\Admin\LocaleController;
 use WebBlocks\Cms\Http\Controllers\Admin\MaintenanceCleanupController;
+use WebBlocks\Cms\Http\Controllers\Admin\McpConnectionsController;
 use WebBlocks\Cms\Http\Controllers\Admin\MediaController;
 use WebBlocks\Cms\Http\Controllers\Admin\NavigationItemController;
 use WebBlocks\Cms\Http\Controllers\Admin\PackageAdminStatusController;
@@ -336,6 +337,9 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::match(['put', 'patch'], '/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale.update');
     Route::match(['put', 'patch'], '/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::get('/profile/mcp-connections', [McpConnectionsController::class, 'index'])->name('profile.mcp-connections.index');
+    Route::delete('/profile/mcp-connections/{connection}', [McpConnectionsController::class, 'destroy'])
+      ->where('connection', '[a-f0-9]{64}')->name('profile.mcp-connections.destroy');
     Route::get('/profile/api-tokens', [PersonalApiTokenController::class, 'index'])->name('profile.api-tokens.index');
     Route::post('/profile/api-tokens', [PersonalApiTokenController::class, 'store'])->name('profile.api-tokens.store');
     Route::put('/profile/api-tokens/{token}', [PersonalApiTokenController::class, 'update'])->name('profile.api-tokens.update');
@@ -528,6 +532,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::get('system/health', [SystemHealthController::class, 'index'])->name('system.health.index');
       Route::post('system/health/refresh', [SystemHealthController::class, 'refresh'])->middleware('throttle:6,1')->name('system.health.refresh');
       Route::get('system/information', SystemInformationController::class)->name('system.information');
+      Route::put('system/settings/mcp', [SystemSettingsController::class, 'updateMcp'])->name('system.settings.mcp.update');
       Route::put('system/settings', [SystemSettingsController::class, 'update'])->name('system.settings.update');
       Route::post('system/settings/mail/verification', [VerificationEmailSettingsController::class, 'update'])->name('system.settings.mail.verification');
       Route::put('system/settings/security', [RequestSecuritySettingsController::class, 'update'])->name('system.settings.security.update');

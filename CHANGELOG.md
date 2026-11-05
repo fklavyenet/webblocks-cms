@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.120.0
+
+- Let Super admins enable and disable remote MCP from System Settings and copy the server URL.
+- Allow multiple compatible OAuth clients to register dynamically and request site-scoped consent using PKCE S256.
+- Let CMS users revoke their own MCP connections across sites, including pending authorization codes.
+- Replace the MCP-specific environment configuration with the panel setting, dynamic registration and the installation’s canonical HTTPS URL.
+
 ## 1.119.0
 
 - Add an opt-in remote MCP endpoint with CMS sign-in and site-scoped OAuth consent.

@@ -4,7 +4,8 @@
     <div class="wb-auth-shell">
         <div class="wb-auth-card wb-stack wb-gap-4">
             <h1>{{ __('webblocks-cms::mcp.connect') }}</h1>
-            <p>{{ __('webblocks-cms::mcp.consent_read', ['client' => $client]) }}</p>
+            <p>{{ __('webblocks-cms::mcp.consent_read', ['client' => $clientName]) }}</p>
+            <p>{{ __('webblocks-cms::mcp.callback_host', ['host' => $callbackAddress]) }}</p>
             @if ($write)
                 <p>{{ __('webblocks-cms::mcp.consent_write') }}</p>
             @endif

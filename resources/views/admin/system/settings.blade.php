@@ -13,6 +13,7 @@
         'privacy' => $systemText('privacy'),
         'security' => $systemText('security'),
         ...($canManageLogFormat ? ['logging' => $systemText('logging')] : []),
+        'mcp' => __('webblocks-cms::mcp.title'),
         'runtime' => $systemText('runtime_information'),
     ];
     $systemTab = old('section', request()->query('tab', 'general'));
@@ -385,6 +386,9 @@
                         </form>
                     </div>
                     @endif
+                    <div class="wb-tabs-panel {{ $systemTab === 'mcp' ? 'is-active' : '' }}" id="system-settings-mcp-panel">
+                        @include('webblocks-cms::admin.system.partials.mcp-settings')
+                    </div>
                     <div class="wb-tabs-panel {{ $systemTab === 'runtime' ? 'is-active' : '' }}" id="system-settings-runtime-panel">
         <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $systemText('runtime_information') }}</strong></div>

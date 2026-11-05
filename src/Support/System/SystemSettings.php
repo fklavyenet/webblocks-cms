@@ -13,6 +13,8 @@ use WebBlocks\Cms\Support\WebBlocks;
 
 class SystemSettings
 {
+  public const MCP_ENABLED = 'system.mcp_enabled';
+
   public const LOG_FORMAT = 'system.log_format';
 
   public const PROJECT_NAME = 'system.project_name';
@@ -108,6 +110,7 @@ class SystemSettings
 
   private const READABLE_KEYS = [
     self::LOG_FORMAT,
+    self::MCP_ENABLED,
     ...self::CLEANUP_AUTOMATIC_KEYS,
     ...self::BACKUP_LIFECYCLE_KEYS,
     self::PROJECT_NAME,
@@ -146,6 +149,7 @@ class SystemSettings
 
   public const MANAGED_KEYS = [
     self::LOG_FORMAT,
+    self::MCP_ENABLED,
     ...self::CLEANUP_AUTOMATIC_KEYS,
     ...self::BACKUP_LIFECYCLE_KEYS,
     self::PROJECT_NAME,
