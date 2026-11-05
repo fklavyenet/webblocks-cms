@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Mcp;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use stdClass;
@@ -54,7 +55,7 @@ final class McpTools
     private readonly UploadMedia $upload,
   ) {}
 
-  public function descriptors(): array
+  public function descriptors(array $available = McpConfiguration::SCOPES): array
   {
     $locale = ['type' => 'string', 'maxLength' => 35];
     $id = ['type' => 'integer', 'minimum' => 1];
@@ -80,7 +81,7 @@ final class McpTools
     }
     $translation['og_image_media_id'] = ['type' => ['integer', 'null'], 'minimum' => 1];
 
-    return [
+    $tools = [
       $this->descriptor(self::READ, 'read_description', ['locale' => $locale, 'page_id' => $id, 'path' => ['type' => 'string', 'maxLength' => 255]], ['locale'], [
         'oneOf' => [['required' => ['page_id']], ['required' => ['path']]],
       ]),
@@ -157,6 +158,8 @@ final class McpTools
         'description' => ['type' => 'string', 'maxLength' => self::UPLOAD_COPY_LIMIT],
       ], ['filename', 'content_base64']),
     ];
+
+    return array_values(array_filter($tools, fn (array $tool) => in_array($this->scope($tool['name']), $available, true)));
   }
 
   public function scope(string $name): ?string
@@ -165,10 +168,14 @@ final class McpTools
       self::READ, self::SEARCH, self::PREVIEW => McpConfiguration::READ,
       self::WRITE => McpConfiguration::WRITE,
       self::CREATE => McpConfiguration::CREATE,
-      self::STRUCTURE, self::EDIT_STRUCTURE => McpConfiguration::STRUCTURE,
-      self::TRANSLATION, self::EDIT_TRANSLATION => McpConfiguration::TRANSLATION,
+      self::STRUCTURE => McpConfiguration::READ_STRUCTURE,
+      self::EDIT_STRUCTURE => McpConfiguration::STRUCTURE,
+      self::TRANSLATION => McpConfiguration::READ_TRANSLATION,
+      self::EDIT_TRANSLATION => McpConfiguration::TRANSLATION,
       self::UPLOAD => McpConfiguration::UPLOAD,
-      self::CONTENT, self::EDIT, self::MEDIA => McpConfiguration::CONTENT,
+      self::CONTENT => McpConfiguration::READ_CONTENT,
+      self::EDIT => McpConfiguration::CONTENT,
+      self::MEDIA => McpConfiguration::READ_MEDIA,
       default => null,
     };
   }
@@ -177,7 +184,7 @@ final class McpTools
   {
     $input = $this->validate($name, $args);
 
-    return match ($name) {
+    $result = match ($name) {
       self::READ => $this->pages->read($grant['site'], $input),
       self::SEARCH => $this->pages->search($grant['site'], $input),
       self::PREVIEW => $this->pages->preview($grant['site'], $input),
@@ -187,11 +194,15 @@ final class McpTools
       self::TRANSLATION => $this->translation->read($grant['site'], $input),
       self::EDIT_TRANSLATION => $this->translation->handle($grant['user'], $grant['site'], $input),
       self::WRITE => $this->updateBlock->handle($grant['user'], $grant['site'], $input, headingOnly: true),
-      self::CONTENT => $this->pages->content($grant['user'], $grant['site'], $input),
+      self::CONTENT => $this->pages->content($grant['user'], $grant['site'], $input, in_array(McpConfiguration::CONTENT, $grant['scopes'], true)),
       self::EDIT => $this->updateBlock->handle($grant['user'], $grant['site'], $input),
       self::MEDIA => $this->media->find($grant['user'], $grant['site'], $input),
       self::UPLOAD => $this->upload->handle($grant['user'], $grant['site'], $input),
     };
+
+    return $name === self::EDIT_TRANSLATION && ! in_array(McpConfiguration::READ_TRANSLATION, $grant['scopes'], true)
+      ? Arr::except($result, ['translation', 'changes'])
+      : $result;
   }
 
   private function validate(string $name, array $args): array

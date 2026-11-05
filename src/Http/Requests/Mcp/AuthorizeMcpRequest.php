@@ -35,7 +35,7 @@ final class AuthorizeMcpRequest extends FormRequest
       'code_challenge_method' => ['required', Rule::in(['S256'])],
       'code_challenge' => ['required', 'string', 'regex:/\A[A-Za-z0-9_-]{43}\z/'],
       'state' => ['nullable', 'string', 'max:512'],
-      'scope' => ['bail', 'nullable', 'string', 'max:150', function (string $key, string $value, \Closure $fail): void {
+      'scope' => ['bail', 'nullable', 'string', 'max:'.strlen(implode(' ', McpConfiguration::SCOPES)), function (string $key, string $value, \Closure $fail): void {
         if (array_diff(explode(' ', $value), McpConfiguration::SCOPES)) {
           $fail(__('webblocks-cms::mcp.invalid_request'));
         }

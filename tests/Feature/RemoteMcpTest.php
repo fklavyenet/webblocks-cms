@@ -7,6 +7,7 @@ use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -70,7 +71,7 @@ class RemoteMcpTest extends TestCase
     $this->get(self::ORIGIN.'/.well-known/oauth-authorization-server/webadmin/mcp')
       ->assertOk()->assertJsonPath('issuer', self::MCP)->assertJsonPath('registration_endpoint', self::MCP.'/register')
       ->assertJsonPath('code_challenge_methods_supported', ['S256'])
-      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure', 'pages:write-draft-translation', 'media:upload']);
+      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure', 'pages:write-draft-translation', 'media:upload', 'pages:read-content', 'pages:read-draft-structure', 'pages:read-draft-translation', 'media:read']);
     $this->rpc('initialize', ['protocolVersion' => '2025-03-26'])->assertJsonPath('result.protocolVersion', '2025-03-26');
     $this->rpc('tools/list')->assertJsonCount(13, 'result.tools')
       ->assertJsonPath('result.tools.1.annotations.readOnlyHint', false)
@@ -84,6 +85,7 @@ class RemoteMcpTest extends TestCase
       ->assertJsonPath('result.tools.7.annotations.idempotentHint', true)
       ->assertJsonPath('result.tools.7.securitySchemes.0.scopes', ['pages:read', 'pages:create-draft'])
       ->assertJsonPath('result.tools.8.name', 'get_draft_structure')
+      ->assertJsonPath('result.tools.8.securitySchemes.0.scopes', ['pages:read', 'pages:read-draft-structure'])
       ->assertJsonPath('result.tools.9.securitySchemes.0.scopes', ['pages:read', 'pages:write-draft-structure'])
       ->assertJsonPath('result.tools.12.name', 'upload_media')
       ->assertJsonPath('result.tools.12.securitySchemes.0.scopes', ['pages:read', 'media:upload']);
@@ -212,10 +214,10 @@ class RemoteMcpTest extends TestCase
       BlockType::create(['slug' => $type, 'name' => $type, 'status' => 'published']);
     }
     $user = $this->operator();
-    $old = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $old = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft pages:read-content');
     $reference = ['page_id' => $page->id, 'locale' => 'en'];
     $this->tool('get_draft_structure', $reference, $old, 403)->assertJsonPath('result.structuredContent.code', 'auth_required');
-    $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-draft-structure');
+    $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-draft-structure pages:read-draft-structure');
     $version = $this->tool('get_draft_structure', $reference, $token)
       ->assertJsonPath('result.structuredContent.slots.0', ['name' => 'main', 'managed' => true])
       ->json('result.structuredContent.version');
@@ -259,7 +261,7 @@ class RemoteMcpTest extends TestCase
     $hero->update(['parent_id' => $stack->id]);
     $aside = SlotType::create(['slug' => 'aside', 'name' => 'Aside', 'status' => 'published', 'sort_order' => 1]);
     $source->slots()->create(['slot_type_id' => $aside->id, 'source_type' => 'page', 'sort_order' => 1]);
-    $token = $this->connect($this->operator(), $source->site_id, scope: 'pages:read pages:write-content-draft pages:write-draft-structure');
+    $token = $this->connect($this->operator(), $source->site_id, scope: 'pages:read pages:write-content-draft pages:write-draft-structure pages:read-draft-structure pages:read-content');
     $reference = ['page_id' => $source->id, 'locale' => 'en'];
     $version = $this->tool('get_draft_structure', $reference, $token)
       ->assertJsonPath('result.structuredContent.draft_id', null)->json('result.structuredContent.version');
@@ -305,10 +307,10 @@ class RemoteMcpTest extends TestCase
     $sourceTranslation = $page->translationForLocale($en);
     $sourceTranslation->update(['seo_title' => 'Original SEO', 'og_description' => 'Keep this']);
     $user = $this->operator();
-    $old = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $old = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft pages:read-content');
     $reference = ['page_id' => $page->id, 'locale' => 'en'];
     $this->tool('get_draft_translation', $reference, $old, 403)->assertJsonPath('result.structuredContent.code', 'auth_required');
-    $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-draft-translation');
+    $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-draft-translation pages:read-draft-translation');
     $version = $this->tool('get_draft_translation', $reference, $token)->json('result.structuredContent.version');
     $input = $reference + ['version' => $version, 'name' => 'Edited name', 'path' => '/new-path', 'seo_title' => 'Edited SEO'];
     $result = $this->tool('update_draft_translation', $input, $token)
@@ -350,7 +352,7 @@ class RemoteMcpTest extends TestCase
     [$page] = $this->pageFixture();
     $locale = Locale::create(['code' => 'de', 'name' => 'Deutsch', 'is_enabled' => true]);
     $page->site->locales()->attach($locale->id, ['is_enabled' => true]);
-    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-draft-translation');
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-draft-translation pages:read-draft-translation');
     $reference = ['page_id' => $page->id, 'locale' => 'de'];
     $version = $this->tool('get_draft_translation', $reference, $token)->json('result.structuredContent.version');
     $first = $this->tool('update_draft_translation', $reference + [
@@ -374,7 +376,7 @@ class RemoteMcpTest extends TestCase
   {
     [$page] = $this->pageFixture();
     $page->update(['status' => Page::STATUS_DRAFT]);
-    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-draft-translation');
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-draft-translation pages:read-draft-translation');
     $reference = ['page_id' => $page->id, 'locale' => 'tr'];
     $version = $this->tool('get_draft_translation', $reference, $token)->json('result.structuredContent.version');
     $this->tool('update_draft_translation', $reference + [
@@ -434,6 +436,81 @@ class RemoteMcpTest extends TestCase
     $this->put($settingsUrl.'/mcp', ['mcp_enabled' => '0'])->assertRedirect();
     $this->postJson(self::MCP.'/register', ['redirect_uris' => [self::REDIRECT]])->assertNotFound();
     $this->postJson(self::MCP, [])->assertNotFound();
+  }
+
+  public function test_read_scopes_allow_inspection_without_enabling_draft_edits(): void
+  {
+    [$page] = $this->pageFixture();
+    $user = $this->operator();
+    $token = $this->connect($user, $page->site_id,
+      scope: 'pages:read pages:read-content pages:read-draft-structure pages:read-draft-translation media:read');
+    $input = ['page_id' => $page->id, 'locale' => 'en'];
+    $this->tool('get_page_content', $input, $token)
+      ->assertJsonPath('result.structuredContent.blocks.0.write.text_fields', [])
+      ->assertJsonPath('result.structuredContent.blocks.0.write.blocked_by', 'forbidden');
+    $this->tool('get_draft_structure', $input, $token)->assertJsonPath('result.structuredContent.page_id', $page->id);
+    $version = $this->tool('get_draft_translation', $input, $token)
+      ->assertJsonPath('result.structuredContent.page_id', $page->id)->json('result.structuredContent.version');
+    $this->tool('find_media', [], $token)->assertJsonPath('result.structuredContent.images', []);
+    foreach (['update_draft_block', 'edit_draft_structure', 'update_draft_translation', 'upload_media'] as $tool) {
+      $this->tool($tool, $input, $token, 403)->assertJsonPath('result.structuredContent.code', 'auth_required');
+    }
+    $writeOnly = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-draft-translation');
+    $this->tool('get_draft_translation', $input, $writeOnly, 403)->assertJsonPath('result.structuredContent.code', 'auth_required');
+    $this->tool('update_draft_translation', $input + ['version' => $version, 'seo_title' => 'Write only'], $writeOnly)
+      ->assertJsonMissingPath('result.structuredContent.translation')
+      ->assertJsonMissingPath('result.structuredContent.changes')
+      ->assertJsonPath('result.structuredContent.page_id', $page->id);
+  }
+
+  public function test_scope_settings_suspend_active_and_pending_grants_and_keep_profile_permissions_separate_by_site(): void
+  {
+    [$page] = $this->pageFixture();
+    $otherSite = Site::create(['handle' => 'branch-office', 'name' => 'Branch office']);
+    $user = $this->operator();
+    $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:read-draft-translation pages:write-draft-translation');
+    $this->connect($user, $otherSite->id, scope: 'pages:read media:read');
+    $auth = array_replace($this->authorizationRequest(), ['scope' => 'pages:read pages:write-draft-translation']);
+    $pending = $this->consent($page->site_id, $auth);
+    $settings = self::ORIGIN.'/webadmin/system/settings/mcp';
+    $profile = self::ORIGIN.'/webadmin/profile/mcp-connections';
+    $allowed = ['mcp_enabled' => '1', 'manage_mcp_scopes' => '1', 'mcp_scopes' => ['pages:read-draft-translation', 'media:read']];
+    $this->put($settings, $allowed)->assertRedirect();
+
+    $this->get($profile)->assertOk()->assertSee('Branch office')
+      ->assertViewHas('connections', function ($connections) use ($page, $otherSite): bool {
+        $active = $connections->getCollection()->reject(fn ($row) => $row->pending)->keyBy('site_id');
+
+        return $active[$page->site_id]->permissions === ['scope_read' => true, 'scope_write_translation' => false, 'scope_read_translation' => true]
+          && $active[$otherSite->id]->permissions === ['scope_read' => true, 'scope_read_media' => true];
+      });
+    $this->post(self::MCP.'/authorize', $auth + ['site_id' => $page->site_id, 'decision' => 'allow'])->assertForbidden();
+    $this->exchange($pending)->assertBadRequest()->assertJsonPath('error', 'invalid_grant');
+    $this->assertNotContains('update_draft_translation', array_column($this->rpc('tools/list')->json('result.tools'), 'name'));
+    $input = ['page_id' => $page->id, 'locale' => 'en'];
+    $version = $this->tool('get_draft_translation', $input, $token)->json('result.structuredContent.version');
+    $edit = $input + ['version' => $version, 'seo_title' => 'Revised title'];
+    $this->tool('update_draft_translation', $edit, $token, 403)->assertJsonPath('result.structuredContent.code', 'scope_disabled');
+    $allowed['mcp_scopes'][] = 'pages:write-draft-translation';
+    $this->put($settings, $allowed)->assertRedirect();
+    $this->tool('update_draft_translation', $edit, $token)
+      ->assertJsonPath('result.structuredContent.translation.seo_title', 'Revised title');
+  }
+
+  public function test_existing_combined_grants_keep_only_their_previous_read_access_after_upgrade(): void
+  {
+    [$page] = $this->pageFixture();
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-content-draft');
+    Schema::table('wbcms_mcp_grants', fn ($table) => $table->dropColumn([
+      'can_read_content', 'can_read_structure', 'can_read_translations', 'can_read_media',
+    ]));
+    $migration = require dirname(__DIR__, 2).'/database/migrations/updates/2026_11_05_200000_split_mcp_read_grants.php';
+    $migration->up();
+
+    $input = ['page_id' => $page->id, 'locale' => 'en'];
+    $this->tool('get_page_content', $input, $token)->assertJsonPath('result.structuredContent.page_id', $page->id);
+    $this->tool('find_media', [], $token)->assertJsonPath('result.structuredContent.images', []);
+    $this->tool('get_draft_translation', $input, $token, 403)->assertJsonPath('result.structuredContent.code', 'auth_required');
   }
 
   public function test_registered_clients_require_consent_and_use_exact_callbacks_and_pkce(): void
@@ -632,14 +709,18 @@ class RemoteMcpTest extends TestCase
     [$page] = $this->pageFixture();
     $user = $this->operator();
     $token = $this->connect($user, $page->site_id);
-    foreach (['get_page_content', 'update_draft_block', 'find_media'] as $name) {
+    foreach ([
+      'get_page_content' => 'pages:read-content',
+      'update_draft_block' => 'pages:write-content-draft',
+      'find_media' => 'media:read',
+    ] as $name => $scope) {
       $this->tool($name, [], $token, 403)->assertJsonPath('result.structuredContent.code', 'auth_required')
-        ->assertJsonPath('result._meta.mcp/www_authenticate.0', fn ($header) => str_contains($header, 'scope="pages:read pages:write-content-draft"'));
+        ->assertJsonPath('result._meta.mcp/www_authenticate.0', fn ($header) => str_contains($header, 'scope="pages:read '.$scope.'"'));
     }
 
     $auth = array_replace($this->authorizationRequest(), ['scope' => 'pages:read pages:write-content-draft']);
     $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertOk()
-      ->assertSee('Read and edit supported localized block text');
+      ->assertSee(__('webblocks-cms::mcp.scope_write_content'))->assertDontSee(__('webblocks-cms::mcp.scope_read_content'));
     $this->exchange($this->consent($page->site_id, $auth))->assertOk()
       ->assertJsonPath('scope', 'pages:read pages:write-content-draft');
   }
@@ -652,7 +733,7 @@ class RemoteMcpTest extends TestCase
     $rich = $page->blocks()->create([
       'type' => 'rich-text', 'slot_type_id' => $hero->slot_type_id, 'status' => 'published', 'sort_order' => 1,
     ]);
-    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-content-draft pages:read-content');
     $reference = ['page_id' => $page->id, 'locale' => 'tr'];
     $version = $this->tool('get_page_content', $reference, $token)
       ->assertJsonPath('result.structuredContent.blocks.0.text.content', 'Inherited copy')
@@ -693,7 +774,7 @@ class RemoteMcpTest extends TestCase
     $aside = SlotType::create(['slug' => 'aside', 'name' => 'Aside', 'status' => 'published', 'sort_order' => 1]);
     $page->slots()->create(['slot_type_id' => $aside->id, 'source_type' => 'page', 'sort_order' => 1]);
     $image = $page->blocks()->create(['type' => 'image', 'slot_type_id' => $aside->id, 'status' => 'published', 'sort_order' => 0]);
-    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-content-draft pages:read-content');
     $reference = ['page_id' => $page->id, 'locale' => 'en'];
     $version = $this->tool('get_page_content', $reference, $token)
       ->assertJsonPath('result.structuredContent.blocks.0.write.text_fields', ['title', 'subtitle', 'content'])
@@ -738,7 +819,7 @@ class RemoteMcpTest extends TestCase
     $foreign = Media::create($media + ['path' => 'other.png', 'filename' => 'other.png', 'original_name' => 'other.png', 'title' => 'MCP foreign image']);
     $otherSite->update(['favicon_media_id' => $foreign->id]);
 
-    $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft pages:read-content media:read');
     $this->tool('find_media', ['q' => 'MCP'], $token)->assertJsonCount(1, 'result.structuredContent.images')
       ->assertJsonPath('result.structuredContent.images.0.media_id', $available->id);
 
@@ -771,7 +852,7 @@ class RemoteMcpTest extends TestCase
     $this->tool('upload_media', $input, $old, 403)
       ->assertJsonPath('result.structuredContent.code', 'auth_required');
 
-    $auth = array_replace($this->authorizationRequest(), ['scope' => 'pages:read pages:write-content-draft media:upload']);
+    $auth = array_replace($this->authorizationRequest(), ['scope' => 'pages:read pages:write-content-draft media:upload media:read']);
     $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertOk()->assertSee(__('webblocks-cms::mcp.consent_upload'));
     $token = $this->exchange($this->consent($page->site_id, $auth))->assertOk()
       ->assertJsonPath('scope', $auth['scope'])->json('access_token');

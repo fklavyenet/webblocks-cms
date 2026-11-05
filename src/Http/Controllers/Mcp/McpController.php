@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use JsonException;
 use stdClass;
 use Symfony\Component\HttpFoundation\Response;
+use WebBlocks\Cms\Policies\McpPagePolicy;
 use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Mcp\McpGrants;
 use WebBlocks\Cms\Support\Mcp\McpToolException;
@@ -24,6 +25,7 @@ final class McpController
     private readonly McpConfiguration $config,
     private readonly McpGrants $grants,
     private readonly McpTools $tools,
+    private readonly McpPagePolicy $policy,
   ) {}
 
   public function __invoke(Request $request): Response
@@ -76,7 +78,7 @@ final class McpController
     return match ($message->method) {
       'initialize' => $this->initialize($id, $message->params ?? new stdClass),
       'ping' => $this->result($id, new stdClass),
-      'tools/list' => $this->result($id, ['tools' => $this->tools->descriptors()]),
+      'tools/list' => $this->result($id, ['tools' => $this->tools->descriptors($this->config->availableScopes())]),
       'tools/call' => $this->callTool($id, $message->params ?? new stdClass, $request),
       default => $this->error($id, -32601, 'Method not found.'),
     };
@@ -104,16 +106,11 @@ final class McpController
     }
 
     $grant = $this->grants->authenticate($request->bearerToken());
-    $allowed = $grant && match ($scope) {
-      McpConfiguration::WRITE => $grant['write'],
-      McpConfiguration::CONTENT => $grant['edit_content'],
-      McpConfiguration::CREATE => $grant['create_draft'],
-      McpConfiguration::STRUCTURE => $grant['edit_structure'],
-      McpConfiguration::TRANSLATION => $grant['edit_translations'],
-      McpConfiguration::UPLOAD => $grant['upload_media'],
-      default => true,
-    };
-    if (! $allowed) {
+    $available = $this->config->availableScopes();
+    if (! in_array($scope, $available, true)) {
+      return $this->toolError($id, new McpToolException('scope_disabled'))->setStatusCode(403);
+    }
+    if (! $grant || ! in_array($scope, $grant['scopes'], true)) {
       $error = $grant ? 'insufficient_scope' : 'invalid_token';
       $required = $scope === McpConfiguration::READ ? $scope : McpConfiguration::READ.' '.$scope;
       $challenge = 'Bearer resource_metadata="'.$this->config->origin().McpConfiguration::RESOURCE_METADATA
@@ -122,6 +119,10 @@ final class McpController
       return $this->toolError($id, new McpToolException('auth_required'), ['mcp/www_authenticate' => [$challenge]])
         ->setStatusCode($grant ? 403 : 401)->header('WWW-Authenticate', $challenge);
     }
+    if (! $this->policy->allowsScopes($grant['user'], $grant['site'], [$scope])) {
+      return $this->toolError($id, new McpToolException('forbidden'));
+    }
+    $grant['scopes'] = array_intersect($grant['scopes'], $available);
 
     try {
       $data = $this->tools->call($name, (array) ($params->arguments ?? []), $grant);

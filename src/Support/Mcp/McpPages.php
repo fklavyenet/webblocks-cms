@@ -189,7 +189,7 @@ final class McpPages
     ];
   }
 
-  public function content(User $user, int $siteId, array $input): array
+  public function content(User $user, int $siteId, array $input, bool $mayWrite = true): array
   {
     $source = $this->page($siteId, $input);
     $locale = $this->locale($source, $input['locale']);
@@ -201,6 +201,7 @@ final class McpPages
     $managed = $draft?->setting('staged_update.managed_slots', []);
     $canReadMedia = $defaultLocale && $this->policy->readMedia($user, $siteId);
     $writeBlocker = match (true) {
+      ! $mayWrite => 'forbidden',
       $draft && $draft->status !== Page::STATUS_DRAFT => 'conflict',
       $draft && ! $verified => 'unverified_base',
       $draft && ! $draft->translationForLocale($locale) => 'draft_locale_unavailable',

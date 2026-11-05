@@ -26,6 +26,18 @@
                 <span id="settings-mcp-copy-status" class="wb-text-sm" role="status" aria-live="polite"></span>
             </div>
         @endif
+        <div class="wb-stack-3" role="group" aria-labelledby="mcp-allowed-scopes">
+            <h3 id="mcp-allowed-scopes">{{ __('webblocks-cms::mcp.allowed_scopes') }}</h3>
+            <p>{{ __('webblocks-cms::mcp.allowed_scopes_help') }}</p>
+            <input type="hidden" name="manage_mcp_scopes" value="1">
+            @foreach ($mcpScopes as $scope => $label)
+                <label class="wb-check">
+                    <input type="checkbox" name="mcp_scopes[]" value="{{ $scope }}"
+                        @checked(in_array($scope, old('manage_mcp_scopes') ? (array) old('mcp_scopes', []) : $mcpAvailableScopes, true))>
+                    <span>{{ __('webblocks-cms::mcp.'.$label) }}</span>
+                </label>
+            @endforeach
+        </div>
         <p class="wb-text-muted">{{ __('webblocks-cms::mcp.disable_help') }}</p>
     </div>
     <div class="wb-card-footer"><button class="wb-btn wb-btn-primary" type="submit">{{ __('webblocks-cms::mcp.save') }}</button></div>

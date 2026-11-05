@@ -31,7 +31,7 @@ final class McpOAuthController
     return response()->json([
       'resource' => $this->config->resource(),
       'authorization_servers' => [$this->config->resource()],
-      'scopes_supported' => McpConfiguration::SCOPES,
+      'scopes_supported' => $this->config->availableScopes(),
       'bearer_methods_supported' => ['header'],
     ]);
   }
@@ -49,7 +49,7 @@ final class McpOAuthController
       'grant_types_supported' => ['authorization_code'],
       'token_endpoint_auth_methods_supported' => McpOAuthClient::AUTH_METHODS,
       'code_challenge_methods_supported' => ['S256'],
-      'scopes_supported' => McpConfiguration::SCOPES,
+      'scopes_supported' => $this->config->availableScopes(),
       'authorization_response_iss_parameter_supported' => true,
     ]);
   }
@@ -82,15 +82,12 @@ final class McpOAuthController
     $client = $request->client();
     $redirect = $data['redirect_uri'];
     abort_unless($user instanceof User, 403);
-    $scopes = explode(' ', $data['scope'] ?? '');
-    $write = in_array(McpConfiguration::WRITE, $scopes, true);
-    $editContent = in_array(McpConfiguration::CONTENT, $scopes, true);
-    $createDraft = in_array(McpConfiguration::CREATE, $scopes, true);
-    $editStructure = in_array(McpConfiguration::STRUCTURE, $scopes, true);
-    $editTranslations = in_array(McpConfiguration::TRANSLATION, $scopes, true);
-    $uploadMedia = in_array(McpConfiguration::UPLOAD, $scopes, true);
-    $canAuthorize = fn (int $siteId): bool => $this->allowed($user, $siteId, $write || $editContent || $editStructure || $editTranslations, $createDraft)
-      && (! $uploadMedia || $this->policy->uploadMedia($user, $siteId));
+    $requested = isset($data['scope']) ? explode(' ', $data['scope']) : [];
+    $scopes = array_intersect(McpConfiguration::SCOPES, [McpConfiguration::READ, ...$requested]);
+    $canAuthorize = fn (int $siteId): bool => $this->policy->allowsScopes($user, $siteId, $scopes);
+    if ($request->isMethod('GET') || $data['decision'] === 'allow') {
+      abort_if(array_diff($scopes, $this->config->availableScopes()) !== [], 403, __('webblocks-cms::mcp.scope_disabled'));
+    }
 
     if ($request->isMethod('GET')) {
       $sites = Site::query()->whereIn('id', $user->accessibleSiteIds())->orderBy('name')->get(['id', 'name'])
@@ -103,7 +100,13 @@ final class McpOAuthController
       $callbackAddress = $callbackHost.($port === null ? '' : ':'.$port);
       $callbackOrigin = parse_url($redirect, PHP_URL_SCHEME).'://'.$callbackAddress;
 
-      return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'write', 'editContent', 'createDraft', 'editStructure', 'editTranslations', 'uploadMedia', 'data', 'clientName', 'callbackAddress'), headers: [
+      $permissions = array_map(fn (string $scope) => match ($scope) {
+        McpConfiguration::READ => 'consent_read',
+        McpConfiguration::UPLOAD => 'consent_upload',
+        default => McpConfiguration::LABELS[$scope],
+      }, $scopes);
+
+      return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'permissions', 'data', 'clientName', 'callbackAddress'), headers: [
         // Chromium applies form-action to the redirect after the consent POST.
         'Content-Security-Policy' => "frame-ancestors 'none'; form-action 'self' {$callbackOrigin}; base-uri 'none'",
         'X-Frame-Options' => 'DENY',
@@ -151,11 +154,5 @@ final class McpOAuthController
     $token = $this->grants->exchange($form['code'], $form['code_verifier'], $client, $form['redirect_uri']);
 
     return $token === null ? response()->json(['error' => 'invalid_grant'], 400) : response()->json($token);
-  }
-
-  private function allowed(User $user, int $siteId, bool $write, bool $createDraft): bool
-  {
-    return ($write ? $this->policy->write($user, $siteId) : $this->policy->read($user, $siteId))
-      && (! $createDraft || $this->policy->createDraft($user, $siteId));
   }
 }

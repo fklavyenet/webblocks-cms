@@ -24,12 +24,8 @@ final class McpGrants
     $this->grants()->insert([
       'user_id' => $user->getAuthIdentifier(),
       'site_id' => $siteId,
-      'can_write' => in_array(McpConfiguration::WRITE, $scopes, true),
-      'can_edit_content' => in_array(McpConfiguration::CONTENT, $scopes, true),
-      'can_create_draft' => in_array(McpConfiguration::CREATE, $scopes, true),
-      'can_edit_structure' => in_array(McpConfiguration::STRUCTURE, $scopes, true),
-      'can_edit_translations' => in_array(McpConfiguration::TRANSLATION, $scopes, true),
-      'can_upload_media' => in_array(McpConfiguration::UPLOAD, $scopes, true),
+      ...array_fill_keys(array_values(McpConfiguration::GRANT_COLUMNS), false),
+      ...array_fill_keys(array_values(array_intersect_key(McpConfiguration::GRANT_COLUMNS, array_flip($scopes))), true),
       'client_fingerprint' => $this->config->clientFingerprint($client->id),
       'oauth_client_id' => $client->id,
       'redirect_hash' => hash('sha256', $redirect),
@@ -47,9 +43,15 @@ final class McpGrants
       $grant = $this->usableGrants()->where('oauth_client_id', $client->id)
         ->where('client_fingerprint', $this->config->clientFingerprint($client->id))->where('code_hash', hash('sha256', $code))->lockForUpdate()->first();
       $challenge = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
+      $user = $grant ? $this->actor($grant) : null;
 
-      if (! $grant || ! hash_equals($grant->code_challenge, $challenge) || ! $this->actor($grant)
+      if (! $user || ! hash_equals($grant->code_challenge, $challenge)
         || ! hash_equals($grant->redirect_hash, hash('sha256', $redirect))) {
+        return null;
+      }
+
+      $scopes = $this->scopes($grant);
+      if (array_diff($scopes, $this->config->availableScopes()) !== []) {
         return null;
       }
 
@@ -66,20 +68,12 @@ final class McpGrants
         'access_token' => $token,
         'token_type' => 'Bearer',
         'expires_in' => self::ACCESS_LIFETIME,
-        'scope' => implode(' ', array_filter([
-          McpConfiguration::READ,
-          $grant->can_write ? McpConfiguration::WRITE : null,
-          $grant->can_edit_content ? McpConfiguration::CONTENT : null,
-          $grant->can_create_draft ? McpConfiguration::CREATE : null,
-          $grant->can_edit_structure ? McpConfiguration::STRUCTURE : null,
-          $grant->can_edit_translations ? McpConfiguration::TRANSLATION : null,
-          $grant->can_upload_media ? McpConfiguration::UPLOAD : null,
-        ])),
+        'scope' => implode(' ', $scopes),
       ];
     });
   }
 
-  /** @return array{user: User, site: int, write: bool, edit_content: bool, create_draft: bool, edit_structure: bool, edit_translations: bool, upload_media: bool}|null */
+  /** @return array{user: User, site: int, scopes: list<string>}|null */
   public function authenticate(#[\SensitiveParameter] ?string $token): ?array
   {
     if (! is_string($token) || ! preg_match('/\A[a-f0-9]{64}\z/', $token)) {
@@ -92,23 +86,39 @@ final class McpGrants
     return $user ? [
       'user' => $user,
       'site' => (int) $grant->site_id,
-      'write' => (bool) $grant->can_write,
-      'edit_content' => (bool) $grant->can_edit_content,
-      'create_draft' => (bool) $grant->can_create_draft,
-      'edit_structure' => (bool) $grant->can_edit_structure,
-      'edit_translations' => (bool) $grant->can_edit_translations,
-      'upload_media' => (bool) $grant->can_upload_media,
+      'scopes' => $this->scopes($grant),
     ] : null;
   }
 
   public function connections(User $user): LengthAwarePaginator
   {
+    $columns = array_values(McpConfiguration::GRANT_COLUMNS);
+    $identity = ['oauth_client_id', 'clients.name', 'wbcms_mcp_grants.site_id', 'sites.name', ...$columns];
+    $pending = 'CASE WHEN wbcms_mcp_grants.token_hash IS NULL THEN 1 ELSE 0 END';
+    $available = $this->config->availableScopes();
+
     return $this->usableGrants()->where('user_id', $user->getAuthIdentifier())
       ->join('wbcms_mcp_oauth_clients as clients', 'clients.id', '=', 'wbcms_mcp_grants.oauth_client_id')
-      ->select('oauth_client_id', 'clients.name as client_name')
-      ->selectRaw('MAX(expires_at) as expires_at')
-      ->groupBy('oauth_client_id', 'clients.name')
-      ->orderByDesc('expires_at')->orderBy('oauth_client_id')->paginate(15);
+      ->join('wbcms_sites as sites', 'sites.id', '=', 'wbcms_mcp_grants.site_id')
+      ->select('oauth_client_id', 'clients.name as client_name', 'wbcms_mcp_grants.site_id', 'sites.name as site_name', ...$columns)
+      ->selectRaw('MAX(wbcms_mcp_grants.id) as row_id, MAX(expires_at) as expires_at, '.$pending.' as pending')
+      ->groupBy(...$identity)->groupByRaw($pending)
+      ->orderByDesc('expires_at')->orderByDesc('row_id')->paginate(15)
+      ->through(function (object $connection) use ($user, $available): object {
+        $connection->permissions = [];
+        foreach ($this->scopes($connection) as $scope) {
+          $connection->permissions[McpConfiguration::LABELS[$scope]] = in_array($scope, $available, true)
+            && $this->policy->allowsScopes($user, (int) $connection->site_id, [$scope]);
+        }
+
+        return $connection;
+      });
+  }
+
+  /** @return list<string> */
+  private function scopes(object $grant): array
+  {
+    return [McpConfiguration::READ, ...array_keys(array_filter(McpConfiguration::GRANT_COLUMNS, fn (string $column) => $grant->{$column}))];
   }
 
   public function revoke(User $user, string $clientId): bool

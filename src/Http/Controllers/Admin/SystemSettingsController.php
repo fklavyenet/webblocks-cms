@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Throwable;
 use WebBlocks\Cms\Http\Requests\Admin\CmsMailTestEmailRequest;
@@ -67,6 +68,8 @@ class SystemSettingsController extends Controller
       'mcpEnabled' => $mcp->enabled(),
       'mcpReady' => $mcp->ready(),
       'mcpResource' => $mcp->resource(),
+      'mcpScopes' => array_diff_key(McpConfiguration::LABELS, [McpConfiguration::READ => true]),
+      'mcpAvailableScopes' => $mcp->availableScopes(),
       'mailDiagnostics' => $this->mailSettingsResolver->diagnostics(),
       'canManageVerificationEmail' => $canManageVerificationEmail,
       'verificationLocale' => $verificationLocale,
@@ -100,7 +103,7 @@ class SystemSettingsController extends Controller
 
   public function updateMcp(McpSettingsRequest $request): RedirectResponse
   {
-    $this->systemSettings->save([SystemSettings::MCP_ENABLED => $request->boolean('mcp_enabled') ? '1' : '0']);
+    DB::transaction(fn () => $this->systemSettings->save($request->settingsPayload()));
 
     return redirect()->route('admin.system.settings.edit', ['tab' => 'mcp'])->with('status', __('webblocks-cms::mcp.saved'));
   }

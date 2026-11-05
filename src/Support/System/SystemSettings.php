@@ -8,12 +8,26 @@ use Throwable;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class SystemSettings
 {
   public const MCP_ENABLED = 'system.mcp_enabled';
+
+  public const MCP_SCOPE_KEYS = [
+    McpConfiguration::READ_CONTENT => 'system.mcp_read_content',
+    McpConfiguration::READ_STRUCTURE => 'system.mcp_read_structure',
+    McpConfiguration::READ_TRANSLATION => 'system.mcp_read_translation',
+    McpConfiguration::READ_MEDIA => 'system.mcp_read_media',
+    McpConfiguration::WRITE => 'system.mcp_write_heading',
+    McpConfiguration::CONTENT => 'system.mcp_write_content',
+    McpConfiguration::CREATE => 'system.mcp_create_draft',
+    McpConfiguration::STRUCTURE => 'system.mcp_write_structure',
+    McpConfiguration::TRANSLATION => 'system.mcp_write_translation',
+    McpConfiguration::UPLOAD => 'system.mcp_upload_media',
+  ];
 
   public const LOG_FORMAT = 'system.log_format';
 
@@ -111,6 +125,7 @@ class SystemSettings
   private const READABLE_KEYS = [
     self::LOG_FORMAT,
     self::MCP_ENABLED,
+    ...self::MCP_SCOPE_KEYS,
     ...self::CLEANUP_AUTOMATIC_KEYS,
     ...self::BACKUP_LIFECYCLE_KEYS,
     self::PROJECT_NAME,
@@ -150,6 +165,7 @@ class SystemSettings
   public const MANAGED_KEYS = [
     self::LOG_FORMAT,
     self::MCP_ENABLED,
+    ...self::MCP_SCOPE_KEYS,
     ...self::CLEANUP_AUTOMATIC_KEYS,
     ...self::BACKUP_LIFECYCLE_KEYS,
     self::PROJECT_NAME,

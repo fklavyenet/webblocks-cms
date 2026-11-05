@@ -7,6 +7,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\PersonalApiTokenPolicy;
+use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 
 final class McpPagePolicy
@@ -16,6 +17,31 @@ final class McpPagePolicy
     private readonly PersonalApiTokenPolicy $personal,
     private readonly PageWorkflowManager $workflow,
   ) {}
+
+  public function allowsScopes(User $user, int $siteId, array $scopes): bool
+  {
+    if (! $this->read($user, $siteId)) {
+      return false;
+    }
+
+    foreach ($scopes as $scope) {
+      $allowed = match ($scope) {
+        McpConfiguration::READ, McpConfiguration::READ_CONTENT, McpConfiguration::READ_STRUCTURE, McpConfiguration::READ_TRANSLATION => true,
+        McpConfiguration::WRITE, McpConfiguration::CONTENT, McpConfiguration::STRUCTURE => $this->write($user, $siteId),
+        McpConfiguration::TRANSLATION => $this->write($user, $siteId)
+          && ($this->editTranslations($user, $siteId) || $this->editSeo($user, $siteId)),
+        McpConfiguration::CREATE => $this->createDraft($user, $siteId),
+        McpConfiguration::READ_MEDIA => $this->readMedia($user, $siteId),
+        McpConfiguration::UPLOAD => $this->uploadMedia($user, $siteId),
+        default => false,
+      };
+      if (! $allowed) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   public function read(User $user, int $siteId): bool
   {

@@ -29,7 +29,43 @@ final class McpConfiguration
 
   public const UPLOAD = 'media:upload';
 
-  public const SCOPES = [self::READ, self::WRITE, self::CONTENT, self::CREATE, self::STRUCTURE, self::TRANSLATION, self::UPLOAD];
+  public const READ_CONTENT = 'pages:read-content';
+
+  public const READ_STRUCTURE = 'pages:read-draft-structure';
+
+  public const READ_TRANSLATION = 'pages:read-draft-translation';
+
+  public const READ_MEDIA = 'media:read';
+
+  public const GRANT_COLUMNS = [
+    self::WRITE => 'can_write',
+    self::CONTENT => 'can_edit_content',
+    self::CREATE => 'can_create_draft',
+    self::STRUCTURE => 'can_edit_structure',
+    self::TRANSLATION => 'can_edit_translations',
+    self::UPLOAD => 'can_upload_media',
+    self::READ_CONTENT => 'can_read_content',
+    self::READ_STRUCTURE => 'can_read_structure',
+    self::READ_TRANSLATION => 'can_read_translations',
+    self::READ_MEDIA => 'can_read_media',
+  ];
+
+  public const SCOPES = [self::READ, self::WRITE, self::CONTENT, self::CREATE, self::STRUCTURE, self::TRANSLATION, self::UPLOAD,
+    self::READ_CONTENT, self::READ_STRUCTURE, self::READ_TRANSLATION, self::READ_MEDIA];
+
+  public const LABELS = [
+    self::READ => 'scope_read',
+    self::READ_CONTENT => 'scope_read_content',
+    self::READ_STRUCTURE => 'scope_read_structure',
+    self::READ_TRANSLATION => 'scope_read_translation',
+    self::READ_MEDIA => 'scope_read_media',
+    self::WRITE => 'scope_write_heading',
+    self::CONTENT => 'scope_write_content',
+    self::CREATE => 'scope_create',
+    self::STRUCTURE => 'scope_write_structure',
+    self::TRANSLATION => 'scope_write_translation',
+    self::UPLOAD => 'scope_upload',
+  ];
 
   public function assertAvailable(Request $request): void
   {
@@ -53,9 +89,17 @@ final class McpConfiguration
   {
     return Schema::hasColumn('wbcms_mcp_oauth_clients', 'client_secret_hash')
       && Schema::hasTable('wbcms_mcp_oauth_redirects')
-      && Schema::hasColumns('wbcms_mcp_grants', ['oauth_client_id', 'redirect_hash', 'can_edit_content', 'can_create_draft', 'can_edit_structure', 'can_edit_translations', 'can_upload_media'])
+      && Schema::hasColumns('wbcms_mcp_grants', ['oauth_client_id', 'redirect_hash', ...array_values(self::GRANT_COLUMNS)])
       && Schema::hasTable('wbcms_mcp_page_drafts')
       && Schema::hasTable('wbcms_staged_page_translation_fields');
+  }
+
+  public function availableScopes(): array
+  {
+    $settings = app(SystemSettings::class)->all();
+
+    return array_values(array_filter(self::SCOPES, fn (string $scope) => ! isset(SystemSettings::MCP_SCOPE_KEYS[$scope])
+      || (bool) ($settings[SystemSettings::MCP_SCOPE_KEYS[$scope]] ?? true)));
   }
 
   public function origin(): string

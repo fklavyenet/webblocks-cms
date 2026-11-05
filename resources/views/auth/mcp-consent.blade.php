@@ -29,25 +29,9 @@
                     <section class="wb-alert wb-alert-info" aria-labelledby="mcp-consent-permissions">
                         <h2 class="wb-alert-title" id="mcp-consent-permissions">{{ __('webblocks-cms::mcp.consent_permissions') }}</h2>
                         <ul class="wb-stack-2">
-                            <li>{{ __('webblocks-cms::mcp.consent_read') }}</li>
-                            @if ($write)
-                                <li>{{ __('webblocks-cms::mcp.consent_write') }}</li>
-                            @endif
-                            @if ($editContent)
-                                <li>{{ __('webblocks-cms::mcp.consent_content') }}</li>
-                            @endif
-                            @if ($createDraft)
-                                <li>{{ __('webblocks-cms::mcp.consent_create_draft') }}</li>
-                            @endif
-                            @if ($editStructure)
-                                <li>{{ __('webblocks-cms::mcp.consent_structure') }}</li>
-                            @endif
-                            @if ($editTranslations)
-                                <li>{{ __('webblocks-cms::mcp.consent_translation') }}</li>
-                            @endif
-                            @if ($uploadMedia)
-                                <li>{{ __('webblocks-cms::mcp.consent_upload') }}</li>
-                            @endif
+                            @foreach ($permissions as $permission)
+                                <li>{{ __('webblocks-cms::mcp.'.$permission) }}</li>
+                            @endforeach
                         </ul>
                     </section>
 
