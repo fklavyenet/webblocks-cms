@@ -42,6 +42,9 @@
                             @if ($editStructure)
                                 <li>{{ __('webblocks-cms::mcp.consent_structure') }}</li>
                             @endif
+                            @if ($editTranslations)
+                                <li>{{ __('webblocks-cms::mcp.consent_translation') }}</li>
+                            @endif
                         </ul>
                     </section>
 

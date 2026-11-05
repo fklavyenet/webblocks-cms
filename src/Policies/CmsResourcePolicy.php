@@ -13,6 +13,8 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
 
 /** One operation/site decision shared by session and delegated API entry points. */
 final class CmsResourcePolicy
@@ -311,6 +313,16 @@ final class CmsResourcePolicy
     foreach (['navigation_menus' => 'cms.navigation.update', 'shared_slots' => 'cms.shared-slots.manage', 'page_slot_shared_slots' => 'cms.shared-slots.update-content'] as $key => $required) {
       if (! empty($plan[$key])) {
       abort_unless($this->acl->allows($user, $required, $siteId) || $this->acl->legacyApiAllows($user, $required, $siteId), 403);
+      }
+    }
+    foreach (data_get($plan, 'staged_update.translation_changes', []) as $localeId => $fields) {
+      $keys = array_keys($fields);
+      if (array_intersect($keys, PageTranslationPayload::IDENTITY_FIELDS) !== []
+        || (int) $localeId !== app(LocaleResolver::class)->default()->id) {
+        abort_unless($this->acl->allows($user, 'cms.translations.update', $siteId), 403);
+      }
+      if (array_intersect($keys, PageTranslationPayload::SEO_FIELDS) !== []) {
+        abort_unless($this->acl->allows($user, 'cms.seo.update', $siteId), 403);
       }
     }
     $this->authorizeFields($plan, $user, $siteId);

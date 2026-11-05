@@ -6,16 +6,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
-use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
 
 /**
  * Page translations own localized page identity and the page-level SEO and
@@ -30,18 +27,10 @@ use WebBlocks\Cms\Support\Pages\PageRevisionManager;
  */
 class InternalPageTranslationController extends Controller
 {
-  private const TEXT_FIELDS = [
-    'seo_title' => 255,
-    'seo_description' => 1000,
-    'seo_keywords' => 500,
-    'list_excerpt' => 300,
-    'og_title' => 255,
-    'og_description' => 1000,
-  ];
-
   public function __construct(
     private readonly InternalContentApiPresenter $presenter,
     private readonly PageRevisionManager $revisionManager,
+    private readonly PageTranslationPayload $payload,
   ) {}
 
   public function index(Page $page): JsonResponse
@@ -82,7 +71,7 @@ class InternalPageTranslationController extends Controller
       );
     }
 
-    $data = $this->validatePayload($request, $page, $resolved, null, creating: true);
+    $data = $this->validatePayload($request, $page, $resolved, null);
 
     if ($data instanceof JsonResponse) {
       return $data;
@@ -117,7 +106,7 @@ class InternalPageTranslationController extends Controller
       return $this->error('locale', 'Locale must be enabled for the page site.', 'invalid_page_translation');
     }
 
-    $data = $this->validatePayload($request, $page, $locale, $translation, creating: false);
+    $data = $this->validatePayload($request, $page, $locale, $translation);
 
     if ($data instanceof JsonResponse) {
       return $data;
@@ -145,11 +134,11 @@ class InternalPageTranslationController extends Controller
   /**
    * @return array<string, mixed>|JsonResponse the fields to write, or the error response
    */
-  private function validatePayload(Request $request, Page $page, Locale $locale, ?PageTranslation $translation, bool $creating): array|JsonResponse
+  private function validatePayload(Request $request, Page $page, Locale $locale, ?PageTranslation $translation): array|JsonResponse
   {
     $payload = $request->json()->all();
 
-    $unknown = array_diff(array_keys($payload), ['name', 'slug', 'path', 'og_image_media_id', ...array_keys(self::TEXT_FIELDS)]);
+    $unknown = array_diff(array_keys($payload), ['name', 'slug', 'path', 'og_image_media_id', ...array_keys(PageTranslationPayload::TEXT_FIELDS)]);
 
     if ($unknown !== []) {
       return response()->json([
@@ -165,144 +154,20 @@ class InternalPageTranslationController extends Controller
       ], 422);
     }
 
-    $identity = $this->resolveIdentity($payload, $translation, $creating);
-
-    if ($identity instanceof JsonResponse) {
-      return $identity;
-    }
-
-    $candidate = $identity;
-
-    foreach (self::TEXT_FIELDS as $field => $max) {
-      if (array_key_exists($field, $payload)) {
-        $candidate[$field] = $this->nullableTrimmed($payload[$field]);
-      }
-    }
-
-    if (array_key_exists('og_image_media_id', $payload)) {
-      $candidate['og_image_media_id'] = $payload['og_image_media_id'] === null || $payload['og_image_media_id'] === ''
-        ? null
-        : (int) $payload['og_image_media_id'];
-    }
-
-    $rules = [
-      'name' => [$creating ? 'required' : 'sometimes', 'string', 'max:255'],
-      'slug' => [
-        $creating ? 'required' : 'sometimes',
-        'string',
-        'max:255',
-        'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-        $this->uniquePerSiteLocale('slug', $page, $locale, $translation),
-      ],
-      'path' => [
-        $creating ? 'required' : 'sometimes',
-        'string',
-        'max:255',
-        'regex:/^(?:\/|\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*)$/',
-        function (string $attribute, mixed $value, \Closure $fail): void {
-          if (is_string($value) && PagePath::isReserved($value)) {
-            $fail('This path uses a reserved CMS or host route segment.');
-          }
-        },
-        $this->uniquePerSiteLocale('path', $page, $locale, $translation),
-      ],
-      'og_image_media_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Media::class, 'id')],
-    ];
-
-    foreach (self::TEXT_FIELDS as $field => $max) {
-      $rules[$field] = ['sometimes', 'nullable', 'string', 'max:'.$max];
-    }
-
-    $validator = Validator::make($candidate, $rules, [
-      'slug.regex' => 'Use only lowercase letters, numbers, and hyphens.',
-      'slug.unique' => 'This slug is already used in this site for this locale.',
-      'path.regex' => 'Use a slash path with lowercase letters, numbers, and hyphens only.',
-      'path.unique' => 'This path is already used in this site for this locale.',
-    ]);
-
-    if ($validator->fails()) {
+    try {
+      return $this->payload->validate($payload, $page, $locale, $translation);
+    } catch (ValidationException $exception) {
       return response()->json([
         'ok' => false,
         'code' => 'invalid_page_translation',
-        'message' => 'The page translation payload is not valid.',
+        'message' => $exception->errorBag === 'translation_field' ? $exception->getMessage() : 'The page translation payload is not valid.',
         'warnings' => [],
-        'errors' => collect($validator->errors()->toArray())
-          ->map(fn (array $messages, string $field) => ['path' => $field, 'message' => $messages[0] ?? 'Invalid value.'])
+        'errors' => collect($exception->errors())
+          ->map(fn (array $messages, string $field) => ['path' => $field, 'message' => $messages[0]])
           ->values()
           ->all(),
       ], 422);
     }
-
-    if (array_key_exists('og_image_media_id', $candidate) && $candidate['og_image_media_id'] !== null) {
-      $media = Media::query()->find($candidate['og_image_media_id']);
-
-      if (! $media?->isImage()) {
-        return $this->error('og_image_media_id', 'The Open Graph image must be an image from Media.', 'invalid_page_translation');
-      }
-    }
-
-    return $candidate;
-  }
-
-  /**
-   * Name, slug and path move together. A caller may send any one of them; the
-   * other two are derived the same way the content plan derives them so a
-   * translation written here and one written by content apply agree.
-   *
-   * @param  array<string, mixed>  $payload
-   * @return array<string, mixed>|JsonResponse
-   */
-  private function resolveIdentity(array $payload, ?PageTranslation $translation, bool $creating): array|JsonResponse
-  {
-    $identity = [];
-
-    if (array_key_exists('name', $payload)) {
-      $identity['name'] = trim((string) $payload['name']);
-    }
-
-    $rawPath = array_key_exists('path', $payload) ? trim((string) $payload['path']) : null;
-    $rawSlug = array_key_exists('slug', $payload) ? trim((string) $payload['slug']) : null;
-
-    if ($rawPath !== null && $rawPath !== '') {
-      try {
-        $identity['path'] = PagePath::canonicalize($rawPath);
-      } catch (\InvalidArgumentException $exception) {
-        return $this->error('path', $exception->getMessage(), 'invalid_page_translation');
-      }
-
-      $identity['slug'] = $rawSlug !== null && $rawSlug !== ''
-        ? Str::slug($rawSlug)
-        : PagePath::slugFromPath($identity['path']);
-
-      return $identity;
-    }
-
-    if ($rawSlug !== null && $rawSlug !== '') {
-      $identity['slug'] = Str::slug($rawSlug);
-      $identity['path'] = PageTranslation::pathFromSlug($identity['slug']);
-
-      return $identity;
-    }
-
-    // Creating with only a name is the common case: derive the rest from it,
-    // exactly as the admin form does.
-    if ($creating) {
-      $slug = Str::slug($identity['name'] ?? '');
-      $identity['slug'] = $slug;
-      $identity['path'] = PageTranslation::pathFromSlug($slug);
-    }
-
-    return $identity;
-  }
-
-  private function uniquePerSiteLocale(string $column, Page $page, Locale $locale, ?PageTranslation $translation)
-  {
-    return Rule::unique(PageTranslation::class, $column)
-      ->ignore($translation?->id)
-      ->where(fn ($query) => $query
-        ->where('site_id', $page->site_id)
-        ->where('locale_id', $locale->id)
-      );
   }
 
   private function resolveLocale(string $value): ?Locale
@@ -343,13 +208,6 @@ class InternalPageTranslationController extends Controller
       event: 'page_updated',
       source: 'internal-content-api',
     );
-  }
-
-  private function nullableTrimmed(mixed $value): ?string
-  {
-    $value = trim((string) $value);
-
-    return $value !== '' ? $value : null;
   }
 
   private function error(string $path, string $message, string $code): JsonResponse

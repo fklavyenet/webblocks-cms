@@ -7,8 +7,10 @@ use Illuminate\Validation\Rule;
 use stdClass;
 use WebBlocks\Cms\Actions\Mcp\CreatePageDraft;
 use WebBlocks\Cms\Actions\Mcp\EditDraftStructure;
+use WebBlocks\Cms\Actions\Mcp\EditDraftTranslation;
 use WebBlocks\Cms\Actions\Mcp\UpdateDraftBlock;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
 
 final class McpTools
 {
@@ -32,12 +34,17 @@ final class McpTools
 
   private const EDIT_STRUCTURE = 'edit_draft_structure';
 
+  private const TRANSLATION = 'get_draft_translation';
+
+  private const EDIT_TRANSLATION = 'update_draft_translation';
+
   public function __construct(
     private readonly McpPages $pages,
     private readonly UpdateDraftBlock $updateBlock,
     private readonly McpMedia $media,
     private readonly CreatePageDraft $createDraft,
     private readonly EditDraftStructure $structure,
+    private readonly EditDraftTranslation $translation,
   ) {}
 
   public function descriptors(): array
@@ -59,6 +66,12 @@ final class McpTools
 
     $slot = ['type' => 'string', 'minLength' => 1, 'maxLength' => 100];
     $parent = ['type' => ['integer', 'null'], 'minimum' => 1];
+
+    $translation = array_fill_keys(PageTranslationPayload::IDENTITY_FIELDS, $text);
+    foreach (PageTranslationPayload::TEXT_FIELDS as $field => $limit) {
+      $translation[$field] = ['type' => ['string', 'null'], 'maxLength' => $limit];
+    }
+    $translation['og_image_media_id'] = ['type' => ['integer', 'null'], 'minimum' => 1];
 
     return [
       $this->descriptor(self::READ, 'read_description', ['locale' => $locale, 'page_id' => $id, 'path' => ['type' => 'string', 'maxLength' => 255]], ['locale'], [
@@ -122,6 +135,12 @@ final class McpTools
           ['properties' => ['operation' => ['const' => 'reorder']], 'required' => ['slot', 'block_ids']],
         ],
       ]),
+      $this->descriptor(self::TRANSLATION, 'translation_description', [
+        'locale' => $locale, 'page_id' => $id,
+      ], ['locale', 'page_id']),
+      $this->descriptor(self::EDIT_TRANSLATION, 'edit_translation_description', [
+        'locale' => $locale, 'page_id' => $id, 'version' => $version,
+      ] + $translation, ['locale', 'page_id', 'version']),
     ];
   }
 
@@ -132,6 +151,7 @@ final class McpTools
       self::WRITE => McpConfiguration::WRITE,
       self::CREATE => McpConfiguration::CREATE,
       self::STRUCTURE, self::EDIT_STRUCTURE => McpConfiguration::STRUCTURE,
+      self::TRANSLATION, self::EDIT_TRANSLATION => McpConfiguration::TRANSLATION,
       self::CONTENT, self::EDIT, self::MEDIA => McpConfiguration::CONTENT,
       default => null,
     };
@@ -148,6 +168,8 @@ final class McpTools
       self::CREATE => $this->createDraft->handle($grant['user'], $grant['site'], $input),
       self::STRUCTURE => $this->structure->read($grant['site'], $input),
       self::EDIT_STRUCTURE => $this->structure->handle($grant['user'], $grant['site'], $input),
+      self::TRANSLATION => $this->translation->read($grant['site'], $input),
+      self::EDIT_TRANSLATION => $this->translation->handle($grant['user'], $grant['site'], $input),
       self::WRITE => $this->updateBlock->handle($grant['user'], $grant['site'], $input, headingOnly: true),
       self::CONTENT => $this->pages->content($grant['user'], $grant['site'], $input),
       self::EDIT => $this->updateBlock->handle($grant['user'], $grant['site'], $input),
@@ -173,7 +195,8 @@ final class McpTools
         'layout' => ['sometimes', 'required', 'string', 'max:100', 'regex:/\A[a-z0-9]+(?:[-_][a-z0-9]+)*\z/'],
       ],
       self::SEARCH => ['q' => ['required', 'string', 'max:120', 'not_regex:/[\x00-\x1F\x7F]/'], 'page' => $page],
-      self::PREVIEW => ['page_id' => $id],
+      self::PREVIEW, self::TRANSLATION => ['page_id' => $id],
+      self::EDIT_TRANSLATION => ['page_id' => $id, 'version' => $version] + $this->translationRules(),
       self::WRITE => [
         'page_id' => $id,
         'block_id' => $id,
@@ -245,9 +268,20 @@ final class McpTools
     return ['operation' => ['required', 'string']] + $rules;
   }
 
+  private function translationRules(): array
+  {
+    $rules = array_fill_keys(PageTranslationPayload::IDENTITY_FIELDS, ['sometimes', 'required', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/']);
+    foreach (PageTranslationPayload::TEXT_FIELDS as $field => $limit) {
+      $rules[$field] = ['sometimes', 'nullable', 'string', 'max:'.$limit];
+    }
+    $rules['og_image_media_id'] = ['sometimes', 'nullable', 'integer', 'min:1'];
+
+    return $rules;
+  }
+
   private function descriptor(string $name, string $description, array $properties, array $required, array $constraints = []): array
   {
-    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE, self::EDIT_STRUCTURE], true);
+    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE, self::EDIT_STRUCTURE, self::EDIT_TRANSLATION], true);
     $scope = $this->scope($name);
     $scopes = $scope === McpConfiguration::READ ? [$scope] : [McpConfiguration::READ, $scope];
     $security = [['type' => 'oauth2', 'scopes' => $scopes]];

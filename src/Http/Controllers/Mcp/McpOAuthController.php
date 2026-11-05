@@ -87,10 +87,11 @@ final class McpOAuthController
     $editContent = in_array(McpConfiguration::CONTENT, $scopes, true);
     $createDraft = in_array(McpConfiguration::CREATE, $scopes, true);
     $editStructure = in_array(McpConfiguration::STRUCTURE, $scopes, true);
+    $editTranslations = in_array(McpConfiguration::TRANSLATION, $scopes, true);
 
     if ($request->isMethod('GET')) {
       $sites = Site::query()->whereIn('id', $user->accessibleSiteIds())->orderBy('name')->get(['id', 'name'])
-        ->filter(fn (Site $site): bool => $this->allowed($user, $site->id, $write || $editContent || $editStructure, $createDraft));
+        ->filter(fn (Site $site): bool => $this->allowed($user, $site->id, $write || $editContent || $editStructure || $editTranslations, $createDraft));
       abort_if($sites->isEmpty(), 403);
 
       $callbackHost = parse_url($redirect, PHP_URL_HOST);
@@ -99,7 +100,7 @@ final class McpOAuthController
       $callbackAddress = $callbackHost.($port === null ? '' : ':'.$port);
       $callbackOrigin = parse_url($redirect, PHP_URL_SCHEME).'://'.$callbackAddress;
 
-      return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'write', 'editContent', 'createDraft', 'editStructure', 'data', 'clientName', 'callbackAddress'), headers: [
+      return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'write', 'editContent', 'createDraft', 'editStructure', 'editTranslations', 'data', 'clientName', 'callbackAddress'), headers: [
         // Chromium applies form-action to the redirect after the consent POST.
         'Content-Security-Policy' => "frame-ancestors 'none'; form-action 'self' {$callbackOrigin}; base-uri 'none'",
         'X-Frame-Options' => 'DENY',
@@ -109,8 +110,8 @@ final class McpOAuthController
     $result = ['error' => 'access_denied'];
     if ($data['decision'] === 'allow') {
       $siteId = (int) $data['site_id'];
-      abort_unless($this->allowed($user, $siteId, $write || $editContent || $editStructure, $createDraft), 403);
-      $result = ['code' => $this->grants->issue($user, $siteId, $write, $editContent, $createDraft, $editStructure, $data['code_challenge'], $client, $redirect)];
+      abort_unless($this->allowed($user, $siteId, $write || $editContent || $editStructure || $editTranslations, $createDraft), 403);
+      $result = ['code' => $this->grants->issue($user, $siteId, $write, $editContent, $createDraft, $editStructure, $editTranslations, $data['code_challenge'], $client, $redirect)];
     }
     $result += ['iss' => $this->config->resource(), 'state' => $data['state'] ?? null];
 

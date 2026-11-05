@@ -42,7 +42,7 @@ final class EditDraftStructure
 
   public function read(int $siteId, array $input): array
   {
-    [$page, $draft] = $this->target($siteId, $input['page_id']);
+    [$page, $draft] = $this->pages->draftTarget($siteId, $input['page_id']);
     $locale = $this->pages->locale($draft ?? $page, $input['locale']);
     $version = $this->version($page, $draft, $locale);
     $slots = $this->slots($draft ?? $page);
@@ -83,7 +83,7 @@ final class EditDraftStructure
     }
 
     return DB::transaction(function () use ($user, $siteId, $input, $localizedText): array {
-      [$page, $draft] = $this->target($siteId, $input['page_id'], lock: true);
+      [$page, $draft] = $this->pages->draftTarget($siteId, $input['page_id'], lock: true);
       $this->pages->lockBlocks($page, $draft);
       $locale = $this->pages->locale($draft ?? $page, $input['locale']);
       $fingerprint = $this->pages->fingerprint($page);
@@ -138,19 +138,6 @@ final class EditDraftStructure
 
       return $this->result($page, $draft, $locale) + ['block_ids' => $changedIds];
     }, attempts: 3);
-  }
-
-  private function target(int $siteId, int $id, bool $lock = false): array
-  {
-    $page = Page::query()->where('site_id', $siteId)->whereKey($id)
-      ->whereIn('status', [Page::STATUS_DRAFT, Page::STATUS_PUBLISHED])
-      ->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])
-      ->when($lock, fn ($query) => $query->lockForUpdate())->first();
-    if (! $page || $page->isRevisionRestoreCandidate() || $page->setting('staged_update') !== null) {
-      throw new McpToolException('page_missing');
-    }
-
-    return [$page, $page->isPublished() ? $this->pages->draft($page, lock: $lock) : $page];
   }
 
   private function slots(Page $page): Collection

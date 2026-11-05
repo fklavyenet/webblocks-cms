@@ -60,16 +60,16 @@ class RemoteMcpTest extends TestCase
     $this->setMcp(true);
   }
 
-  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_ten_tools(): void
+  public function test_discovery_is_opt_in_and_advertises_pkce_and_the_twelve_tools(): void
   {
     $this->get(self::ORIGIN.'/.well-known/oauth-protected-resource/webadmin/mcp')
       ->assertOk()->assertJsonPath('resource', self::MCP);
     $this->get(self::ORIGIN.'/.well-known/oauth-authorization-server/webadmin/mcp')
       ->assertOk()->assertJsonPath('issuer', self::MCP)->assertJsonPath('registration_endpoint', self::MCP.'/register')
       ->assertJsonPath('code_challenge_methods_supported', ['S256'])
-      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure']);
+      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure', 'pages:write-draft-translation']);
     $this->rpc('initialize', ['protocolVersion' => '2025-03-26'])->assertJsonPath('result.protocolVersion', '2025-03-26');
-    $this->rpc('tools/list')->assertJsonCount(10, 'result.tools')
+    $this->rpc('tools/list')->assertJsonCount(12, 'result.tools')
       ->assertJsonPath('result.tools.1.annotations.readOnlyHint', false)
       ->assertJsonPath('result.tools.3.annotations.readOnlyHint', true)
       ->assertJsonPath('result.tools.4.annotations.readOnlyHint', false)
@@ -291,6 +291,94 @@ class RemoteMcpTest extends TestCase
     $this->assertSame([$aside->id], $published->pluck('slot_type_id')->unique()->values()->all());
     $this->assertSame($published->firstWhere('type', 'stack')->id, $published->firstWhere('type', 'hero')->parent_id);
     $this->assertSame('Moved hero', $published->firstWhere('type', 'hero')->textTranslations()->orderBy('locale_id')->firstOrFail()->title);
+  }
+
+  public function test_mcp_translation_applies_only_selected_fields_and_rejects_a_changed_source(): void
+  {
+    [$page, $heading] = $this->pageFixture(path: '/original');
+    $en = Locale::where('code', 'en')->sole();
+    $sourceTranslation = $page->translationForLocale($en);
+    $sourceTranslation->update(['seo_title' => 'Original SEO', 'og_description' => 'Keep this']);
+    $user = $this->operator();
+    $old = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft');
+    $reference = ['page_id' => $page->id, 'locale' => 'en'];
+    $this->tool('get_draft_translation', $reference, $old, 403)->assertJsonPath('result.structuredContent.code', 'auth_required');
+    $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-draft-translation');
+    $version = $this->tool('get_draft_translation', $reference, $token)->json('result.structuredContent.version');
+    $input = $reference + ['version' => $version, 'name' => 'Edited name', 'path' => '/new-path', 'seo_title' => 'Edited SEO'];
+    $result = $this->tool('update_draft_translation', $input, $token)
+      ->assertJsonPath('result.structuredContent.translation.path', '/new-path')->json('result.structuredContent');
+    $this->tool('update_draft_translation', $input, $token)->assertJsonPath('result.structuredContent.code', 'conflict');
+    $this->get($result['preview_url'])->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')->assertSee('Edited SEO');
+    $this->assertSame('/original', $sourceTranslation->fresh()->path);
+    $this->assertSame('Original SEO', $sourceTranslation->fresh()->seo_title);
+
+    $plans = app(InternalContentPlanService::class);
+    $promotion = ['plan' => [
+      'mode' => 'promote_staged_page_update', 'staged_page_id' => $result['draft_id'], 'expected_source_path' => '/original',
+    ]];
+    $sourceTranslation->update(['seo_title' => 'Concurrent SEO']);
+    $failed = $plans->apply($promotion);
+    $this->assertFalse($failed->ok);
+    $this->assertContains('The published page changed after the translation draft was prepared.', array_column($failed->errors, 'message'));
+    $this->assertSame('Concurrent SEO', $sourceTranslation->fresh()->seo_title);
+
+    $sourceTranslation->update(['seo_title' => 'Original SEO']);
+    $competitor = Page::create(['site_id' => $page->site_id, 'title' => 'Other page', 'slug' => 'new-path', 'status' => Page::STATUS_DRAFT]);
+    $collision = $plans->apply($promotion);
+    $this->assertFalse($collision->ok);
+    $this->assertContains('This path is already used in this site for this locale.', array_column($collision->errors, 'message'));
+    $competitor->delete();
+    $draft = Page::findOrFail($result['draft_id']);
+    $draft->translationForLocale($en)->update(['og_description' => 'Unselected draft change']);
+    $applied = $plans->apply($promotion);
+    $this->assertTrue($applied->ok, json_encode($applied->errors));
+    $this->assertSame('/new-path', $sourceTranslation->fresh()->path);
+    $this->assertSame('Edited name', $sourceTranslation->fresh()->name);
+    $this->assertSame('Edited SEO', $sourceTranslation->fresh()->seo_title);
+    $this->assertSame('Keep this', $sourceTranslation->fresh()->og_description);
+    $this->assertSame($heading->id, $page->blocks()->sole()->id);
+  }
+
+  public function test_mcp_can_add_an_enabled_locale_in_a_draft_and_clear_seo_fields(): void
+  {
+    [$page] = $this->pageFixture();
+    $locale = Locale::create(['code' => 'de', 'name' => 'Deutsch', 'is_enabled' => true]);
+    $page->site->locales()->attach($locale->id, ['is_enabled' => true]);
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-draft-translation');
+    $reference = ['page_id' => $page->id, 'locale' => 'de'];
+    $version = $this->tool('get_draft_translation', $reference, $token)->json('result.structuredContent.version');
+    $first = $this->tool('update_draft_translation', $reference + [
+      'version' => $version, 'name' => 'Neue Seite', 'seo_description' => 'Entwurf',
+    ], $token)->assertJsonPath('result.structuredContent.translation.path', '/neue-seite')->json('result.structuredContent');
+    $this->tool('update_draft_translation', $reference + [
+      'version' => $first['version'], 'seo_description' => null,
+    ], $token)->assertJsonPath('result.structuredContent.changes.seo_description', null);
+    $this->assertNull($page->translationForLocale($locale));
+    $promoted = app(InternalContentPlanService::class)->apply(['plan' => [
+      'mode' => 'promote_staged_page_update', 'staged_page_id' => $first['draft_id'], 'expected_source_path' => '/',
+    ]]);
+    $this->assertTrue($promoted->ok, json_encode($promoted->errors));
+    $translation = $page->fresh()->translationForLocale($locale);
+    $this->assertSame('Neue Seite', $translation->name);
+    $this->assertSame('/neue-seite', $translation->path);
+    $this->assertNull($translation->seo_description);
+  }
+
+  public function test_mcp_can_edit_translation_fields_on_a_standalone_draft(): void
+  {
+    [$page] = $this->pageFixture();
+    $page->update(['status' => Page::STATUS_DRAFT]);
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read pages:write-draft-translation');
+    $reference = ['page_id' => $page->id, 'locale' => 'tr'];
+    $version = $this->tool('get_draft_translation', $reference, $token)->json('result.structuredContent.version');
+    $this->tool('update_draft_translation', $reference + [
+      'version' => $version, 'name' => 'Taslak başlığı', 'path' => '/taslak', 'og_title' => 'Paylaşım başlığı',
+    ], $token)->assertJsonPath('result.structuredContent.draft_id', $page->id)
+      ->assertJsonPath('result.structuredContent.translation.og_title', 'Paylaşım başlığı');
+    $this->assertSame('/taslak', $page->fresh()->translationForLocale('tr')->path);
+    $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
+    $this->assertSame(1, Page::count());
   }
 
   public function test_oauth_binds_codes_to_pkce_callback_resource_and_one_site(): void

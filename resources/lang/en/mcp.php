@@ -36,6 +36,7 @@ return [
   'consent_content' => 'Read and edit supported localized block text in update drafts, and find and select existing images for those drafts. Publishing requires a separate CMS action.',
   'consent_create_draft' => 'Create new page drafts on the selected site and open private previews.',
   'consent_structure' => 'Read draft block structure, prepare update drafts, and add, move, or reorder blocks on the selected site.',
+  'consent_translation' => 'Read and edit localized page identity and SEO in drafts on the selected site.',
   'consent_duration' => 'Access expires after one hour.',
   'site' => 'Site',
   'select_site' => 'Choose a site',
@@ -52,6 +53,8 @@ return [
   'media_description' => 'Find public images already used by the selected site or uploaded by you and unused. Search by title or original filename. Returns media IDs for use in update_draft_block.',
   'structure_description' => 'List page-owned draft slots, block IDs, sibling order, allowed add types, and the current version. Use the published source page ID for an update draft, or the new page ID for a standalone draft. Follow next_page to see more blocks.',
   'edit_structure_description' => 'Prepare a published page update draft with explicit managed slots, add a block, move an existing block to the end of a destination sibling group, or reorder a full sibling group. Read get_draft_structure first and use its current version and draft block IDs. Omitting parent_id targets the slot root. Returns the new version and private preview.',
+  'translation_description' => 'Read localized page identity and SEO, pending draft fields, and the version required for an edit. Use a standalone draft ID or the published source page ID.',
+  'edit_translation_description' => 'Update localized page identity or SEO in a draft. Use the version returned by get_draft_translation. Provide a name when adding a locale. Null clears a supported SEO field. Returns a private preview link.',
   'auth_required' => 'Connect to WebBlocks CMS with the required access before running this tool.',
   'locale_unavailable' => 'The requested locale is not enabled for the selected site.',
   'invalid_page_path' => 'Choose a valid page path outside reserved CMS routes.',
@@ -68,5 +71,6 @@ return [
   'structure_slot_unavailable' => 'Choose a page-owned slot managed by this draft.',
   'invalid_block_placement' => 'The block or its descendants cannot be placed at this destination.',
   'invalid_block_order' => 'Provide all editable siblings in the chosen group exactly once.',
+  'invalid_page_translation' => 'The page translation could not be saved. Check the localized identity, available path, and SEO field values.',
   'forbidden' => 'Your CMS account lacks permission for this operation on the selected site.',
 ];

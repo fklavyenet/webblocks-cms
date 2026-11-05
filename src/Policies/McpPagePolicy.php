@@ -42,6 +42,11 @@ final class McpPagePolicy
     return $this->acl->allows($user, 'cms.translations.update', $siteId);
   }
 
+  public function editSeo(User $user, int $siteId): bool
+  {
+    return $this->acl->allows($user, 'cms.seo.update', $siteId);
+  }
+
   public function readMedia(User $user, int $siteId): bool
   {
     return $this->acl->allows($user, 'cms.media.read', $siteId)

@@ -83,6 +83,19 @@ final class McpPages
     return $locale;
   }
 
+  public function draftTarget(int $siteId, int $id, bool $lock = false): array
+  {
+    $page = Page::query()->where('site_id', $siteId)->whereKey($id)
+      ->whereIn('status', [Page::STATUS_DRAFT, Page::STATUS_PUBLISHED])
+      ->whereNotIn('page_type', [Page::TYPE_SHARED_SLOT_SOURCE, Page::TYPE_SYSTEM])
+      ->when($lock, fn ($query) => $query->lockForUpdate())->first();
+    if (! $page || $page->isRevisionRestoreCandidate() || $page->setting('staged_update') !== null) {
+      throw new McpToolException('page_missing');
+    }
+
+    return [$page, $page->isPublished() ? $this->draft($page, lock: $lock) : $page];
+  }
+
   public function draft(Page $source, bool $lock = false): ?Page
   {
     $drafts = $this->plans->stagedDrafts($source)

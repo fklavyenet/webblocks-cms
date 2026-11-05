@@ -36,6 +36,7 @@ return [
   'consent_content' => 'Güncelleme taslaklarındaki desteklenen blok metinlerini dil bazında okuyup düzenleyin ve bu taslaklar için mevcut görselleri bulup seçin. Yayınlama, CMS’de ayrı bir işlem gerektirir.',
   'consent_create_draft' => 'Seçilen sitede yeni sayfa taslakları oluştur ve özel önizlemeleri aç.',
   'consent_structure' => 'Seçilen sitede taslak blok yapısını oku, güncelleme taslağı hazırla ve blok ekle, taşı veya sırala.',
+  'consent_translation' => 'Seçilen sitede taslakların yerelleştirilmiş sayfa kimliğini ve SEO alanlarını oku ve düzenle.',
   'consent_duration' => 'Erişim bir saat sonra sona erer.',
   'site' => 'Site',
   'select_site' => 'Bir site seçin',
@@ -52,6 +53,8 @@ return [
   'media_description' => 'Seçilen sitede kullanılan veya senin yüklediğin ve henüz kullanılmamış herkese açık görselleri bul. Başlığa veya özgün dosya adına göre ara. update_draft_block için medya kimliklerini döndürür.',
   'structure_description' => 'Sayfaya ait taslak yuvalarını, blok kimliklerini, kardeş sırasını, eklenebilir türleri ve güncel sürümü listele. Güncelleme taslağı için yayındaki kaynak sayfanın kimliğini, bağımsız taslak için yeni sayfanın kimliğini kullan. Diğer bloklar için next_page değerini izle.',
   'edit_structure_description' => 'Yayındaki sayfa için yönetilecek yuvaları seçerek güncelleme taslağı hazırla, blok ekle, mevcut bloğu hedef grubun sonuna taşı veya kardeş grubunun tamamını sırala. Önce get_draft_structure aracını çağır ve dönen sürümü ve taslak blok kimliklerini kullan. parent_id girilmezse işlem yuva kökünde yapılır. Yeni sürümü ve özel önizlemeyi döndürür.',
+  'translation_description' => 'Yerelleştirilmiş sayfa kimliğini, SEO alanlarını, bekleyen taslak değişikliklerini ve düzenleme sürümünü oku. Bağımsız taslak kimliğini veya yayındaki kaynak sayfa kimliğini kullan.',
+  'edit_translation_description' => 'Taslakta yerelleştirilmiş sayfa kimliğini veya SEO alanlarını düzenle. get_draft_translation aracının döndürdüğü sürümü kullan. Yeni dil eklerken sayfa adını gir. Null değeri desteklenen SEO alanını temizler. Özel önizleme bağlantısı döner.',
   'auth_required' => 'Bu aracı kullanmak için gereken izinlerle WebBlocks CMS’ye bağlanın.',
   'locale_unavailable' => 'İstenen dil seçilen site için etkin değil.',
   'invalid_page_path' => 'Ayrılmış CMS yollarının dışında geçerli bir sayfa yolu seç.',
@@ -68,5 +71,6 @@ return [
   'structure_slot_unavailable' => 'Taslağın yönettiği ve sayfaya ait bir yuva seç.',
   'invalid_block_placement' => 'Blok veya alt blokları bu hedefe yerleştirilemiyor.',
   'invalid_block_order' => 'Seçilen gruptaki düzenlenebilir kardeş blokların tamamını birer kez gönder.',
+  'invalid_page_translation' => 'Sayfa çevirisi kaydedilemedi. Yerelleştirilmiş sayfa kimliğini, adresin kullanılabilirliğini ve SEO alanlarını kontrol et.',
   'forbidden' => 'CMS hesabınızın seçilen sitede bu işlemi yapma izni yok.',
 ];

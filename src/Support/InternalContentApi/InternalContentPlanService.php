@@ -40,6 +40,7 @@ use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\StagedPageTranslations;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
@@ -251,6 +252,7 @@ class InternalContentPlanService
     private readonly InternalContentApiOperations $operations,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
     private readonly ManagedCtaSynchronizer $managedCtaSynchronizer,
+    private readonly StagedPageTranslations $stagedTranslations,
   ) {}
 
   public function validate(array $payload): InternalContentPlanResult
@@ -438,16 +440,29 @@ class InternalContentPlanService
 
       if ($plan['mode'] === self::MODE_PROMOTE_STAGED_UPDATE) {
         $sourcePage = Page::query()
-          ->with(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot'])
           ->lockForUpdate()
           ->find($plan['staged_update']['source_page']['id']);
         $stagedPage = Page::query()
-          ->with(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot'])
           ->lockForUpdate()
           ->find($plan['staged_update']['staged_page']['id']);
 
         if (! $sourcePage || ! $stagedPage) {
           throw new \InvalidArgumentException('Source or staged page no longer resolves.');
+        }
+
+        $expectedTranslations = $plan['staged_update']['translation_changes'];
+        if ($expectedTranslations !== []) {
+          PageTranslation::query()->whereIn('page_id', [$sourcePage->id, $stagedPage->id])
+            ->orderBy('id')->lockForUpdate()->pluck('id');
+        }
+        $translationChanges = $this->stagedTranslations->changes($stagedPage);
+        if ($translationChanges !== $expectedTranslations) {
+          throw new \InvalidArgumentException('The staged translations changed after validation. Review the update again.');
+        }
+        try {
+          $this->stagedTranslations->assertPromotable($sourcePage, $stagedPage, $translationChanges);
+        } catch (ValidationException $exception) {
+          throw new \InvalidArgumentException($exception->getMessage(), previous: $exception);
         }
 
         if ($this->splitsMovedBlockSlots($sourcePage, $stagedPage, $plan['staged_update']['promote_slots'], lock: true)) {
@@ -464,6 +479,7 @@ class InternalContentPlanService
         );
 
         $deletedCount = $this->promoteStagedSlots($sourcePage, $stagedPage, $plan['staged_update']['promote_slots']);
+        $this->stagedTranslations->promote($sourcePage, $translationChanges);
         app(ContactConsentRequirements::class)->assertPage($sourcePage->fresh());
         $this->persistPageSourceSync($sourcePage, $plan['page_settings']);
         $sourcePage->forceFill([
@@ -1405,7 +1421,17 @@ class InternalContentPlanService
     if ($pageSettings === [] && $this->sourceSync($stagedPage) !== []) {
       $pageSettings = ['source_sync' => $this->sourceSync($stagedPage)];
     }
-    $promoteSlots = $this->normalizePromoteSlots($input, $sourcePage, $stagedPage, $errors);
+    $translationChanges = $stagedPage ? $this->stagedTranslations->changes($stagedPage) : [];
+    if ($sourcePage && $stagedPage) {
+      try {
+        $this->stagedTranslations->assertPromotable($sourcePage, $stagedPage, $translationChanges);
+      } catch (ValidationException $exception) {
+        foreach ($exception->errors() as $field => $messages) {
+          $errors[] = $this->error('plan.translation_changes.'.$field, $messages[0]);
+        }
+      }
+    }
+    $promoteSlots = $this->normalizePromoteSlots($input, $sourcePage, $stagedPage, $errors, $translationChanges !== []);
     if ($sourcePage && $stagedPage) {
       $errors = [...$errors, ...app(ContactConsentRequirements::class)->publicationErrors($sourcePage, replacement: $stagedPage, replaceSlots: $promoteSlots)];
     }
@@ -1428,6 +1454,7 @@ class InternalContentPlanService
         'staged_page' => $stagedPage ? ['id' => $stagedPage->id, 'status' => $stagedPage->status] : null,
         'managed_slots' => $this->stagedUpdateMetadata($stagedPage)['managed_slots'] ?? [],
         'promote_slots' => $promoteSlots,
+        'translation_changes' => $translationChanges,
       ],
       'page' => null,
       'slots' => [],
@@ -1641,10 +1668,14 @@ class InternalContentPlanService
     }
   }
 
-  private function normalizePromoteSlots(array $input, ?Page $sourcePage, ?Page $stagedPage, array &$errors): array
+  private function normalizePromoteSlots(array $input, ?Page $sourcePage, ?Page $stagedPage, array &$errors, bool $hasTranslationChanges): array
   {
     $metadata = $this->stagedUpdateMetadata($stagedPage);
     $rawSlots = data_get($input, 'promote_slots', data_get($input, 'managed_slots', $metadata['managed_slots'] ?? []));
+
+    if ($hasTranslationChanges && $rawSlots === []) {
+      return [];
+    }
 
     if (! is_array($rawSlots) || $rawSlots === []) {
       $rawSlots = $this->sourceSync($stagedPage)['managed_slots'] ?? [];

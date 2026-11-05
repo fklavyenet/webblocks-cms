@@ -94,6 +94,7 @@ final class McpController
       McpConfiguration::CONTENT => $grant['edit_content'],
       McpConfiguration::CREATE => $grant['create_draft'],
       McpConfiguration::STRUCTURE => $grant['edit_structure'],
+      McpConfiguration::TRANSLATION => $grant['edit_translations'],
       default => true,
     };
     if (! $allowed) {

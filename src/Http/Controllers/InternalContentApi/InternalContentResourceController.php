@@ -54,6 +54,7 @@ use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\StagedPageTranslations;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -653,6 +654,7 @@ class InternalContentResourceController extends Controller
         'method' => 'POST',
         'url' => '/webadmin/api/content/apply',
         'available' => $canPromote && $isActiveDraft,
+        'translation_changes' => app(StagedPageTranslations::class)->changes($page),
         'required_capabilities' => [
           CmsApiTokenCapabilities::CONTENT_APPLY,
           CmsApiTokenCapabilities::CONTENT_PUBLISH,
