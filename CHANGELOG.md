@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.123.0
+
+- Expand MCP with localized page search and draft editing for blocks, translations, and SEO.
+- Create unpublished page drafts with private previews. Repeating the same request returns the existing draft.
+- Add, move, and reorder supported blocks in draft slots. Update localized page names, proposed addresses, SEO, and social sharing fields in drafts.
+- Upload files of up to 512 KiB to the Media Library through a separate MCP grant and the shared CMS uploader.
+- Separate MCP read and edit permissions. Super admins can control which permissions clients may request, and users can see each connection’s site and grants in their profile. Existing connections keep their previous access during the upgrade.
+
 ## 1.122.1
 
 - Show the contact form confirmation directly below the Send message button and return visitors to it after submission, without shifting the navigation.
