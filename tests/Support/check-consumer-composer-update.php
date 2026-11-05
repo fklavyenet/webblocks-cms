@@ -13,6 +13,7 @@ use Symfony\Component\Process\Process;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
+use WebBlocks\Cms\Support\System\Updates\CmsUpdateAdmissionContext;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\PostApplyRunner;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
@@ -63,6 +64,11 @@ if (in_array($mode, ['apply', 'apply-failure', 'apply-bridge', 'apply-bridge-fai
     'from_version' => WebBlocks::version(), 'target_version' => $version, 'checksum_sha256' => $checksum,
     'status' => 'running', 'started_at' => now(),
   ]);
+  // The bridge built from this checkout uses the worker's admission context.
+  // The immutable historical updater predates it.
+  if (class_exists(CmsUpdateAdmissionContext::class)) {
+    app(CmsUpdateAdmissionContext::class)->operationId = $operation->id;
+  }
   app(CmsUpdateProgress::class)->operation($operation->id);
   if ($failing) {
     $delegate = app(PostApplyRunner::class);
