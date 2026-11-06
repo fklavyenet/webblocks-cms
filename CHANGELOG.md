@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.126.1
+
+- Open general diagnostic reports from System Health and run-specific reports from System Updates history. The diagnostic report page highlights System Health in the sidebar.
+- The Prepare diagnostic report button uses the standard form button width and stays disabled until you check the preparation consent box.
+
 ## 1.126.0
 
 - Mark selected contact messages as read or unread in the inbox. The action updates eligible messages on sites where you have permission and keeps your current filters.

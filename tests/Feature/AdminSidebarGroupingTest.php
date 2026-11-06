@@ -126,6 +126,15 @@ class AdminSidebarGroupingTest extends TestCase
       $this->assertSame([], array_keys(array_filter($this->sidebarGroups($xpath), fn ($group) => $group->hasAttribute('data-wb-nav-group-open'))));
       $this->assertSame(1, $xpath->query('//aside[@id="admin-sidebar"]/nav/div[1]//a[@aria-current="page"]')->length);
     }
+
+    foreach (['admin.system.diagnostics.index', 'admin.system.diagnostics.prepare'] as $route) {
+      $xpath = $this->sidebar($user, $route);
+      $maintenance = $this->sidebarGroups($xpath)['Maintenance'];
+      $activeItems = $xpath->query('.//a[@aria-current="page"]', $maintenance);
+      $this->assertTrue($maintenance->hasAttribute('data-wb-nav-group-open'));
+      $this->assertSame(1, $activeItems->length);
+      $this->assertSame(route('admin.system.health.index'), $activeItems->item(0)->getAttribute('href'));
+    }
   }
 
   #[Test]

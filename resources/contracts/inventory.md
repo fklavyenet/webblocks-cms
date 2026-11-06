@@ -1149,9 +1149,10 @@ Do not use site CSS to:
 
 ## Provider independent diagnostic reports
 
-System operators with `access-system` may explicitly prepare installation diagnostic
-reports from System Health or Updates. Category selection and preparation consent
-precede collection. The provider-independent report schema is
+System operators with `access-system` may open installation diagnostics from
+System Health or from a specific run in System Updates history. The report page
+belongs to System Health. Select categories and check the consent box to enable
+report preparation. The provider-independent report schema is
 `webblocks-diagnostics/1`; UTF-8 serialized reports are limited to 64 KiB.
 Prepared previews are encrypted, installation- and user-bound, and expire after
 30 minutes. Download validates the existing artifact and never recollects data.

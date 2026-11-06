@@ -9,7 +9,7 @@
         <div class="wb-card-header"><h2 class="wb-card-title">{{ $text('title') }}</h2></div>
         <div class="wb-card-body wb-stack wb-stack-4">
             <p>{{ $text('help') }}</p>
-            <form method="post" action="{{ route('admin.system.diagnostics.prepare') }}" class="wb-stack wb-stack-3">
+            <form method="post" action="{{ route('admin.system.diagnostics.prepare') }}" class="wb-stack wb-stack-3" data-wb-diagnostic-form>
                 @csrf
                 @if ($runId)<input type="hidden" name="run_id" value="{{ $runId }}">@endif
                 <div role="group" aria-labelledby="diagnostic-categories">
@@ -20,7 +20,9 @@
                 </div>
                 <p class="wb-text-sm wb-text-muted">{{ $text('errors_help') }}</p>
                 <label class="wb-check"><input type="checkbox" name="prepare_consent" value="1" required><span>{{ $text('consent') }}</span></label>
-                <button class="wb-btn wb-btn-primary" type="submit">{{ $text('prepare') }}</button>
+                <div class="wb-cluster">
+                    <button class="wb-btn wb-btn-primary" type="submit" disabled>{{ $text('prepare') }}</button>
+                </div>
             </form>
             @isset($envelope)
                 <div class="wb-alert wb-alert-info" role="status">{{ $text('review') }}</div>

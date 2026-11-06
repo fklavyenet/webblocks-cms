@@ -102,7 +102,7 @@ final class AdminNavigation
                     'label' => $adminTranslator->get('system_health.navigation', $adminLocale),
                     'icon' => 'wb-icon-file',
                     'items' => [
-                        ['label' => $adminTranslator->get('system_health.title', $adminLocale), 'route' => 'admin.system.health.index', 'active' => ['admin.system.health.*'], 'icon' => 'wb-icon-activity'],
+                        ['label' => $adminTranslator->get('system_health.title', $adminLocale), 'route' => 'admin.system.health.index', 'active' => ['admin.system.health.*', 'admin.system.diagnostics.*'], 'icon' => 'wb-icon-activity'],
                         ['label' => $adminText('navigation.search_rebuild'), 'route' => 'admin.system.search.index', 'active' => ['admin.system.search.*'], 'icon' => 'wb-icon-search'],
                         ['label' => $adminText('navigation.backups'), 'route' => 'admin.system.backups.index', 'active' => ['admin.system.backups.*'], 'icon' => 'wb-icon-database-backup'],
                         ['label' => $adminText('navigation.cleanup'), 'route' => 'admin.system.cleanup.index', 'active' => ['admin.system.cleanup.*'], 'icon' => 'wb-icon-trash2'],

@@ -69,8 +69,6 @@
     @include('webblocks-cms::admin.partials.flash')
   </div>
 
-  <p><a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.diagnostics.index') }}">{{ $adminTranslator->get('diagnostics.prepare', $adminLocale) }}</a></p>
-
   <section class="wb-card">
     <div class="wb-card-header wb-cluster wb-cluster-between">
       <h2 class="wb-card-title">{{ $adminText('updates.title') }}</h2>

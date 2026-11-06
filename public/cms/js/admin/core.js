@@ -46,6 +46,22 @@
         });
     }
 
+    function bindDiagnosticConsent() {
+        var form = document.querySelector('[data-wb-diagnostic-form]');
+        if (!form) return;
+
+        var consent = form.elements.namedItem('prepare_consent');
+        var submit = form.querySelector('button[type="submit"]');
+
+        function syncSubmit() {
+            submit.disabled = !consent.checked;
+        }
+
+        consent.addEventListener('change', syncSubmit);
+        window.addEventListener('pageshow', syncSubmit);
+        syncSubmit();
+    }
+
     function hideLegacyOverlayShell(overlay) {
         var legacyLayer = overlay ? overlay.closest('.wb-overlay-layer--dialog') : null;
 
@@ -707,6 +723,7 @@
     }
 
     bindSeoEvidence();
+    bindDiagnosticConsent();
     bindAdminTransientUiReset();
     bindAdminHistoryModalLinks();
     bindSiteHandleAutosuggest();

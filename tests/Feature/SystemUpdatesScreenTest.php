@@ -105,6 +105,8 @@ class SystemUpdatesScreenTest extends TestCase
 
     // History accordion + eye-modal log.
     $this->assertStringContainsString('Update history', $html);
+    $this->assertStringNotContainsString('href="'.route('admin.system.diagnostics.index').'"', $html);
+    $this->assertStringContainsString('href="'.route('admin.system.diagnostics.index', ['run_id' => 1]).'"', $html);
     $this->assertStringContainsString('wb-icon-eye', $html);
     $this->assertStringContainsString('wb-run-log-1', $html);
     $this->assertStringContainsString('Applied 1.40.0', $html);

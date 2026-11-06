@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
@@ -48,7 +50,13 @@ class SystemDiagnosticReportTest extends TestCase
   public function test_opening_the_form_does_not_collect_or_send_data(): void
   {
     $this->mock(SystemDiagnosticReportQuery::class, fn ($mock) => $mock->shouldNotReceive('collect'));
-    $this->actingAs($this->actor())->get('/test-diagnostics')->assertOk()->assertSee('Prepare diagnostic report');
+    $response = $this->actingAs($this->actor())->get('/test-diagnostics')->assertOk()->assertSee('Prepare diagnostic report');
+
+    $document = new DOMDocument;
+    @$document->loadHTML($response->getContent());
+    $xpath = new DOMXPath($document);
+    $this->assertSame(1, $xpath->query('//form[@data-wb-diagnostic-form]/div[@class="wb-cluster"]/button[@type="submit" and @disabled]')->length);
+    $this->assertSame(1, $xpath->query('//form[@data-wb-diagnostic-form]//input[@name="prepare_consent" and @required and not(@checked)]')->length);
   }
 
   public function test_every_operation_requires_system_authority_and_explicit_collection_consent(): void
