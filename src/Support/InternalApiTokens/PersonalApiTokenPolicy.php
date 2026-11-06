@@ -44,21 +44,7 @@ class PersonalApiTokenPolicy
 
   public function grantable(User $user): array
   {
-    $acl = app(CmsAuthorization::class);
-    if ($acl->ready()) {
-      return array_values(array_filter(array_diff(CmsApiTokenCapabilities::ALL, self::SYSTEM_ONLY), function ($capability) use ($acl, $user) {
-        $permissions = app(PermissionCatalog::class)->capabilityGrantPermissions($capability);
-
-        return collect($permissions)->contains(fn ($permission) => $acl->allows($user, $permission)) || $acl->allows($user, 'cms.legacy-api.'.$capability);
-      }));
-    }
-    $capabilities = array_values(array_diff(CmsApiTokenCapabilities::ALL, self::SYSTEM_ONLY));
-
-    if ($user->isEditor()) {
-      $capabilities = array_values(array_diff($capabilities, self::SITE_ADMIN_ONLY));
-    }
-
-    return $capabilities;
+    return array_values(array_filter(CmsApiTokenCapabilities::ALL, fn (string $capability) => $this->canUse($user, $capability)));
   }
 
   public static function legacyCapabilities(string $role): array
@@ -68,6 +54,18 @@ class PersonalApiTokenPolicy
 
   public function canUse(User $user, string $capability): bool
   {
-    return in_array($capability, $this->grantable($user), true);
+    if (! in_array($capability, CmsApiTokenCapabilities::ALL, true) || in_array($capability, self::SYSTEM_ONLY, true)) {
+      return false;
+    }
+
+    $acl = app(CmsAuthorization::class);
+    if (! $acl->ready()) {
+      return ! $user->isEditor() || ! in_array($capability, self::SITE_ADMIN_ONLY, true);
+    }
+
+    $permissions = app(PermissionCatalog::class)->capabilityGrantPermissions($capability);
+
+    return collect($permissions)->contains(fn ($permission) => $acl->allows($user, $permission))
+      || $acl->allows($user, 'cms.legacy-api.'.$capability);
   }
 }

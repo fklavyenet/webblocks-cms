@@ -199,6 +199,27 @@ class BlockTypeApiAuthoringPolicyTest extends TestCase
   }
 
   #[Test]
+  public function content_api_reorders_one_complete_group_and_preserves_other_groups(): void
+  {
+    $this->seedBlockTypes();
+    [$page, $slotType] = $this->seedPage();
+    $section = $this->seedBlock($page, $slotType, 'section', ['sort_order' => 3]);
+    $first = $this->seedBlock($page, $slotType, 'header', ['sort_order' => 0], $section);
+    $second = $this->seedBlock($page, $slotType, 'header', ['sort_order' => 1], $section);
+    $controller = app(InternalContentResourceController::class);
+
+    $incomplete = Request::create('/', 'PATCH', ['blocks' => [$second->id]]);
+    $this->assertSame(422, $controller->reorderSlotBlocks($incomplete, $page, $slotType->slug)->getStatusCode());
+    $this->assertSame(1, $second->fresh()->sort_order);
+
+    $complete = Request::create('/', 'PATCH', ['blocks' => [$second->id, $first->id]]);
+    $this->assertSame(200, $controller->reorderSlotBlocks($complete, $page, $slotType->slug)->getStatusCode());
+    $this->assertSame([$second->id, $first->id], $section->children()->pluck('id')->all());
+    $this->assertSame(3, $section->fresh()->sort_order);
+    $this->assertSame('block_reordered', $page->revisions()->sole()->event);
+  }
+
+  #[Test]
   public function reordering_a_sibling_group_containing_html_is_rejected(): void
   {
     $this->seedBlockTypes();

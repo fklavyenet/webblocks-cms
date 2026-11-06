@@ -43,7 +43,7 @@ class EngagementController extends Controller
 
     return view('webblocks-cms::admin.engagement.comments', $this->options($request, $filters) + [
       'comments' => $comments, 'tableReady' => $ready, 'statuses' => CommentEntry::statuses(),
-      'totalCount' => $ready ? $this->query->comments($request->user())->count() : 0, 'filteredCount' => $comments->total(),
+      'totalCount' => $ready ? $this->query->comments($request->user(), array_intersect_key($filters, ['moderatable' => true]))->count() : 0, 'filteredCount' => $comments->total(),
       'commentStatuses' => $ready ? $this->query->comments($request->user(), array_diff_key($filters, ['status' => true]))->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status')->all() : [],
     ]);
   }
@@ -66,7 +66,7 @@ class EngagementController extends Controller
   {
     abort_unless(app(EngagementPolicy::class)->update($request->user(), $commentEntry), 403);
 
-    return view('webblocks-cms::admin.engagement.comment', ['comment' => $commentEntry->load(['site', 'page.translations', 'block']), 'returnQuery' => http_build_query(array_intersect_key($request->query(), array_flip(['search', 'site', 'page_id', 'status', 'from', 'until', 'page', 'sort', 'direction'])))]);
+    return view('webblocks-cms::admin.engagement.comment', ['comment' => $commentEntry->load(['site', 'page.translations', 'block']), 'returnQuery' => http_build_query(array_intersect_key($request->query(), array_flip(['search', 'site', 'page_id', 'status', 'moderatable', 'from', 'until', 'page', 'sort', 'direction'])))]);
   }
 
   public function updateCommentStatus(ModerateCommentsRequest $request, CommentEntry $commentEntry): RedirectResponse

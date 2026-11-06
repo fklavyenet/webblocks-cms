@@ -158,6 +158,7 @@
             'id' => 'apply-page-version-candidate-modal',
             'title' => $text('apply_candidate'),
             'description' => $text('apply_candidate_description'),
+            'pendingOperation' => 'restoring',
             'action' => route('admin.pages.revisions.candidate.apply', [$page, $candidate]),
             'method' => 'POST',
             'submitLabel' => $text('apply_candidate'),

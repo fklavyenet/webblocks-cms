@@ -24,7 +24,6 @@ wb-overlay-layer--dialog
 wb-picker-results
 wb-public-block
 wb-public-contact-card
-wb-public-contact-form-card
 wb-public-contact-meta
 wb-public-search-results
 wb-public-showcase-item

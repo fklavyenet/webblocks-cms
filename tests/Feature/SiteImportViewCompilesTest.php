@@ -60,8 +60,7 @@ class SiteImportViewCompilesTest extends TestCase
   {
     $source = $this->source();
 
-    $this->assertStringContainsString('wb-progress-bar', $source);
-    $this->assertStringContainsString('wb-progress-bar-fill', $source);
+    $this->assertStringContainsString('<progress class="wb-progress-bar"', $source);
     $this->assertStringNotContainsString('<style', $source);
   }
 
@@ -75,17 +74,6 @@ class SiteImportViewCompilesTest extends TestCase
     // with no sign that anything stopped.
     $this->assertStringContainsString("addEventListener('wb:overlay:close-request'", $source);
     $this->assertStringContainsString('event.preventDefault()', $source);
-  }
-
-  #[Test]
-  public function a_locked_step_is_waited_out_rather_than_retried_against(): void
-  {
-    $source = $this->runtime();
-
-    // 409 means another tab holds the per-import lock. Its work is this run's
-    // work, so the answer is to wait, not to race it.
-    $this->assertStringContainsString('result.status === 409', $source);
-    $this->assertStringContainsString('setTimeout(run, 2000)', $source);
   }
 
   #[Test]

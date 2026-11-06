@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,7 @@ use WebBlocks\Cms\Models\BlockButtonTranslation;
 use WebBlocks\Cms\Models\BlockContactFormTranslation;
 use WebBlocks\Cms\Models\BlockImageTranslation;
 use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
+use WebBlocks\Cms\Models\BlockPluginTranslation;
 use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
@@ -34,10 +36,13 @@ use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactConsentValidationException;
-use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
+use WebBlocks\Cms\Support\Mcp\McpConfiguration;
+use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\StagedPageTranslations;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
+use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
 
 class InternalContentPlanService
@@ -242,11 +247,12 @@ class InternalContentPlanService
     private readonly BlockPayloadWriter $blockPayloadWriter,
     private readonly BlockDeletionManager $blockDeletionManager,
     private readonly PageRevisionManager $pageRevisionManager,
-    private readonly PageLayoutSlotSyncer $slotSyncer,
+    private readonly PageDraftInitializer $drafts,
     private readonly InternalContentApiPresenter $presenter,
     private readonly InternalContentApiOperations $operations,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
     private readonly ManagedCtaSynchronizer $managedCtaSynchronizer,
+    private readonly StagedPageTranslations $stagedTranslations,
   ) {}
 
   public function validate(array $payload): InternalContentPlanResult
@@ -434,16 +440,33 @@ class InternalContentPlanService
 
       if ($plan['mode'] === self::MODE_PROMOTE_STAGED_UPDATE) {
         $sourcePage = Page::query()
-          ->with(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot'])
           ->lockForUpdate()
           ->find($plan['staged_update']['source_page']['id']);
         $stagedPage = Page::query()
-          ->with(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot'])
           ->lockForUpdate()
           ->find($plan['staged_update']['staged_page']['id']);
 
         if (! $sourcePage || ! $stagedPage) {
           throw new \InvalidArgumentException('Source or staged page no longer resolves.');
+        }
+
+        $expectedTranslations = $plan['staged_update']['translation_changes'];
+        if ($expectedTranslations !== []) {
+          PageTranslation::query()->whereIn('page_id', [$sourcePage->id, $stagedPage->id])
+            ->orderBy('id')->lockForUpdate()->pluck('id');
+        }
+        $translationChanges = $this->stagedTranslations->changes($stagedPage);
+        if ($translationChanges !== $expectedTranslations) {
+          throw new \InvalidArgumentException('The staged translations changed after validation. Review the update again.');
+        }
+        try {
+          $this->stagedTranslations->assertPromotable($sourcePage, $stagedPage, $translationChanges);
+        } catch (ValidationException $exception) {
+          throw new \InvalidArgumentException($exception->getMessage(), previous: $exception);
+        }
+
+        if ($this->splitsMovedBlockSlots($sourcePage, $stagedPage, $plan['staged_update']['promote_slots'], lock: true)) {
+          throw new \InvalidArgumentException('Promote both slots together when a block has moved between them.');
         }
 
         $this->pageRevisionManager->capture(
@@ -456,6 +479,7 @@ class InternalContentPlanService
         );
 
         $deletedCount = $this->promoteStagedSlots($sourcePage, $stagedPage, $plan['staged_update']['promote_slots']);
+        $this->stagedTranslations->promote($sourcePage, $translationChanges);
         app(ContactConsentRequirements::class)->assertPage($sourcePage->fresh());
         $this->persistPageSourceSync($sourcePage, $plan['page_settings']);
         $sourcePage->forceFill([
@@ -513,28 +537,20 @@ class InternalContentPlanService
       }
 
       if ($plan['page'] !== null) {
-        $page = Page::query()->create([
+        $page = $this->drafts->create([
           'site_id' => $plan['site']['id'],
-          'page_type' => Page::TYPE_DEFAULT,
-          'status' => Page::STATUS_DRAFT,
           'settings' => Page::supportsSettingsColumn()
             ? array_filter([
               'public_shell' => $plan['layout']['handle'],
               'source_sync' => $plan['page_settings']['source_sync'] ?? null,
             ], fn ($value) => $value !== null)
             : null,
-        ]);
-
-        PageTranslation::query()->create([
-          'page_id' => $page->id,
-          'site_id' => $page->site_id,
+        ], [
           'locale_id' => $plan['locale']['id'],
           'name' => $plan['page']['title'],
           'slug' => $plan['page']['slug'],
           'path' => $plan['page']['path'],
-        ]);
-
-        $this->slotSyncer->seedInitialSlots($page, $plan['layout']['handle']);
+        ], $plan['layout']['handle']);
 
         $slotTypes = SlotType::query()->whereIn('slug', array_keys($plan['slots']))->get()->keyBy('slug');
 
@@ -715,9 +731,9 @@ class InternalContentPlanService
     return $block;
   }
 
-  public function prepareAuthoringDraft(Page $page, User $actor): Page
+  public function prepareAuthoringDraft(Page $page, User $actor, ?array $managedSlots = null, string $event = 'dynamic_content_draft_prepared'): Page
   {
-    return DB::transaction(function () use ($page, $actor): Page {
+    return DB::transaction(function () use ($page, $actor, $managedSlots, $event): Page {
       $page = Page::query()->lockForUpdate()->findOrFail($page->id);
       abort_unless($page->status === Page::STATUS_PUBLISHED, 409);
       $draft = $this->findReusableStagedPage($page);
@@ -728,10 +744,10 @@ class InternalContentPlanService
 
         return $draft;
       }
-      $slots = $page->slots()->with('slotType')->get()->filter(fn ($slot) => $slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_PAGE)->map(fn ($slot) => $slot->slotType->slug)->values()->all();
+      $slots = $managedSlots ?? $page->slots()->with('slotType')->get()->filter(fn ($slot) => $slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_PAGE)->map(fn ($slot) => $slot->slotType->slug)->values()->all();
       $draft = $this->createStagedPage($page, ['staged_update' => ['managed_slots' => $slots]]);
       $draft->forceFill(['created_by_user_id' => $actor->id, 'updated_by_user_id' => $actor->id])->save();
-      $this->pageRevisionManager->capture($draft, $actor, event: 'dynamic_content_draft_prepared');
+      $this->pageRevisionManager->capture($draft, $actor, event: $event);
 
       return $draft;
     });
@@ -837,20 +853,30 @@ class InternalContentPlanService
 
     $this->cloneBlocks($sourcePage, $stagedPage);
 
+    // This baseline is set once. Reusing a draft may refresh workflow metadata,
+    // but cannot make its existing content a copy of a newer published version.
+    if (app(McpConfiguration::class)->enabled() && Schema::hasTable('wbcms_staged_page_bases')) {
+      DB::table('wbcms_staged_page_bases')->insert([
+        'page_id' => $stagedPage->id,
+        'source_fingerprint' => SnapshotContent::hash($this->pageRevisionManager->snapshotForInspection($sourcePage)),
+      ]);
+    }
+
     return $stagedPage;
   }
 
   private function findReusableStagedPage(Page $sourcePage): ?Page
   {
+    return $this->stagedDrafts($sourcePage)->where('status', Page::STATUS_DRAFT)->orderByDesc('id')->lockForUpdate()->first();
+  }
+
+  public function stagedDrafts(Page $sourcePage): Builder
+  {
     return Page::query()
       ->where('site_id', $sourcePage->site_id)
-      ->where('status', Page::STATUS_DRAFT)
       ->whereRuntimeSetting('staged_update.type', self::STAGED_UPDATE_TYPE)
       ->whereRuntimeSetting('staged_update.source_page_id', $sourcePage->id)
-      ->whereRuntimeSetting('staged_update.state', 'draft')
-      ->orderByDesc('id')
-      ->lockForUpdate()
-      ->first();
+      ->whereRuntimeSetting('staged_update.state', 'draft');
   }
 
   private function refreshReusableStagedMetadata(Page $stagedPage, Page $sourcePage, array $plan): void
@@ -918,7 +944,7 @@ class InternalContentPlanService
     $blocks = Block::query()
       ->where('page_id', $sourcePage->id)
       ->when($slotTypeIds !== null, fn ($query) => $query->whereIn('slot_type_id', $slotTypeIds))
-      ->with(['blockAssets.galleryItemTranslations', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+      ->with(['blockAssets.galleryItemTranslations', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations', 'pluginTranslations'])
       ->orderBy('id')
       ->lockForUpdate()
       ->get();
@@ -1015,6 +1041,15 @@ class InternalContentPlanService
         'submit_label' => $translation->submit_label,
         'success_message' => $translation->success_message,
         'consent_label' => $translation->consent_label,
+      ]);
+    }
+
+    foreach ($source->pluginTranslations as $translation) {
+      $this->cloneTranslation(BlockPluginTranslation::class, $target, [
+        'block_id' => $target->id,
+        'locale_id' => $translation->locale_id,
+        'field' => $translation->field,
+        'value' => $translation->value,
       ]);
     }
   }
@@ -1386,7 +1421,17 @@ class InternalContentPlanService
     if ($pageSettings === [] && $this->sourceSync($stagedPage) !== []) {
       $pageSettings = ['source_sync' => $this->sourceSync($stagedPage)];
     }
-    $promoteSlots = $this->normalizePromoteSlots($input, $sourcePage, $stagedPage, $errors);
+    $translationChanges = $stagedPage ? $this->stagedTranslations->changes($stagedPage) : [];
+    if ($sourcePage && $stagedPage) {
+      try {
+        $this->stagedTranslations->assertPromotable($sourcePage, $stagedPage, $translationChanges);
+      } catch (ValidationException $exception) {
+        foreach ($exception->errors() as $field => $messages) {
+          $errors[] = $this->error('plan.translation_changes.'.$field, $messages[0]);
+        }
+      }
+    }
+    $promoteSlots = $this->normalizePromoteSlots($input, $sourcePage, $stagedPage, $errors, $translationChanges !== []);
     if ($sourcePage && $stagedPage) {
       $errors = [...$errors, ...app(ContactConsentRequirements::class)->publicationErrors($sourcePage, replacement: $stagedPage, replaceSlots: $promoteSlots)];
     }
@@ -1409,6 +1454,7 @@ class InternalContentPlanService
         'staged_page' => $stagedPage ? ['id' => $stagedPage->id, 'status' => $stagedPage->status] : null,
         'managed_slots' => $this->stagedUpdateMetadata($stagedPage)['managed_slots'] ?? [],
         'promote_slots' => $promoteSlots,
+        'translation_changes' => $translationChanges,
       ],
       'page' => null,
       'slots' => [],
@@ -1622,10 +1668,14 @@ class InternalContentPlanService
     }
   }
 
-  private function normalizePromoteSlots(array $input, ?Page $sourcePage, ?Page $stagedPage, array &$errors): array
+  private function normalizePromoteSlots(array $input, ?Page $sourcePage, ?Page $stagedPage, array &$errors, bool $hasTranslationChanges): array
   {
     $metadata = $this->stagedUpdateMetadata($stagedPage);
     $rawSlots = data_get($input, 'promote_slots', data_get($input, 'managed_slots', $metadata['managed_slots'] ?? []));
+
+    if ($hasTranslationChanges && $rawSlots === []) {
+      return [];
+    }
 
     if (! is_array($rawSlots) || $rawSlots === []) {
       $rawSlots = $this->sourceSync($stagedPage)['managed_slots'] ?? [];
@@ -1657,8 +1707,28 @@ class InternalContentPlanService
     }
 
     $this->validatePromoteSlotSet($sourcePage, $stagedPage, $slots, $errors);
+    if ($sourcePage && $stagedPage && $this->splitsMovedBlockSlots($sourcePage, $stagedPage, $slots)) {
+      $errors[] = $this->error('plan.promote_slots', 'Promote both slots together when a block has moved between them.');
+    }
 
     return $slots;
+  }
+
+  private function splitsMovedBlockSlots(Page $source, Page $draft, array $slots, bool $lock = false): bool
+  {
+    $slotIds = SlotType::query()->whereIn('slug', $slots)->pluck('id')->all();
+    $blocks = Block::query()->whereIn('page_id', [$source->id, $draft->id])
+      ->whereNotNull('revision_key')->orderBy('id')
+      ->when($lock, fn ($query) => $query->lockForUpdate())
+      ->get(['id', 'page_id', 'slot_type_id', 'revision_key'])
+      ->groupBy('page_id');
+    $originals = $blocks->get($source->id, collect())->keyBy('revision_key');
+
+    return $blocks->get($draft->id, collect())->contains(function (Block $block) use ($originals, $slotIds): bool {
+      $original = $originals->get($block->revision_key);
+
+      return $original && in_array($original->slot_type_id, $slotIds, true) !== in_array($block->slot_type_id, $slotIds, true);
+    });
   }
 
   private function managedSlotsForStagedUpdate(array $input, ?Page $sourcePage, array &$errors): array

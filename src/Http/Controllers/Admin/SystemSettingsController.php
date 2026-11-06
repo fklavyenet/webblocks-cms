@@ -4,9 +4,11 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Throwable;
 use WebBlocks\Cms\Http\Requests\Admin\CmsMailTestEmailRequest;
+use WebBlocks\Cms\Http\Requests\Admin\McpSettingsRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SystemSettingsRequest;
 use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Policies\LogFormatPolicy;
@@ -16,6 +18,7 @@ use WebBlocks\Cms\Support\Logging\LogFormatSettings;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 use WebBlocks\Cms\Support\Mail\CmsTestEmailSender;
 use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
+use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -31,7 +34,7 @@ class SystemSettingsController extends Controller
     private readonly AdminLocaleResolver $adminLocaleResolver,
   ) {}
 
-  public function edit(): View
+  public function edit(McpConfiguration $mcp): View
   {
     $verificationLocale = request()->query('verification_locale', $this->adminLocaleResolver->locale());
     $verificationLocale = is_string($verificationLocale) && in_array($verificationLocale, AdminLocaleResolver::SUPPORTED_LOCALES, true) ? $verificationLocale : 'en';
@@ -62,6 +65,11 @@ class SystemSettingsController extends Controller
         'cms_mail_timeout' => old('cms_mail_timeout', $this->systemSettings->cmsMailSettings()['timeout']),
         'cms_mail_password_configured' => $this->systemSettings->cmsMailPasswordConfigured(),
       ],
+      'mcpEnabled' => $mcp->enabled(),
+      'mcpReady' => $mcp->ready(),
+      'mcpResource' => $mcp->resource(),
+      'mcpScopes' => array_diff_key(McpConfiguration::LABELS, [McpConfiguration::READ => true]),
+      'mcpAvailableScopes' => $mcp->availableScopes(),
       'mailDiagnostics' => $this->mailSettingsResolver->diagnostics(),
       'canManageVerificationEmail' => $canManageVerificationEmail,
       'verificationLocale' => $verificationLocale,
@@ -91,6 +99,13 @@ class SystemSettingsController extends Controller
       ->route('admin.system.settings.edit', ['tab' => $request->validated('section')])
       ->with('status', $request->validated('section') === 'logging'
         ? __('webblocks-cms::admin.system_settings.logging_saved') : 'Settings updated successfully.');
+  }
+
+  public function updateMcp(McpSettingsRequest $request): RedirectResponse
+  {
+    DB::transaction(fn () => $this->systemSettings->save($request->settingsPayload()));
+
+    return redirect()->route('admin.system.settings.edit', ['tab' => 'mcp'])->with('status', __('webblocks-cms::mcp.saved'));
   }
 
   public function sendMailTest(CmsMailTestEmailRequest $request, CmsTestEmailSender $sender): RedirectResponse

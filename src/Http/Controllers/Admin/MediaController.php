@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Schema;
@@ -256,9 +257,13 @@ class MediaController extends Controller
     return $redirect;
   }
 
-  public function store(MediaUploadRequest $request): RedirectResponse
+  public function store(MediaUploadRequest $request): RedirectResponse|JsonResponse
   {
     $this->mediaUploader->upload($request->file('file'), $request->validated(), $request->user()?->id);
+
+    if ($request->expectsJson()) {
+      return response()->json(['uploaded' => true], 201);
+    }
 
     return redirect()
       ->route('admin.media.index', array_filter(['folder_id' => $request->validated('folder_id')]))

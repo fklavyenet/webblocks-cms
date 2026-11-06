@@ -1,9 +1,58 @@
 # Changelog
 
+## 1.125.0
+
+- Prepare a diagnostic report from System Health or Updates. Choose what to collect, review the report, then download the same contents to share with support.
+- Include selected runtime versions, update status, plugin state and saved health counts. Optional error entries show timing, severity and fingerprints. Reports are tied to the installation and user and expire after 30 minutes.
+- Keep provider connections, ticket submission and consent to share in the optional Support plugin.
+
+## 1.124.0
+
+- Open a Panel notifications menu from the admin bell. It counts unread contact messages and comments you can moderate, with separate links to the filtered queues. Counts update as messages are read or comments are moderated.
+
+## 1.123.1
+
+- Show when an admin dialog has submitted an action and prevent repeat submissions. Longer operations such as site export, media upload, backups, and plugin updates show an in-dialog progress indicator while the browser waits for the result.
+- Keep site import results visible until dismissed. Pausing waits for the current step to finish, and an unconfirmed result stops further requests and directs the operator to the saved results.
+
+## 1.123.0
+
+- Expand MCP with localized page search and draft editing for blocks, translations, and SEO.
+- Create unpublished page drafts with private previews. Repeating the same request returns the existing draft.
+- Add, move, and reorder supported blocks in draft slots. Update localized page names, proposed addresses, SEO, and social sharing fields in drafts.
+- Upload files of up to 512 KiB to the Media Library through a separate MCP grant and the shared CMS uploader.
+- Separate MCP read and edit permissions. Super admins can control which permissions clients may request, and users can see each connection’s site and grants in their profile. Existing connections keep their previous access during the upgrade.
+
+## 1.122.1
+
+- Show the contact form confirmation directly below the Send message button and return visitors to it after submission, without shifting the navigation.
+
+## 1.122.0
+
+- Read supported localized block text in published pages and their update drafts through MCP.
+- Edit supported block copy, captions and alternative text in update drafts, and select existing public images within the authorized site. Draft edits return a private preview link.
+- Require a separate OAuth grant for the expanded tools and preserve the scope of existing connections.
+
+## 1.121.0
+
+- Support automatic registration for OAuth clients that authenticate with a client secret and use PKCE for authorization.
+- Group site selection and requested permissions on the MCP consent screen, and wrap long lines in the update log.
+
+## 1.120.1
+
+- Allow Chromium to return to the registered OAuth callback after WebBlocks MCP consent.
+
+## 1.120.0
+
+- Let Super admins enable and disable remote MCP from System Settings and copy the server URL.
+- Allow multiple compatible OAuth clients to register dynamically and request site-scoped consent using PKCE S256.
+- Let CMS users revoke their own MCP connections across sites, including pending authorization codes.
+- Replace the MCP-specific environment configuration with the panel setting, dynamic registration and the installation’s canonical HTTPS URL.
+
 ## 1.119.0
 
-- Add provider-independent, permission-checked diagnostic reports with explicit category selection, exact preview/download and expiring user-bound artifacts. Export controlled runtime/update fields, saved health counts and optional error fingerprints without raw messages, credentials or content.
-- Link reports from Health and Update history and keep the health status summary compact. Support tickets and provider connections remain optional plugin features.
+- Add an opt-in remote MCP endpoint with CMS sign-in and site-scoped OAuth consent.
+- Find published pages, update localized headings in verified staged drafts, and open private previews.
 
 ## 1.118.2
 

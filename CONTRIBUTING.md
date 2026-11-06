@@ -73,6 +73,12 @@ messages in page content or next to the action. Do not use toast notifications o
 hide feedback automatically. Success and failure must remain visible and be
 announced with an appropriate status/alert live region.
 
+Admin modal forms that submit in the current tab show a busy submit button
+after validation. Longer requests also show an indeterminate progress bar and
+guidance to keep the tab open. Keep the dialog visible while awaiting the
+response and preserve native form values and the selected submit action.
+JavaScript-owned requests keep their own result and retry behavior.
+
 Multi-step manual work uses the shared native `wb-modal` progress dialog: explain
 that the tab must remain open, show truthful counts (indeterminate until known),
 a compact summary and elapsed time for this screen. Keep completion/errors until

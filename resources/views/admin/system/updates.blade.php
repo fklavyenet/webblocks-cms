@@ -288,7 +288,7 @@
   {{-- Run logs for the history rows above; modals live outside the card. --}}
   @foreach ($runs as $run)
     @if ($run->output)
-      <div id="wb-run-log-{{ $run->id }}" class="wb-modal" role="dialog" aria-modal="true" aria-labelledby="wb-run-log-{{ $run->id }}-title">
+      <div id="wb-run-log-{{ $run->id }}" class="wb-modal wb-modal-lg" role="dialog" aria-modal="true" aria-labelledby="wb-run-log-{{ $run->id }}-title">
         <div class="wb-modal-dialog">
           <div class="wb-modal-header">
             <div>
@@ -301,7 +301,7 @@
           </div>
           <div class="wb-modal-body">
             <p>{{ $sanitizer->sanitize($run->summary) }}</p>
-            <pre class="wb-text-xs">{{ $sanitizer->sanitize($run->output, 20000) }}</pre>
+            <pre class="wb-cms-update-log wb-text-xs">{{ $sanitizer->sanitize($run->output, 20000) }}</pre>
           </div>
         </div>
       </div>

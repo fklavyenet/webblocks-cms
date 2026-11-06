@@ -180,11 +180,7 @@ class AdminAuthorization
     return $query->where(function (Builder $mediaQuery) use ($user, $mediaSiteIds): void {
       $mediaQuery
         ->where('uploaded_by', $user->id)
-        ->orWhereHas('blocks.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $mediaSiteIds))
-        ->orWhereHas('blockMedia.block.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $mediaSiteIds))
-        ->orWhereHas('sitesUsingAsFavicon', fn (Builder $siteQuery) => $siteQuery->whereIn((new Site)->qualifyColumn('id'), $mediaSiteIds))
-        ->orWhereHas('sitesUsingAsSocialImage', fn (Builder $siteQuery) => $siteQuery->whereIn((new Site)->qualifyColumn('id'), $mediaSiteIds))
-        ->orWhereHas('pageTranslationsUsingAsOgImage.page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $mediaSiteIds));
+        ->orWhere(fn (Builder $siteMedia) => $siteMedia->usedBySites($mediaSiteIds));
     });
   }
 

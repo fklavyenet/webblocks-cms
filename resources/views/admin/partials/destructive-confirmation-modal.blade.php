@@ -6,6 +6,9 @@
     $submitLabel = $submitLabel ?? $adminTranslator->admin('common.delete', $adminLocale);
     $cancelLabel = $cancelLabel ?? $adminTranslator->admin('common.cancel', $adminLocale);
     $formAttributes = $formAttributes ?? [];
+    if (isset($pendingOperation)) {
+        $formAttributes['data-wb-modal-submit-progress'] = $pendingOperation;
+    }
     $submitAttributes = $submitAttributes ?? [];
 
     $formAttributeString = collect($formAttributes)

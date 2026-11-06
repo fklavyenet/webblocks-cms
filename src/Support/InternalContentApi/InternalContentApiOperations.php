@@ -569,7 +569,7 @@ class InternalContentApiOperations
     return $block;
   }
 
-  public function normalizeBlock(mixed $block, string $path, ?BlockType $parentType, array &$errors, array &$warnings): ?array
+  public function normalizeBlock(mixed $block, string $path, ?BlockType $parentType, array &$errors, array &$warnings, bool $allowEmptyWrapper = false): ?array
   {
     if (! is_array($block)) {
       $errors[] = $this->error($path, 'Block must be an object.');
@@ -661,7 +661,7 @@ class InternalContentApiOperations
       $errors[] = $this->error($path.'.children', 'This block type does not accept children.');
     }
 
-    if ($children === [] && $this->requiresChildren($blockType)) {
+    if ($children === [] && ! $allowEmptyWrapper && $this->requiresChildren($blockType)) {
       $errors[] = $this->error($path.'.children', 'This wrapper block type must contain renderable child blocks. Use nested children arrays; flat id/parent_id references are not part of the content plan contract.');
     }
 

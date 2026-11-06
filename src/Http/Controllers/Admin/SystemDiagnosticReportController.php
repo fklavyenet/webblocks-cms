@@ -17,10 +17,12 @@ class SystemDiagnosticReportController
 
   public function prepare(SystemDiagnosticReportRequest $request, SystemDiagnosticReports $reports): Response
   {
-    $envelope = $reports->prepare($request->user(), $request->validated('categories'), $request->filled('run_id') ? $request->integer('run_id') : null);
+    $selectedCategories = $request->validated('categories');
+    $envelope = $reports->prepare($request->user(), $selectedCategories, $request->filled('run_id') ? $request->integer('run_id') : null);
 
     return response()->view('webblocks-cms::admin.system.diagnostics', [
       'categories' => SystemDiagnosticReportQuery::CATEGORIES, 'runId' => $request->validated('run_id'),
+      'selectedCategories' => $selectedCategories,
       'envelope' => $envelope, 'reportText' => $reports->encode($reports->open($request->user(), $envelope)),
     ])->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
   }

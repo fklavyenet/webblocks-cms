@@ -37,7 +37,7 @@
                 </a>
             </div>
 
-            <form method="POST" action="{{ $formAction }}" class="wb-stack wb-gap-4">
+            <form method="POST" action="{{ $formAction }}" data-wb-modal-submit-progress="exporting" class="wb-stack wb-gap-4">
                 @csrf
                 <input type="hidden" name="_site_export_modal" value="{{ $modalKey }}">
 

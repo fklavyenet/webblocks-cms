@@ -1,4 +1,5 @@
 @php
+    $selected = (array) old('categories', $selectedCategories ?? ['system_summary', 'update_run', 'plugin_health', 'saved_health']);
     $text = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('diagnostics.'.$key, app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale());
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $text('title'), 'heading' => $text('title')])
@@ -14,7 +15,7 @@
                 <div role="group" aria-labelledby="diagnostic-categories">
                     <h3 id="diagnostic-categories">{{ $text('categories') }}</h3>
                     @foreach ($categories as $category)
-                        <label class="wb-check"><input type="checkbox" name="categories[]" value="{{ $category }}" @checked(in_array($category, old('categories', ['system_summary', 'update_run', 'plugin_health', 'saved_health']), true))><span>{{ $text('category.'.$category) }}</span></label>
+                        <label class="wb-check"><input type="checkbox" name="categories[]" value="{{ $category }}" @checked(in_array($category, $selected, true))><span>{{ $text('category.'.$category) }}</span></label>
                     @endforeach
                 </div>
                 <p class="wb-text-sm wb-text-muted">{{ $text('errors_help') }}</p>

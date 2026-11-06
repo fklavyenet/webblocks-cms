@@ -3,7 +3,7 @@
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
-use WebBlocks\Cms\Support\Media\MediaMimeTypes;
+use WebBlocks\Cms\Support\Media\MediaUploadRules;
 
 class MediaUploadRequest extends FormRequest
 {
@@ -16,16 +16,7 @@ class MediaUploadRequest extends FormRequest
   {
     return [
       'folder_id' => ['nullable', 'integer', 'exists:wbcms_media_folders,id'],
-      'file' => [
-        'required',
-        'file',
-        'max:51200',
-        'mimetypes:'.MediaMimeTypes::rule(),
-      ],
-      'title' => ['nullable', 'string', 'max:255'],
-      'alt_text' => ['nullable', 'string', 'max:255'],
-      'caption' => ['nullable', 'string'],
-      'description' => ['nullable', 'string'],
-    ];
+      'file' => MediaUploadRules::file(),
+    ] + MediaUploadRules::metadata();
   }
 }

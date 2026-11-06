@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRenderController;
 use WebBlocks\Cms\Http\Controllers\Public\ContactMessageController;
+use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Http\Requests\ContactMessageRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\ContactMessage;
@@ -204,7 +205,48 @@ class ContactFormConsentTest extends TestCase
     $this->assertSame(50, $message->spam_score);
   }
 
+  #[Test]
+  public function submission_returns_to_escaped_confirmation_below_only_the_submitted_forms_button(): void
+  {
+    $this->withoutMiddleware(EnsureInstalled::class);
+    config()->set('cms.multisite.unknown_host_fallback', true);
+    $block = $this->seedForm(consentRequired: false, consentLabel: null);
+    $block->replicate()->fill(['sort_order' => 1])->save();
+    $locale = Locale::create(['code' => 'de', 'name' => 'Deutsch', 'is_default' => false, 'is_enabled' => true]);
+    $block->page->site->locales()->attach($locale, ['is_enabled' => true]);
+    $block->page->translations()->create(['locale_id' => $locale->id, 'name' => 'Kontakt', 'slug' => 'kontakt', 'path' => '/kontakt']);
+    $block->contactFormTranslations()->create(['locale_id' => $locale->id, 'success_message' => 'Empfangen <strong>als Text</strong>']);
+    $url = '/de/kontakt?from=footer';
+    $anchor = 'contact-form-success-'.$block->id;
+
+    $this->post('/contact-messages', $this->submissionPayload($block, null, 'Hello there.', $url))
+      ->assertRedirect($url.'#'.$anchor);
+    $html = $this->get($url)->assertOk()->getContent();
+    $dom = new \DOMDocument;
+    @$dom->loadHTML($html);
+    $xpath = new \DOMXPath($dom);
+    $alerts = $xpath->query('//div[contains(@class,"wb-alert-success") and @role="status"]');
+    $this->assertCount(1, $alerts);
+    $alert = $alerts->item(0);
+    $this->assertSame($anchor, $alert->getAttribute('id'));
+    $this->assertSame(1, $xpath->query('ancestor::section[@id="contact-form-'.$block->id.'"]', $alert)->length);
+    $this->assertSame(1, $xpath->query('preceding-sibling::*[1]/button[@type="submit"]', $alert)->length);
+    $this->assertStringContainsString('Nachricht gesendet', $alert->textContent);
+    $this->assertStringContainsString('Empfangen <strong>als Text</strong>', $alert->textContent);
+    $this->assertSame(0, $xpath->query('.//strong[text()="als Text"]', $alert)->length);
+    $this->get($url)->assertOk()->assertDontSee($anchor);
+  }
+
   private function submit(Block $block, ?string $consent, string $message = 'Hello there.', string $sourceUrl = '/about'): void
+  {
+    $request = ContactMessageRequest::create('/contact-messages', 'POST', $this->submissionPayload($block, $consent, $message, $sourceUrl));
+    $request->setContainer($this->app)->setRedirector($this->app->make('redirect'));
+    $request->validateResolved();
+
+    $this->app->make(ContactMessageController::class)->store($request);
+  }
+
+  private function submissionPayload(Block $block, ?string $consent, string $message, string $sourceUrl): array
   {
     config()->set('contact.minimum_submit_seconds', 0);
     $check = app(ContactFormCheck::class);
@@ -225,11 +267,7 @@ class ContactFormConsentTest extends TestCase
       $payload['consent'] = $consent;
     }
 
-    $request = ContactMessageRequest::create('/contact-messages', 'POST', $payload);
-    $request->setContainer($this->app)->setRedirector($this->app->make('redirect'));
-    $request->validateResolved();
-
-    $this->app->make(ContactMessageController::class)->store($request);
+    return $payload;
   }
 
   private function renderPage(Block $block, string $locale = 'en'): string

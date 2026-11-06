@@ -44,6 +44,10 @@
     padding-top: var(--wb-s3);
 }
 
+.wb-public-contact-form-card .wb-alert-success:target {
+    scroll-margin-block-start: calc(var(--wb-navbar-h, 56px) + var(--wb-s3));
+}
+
 :is(body[data-wb-public-theme], [data-wb-public-theme-preview]) {
     background: var(--wb-public-page-bg, var(--wb-bg));
     color: var(--wb-text);

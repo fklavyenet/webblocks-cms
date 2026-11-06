@@ -239,6 +239,7 @@
             'id' => 'restore-backup-'.$backup->id,
             'title' => $adminText('backups.restore_title'),
             'description' => $adminText('backups.restore_description'),
+            'pendingOperation' => 'restoring',
             'action' => route('admin.system.backups.restore', $backup),
             'method' => 'POST',
             'submitLabel' => $adminText('backups.restore_backup'),

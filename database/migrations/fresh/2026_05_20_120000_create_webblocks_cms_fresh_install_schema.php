@@ -22,6 +22,8 @@ return new class extends Migration
   public function down(): void
   {
     foreach ([
+      'wbcms_mcp_page_drafts',
+      'wbcms_staged_page_translation_fields',
       'wbcms_revision_capture_events',
       'wbcms_navigation_item_translations',
       'wbcms_block_gallery_item_translations',

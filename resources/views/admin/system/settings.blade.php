@@ -13,6 +13,7 @@
         'privacy' => $systemText('privacy'),
         'security' => $systemText('security'),
         ...($canManageLogFormat ? ['logging' => $systemText('logging')] : []),
+        'mcp' => __('webblocks-cms::mcp.title'),
         'runtime' => $systemText('runtime_information'),
     ];
     $systemTab = old('section', request()->query('tab', 'general'));
@@ -385,6 +386,9 @@
                         </form>
                     </div>
                     @endif
+                    <div class="wb-tabs-panel {{ $systemTab === 'mcp' ? 'is-active' : '' }}" id="system-settings-mcp-panel">
+                        @include('webblocks-cms::admin.system.partials.mcp-settings')
+                    </div>
                     <div class="wb-tabs-panel {{ $systemTab === 'runtime' ? 'is-active' : '' }}" id="system-settings-runtime-panel">
         <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $systemText('runtime_information') }}</strong></div>
@@ -470,7 +474,7 @@
 
     <div class="wb-modal {{ $errors->has('recipient_email') ? 'is-open' : '' }}" id="settings-mail-test-modal" role="dialog" aria-modal="true" aria-labelledby="settings-mail-test-title">
         <div class="wb-modal-dialog">
-            <form method="POST" action="{{ route('admin.system.settings.mail.test') }}">
+            <form method="POST" action="{{ route('admin.system.settings.mail.test') }}" data-wb-modal-submit-progress="sending">
                 @csrf
                 <div class="wb-modal-header">
                     <h2 class="wb-modal-title" id="settings-mail-test-title">{{ $systemText('send_test_email') }}</h2>

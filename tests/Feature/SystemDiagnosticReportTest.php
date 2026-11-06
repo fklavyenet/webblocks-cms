@@ -60,6 +60,24 @@ class SystemDiagnosticReportTest extends TestCase
     $this->post('/test-diagnostics', ['categories' => ['arbitrary_file'], 'prepare_consent' => 1])->assertSessionHasErrors('categories.0');
   }
 
+  public function test_preview_preserves_the_categories_used_to_prepare_the_report(): void
+  {
+    $this->actingAs($this->actor())->post('/test-diagnostics', [
+      'categories' => ['system_summary'],
+      'prepare_consent' => 1,
+    ])->assertOk()->assertSee('value="system_summary" checked', false)->assertDontSee('value="update_run" checked', false);
+  }
+
+  public function test_the_form_renders_after_rejecting_scalar_categories(): void
+  {
+    $this->actingAs($this->actor())->from('/test-diagnostics')->post('/test-diagnostics', [
+      'categories' => 'update_run',
+      'prepare_consent' => 1,
+    ])->assertRedirect('/test-diagnostics')->assertSessionHasErrors('categories');
+
+    $this->get('/test-diagnostics')->assertOk();
+  }
+
   public function test_download_is_exact_reviewed_content_without_recollection_and_cannot_cross_users(): void
   {
     $actor = $this->actor();

@@ -219,6 +219,7 @@
                 'id' => 'bulk-delete-users-modal',
                 'title' => $adminText('bulk_delete_title'),
                 'description' => $adminText('bulk_delete_description'),
+                'pendingOperation' => 'deleting',
                 'action' => route('admin.users.bulk-destroy'),
                 'method' => 'DELETE',
                 'submitLabel' => $adminText('delete_selected'),

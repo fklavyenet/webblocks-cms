@@ -1525,7 +1525,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
      */
   protected function adminRouteFiles(): array
   {
-    return $this->namedRouteFiles(self::PACKAGE_ADMIN_ROUTE_FILE);
+    return [...$this->namedRouteFiles(self::PACKAGE_ADMIN_ROUTE_FILE), ...$this->namedRouteFiles('mcp.php')];
   }
 
   protected function authRouteFiles(): array

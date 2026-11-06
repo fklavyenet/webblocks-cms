@@ -62,7 +62,9 @@ class TwoFactorRecoveryTest extends TestCase
     parent::setUp();
     $this->withoutMiddleware(RedirectIfNotInstalled::class);
     Notification::fake();
-    $this->mock(PanelNotificationQuery::class)->shouldReceive('forUser')->andReturn(null);
+    $notifications = $this->mock(PanelNotificationQuery::class);
+    $notifications->shouldReceive('forUser')->andReturn(null);
+    $notifications->shouldReceive('pendingCommentsForUser')->andReturn(0);
   }
 
   private function user(string $name, ?string $role = 'super_admin'): User

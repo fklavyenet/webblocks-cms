@@ -79,7 +79,7 @@
                 @if ($definition->effects)<p>{{ $j('effects') }}</p>@endif
             @endcomponent
             @if ($definition->effects && $definition->web)
-                @component('webblocks-cms::admin.partials.destructive-confirmation-modal', ['id' => 'job-request-'.$loop->index, 'title' => $label($definition), 'description' => $j('effects'), 'action' => route('admin.jobs.store'), 'method' => 'POST', 'submitLabel' => $j('confirm')])
+                @component('webblocks-cms::admin.partials.destructive-confirmation-modal', ['id' => 'job-request-'.$loop->index, 'title' => $label($definition), 'description' => $j('effects'), 'action' => route('admin.jobs.store'), 'method' => 'POST', 'formAttributes' => ['data-wb-modal-submit-label' => 'starting'], 'submitLabel' => $j('confirm')])
                     <input type="hidden" name="job_key" value="{{ $definition->key }}"><input type="hidden" name="confirmed" value="1">
                     <p>{{ $label($definition) }}</p><p>{{ $j('installation_scope') }}</p>
                     @if (! $definition->web)<p>{{ $j('cli_only') }}</p>@endif

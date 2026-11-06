@@ -299,6 +299,7 @@
             'id' => 'bulk-delete-media-modal',
             'title' => $adminText('delete_selected_media'),
             'description' => $adminText('delete_selected_media_description'),
+            'pendingOperation' => 'deleting',
             'action' => route('admin.media.bulk-destroy'),
             'method' => 'DELETE',
             'submitLabel' => $adminText('delete_selected'),
@@ -419,7 +420,7 @@
                         </a>
                     </div>
 
-                    <form method="POST" action="{{ route('admin.media.store') }}" enctype="multipart/form-data" class="wb-stack wb-gap-4">
+                    <form method="POST" action="{{ route('admin.media.store') }}" data-wb-modal-submit-progress="uploading" enctype="multipart/form-data" class="wb-stack wb-gap-4">
                         @csrf
                         <input type="hidden" name="_media_modal" value="upload-asset">
 
@@ -497,7 +498,7 @@
                         </a>
                     </div>
 
-                    <form method="POST" action="{{ route('admin.media.fetch') }}" class="wb-stack wb-gap-4">
+                    <form method="POST" action="{{ route('admin.media.fetch') }}" data-wb-modal-submit-progress="fetching" class="wb-stack wb-gap-4">
                         @csrf
                         <input type="hidden" name="_media_modal" value="fetch-media">
 

@@ -10,7 +10,10 @@ use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Admin\DashboardController;
+use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Requests\Admin\ContactMessageIndexRequest;
+use WebBlocks\Cms\Models\CmsRole;
+use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
@@ -115,7 +118,7 @@ class PanelNotificationsTest extends TestCase
       $this->assertSame(1, $data['awaiting']);
       $this->assertSame(1, $data['warnings']);
       $this->view('webblocks-cms::admin.partials.panel-notifications-indicator', ['panelNotifications' => $data])
-        ->assertSee('1 unread message(s).')->assertSee('class="wb-btn-badge"', false);
+        ->assertSee('1 unread contact message')->assertSee('class="wb-btn-badge"', false);
     }
     $this->assertSame($before, $message->fresh()->getAttributes());
     $this->assertSame('pending', DB::table('wbcms_site_notification_events')->value('status'));
@@ -196,6 +199,7 @@ class PanelNotificationsTest extends TestCase
     $this->assertSame(1, $view->getData()['panelNotifications']['awaiting']);
     $query = Mockery::mock(PanelNotificationQuery::class);
     $query->shouldNotReceive('forUser');
+    $query->shouldReceive('pendingCommentsForUser')->once()->andReturn(0);
     (new PanelNotificationsComposer($query))->compose($view);
   }
 
@@ -210,7 +214,7 @@ class PanelNotificationsTest extends TestCase
     $dashboard = app(DashboardController::class)(request())->render();
     $this->assertStringContainsString('data-wb-panel-notifications', $dashboard);
     $this->assertStringContainsString('data-wb-panel-notification-summary', $dashboard);
-    $this->assertStringContainsString('1 unread message(s).', $dashboard);
+    $this->assertStringContainsString('1 unread contact message', $dashboard);
     $this->assertStringNotContainsString('PrivateBody', $dashboard);
     $layout = view('webblocks-cms::layouts.admin')->render();
     $this->assertStringContainsString('data-wb-panel-notifications', $layout);
@@ -221,6 +225,56 @@ class PanelNotificationsTest extends TestCase
     $this->assertStringNotContainsString('data-wb-panel-notifications', $dashboard);
     $this->assertStringContainsString('data-wb-panel-notification-summary', $dashboard);
     $this->assertStringNotContainsString('data-wb-panel-notifications', view('webblocks-cms::layouts.admin')->render());
+  }
+
+  #[Test]
+  public function the_bell_links_to_the_same_authorized_queues_it_counts(): void
+  {
+    (require dirname(__DIR__, 2).'/database/migrations/updates/2026_07_12_140000_ensure_prefixed_engagement_tables.php')->up();
+    $this->withoutMiddleware(RedirectIfNotInstalled::class);
+    $allowed = $this->site('actionable');
+    $readOnly = $this->site('read-only');
+    $private = $this->site('private');
+    $message = $this->message($allowed);
+    $this->message($allowed, 'read');
+    $this->message($readOnly);
+    $this->message($private);
+
+    $comments = collect([$allowed, $readOnly, $private])->map(fn (Site $site) => CommentEntry::create([
+      'site_id' => $site->id,
+      'page_id' => Page::where('site_id', $site->id)->firstOrFail()->id,
+      'body' => 'PrivateComment',
+      'status' => 'pending',
+    ]));
+    $comment = $comments->first();
+    $user = $this->user([$allowed->id, $readOnly->id]);
+    $readOnlyRole = CmsRole::create(['name' => 'Read comments', 'handle' => 'read-comments']);
+    foreach (['cms.panel.access', 'cms.engagement.read'] as $permission) {
+      DB::table('wbcms_acl_role_permissions')->insert(['role_id' => $readOnlyRole->id, 'permission' => $permission]);
+    }
+    DB::table('wbcms_site_user')->where('user_id', $user->id)->where('site_id', $readOnly->id)->update(['role_id' => $readOnlyRole->id]);
+    $this->actingAs($user);
+
+    $dashboardUrl = route('admin.dashboard');
+    $messageUrl = route('admin.contact-messages.index', ['status' => 'new']);
+    $commentUrl = route('admin.engagement.comments.index', ['status' => 'pending', 'moderatable' => 1]);
+
+    $this->get($dashboardUrl)->assertOk()
+      ->assertSee('Panel notifications: 2 pending items')
+      ->assertSee('1 unread contact message')->assertSee($messageUrl)
+      ->assertSee('1 comment awaiting moderation')->assertSee($commentUrl)
+      ->assertDontSee('PrivateBody')->assertDontSee('PrivateComment');
+    $this->get($messageUrl)->assertOk()->assertViewHas('messages', fn ($messages) => $messages->pluck('id')->all() === [$message->id]);
+    $this->get($commentUrl)->assertOk()->assertViewHas('comments', fn ($records) => $records->pluck('id')->all() === [$comment->id]);
+    $this->assertSame('new', $message->fresh()->status);
+    $this->assertSame('pending', $comment->fresh()->status);
+
+    $this->get(route('admin.contact-messages.show', $message))->assertOk();
+    $this->get($dashboardUrl)->assertOk()->assertSee('Panel notifications: 1 pending item')->assertSee($commentUrl)->assertDontSee($messageUrl);
+
+    $this->patch(route('admin.engagement.comments.status', $comment), ['status' => 'approved', 'return_query' => parse_url($commentUrl, PHP_URL_QUERY)])
+      ->assertRedirect($commentUrl);
+    $this->get($dashboardUrl)->assertOk()->assertDontSee('data-wb-panel-notifications');
   }
 
   #[Test]

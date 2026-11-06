@@ -3,7 +3,7 @@
         var checkbox = modal.querySelector('[data-wb-delete-descendants-toggle]');
         var submit = modal.querySelector('[data-wb-delete-submit]');
 
-        if (!checkbox || !submit) {
+        if (!checkbox || !submit || submit.classList.contains('is-busy')) {
             return;
         }
 

@@ -28,6 +28,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
@@ -45,14 +46,15 @@ use WebBlocks\Cms\Support\InternalContentApi\MediaContractRegistry;
 use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
-use WebBlocks\Cms\Support\Media\MediaMimeTypes;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Media\MediaUploader;
+use WebBlocks\Cms\Support\Media\MediaUploadRules;
 use WebBlocks\Cms\Support\Media\MediaUsageResolver;
 use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\StagedPageTranslations;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -69,6 +71,7 @@ class InternalContentResourceController extends Controller
     private readonly LocaleOptionCatalog $localeOptionCatalog,
     private readonly InternalContentApiOperations $operations,
     private readonly PageRevisionManager $revisionManager,
+    private readonly PageBlockStructure $blockStructure,
     private readonly BlockDeletionManager $blockDeletionManager,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
     private readonly BlockTranslationRegistry $translationRegistry,
@@ -651,6 +654,7 @@ class InternalContentResourceController extends Controller
         'method' => 'POST',
         'url' => '/webadmin/api/content/apply',
         'available' => $canPromote && $isActiveDraft,
+        'translation_changes' => app(StagedPageTranslations::class)->changes($page),
         'required_capabilities' => [
           CmsApiTokenCapabilities::CONTENT_APPLY,
           CmsApiTokenCapabilities::CONTENT_PUBLISH,
@@ -1028,12 +1032,8 @@ class InternalContentResourceController extends Controller
   {
     $validator = Validator::make($request->all(), [
       'folder_id' => ['nullable', 'integer', 'exists:wbcms_media_folders,id'],
-      'file' => $this->mediaFileRules(),
-      'title' => ['nullable', 'string', 'max:255'],
-      'alt_text' => ['nullable', 'string', 'max:255'],
-      'caption' => ['nullable', 'string'],
-      'description' => ['nullable', 'string'],
-    ]);
+      'file' => MediaUploadRules::file(),
+    ] + MediaUploadRules::metadata());
 
     if ($validator->fails()) {
       return response()->json([
@@ -1111,12 +1111,8 @@ class InternalContentResourceController extends Controller
   public function replaceMedia(Request $request, Media $media): JsonResponse
   {
     $validator = Validator::make($request->all(), [
-      'file' => $this->mediaFileRules(),
-      'title' => ['nullable', 'string', 'max:255'],
-      'alt_text' => ['nullable', 'string', 'max:255'],
-      'caption' => ['nullable', 'string'],
-      'description' => ['nullable', 'string'],
-    ]);
+      'file' => MediaUploadRules::file(),
+    ] + MediaUploadRules::metadata());
 
     if ($validator->fails()) {
       return $this->validationErrors('invalid_media_replace', 'Media replace failed validation.', $validator->errors()->toArray());
@@ -1547,43 +1543,27 @@ class InternalContentResourceController extends Controller
 
     $parentId = $parentIds->first();
 
-    $siblingIds = Block::query()
-      ->where('page_id', $page->id)
-      ->where('slot_type_id', $slotType->id)
-      ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
-      ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
-      ->pluck('id')
-      ->map(fn ($id) => (int) $id);
-
-    if ($siblingIds->sort()->values()->all() !== $blockIds->sort()->values()->all()) {
-      return $this->blockValidationError([
-        ['path' => 'blocks', 'message' => 'Submitted blocks must contain the full sibling group for one parent.'],
-      ]);
-    }
-
-    if ($this->apiAuthoringPolicy->blockIdsScopeHasHumanOnlyBlock($blockIds)) {
-      return $this->apiAuthoringPolicy->rejectionResponse('blocks');
-    }
-
-    DB::transaction(function () use ($page, $slotType, $blockIds, $parentId): void {
+    return DB::transaction(function () use ($page, $slotType, $blockIds, $parentId): JsonResponse {
       $siblings = Block::query()
         ->where('page_id', $page->id)
         ->where('slot_type_id', $slotType->id)
-        ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
-        ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
+        ->where('parent_id', $parentId)
+        ->orderBy('id')
         ->lockForUpdate()
         ->get(['id', 'sort_order']);
 
-      $positionMap = $blockIds->flip();
+      $orderedIds = $blockIds->all();
+      if (! $this->blockStructure->containsExactly($siblings, $orderedIds)) {
+        return $this->blockValidationError([
+          ['path' => 'blocks', 'message' => 'Submitted blocks must contain the full sibling group for one parent.'],
+        ]);
+      }
 
-      $siblings
-        ->sortBy(fn (Block $block) => $positionMap->get($block->id))
-        ->values()
-        ->each(function (Block $block, int $index): void {
-          if ($block->sort_order !== $index) {
-            $block->update(['sort_order' => $index]);
-          }
-        });
+      if ($this->apiAuthoringPolicy->blockIdsScopeHasHumanOnlyBlock($blockIds)) {
+        return $this->apiAuthoringPolicy->rejectionResponse('blocks');
+      }
+
+      $this->blockStructure->saveOrder($siblings, $orderedIds);
 
       $this->revisionManager->capture(
         $page->fresh(),
@@ -1593,9 +1573,9 @@ class InternalContentResourceController extends Controller
         event: 'block_reordered',
         source: 'internal-content-api',
       );
-    });
 
-    return $this->ok(['message' => 'Saved']);
+      return $this->ok(['message' => 'Saved']);
+    });
   }
 
   public function deleteSlotBlock(Request $request, Page $page, string $slot, Block $block): JsonResponse
@@ -1832,16 +1812,6 @@ class InternalContentResourceController extends Controller
         ->values()
         ->all(),
     ], 422);
-  }
-
-  private function mediaFileRules(): array
-  {
-    return [
-      'required',
-      'file',
-      'max:51200',
-      'mimetypes:'.MediaMimeTypes::rule(),
-    ];
   }
 
   private function directMediaKindsForBlockType(string $type): array

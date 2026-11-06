@@ -25,6 +25,7 @@ class EngagementIndexRequest extends FormRequest
       'site' => ['nullable', 'integer', Rule::in($sites)],
       'page_id' => ['nullable', 'integer', Rule::exists((new Page)->getTable(), 'id')->where(fn ($query) => $query->whereIn('site_id', $sites)->when($this->filled('site'), fn ($query) => $query->where('site_id', $this->input('site'))))],
       'status' => ['nullable', 'string', 'max:40'],
+      'moderatable' => [$this->routeIs('admin.engagement.comments.index') ? 'sometimes' : 'prohibited', 'boolean'],
       'rating' => ['nullable', 'integer', 'min:1', 'max:255'],
       'from' => ['nullable', 'date_format:Y-m-d'],
       'until' => ['nullable', 'date_format:Y-m-d', ...($this->filled('from') ? ['after_or_equal:from'] : [])],

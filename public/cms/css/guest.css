@@ -24,3 +24,6 @@
 .wb-auth-brand-mark-on-surface {
     color: var(--wb-accent);
 }
+
+.wb-mcp-consent .wb-auth-header-subtitle,
+.wb-mcp-consent .wb-auth-footer { overflow-wrap: anywhere; }

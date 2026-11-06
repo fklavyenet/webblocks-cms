@@ -10,6 +10,7 @@ use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Models\ContentRating;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -29,6 +30,13 @@ class EngagementQuery
   public function comments($user, array $filters = []): Builder
   {
     return $this->filter($this->scope(CommentEntry::query(), $user), $filters)
+      ->when($filters['moderatable'] ?? false, function (Builder $query) use ($user): void {
+        $acl = app(CmsAuthorization::class);
+        if ($acl->ready()) {
+          $query->whereIn('site_id', $acl->siteIds($user, 'cms.engagement.read')
+            ->intersect($acl->siteIds($user, 'cms.engagement.moderate')));
+        }
+      })
       ->when($filters['status'] ?? '', fn ($query, $status) => $query->where('status', $status));
   }
 

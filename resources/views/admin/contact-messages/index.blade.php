@@ -227,6 +227,7 @@
                 'id' => 'bulk-delete-contact-messages-modal',
                 'title' => $adminText('delete_selected_contact_messages'),
                 'description' => $adminText('delete_selected_description'),
+                'pendingOperation' => 'deleting',
                 'action' => route('admin.contact-messages.bulk-destroy'),
                 'method' => 'DELETE',
                 'submitLabel' => $adminText('delete_selected'),

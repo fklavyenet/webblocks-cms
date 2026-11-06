@@ -13,6 +13,7 @@ use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 use WebBlocks\Cms\Support\Contact\ContactMessageNotifier;
 use WebBlocks\Cms\Support\PublicSubmissions\PublicSubmissionProtection;
 use WebBlocks\Cms\Support\PublicSubmissions\SubmissionDecision;
+use WebBlocks\Cms\Support\Translations\PublicLocaleContext;
 
 class ContactMessageController extends Controller
 {
@@ -26,7 +27,6 @@ class ContactMessageController extends Controller
     $payload = $request->payload();
     $block = Block::query()->with(['blockType', 'page.site'])->findOrFail($payload['block_id']);
     $block->page?->loadMissing(['site', 'translations']);
-    $block = app(BlockTranslationResolver::class)->resolve($block, site: $block->page?->site);
 
     abort_unless($block->typeSlug() === 'contact_form', 404);
     abort_unless($block->status === 'published', 404);
@@ -40,12 +40,12 @@ class ContactMessageController extends Controller
     $redirects = app(ContactFormRedirects::class);
     $fallbackUrl = $block->page?->publicUrl() ?: url('/');
     $sourceUrl = $redirects->baseUrl($payload['source_url'], $fallbackUrl);
+    $locale = app(PublicLocaleContext::class)->forBlockSource($block, $sourceUrl);
+    $block = app(BlockTranslationResolver::class)->resolve($block, $locale, $block->page?->site);
     $successMessage = $block->success_message ?? config('contact.success_message');
 
     if ($payload['form_check_filled'] || $payload['elapsed_seconds'] === null || $payload['elapsed_seconds'] < $minimumSubmitSeconds) {
-      return redirect($sourceUrl)
-        ->with('contact_form_success_block_id', $block->id)
-        ->with('contact_form_success_message', $successMessage);
+      return $this->successResponse($sourceUrl, $block, $successMessage);
     }
 
     $notificationEnabled = (bool) $block->setting('send_email_notification', true);
@@ -93,9 +93,7 @@ class ContactMessageController extends Controller
         'notification_status' => 'skipped',
       ]);
 
-      return redirect($sourceUrl)
-        ->with('contact_form_success_block_id', $block->id)
-        ->with('contact_form_success_message', $successMessage);
+      return $this->successResponse($sourceUrl, $block, $successMessage);
     }
 
     $result = $this->notifier->send($contactMessage);
@@ -109,7 +107,12 @@ class ContactMessageController extends Controller
       'notification_reason' => $result->reason,
     ]);
 
-    return redirect($sourceUrl)
+    return $this->successResponse($sourceUrl, $block, $successMessage);
+  }
+
+  private function successResponse(string $sourceUrl, Block $block, ?string $successMessage): RedirectResponse
+  {
+    return redirect($sourceUrl.'#contact-form-success-'.$block->id)
       ->with('contact_form_success_block_id', $block->id)
       ->with('contact_form_success_message', $successMessage);
   }

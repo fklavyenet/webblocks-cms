@@ -2,6 +2,7 @@
     $hasTargetedErrors = $errors->any() && (int) old('block_id') === $block->id;
     $resolvedLocaleCode = strtolower((string) ($block->getAttribute('resolved_locale_code') ?? app()->getLocale()));
     $translator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $successMessage = session('contact_form_success_block_id') === $block->id ? session('contact_form_success_message') : null;
     $contactFormCopy = [
         'submit' => $translator->get('blocks.contact_form.submit', $resolvedLocaleCode),
         'review' => $translator->get('blocks.contact_form.review', $resolvedLocaleCode),
@@ -125,6 +126,13 @@
                 <span class="wb-text-sm wb-text-muted">{{ $contactFormCopy['storage'] }}</span>
                 <button type="submit" class="wb-btn wb-btn-primary" @disabled($consentUnavailable)>{{ $submitLabel }}</button>
             </div>
+
+            @if ($successMessage !== null)
+                <div id="contact-form-success-{{ $block->id }}" class="wb-alert wb-alert-success" role="status" tabindex="-1">
+                    <strong class="wb-alert-title">{{ $translator->public('toast.contact_message_sent', $block->renderLocaleCode()) }}</strong>
+                    <p>{{ $successMessage }}</p>
+                </div>
+            @endif
         </form>
     </div>
 </section>

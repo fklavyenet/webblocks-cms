@@ -37,10 +37,16 @@ ARGS=(
   "--payload=${RELEASE_ROOT}/webblocks-cms-${VERSION}-update-server-payload.json"
 )
 
-for arg in "$@"; do
+while [ "$#" -gt 0 ]; do
+  arg="$1"
+  shift
   case "${arg}" in
-    --version=*)
-      ARGS[0]="--release-version=${arg#--version=}"
+    --version=*|--release-version=*)
+      ARGS[0]="--release-version=${arg#*=}"
+      ;;
+    --release-version)
+      ARGS[0]="--release-version=${1:?Pass a version after --release-version.}"
+      shift
       ;;
     --version)
       printf '[webblocks-publish-update] Use --version=1.37.1 with the Composer alias. Testbench reserves bare --version for application version output.\n' >&2
@@ -69,6 +75,32 @@ if [ "${DRY_RUN}" = false ]; then
     printf '[webblocks-publish-update] GitHub CLI authentication is required before publishing. Run gh auth login.\n' >&2
     exit 1
   fi
+
+  RELEASE_VERSION="${ARGS[0]#--release-version=}"
+  TAG="v${RELEASE_VERSION}"
+  if ! TAG_COMMIT="$(git rev-parse --verify "refs/tags/${TAG}^{commit}")"; then
+    printf '[webblocks-publish-update] Release tag %s is missing.\n' "${TAG}" >&2
+    exit 1
+  fi
+
+  # The admin updater resolves the exact version through Composer after download.
+  # Check Composer's public metadata before making the update visible to sites.
+  if ! curl --fail --silent --show-error --max-time 30 \
+    https://repo.packagist.org/p2/fklavyenet/webblocks-cms.json | "${PHP_BIN}" -r '
+      $metadata = json_decode(stream_get_contents(STDIN), true);
+      foreach ($metadata["packages"]["fklavyenet/webblocks-cms"] ?? [] as $release) {
+        if (($release["version"] ?? null) === $argv[1]
+          && ($release["source"]["reference"] ?? null) === $argv[2]
+          && ($release["dist"]["reference"] ?? null) === $argv[2]) {
+          exit(0);
+        }
+      }
+      exit(1);
+    ' "${TAG}" "${TAG_COMMIT}"; then
+    printf '[webblocks-publish-update] Composer metadata has not confirmed %s at %s. Wait for Packagist to sync, then rerun publication.\n' "${TAG}" "${TAG_COMMIT}" >&2
+    exit 1
+  fi
+  printf '[webblocks-publish-update] Packagist verified %s at %s.\n' "${TAG}" "${TAG_COMMIT}"
 fi
 
 "${PHP_BIN}" vendor/bin/testbench webblocks:publish-update "${ARGS[@]}"

@@ -245,6 +245,7 @@
             'id' => $uninstallModalId,
             'title' => $adminText('uninstall_title', ['plugin' => $plugin['label']]),
             'description' => $adminText('uninstall_description'),
+            'pendingOperation' => 'uninstalling',
             'action' => route('admin.system.plugins.uninstall', $plugin['handle']),
             'method' => 'DELETE',
             'submitLabel' => $adminText('uninstall_plugin'),
