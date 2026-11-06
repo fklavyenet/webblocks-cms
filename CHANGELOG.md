@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.124.0
+
+- Open a Panel notifications menu from the admin bell. It counts unread contact messages and comments you can moderate, with separate links to the filtered queues. Counts update as messages are read or comments are moderated.
+
 ## 1.123.1
 
 - Show when an admin dialog has submitted an action and prevent repeat submissions. Longer operations such as site export, media upload, backups, and plugin updates show an in-dialog progress indicator while the browser waits for the result.

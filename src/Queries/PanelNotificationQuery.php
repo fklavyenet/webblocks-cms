@@ -4,13 +4,29 @@ namespace WebBlocks\Cms\Queries;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Policies\EngagementPolicy;
 use WebBlocks\Cms\Policies\PanelNotificationPolicy;
 
 class PanelNotificationQuery
 {
-  public function __construct(private readonly PanelNotificationPolicy $policy, private readonly SiteNotificationHealthQuery $health) {}
+  public function __construct(
+    private readonly PanelNotificationPolicy $policy,
+    private readonly SiteNotificationHealthQuery $health,
+    private readonly EngagementPolicy $engagementPolicy,
+    private readonly EngagementQuery $engagement,
+  ) {}
+
+  public function pendingCommentsForUser($user): int
+  {
+    if (! $this->engagementPolicy->viewAny($user) || ! Schema::hasTable((new CommentEntry)->getTable())) {
+      return 0;
+    }
+
+    return $this->engagement->comments($user, ['status' => 'pending', 'moderatable' => true])->count();
+  }
 
   public function forUser($user): ?array
   {

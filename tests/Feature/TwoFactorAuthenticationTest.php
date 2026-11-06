@@ -61,7 +61,9 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->withoutMiddleware(RedirectIfNotInstalled::class);
     Notification::fake();
     // The notification aggregate belongs to the host's concrete User type.
-    $this->mock(PanelNotificationQuery::class)->shouldReceive('forUser')->andReturn(null);
+    $notifications = $this->mock(PanelNotificationQuery::class);
+    $notifications->shouldReceive('forUser')->andReturn(null);
+    $notifications->shouldReceive('pendingCommentsForUser')->andReturn(0);
     $this->travelTo(now()->startOfMinute()->addSeconds(5));
   }
 

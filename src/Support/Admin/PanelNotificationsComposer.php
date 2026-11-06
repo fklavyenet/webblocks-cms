@@ -11,8 +11,10 @@ class PanelNotificationsComposer
 
   public function compose(View $view): void
   {
+    $user = request()->user();
     if (! array_key_exists('panelNotifications', $view->getData())) {
-      $view->with('panelNotifications', $this->notifications->forUser(request()->user()));
+      $view->with('panelNotifications', $this->notifications->forUser($user));
     }
+    $view->with('panelPendingComments', $this->notifications->pendingCommentsForUser($user));
   }
 }
