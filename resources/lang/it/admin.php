@@ -3320,6 +3320,12 @@ $translations = [
     'cannot_be_undone' => 'Questa operazione non può essere annullata dall\'interfaccia admin.',
   ],
   'contact_messages_index' => [
+    'current_messages_summary' => 'Messaggi corrispondenti ai filtri attuali',
+    'protection_history_help' => 'Questi conteggi riguardano i controlli dei moduli di contatto e includono i messaggi salvati e poi eliminati.',
+    'mark_read_selected' => 'Segna i selezionati come letti',
+    'mark_unread_selected' => 'Segna i selezionati come non letti',
+    'bulk_status_updated' => 'Messaggi aggiornati: :count.',
+    'bulk_status_unchanged' => 'Non è stato possibile aggiornare alcun messaggio selezionato.',
     'protection_summary' => 'Protezione locale · ultimi :days giorni',
     'protection_total' => 'Controllati',
     'protection_allowed' => 'Consentiti',

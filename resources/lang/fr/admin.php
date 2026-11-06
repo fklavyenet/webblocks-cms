@@ -3321,6 +3321,12 @@ $translations = [
     'cannot_be_undone' => 'Cette action est irréversible depuis l\'interface d\'administration.',
   ],
   'contact_messages_index' => [
+    'current_messages_summary' => 'Messages correspondant aux filtres actuels',
+    'protection_history_help' => 'Ces chiffres concernent les contrôles des formulaires de contact et incluent les messages enregistrés puis supprimés.',
+    'mark_read_selected' => 'Marquer la sélection comme lue',
+    'mark_unread_selected' => 'Marquer la sélection comme non lue',
+    'bulk_status_updated' => 'Messages mis à jour : :count.',
+    'bulk_status_unchanged' => 'Aucun des messages sélectionnés n’a pu être modifié.',
     'protection_summary' => 'Protection locale · :days derniers jours',
     'protection_total' => 'Vérifiés',
     'protection_allowed' => 'Autorisés',

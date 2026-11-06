@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.126.0
+
+- Mark selected contact messages as read or unread in the inbox. The action updates eligible messages on sites where you have permission and keeps your current filters.
+- See counts by status for the saved messages matching your inbox filters. The last 30 days of contact form protection checks are shown separately.
+- Add space between the bulk action bar and the table in admin lists that use the shared bar.
+
 ## 1.125.0
 
 - Prepare a diagnostic report from System Health or Updates. Choose what to collect, review the report, then download the same contents to share with support.

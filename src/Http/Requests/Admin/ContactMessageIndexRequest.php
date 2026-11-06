@@ -18,7 +18,7 @@ class ContactMessageIndexRequest extends FormRequest
   public function rules(): array
   {
     return ['site' => ['sometimes', 'nullable', 'integer', Rule::in(
-      app(AdminAuthorization::class)->scopeSitesForUser(Site::query(), $this->user())->pluck('id')->all()
+      app(AdminAuthorization::class)->scopeContactMessageSitesForUser(Site::query(), $this->user())->pluck('id')->all()
     )]];
   }
 }

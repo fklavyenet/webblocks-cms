@@ -218,6 +218,10 @@ svg.wb-sidebar-brand-logo {
     padding-left: 18px;
 }
 
+.wb-card-body:not(.wb-stack) > [data-wb-admin-bulk-actions]:not([hidden]) + .wb-table-wrap {
+    margin-block-start: var(--wb-s4);
+}
+
 .wb-admin-listing-view-form {
     display: flex;
     flex-wrap: wrap;

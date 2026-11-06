@@ -3321,6 +3321,12 @@ $translations = [
     'cannot_be_undone' => 'Esto no se puede deshacer desde la interfaz de administración.',
   ],
   'contact_messages_index' => [
+    'current_messages_summary' => 'Mensajes que coinciden con los filtros actuales',
+    'protection_history_help' => 'Estas cifras corresponden a comprobaciones del formulario de contacto e incluyen mensajes guardados que se eliminaron después.',
+    'mark_read_selected' => 'Marcar la selección como leída',
+    'mark_unread_selected' => 'Marcar la selección como no leída',
+    'bulk_status_updated' => 'Mensajes actualizados: :count.',
+    'bulk_status_unchanged' => 'No se pudo actualizar ninguno de los mensajes seleccionados.',
     'protection_summary' => 'Protección local · últimos :days días',
     'protection_total' => 'Comprobados',
     'protection_allowed' => 'Permitidos',

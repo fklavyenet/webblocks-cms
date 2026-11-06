@@ -23,6 +23,7 @@ class ContactMessageIndexState
    */
   private const ALLOWED_STATUSES = [
     'new',
+    'quarantined',
     'read',
     'replied',
     'archived',
@@ -36,6 +37,8 @@ class ContactMessageIndexState
     'sent',
     'pending',
     'failed',
+    'skipped',
+    'not_configured',
     'disabled',
   ];
 

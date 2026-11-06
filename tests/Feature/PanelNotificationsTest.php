@@ -354,4 +354,73 @@ class PanelNotificationsTest extends TestCase
     $this->assertSame([], $state->normalizeQuery(['site' => -1]));
     $this->assertSame(route('admin.contact-messages.index', ['site' => $first->id]), $state->sanitizeReturnUrl(route('admin.contact-messages.index', ['site' => $first->id])));
   }
+
+  #[Test]
+  public function inbox_counts_current_filtered_messages_separately_from_protection_history(): void
+  {
+    $this->withoutMiddleware(RedirectIfNotInstalled::class);
+    $site = $this->site('inbox');
+    $otherSite = $this->site('other-inbox');
+    $message = $this->message($site);
+    $this->message($site, 'read');
+    $this->message($otherSite);
+    $this->actingAs($this->user([$site->id, $otherSite->id]));
+
+    foreach ([[$site, 'contact', 4], [$site, 'comment', 2], [$otherSite, 'contact', 3]] as [$source, $surface, $allowed]) {
+      DB::table('wbcms_submission_daily_totals')->insert([
+        'site_id' => $source->id, 'date' => now()->toDateString(), 'surface' => $surface,
+        'allowed' => $allowed, 'quarantined' => 0, 'spam' => 0,
+      ]);
+    }
+
+    $url = route('admin.contact-messages.index', ['site' => $site->id, 'status' => 'new', 'notification' => 'skipped', 'search' => 'PrivateSubject']);
+    $this->get($url)->assertOk()
+      ->assertSeeInOrder(['Messages matching the current filters', 'Mark selected as read', 'Local protection'])
+      ->assertViewHas('statusCounts', fn ($counts) => $counts->count() === 1 && (int) $counts['new'] === 1)
+      ->assertViewHas('protectionSummary', fn ($summary) => $summary['total'] === 4);
+
+    $message->delete();
+    $this->get($url)->assertOk()
+      ->assertViewHas('statusCounts', fn ($counts) => $counts->isEmpty())
+      ->assertViewHas('protectionSummary', fn ($summary) => $summary['total'] === 4);
+  }
+
+  #[Test]
+  public function bulk_read_status_only_changes_eligible_messages_on_writable_sites(): void
+  {
+    $this->withoutMiddleware(RedirectIfNotInstalled::class);
+    $site = $this->site('inbox');
+    $readOnly = $this->site('read-only');
+    $private = $this->site('private');
+    $message = $this->message($site);
+    $spam = $this->message($site, 'spam');
+    $readOnlyMessage = $this->message($readOnly);
+    $privateMessage = $this->message($private);
+    $user = $this->user([$site->id, $readOnly->id]);
+    $role = CmsRole::create(['name' => 'Read messages', 'handle' => 'read-messages']);
+    foreach (['cms.panel.access', 'cms.messages.read'] as $permission) {
+      DB::table('wbcms_acl_role_permissions')->insert(['role_id' => $role->id, 'permission' => $permission]);
+    }
+    DB::table('wbcms_site_user')->where('user_id', $user->id)->where('site_id', $readOnly->id)->update(['role_id' => $role->id]);
+    $this->actingAs($user);
+
+    $index = route('admin.contact-messages.index', ['site' => $site->id, 'status' => 'new', 'notification' => 'skipped']);
+    $this->get(route('admin.contact-messages.index'))->assertOk()
+      ->assertViewHas('editableMessageIds', fn ($ids) => array_keys($ids) === [$message->id])
+      ->assertSee('form="bulk-contact-message-status" data-wb-admin-bulk-editable-status="new"', false);
+    $this->get(route('admin.contact-messages.index', ['site' => $readOnly->id]))
+      ->assertOk()->assertDontSee('bulk-contact-message-status');
+
+    $endpoint = route('admin.contact-messages.bulk-status');
+    $payload = ['contact_message_ids' => [$message->id, $spam->id, $readOnlyMessage->id, $privateMessage->id], 'return_url' => $index];
+    $this->patch($endpoint, $payload + ['status' => 'read'])->assertRedirect($index)->assertSessionHas('status_replace', ['count' => 1]);
+    $this->assertSame('read', $message->fresh()->status);
+    $this->assertSame('spam', $spam->fresh()->status);
+    $this->assertSame('new', $readOnlyMessage->fresh()->status);
+    $this->assertSame('new', $privateMessage->fresh()->status);
+    $this->patch($endpoint, $payload + ['status' => 'read'])->assertSessionHas('contact_message_status_unchanged', true);
+    $this->patch($endpoint, $payload + ['status' => 'new'])->assertRedirect($index)->assertSessionHas('status_replace', ['count' => 1]);
+    $this->assertSame('new', $message->fresh()->status);
+    $this->patchJson($endpoint, $payload + ['status' => 'spam'])->assertUnprocessable()->assertJsonValidationErrors('status');
+  }
 }

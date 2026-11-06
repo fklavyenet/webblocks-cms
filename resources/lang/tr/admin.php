@@ -3336,6 +3336,12 @@ $translations = [
     'cannot_be_undone' => 'Bu işlem admin UI üzerinden geri alınamaz.',
   ],
   'contact_messages_index' => [
+    'current_messages_summary' => 'Geçerli filtrelere uyan mesajlar',
+    'protection_history_help' => 'Bu sayılar iletişim formu kontrollerini gösterir. Kaydedildikten sonra silinen mesajların kontrolleri de sayılır.',
+    'mark_read_selected' => 'Seçilenleri okundu olarak işaretle',
+    'mark_unread_selected' => 'Seçilenleri okunmadı olarak işaretle',
+    'bulk_status_updated' => 'Güncellenen mesaj sayısı: :count.',
+    'bulk_status_unchanged' => 'Seçilen mesajlardan hiçbiri güncellenemedi.',
     'title' => 'İletişim Mesajları',
     'description' => 'Kaydedilen public talepleri inceleyin, editorial spam durumunu e-posta bildirim tesliminden ayırın ve mesaj durumunu güncelleyin.',
     'protection_summary' => 'Yerel koruma · son :days gün',

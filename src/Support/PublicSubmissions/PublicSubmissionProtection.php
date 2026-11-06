@@ -149,7 +149,7 @@ final class PublicSubmissionProtection
   /** @param iterable<int> $siteIds
    * @return array{days: int, total: int, allowed: int, quarantined: int, spam: int}
    */
-  public function summary(iterable $siteIds, int $days = 30): array
+  public function summary(iterable $siteIds, int $days = 30, ?string $surface = null): array
   {
     $days = max(1, min(365, $days));
     $empty = ['days' => $days, 'total' => 0, 'allowed' => 0, 'quarantined' => 0, 'spam' => 0];
@@ -166,6 +166,7 @@ final class PublicSubmissionProtection
 
     $row = DB::table('wbcms_submission_daily_totals')
       ->whereIn('site_id', $ids)
+      ->when($surface !== null, fn ($query) => $query->where('surface', $surface))
       ->where('date', '>=', now()->subDays($days - 1)->toDateString())
       ->selectRaw('SUM(allowed) as allowed, SUM(quarantined) as quarantined, SUM(spam) as spam')
       ->first();

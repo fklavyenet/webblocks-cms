@@ -425,6 +425,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::patch('navigation/{navigation}/visibility', [NavigationItemController::class, 'toggleVisibility'])->name('navigation.visibility');
     Route::resource('navigation', NavigationItemController::class)->except(['show']);
     Route::get('contact-messages', [AdminContactMessageController::class, 'index'])->middleware('can:manage-site-operations')->name('contact-messages.index');
+    Route::patch('contact-messages/bulk/status', [AdminContactMessageController::class, 'bulkUpdateStatus'])->middleware('can:manage-site-operations')->name('contact-messages.bulk-status');
     Route::delete('contact-messages/bulk', [AdminContactMessageController::class, 'bulkDestroy'])->middleware('can:manage-site-operations')->name('contact-messages.bulk-destroy');
     Route::get('contact-messages/{contactMessage}', [AdminContactMessageController::class, 'show'])->middleware('can:manage-site-operations')->name('contact-messages.show');
     Route::patch('contact-messages/{contactMessage}/status', [AdminContactMessageController::class, 'updateStatus'])->middleware('can:manage-site-operations')->name('contact-messages.status');

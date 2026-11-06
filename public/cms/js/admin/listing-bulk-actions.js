@@ -58,6 +58,13 @@
             trigger.disabled = count === 0;
         }
 
+        listing.querySelectorAll('[data-wb-admin-bulk-requires-status]').forEach(function (button) {
+            var requiredStatus = button.getAttribute('data-wb-admin-bulk-requires-status');
+            button.disabled = !selected.some(function (checkbox) {
+                return checkbox.getAttribute('data-wb-admin-bulk-editable-status') === requiredStatus;
+            });
+        });
+
         if (modalCount) {
             modalCount.textContent = String(count);
         }

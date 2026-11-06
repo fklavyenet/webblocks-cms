@@ -24,13 +24,16 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
+    @if (session('contact_message_status_unchanged'))
+        <div class="wb-alert wb-alert-warning" role="alert"><div>{{ $adminText('bulk_status_unchanged') }}</div></div>
+    @endif
+
     <div class="wb-card wb-card-muted">
-        <div class="wb-card-header"><strong>{{ $adminText('protection_summary', ['days' => $protectionSummary['days']]) }}</strong></div>
+        <div class="wb-card-header"><strong>{{ $adminText('current_messages_summary') }}</strong></div>
         <div class="wb-card-body wb-cluster wb-cluster-4 wb-flex-wrap">
-            <span>{{ $adminText('protection_total') }}: <strong>{{ $protectionSummary['total'] }}</strong></span>
-            <span>{{ $adminText('protection_allowed') }}: <strong>{{ $protectionSummary['allowed'] }}</strong></span>
-            <span>{{ $adminText('protection_quarantined') }}: <strong>{{ $protectionSummary['quarantined'] }}</strong></span>
-            <span>{{ $adminText('protection_spam') }}: <strong>{{ $protectionSummary['spam'] }}</strong></span>
+            @foreach (ContactMessage::statuses() as $status)
+                <span>{{ $statusLabel($status) }}: <strong>{{ $statusCounts[$status] ?? 0 }}</strong></span>
+            @endforeach
         </div>
     </div>
 
@@ -110,15 +113,27 @@
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
                 <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     <strong>{{ $adminText('title') }}</strong>
-                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $messages->total() }}</span>
                 </div>
             </div>
             <div class="wb-card-body">
-                @include('webblocks-cms::admin.partials.listing-bulk-actions', [
+                @component('webblocks-cms::admin.partials.listing-bulk-actions', [
                     'label' => $adminText('selected'),
                     'deleteTarget' => '#bulk-delete-contact-messages-modal',
                     'deleteLabel' => $adminText('delete_selected'),
                 ])
+                    @if ($editableMessageIds !== [])
+                        @slot('additionalActions')
+                            <form id="bulk-contact-message-status" method="POST" action="{{ route('admin.contact-messages.bulk-status') }}" class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="return_url" value="{{ $currentReturnUrl }}">
+                                <button type="submit" name="status" value="read" class="wb-btn wb-btn-secondary" data-wb-admin-bulk-requires-status="new" disabled>{{ $adminText('mark_read_selected') }}</button>
+                                <button type="submit" name="status" value="new" class="wb-btn wb-btn-secondary" data-wb-admin-bulk-requires-status="read" disabled>{{ $adminText('mark_unread_selected') }}</button>
+                            </form>
+                        @endslot
+                    @endif
+                @endcomponent
 
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover">
@@ -144,7 +159,11 @@
                                 <tr>
                                     <td>
                                         <label class="wb-check" for="contact_message_select_{{ $message->id }}">
-                                            <input id="contact_message_select_{{ $message->id }}" type="checkbox" value="{{ $message->id }}" data-wb-admin-row-select aria-label="{{ $adminText('select_message_from', ['name' => $message->name]) }}">
+                                            <input id="contact_message_select_{{ $message->id }}" type="checkbox" value="{{ $message->id }}" data-wb-admin-row-select aria-label="{{ $adminText('select_message_from', ['name' => $message->name]) }}"
+                                                @if (isset($editableMessageIds[$message->id]))
+                                                    name="contact_message_ids[]" form="bulk-contact-message-status" data-wb-admin-bulk-editable-status="{{ $message->status }}"
+                                                @endif
+                                            >
                                             <span class="wb-sr-only">{{ $adminText('select_message_from', ['name' => $message->name]) }}</span>
                                         </label>
                                     </td>
@@ -259,4 +278,19 @@
             @endif
         @endpush
     @endif
+
+    <details class="wb-collapse-panel">
+        <summary class="wb-collapse-trigger">{{ $adminText('protection_summary', ['days' => $protectionSummary['days']]) }}</summary>
+        <div class="wb-collapse-body">
+            <div class="wb-stack wb-stack-2">
+                <p class="wb-text-sm wb-text-muted">{{ $adminText('protection_history_help') }}</p>
+                <div class="wb-cluster wb-cluster-4 wb-flex-wrap">
+                    <span>{{ $adminText('protection_total') }}: <strong>{{ $protectionSummary['total'] }}</strong></span>
+                    <span>{{ $adminText('protection_allowed') }}: <strong>{{ $protectionSummary['allowed'] }}</strong></span>
+                    <span>{{ $adminText('protection_quarantined') }}: <strong>{{ $protectionSummary['quarantined'] }}</strong></span>
+                    <span>{{ $adminText('protection_spam') }}: <strong>{{ $protectionSummary['spam'] }}</strong></span>
+                </div>
+            </div>
+        </div>
+    </details>
 @endsection

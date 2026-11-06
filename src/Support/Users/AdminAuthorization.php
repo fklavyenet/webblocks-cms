@@ -198,6 +198,25 @@ class AdminAuthorization
     return $query->whereHas('page', fn (Builder $pageQuery) => $pageQuery->whereIn('site_id', $this->readSiteIds($user, $query->getModel() instanceof Block ? 'cms.pages.read' : 'cms.messages.read')));
   }
 
+  public function scopeContactMessageSitesForUser(Builder $query, User $user): Builder
+  {
+    return $user->isSuperAdmin()
+      ? $query
+      : $query->whereKey($this->readSiteIds($user, 'cms.messages.read'));
+  }
+
+  public function scopeContactMessageStatusUpdatesForUser(Builder $query, User $user): Builder
+  {
+    if ($user->isSuperAdmin()) {
+      return $query;
+    }
+
+    $acl = app(CmsAuthorization::class);
+    $siteIds = $this->readSiteIds($user, 'cms.messages.read')->intersect($acl->siteIds($user, 'cms.messages.update-status'));
+
+    return $query->whereHas('page', fn (Builder $page) => $page->whereIn('site_id', $siteIds));
+  }
+
   private function readSiteIds(User $user, string $permission)
   {
     $acl = app(CmsAuthorization::class);

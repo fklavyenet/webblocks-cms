@@ -3323,6 +3323,12 @@ $translations = [
     'cannot_be_undone' => 'Dies kann in der Admin-UI nicht rückgängig gemacht werden.',
   ],
   'contact_messages_index' => [
+    'current_messages_summary' => 'Nachrichten für die aktuellen Filter',
+    'protection_history_help' => 'Diese Zahlen erfassen Prüfungen von Kontaktformularen, auch wenn die gespeicherten Nachrichten später gelöscht wurden.',
+    'mark_read_selected' => 'Ausgewählte als gelesen markieren',
+    'mark_unread_selected' => 'Ausgewählte als ungelesen markieren',
+    'bulk_status_updated' => 'Aktualisierte Nachrichten: :count.',
+    'bulk_status_unchanged' => 'Keine der ausgewählten Nachrichten konnte geändert werden.',
     'title' => 'Kontaktnachrichten',
     'description' => 'Prüfen Sie gespeicherte öffentliche Anfragen, trennen Sie redaktionellen Spam-Status von E-Mail-Benachrichtigungszustellung und aktualisieren Sie den Nachrichtenstatus.',
     'protection_summary' => 'Lokaler Schutz · letzte :days Tage',

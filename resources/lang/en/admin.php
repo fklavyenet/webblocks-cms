@@ -3564,6 +3564,12 @@ return [
     'cannot_be_undone' => 'This cannot be undone from the admin UI.',
   ],
   'contact_messages_index' => [
+    'current_messages_summary' => 'Messages matching the current filters',
+    'protection_history_help' => 'These are contact form checks. The counts include submissions whose saved messages were later deleted.',
+    'mark_read_selected' => 'Mark selected as read',
+    'mark_unread_selected' => 'Mark selected as unread',
+    'bulk_status_updated' => 'Messages updated: :count.',
+    'bulk_status_unchanged' => 'None of the selected messages could be changed.',
     'title' => 'Contact Messages',
     'description' => 'Review saved public enquiries, separate editorial spam status from email notification delivery, and update message status.',
     'protection_summary' => 'Local protection · last :days days',

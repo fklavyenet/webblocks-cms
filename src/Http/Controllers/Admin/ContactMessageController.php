@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use WebBlocks\Cms\Actions\ContactMessages\UpdateSelectedContactMessageReadStatus;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteContactMessagesRequest;
+use WebBlocks\Cms\Http\Requests\Admin\BulkUpdateContactMessageStatusRequest;
 use WebBlocks\Cms\Http\Requests\Admin\ContactMessageIndexRequest;
 use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Models\Site;
@@ -44,8 +46,7 @@ class ContactMessageController extends Controller
     $baseQuery = ContactMessage::query()
       ->tap(fn ($query) => $this->authorization->scopeContactMessagesForUser($query, $request->user()));
 
-    $filteredQuery = ContactMessage::query()
-      ->tap(fn ($query) => $this->authorization->scopeContactMessagesForUser($query, $request->user()))
+    $filteredQuery = (clone $baseQuery)
       ->when($siteId > 0, fn ($query) => $query->whereHas('page', fn ($pages) => $pages->where('site_id', $siteId)))
       ->when($search !== '', function ($query) use ($search) {
         $query->where(function ($inner) use ($search) {
@@ -94,10 +95,12 @@ class ContactMessageController extends Controller
         };
       });
 
-    $totalCount = (clone $baseQuery)->count();
-    $siteIds = Site::query()
-      ->tap(fn ($query) => $this->authorization->scopeSitesForUser($query, $request->user()))
-      ->pluck('id');
+    $statusCounts = (clone $filteredQuery)
+      ->selectRaw('status, count(*) as aggregate')
+      ->groupBy('status')
+      ->pluck('aggregate', 'status');
+    $messageSites = $this->authorization->scopeContactMessageSitesForUser(Site::query(), $request->user());
+    $protectionSiteIds = (clone $messageSites)->when($siteId > 0, fn ($query) => $query->whereKey($siteId))->pluck('id');
 
     $messages = $filteredQuery
       ->with(['page', 'block.slotType', 'block.blockType'])
@@ -107,19 +110,26 @@ class ContactMessageController extends Controller
 
     AdminPagination::redirectOutOfRange($messages);
 
+    $editableMessageIds = $messages->isEmpty() ? [] : $this->authorization
+      ->scopeContactMessageStatusUpdatesForUser(ContactMessage::query(), $request->user())
+      ->whereKey($messages->modelKeys())
+      ->whereIn('status', ['new', 'read'])
+      ->pluck('id')->flip()->all();
+
     return view('webblocks-cms::admin.contact-messages.index', [
-      'sites' => $this->authorization->scopeSitesForUser(Site::query(), $request->user())->orderBy('name')->get(),
+      'sites' => $messageSites->orderBy('name')->get(),
       'messages' => $messages,
+      'editableMessageIds' => $editableMessageIds,
       'filters' => [
         'site' => $siteId ?: '',
         'search' => $search,
         'status' => $status,
         'notification' => $notification,
       ],
-      'totalCount' => $totalCount,
-      'filteredCount' => (clone $filteredQuery)->count(),
+      'totalCount' => $baseQuery->count(),
+      'statusCounts' => $statusCounts,
       'currentReturnUrl' => $this->contactMessageIndexState->returnUrl($request),
-      'protectionSummary' => $this->submissionProtection->summary($siteIds),
+      'protectionSummary' => $this->submissionProtection->summary($protectionSiteIds, surface: 'contact'),
     ]);
   }
 
@@ -197,5 +207,18 @@ class ContactMessageController extends Controller
     }
 
     return $redirect;
+  }
+
+  public function bulkUpdateStatus(BulkUpdateContactMessageStatusRequest $request, UpdateSelectedContactMessageReadStatus $update): RedirectResponse
+  {
+    $count = $update->execute($request->user(), $request->validated('contact_message_ids'), $request->validated('status'));
+    $redirect = redirect()->to($this->contactMessageIndexState->returnUrl($request));
+
+    if ($count === 0) {
+      return $redirect->with('contact_message_status_unchanged', true);
+    }
+
+    return $redirect->with('status_key', 'contact_messages_index.bulk_status_updated')
+      ->with('status_replace', ['count' => $count]);
   }
 }

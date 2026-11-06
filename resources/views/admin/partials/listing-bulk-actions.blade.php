@@ -10,15 +10,20 @@
             <span class="wb-status-pill wb-status-info"><span data-wb-admin-bulk-count>0</span> {{ $label }}</span>
         </div>
 
-        @if ($deleteTarget)
-            <button
-                type="button"
-                class="wb-btn wb-btn-danger"
-                data-wb-toggle="modal"
-                data-wb-target="{{ $deleteTarget }}"
-                data-wb-admin-bulk-delete-trigger
-                disabled
-            >{{ $deleteLabel }}</button>
+        @if ($deleteTarget || isset($additionalActions))
+            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                {{ $additionalActions ?? '' }}
+                @if ($deleteTarget)
+                    <button
+                        type="button"
+                        class="wb-btn wb-btn-danger"
+                        data-wb-toggle="modal"
+                        data-wb-target="{{ $deleteTarget }}"
+                        data-wb-admin-bulk-delete-trigger
+                        disabled
+                    >{{ $deleteLabel }}</button>
+                @endif
+            </div>
         @endif
     </div>
 </div>
