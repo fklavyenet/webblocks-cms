@@ -262,12 +262,14 @@
                           <td class="wb-text-sm">{{ $run->durationLabel() }}</td>
                           <td class="wb-text-sm">{{ optional($run->finished_at)->format('Y-m-d H:i') ?? optional($run->started_at)->format('Y-m-d H:i') ?? '—' }}</td>
                           <td class="wb-table-actions">
-                            <a class="wb-action-btn" href="{{ route('admin.system.diagnostics.index', ['run_id' => $run->id]) }}" title="{{ $adminTranslator->get('diagnostics.title', $adminLocale) }}" aria-label="{{ $adminTranslator->get('diagnostics.title', $adminLocale) }}"><i class="wb-icon wb-icon-file-text" aria-hidden="true"></i></a>
-                            @if ($run->output)
-                              <button type="button" class="wb-icon-btn" data-wb-toggle="modal" data-wb-target="#wb-run-log-{{ $run->id }}" aria-label="{{ $adminText('updates.view_log') }}">
-                                <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
-                              </button>
-                            @endif
+                            <div class="wb-action-group">
+                              @if ($run->output)
+                                <button type="button" class="wb-action-btn" data-wb-toggle="modal" data-wb-target="#wb-run-log-{{ $run->id }}" aria-label="{{ $adminText('updates.view_log') }}">
+                                  <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                </button>
+                              @endif
+                              <a class="wb-action-btn" href="{{ route('admin.system.diagnostics.index', ['run_id' => $run->id]) }}" title="{{ $adminTranslator->get('diagnostics.title', $adminLocale) }}" aria-label="{{ $adminTranslator->get('diagnostics.title', $adminLocale) }}"><i class="wb-icon wb-icon-file-text" aria-hidden="true"></i></a>
+                            </div>
                           </td>
                         </tr>
                       @endforeach

@@ -77,6 +77,7 @@ class SystemUpdatesScreenTest extends TestCase
   {
     $html = $this->renderScreen($this->updateAvailableReport(), runs: collect([
       $this->makeRun(1, '1.39.0', '1.40.0', SystemUpdateRun::STATUS_SUCCESS, output: "Applied 1.40.0\nDatabase migrated."),
+      $this->makeRun(2, '1.38.0', '1.39.0', SystemUpdateRun::STATUS_SUCCESS),
     ]));
 
     // Single-card header with avatar + icon.
@@ -106,8 +107,15 @@ class SystemUpdatesScreenTest extends TestCase
     // History accordion + eye-modal log.
     $this->assertStringContainsString('Update history', $html);
     $this->assertStringNotContainsString('href="'.route('admin.system.diagnostics.index').'"', $html);
-    $this->assertStringContainsString('href="'.route('admin.system.diagnostics.index', ['run_id' => 1]).'"', $html);
-    $this->assertStringContainsString('wb-icon-eye', $html);
+    $document = new DOMDocument;
+    @$document->loadHTML($html);
+    $xpath = new DOMXPath($document);
+    $actions = $xpath->query('//div[@id="wb-update-history"]//td[@class="wb-table-actions"]/div[@class="wb-action-group"]/*');
+    $this->assertSame(3, $actions->length);
+    $this->assertSame('#wb-run-log-1', $actions->item(0)->getAttribute('data-wb-target'));
+    $this->assertSame(1, $xpath->query('./i[@class="wb-icon wb-icon-eye"]', $actions->item(0))->length);
+    $this->assertSame(route('admin.system.diagnostics.index', ['run_id' => 1]), $actions->item(1)->getAttribute('href'));
+    $this->assertSame(route('admin.system.diagnostics.index', ['run_id' => 2]), $actions->item(2)->getAttribute('href'));
     $this->assertStringContainsString('wb-run-log-1', $html);
     $this->assertStringContainsString('Applied 1.40.0', $html);
 
