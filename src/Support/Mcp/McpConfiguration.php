@@ -27,6 +27,8 @@ final class McpConfiguration
 
   public const TRANSLATION = 'pages:write-draft-translation';
 
+  public const SEO = 'pages:write-draft-seo';
+
   public const UPLOAD = 'media:upload';
 
   public const READ_CONTENT = 'pages:read-content';
@@ -43,6 +45,7 @@ final class McpConfiguration
     self::CREATE => 'can_create_draft',
     self::STRUCTURE => 'can_edit_structure',
     self::TRANSLATION => 'can_edit_translations',
+    self::SEO => 'can_edit_seo',
     self::UPLOAD => 'can_upload_media',
     self::READ_CONTENT => 'can_read_content',
     self::READ_STRUCTURE => 'can_read_structure',
@@ -51,7 +54,7 @@ final class McpConfiguration
   ];
 
   public const SCOPES = [self::READ, self::WRITE, self::CONTENT, self::CREATE, self::STRUCTURE, self::TRANSLATION, self::UPLOAD,
-    self::READ_CONTENT, self::READ_STRUCTURE, self::READ_TRANSLATION, self::READ_MEDIA];
+    self::READ_CONTENT, self::READ_STRUCTURE, self::READ_TRANSLATION, self::READ_MEDIA, self::SEO];
 
   public const LABELS = [
     self::READ => 'scope_read',
@@ -64,6 +67,7 @@ final class McpConfiguration
     self::CREATE => 'scope_create',
     self::STRUCTURE => 'scope_write_structure',
     self::TRANSLATION => 'scope_write_translation',
+    self::SEO => 'scope_write_seo',
     self::UPLOAD => 'scope_upload',
   ];
 
@@ -90,6 +94,8 @@ final class McpConfiguration
     return Schema::hasColumn('wbcms_mcp_oauth_clients', 'client_secret_hash')
       && Schema::hasTable('wbcms_mcp_oauth_redirects')
       && Schema::hasColumns('wbcms_mcp_grants', ['oauth_client_id', 'redirect_hash', ...array_values(self::GRANT_COLUMNS)])
+      && Schema::hasColumn('wbcms_mcp_grants', 'drafts_created_only')
+      && Schema::hasTable('wbcms_mcp_grant_drafts')
       && Schema::hasTable('wbcms_mcp_page_drafts')
       && Schema::hasTable('wbcms_staged_page_translation_fields');
   }

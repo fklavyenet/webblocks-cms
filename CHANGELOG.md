@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Limit new MCP connections to drafts they create and an existing draft explicitly approved at consent. Users can choose broader site draft access when needed and review the scope in their profile.
+- Add a separate MCP permission and tool for editing draft SEO and social fields without editing page names or addresses.
+
 ## 1.126.1
 
 - Open general diagnostic reports from System Health and run-specific reports from System Updates history. The diagnostic report page highlights System Health in the sidebar.

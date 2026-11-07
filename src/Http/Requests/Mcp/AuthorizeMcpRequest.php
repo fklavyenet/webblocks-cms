@@ -43,6 +43,8 @@ final class AuthorizeMcpRequest extends FormRequest
       'resource' => ['nullable', 'string', Rule::in([$config->resource()])],
       'decision' => [$this->isMethod('POST') ? 'required' : 'prohibited', Rule::in(['allow', 'deny'])],
       'site_id' => ['required_if:decision,allow', 'nullable', 'integer', 'min:1'],
+      'draft_access' => [$this->isMethod('POST') ? 'sometimes' : 'prohibited', 'string', Rule::in(['created', 'site'])],
+      'draft_page_id' => ['nullable', 'integer', 'min:1'],
     ];
   }
 

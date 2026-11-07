@@ -26,6 +26,7 @@ class SystemSettings
     McpConfiguration::CREATE => 'system.mcp_create_draft',
     McpConfiguration::STRUCTURE => 'system.mcp_write_structure',
     McpConfiguration::TRANSLATION => 'system.mcp_write_translation',
+    McpConfiguration::SEO => 'system.mcp_write_seo',
     McpConfiguration::UPLOAD => 'system.mcp_upload_media',
   ];
 

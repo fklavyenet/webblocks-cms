@@ -71,9 +71,9 @@ class RemoteMcpTest extends TestCase
     $this->get(self::ORIGIN.'/.well-known/oauth-authorization-server/webadmin/mcp')
       ->assertOk()->assertJsonPath('issuer', self::MCP)->assertJsonPath('registration_endpoint', self::MCP.'/register')
       ->assertJsonPath('code_challenge_methods_supported', ['S256'])
-      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure', 'pages:write-draft-translation', 'media:upload', 'pages:read-content', 'pages:read-draft-structure', 'pages:read-draft-translation', 'media:read']);
+      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure', 'pages:write-draft-translation', 'media:upload', 'pages:read-content', 'pages:read-draft-structure', 'pages:read-draft-translation', 'media:read', 'pages:write-draft-seo']);
     $this->rpc('initialize', ['protocolVersion' => '2025-03-26'])->assertJsonPath('result.protocolVersion', '2025-03-26');
-    $this->rpc('tools/list')->assertJsonCount(13, 'result.tools')
+    $this->rpc('tools/list')->assertJsonCount(14, 'result.tools')
       ->assertJsonPath('result.tools.1.annotations.readOnlyHint', false)
       ->assertJsonPath('result.tools.3.annotations.readOnlyHint', true)
       ->assertJsonPath('result.tools.4.annotations.readOnlyHint', false)
@@ -88,7 +88,9 @@ class RemoteMcpTest extends TestCase
       ->assertJsonPath('result.tools.8.securitySchemes.0.scopes', ['pages:read', 'pages:read-draft-structure'])
       ->assertJsonPath('result.tools.9.securitySchemes.0.scopes', ['pages:read', 'pages:write-draft-structure'])
       ->assertJsonPath('result.tools.12.name', 'upload_media')
-      ->assertJsonPath('result.tools.12.securitySchemes.0.scopes', ['pages:read', 'media:upload']);
+      ->assertJsonPath('result.tools.12.securitySchemes.0.scopes', ['pages:read', 'media:upload'])
+      ->assertJsonPath('result.tools.13.name', 'update_draft_seo')
+      ->assertJsonPath('result.tools.13.securitySchemes.0.scopes', ['pages:read', 'pages:write-draft-seo']);
     $this->tool('find_page', ['path' => '/', 'locale' => 'en'], status: 401)
       ->assertHeader('WWW-Authenticate')->assertJsonPath('result.structuredContent.code', 'auth_required')
       ->assertJsonPath('result._meta.mcp/www_authenticate.0', fn ($header) => str_contains($header, 'resource_metadata='));
@@ -940,6 +942,180 @@ class RemoteMcpTest extends TestCase
     return ['header' => ['header'], 'content header' => ['content_header']];
   }
 
+  public function test_new_consent_defaults_to_connection_created_drafts_and_hides_existing_work(): void
+  {
+    [$page, $heading] = $this->pageFixture();
+    $colleague = $this->operator();
+    $draft = app(InternalContentPlanService::class)->prepareAuthoringDraft($page, $colleague);
+    $draft->blocks()->sole()->textTranslations()->whereHas('locale', fn ($query) => $query->where('code', 'en'))
+      ->update(['title' => 'Private colleague copy']);
+    $user = $this->operator();
+    $this->actingAs($user, 'web');
+    $auth = $this->authorizationRequest();
+    $auth['scope'] = 'pages:read pages:write-draft pages:read-content pages:write-content-draft pages:read-draft-structure pages:write-draft-structure pages:read-draft-translation pages:write-draft-seo';
+    $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertOk()
+      ->assertSee('Drafts created by this connection and the draft you select')->assertSee('All eligible drafts on the selected site');
+    $token = $this->exchange($this->consent($page->site_id, $auth))->assertOk()->json('access_token');
+    $this->assertDatabaseHas('wbcms_mcp_grants', ['token_hash' => hash('sha256', $token), 'drafts_created_only' => true]);
+    $ref = ['page_id' => $page->id, 'locale' => 'en'];
+    $version = $this->tool('find_page', $ref, $token)->assertJsonPath('result.structuredContent.draft_restricted', true)
+      ->assertJsonPath('result.structuredContent.draft', null)->assertDontSee('Private colleague copy')->json('result.structuredContent.version');
+    $this->tool('get_page_content', $ref, $token)->assertJsonPath('result.structuredContent.blocks.0.write.blocked_by', 'draft_access_denied')
+      ->assertJsonPath('result.structuredContent.draft', null)->assertDontSee('Private colleague copy');
+    foreach (['get_draft_structure', 'get_draft_translation', 'get_draft_preview'] as $name) {
+      $this->tool($name, $ref, $token)->assertJsonPath('result.structuredContent.code', 'draft_access_denied');
+    }
+    $this->tool('update_draft_heading', $ref + ['version' => $version, 'block_id' => $heading->id, 'title' => 'Overwritten'], $token)
+      ->assertJsonPath('result.structuredContent.code', 'draft_access_denied');
+    $this->tool('edit_draft_structure', $ref + ['version' => $version, 'operation' => 'add', 'slot' => 'main', 'type' => 'header'], $token)
+      ->assertJsonPath('result.structuredContent.code', 'draft_access_denied');
+    $this->tool('update_draft_seo', $ref + ['version' => $version, 'seo_title' => 'Overwritten'], $token)
+      ->assertJsonPath('result.structuredContent.code', 'draft_access_denied');
+    $this->assertSame('Private colleague copy', $draft->blocks()->sole()->textTranslations()->whereHas('locale', fn ($query) => $query->where('code', 'en'))->sole()->title);
+    $this->assertDatabaseEmpty('wbcms_mcp_grant_drafts');
+  }
+
+  public function test_restricted_grants_bind_new_update_drafts_to_one_connection_and_keep_conflict_checks(): void
+  {
+    [$page, $heading] = $this->pageFixture();
+    $user = $this->operator();
+    $scope = 'pages:read pages:write-draft pages:read-draft-structure pages:write-draft-structure pages:read-draft-translation pages:write-draft-seo';
+    $token = $this->connect($user, $page->site_id, $scope, draftAccess: 'created');
+    $ref = ['page_id' => $page->id, 'locale' => 'en'];
+    $version = $this->tool('find_page', $ref, $token)->json('result.structuredContent.version');
+    $result = $this->tool('update_draft_heading', $ref + ['block_id' => $heading->id, 'version' => $version, 'title' => 'Owned draft'], $token)
+      ->json('result.structuredContent');
+    $grantId = DB::table('wbcms_mcp_grants')->where('token_hash', hash('sha256', $token))->value('id');
+    $this->assertDatabaseHas('wbcms_mcp_grant_drafts', ['grant_id' => $grantId, 'page_id' => $result['draft_id']]);
+    $this->tool('find_page', $ref, $token)->assertJsonPath('result.structuredContent.headings.0.draft_title', 'Owned draft');
+    $this->tool('get_draft_preview', $ref, $token)->assertJsonPath('result.structuredContent.draft_id', $result['draft_id']);
+    $this->tool('get_draft_structure', $ref, $token)->assertJsonPath('result.structuredContent.draft_id', $result['draft_id']);
+    $translation = $this->tool('get_draft_translation', $ref, $token)->json('result.structuredContent');
+    $second = $this->connect($user, $page->site_id, $scope, draftAccess: 'created');
+    $this->tool('update_draft_seo', $ref + ['version' => $translation['version'], 'seo_title' => 'Cross connection'], $second)
+      ->assertJsonPath('result.structuredContent.code', 'draft_access_denied');
+    $fresh = $this->tool('find_page', $ref, $token)->json('result.structuredContent.version');
+    Page::findOrFail($result['draft_id'])->blocks()->sole()->textTranslations()->whereHas('locale', fn ($query) => $query->where('code', 'en'))
+      ->update(['title' => 'Human update']);
+    $this->tool('update_draft_heading', $ref + ['block_id' => $heading->id, 'version' => $fresh, 'title' => 'Stale write'], $token)
+      ->assertJsonPath('result.structuredContent.code', 'conflict');
+    $this->get('/webadmin/profile/mcp-connections')->assertOk()->assertSee('Drafts created by this connection and the draft you select');
+    $this->delete('/webadmin/profile/mcp-connections/'.$this->defaultClient())->assertRedirect();
+    $this->assertDatabaseEmpty('wbcms_mcp_grant_drafts');
+  }
+
+  public function test_restricted_standalone_draft_retries_do_not_transfer_ownership_to_another_connection(): void
+  {
+    [$source, $hero] = $this->pageFixture();
+    BlockType::create(['slug' => 'header', 'name' => 'Header', 'status' => 'published']);
+    $layout = PageLayout::create(['handle' => 'default', 'name' => 'Default', 'is_active' => true]);
+    $layout->layoutSlots()->create(['slot_type_id' => $hero->slot_type_id, 'slot_name' => 'main', 'label' => 'Main', 'is_active' => true]);
+    $user = $this->operator();
+    $scope = 'pages:read pages:create-draft pages:read-draft-structure pages:write-draft-structure pages:read-draft-translation pages:write-draft-seo';
+    $token = $this->connect($user, $source->site_id, $scope, draftAccess: 'created');
+    $input = ['locale' => 'en', 'title' => 'Private draft', 'path' => '/private-draft'];
+    $draft = $this->tool('create_page_draft', $input, $token)->json('result.structuredContent');
+    $this->tool('create_page_draft', $input, $token)->assertJsonPath('result.structuredContent', $draft);
+    $ref = ['page_id' => $draft['page_id'], 'locale' => 'en'];
+    $structure = $this->tool('get_draft_structure', $ref, $token)->json('result.structuredContent');
+    $this->tool('edit_draft_structure', $ref + ['version' => $structure['version'], 'operation' => 'add', 'slot' => 'main', 'type' => 'header', 'text' => ['title' => 'Private heading']], $token)
+      ->assertJsonPath('result.structuredContent.draft_id', $draft['draft_id']);
+    $other = $this->connect($user, $source->site_id, $scope, draftAccess: 'created');
+    $this->tool('create_page_draft', $input, $other)->assertJsonPath('result.structuredContent.code', 'draft_access_denied');
+    $this->tool('get_draft_structure', $ref, $other)->assertJsonPath('result.structuredContent.code', 'draft_access_denied');
+    $this->tool('get_draft_translation', $ref, $other)->assertJsonPath('result.structuredContent.code', 'draft_access_denied');
+    $this->assertSame(2, Page::count());
+    $this->assertSame(1, DB::table('wbcms_mcp_grant_drafts')->count());
+    Page::findOrFail($draft['page_id'])->delete();
+    $this->assertDatabaseEmpty('wbcms_mcp_grant_drafts');
+  }
+
+  public function test_seo_only_grant_cannot_change_page_identity_or_invoke_the_broader_translation_tool(): void
+  {
+    [$page] = $this->pageFixture(path: '/original');
+    $user = $this->operator();
+    $token = $this->connect($user, $page->site_id, 'pages:read pages:read-draft-translation pages:write-draft-seo', draftAccess: 'created');
+    $ref = ['page_id' => $page->id, 'locale' => 'en'];
+    $version = $this->tool('get_draft_translation', $ref, $token)->json('result.structuredContent.version');
+    $this->tool('update_draft_translation', $ref + ['version' => $version, 'seo_title' => 'Broader tool'], $token, 403)
+      ->assertJsonPath('result.structuredContent.code', 'auth_required');
+    foreach (['name' => 'Renamed', 'slug' => 'new-slug', 'path' => '/other-path'] as $field => $value) {
+      $this->tool('update_draft_seo', $ref + ['version' => $version, 'seo_title' => 'SEO title', $field => $value], $token)
+        ->assertJsonPath('result.structuredContent.code', 'invalid_request');
+    }
+    $result = $this->tool('update_draft_seo', $ref + ['version' => $version, 'seo_title' => 'SEO title'], $token)
+      ->assertJsonPath('result.structuredContent.translation.seo_title', 'SEO title')->json('result.structuredContent');
+    $this->assertSame('/original', $page->translationForLocale('en')->fresh()->path);
+    $this->assertDatabaseHas('wbcms_mcp_grant_drafts', ['page_id' => $result['draft_id']]);
+    app(SystemSettings::class)->save(['system.mcp_write_seo' => '0']);
+    $this->rpc('tools/list')->assertDontSee('update_draft_seo');
+    $this->tool('update_draft_seo', $ref + ['version' => $result['version'], 'seo_title' => 'Disabled'], $token, 403)
+      ->assertJsonPath('result.structuredContent.code', 'scope_disabled');
+  }
+
+  public function test_explicit_site_draft_consent_can_continue_an_existing_draft(): void
+  {
+    [$page, $heading] = $this->pageFixture();
+    $draft = app(InternalContentPlanService::class)->prepareAuthoringDraft($page, $this->operator());
+    $token = $this->connect($this->operator(), $page->site_id, draftAccess: 'site');
+    $ref = ['page_id' => $page->id, 'locale' => 'en'];
+    $version = $this->tool('find_page', $ref, $token)->assertJsonPath('result.structuredContent.draft.id', $draft->id)->json('result.structuredContent.version');
+    $this->tool('update_draft_heading', $ref + ['version' => $version, 'block_id' => $heading->id, 'title' => 'Explicit site access'], $token)
+      ->assertJsonPath('result.structuredContent.draft_id', $draft->id);
+    $this->assertDatabaseHas('wbcms_mcp_grants', ['token_hash' => hash('sha256', $token), 'drafts_created_only' => false]);
+  }
+
+  public function test_consent_can_approve_one_existing_draft_for_a_separate_seo_task(): void
+  {
+    [$page, $heading] = $this->pageFixture();
+    $draft = app(InternalContentPlanService::class)->prepareAuthoringDraft($page, $this->operator());
+    $unrelated = Page::create(['site_id' => $page->site_id, 'title' => 'Colleague notes', 'slug' => 'colleague-notes', 'status' => Page::STATUS_DRAFT]);
+    $user = $this->operator();
+    $this->actingAs($user, 'web');
+    $auth = $this->authorizationRequest();
+    $auth['scope'] = 'pages:read pages:read-draft-translation pages:write-draft-seo';
+    $this->get(self::MCP.'/authorize?'.http_build_query($auth))->assertOk()->assertSee('Also allow one existing draft');
+    $token = $this->exchange($this->consent($page->site_id, $auth + ['draft_page_id' => $draft->id]))->assertOk()->json('access_token');
+    $ref = ['page_id' => $page->id, 'locale' => 'en'];
+    $version = $this->tool('get_draft_translation', $ref, $token)->json('result.structuredContent.version');
+    $this->tool('update_draft_seo', $ref + ['version' => $version, 'seo_description' => 'Reviewed per task'], $token)
+      ->assertJsonPath('result.structuredContent.draft_id', $draft->id);
+    $this->tool('get_draft_translation', ['page_id' => $unrelated->id, 'locale' => 'en'], $token)
+      ->assertJsonPath('result.structuredContent.code', 'draft_access_denied');
+    $this->assertSame(1, DB::table('wbcms_mcp_grant_drafts')->count());
+    $this->get('/webadmin/profile/mcp-connections')->assertOk()->assertSee('Authorized drafts');
+    $foreignSite = Site::create(['handle' => 'other', 'name' => 'Other']);
+    $foreignDraft = Page::create(['site_id' => $foreignSite->id, 'title' => 'Foreign', 'slug' => 'foreign', 'status' => Page::STATUS_DRAFT]);
+    $grantCount = DB::table('wbcms_mcp_grants')->count();
+    foreach ([$foreignDraft->id, $page->id] as $invalid) {
+      $this->post(self::MCP.'/authorize', $auth + ['draft_page_id' => $invalid, 'site_id' => $page->site_id, 'decision' => 'allow'])->assertForbidden();
+    }
+    $this->assertSame($grantCount, DB::table('wbcms_mcp_grants')->count());
+  }
+
+  public function test_seo_only_tools_recheck_current_role_and_translation_permissions(): void
+  {
+    [$page] = $this->pageFixture();
+    $user = $this->cmsActor((new User)->forceFill(['role' => 'editor', 'is_active' => true]));
+    $role = CmsRole::create(['name' => 'SEO editor', 'handle' => 'seo-editor']);
+    foreach (['cms.panel.access', 'cms.pages.read', 'cms.pages.update-draft', 'cms.seo.update'] as $permission) {
+      DB::table('wbcms_acl_role_permissions')->insert(['role_id' => $role->id, 'permission' => $permission]);
+    }
+    $user->sites()->attach([$page->site_id => ['role_id' => $role->id]]);
+    $token = $this->connect($user, $page->site_id, 'pages:read pages:read-draft-translation pages:write-draft-seo', draftAccess: 'created');
+    $ref = ['page_id' => $page->id, 'locale' => 'en'];
+    $version = $this->tool('get_draft_translation', $ref, $token)->json('result.structuredContent.version');
+    $this->tool('update_draft_seo', $ref + ['version' => $version, 'seo_title' => 'Allowed SEO'], $token)
+      ->assertJsonPath('result.structuredContent.translation.seo_title', 'Allowed SEO');
+    $turkish = ['page_id' => $page->id, 'locale' => 'tr'];
+    $translated = $this->tool('get_draft_translation', $turkish, $token)->json('result.structuredContent.version');
+    $this->tool('update_draft_seo', $turkish + ['version' => $translated, 'seo_title' => 'Yetkisiz'], $token)
+      ->assertJsonPath('result.structuredContent.code', 'forbidden');
+    DB::table('wbcms_acl_role_permissions')->where('role_id', $role->id)->where('permission', 'cms.seo.update')->delete();
+    $this->tool('update_draft_seo', $ref + ['version' => $version, 'seo_title' => 'Revoked'], $token)
+      ->assertJsonPath('result.structuredContent.code', 'forbidden');
+  }
+
   private function operator(): User
   {
     return $this->cmsActor((new User)->forceFill(['role' => 'super_admin', 'is_active' => true]));
@@ -963,10 +1139,10 @@ class RemoteMcpTest extends TestCase
     return [$page, $heading];
   }
 
-  private function connect(User $user, int $siteId, string $scope = 'pages:read pages:write-draft'): string
+  private function connect(User $user, int $siteId, string $scope = 'pages:read pages:write-draft', string $draftAccess = 'site'): string
   {
     $this->actingAs($user, 'web');
-    $auth = array_replace($this->authorizationRequest(), ['scope' => $scope]);
+    $auth = array_replace($this->authorizationRequest(), ['scope' => $scope, 'draft_access' => $draftAccess]);
 
     return $this->exchange($this->consent($siteId, $auth))->assertOk()->json('access_token');
   }

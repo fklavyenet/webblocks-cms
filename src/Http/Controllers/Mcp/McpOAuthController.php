@@ -13,6 +13,7 @@ use WebBlocks\Cms\Http\Requests\Mcp\RegisterMcpClientRequest;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Policies\McpPagePolicy;
 use WebBlocks\Cms\Support\Mcp\McpConfiguration;
+use WebBlocks\Cms\Support\Mcp\McpDraftAccess;
 use WebBlocks\Cms\Support\Mcp\McpGrants;
 use WebBlocks\Cms\Support\Mcp\McpOAuthClient;
 use WebBlocks\Cms\Support\Mcp\McpOAuthClients;
@@ -93,6 +94,8 @@ final class McpOAuthController
       $sites = Site::query()->whereIn('id', $user->accessibleSiteIds())->orderBy('name')->get(['id', 'name'])
         ->filter(fn (Site $site): bool => $canAuthorize($site->id));
       abort_if($sites->isEmpty(), 403);
+      $drafts = app(McpDraftAccess::class)->candidates($sites->pluck('id')->all())->with('translations')
+        ->orderByDesc('updated_at')->orderByDesc('id')->limit(100)->get();
 
       $callbackHost = parse_url($redirect, PHP_URL_HOST);
       $clientName = $client->name ?: $callbackHost;
@@ -106,7 +109,7 @@ final class McpOAuthController
         default => McpConfiguration::LABELS[$scope],
       }, $scopes);
 
-      return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'permissions', 'data', 'clientName', 'callbackAddress'), headers: [
+      return response()->view('webblocks-cms::auth.mcp-consent', compact('sites', 'drafts', 'permissions', 'data', 'clientName', 'callbackAddress'), headers: [
         // Chromium applies form-action to the redirect after the consent POST.
         'Content-Security-Policy' => "frame-ancestors 'none'; form-action 'self' {$callbackOrigin}; base-uri 'none'",
         'X-Frame-Options' => 'DENY',
@@ -117,7 +120,12 @@ final class McpOAuthController
     if ($data['decision'] === 'allow') {
       $siteId = (int) $data['site_id'];
       abort_unless($canAuthorize($siteId), 403);
-      $result = ['code' => $this->grants->issue($user, $siteId, $scopes, $data['code_challenge'], $client, $redirect)];
+      $code = $this->grants->issue(
+        $user, $siteId, $scopes, $data['code_challenge'], $client, $redirect,
+        draftsCreatedOnly: ($data['draft_access'] ?? 'created') === 'created',
+        draftId: isset($data['draft_page_id']) ? (int) $data['draft_page_id'] : null,
+      );
+      $result = ['code' => $code];
     }
     $result += ['iss' => $this->config->resource(), 'state' => $data['state'] ?? null];
 

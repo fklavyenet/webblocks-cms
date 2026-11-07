@@ -41,6 +41,8 @@ final class McpTools
 
   private const EDIT_TRANSLATION = 'update_draft_translation';
 
+  private const EDIT_SEO = 'update_draft_seo';
+
   public const UPLOAD = 'upload_media';
 
   private const UPLOAD_COPY_LIMIT = 2000;
@@ -157,6 +159,9 @@ final class McpTools
         'caption' => ['type' => 'string', 'maxLength' => self::UPLOAD_COPY_LIMIT],
         'description' => ['type' => 'string', 'maxLength' => self::UPLOAD_COPY_LIMIT],
       ], ['filename', 'content_base64']),
+      $this->descriptor(self::EDIT_SEO, 'edit_seo_description', [
+        'locale' => $locale, 'page_id' => $id, 'version' => $version,
+      ] + array_intersect_key($translation, array_flip(PageTranslationPayload::SEO_FIELDS)), ['locale', 'page_id', 'version']),
     ];
 
     return array_values(array_filter($tools, fn (array $tool) => in_array($this->scope($tool['name']), $available, true)));
@@ -172,6 +177,7 @@ final class McpTools
       self::EDIT_STRUCTURE => McpConfiguration::STRUCTURE,
       self::TRANSLATION => McpConfiguration::READ_TRANSLATION,
       self::EDIT_TRANSLATION => McpConfiguration::TRANSLATION,
+      self::EDIT_SEO => McpConfiguration::SEO,
       self::UPLOAD => McpConfiguration::UPLOAD,
       self::CONTENT => McpConfiguration::READ_CONTENT,
       self::EDIT => McpConfiguration::CONTENT,
@@ -185,22 +191,22 @@ final class McpTools
     $input = $this->validate($name, $args);
 
     $result = match ($name) {
-      self::READ => $this->pages->read($grant['site'], $input),
+      self::READ => $this->pages->read($grant['site'], $input, $grant),
       self::SEARCH => $this->pages->search($grant['site'], $input),
-      self::PREVIEW => $this->pages->preview($grant['site'], $input),
-      self::CREATE => $this->createDraft->handle($grant['user'], $grant['site'], $input),
-      self::STRUCTURE => $this->structure->read($grant['site'], $input),
-      self::EDIT_STRUCTURE => $this->structure->handle($grant['user'], $grant['site'], $input),
-      self::TRANSLATION => $this->translation->read($grant['site'], $input),
-      self::EDIT_TRANSLATION => $this->translation->handle($grant['user'], $grant['site'], $input),
-      self::WRITE => $this->updateBlock->handle($grant['user'], $grant['site'], $input, headingOnly: true),
-      self::CONTENT => $this->pages->content($grant['user'], $grant['site'], $input, in_array(McpConfiguration::CONTENT, $grant['scopes'], true)),
-      self::EDIT => $this->updateBlock->handle($grant['user'], $grant['site'], $input),
+      self::PREVIEW => $this->pages->preview($grant['site'], $input, $grant),
+      self::CREATE => $this->createDraft->handle($grant['user'], $grant['site'], $input, $grant),
+      self::STRUCTURE => $this->structure->read($grant['site'], $input, $grant),
+      self::EDIT_STRUCTURE => $this->structure->handle($grant['user'], $grant['site'], $input, $grant),
+      self::TRANSLATION => $this->translation->read($grant['site'], $input, $grant),
+      self::EDIT_TRANSLATION, self::EDIT_SEO => $this->translation->handle($grant['user'], $grant['site'], $input, $grant),
+      self::WRITE => $this->updateBlock->handle($grant['user'], $grant['site'], $input, headingOnly: true, grant: $grant),
+      self::CONTENT => $this->pages->content($grant['user'], $grant['site'], $input, in_array(McpConfiguration::CONTENT, $grant['scopes'], true), $grant),
+      self::EDIT => $this->updateBlock->handle($grant['user'], $grant['site'], $input, grant: $grant),
       self::MEDIA => $this->media->find($grant['user'], $grant['site'], $input),
       self::UPLOAD => $this->upload->handle($grant['user'], $grant['site'], $input),
     };
 
-    return $name === self::EDIT_TRANSLATION && ! in_array(McpConfiguration::READ_TRANSLATION, $grant['scopes'], true)
+    return in_array($name, [self::EDIT_TRANSLATION, self::EDIT_SEO], true) && ! in_array(McpConfiguration::READ_TRANSLATION, $grant['scopes'], true)
       ? Arr::except($result, ['translation', 'changes'])
       : $result;
   }
@@ -225,6 +231,7 @@ final class McpTools
       self::SEARCH => ['q' => ['required', 'string', 'max:120', 'not_regex:/[\x00-\x1F\x7F]/'], 'page' => $page],
       self::PREVIEW, self::TRANSLATION => ['page_id' => $id],
       self::EDIT_TRANSLATION => ['page_id' => $id, 'version' => $version] + $this->translationRules(),
+      self::EDIT_SEO => ['page_id' => $id, 'version' => $version] + array_intersect_key($this->translationRules(), array_flip(PageTranslationPayload::SEO_FIELDS)),
       self::WRITE => [
         'page_id' => $id,
         'block_id' => $id,
@@ -315,7 +322,7 @@ final class McpTools
 
   private function descriptor(string $name, string $description, array $properties, array $required, array $constraints = []): array
   {
-    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE, self::EDIT_STRUCTURE, self::EDIT_TRANSLATION, self::UPLOAD], true);
+    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE, self::EDIT_STRUCTURE, self::EDIT_TRANSLATION, self::EDIT_SEO, self::UPLOAD], true);
     $scope = $this->scope($name);
     $scopes = $scope === McpConfiguration::READ ? [$scope] : [McpConfiguration::READ, $scope];
     $security = [['type' => 'oauth2', 'scopes' => $scopes]];
