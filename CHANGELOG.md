@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.127.1
 
 - Accept public documentation source identities and paths about tokens, secrets and passwords in source-sync metadata. Keep credential values and private environment files blocked, and retain the source binding through staged promotion.
 
