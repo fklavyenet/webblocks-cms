@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockTextTranslation;
 use WebBlocks\Cms\Models\BlockType;
@@ -179,12 +180,19 @@ class ContentPlanLargePublishTest extends TestCase
   }
 
   #[Test]
-  public function a_translation_event_veto_rolls_back_the_copy_and_does_not_leave_metadata_pending(): void
+  #[TestWith([Block::class])]
+  #[TestWith([BlockTextTranslation::class])]
+  public function a_creation_event_veto_rolls_back_the_copy_and_does_not_leave_metadata_pending(string $modelClass): void
   {
     $source = $this->seedPage(2);
     $cancel = true;
-    BlockTextTranslation::creating(function (BlockTextTranslation $translation) use ($source, &$cancel): bool {
-      return ! $cancel || $translation->block->page_id === $source->id || $translation->locale->code !== 'fr';
+    $created = 0;
+    $modelClass::creating(function ($model) use ($source, &$cancel, &$created): bool {
+      if ($model instanceof Block) {
+        return ! $cancel || $model->page_id === $source->id || ++$created !== 2;
+      }
+
+      return ! $cancel || $model->block->page_id === $source->id || $model->locale->code !== 'fr';
     });
     $token = app(CmsApiTokenIssuer::class)->issue('Synthetic event publisher', capabilities: ['content.apply', 'content.publish'])->plainToken;
     $plan = ['plan' => [
