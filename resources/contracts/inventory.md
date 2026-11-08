@@ -231,6 +231,16 @@ Content-plan conventions:
 - Use only nested `children`; do not send `id`, `parent_id`, `block_id`, `slot_type_id`, or `block_type_id`.
 - From 1.105.9, discovery and content-contract responses expose `authoring_settings_schema` revision 1. New or changed core settings must match the per-block field rules; unknown fields and invalid values return field-specific 422 errors. Existing descriptive `settings_schema` payloads remain unchanged. Read the operation-specific `writes` and `closed_reason` metadata before authoring.
 
+Optional `page.settings.source_sync` metadata retains only `type`, `source_id`,
+`source_path`, `source_sha256`, `managed_slots` and `last_synced_at`. Public
+documentation identities and filenames may contain topic words such as token,
+secret or password. Credential assignments, authorization header values,
+recognized bare key/token formats, private key material, credential-bearing
+URLs and private `.env` file components are rejected without echoing their
+values. String limits, control-character checks and relative source-path rules
+remain enforced. Validation is read-only; successful creation and staged
+promotion retain the complete accepted source binding.
+
 ## Public Rendering Shell
 
 Normal main-slot rendering provides:

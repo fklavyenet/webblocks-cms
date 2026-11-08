@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Accept public documentation source identities and paths about tokens, secrets and passwords in source-sync metadata. Keep credential values and private environment files blocked, and retain the source binding through staged promotion.
+
 ## 1.127.0
 
 - Limit new MCP connections to drafts they create and an existing draft explicitly approved at consent. Users can choose broader site draft access when needed and review the scope in their profile.

@@ -38,6 +38,7 @@ use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactConsentValidationException;
 use WebBlocks\Cms\Support\Database\ContentVersionUpdates;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PagePath;
@@ -2660,13 +2661,34 @@ class InternalContentPlanService
       return null;
     }
 
-    if (preg_match('/(token|secret|password|\\.env)/i', $value)) {
+    if ($this->sourceSyncContainsCredentials($value)) {
       $errors[] = $this->error('plan.page.settings.source_sync.'.$field, 'source_sync '.$field.' must not contain secret-like values.');
 
       return null;
     }
 
     return $value;
+  }
+
+  private function sourceSyncContainsCredentials(string $value): bool
+  {
+    // Documentation identities may name credential topics. Keep credential
+    // assignments, authorization values and private environment files out.
+    $patterns = [
+      '~^(?:bearer|basic)\s+\S+$~i',
+      "~(?:^|[\\s{,;?&/:])[\"']?(?:[a-z0-9_.-]*(?:token|secret|password|passwd|pwd|(?:api|app|private)[_-]?key)|authorization)[\"']?\\s*[:=]~i",
+      '~-----BEGIN (?:[A-Z]+ )*PRIVATE KEY(?: BLOCK)?-----~i',
+      '~^[a-z][a-z0-9+.-]*://[^/\s]+@~i',
+      '~^'.preg_quote(CmsApiTokenIssuer::TOKEN_PREFIX, '~').'[a-zA-Z0-9]{64}$~D',
+      '~^(?:sk_(?:live|test)_[a-z0-9]{16,}|sk-[a-z0-9_-]{20,}|gh[pousr]_[a-z0-9]{20,}|github_pat_[a-z0-9_]{20,}|xox[baprs]-[a-z0-9-]{20,}|(?:AKIA|ASIA)[A-Z0-9]{16}|AIza[a-z0-9_-]{30,}|eyJ[a-z0-9_-]{5,}\.[a-z0-9_-]{5,}\.[a-z0-9_-]{8,})$~i',
+    ];
+    foreach ($patterns as $pattern) {
+      if (preg_match($pattern, $value)) {
+        return true;
+      }
+    }
+
+    return preg_match('~(?:^|[/:])\.env~i', str_replace('\\', '/', $value)) === 1;
   }
 
   private function safeSourceSyncPath(mixed $value, array &$errors): ?string
