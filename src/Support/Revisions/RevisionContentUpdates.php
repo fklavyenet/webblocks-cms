@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Support\Database\ContentVersionUpdates;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
+use WebBlocks\Cms\Support\Relational\RestoredSettingWrites;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 
 /** Collect derived-state updates within the restoration transaction. */
@@ -18,7 +19,9 @@ final class RevisionContentUpdates
     return DB::transaction(fn ($connection) => app(ContentVersionUpdates::class)->during(
       $connection,
       fn () => PublicSearchIndexer::coalescing(fn () => app(RestoredIndexTargets::class)->during(
-        fn () => app(RestoreLookups::class)->during(fn () => app(PersistentDocuments::class)->duringRestoreMetadata($write)),
+        fn () => app(RestoreLookups::class)->during(fn () => app(PersistentDocuments::class)->duringRestoreMetadata(
+          fn () => app(RestoredSettingWrites::class)->during($write),
+        )),
       )),
     ), $attempts);
   }

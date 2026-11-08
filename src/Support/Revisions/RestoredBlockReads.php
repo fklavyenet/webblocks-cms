@@ -22,6 +22,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Support\Blocks\BlockCopyCatalog;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
+use WebBlocks\Cms\Support\Relational\RestoredSettingWrites;
 use WebBlocks\Cms\Support\Relational\StructuredSettings;
 
 /** Reuse one restored block only while its SQL values remain current. */
@@ -65,6 +66,9 @@ final class RestoredBlockReads
     if ($preload) {
       // Actual SQL document sizes may differ from the snapshot after creation observers.
       app(PersistentDocuments::class)->flushRestoreMetadata($connection);
+      if (app()->resolved(RestoredSettingWrites::class)) {
+        app(RestoredSettingWrites::class)->flush($connection);
+      }
       $ids = array_map(fn ($snapshot) => $idMap[$snapshot['snapshot_id']], $snapshots);
       $generation = $this->writeGeneration;
       $withinBudget = $this->withinReadBudget($ids);

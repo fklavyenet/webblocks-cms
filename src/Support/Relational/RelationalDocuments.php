@@ -169,6 +169,10 @@ class RelationalDocuments
       };
     }
     if ($model instanceof Block) {
+      if ($definition === DocumentFields::block() && app()->resolved(RestoredSettingWrites::class)
+        && app(RestoredSettingWrites::class)->reference($model, [$definition['owner'] => $model->getKey(), ...$row])) {
+        return;
+      }
       DB::table($definition['table'])->upsert([[$definition['owner'] => $model->getKey(), ...$row]], [$definition['owner']], array_keys($row));
     } else {
       DB::table($definition['table'])->updateOrInsert([$definition['owner'] => $model->getKey()], $row);

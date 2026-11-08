@@ -215,6 +215,12 @@ class StructuredSettings
       && $model instanceof Block && $model->wasRecentlyCreated
       && $model->getConnection()->transactionLevel() > 0
       && DB::connection()->getEventDispatcher() === app('events');
+    if ($freshOwner && app()->resolved(RestoredSettingWrites::class)
+      && app(RestoredSettingWrites::class)->settings($model, $attribute, $format, $bytes, $nodes, $records)) {
+      return;
+    }
+    // A guarded buffering attempt may have flushed an observer's earlier write.
+    $freshOwner = $freshOwner && $creationVersion === $this->writeVersion;
     $existing = $freshOwner ? null : DB::table('wbcms_setting_documents')->where($identity)->lockForUpdate()->first(['id']);
     $metadata = ['format' => $format, 'payload_bytes' => $bytes, 'node_count' => count($nodes)];
     if ($existing === null) {

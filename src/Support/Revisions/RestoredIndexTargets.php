@@ -54,6 +54,12 @@ final class RestoredIndexTargets
     return ($this->creations[array_key_last($this->creations)]->model ?? null) === $block;
   }
 
+  /** Auxiliary writers may buffer only the actual INSERT owner in this restore scope. */
+  public function provesCreation(Block $block): bool
+  {
+    return $this->valid($this->creations[array_key_last($this->creations)] ?? null, $block);
+  }
+
   public function target(Block $block): ?Block
   {
     $creation = $this->creations[array_key_last($this->creations)] ?? null;

@@ -143,6 +143,7 @@ use WebBlocks\Cms\Support\Plugins\PluginRuntimeRegistrar;
 use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Relational\RelationalDocuments;
+use WebBlocks\Cms\Support\Relational\RestoredSettingWrites;
 use WebBlocks\Cms\Support\Relational\StructuredSettings;
 use WebBlocks\Cms\Support\Relational\TokenRelations;
 use WebBlocks\Cms\Support\Revisions\RestoredBlockReads;
@@ -1053,6 +1054,9 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       if ($app->resolved(PersistentDocuments::class)) {
         $app->make(PersistentDocuments::class)->rollbackRestoreMetadata($event->connection);
       }
+      if ($app->resolved(RestoredSettingWrites::class)) {
+        $app->make(RestoredSettingWrites::class)->rollback($event->connection);
+      }
       if ($app->resolved(SeoSourceVersion::class)) {
         $app->make(SeoSourceVersion::class)->forgetSnapshotOwners();
       }
@@ -1129,6 +1133,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->bind(UpdatePackageExtractor::class, CmsUpdateExtractor::class);
     $this->app->singleton(PersistentDocuments::class);
     $this->app->singleton(StructuredSettings::class);
+    $this->app->singleton(RestoredSettingWrites::class);
     $this->app->singleton(RelationalDocuments::class);
     $this->app->singleton(TokenRelations::class);
     $this->app->bind(ClientRunRecorder::class, CmsClientRunRecorder::class);
