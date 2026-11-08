@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.126.2
+
+- Reduce database queries when creating update drafts, publishing them, and restoring pages or shared slots with many translated, nested blocks. Coalesce SEO source and public list/navigation cache version updates within the owning content transaction.
+- Batch relational metadata, typed settings and application reference writes, reuse bounded relation and catalog reads, and avoid rewriting unchanged settings or metadata. Keep model events, locale validation and observer changes visible.
+- Write complete, independent revision snapshots in batches bounded by database parameter, packet and available memory limits. Reuse verified snapshot owners and avoid repeated snapshot serialization when recording capture results.
+- Preserve source metadata during draft copying and publication. Roll back cancelled block or translation creation, and resolve the current search index target when observers change block ownership.
+
 ## 1.126.1
 
 - Open general diagnostic reports from System Health and run-specific reports from System Updates history. The diagnostic report page highlights System Health in the sidebar.
