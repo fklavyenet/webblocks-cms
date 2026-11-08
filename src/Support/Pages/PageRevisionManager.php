@@ -5,7 +5,6 @@ namespace WebBlocks\Cms\Support\Pages;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 use WebBlocks\Cms\Models\Block;
@@ -21,7 +20,11 @@ use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
+use WebBlocks\Cms\Support\Revisions\RestoredBlockReads;
+use WebBlocks\Cms\Support\Revisions\RestoreWriteCancelledException;
 use WebBlocks\Cms\Support\Revisions\RevisionCaptureRecorder;
+use WebBlocks\Cms\Support\Revisions\RevisionContentUpdates;
 
 class PageRevisionManager
 {
@@ -119,7 +122,7 @@ class PageRevisionManager
     abort_unless($page->id === $revision->page_id, 404);
     abort_unless((int) $page->site_id === (int) $revision->site_id, 404);
 
-    DB::transaction(function () use ($page, $revision, $actor, $confirmedTranslationRemovalLocaleIds): void {
+    app(RevisionContentUpdates::class)->during(function () use ($page, $revision, $actor, $confirmedTranslationRemovalLocaleIds): void {
       $page = Page::query()->lockForUpdate()->findOrFail($page->id);
       $removals = $this->translationRemovals($page, $revision);
       $requiredLocaleIds = array_column($removals, 'locale_id');
@@ -461,7 +464,10 @@ class PageRevisionManager
           'is_system' => $block['is_system'],
         ]);
 
-        $created->withRevisionIdentity($block['revision_key'] ?? null)->save();
+        $created->withRevisionIdentity($block['revision_key'] ?? null);
+        if (! app(PersistentDocuments::class)->createRestored($created)) {
+          throw new RestoreWriteCancelledException;
+        }
 
         $idMap[$block['snapshot_id']] = $created->id;
         $createdThisPass++;
@@ -476,9 +482,7 @@ class PageRevisionManager
       $remaining = $nextRemaining;
     }
 
-    foreach ($snapshotBlocks as $block) {
-      $restoredBlock = Block::query()->findOrFail($idMap[$block['snapshot_id']]);
-
+    app(RestoredBlockReads::class)->each($snapshotBlocks, $idMap, function (Block $restoredBlock, array $block): void {
       foreach ($block['block_media'] ?? [] as $asset) {
         $restoredBlockAsset = $restoredBlock->blockAssets()->make([
           'media_id' => $asset['media_id'] ?? null,
@@ -498,7 +502,10 @@ class PageRevisionManager
       }
 
       foreach ($block['text_translations'] ?? [] as $translation) {
-        $restoredBlock->textTranslations()->create($translation);
+        $row = $restoredBlock->textTranslations()->make($translation);
+        if (! app(PersistentDocuments::class)->createRestored($row)) {
+          throw new RestoreWriteCancelledException;
+        }
       }
 
       foreach ($block['button_translations'] ?? [] as $translation) {
@@ -514,24 +521,16 @@ class PageRevisionManager
       }
 
       $this->normalizeRestoredBlock($restoredBlock, $block);
-    }
+    });
   }
 
   private function normalizeRestoredBlock(Block $block, array $snapshotBlock): void
   {
     $legacyFallbackUsed = $this->ensureLegacySnapshotFallbackTranslations($block, $snapshotBlock);
 
-    if ($legacyFallbackUsed || $this->blockHasTranslationRows($block)) {
-      // Older revisions may only carry canonical block copy. Restore those payloads into
-      // translation rows and immediately clear canonical fields so reconstructed content
-      // follows the same authoritative translation model as current revisions.
-      $this->blockTranslationWriter->normalizeCanonicalStorage($block->fresh([
-        'textTranslations',
-        'buttonTranslations',
-        'imageTranslations',
-        'contactFormTranslations',
-      'pluginTranslations',
-      ]));
+    $target = app(RestoredBlockReads::class)->forNormalization($block, $legacyFallbackUsed);
+    if ($target !== null) {
+      $this->blockTranslationWriter->normalizeCanonicalStorage($target);
     }
   }
 
@@ -636,15 +635,6 @@ class PageRevisionManager
     );
 
     return true;
-  }
-
-  private function blockHasTranslationRows(Block $block): bool
-  {
-    return $block->textTranslations()->exists()
-      || $block->buttonTranslations()->exists()
-      || $block->imageTranslations()->exists()
-      || $block->contactFormTranslations()->exists()
-      || $block->galleryItemTranslations()->exists();
   }
 
   private function dateOrNull(mixed $value): ?Carbon

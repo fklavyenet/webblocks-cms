@@ -169,6 +169,10 @@ class StructuredSettingsStorageTest extends TestCase
     foreach ([null, [], ['locale' => null], ['locale' => false]] as $value) {
       $application = $this->application(['supports' => $value]);
       $this->assertSame($value, $application->fresh()->supports);
+      foreach (SettingDefinitions::APPLICATION_ATTRIBUTES as $attribute) {
+        $this->assertDatabaseHas('wbcms_setting_documents', ['application_id' => $application->id, 'attribute' => $attribute]);
+      }
+      $this->assertNull($application->fresh()->css_assets);
     }
     $block = Block::create(['page_id' => $this->page()->id, 'type' => 'hero']);
     $application = $this->application();

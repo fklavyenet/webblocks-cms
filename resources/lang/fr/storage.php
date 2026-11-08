@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'restore_cancelled' => 'La restauration a été annulée. Aucune modification n’a été enregistrée.',
+  'snapshot_limit_parameters' => 'Un enregistrement de révision dépasse la limite de paramètres de la connexion à la base de données. Demandez à l’administrateur de l’hébergement de vérifier les limites de la base de données.',
+  'snapshot_limit_packet' => 'Un enregistrement de révision dépasse le budget de paquets de la connexion à la base de données. Demandez à l’administrateur de l’hébergement de vérifier la taille maximale des paquets.',
+  'snapshot_limit_discovery' => 'Les limites de la connexion à la base de données n’ont pas pu être déterminées. Demandez à l’administrateur de l’hébergement de vérifier la connexion.',
   'interrupted' => 'Interrompu',
   'preview_unavailable' => 'Aperçu indisponible ; la taille nettoyable reste non confirmée.',
   'history_help' => 'Les révisions suivent les protections de conservation et peuvent être nettoyées manuellement ou par maintenance activée. Paquets et journaux restent gérés manuellement.',

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
+use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
@@ -26,10 +27,26 @@ class StagedUpdateLifecycleTest extends TestCase
   {
     $source = $this->seedPublishedPage();
     $service = app(InternalContentPlanService::class);
+    $type = BlockType::query()->firstOrCreate(['slug' => 'plain_text'], ['name' => 'Plain text', 'source_type' => 'static', 'status' => 'published']);
+    $block = $source->blocks()->create([
+      'block_type_id' => $type->id, 'slot_type_id' => $source->slots->sole()->slot_type_id, 'status' => 'published',
+      'meta' => '{"source":"document","parts":[1,true,null]}',
+    ]);
+    $block->textTranslations()->create([
+      'locale_id' => $source->site->locales->sole()->id, 'content' => 'Text',
+      'meta' => '["translated",{"status":"reviewed"}]',
+    ]);
+    $blockMeta = $block->fresh()->meta;
+    $translationMeta = $block->textTranslations()->sole()->meta;
+    $this->assertJsonStringEqualsJsonString('{"source":"document","parts":[1,true,null]}', $blockMeta);
+    $this->assertJsonStringEqualsJsonString('["translated",{"status":"reviewed"}]', $translationMeta);
 
     $created = $service->apply($this->createPlan($source));
     $this->assertTrue($created->ok, json_encode($created->errors, JSON_PRETTY_PRINT));
     $stagedPageId = $created->data['staged_page']['id'];
+    $stagedBlock = Page::query()->findOrFail($stagedPageId)->blocks()->sole();
+    $this->assertSame($blockMeta, $stagedBlock->meta);
+    $this->assertSame($translationMeta, $stagedBlock->textTranslations()->sole()->meta);
 
     $promoted = $service->apply([
       'plan' => [
@@ -50,6 +67,9 @@ class StagedUpdateLifecycleTest extends TestCase
       'promoted_to_page_id' => $source->id,
     ], $promoted->data['staged_update']);
     $this->assertSame(Page::STATUS_PUBLISHED, $source->fresh()->status);
+    $promotedBlock = $source->blocks()->sole();
+    $this->assertSame($blockMeta, $promotedBlock->meta);
+    $this->assertSame($translationMeta, $promotedBlock->textTranslations()->sole()->meta);
     $this->assertGreaterThanOrEqual(2, PageRevision::query()->where('page_id', $source->id)->count());
   }
 

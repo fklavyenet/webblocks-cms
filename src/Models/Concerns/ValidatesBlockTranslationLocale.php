@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Models\Concerns;
 
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Support\Revisions\RestoredBlockReads;
 use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
 
 trait ValidatesBlockTranslationLocale
@@ -11,6 +12,9 @@ trait ValidatesBlockTranslationLocale
   protected static function bootValidatesBlockTranslationLocale(): void
   {
     static::saving(function ($translation): void {
+      if (app()->resolved(RestoredBlockReads::class)) {
+        app(RestoredBlockReads::class)->primeTranslation($translation);
+      }
       $siteId = $translation->block?->page?->site_id
         ?? ($translation->block_id
           ? Block::query()

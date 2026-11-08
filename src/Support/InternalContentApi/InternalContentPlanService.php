@@ -29,6 +29,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Policies\CmsResourcePolicy;
+use WebBlocks\Cms\Support\Blocks\BlockCopyCatalog;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
@@ -36,13 +37,17 @@ use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactConsentValidationException;
+use WebBlocks\Cms\Support\Database\ContentVersionUpdates;
 use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\StagedPageTranslations;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
+use WebBlocks\Cms\Support\Revisions\RestoredIndexTargets;
 use WebBlocks\Cms\Support\Revisions\SnapshotContent;
+use WebBlocks\Cms\Support\Search\BlockIndexTargets;
 use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
 
 class InternalContentPlanService
@@ -272,7 +277,7 @@ class InternalContentPlanService
     app(CmsResourcePolicy::class)->authorizePlan($plan);
 
     try {
-      $applied = DB::transaction(function () use ($plan): array {
+      $apply = function () use ($plan): array {
       $writes = [];
       $data = [];
       $page = null;
@@ -301,14 +306,18 @@ class InternalContentPlanService
         if ($stagedPage) {
           $this->refreshReusableStagedMetadata($stagedPage, $sourcePage, $plan);
         } else {
-          $stagedPage = $this->createStagedPage($sourcePage, $plan);
-          $revision = $this->pageRevisionManager->capture(
-            $stagedPage,
-            label: 'Internal Content API staged update created',
-            reason: 'A staged content update was created from published page #'.$sourcePage->id.'.',
-            event: 'internal_content_api_staged_update_created',
-            source: 'internal-content-api',
-          );
+          [$stagedPage, $revision] = app(ContentVersionUpdates::class)->during(DB::connection(), function () use ($sourcePage, $plan): array {
+            $draft = $this->createStagedPage($sourcePage, $plan);
+            $revision = $this->pageRevisionManager->capture(
+              $draft,
+              label: 'Internal Content API staged update created',
+              reason: 'A staged content update was created from published page #'.$sourcePage->id.'.',
+              event: 'internal_content_api_staged_update_created',
+              source: 'internal-content-api',
+            );
+
+            return [$draft, $revision];
+          });
         }
 
         $stagedPage = $stagedPage->fresh([
@@ -647,7 +656,10 @@ class InternalContentPlanService
       }
 
         return ['writes' => $writes, 'data' => $data];
-      });
+      };
+      $applied = $plan['mode'] === self::MODE_PROMOTE_STAGED_UPDATE
+        ? DB::transaction(fn ($connection) => app(ContentVersionUpdates::class)->during($connection, $apply))
+        : DB::transaction($apply);
     } catch (\InvalidArgumentException $exception) {
       return new InternalContentPlanResult(
         ok: false,
@@ -745,11 +757,14 @@ class InternalContentPlanService
         return $draft;
       }
       $slots = $managedSlots ?? $page->slots()->with('slotType')->get()->filter(fn ($slot) => $slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_PAGE)->map(fn ($slot) => $slot->slotType->slug)->values()->all();
-      $draft = $this->createStagedPage($page, ['staged_update' => ['managed_slots' => $slots]]);
-      $draft->forceFill(['created_by_user_id' => $actor->id, 'updated_by_user_id' => $actor->id])->save();
-      $this->pageRevisionManager->capture($draft, $actor, event: $event);
 
-      return $draft;
+      return app(ContentVersionUpdates::class)->during(DB::connection(), function () use ($page, $slots, $actor, $event): Page {
+        $draft = $this->createStagedPage($page, ['staged_update' => ['managed_slots' => $slots]]);
+        $draft->forceFill(['created_by_user_id' => $actor->id, 'updated_by_user_id' => $actor->id])->save();
+        $this->pageRevisionManager->capture($draft, $actor, event: $event);
+
+        return $draft;
+      });
     });
   }
 
@@ -762,11 +777,6 @@ class InternalContentPlanService
         'slots.slotType',
         'slots.sharedSlot',
         'pageAssets',
-        'blocks.blockAssets',
-        'blocks.textTranslations',
-        'blocks.buttonTranslations',
-        'blocks.imageTranslations',
-        'blocks.contactFormTranslations',
       ])
       ->lockForUpdate()
       ->findOrFail($sourcePage->id);
@@ -921,8 +931,12 @@ class InternalContentPlanService
         ->lockForUpdate()
         ->get();
 
+      $parentIds = $slotBlocks->pluck('parent_id')->filter(fn ($id) => $id !== null)->flip();
       foreach ($slotBlocks->whereNull('parent_id') as $block) {
-        foreach ($this->blockDeletionManager->recursiveDeleteOrder($block, $slotBlocks) as $deleteBlock) {
+        $deleteOrder = $parentIds->has($block->id)
+          ? $this->blockDeletionManager->recursiveDeleteOrder($block, $slotBlocks) : [$block];
+        foreach ($deleteOrder as $deleteBlock) {
+          $deleteBlock->setRelation('page', $sourcePage);
           $deleteBlock->delete();
           $deletedCount++;
         }
@@ -936,7 +950,13 @@ class InternalContentPlanService
 
   private function cloneBlocks(Page $sourcePage, Page $targetPage, ?array $slotTypeIds = null, ?string $forcedStatus = null): void
   {
-    app(SiteLocaleValidation::class)->during(fn () => $this->copyBlocks($sourcePage, $targetPage, $slotTypeIds, $forcedStatus));
+    app(SiteLocaleValidation::class)->during(fn () => app(BlockCopyCatalog::class)->during(
+      fn () => app(BlockIndexTargets::class)->during(
+        fn () => app(PersistentDocuments::class)->duringBlockClone(
+          fn () => $this->copyBlocks($sourcePage, $targetPage, $slotTypeIds, $forcedStatus),
+        ),
+      ),
+    ));
   }
 
   private function copyBlocks(Page $sourcePage, Page $targetPage, ?array $slotTypeIds, ?string $forcedStatus): void
@@ -962,7 +982,9 @@ class InternalContentPlanService
 
       $newBlock = (new Block($attributes))->withRevisionIdentity($block->revision_key);
       $newBlock->setRelation('page', $targetPage);
-      $newBlock->createInTransaction();
+      if (! app(RestoredIndexTargets::class)->creating($newBlock, fn () => $newBlock->createInTransaction())) {
+        throw new \RuntimeException('A block model event cancelled the content copy.');
+      }
       $blockMap[$block->id] = $newBlock->id;
       $copies[$block->id] = $newBlock;
 
@@ -1059,7 +1081,9 @@ class InternalContentPlanService
   {
     $translation = new $model($attributes);
     $translation->setRelation('block', $target);
-    $translation->createInTransaction();
+    if (! $translation->createInTransaction()) {
+      throw new \RuntimeException('A translation model event cancelled the content copy.');
+    }
   }
 
   private function normalize(array $payload): InternalContentPlanResult

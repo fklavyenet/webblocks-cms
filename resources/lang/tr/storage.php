@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'restore_cancelled' => 'Geri yükleme iptal edildi. Hiçbir değişiklik kaydedilmedi.',
+  'snapshot_limit_parameters' => 'Bir revizyon kaydı, veritabanı bağlantısının parametre sınırını aşıyor. Barındırma yöneticisinden veritabanı sınırlarını incelemesini isteyin.',
+  'snapshot_limit_packet' => 'Bir revizyon kaydı, veritabanı bağlantısının paket bütçesini aşıyor. Barındırma yöneticisinden veritabanı paket sınırını incelemesini isteyin.',
+  'snapshot_limit_discovery' => 'Veritabanı bağlantısının sınırları belirlenemedi. Barındırma yöneticisinden veritabanı bağlantısını kontrol etmesini isteyin.',
   'interrupted' => 'Kesintiye uğradı',
   'preview_unavailable' => 'Temizlik önizlemesi alınamadı; temizlenebilir boyut doğrulanamıyor.',
   'history_help' => 'Revizyon geçmişi saklama kurallarıyla korunur; elle veya etkinleştirilen otomatik bakım ile temizlenebilir. Aktarım paketleri ve loglar yönetici tarafından yönetilir.',

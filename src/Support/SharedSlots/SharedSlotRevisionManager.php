@@ -5,7 +5,6 @@ namespace WebBlocks\Cms\Support\SharedSlots;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockGalleryItemTranslation;
 use WebBlocks\Cms\Models\Locale;
@@ -16,7 +15,11 @@ use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
+use WebBlocks\Cms\Support\Relational\PersistentDocuments;
+use WebBlocks\Cms\Support\Revisions\RestoredBlockReads;
+use WebBlocks\Cms\Support\Revisions\RestoreWriteCancelledException;
 use WebBlocks\Cms\Support\Revisions\RevisionCaptureRecorder;
+use WebBlocks\Cms\Support\Revisions\RevisionContentUpdates;
 
 class SharedSlotRevisionManager
 {
@@ -96,7 +99,7 @@ class SharedSlotRevisionManager
     abort_unless($sharedSlot->id === $revision->shared_slot_id, 404);
     abort_unless((int) $sharedSlot->site_id === (int) $revision->site_id, 404);
 
-    DB::transaction(function () use ($sharedSlot, $revision, $actor): void {
+    app(RevisionContentUpdates::class)->during(function () use ($sharedSlot, $revision, $actor): void {
       $lockedSharedSlot = SharedSlot::query()->lockForUpdate()->findOrFail($sharedSlot->id);
       $lockedRevision = SharedSlotRevision::query()->findOrFail($revision->id);
 
@@ -315,7 +318,10 @@ class SharedSlotRevisionManager
           'is_system' => $block['is_system'],
         ]);
 
-        $created->withRevisionIdentity($block['revision_key'] ?? null)->save();
+        $created->withRevisionIdentity($block['revision_key'] ?? null);
+        if (! app(PersistentDocuments::class)->createRestored($created)) {
+          throw new RestoreWriteCancelledException;
+        }
 
         $idMap[$block['snapshot_id']] = $created->id;
         $createdThisPass++;
@@ -330,9 +336,7 @@ class SharedSlotRevisionManager
       $remaining = $nextRemaining;
     }
 
-    foreach ($snapshotBlocks as $block) {
-      $restoredBlock = Block::query()->findOrFail($idMap[$block['snapshot_id']]);
-
+    app(RestoredBlockReads::class)->each($snapshotBlocks, $idMap, function (Block $restoredBlock, array $block): void {
       foreach ($block['block_media'] ?? [] as $asset) {
         $restoredBlockAsset = $restoredBlock->blockAssets()->make([
           'media_id' => $asset['media_id'] ?? null,
@@ -352,7 +356,10 @@ class SharedSlotRevisionManager
       }
 
       foreach ($block['text_translations'] ?? [] as $translation) {
-        $restoredBlock->textTranslations()->create($translation);
+        $row = $restoredBlock->textTranslations()->make($translation);
+        if (! app(PersistentDocuments::class)->createRestored($row)) {
+          throw new RestoreWriteCancelledException;
+        }
       }
 
       foreach ($block['button_translations'] ?? [] as $translation) {
@@ -368,7 +375,7 @@ class SharedSlotRevisionManager
       }
 
       $this->normalizeRestoredBlock($restoredBlock, $block);
-    }
+    });
 
     $this->sourcePages->ensureFor($sharedSlot->fresh());
     $this->sourcePages->rebuildAssignments($sharedSlot->fresh());
@@ -378,14 +385,9 @@ class SharedSlotRevisionManager
   {
     $legacyFallbackUsed = $this->ensureLegacySnapshotFallbackTranslations($block, $snapshotBlock);
 
-    if ($legacyFallbackUsed || $this->blockHasTranslationRows($block)) {
-      $this->blockTranslationWriter->normalizeCanonicalStorage($block->fresh([
-        'textTranslations',
-        'buttonTranslations',
-        'imageTranslations',
-        'contactFormTranslations',
-      'pluginTranslations',
-      ]));
+    $target = app(RestoredBlockReads::class)->forNormalization($block, $legacyFallbackUsed);
+    if ($target !== null) {
+      $this->blockTranslationWriter->normalizeCanonicalStorage($target);
     }
   }
 
@@ -490,15 +492,6 @@ class SharedSlotRevisionManager
     );
 
     return true;
-  }
-
-  private function blockHasTranslationRows(Block $block): bool
-  {
-    return $block->textTranslations()->exists()
-      || $block->buttonTranslations()->exists()
-      || $block->imageTranslations()->exists()
-      || $block->contactFormTranslations()->exists()
-      || $block->galleryItemTranslations()->exists();
   }
 
   private function dateOrNull(mixed $value): ?Carbon

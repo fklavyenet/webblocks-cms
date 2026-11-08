@@ -5,9 +5,11 @@ namespace WebBlocks\Cms\Tests\Feature;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Tests\TestCase;
@@ -31,16 +33,18 @@ class RelationalWriteEfficiencyTest extends TestCase
       }
     });
     $block = Block::create(['page_id' => $page->id, 'type' => 'rich-text', 'status' => 'draft',
-      'settings' => json_encode(['alignment' => 'center', 'historical' => ['values' => [false, null, 1, '1']]]),
+      'settings' => json_encode(['alignment' => 'center', 'application_handle' => 'synthetic-app', 'historical' => ['values' => [false, null, 1, '1']]]),
       'meta' => '{"source":"original","extra":[1,2]}']);
     $measuring = false;
     $this->assertSame([], $deletes, 'New relational documents have no child rows to clear.');
+    $this->assertDatabaseHas('wbcms_block_application_references', ['block_id' => $block->id, 'application_handle' => 'synthetic-app', 'application_handle_kind' => 'string']);
     $persistentId = DB::table('wbcms_persistent_documents')->where('block_id', $block->id)->where('attribute', 'meta')->value('id');
     $settingsId = DB::table('wbcms_setting_documents')->where('block_id', $block->id)->where('attribute', 'settings')->value('id');
     $this->assertSame([false, null, 1, '1'], $block->fresh()->setting('historical.values'));
     $block->update(['settings' => '{"alignment":"left"}', 'meta' => 'replacement']);
     $this->assertSame(['alignment' => 'left'], json_decode($block->fresh()->serializedSettings(), true));
     $this->assertSame('replacement', $block->fresh()->meta);
+    $this->assertDatabaseHas('wbcms_block_application_references', ['block_id' => $block->id, 'application_handle' => null, 'application_handle_kind' => null, 'resolved_application_id' => null]);
     $this->assertSame(0, DB::table('wbcms_persistent_metadata')->where('document_id', $persistentId)->count());
     $this->assertSame($persistentId, DB::table('wbcms_persistent_documents')->where('block_id', $block->id)->where('attribute', 'meta')->value('id'));
     $this->assertSame($settingsId, DB::table('wbcms_setting_documents')->where('block_id', $block->id)->where('attribute', 'settings')->value('id'));
@@ -53,7 +57,10 @@ class RelationalWriteEfficiencyTest extends TestCase
   public function row_writes_reuse_schema_discovery_and_still_read_the_latest_sql_values(): void
   {
     [$page, $locale] = $this->fixtures();
-    $block = Block::create(['page_id' => $page->id, 'type' => 'plain_text', 'status' => 'draft']);
+    $type = BlockType::create(['name' => 'Plain text', 'slug' => 'plain_text', 'source_type' => 'static']);
+    $slot = SlotType::create(['name' => 'Main', 'slug' => 'main']);
+    $block = Block::create(['page_id' => $page->id, 'type' => 'plain_text', 'block_type_id' => $type->id, 'slot_type_id' => $slot->id, 'status' => 'draft']);
+    $this->assertArrayNotHasKey('slot_type', $block->toArray(), 'Resolving the slot slug must not expand the returned block relation payload.');
     $translation = $block->textTranslations()->create(['locale_id' => $locale->id, 'content' => 'Synthetic', 'meta' => 'initial']);
     $this->assertTrue(app(PersistentDocuments::class)->retired($translation, 'meta'));
     $schemaQueries = [];

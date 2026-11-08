@@ -7,6 +7,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\CmsModel;
 
 class RelationalDocuments
@@ -167,7 +168,11 @@ class RelationalDocuments
         'resolved_application_id' => $this->resolve($table, 'handle', $row['application_handle']),
       };
     }
-    DB::table($definition['table'])->updateOrInsert([$definition['owner'] => $model->getKey()], $row);
+    if ($model instanceof Block) {
+      DB::table($definition['table'])->upsert([[$definition['owner'] => $model->getKey(), ...$row]], [$definition['owner']], array_keys($row));
+    } else {
+      DB::table($definition['table'])->updateOrInsert([$definition['owner'] => $model->getKey()], $row);
+    }
     if ($definition['lists'] !== []) {
       DB::table('wbcms_page_runtime_items')->where('page_id', $model->getKey())->delete();
       foreach (array_chunk($items, 500) as $batch) {

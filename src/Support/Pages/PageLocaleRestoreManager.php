@@ -3,7 +3,6 @@
 namespace WebBlocks\Cms\Support\Pages;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Models\Locale;
@@ -11,6 +10,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
+use WebBlocks\Cms\Support\Revisions\RevisionContentUpdates;
 use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 use WebBlocks\Cms\Support\Search\PublicSearchIndexer;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
@@ -54,7 +54,7 @@ final class PageLocaleRestoreManager
 
   public function apply(PageRevisionCandidate $candidate, Page $page, PageRevision $revision, User $actor, bool $confirmed): Page
   {
-    return DB::transaction(fn () => $this->applyLocked($candidate, $page, $revision, $actor, $confirmed), 3);
+    return app(RevisionContentUpdates::class)->during(fn () => $this->applyLocked($candidate, $page, $revision, $actor, $confirmed), 3);
   }
 
   private function applyLocked(PageRevisionCandidate $candidate, Page $page, PageRevision $revision, User $actor, bool $confirmed): Page

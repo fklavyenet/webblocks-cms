@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Relational;
 
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -14,6 +15,21 @@ class StructuredSettings
 
   private array $columns = [];
 
+  private int $writeVersion = 0;
+
+  public function writeVersion(): int
+  {
+    return $this->writeVersion;
+  }
+
+  public function onQuery(QueryExecuted $query): void
+  {
+    if (! preg_match('/^\s*(select|pragma|explain|show|describe)\b/i', $query->sql)
+      && stripos($query->sql, 'wbcms_setting_documents') !== false) {
+      $this->writeVersion++;
+    }
+  }
+
   public function available(): bool
   {
     if (! app()->bound('db.schema')) {
@@ -25,6 +41,7 @@ class StructuredSettings
 
   public function clearAvailability(): void
   {
+    $this->writeVersion++;
     $this->available = null;
     $this->columns = [];
   }
@@ -81,22 +98,22 @@ class StructuredSettings
     }
   }
 
-  private function values(Collection $documents): array
+  private function values(Collection $documents, bool $lock = false): array
   {
     if ($documents->isEmpty()) {
       return [];
     }
     $ids = $documents->pluck('id');
-    $nodes = DB::table('wbcms_setting_nodes')->whereIn('document_id', $ids)->get()->groupBy('document_id')->map(fn ($group) => $group->sortBy('node_index')->values());
+    $nodes = DB::table('wbcms_setting_nodes')->whereIn('document_id', $ids)->when($lock, fn ($query) => $query->lockForUpdate())->get()->groupBy('document_id')->map(fn ($group) => $group->sortBy('node_index')->values());
     $used = $nodes->flatten(1)->where('kind', 'column')->pluck('ref_table')->unique()->all();
     $records = [];
     foreach (array_keys(SettingDefinitions::tables()) as $table) {
       if (in_array($table, $used, true)) {
-        $records[$table] = DB::table('wbcms_'.$table)->whereIn('document_id', $ids)->get()->groupBy('document_id');
+        $records[$table] = DB::table('wbcms_'.$table)->whereIn('document_id', $ids)->when($lock, fn ($query) => $query->lockForUpdate())->get()->groupBy('document_id');
       }
     }
     $references = in_array('application_reference', $used, true)
-      ? DB::table('wbcms_block_application_references')->whereIn('block_id', $documents->pluck('block_id')->filter())->get()->keyBy('block_id') : collect();
+      ? DB::table('wbcms_block_application_references')->whereIn('block_id', $documents->pluck('block_id')->filter())->when($lock, fn ($query) => $query->lockForUpdate())->get()->keyBy('block_id') : collect();
     $values = [];
     foreach ($documents as $document) {
       $rows = [];
@@ -111,12 +128,54 @@ class StructuredSettings
     return $values;
   }
 
-  public function captureDefaults(CmsModel $model): void
+  /** Compare current locked SQL values after saving/updating observers have run. */
+  public function unchanged(CmsModel $model, string $attribute, mixed $value): bool
+  {
+    $documents = DB::table('wbcms_setting_documents')
+      ->where($model instanceof Block ? 'block_id' : 'application_id', $model->getKey())
+      ->where('attribute', $attribute)->lockForUpdate()->get();
+    if ($documents->isEmpty()) {
+      return false;
+    }
+    $format = 'value';
+    if ($model instanceof Block && is_string($value)) {
+      $decoded = json_decode($value);
+      $format = json_last_error() === JSON_ERROR_NONE ? 'json' : 'raw';
+      if ($format === 'json') {
+        $value = $decoded;
+      }
+    }
+    $document = $documents->first();
+    if ($document->format !== $format) {
+      return false;
+    }
+    $current = $this->values($documents, lock: true)[$document->id];
+    if ($format === 'json') {
+      $current = json_decode($current, flags: JSON_THROW_ON_ERROR);
+    }
+
+    if (! SettingTree::sameValue($current, $value)) {
+      return false;
+    }
+    if ($model instanceof Block && data_get($value, 'content_collection.template_block_id') !== null) {
+      $reference = DB::table('wbcms_block_content_collections')->where('document_id', $document->id)->first();
+      if ($reference !== null && $reference->template_block_id !== null
+        && ($reference->resolved_template_id === null || (int) $reference->resolved_template_id !== (int) $reference->template_block_id)) {
+        // Unchanged authoring data can still require derived-reference repair.
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /** @param list<string> $writtenAttributes Attributes already persisted by this save. */
+  public function captureDefaults(CmsModel $model, array $writtenAttributes = []): void
   {
     if (! $this->available()) {
       return;
     }
-    $attributes = array_diff(SettingDefinitions::attributes($model), array_keys($model->getAttributes()));
+    $attributes = array_diff(SettingDefinitions::attributes($model), array_keys($model->getAttributes()), $writtenAttributes);
     if ($attributes === []) {
       return;
     }
@@ -136,7 +195,7 @@ class StructuredSettings
     }
   }
 
-  public function write(CmsModel $model, string $attribute, mixed $value): void
+  public function write(CmsModel $model, string $attribute, mixed $value, ?int $creationVersion = null): void
   {
     $bytes = is_string($value) ? strlen($value) : strlen(json_encode($value, JSON_THROW_ON_ERROR));
     $format = 'value';
@@ -150,7 +209,13 @@ class StructuredSettings
     $owner = $model instanceof Block ? 'block_id' : 'application_id';
     $identity = [$owner => $model->getKey(), 'attribute' => $attribute];
     $tables = array_keys(SettingDefinitions::tables());
-    $existing = DB::table('wbcms_setting_documents')->where($identity)->lockForUpdate()->first(['id']);
+    // New owners cannot have an existing document unless a creation observer
+    // wrote one. Keep those writes visible, including raw query-builder writes.
+    $freshOwner = $creationVersion !== null && $creationVersion === $this->writeVersion
+      && $model instanceof Block && $model->wasRecentlyCreated
+      && $model->getConnection()->transactionLevel() > 0
+      && DB::connection()->getEventDispatcher() === app('events');
+    $existing = $freshOwner ? null : DB::table('wbcms_setting_documents')->where($identity)->lockForUpdate()->first(['id']);
     $metadata = ['format' => $format, 'payload_bytes' => $bytes, 'node_count' => count($nodes)];
     if ($existing === null) {
       $documentId = (int) DB::table('wbcms_setting_documents')->insertGetId($identity + $metadata);
@@ -164,12 +229,35 @@ class StructuredSettings
       }
     }
     foreach ($tables as $table) {
+      if (empty($records[$table])) {
+        continue;
+      }
+      $rows = [];
+      $columns = ['document_id' => $documentId];
       foreach ($records[$table] ?? [] as $row) {
         if ($table === 'block_content_collections') {
           $id = $row['template_block_id'] ?? null;
           $row['resolved_template_id'] = $id === null ? null : DB::table('wbcms_blocks')->where('id', $id)->value('id');
         }
-        DB::table('wbcms_'.$table)->insert(['document_id' => $documentId, ...$row]);
+        $columns += array_fill_keys(array_keys($row), null);
+        $rows[] = $row;
+      }
+      $batchSize = max(1, min(100, intdiv(900, count($columns))));
+      $batch = [];
+      $batchBytes = 0;
+      foreach ($rows as $row) {
+        $row = array_replace($columns, $row);
+        $bytes = array_sum(array_map(fn ($value) => is_string($value) ? strlen($value) : 8, $row));
+        if ($batch !== [] && (count($batch) >= $batchSize || $batchBytes + $bytes > 2097152)) {
+          DB::table('wbcms_'.$table)->insert($batch);
+          $batch = [];
+          $batchBytes = 0;
+        }
+        $batch[] = $row;
+        $batchBytes += $bytes;
+      }
+      if ($batch !== []) {
+        DB::table('wbcms_'.$table)->insert($batch);
       }
     }
     foreach (array_chunk($nodes, 500) as $batch) {

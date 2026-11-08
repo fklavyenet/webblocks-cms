@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\Concerns\HasRevisionIdentity;
 use WebBlocks\Cms\Models\Concerns\ReusesMediaRelationAliases;
 use WebBlocks\Cms\Support\Applications\ApplicationDefinition;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
+use WebBlocks\Cms\Support\Blocks\BlockCopyCatalog;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Blocks\HeaderAnchors;
@@ -30,6 +31,8 @@ use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
 use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
+use WebBlocks\Cms\Support\Revisions\RestoredIndexTargets;
+use WebBlocks\Cms\Support\Search\BlockIndexTargets;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -90,16 +93,16 @@ class Block extends CmsModel
   {
     static::saving(function (self $block): void {
       if ($block->block_type_id) {
-        $resolvedBlockType = BlockType::query()->find($block->block_type_id);
+        $resolvedBlockType = app(BlockCopyCatalog::class)->find(BlockType::class, $block->block_type_id);
+        $block->setRelation('blockType', $resolvedBlockType);
 
         $block->type = $resolvedBlockType?->slug ?? $block->type;
         $block->source_type = $resolvedBlockType?->source_type ?? $block->source_type ?? 'static';
       }
 
       if ($block->slot_type_id) {
-        $block->slot = SlotType::query()
-          ->whereKey($block->slot_type_id)
-          ->value('slug') ?? $block->slot;
+        $resolvedSlotType = app(BlockCopyCatalog::class)->find(SlotType::class, $block->slot_type_id);
+        $block->slot = $resolvedSlotType?->slug ?? $block->slot;
       }
 
       if ($block->typeSlug() === 'header' && $block->explicitHeaderAnchor() === null) {
@@ -110,7 +113,13 @@ class Block extends CmsModel
     });
 
     static::saved(function (self $block): void {
-      static::refreshSearchForBlock($block->fresh('page'));
+      $restoreTargets = app()->resolved(RestoredIndexTargets::class) ? app(RestoredIndexTargets::class) : null;
+      if ($restoreTargets?->hasCreation($block)) {
+        static::refreshSearchForBlock($restoreTargets->target($block));
+
+        return;
+      }
+      static::refreshSearchForBlock(app(BlockIndexTargets::class)->freshForIndex($block));
     });
 
     static::deleted(function (self $block): void {

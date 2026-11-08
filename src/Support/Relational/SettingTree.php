@@ -7,12 +7,13 @@ use stdClass;
 
 final class SettingTree
 {
-  public static function encode(mixed $value, bool $block, string $attribute, ?callable $selector = null, bool $expandSerialized = false): array
+  public static function encode(mixed $value, bool $block, string $attribute, ?callable $selector = null, bool $expandSerialized = false, ?callable $writeNode = null): array
   {
     $nodes = [];
     $records = [];
-    $visit = function (mixed $value, ?int $parent, int $ordinal, mixed $key, array $path, array $positions, array $ancestors) use (&$visit, &$nodes, &$records, $block, $attribute, $selector, $expandSerialized): void {
-      $index = count($nodes);
+    $nodeCount = 0;
+    $visit = function (mixed $value, ?int $parent, int $ordinal, mixed $key, array $path, array $positions, array $ancestors) use (&$visit, &$nodes, &$records, &$nodeCount, $block, $attribute, $selector, $expandSerialized, $writeNode): void {
+      $index = $nodeCount++;
       $node = [
         'node_index' => $index, 'parent_index' => $parent, 'ordinal' => $ordinal,
         'key_kind' => $parent === null ? null : (is_int($key) ? 'integer' : 'string'),
@@ -51,7 +52,11 @@ final class SettingTree
         }
         $node = array_replace($node, $scalar, ['kind' => 'value']);
       }
-      $nodes[] = $node;
+      if ($writeNode === null) {
+        $nodes[] = $node;
+      } else {
+        $writeNode($node);
+      }
       if (in_array($node['kind'], ['array', 'object', 'json'], true)) {
         if (! $selector && ! $block && $attribute === 'settings_schema' && count($path) === 1) {
           $records['application_setting_fields'][$positions[0]] ??= ['item_index' => $positions[0], 'item_key' => (string) $path[0]];
@@ -69,7 +74,7 @@ final class SettingTree
     };
     $visit($value, null, 0, null, [], [], []);
 
-    return [$nodes, $records];
+    return [$nodes, $records, $nodeCount];
   }
 
   public static function decode(array $nodes, array $records, ?object $applicationReference, ?array $definitions = null): mixed
@@ -125,5 +130,28 @@ final class SettingTree
     };
 
     return $read($nodes[0]);
+  }
+
+  public static function sameValue(mixed $current, mixed $value): bool
+  {
+    if (get_debug_type($current) !== get_debug_type($value)) {
+      return false;
+    }
+    if (is_array($current) || $current instanceof stdClass) {
+      $current = (array) $current;
+      $value = (array) $value;
+      if (array_keys($current) !== array_keys($value)) {
+        return false;
+      }
+      foreach ($current as $key => $item) {
+        if (! self::sameValue($item, $value[$key])) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    return $current === $value;
   }
 }

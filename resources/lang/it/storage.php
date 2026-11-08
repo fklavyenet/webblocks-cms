@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'restore_cancelled' => 'Il ripristino è stato annullato. Nessuna modifica è stata salvata.',
+  'snapshot_limit_parameters' => 'Un record di revisione supera il limite di parametri della connessione al database. Chiedere all’amministratore dell’hosting di verificare i limiti del database.',
+  'snapshot_limit_packet' => 'Un record di revisione supera il budget dei pacchetti della connessione al database. Chiedere all’amministratore dell’hosting di verificare il limite dei pacchetti del database.',
+  'snapshot_limit_discovery' => 'Non è stato possibile determinare i limiti della connessione al database. Chiedere all’amministratore dell’hosting di verificare la connessione.',
   'interrupted' => 'Interrotto',
   'preview_unavailable' => 'Anteprima non disponibile; dimensione eliminabile non confermata.',
   'history_help' => 'Le revisioni seguono le protezioni e vengono pulite manualmente o tramite categorie automatiche attivate. Pacchetti e log restano gestiti manualmente.',

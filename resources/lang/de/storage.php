@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'restore_cancelled' => 'Die Wiederherstellung wurde abgebrochen. Es wurden keine Änderungen gespeichert.',
+  'snapshot_limit_parameters' => 'Ein Revisionseintrag überschreitet das Parameterlimit der Datenbankverbindung. Bitten Sie die Hosting-Administration, die Datenbanklimits zu prüfen.',
+  'snapshot_limit_packet' => 'Ein Revisionseintrag überschreitet das Paketbudget der Datenbankverbindung. Bitten Sie die Hosting-Administration, das Paketlimit der Datenbank zu prüfen.',
+  'snapshot_limit_discovery' => 'Die Limits der Datenbankverbindung konnten nicht ermittelt werden. Bitten Sie die Hosting-Administration, die Datenbankverbindung zu prüfen.',
   'interrupted' => 'Unterbrochen',
   'preview_unavailable' => 'Bereinigungsvorschau nicht verfügbar; bereinigbare Größe unbestätigt.',
   'history_help' => 'Revisionen folgen den Schutzregeln und werden manuell oder durch aktivierte Wartung bereinigt. Transferpakete und Logs bleiben manuell verwaltet.',

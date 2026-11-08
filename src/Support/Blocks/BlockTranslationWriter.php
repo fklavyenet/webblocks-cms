@@ -6,6 +6,7 @@ use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Revisions\RestoredBlockReads;
 
 class BlockTranslationWriter
 {
@@ -144,6 +145,10 @@ class BlockTranslationWriter
         : json_encode($settings, JSON_UNESCAPED_SLASHES);
     }
 
+    if (app()->resolved(RestoredBlockReads::class) && app(RestoredBlockReads::class)->canSkipCanonicalSave($block, $updates)) {
+      return;
+    }
+
     // Settings now live in typed SQL records. Use the model's relational writer
     // instead of addressing the retired settings column during revision restore.
     Block::withoutTimestamps(fn () => $block->forceFill($updates)->saveQuietly());
@@ -152,23 +157,25 @@ class BlockTranslationWriter
   private function ensureDefaultTranslation(Block $block, string $family, int $defaultLocaleId, ?Block $translationSourceBlock = null): void
   {
     $translationSourceBlock ??= $block;
+    $restoreReads = app()->resolved(RestoredBlockReads::class) ? app(RestoredBlockReads::class) : null;
 
     if ($family === BlockTranslationRegistry::PLUGIN_FAMILY) {
-      if (! $block->pluginTranslations()->where('locale_id', $defaultLocaleId)->exists()) {
+      if (! ($restoreReads?->defaultTranslationExists($block, 'pluginTranslations', $defaultLocaleId) ?? $block->pluginTranslations()->where('locale_id', $defaultLocaleId)->exists())) {
         $this->writeTranslation($block, $family, $defaultLocaleId, $this->pluginTranslationPayload([], $translationSourceBlock, $defaultLocaleId));
       }
 
       return;
     }
 
-    $relation = match ($family) {
-      'text' => $block->textTranslations(),
-      'button' => $block->buttonTranslations(),
-      'image' => $block->imageTranslations(),
-      'contact_form' => $block->contactFormTranslations(),
+    $relationName = match ($family) {
+      'text' => 'textTranslations',
+      'button' => 'buttonTranslations',
+      'image' => 'imageTranslations',
+      'contact_form' => 'contactFormTranslations',
     };
+    $relation = $block->{$relationName}();
 
-    if ($relation->where('locale_id', $defaultLocaleId)->exists()) {
+    if ($restoreReads?->defaultTranslationExists($block, $relationName, $defaultLocaleId) ?? $relation->where('locale_id', $defaultLocaleId)->exists()) {
       return;
     }
 

@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'restore_cancelled' => 'Se canceló la restauración. No se guardó ningún cambio.',
+  'snapshot_limit_parameters' => 'Un registro de revisión supera el límite de parámetros de la conexión a la base de datos. Pida al administrador del alojamiento que revise los límites de la base de datos.',
+  'snapshot_limit_packet' => 'Un registro de revisión supera el presupuesto de paquetes de la conexión a la base de datos. Pida al administrador del alojamiento que revise el límite de paquetes de la base de datos.',
+  'snapshot_limit_discovery' => 'No se pudieron determinar los límites de la conexión a la base de datos. Pida al administrador del alojamiento que compruebe la conexión.',
   'interrupted' => 'Interrumpido',
   'preview_unavailable' => 'Vista previa no disponible; no se puede confirmar el tamaño eliminable.',
   'history_help' => 'Las revisiones respetan las protecciones y se limpian manualmente o mediante categorías automáticas activadas. Los paquetes y registros siguen bajo gestión manual.',

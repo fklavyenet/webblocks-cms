@@ -145,6 +145,8 @@ abstract class CmsModel extends Model
       return parent::save($options);
     }
 
+    $joiningCreation = $this->joinsCreationTransaction && ! $this->exists && $this->getConnection()->transactionLevel() > 0;
+    $options['joiningCreation'] = $joiningCreation;
     $persist = function () use ($options) {
       $locked = $this->exists
         ? $this->newQueryWithoutScopes()->whereKey($this->getKey())->lockForUpdate()->first() : null;
@@ -160,15 +162,28 @@ abstract class CmsModel extends Model
         }
       }
 
+      $options['structuredCreationVersion'] = $options['joiningCreation'] && $this instanceof Block
+        ? app(StructuredSettings::class)->writeVersion() : null;
+      $options['existingSettingsOwner'] = $locked !== null;
+
       return parent::save($options);
     };
 
-    return $this->joinsCreationTransaction && ! $this->exists && $this->getConnection()->transactionLevel() > 0
+    return $joiningCreation
       ? $persist() : $this->getConnection()->transaction($persist);
   }
 
   protected function finishSave(array $options)
   {
+    $unchangedStructured = [];
+    if ($options['existingSettingsOwner'] ?? false) {
+      foreach ($this->pendingStructuredValues as $key => $value) {
+        if (app(PersistentDocuments::class)->retired($this, $key)
+          && app(StructuredSettings::class)->unchanged($this, $key, $value)) {
+          $unchangedStructured[$key] = true;
+        }
+      }
+    }
     foreach ($this->pendingRelationalValues as $key => $value) {
       $definition = DocumentFields::for($this, $key);
       if ($definition !== null) {
@@ -178,10 +193,17 @@ abstract class CmsModel extends Model
       }
     }
     foreach ($this->pendingStructuredValues as $key => $value) {
-      app(StructuredSettings::class)->write($this, $key, $value);
+      if (! isset($unchangedStructured[$key])) {
+        app(StructuredSettings::class)->write($this, $key, $value, $options['structuredCreationVersion'] ?? null);
+      }
     }
     foreach ($this->pendingPersistentValues as $key => $value) {
-      app(PersistentDocuments::class)->write($this, $key, $value);
+      $unchangedMeta = ($options['existingSettingsOwner'] ?? false) && $key === 'meta'
+        && app(PersistentDocuments::class)->retired($this, $key)
+        && app(PersistentDocuments::class)->unchangedMeta($this, $value);
+      if (! $unchangedMeta) {
+        app(PersistentDocuments::class)->write($this, $key, $value, newOwner: $options['joiningCreation'] ?? false);
+      }
       if ($key === 'snapshot' && is_array($value)) {
         $this->attributes['snapshot_bytes'] = strlen(json_encode($value, JSON_THROW_ON_ERROR));
         $this->getConnection()->table($this->getTable())->where($this->getKeyName(), $this->getKey())->update(['snapshot_bytes' => $this->attributes['snapshot_bytes']]);
@@ -207,7 +229,7 @@ abstract class CmsModel extends Model
     $this->pendingPersistentValues = [];
     $this->persistentPrimed = false;
     if ($this->wasRecentlyCreated && SettingDefinitions::attributes($this) !== []) {
-      app(StructuredSettings::class)->captureDefaults($this);
+      app(StructuredSettings::class)->captureDefaults($this, array_keys($this->pendingStructuredValues));
     }
     $this->structuredSettingsPrimed = false;
     $this->pendingStructuredValues = [];

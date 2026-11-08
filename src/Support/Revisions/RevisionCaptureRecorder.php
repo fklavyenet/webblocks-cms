@@ -69,6 +69,9 @@ class RevisionCaptureRecorder
   {
     // Measure the database representation once, outside any ordered query.
     $bytes = (int) (RevisionPayloadSizes::forIds($revision->getTable(), [$revision->id])[$revision->id] ?? 0);
-    $revision->forceFill(['snapshot_hash' => $hash, 'snapshot_bytes' => $bytes])->saveQuietly();
+    $attributes = ['snapshot_hash' => $hash, 'snapshot_bytes' => $bytes, 'updated_at' => $revision->freshTimestampString()];
+    // These metadata columns do not require reading and rewriting the snapshot.
+    $revision->newQuery()->whereKey($revision->getKey())->update($attributes);
+    $revision->forceFill($attributes)->syncOriginalAttributes(array_keys($attributes));
   }
 }

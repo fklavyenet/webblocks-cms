@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
+use WebBlocks\Cms\Support\Revisions\RestoreLookups;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
 class LocaleResolver
@@ -28,6 +29,15 @@ class LocaleResolver
   }
 
   public function default(): Locale
+  {
+    if (app()->resolved(RestoreLookups::class)) {
+      return app(RestoreLookups::class)->defaultLocale(fn () => $this->rememberDefault());
+    }
+
+    return $this->rememberDefault();
+  }
+
+  private function rememberDefault(): Locale
   {
     return app(RequestMemo::class)->remember('locale.default', [], fn () => $this->loadDefault());
   }

@@ -1,6 +1,10 @@
 <?php
 
 return [
+  'restore_cancelled' => 'Restoration was cancelled. No changes were saved.',
+  'snapshot_limit_parameters' => 'A revision record exceeds the database connection parameter limit. Ask the hosting administrator to review the database limits.',
+  'snapshot_limit_packet' => 'A revision record exceeds the database connection packet budget. Ask the hosting administrator to review the database packet limit.',
+  'snapshot_limit_discovery' => 'The database connection limits could not be determined. Ask the hosting administrator to check the database connection.',
   'interrupted' => 'Interrupted',
   'preview_unavailable' => 'Cleanup preview is unavailable; no eligible size can be confirmed.',
   'history_help' => 'Revision history follows the retention safeguards and can be removed manually or by enabled scheduled categories. Transfer packages and logs remain operator managed.',

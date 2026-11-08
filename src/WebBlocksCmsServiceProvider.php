@@ -105,6 +105,7 @@ use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
 use WebBlocks\Cms\Support\Admin\QuickSettingsComposer;
 use WebBlocks\Cms\Support\Auth\TwoFactorAccountState;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
+use WebBlocks\Cms\Support\Blocks\BlockCopyCatalog;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Consent\ConsentIntegrations;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
@@ -112,6 +113,7 @@ use WebBlocks\Cms\Support\ContentSources\ContentCollectionRenderer;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRuntime;
+use WebBlocks\Cms\Support\Database\ContentVersionUpdates;
 use WebBlocks\Cms\Support\Logging\CmsLogTap;
 use WebBlocks\Cms\Support\Logging\LogFormatSettings;
 use WebBlocks\Cms\Support\NativeLocal\NativeLocalProbe;
@@ -143,6 +145,10 @@ use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Relational\RelationalDocuments;
 use WebBlocks\Cms\Support\Relational\StructuredSettings;
 use WebBlocks\Cms\Support\Relational\TokenRelations;
+use WebBlocks\Cms\Support\Revisions\RestoredBlockReads;
+use WebBlocks\Cms\Support\Revisions\RestoredIndexTargets;
+use WebBlocks\Cms\Support\Revisions\RestoreLookups;
+use WebBlocks\Cms\Support\Search\BlockIndexTargets;
 use WebBlocks\Cms\Support\Search\PublicSearchResolver;
 use WebBlocks\Cms\Support\Seo\SeoSourceVersion;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
@@ -1001,6 +1007,12 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->singleton(ConsentIntegrations::class);
     $this->app->scoped(RequestMemo::class);
     $this->app->scoped(SiteLocaleValidation::class);
+    $this->app->scoped(BlockCopyCatalog::class);
+    $this->app->scoped(BlockIndexTargets::class);
+    $this->app->scoped(ContentVersionUpdates::class);
+    $this->app->scoped(RestoredBlockReads::class);
+    $this->app->scoped(RestoredIndexTargets::class);
+    $this->app->scoped(RestoreLookups::class);
     $this->app->singleton(PageListCache::class);
     $this->app->singleton(NavigationCache::class);
     $this->app->singleton(SeoSourceVersion::class);
@@ -1014,23 +1026,80 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       if ($app->resolved(SiteLocaleValidation::class)) {
         $app->make(SiteLocaleValidation::class)->invalidate($query->sql);
       }
+      if ($app->resolved(BlockCopyCatalog::class)) {
+        $app->make(BlockCopyCatalog::class)->invalidate($query->sql);
+      }
+      if ($app->resolved(BlockIndexTargets::class)) {
+        $app->make(BlockIndexTargets::class)->invalidate($query->sql);
+      }
+      if ($app->resolved(StructuredSettings::class)) {
+        $app->make(StructuredSettings::class)->onQuery($query);
+      }
+      if ($app->resolved(RestoredBlockReads::class)) {
+        $app->make(RestoredBlockReads::class)->onQuery($query);
+      }
+      if ($app->resolved(RestoredIndexTargets::class)) {
+        $app->make(RestoredIndexTargets::class)->onQuery($query);
+      }
+      if ($app->resolved(RestoreLookups::class)) {
+        $app->make(RestoreLookups::class)->onQuery($query);
+      }
       $app->make(PageListCache::class)->onQuery($query);
       $app->make(NavigationCache::class)->onQuery($query);
       $app->make(SeoSourceVersion::class)->onQuery($query);
     });
-    $this->app['events']->listen(TransactionRolledBack::class, static function (): void {
+    $this->app['events']->listen(TransactionRolledBack::class, static function ($event): void {
       $app = app();
+      if ($app->resolved(PersistentDocuments::class)) {
+        $app->make(PersistentDocuments::class)->rollbackRestoreMetadata($event->connection);
+      }
+      if ($app->resolved(SeoSourceVersion::class)) {
+        $app->make(SeoSourceVersion::class)->forgetSnapshotOwners();
+      }
+      if ($app->resolved(RestoredBlockReads::class)) {
+        $app->make(RestoredBlockReads::class)->invalidate();
+      }
+      if ($app->resolved(RestoredIndexTargets::class)) {
+        $app->make(RestoredIndexTargets::class)->invalidate();
+      }
+      if ($app->resolved(RestoreLookups::class)) {
+        $app->make(RestoreLookups::class)->invalidate();
+      }
       if ($app->resolved(RequestMemo::class)) {
         $app->make(RequestMemo::class)->clear();
       }
       if ($app->resolved(SiteLocaleValidation::class)) {
         $app->make(SiteLocaleValidation::class)->invalidate();
       }
+      if ($app->resolved(BlockCopyCatalog::class)) {
+        $app->make(BlockCopyCatalog::class)->invalidate();
+      }
+      if ($app->resolved(BlockIndexTargets::class)) {
+        $app->make(BlockIndexTargets::class)->invalidate();
+      }
     });
     $this->app['events']->listen(TransactionCommitted::class, static function ($event): void {
       $app = app();
+      if ($event->connection->transactionLevel() === 0 && $app->resolved(SeoSourceVersion::class)) {
+        $app->make(SeoSourceVersion::class)->forgetSnapshotOwners();
+      }
+      if ($event->connection->transactionLevel() === 0 && $app->resolved(RestoredBlockReads::class)) {
+        $app->make(RestoredBlockReads::class)->invalidate();
+      }
+      if ($event->connection->transactionLevel() === 0 && $app->resolved(RestoredIndexTargets::class)) {
+        $app->make(RestoredIndexTargets::class)->invalidate();
+      }
+      if ($event->connection->transactionLevel() === 0 && $app->resolved(RestoreLookups::class)) {
+        $app->make(RestoreLookups::class)->invalidate();
+      }
       if ($event->connection->transactionLevel() === 0 && $app->resolved(SiteLocaleValidation::class)) {
         $app->make(SiteLocaleValidation::class)->invalidate();
+      }
+      if ($event->connection->transactionLevel() === 0 && $app->resolved(BlockCopyCatalog::class)) {
+        $app->make(BlockCopyCatalog::class)->invalidate();
+      }
+      if ($event->connection->transactionLevel() === 0 && $app->resolved(BlockIndexTargets::class)) {
+        $app->make(BlockIndexTargets::class)->invalidate();
       }
     });
     $this->app->singleton(BackupOperations::class);

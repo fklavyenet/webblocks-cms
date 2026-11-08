@@ -6,9 +6,9 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Throwable;
 use WeakMap;
+use WebBlocks\Cms\Support\Database\ContentVersionUpdates;
 
 /** Disposable query data; SQL owns the generation, including during cache outages. */
 abstract class VersionedQueryCache
@@ -47,6 +47,10 @@ abstract class VersionedQueryCache
 
       return;
     }
+    $versions = app(ContentVersionUpdates::class);
+    if ($versions->isPending($event->connection, $this->table())) {
+      return;
+    }
     // Bulk, pivot and raw Laravel writes bypass Eloquent observers. Match only
     // dependencies, never cache-table writes or unrelated visitor/runtime writes.
     $prefix = preg_quote($event->connection->getTablePrefix().'wbcms_', '/');
@@ -57,7 +61,7 @@ abstract class VersionedQueryCache
     if ($this->available($event->connection)) {
       // Runs on the writer connection, inside its transaction if present. A
       // rollback restores the old generation. Unique tokens prevent ABA reuse.
-      $event->connection->table($this->table())->where('id', 1)->update(['generation' => (string) Str::uuid()]);
+      $versions->invalidate($event->connection, $this->table());
     }
   }
 

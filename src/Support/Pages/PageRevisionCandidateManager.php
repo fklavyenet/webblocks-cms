@@ -9,6 +9,7 @@ use RuntimeException;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
+use WebBlocks\Cms\Support\Revisions\RevisionContentUpdates;
 use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 
 class PageRevisionCandidateManager
@@ -43,7 +44,7 @@ class PageRevisionCandidateManager
       throw new RuntimeException('Page version candidates are not ready. Run the latest migrations.');
     }
 
-    return DB::transaction(function () use ($page, $revision, $actor, $scope, $localeId): PageRevisionCandidate {
+    return app(RevisionContentUpdates::class)->during(function () use ($page, $revision, $actor, $scope, $localeId): PageRevisionCandidate {
       $page = Page::query()->lockForUpdate()->findOrFail($page->id);
       $revision = PageRevision::query()->where('page_id', $page->id)->lockForUpdate()->findOrFail($revision->id);
       $plan = null;
@@ -110,7 +111,7 @@ class PageRevisionCandidateManager
 
   public function apply(PageRevisionCandidate $candidate, User $actor, array $confirmedTranslationRemovalLocaleIds = [], bool $confirmLocaleRestore = false): Page
   {
-    return DB::transaction(function () use ($candidate, $actor, $confirmedTranslationRemovalLocaleIds, $confirmLocaleRestore): Page {
+    return app(RevisionContentUpdates::class)->during(function () use ($candidate, $actor, $confirmedTranslationRemovalLocaleIds, $confirmLocaleRestore): Page {
       $candidate = PageRevisionCandidate::query()->lockForUpdate()->findOrFail($candidate->id);
       $this->assertReady($candidate);
       $page = Page::query()->lockForUpdate()->findOrFail($candidate->page_id);
