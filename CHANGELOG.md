@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 1.127.0
 
 - Limit new MCP connections to drafts they create and an existing draft explicitly approved at consent. Users can choose broader site draft access when needed and review the scope in their profile.
 - Add a separate MCP permission and tool for editing draft SEO and social fields without editing page names or addresses.
+- Existing authorizations keep their previous site-wide draft access until expiry or revocation. Rolling back the new schema migration revokes restricted and SEO-only authorizations so older code cannot broaden their access.
 
 ## 1.126.2
 
