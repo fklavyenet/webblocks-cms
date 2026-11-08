@@ -12,6 +12,7 @@ use WebBlocks\Cms\Support\Formatting\SafeRichTextRenderer;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Mcp\McpBlockFields;
+use WebBlocks\Cms\Support\Mcp\McpDraftAccess;
 use WebBlocks\Cms\Support\Mcp\McpMedia;
 use WebBlocks\Cms\Support\Mcp\McpPages;
 use WebBlocks\Cms\Support\Mcp\McpToolException;
@@ -21,6 +22,7 @@ final class UpdateDraftBlock
 {
   public function __construct(
     private readonly McpPages $pages,
+    private readonly McpDraftAccess $access,
     private readonly McpPagePolicy $policy,
     private readonly InternalContentPlanService $plans,
     private readonly BlockTranslationWriter $translations,
@@ -30,15 +32,16 @@ final class UpdateDraftBlock
     private readonly PageRevisionManager $revisions,
   ) {}
 
-  public function handle(User $user, int $siteId, array $input, bool $headingOnly = false): array
+  public function handle(User $user, int $siteId, array $input, bool $headingOnly = false, ?array $grant = null): array
   {
     if (! $this->policy->write($user, $siteId)) {
       throw new McpToolException('forbidden');
     }
 
-    return DB::transaction(function () use ($user, $siteId, $input, $headingOnly): array {
+    return DB::transaction(function () use ($user, $siteId, $input, $headingOnly, $grant): array {
       $source = $this->pages->page($siteId, $input, lock: true);
       $draft = $this->pages->draft($source, lock: true);
+      $this->access->assertAllowed($grant, $draft);
       if ($draft && $draft->status !== Page::STATUS_DRAFT) {
         throw new McpToolException('conflict');
       }
@@ -61,7 +64,10 @@ final class UpdateDraftBlock
         throw new McpToolException($unavailable);
       }
 
-      $draft ??= $this->plans->prepareAuthoringDraft($source, $user, [$slot], 'mcp_draft_prepared');
+      if (! $draft) {
+        $draft = $this->plans->prepareAuthoringDraft($source, $user, [$slot], 'mcp_draft_prepared');
+        $this->access->recordCreated($grant, $draft);
+      }
       $translated = $locale->id !== app(LocaleResolver::class)->default()->id;
       if (! $this->policy->editDraft($user, $draft, $translated)) {
         throw new McpToolException('forbidden');

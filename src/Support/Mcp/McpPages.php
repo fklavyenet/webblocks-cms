@@ -36,6 +36,7 @@ final class McpPages
     private readonly McpBlockFields $fields,
     private readonly McpPageQuery $query,
     private readonly McpPagePolicy $policy,
+    private readonly McpDraftAccess $access,
     private readonly BlockTypeApiAuthoringPolicy $authoring,
   ) {}
 
@@ -141,12 +142,14 @@ final class McpPages
     return DB::table('wbcms_staged_page_bases')->where('page_id', $draft->id)->value('source_fingerprint') === $sourceFingerprint;
   }
 
-  public function read(int $siteId, array $input): array
+  public function read(int $siteId, array $input, ?array $grant = null): array
   {
     $source = $this->page($siteId, $input);
     $locale = $this->locale($source, $input['locale']);
     $translation = $source->translationForLocale($locale);
     $draft = $this->draft($source);
+    $draftRestricted = ! $this->access->allows($grant, $draft);
+    $draft = $draftRestricted ? null : $draft;
     $sourceFingerprint = $this->fingerprint($source);
     $version = $this->version($source, $sourceFingerprint, $draft, $locale);
     $sourceHeadings = $this->headings($source);
@@ -159,6 +162,7 @@ final class McpPages
       'name' => $translation->name,
       'path' => $translation->path,
       'version' => $version,
+      'draft_restricted' => $draftRestricted,
       'draft' => $draft ? ['id' => $draft->id, 'status' => $draft->status, 'source_verified' => $this->hasVerifiedBase($draft, $sourceFingerprint)] : null,
       'headings' => $sourceHeadings->map(function (Block $block) use ($draftHeadings, $locale, $source, $draft): array {
         $copy = $block->revision_key ? $draftHeadings->get($block->revision_key) : null;
@@ -189,11 +193,13 @@ final class McpPages
     ];
   }
 
-  public function content(User $user, int $siteId, array $input, bool $mayWrite = true): array
+  public function content(User $user, int $siteId, array $input, bool $mayWrite = true, ?array $grant = null): array
   {
     $source = $this->page($siteId, $input);
     $locale = $this->locale($source, $input['locale']);
     $draft = $this->draft($source);
+    $draftRestricted = ! $this->access->allows($grant, $draft);
+    $draft = $draftRestricted ? null : $draft;
     $fingerprint = $this->fingerprint($source);
     $defaultLocale = app(LocaleResolver::class)->default()->id === $locale->id;
     $version = $this->version($source, $fingerprint, $draft, $locale);
@@ -201,6 +207,7 @@ final class McpPages
     $managed = $draft?->setting('staged_update.managed_slots', []);
     $canReadMedia = $defaultLocale && $this->policy->readMedia($user, $siteId);
     $writeBlocker = match (true) {
+      $draftRestricted => 'draft_access_denied',
       ! $mayWrite => 'forbidden',
       $draft && $draft->status !== Page::STATUS_DRAFT => 'conflict',
       $draft && ! $verified => 'unverified_base',
@@ -217,6 +224,7 @@ final class McpPages
       'page_id' => $source->id,
       'locale' => $locale->code,
       'version' => $version,
+      'draft_restricted' => $draftRestricted,
       'draft' => $draft ? ['id' => $draft->id, 'status' => $draft->status, 'source_verified' => $verified, 'managed_slots' => $managed] : null,
       'blocks' => $blocks->forPage($page, 10)->map(function (Block $block) use ($draft, $draftBlocks, $locale, $defaultLocale, $managed, $writeBlocker, $canReadMedia): array {
         $slot = $block->slotType?->slug;
@@ -257,10 +265,11 @@ final class McpPages
     ];
   }
 
-  public function preview(int $siteId, array $input): array
+  public function preview(int $siteId, array $input, ?array $grant = null): array
   {
     $source = $this->page($siteId, $input);
     $draft = $this->draft($source) ?? throw new McpToolException('draft_missing');
+    $this->access->assertAllowed($grant, $draft);
 
     return $this->previewLink($source, $draft, $this->locale($draft, $input['locale']));
   }

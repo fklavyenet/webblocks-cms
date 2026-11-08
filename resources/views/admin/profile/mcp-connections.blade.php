@@ -41,6 +41,10 @@
                                     @if ($connection->pending)
                                         <p class="wb-text-muted">{{ $text('connection_pending') }}</p>
                                     @endif
+                                    <p>{{ $text($connection->drafts_created_only ? 'drafts_created' : 'drafts_site') }}</p>
+                                    @if ($connection->drafts_created_only && $connection->draft_names->isNotEmpty())
+                                        <p>{{ $text('authorized_drafts') }} {{ $connection->draft_names->join(', ') }}</p>
+                                    @endif
                                     <ul>
                                         @foreach ($connection->permissions as $label => $available)
                                             <li>{{ $text($label) }}@if (!$available) <span class="wb-text-muted">({{ $text('permission_unavailable') }})</span>@endif</li>

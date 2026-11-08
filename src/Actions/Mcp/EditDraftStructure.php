@@ -17,6 +17,7 @@ use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Mcp\McpBlockFields;
+use WebBlocks\Cms\Support\Mcp\McpDraftAccess;
 use WebBlocks\Cms\Support\Mcp\McpPages;
 use WebBlocks\Cms\Support\Mcp\McpToolException;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -31,6 +32,7 @@ final class EditDraftStructure
 
   public function __construct(
     private readonly McpPages $pages,
+    private readonly McpDraftAccess $access,
     private readonly PageBlockStructure $structure,
     private readonly McpPagePolicy $policy,
     private readonly InternalContentPlanService $plans,
@@ -40,9 +42,10 @@ final class EditDraftStructure
     private readonly PageRevisionManager $revisions,
   ) {}
 
-  public function read(int $siteId, array $input): array
+  public function read(int $siteId, array $input, ?array $grant = null): array
   {
     [$page, $draft] = $this->pages->draftTarget($siteId, $input['page_id']);
+    $this->access->assertAllowed($grant, $draft);
     $locale = $this->pages->locale($draft ?? $page, $input['locale']);
     $version = $this->version($page, $draft, $locale);
     $slots = $this->slots($draft ?? $page);
@@ -74,7 +77,7 @@ final class EditDraftStructure
     ];
   }
 
-  public function handle(User $user, int $siteId, array $input): array
+  public function handle(User $user, int $siteId, array $input, ?array $grant = null): array
   {
     $localizedText = $input['operation'] === 'add' && ! empty($input['text'])
       && $input['locale'] !== app(LocaleResolver::class)->default()->code;
@@ -82,8 +85,9 @@ final class EditDraftStructure
       throw new McpToolException('forbidden');
     }
 
-    return DB::transaction(function () use ($user, $siteId, $input, $localizedText): array {
+    return DB::transaction(function () use ($user, $siteId, $input, $localizedText, $grant): array {
       [$page, $draft] = $this->pages->draftTarget($siteId, $input['page_id'], lock: true);
+      $this->access->assertAllowed($grant, $draft);
       $this->pages->lockBlocks($page, $draft);
       $locale = $this->pages->locale($draft ?? $page, $input['locale']);
       $fingerprint = $this->pages->fingerprint($page);
@@ -103,6 +107,7 @@ final class EditDraftStructure
           throw new McpToolException('structure_slot_unavailable');
         }
         $draft = $this->plans->prepareAuthoringDraft($page, $user, $input['slots'], 'mcp_draft_prepared');
+        $this->access->recordCreated($grant, $draft);
 
         return $this->result($page, $draft, $locale);
       }

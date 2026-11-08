@@ -1,6 +1,17 @@
 <?php
 
 return [
+  'authorized_drafts' => 'Authorized drafts',
+  'existing_draft_help' => 'Select a draft from the same site to continue earlier work. The list shows up to 100 recently updated drafts. Selecting it explicitly grants this connection access.',
+  'no_existing_draft' => 'No existing draft',
+  'existing_draft' => 'Also allow one existing draft',
+  'draft_access' => 'Draft access',
+  'drafts_created' => 'Drafts created by this connection and the draft you select',
+  'drafts_site' => 'All eligible drafts on the selected site',
+  'draft_access_help' => 'The restricted option protects existing drafts, including your own. Choose site access only when this client needs to work on existing drafts. Your CMS role still applies.',
+  'draft_access_denied' => 'This connection can access only drafts it created or that you explicitly approved. Reconnect and select an existing draft to grant access.',
+  'scope_write_seo' => 'Edit draft SEO and social sharing fields only',
+  'edit_seo_description' => 'Edit only SEO, list excerpt and social sharing fields in an eligible draft. Read get_draft_translation first and provide its current version. Requires pages:write-draft-seo and the CMS SEO permission. Page names, slugs and paths are excluded. Uses the connection draft access restriction.',
   'title' => 'MCP',
   'settings' => 'Remote MCP',
   'settings_help' => 'Let compatible AI clients register automatically using this server URL. Each user chooses a site and approves access in WebBlocks CMS.',
@@ -41,7 +52,7 @@ return [
   'scope_write_content' => 'Edit draft block text and select existing images',
   'scope_create' => 'Create page drafts',
   'scope_write_structure' => 'Prepare update drafts and add, move or reorder blocks',
-  'scope_write_translation' => 'Edit draft translations and SEO',
+  'scope_write_translation' => 'Edit draft page names, addresses and SEO',
   'scope_upload' => 'Upload files to the public Media Library',
   'allowed_scopes' => 'Allowed client permissions',
   'allowed_scopes_help' => 'Choose which permissions clients can request. Basic page access is available while MCP is on. Turning a permission off suspends it for existing connections. Unexpired grants can resume when it is turned back on.',

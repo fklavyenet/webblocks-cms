@@ -11,6 +11,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Policies\McpPagePolicy;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Mcp\McpDraftAccess;
 use WebBlocks\Cms\Support\Mcp\McpPages;
 use WebBlocks\Cms\Support\Mcp\McpToolException;
 use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
@@ -28,9 +29,10 @@ final class CreatePageDraft
     private readonly PageDraftInitializer $drafts,
     private readonly PageRevisionManager $revisions,
     private readonly McpPages $pages,
+    private readonly McpDraftAccess $access,
   ) {}
 
-  public function handle(User $user, int $siteId, array $input): array
+  public function handle(User $user, int $siteId, array $input, ?array $grant = null): array
   {
     if (! $this->policy->createDraft($user, $siteId)) {
       throw new McpToolException('forbidden');
@@ -48,7 +50,7 @@ final class CreatePageDraft
     $layout = $input['layout'] ?? 'default';
     $hash = SnapshotContent::hash(['title' => $input['title'], 'path' => $path, 'locale' => $input['locale'], 'layout' => $layout]);
 
-    return DB::transaction(function () use ($user, $siteId, $input, $path, $layout, $hash): array {
+    return DB::transaction(function () use ($user, $siteId, $input, $path, $layout, $hash, $grant): array {
       // Serialize MCP creation and receipt lookup within a site. The translation
       // unique constraints also cover concurrent panel and Content API writers.
       $site = Site::query()->lockForUpdate()->find($siteId) ?? throw new McpToolException('page_missing');
@@ -69,6 +71,8 @@ final class CreatePageDraft
         if (! $page || ! $translation || $page->isRevisionRestoreCandidate() || $page->setting('staged_update') !== null) {
           throw new McpToolException('created_draft_unavailable');
         }
+
+        $this->access->assertAllowed($grant, $page);
 
         return $this->result($page, $locale, $translation->path);
       }
@@ -99,6 +103,7 @@ final class CreatePageDraft
         throw new McpToolException('page_path_conflict');
       }
 
+      $this->access->recordCreated($grant, $page);
       $this->revisions->capture($page, $user, event: 'page_created', source: 'mcp');
       DB::table('wbcms_mcp_page_drafts')->insert([
         'site_id' => $siteId, 'user_id' => $user->getAuthIdentifier(), 'request_hash' => $hash, 'page_id' => $page->id,

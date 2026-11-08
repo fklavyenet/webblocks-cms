@@ -1,6 +1,17 @@
 <?php
 
 return [
+  'authorized_drafts' => 'İzin verilen taslaklar',
+  'existing_draft_help' => 'Önceki çalışmaya devam etmek için aynı siteden bir taslak seçin. Listede son güncellenen en fazla 100 taslak bulunur. Seçim bu bağlantıya açıkça erişim verir.',
+  'no_existing_draft' => 'Mevcut taslak seçilmedi',
+  'existing_draft' => 'Bir mevcut taslağa da izin ver',
+  'draft_access' => 'Taslak erişimi',
+  'drafts_created' => 'Bu bağlantının oluşturduğu ve seçtiğiniz taslak',
+  'drafts_site' => 'Seçilen sitedeki uygun tüm taslaklar',
+  'draft_access_help' => 'Sınırlı seçenek, sizin taslaklarınız dahil mevcut taslakları korur. Site erişimini yalnızca istemcinin mevcut taslaklarda çalışması gerektiğinde seçin. CMS rolünüz de uygulanır.',
+  'draft_access_denied' => 'Bu bağlantı yalnızca oluşturduğu veya açıkça onayladığınız taslaklara erişebilir. Erişim vermek için yeniden bağlanıp mevcut taslağı seçin.',
+  'scope_write_seo' => 'Yalnızca taslak SEO ve sosyal paylaşım alanlarını düzenle',
+  'edit_seo_description' => 'Uygun bir taslakta yalnızca SEO, liste özeti ve sosyal paylaşım alanlarını düzenler. Önce get_draft_translation ile güncel sürümü okuyun. pages:write-draft-seo ve CMS SEO yetkisi gerekir. Sayfa adı, kısa adres ve yol kapsam dışındadır. Bağlantının taslak erişim sınırı uygulanır.',
   'title' => 'MCP',
   'settings' => 'Uzak MCP',
   'settings_help' => 'Uyumlu yapay zekâ istemcileri bu sunucu adresiyle otomatik kaydolabilir. Her kullanıcı WebBlocks CMS içinde bir site seçer ve erişimi onaylar.',
@@ -41,7 +52,7 @@ return [
   'scope_write_content' => 'Taslak blok metnini düzenle ve mevcut görselleri seç',
   'scope_create' => 'Sayfa taslakları oluştur',
   'scope_write_structure' => 'Güncelleme taslağı hazırla, blok ekle, taşı veya sırala',
-  'scope_write_translation' => 'Taslak çevirilerini ve SEO alanlarını düzenle',
+  'scope_write_translation' => 'Taslak sayfa adlarını, adresleri ve SEO alanlarını düzenle',
   'scope_upload' => 'Herkese açık Medya Kütüphanesi’ne dosya yükle',
   'allowed_scopes' => 'İstemcilere verilebilecek izinler',
   'allowed_scopes_help' => 'İstemcilerin isteyebileceği izinleri seçin. MCP açıkken temel sayfa erişimi kullanılabilir. Bir izni kapatmak mevcut bağlantılarda da o izni askıya alır. İzin yeniden açıldığında süresi dolmamış erişimler devam edebilir.',

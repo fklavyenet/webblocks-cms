@@ -10,7 +10,7 @@
             <form method="post" action="{{ route('webblocks.mcp.authorize', absolute: false) }}">
                 @csrf
                 @foreach ($data as $key => $value)
-                    @if ($value !== null && ! in_array($key, ['site_id', 'decision'], true))
+                    @if ($value !== null && ! in_array($key, ['site_id', 'decision', 'draft_access', 'draft_page_id'], true))
                         <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                     @endif
                 @endforeach
@@ -24,6 +24,30 @@
                                 <option value="{{ $site->id }}">{{ $site->name }}</option>
                             @endforeach
                         </select>
+                    </div>
+
+                    <div class="wb-field">
+                        <label class="wb-label" for="mcp-draft-access">{{ __('webblocks-cms::mcp.draft_access') }}</label>
+                        <select id="mcp-draft-access" name="draft_access" class="wb-select" aria-describedby="mcp-draft-access-help" required>
+                            <option value="created">{{ __('webblocks-cms::mcp.drafts_created') }}</option>
+                            <option value="site">{{ __('webblocks-cms::mcp.drafts_site') }}</option>
+                        </select>
+                        <p id="mcp-draft-access-help" class="wb-text-sm wb-text-muted">{{ __('webblocks-cms::mcp.draft_access_help') }}</p>
+                    </div>
+
+                    <div class="wb-field">
+                        <label class="wb-label" for="mcp-draft-page">{{ __('webblocks-cms::mcp.existing_draft') }}</label>
+                        <select id="mcp-draft-page" name="draft_page_id" class="wb-select" aria-describedby="mcp-draft-page-help">
+                            <option value="">{{ __('webblocks-cms::mcp.no_existing_draft') }}</option>
+                            @foreach ($sites as $site)
+                                <optgroup label="{{ $site->name }}">
+                                    @foreach ($drafts->where('site_id', $site->id) as $draft)
+                                        <option value="{{ $draft->id }}">{{ $draft->translations->first()?->name }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                        <p id="mcp-draft-page-help" class="wb-text-sm wb-text-muted">{{ __('webblocks-cms::mcp.existing_draft_help') }}</p>
                     </div>
 
                     <section class="wb-alert wb-alert-info" aria-labelledby="mcp-consent-permissions">

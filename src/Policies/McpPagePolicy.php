@@ -30,6 +30,7 @@ final class McpPagePolicy
         McpConfiguration::WRITE, McpConfiguration::CONTENT, McpConfiguration::STRUCTURE => $this->write($user, $siteId),
         McpConfiguration::TRANSLATION => $this->write($user, $siteId)
           && ($this->editTranslations($user, $siteId) || $this->editSeo($user, $siteId)),
+        McpConfiguration::SEO => $this->write($user, $siteId) && $this->editSeo($user, $siteId),
         McpConfiguration::CREATE => $this->createDraft($user, $siteId),
         McpConfiguration::READ_MEDIA => $this->readMedia($user, $siteId),
         McpConfiguration::UPLOAD => $this->uploadMedia($user, $siteId),

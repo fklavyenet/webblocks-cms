@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Limit new MCP connections to drafts they create and an existing draft explicitly approved at consent. Users can choose broader site draft access when needed and review the scope in their profile.
+- Add a separate MCP permission and tool for editing draft SEO and social fields without editing page names or addresses.
+
 ## 1.126.2
 
 - Reduce database queries when creating update drafts, publishing them, and restoring pages or shared slots with many translated, nested blocks. Coalesce SEO source and public list/navigation cache version updates within the owning content transaction.

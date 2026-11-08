@@ -13,6 +13,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Policies\McpPagePolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Mcp\McpDraftAccess;
 use WebBlocks\Cms\Support\Mcp\McpMedia;
 use WebBlocks\Cms\Support\Mcp\McpPages;
 use WebBlocks\Cms\Support\Mcp\McpToolException;
@@ -25,6 +26,7 @@ final class EditDraftTranslation
 {
   public function __construct(
     private readonly McpPages $pages,
+    private readonly McpDraftAccess $access,
     private readonly McpPagePolicy $policy,
     private readonly InternalContentPlanService $plans,
     private readonly PageTranslationPayload $payload,
@@ -33,15 +35,16 @@ final class EditDraftTranslation
     private readonly PageRevisionManager $revisions,
   ) {}
 
-  public function read(int $siteId, array $input): array
+  public function read(int $siteId, array $input, ?array $grant = null): array
   {
     [$source, $draft] = $this->pages->draftTarget($siteId, $input['page_id']);
+    $this->access->assertAllowed($grant, $draft);
     $locale = $this->locale($source, $input['locale']);
 
     return $this->result($source, $draft, $locale);
   }
 
-  public function handle(User $user, int $siteId, array $input): array
+  public function handle(User $user, int $siteId, array $input, ?array $grant = null): array
   {
     $fields = Arr::except($input, ['locale', 'page_id', 'version']);
     if ($fields === []) {
@@ -55,8 +58,9 @@ final class EditDraftTranslation
       throw new McpToolException('forbidden');
     }
 
-    return DB::transaction(function () use ($user, $siteId, $input, $fields): array {
+    return DB::transaction(function () use ($user, $siteId, $input, $fields, $grant): array {
       [$source, $draft] = $this->pages->draftTarget($siteId, $input['page_id'], lock: true);
+      $this->access->assertAllowed($grant, $draft);
       $this->pages->lockBlocks($source, $draft);
       PageTranslation::query()->whereIn('page_id', array_filter([$source->id, $draft?->id]))
         ->orderBy('id')->lockForUpdate()->pluck('id');
@@ -90,7 +94,10 @@ final class EditDraftTranslation
         $this->media->selectedImage($user, $siteId, $fields['og_image_media_id']);
       }
 
-      $draft ??= $this->plans->prepareAuthoringDraft($source, $user, [], 'mcp_draft_prepared');
+      if (! $draft) {
+        $draft = $this->plans->prepareAuthoringDraft($source, $user, [], 'mcp_draft_prepared');
+        $this->access->recordCreated($grant, $draft);
+      }
       if (! $this->policy->editDraft($user, $draft, $locale->id !== app(LocaleResolver::class)->default()->id)) {
         throw new McpToolException('forbidden');
       }
