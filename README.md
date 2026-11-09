@@ -100,7 +100,7 @@ php artisan vendor:publish --tag=webblocks-cms-stubs
 
 Views, translations, and migrations load from the installed package and do not have separate publish tags. Avoid `--force` unless you intentionally want to replace package-owned published files in a controlled host environment.
 
-CMS static assets are published under `public/cms`. Site-owned overrides belong under `public/site/{site_handle}` in the host application. See [Public assets](https://cms.webblocksui.com/docs/public-assets), [public themes and tones](https://cms.webblocksui.com/docs/public-theme-and-tones), and [media image variants](https://cms.webblocksui.com/docs/media-image-variants).
+CMS static assets are published under `public/cms`. Site-owned overrides belong under `public/site/{site_handle}` in the host application. See [Public assets](https://cms.webblocksui.com/docs/public-assets) and [media image variants](https://cms.webblocksui.com/docs/media-image-variants).
 
 ## Package development
 
