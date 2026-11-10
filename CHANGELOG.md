@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.128.2
+
+- Let active plugins add site-scoped work counts and links to their filtered queues in the admin notification bell.
+
 ## 1.128.1
 
 - Fix page links in private preview menus so they open the selected language on the correct public site when the administration and site domains differ.
