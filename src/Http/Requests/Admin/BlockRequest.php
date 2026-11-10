@@ -2584,9 +2584,9 @@ class BlockRequest extends FormRequest
       ? $this->route('block')->setting('content_bindings', [])
       : [];
     $bindings = is_array($existingBindings) ? $existingBindings : [];
-    $bindingBlock = $this->route('block') instanceof Block ? $this->route('block') : new Block;
+    $bindingBlock = $existingBlock ? clone $existingBlock : new Block;
     $bindingBlock->type = $data['type'] ?? $existingBlock?->type;
-    $bindingBlock->page_id = $data['page_id'] ?? $bindingBlock->page_id;
+    $bindingBlock->page_id = $pageId;
     $sourceEditor = app(ContentSourceEditor::class);
 
     foreach (($data['content_binding_selection'] ?? []) as $target => $selection) {

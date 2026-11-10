@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.128.4
+
+- Fix Save Block when exchanging children between two full Splits in the same slot. A valid replacement now saves both positions in one revision.
+
 ## 1.128.3
 
 - Open the confirmation from Profile → MCP connections and revoke only the selected connection, including while remote MCP is disabled.

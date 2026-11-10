@@ -254,19 +254,22 @@ class EditorFormRecoveryTest extends TestCase
     $this->get(route('admin.pages.slots.blocks', [$this->page, $slot, 'edit' => $outgoing->id]))
       ->assertOk()->assertSee('name="replacement_block_id"', false);
     $url = route('admin.blocks.update', $outgoing);
+    $headers = ['Accept' => 'application/json', 'X-WebBlocks-Editor-Save' => '1'];
     $form = [
-      'page_id' => $this->page->id, 'slot_type_id' => $this->slot->id, 'block_type_id' => $this->type->id,
-      'parent_id' => null, 'sort_order' => 9, 'status' => 'draft', 'content' => '<p>Moving side</p>',
+      '_method' => 'PUT', 'page_id' => (string) $this->page->id, 'slot_type_id' => (string) $this->slot->id,
+      'block_type_id' => (string) $this->type->id, 'parent_id' => '', 'sort_order' => '9',
+      'status' => 'draft', 'content' => '<p>Moving side</p>',
     ];
-    $this->putJson($url, $form)->assertUnprocessable()->assertJsonValidationErrors('parent_id');
-    $form['parent_id'] = $destination->id;
-    $this->putJson($url, $form + ['replacement_block_id' => $staying->id])
+    $slotRows = fn () => DB::table('wbcms_blocks')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all();
+    $before = $slotRows();
+    $this->post($url, $form, $headers)->assertUnprocessable()->assertJsonValidationErrors('parent_id');
+    $form['parent_id'] = (string) $destination->id;
+    $this->post($url, $form + ['replacement_block_id' => (string) $staying->id], $headers)
       ->assertUnprocessable()->assertJsonValidationErrors('replacement_block_id');
-    $this->assertSame($source->id, $outgoing->fresh()->parent_id);
-    $this->assertSame($destination->id, $incoming->fresh()->parent_id);
+    $this->assertSame($before, $slotRows());
     $this->assertSame(0, $this->page->revisions()->count());
 
-    $exchange = $form + ['replacement_block_id' => $incoming->id];
+    $exchange = $form + ['replacement_block_id' => (string) $incoming->id];
     $interrupted = false;
     DB::connection()->beforeExecuting(function ($sql, $bindings) use ($outgoing, &$interrupted): void {
       if (! $interrupted && str_starts_with($sql, 'update "wbcms_blocks"') && end($bindings) === $outgoing->id) {
@@ -274,13 +277,12 @@ class EditorFormRecoveryTest extends TestCase
         throw new \RuntimeException('Synthetic exchange interruption');
       }
     });
-    $this->putJson($url, $exchange)->assertInternalServerError();
+    $this->putJson($url, ['page_id' => $this->page->id] + $exchange)->assertInternalServerError();
     $this->assertTrue($interrupted);
-    $this->assertSame($source->id, $outgoing->fresh()->parent_id);
-    $this->assertSame($destination->id, $incoming->fresh()->parent_id);
+    $this->assertSame($before, $slotRows());
     $this->assertSame(0, $this->page->revisions()->count());
 
-    $this->put($url, $exchange)->assertRedirect()->assertSessionHasNoErrors();
+    $this->post($url, $exchange, $headers)->assertOk()->assertJsonPath('saved', true);
     $this->assertSame([$destination->id, 0], [$outgoing->fresh()->parent_id, $outgoing->fresh()->sort_order]);
     $this->assertSame([$source->id, 1], [$incoming->fresh()->parent_id, $incoming->fresh()->sort_order]);
     $this->assertSame(2, $source->children()->count());
