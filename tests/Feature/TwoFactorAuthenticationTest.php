@@ -64,6 +64,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $notifications = $this->mock(PanelNotificationQuery::class);
     $notifications->shouldReceive('forUser')->andReturn(null);
     $notifications->shouldReceive('pendingCommentsForUser')->andReturn(0);
+    $notifications->shouldReceive('pluginItemsForUser')->andReturn([]);
     $this->travelTo(now()->startOfMinute()->addSeconds(5));
   }
 

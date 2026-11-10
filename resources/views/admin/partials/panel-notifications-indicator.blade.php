@@ -1,7 +1,8 @@
 @php
     $unreadMessages = $panelNotifications['unread'] ?? 0;
     $pendingComments = $panelPendingComments ?? 0;
-    $total = $unreadMessages + $pendingComments;
+    $pluginNotifications = $panelPluginNotifications ?? [];
+    $total = $unreadMessages + $pendingComments + array_sum(array_column($pluginNotifications, 'count'));
     $notificationLabel = static fn (string $key, int $count) => trans_choice('webblocks-cms::notifications.'.$key, $count, [], $adminLocale ?? null);
 @endphp
 
@@ -25,6 +26,11 @@
                     {{ $notificationLabel('panel_pending_comments', $pendingComments) }}
                 </a>
             @endif
+            @foreach ($pluginNotifications as $notification)
+                <a class="wb-dropdown-item" href="{{ $notification['url'] }}">
+                    {{ trans_choice($notification['labelKey'], $notification['count'], [], $adminLocale ?? null) }}
+                </a>
+            @endforeach
         </div>
     </div>
 @endif

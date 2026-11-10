@@ -2,10 +2,13 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\Admin\ContactMessageController;
@@ -21,8 +24,16 @@ use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Queries\PanelNotificationQuery;
 use WebBlocks\Cms\Queries\SystemHealthQuery;
 use WebBlocks\Cms\Services\SiteNotifications\SiteNotificationDispatcher;
+use WebBlocks\Cms\Support\Admin\PanelNotification;
 use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
+use WebBlocks\Cms\Support\Admin\PanelNotificationSource;
+use WebBlocks\Cms\Support\Admin\PanelNotificationSources;
 use WebBlocks\Cms\Support\ContactMessages\ContactMessageIndexState;
+use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
+use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginPermission;
+use WebBlocks\Cms\Support\Plugins\PluginRegistry;
+use WebBlocks\Cms\Support\Plugins\PluginRuntimeRegistrar;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 use WebBlocks\Cms\Tests\CmsSqlTestUser;
@@ -200,6 +211,7 @@ class PanelNotificationsTest extends TestCase
     $query = Mockery::mock(PanelNotificationQuery::class);
     $query->shouldNotReceive('forUser');
     $query->shouldReceive('pendingCommentsForUser')->once()->andReturn(0);
+    $query->shouldReceive('pluginItemsForUser')->once()->andReturn([]);
     (new PanelNotificationsComposer($query))->compose($view);
   }
 
@@ -275,6 +287,64 @@ class PanelNotificationsTest extends TestCase
     $this->patch(route('admin.engagement.comments.status', $comment), ['status' => 'approved', 'return_query' => parse_url($commentUrl, PHP_URL_QUERY)])
       ->assertRedirect($commentUrl);
     $this->get($dashboardUrl)->assertOk()->assertDontSee('data-wb-panel-notifications');
+  }
+
+  #[Test]
+  public function the_bell_includes_active_plugin_work_and_links_to_its_authorized_queue(): void
+  {
+    $this->withoutMiddleware(RedirectIfNotInstalled::class);
+    $allowed = $this->site('plugin-allowed');
+    $panelOnly = $this->site('panel-only');
+    $private = $this->site('plugin-private');
+    $user = $this->user([$allowed->id, $panelOnly->id], false);
+    $role = CmsRole::create(['name' => 'Plugin reviewer', 'handle' => 'plugin-reviewer']);
+    foreach (['cms.panel.access', TestPanelNotificationSource::PERMISSION] as $permission) {
+      DB::table('wbcms_acl_role_permissions')->insert(['role_id' => $role->id, 'permission' => $permission]);
+    }
+    DB::table('wbcms_site_user')->where('user_id', $user->id)->where('site_id', $allowed->id)->update(['role_id' => $role->id]);
+
+    $registry = new PluginRegistry([TestPanelNotificationSource::PLUGIN => true]);
+    $registry->register(PluginDefinition::make(TestPanelNotificationSource::PLUGIN)
+      ->provider(TestPanelNotificationProvider::class)
+      ->permissions([PluginPermission::make(TestPanelNotificationSource::PERMISSION)->siteDelegable()])
+      ->adminRoutes(function (): void {
+        Route::get('/queue', function (Request $request) {
+          $site = (int) $request->query('site');
+          abort_unless(app(PluginAccessResolver::class)->permittedSiteIds($request->user(), TestPanelNotificationSource::PERMISSION)->contains($site), 403);
+
+          return response()->json(['site' => $site, 'pending' => config('test-panel-queue.'.$site, 0)]);
+        })->middleware('plugin.permission:'.TestPanelNotificationSource::PERMISSION)->name('queue');
+      }));
+    $this->app->instance(PluginRegistry::class, $registry);
+    app(PluginRuntimeRegistrar::class)->register();
+    app('translator')->addLines(['test-panel.queue' => '{1} :count item to review|[2,*] :count items to review'], 'en');
+    config(['test-panel-queue' => [$allowed->id => 102, $panelOnly->id => 10, $private->id => 99]]);
+    $this->actingAs($user);
+
+    $dashboard = route('admin.dashboard');
+    $queue = route(TestPanelNotificationSource::ROUTE, ['site' => $allowed->id], absolute: false);
+    $this->assertNull(app(PanelNotificationQuery::class)->forUser($user));
+    $this->get($dashboard)->assertOk()
+      ->assertSee('Panel notifications: 102 pending items')
+      ->assertSee('>99+</span>', false)
+      ->assertSee('102 items to review')
+      ->assertSee('href="'.$queue.'"', false);
+    $this->get($queue)->assertOk()->assertExactJson(['site' => $allowed->id, 'pending' => 102]);
+    $this->get(route(TestPanelNotificationSource::ROUTE, ['site' => $panelOnly->id]))->assertForbidden();
+
+    DB::table('wbcms_acl_role_permissions')->insert(['role_id' => $role->id, 'permission' => 'cms.messages.read']);
+    $this->message($allowed);
+    $this->get($dashboard)->assertOk()
+      ->assertSee('Panel notifications: 103 pending items')
+      ->assertSee('1 unread contact message')
+      ->assertSee('102 items to review');
+
+    config(['test-panel-queue.'.$allowed->id => 0]);
+    $this->get($dashboard)->assertOk()->assertSee('1 unread contact message')->assertDontSee($queue);
+
+    config(['test-panel-queue.'.$allowed->id => 102]);
+    $registry->suppress(TestPanelNotificationSource::PLUGIN);
+    $this->get($dashboard)->assertOk()->assertSee('1 unread contact message')->assertDontSee($queue);
   }
 
   #[Test]
@@ -422,5 +492,35 @@ class PanelNotificationsTest extends TestCase
     $this->patch($endpoint, $payload + ['status' => 'new'])->assertRedirect($index)->assertSessionHas('status_replace', ['count' => 1]);
     $this->assertSame('new', $message->fresh()->status);
     $this->patchJson($endpoint, $payload + ['status' => 'spam'])->assertUnprocessable()->assertJsonValidationErrors('status');
+  }
+}
+
+class TestPanelNotificationProvider extends ServiceProvider
+{
+  public function register(): void
+  {
+    $this->app->make(PanelNotificationSources::class)->register(TestPanelNotificationSource::PLUGIN, TestPanelNotificationSource::class);
+  }
+}
+
+class TestPanelNotificationSource implements PanelNotificationSource
+{
+  public const PLUGIN = 'notification-test';
+
+  public const PERMISSION = self::PLUGIN.'.read';
+
+  public const ROUTE = 'webblocks.plugins.notification_test.queue';
+
+  public function notificationFor(Authenticatable $user, array $siteIds): ?PanelNotification
+  {
+    $permitted = app(PluginAccessResolver::class)->permittedSiteIds($user, self::PERMISSION)->intersect($siteIds);
+    $site = $permitted->first();
+
+    return $site === null ? null : new PanelNotification(
+      count: config('test-panel-queue.'.$site, 0),
+      labelKey: 'test-panel.queue',
+      route: self::ROUTE,
+      routeParameters: ['site' => $site],
+    );
   }
 }

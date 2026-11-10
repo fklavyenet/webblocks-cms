@@ -2,13 +2,18 @@
 
 namespace WebBlocks\Cms\Queries;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Policies\EngagementPolicy;
 use WebBlocks\Cms\Policies\PanelNotificationPolicy;
+use WebBlocks\Cms\Support\Admin\PanelNotificationSources;
 
 class PanelNotificationQuery
 {
@@ -26,6 +31,48 @@ class PanelNotificationQuery
     }
 
     return $this->engagement->comments($user, ['status' => 'pending', 'moderatable' => true])->count();
+  }
+
+  /** @return list<array{count: int, labelKey: string, url: string}> */
+  public function pluginItemsForUser(?Authenticatable $user): array
+  {
+    if ($user === null) {
+      return [];
+    }
+
+    $items = [];
+    $siteIds = null;
+    foreach (app(PanelNotificationSources::class)->active() as [$plugin, $source]) {
+      $siteIds ??= $this->policy->pluginSiteIds($user);
+      if ($siteIds === []) {
+        return [];
+      }
+
+      try {
+        $notification = app($source)->notificationFor($user, $siteIds);
+        if ($notification === null || $notification->count <= 0 || trim($notification->labelKey) === '') {
+          continue;
+        }
+
+        $route = Route::getRoutes()->getByName($notification->route);
+        $prefix = trim($plugin->adminRoutePrefix(), '/');
+        if (! $route || ! str_starts_with($notification->route, $plugin->routeNamePrefix().'.')
+          || ! in_array('GET', $route->methods(), true)
+          || ($route->uri() !== $prefix && ! str_starts_with($route->uri(), $prefix.'/'))) {
+          continue;
+        }
+
+        $items[] = [
+          'count' => $notification->count,
+          'labelKey' => $notification->labelKey,
+          'url' => route($notification->route, $notification->routeParameters, absolute: false),
+        ];
+      } catch (Throwable) {
+        Log::warning('Panel notification source failed.', ['plugin' => $plugin->handle(), 'source' => $source]);
+      }
+    }
+
+    return $items;
   }
 
   public function forUser($user): ?array

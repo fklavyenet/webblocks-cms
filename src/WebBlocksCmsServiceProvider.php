@@ -101,6 +101,7 @@ use WebBlocks\Cms\Policies\SystemBackupPolicy;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
 use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
+use WebBlocks\Cms\Support\Admin\PanelNotificationSources;
 use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
 use WebBlocks\Cms\Support\Admin\QuickSettingsComposer;
 use WebBlocks\Cms\Support\Auth\TwoFactorAccountState;
@@ -1115,6 +1116,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->registerClassAliases();
     $this->registerConfig();
     $this->app->singleton(SiteNotificationChannels::class);
+    $this->app->singleton(PanelNotificationSources::class);
     $this->registerNativeLocalDoctor();
     $this->registerPlugins();
 

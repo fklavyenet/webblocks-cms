@@ -65,6 +65,7 @@ class TwoFactorRecoveryTest extends TestCase
     $notifications = $this->mock(PanelNotificationQuery::class);
     $notifications->shouldReceive('forUser')->andReturn(null);
     $notifications->shouldReceive('pendingCommentsForUser')->andReturn(0);
+    $notifications->shouldReceive('pluginItemsForUser')->andReturn([]);
   }
 
   private function user(string $name, ?string $role = 'super_admin'): User

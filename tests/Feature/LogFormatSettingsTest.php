@@ -45,6 +45,7 @@ class LogFormatSettingsTest extends TestCase
     $notifications = $this->mock(PanelNotificationQuery::class);
     $notifications->shouldReceive('forUser')->andReturn(null);
     $notifications->shouldReceive('pendingCommentsForUser')->andReturn(0);
+    $notifications->shouldReceive('pluginItemsForUser')->andReturn([]);
   }
 
   private function actor(string $role = 'super_admin', bool $active = true): User

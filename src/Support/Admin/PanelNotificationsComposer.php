@@ -16,5 +16,6 @@ class PanelNotificationsComposer
       $view->with('panelNotifications', $this->notifications->forUser($user));
     }
     $view->with('panelPendingComments', $this->notifications->pendingCommentsForUser($user));
+    $view->with('panelPluginNotifications', $this->notifications->pluginItemsForUser($user));
   }
 }
