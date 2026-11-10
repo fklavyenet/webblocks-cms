@@ -3,6 +3,8 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use App\Models\User;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Http\UploadedFile;
@@ -680,7 +682,7 @@ class RemoteMcpTest extends TestCase
     $this->tool('find_page', ['path' => '/', 'locale' => 'en'], $token)->assertJsonPath('result.structuredContent.page_id', $page->id);
   }
 
-  public function test_profile_revocation_is_personal_and_ends_pending_and_active_grants_across_sites(): void
+  public function test_profile_revokes_only_the_selected_connection_while_remote_mcp_is_disabled(): void
   {
     [$page] = $this->pageFixture();
     $otherSite = Site::create(['handle' => 'another', 'name' => 'Another site']);
@@ -693,25 +695,44 @@ class RemoteMcpTest extends TestCase
     $credentials = ['client_id' => $client];
     $first = $this->exchange($this->consent($page->site_id, $auth), $credentials)->assertOk()->json('access_token');
     $second = $this->exchange($this->consent($otherSite->id, $auth), $credentials)->assertOk()->json('access_token');
-    $pending = $this->consent($otherSite->id, $auth);
+    $pending = $this->consent($page->site_id, $auth);
     $otherCode = $this->consent($page->site_id, array_replace($auth, ['client_id' => $otherClient]));
     $other = $this->exchange($otherCode, array_replace($credentials, ['client_id' => $otherClient]))->assertOk()->json('access_token');
     $profileUrl = self::ORIGIN.'/webadmin/profile/mcp-connections';
-    $this->get($profileUrl)->assertOk()->assertSee('Client A')->assertSee('Client B');
+    $grants = DB::table('wbcms_mcp_grants');
+    $selectedId = (clone $grants)->where('token_hash', hash('sha256', $first))->value('id');
+    $pendingId = (clone $grants)->where('code_hash', hash('sha256', $pending))->value('id');
+    $this->setMcp(false);
+    $response = $this->get($profileUrl)->assertOk()->assertSee(__('webblocks-cms::mcp.disabled_notice'));
+    $document = new DOMDocument;
+    $document->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+    $xpath = new DOMXPath($document);
+    $trigger = $xpath->query('//button[@data-wb-toggle="modal" and @data-wb-target="#revoke-mcp-'.$selectedId.'"]');
+    $this->assertSame(1, $trigger->length);
+    $dialog = '//*[@id="wb-overlay-root"]//*[@role="dialog" and @id="revoke-mcp-'.$selectedId.'"]';
+    $this->assertStringContainsString('Client A', $xpath->evaluate('normalize-space('.$dialog.')'));
+    $this->assertStringContainsString('Test site', $xpath->evaluate('normalize-space('.$dialog.')'));
+    $action = $xpath->evaluate('string('.$dialog.'/descendant::form[@method="POST" and input[@name="_method" and @value="DELETE"] and input[@name="_token"]]/@action)');
+    $this->assertSame($profileUrl.'/'.$selectedId, $action);
 
+    $this->setMcp(true);
     $this->actingAs($secondUser, 'web');
     $this->get($profileUrl)->assertOk()->assertDontSee('Client A')->assertDontSee('Client B');
-    $this->delete($profileUrl.'/'.$client)->assertNotFound();
+    $this->delete($action)->assertNotFound();
     $separate = $this->exchange($this->consent($page->site_id, $auth), $credentials)->assertOk()->json('access_token');
     $this->actingAs($firstUser, 'web');
     $this->setMcp(false);
-    $this->delete($profileUrl.'/'.$client)->assertRedirect();
-    $this->get($profileUrl)->assertOk()->assertDontSee('Client A')->assertSee('Client B');
+    $this->post($action, ['_method' => 'DELETE'])->assertRedirect($profileUrl);
+    $this->get($profileUrl)->assertOk()->assertDontSee('id="revoke-mcp-'.$selectedId.'"', false)->assertSee('Client A')->assertSee('Client B');
+    $this->assertDatabaseMissing('wbcms_mcp_grants', ['id' => $selectedId]);
+    $this->assertDatabaseHas('wbcms_mcp_grants', ['id' => $pendingId]);
+    $this->post($profileUrl.'/'.$pendingId, ['_method' => 'DELETE'])->assertRedirect($profileUrl);
     $this->setMcp(true);
 
     $arguments = ['path' => '/', 'locale' => 'en'];
     $this->tool('find_page', $arguments, $first, 401);
-    $this->tool('find_page', $arguments, $second, 401);
+    $this->tool('search_pages', ['q' => 'Home', 'locale' => 'en'], $second)
+      ->assertJsonPath('result.structuredContent.site_id', $otherSite->id);
     $this->exchange($pending, $credentials)->assertBadRequest()->assertJsonPath('error', 'invalid_grant');
     $this->tool('find_page', $arguments, $other);
     $this->tool('find_page', $arguments, $separate);
@@ -1108,7 +1129,8 @@ class RemoteMcpTest extends TestCase
     $this->tool('update_draft_heading', $ref + ['block_id' => $heading->id, 'version' => $fresh, 'title' => 'Stale write'], $token)
       ->assertJsonPath('result.structuredContent.code', 'conflict');
     $this->get('/webadmin/profile/mcp-connections')->assertOk()->assertSee('Drafts created by this connection and the draft you select');
-    $this->delete('/webadmin/profile/mcp-connections/'.$this->defaultClient())->assertRedirect();
+    $grantId = DB::table('wbcms_mcp_grants')->where('token_hash', hash('sha256', $token))->value('id');
+    $this->delete('/webadmin/profile/mcp-connections/'.$grantId)->assertRedirect();
     $this->assertDatabaseEmpty('wbcms_mcp_grant_drafts');
   }
 

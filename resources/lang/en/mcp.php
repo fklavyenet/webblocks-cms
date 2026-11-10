@@ -36,7 +36,7 @@ return [
   'expires' => 'Last expiry',
   'actions' => 'Actions',
   'revoke' => 'Revoke access',
-  'revoke_confirm' => 'This ends the access you granted this client on all sites. The client will need your approval again to connect.',
+  'revoke_confirm' => 'This ends access for the selected connection. The client will need your approval again to replace that connection.',
   'revoked' => 'MCP access revoked.',
   'callback_host' => 'The connection will return to :host after your decision.',
   'connect' => 'Connect a client to WebBlocks CMS',

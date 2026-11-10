@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.128.3
+
+- Open the confirmation from Profile → MCP connections and revoke only the selected connection, including while remote MCP is disabled.
+
 ## 1.128.2
 
 - Let active plugins add site-scoped work counts and links to their filtered queues in the admin notification bell.

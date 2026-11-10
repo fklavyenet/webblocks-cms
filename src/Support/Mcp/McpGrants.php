@@ -144,10 +144,10 @@ final class McpGrants
     return [McpConfiguration::READ, ...array_keys(array_filter(McpConfiguration::GRANT_COLUMNS, fn (string $column) => $grant->{$column}))];
   }
 
-  public function revoke(User $user, string $clientId): bool
+  public function revoke(User $user, int $grantId): bool
   {
-    return $this->grants()->where('user_id', $user->getAuthIdentifier())
-      ->where('oauth_client_id', $clientId)->delete() > 0;
+    return $this->usableGrants()->where('user_id', $user->getAuthIdentifier())
+      ->where('wbcms_mcp_grants.id', $grantId)->delete() > 0;
   }
 
   private function actor(object $grant): ?User

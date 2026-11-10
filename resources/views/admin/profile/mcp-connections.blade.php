@@ -66,17 +66,18 @@
     </div>
 @endsection
 
-@push('modals')
+@push('overlays')
     @foreach ($connections ?? [] as $connection)
         @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
             'id' => 'revoke-mcp-'.$connection->row_id,
             'title' => $text('revoke'),
             'description' => $text('revoke_confirm'),
-            'action' => route('admin.profile.mcp-connections.destroy', $connection->oauth_client_id),
+            'action' => route('admin.profile.mcp-connections.destroy', $connection->row_id),
             'method' => 'DELETE',
             'submitLabel' => $text('revoke'),
         ])
             <p><strong>{{ $connection->client_name }}</strong></p>
+            <p>{{ $connection->site_name }} · {{ \Illuminate\Support\Carbon::parse($connection->expires_at)->isoFormat('lll') }}</p>
         @endcomponent
     @endforeach
 @endpush

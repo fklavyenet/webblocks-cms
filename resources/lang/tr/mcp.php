@@ -36,7 +36,7 @@ return [
   'expires' => 'En geç sona erme',
   'actions' => 'İşlemler',
   'revoke' => 'Erişimi geri al',
-  'revoke_confirm' => 'Bu işlem, bu istemciye tüm sitelerde verdiğiniz erişimi sonlandırır. İstemcinin yeniden bağlanması için tekrar onay vermeniz gerekir.',
+  'revoke_confirm' => 'Bu işlem seçilen bağlantının erişimini sonlandırır. İstemcinin bu bağlantının yerine yenisini kurabilmesi için tekrar onay vermeniz gerekir.',
   'revoked' => 'MCP erişimi geri alındı.',
   'callback_host' => 'Kararınızdan sonra bağlantı :host adresine dönecek.',
   'connect' => 'WebBlocks CMS’ye istemci bağla',

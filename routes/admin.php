@@ -340,7 +340,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::match(['put', 'patch'], '/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::get('/profile/mcp-connections', [McpConnectionsController::class, 'index'])->name('profile.mcp-connections.index');
     Route::delete('/profile/mcp-connections/{connection}', [McpConnectionsController::class, 'destroy'])
-      ->where('connection', '[a-f0-9]{64}')->name('profile.mcp-connections.destroy');
+      ->whereNumber('connection')->name('profile.mcp-connections.destroy');
     Route::get('/profile/api-tokens', [PersonalApiTokenController::class, 'index'])->name('profile.api-tokens.index');
     Route::post('/profile/api-tokens', [PersonalApiTokenController::class, 'store'])->name('profile.api-tokens.store');
     Route::put('/profile/api-tokens/{token}', [PersonalApiTokenController::class, 'update'])->name('profile.api-tokens.update');

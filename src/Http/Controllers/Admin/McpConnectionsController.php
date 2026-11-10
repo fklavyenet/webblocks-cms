@@ -20,7 +20,8 @@ final class McpConnectionsController
 
   public function destroy(Request $request, string $connection, McpConfiguration $config, McpGrants $grants): RedirectResponse
   {
-    abort_unless($config->hasOAuthSchema() && $grants->revoke($request->user(), $connection), 404);
+    $grantId = filter_var($connection, FILTER_VALIDATE_INT);
+    abort_unless($grantId !== false && $config->hasOAuthSchema() && $grants->revoke($request->user(), $grantId), 404);
 
     return redirect()->route('admin.profile.mcp-connections.index')->with('status', __('webblocks-cms::mcp.revoked'));
   }
