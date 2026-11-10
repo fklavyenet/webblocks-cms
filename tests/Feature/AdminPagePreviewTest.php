@@ -2,16 +2,21 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use App\Models\User;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\Admin\PageController;
+use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Http\Requests\Admin\PagePreviewRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
@@ -19,6 +24,7 @@ use WebBlocks\Cms\Support\Pages\PageLayoutSlotComparison;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
+use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
 class AdminPagePreviewTest extends TestCase
@@ -59,6 +65,78 @@ class AdminPagePreviewTest extends TestCase
     $this->assertStringContainsString('English heading', $html);
     $this->assertStringContainsString('alt="English description"', $html);
     $this->assertStringNotContainsString('Türkçe başlık', $html);
+  }
+
+  #[Test]
+  public function private_preview_menu_links_use_the_rendered_site_and_locale(): void
+  {
+    config()->set('app.url', 'https://admin.example.test');
+    [$page, $turkish] = $this->fixture();
+    $site = $page->site;
+    $site->update(['domain' => 'cms.example.test']);
+    $site->siteDomains()->create(['domain' => 'alias.example.test', 'status' => 'active']);
+    Site::create(['name' => 'Admin host', 'handle' => 'admin-host', 'domain' => 'admin.example.test', 'is_primary' => true]);
+
+    $blogs = Page::create(['site_id' => $site->id, 'title' => 'Blogs', 'slug' => 'blogs', 'status' => Page::STATUS_PUBLISHED, 'published_at' => now()]);
+    $blogs->translations()->create(['locale_id' => $turkish->id, 'name' => 'Türkçe blog', 'slug' => 'yazilar', 'path' => '/yazilar']);
+    $englishOnly = Page::create(['site_id' => $site->id, 'title' => 'News', 'slug' => 'news', 'status' => Page::STATUS_PUBLISHED, 'published_at' => now()]);
+    $group = $site->navigationItems()->create(['title' => 'Articles', 'menu_key' => 'primary', 'link_type' => NavigationItem::LINK_GROUP]);
+    $site->navigationItems()->create(['title' => 'Blogs', 'menu_key' => 'primary', 'parent_id' => $group->id, 'link_type' => NavigationItem::LINK_PAGE, 'page_id' => $blogs->id]);
+    $site->navigationItems()->create(['title' => 'News', 'menu_key' => 'primary', 'link_type' => NavigationItem::LINK_PAGE, 'page_id' => $englishOnly->id]);
+    foreach (['Relative URL' => '/blogs?view=all#top', 'External URL' => 'https://external.example.test/blogs'] as $title => $url) {
+      $site->navigationItems()->create(['title' => $title, 'menu_key' => 'primary', 'link_type' => NavigationItem::LINK_CUSTOM_URL, 'url' => $url]);
+    }
+    foreach (['header' => ['navbar-navigation', 'header-actions'], 'sidebar' => ['sidebar-navigation'], 'footer' => ['navigation-auto']] as $slug => $types) {
+      $slot = SlotType::create(['name' => $slug, 'slug' => $slug, 'status' => 'published']);
+      $page->slots()->create(['slot_type_id' => $slot->id]);
+      foreach ($types as $type) {
+        $page->blocks()->create(['type' => $type, 'slot_type_id' => $slot->id, 'status' => 'published', 'settings' => ['menu_key' => 'primary']]);
+      }
+    }
+
+    $this->withoutMiddleware(RedirectIfNotInstalled::class);
+    $preview = '/webadmin/pages/'.$page->id.'/preview?locale=tr';
+    $this->get('https://admin.example.test'.$preview)->assertRedirect();
+    if (! class_exists(User::class)) {
+      class_alias(CmsSqlTestUser::class, User::class);
+    }
+    $this->actingAs($this->cmsActor(new User(['role' => 'super_admin'])));
+    foreach (['admin.example.test' => 'https://cms.example.test', 'cms.example.test' => '', 'alias.example.test' => ''] as $host => $origin) {
+      $html = $this->get('https://'.$host.$preview)->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')->getContent();
+      $this->assertMenuHrefs($html, [
+        'Blogs' => $origin.'/tr/yazilar',
+        'News' => $origin.'/news',
+        'Relative URL' => '/blogs?view=all#top',
+        'External URL' => 'https://external.example.test/blogs',
+      ]);
+      $this->assertStringContainsString('href="/preview"', $html);
+      $this->assertStringContainsString('href="/tr/onizleme"', $html);
+      $this->assertStringContainsString('aria-current="true"', $html);
+    }
+    $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
+
+    $page->update(['status' => Page::STATUS_PUBLISHED, 'published_at' => now()]);
+    $public = $this->get('https://cms.example.test/tr/onizleme')->assertOk()->getContent();
+    $this->assertMenuHrefs($public, [
+      'Blogs' => '/tr/yazilar',
+      'News' => null,
+      'Relative URL' => '/blogs?view=all#top',
+      'External URL' => 'https://external.example.test/blogs',
+    ]);
+  }
+
+  private function assertMenuHrefs(string $html, array $links): void
+  {
+    $document = new DOMDocument;
+    $document->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
+    $xpath = new DOMXPath($document);
+    foreach (['wb-navbar-links', 'wb-navbar-drawer', 'wb-sidebar-nav', 'wb-slot-footer'] as $region) {
+      foreach ($links as $label => $href) {
+        $anchors = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " '.$region.' ")]//a[normalize-space(.)="'.$label.'"]');
+        $this->assertSame($href === null ? 0 : 1, $anchors->length, $region.' '.$label);
+        $this->assertSame($href, $anchors->item(0)?->getAttribute('href'), $region.' '.$label);
+      }
+    }
   }
 
   #[Test]

@@ -10,7 +10,7 @@
   // Same rule as navbar-navigation: a page-linked item only renders while its
   // page is published, so archiving a page drops its link from every menu.
   $linksToUnpublishedPage = fn ($item) => $item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE
-    && ($item->page?->status !== \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED || $item->resolvedUrl() === null);
+    && ($item->page?->status !== \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED || $item->resolvedUrlForBlock($block) === null);
   $items = app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)
     ->buildPublicMenuTree($menuKey, $siteScope)
     ->filter(fn ($item) => $item->isVisible() && (! $item->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($item->page)) && ! $linksToUnpublishedPage($item));
@@ -24,7 +24,7 @@
       }
 
       $children = $item->children->filter(fn ($child) => $child->isVisible() && (! $child->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($child->page)) && ! $linksToUnpublishedPage($child));
-      $url = $item->resolvedUrl();
+      $url = $item->resolvedUrlForBlock($block);
       $label = e($item->resolvedTitle());
       $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
 

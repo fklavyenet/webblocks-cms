@@ -135,6 +135,29 @@ class PageRouteResolver
     return $this->urlFor($page, $locale, $site);
   }
 
+  public function previewMenuUrlFor(Page $page, ?string $locale, Site $site): ?string
+  {
+    $path = $this->pathFor($page, $locale, $site);
+    if ($path === null && $locale !== null) {
+      $path = $this->pathFor($page, site: $site);
+    }
+    if ($path === null) {
+      return null;
+    }
+
+    $host = $this->siteDomainNormalizer->normalize(request()->getHost());
+    $origin = app(RequestMemo::class)->remember('page.preview-menu-origin', [$site->getConnectionName(), $site->id, $host], function () use ($site, $host): string {
+      $domain = $this->canonicalDomainFor($site);
+      if (! $domain || $domain === $host || $this->siteResolver->activeSiteDomainFor($site, $host)) {
+        return '';
+      }
+
+      return $this->canonicalOrigin($domain);
+    });
+
+    return $origin.$path;
+  }
+
   public function currentHostUrlFor(Page $page, Locale|string|null $locale = null, ?Request $request = null): ?string
   {
     $request ??= request();

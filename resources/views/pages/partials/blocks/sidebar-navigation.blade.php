@@ -11,7 +11,7 @@
   $currentPageId = (int) ($block->renderPageId() ?? 0);
   $activeState = app(\WebBlocks\Cms\Support\Navigation\PublicNavigationActiveState::class);
 
-  $filterVisibleItems = function ($items) use (&$filterVisibleItems) {
+  $filterVisibleItems = function ($items) use (&$filterVisibleItems, $block) {
     return $items
       ->filter(fn ($item) => $item->isVisible() && (! $item->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($item->page)))
       ->map(function ($item) use (&$filterVisibleItems) {
@@ -19,26 +19,26 @@
 
         return $item;
       })
-      ->filter(function ($item) {
+      ->filter(function ($item) use ($block) {
         if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
           return $item->children->isNotEmpty();
         }
 
         if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) {
-          return $item->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $item->resolvedUrl() !== null;
+          return $item->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $item->resolvedUrlForBlock($block) !== null;
         }
 
-        return $item->resolvedUrl() !== null;
+        return $item->resolvedUrlForBlock($block) !== null;
       })
       ->values();
   };
 
-  $isNavigationItemActive = function (\WebBlocks\Cms\Models\NavigationItem $item) use (&$isNavigationItemActive, $activeMatching, $currentPageId, $activeState): bool {
+  $isNavigationItemActive = function (\WebBlocks\Cms\Models\NavigationItem $item) use (&$isNavigationItemActive, $activeMatching, $currentPageId, $activeState, $block): bool {
     if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
       return $item->children->contains(fn ($child) => $isNavigationItemActive($child));
     }
 
-    $href = $item->resolvedUrl();
+    $href = $item->resolvedUrlForBlock($block);
 
     if ($href === null) {
       return false;

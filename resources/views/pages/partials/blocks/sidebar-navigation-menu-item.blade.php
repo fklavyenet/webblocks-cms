@@ -3,7 +3,7 @@
     $children = $item->children->filter(fn ($child) => $child->isVisible() && (! $child->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($child->page)))->values();
     $isGroup = $item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty();
     $isActive = $isNavigationItemActive($item);
-    $href = $item->resolvedUrl();
+    $href = $item->resolvedUrlForBlock($block);
     $target = $item->target === '_blank';
     $icon = $showIcons ? $item->sidebarIcon() : null;
     $groupItemsId = 'wb-nav-group-items-'.$item->id;

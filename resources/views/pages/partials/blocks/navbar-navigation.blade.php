@@ -13,30 +13,30 @@
   $items = app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)
     ->buildPublicMenuTree($menuKey, $site?->id)
     ->filter(fn ($item) => $item->isVisible() && (! $item->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($item->page)))
-    ->map(function ($item) {
+    ->map(function ($item) use ($block) {
       $item->setRelation('children', $item->children
         ->filter(fn ($child) => $child->isVisible() && (! $child->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($child->page)))
-        ->filter(function ($child) {
+        ->filter(function ($child) use ($block) {
           if ($child->link_type !== \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) {
-            return $child->resolvedUrl() !== null;
+            return $child->resolvedUrlForBlock($block) !== null;
           }
 
-          return $child->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $child->resolvedUrl() !== null;
+          return $child->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $child->resolvedUrlForBlock($block) !== null;
         })
         ->values());
 
       return $item;
     })
-    ->filter(function ($item) {
+    ->filter(function ($item) use ($block) {
       if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
         return $item->children->isNotEmpty();
       }
 
       if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) {
-        return $item->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $item->resolvedUrl() !== null;
+        return $item->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $item->resolvedUrlForBlock($block) !== null;
       }
 
-      return $item->resolvedUrl() !== null;
+      return $item->resolvedUrlForBlock($block) !== null;
     })
     ->values();
   $a11y = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
@@ -44,7 +44,7 @@
   $label = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title') ?? $a11y('menu.primary');
   $currentPageId = (int) ($block->renderPageId() ?? 0);
   $activeState = app(\WebBlocks\Cms\Support\Navigation\PublicNavigationActiveState::class);
-  $isItemActive = function ($item) use (&$isItemActive, $activeMatching, $currentPageId, $activeState): bool {
+  $isItemActive = function ($item) use (&$isItemActive, $activeMatching, $currentPageId, $activeState, $block): bool {
     if ($activeMatching === 'off') {
       return false;
     }
@@ -53,7 +53,7 @@
       return $item->children->contains(fn ($child) => $isItemActive($child));
     }
 
-    $href = $item->resolvedUrl();
+    $href = $item->resolvedUrlForBlock($block);
 
     if ($href === null) {
       return false;
@@ -80,7 +80,7 @@
 
     foreach ($items as $item) {
       $isActive = $isItemActive($item);
-      $url = $item->resolvedUrl();
+      $url = $item->resolvedUrlForBlock($block);
       $children = $item->children;
 
       if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty()) {
@@ -106,7 +106,7 @@
 
     foreach ($items as $item) {
       $isActive = $isItemActive($item);
-      $url = $item->resolvedUrl();
+      $url = $item->resolvedUrlForBlock($block);
       $children = $item->children;
 
       if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty()) {
@@ -120,7 +120,7 @@
 
         foreach ($children as $child) {
           $childActive = $isItemActive($child);
-          $childUrl = $child->resolvedUrl();
+          $childUrl = $child->resolvedUrlForBlock($block);
           $childTarget = $child->target ? ' target="'.e($child->target).'" rel="noopener noreferrer"' : '';
 
           if ($childUrl) {

@@ -1922,8 +1922,13 @@ for page identity, page-owned and Shared Slot blocks, image text and existing
 dynamic bindings. Preview includes draft page-owned blocks, retains existing
 access checks and noindex output, and never saves or publishes content. Page
 translation rows, their edit forms and slot block editors link to this localized
-preview. Dynamic Content's configured preview and automatic-page routes are
-unchanged.
+preview. In this preview, Page links in Navbar Navigation (including its mobile
+drawer), menu-backed Sidebar Navigation and Navigation Auto use the selected
+language, falling back to the target's default-language page when needed. These
+links use the target site's canonical origin when the preview request is on
+another site's domain, and stay root-relative on the target site's own domains.
+Custom menu URLs, the language switcher, public rendering, Dynamic Content's
+configured preview and automatic-page routes retain their existing behavior.
 
 The page translation table reports that a page translation record exists. This
 is a title/routing record, not evidence of complete or current block/provider

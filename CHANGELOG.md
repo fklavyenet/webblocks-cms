@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.128.1
+
+- Fix page links in private preview menus so they open the selected language on the correct public site when the administration and site domains differ.
+
 ## 1.128.0
 
 - Share authoring and validation rules across the panel, Content API, and MCP for blocks, translations, media, page drafts and revisions. Share the corresponding panel and API rules for Shared Slots, navigation, site settings, plugin lifecycle and maintenance.

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Support\Consent\ConsentConfiguration;
 use WebBlocks\Cms\Support\Consent\ConsentPreferencesLink;
+use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
@@ -249,6 +250,19 @@ class NavigationItem extends CmsModel
     $title = trim((string) $this->translationForLocale($requested)?->title);
 
     return $title !== '' ? $title : null;
+  }
+
+  public function resolvedUrlForBlock(Block $block): ?string
+  {
+    if ($this->link_type === self::LINK_PAGE
+      && $block->getAttribute('render_preview')
+      && request()?->routeIs('admin.pages.preview')
+      && ($site = $block->renderSite())
+      && ($page = $this->page)) {
+      return app(PageRouteResolver::class)->previewMenuUrlFor($page, $block->renderLocaleCode(), $site);
+    }
+
+    return $this->resolvedUrl();
   }
 
   public function resolvedUrl(): ?string
