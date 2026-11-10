@@ -10,6 +10,7 @@ use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
+use WebBlocks\Cms\Support\Navigation\NavigationTree;
 
 class NavigationItemRequest extends FormRequest
 {
@@ -103,7 +104,7 @@ class NavigationItemRequest extends FormRequest
         $validator->errors()->add('icon', 'Select an active icon from the catalog.');
       }
 
-      if ($linkType === NavigationItem::LINK_COOKIE_SETTINGS && ($url !== '' || $pageId || ($this->input('target') && $this->input('target') !== '_self'))) {
+      if ($linkType === NavigationItem::LINK_COOKIE_SETTINGS && NavigationItem::overridesCookieDestination($url, $pageId, $this->input('target') ?: null)) {
         $validator->errors()->add('link_type', __('webblocks-cms::consent.fixed_destination'));
       }
 
@@ -113,37 +114,16 @@ class NavigationItemRequest extends FormRequest
 
       $parent = NavigationItem::query()->with('parent')->find($parentId);
 
-      if (! $parent || $parent->menu_key !== $menuKey || (int) $parent->site_id !== (int) $siteId) {
-        $validator->errors()->add('parent_id', 'Parent item must belong to the same menu.');
-
-        return;
-      }
-
-      if ($parent->link_type !== NavigationItem::LINK_GROUP) {
-        $validator->errors()->add('parent_id', 'Only navigation groups can be selected as a parent.');
-
-        return;
-      }
-
-      $depth = 2;
-      $cursor = $parent->parent;
-
-      while ($cursor) {
-        $depth++;
-
-        if ($depth > 3) {
-          $validator->errors()->add('parent_id', 'Navigation depth cannot exceed 3 levels.');
-
-          return;
-        }
-
-        if ($navigation && $cursor->id === $navigation->id) {
-          $validator->errors()->add('parent_id', 'A navigation item cannot be moved under its own child tree.');
-
-          return;
-        }
-
-        $cursor = $cursor->parent;
+      $issue = app(NavigationTree::class)->parentPlacementIssue($parent, (int) $siteId, $menuKey, $navigation);
+      $message = match ($issue) {
+        'scope' => 'Parent item must belong to the same menu.',
+        'group' => 'Only navigation groups can be selected as a parent.',
+        'depth' => 'Navigation depth cannot exceed 3 levels.',
+        'cycle' => 'A navigation item cannot be moved under its own child tree.',
+        default => null,
+      };
+      if ($message !== null) {
+        $validator->errors()->add('parent_id', $message);
       }
     }];
   }

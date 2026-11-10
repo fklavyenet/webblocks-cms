@@ -99,6 +99,22 @@ class Media extends CmsModel
     return $this->hasMany(PageTranslation::class, 'og_image_media_id');
   }
 
+  public function scopeMatchingText(Builder $query, string $term, array $fields, bool $literal = false): Builder
+  {
+    $pattern = '%'.($literal ? strtr($term, ['!' => '!!', '%' => '!%', '_' => '!_']) : $term).'%';
+
+    return $query->where(function (Builder $matches) use ($fields, $pattern, $literal): void {
+      foreach ($fields as $field) {
+        if ($literal) {
+          $column = $matches->getQuery()->getGrammar()->wrap($field);
+          $matches->orWhereRaw($column." LIKE ? ESCAPE '!'", [$pattern]);
+        } else {
+          $matches->orWhere($field, 'like', $pattern);
+        }
+      }
+    });
+  }
+
   public function scopeUsedBySites(Builder $query, iterable $siteIds): Builder
   {
     return $query->where(function (Builder $usage) use ($siteIds): void {

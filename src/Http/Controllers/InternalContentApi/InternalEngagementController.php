@@ -7,10 +7,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use WebBlocks\Cms\Actions\Engagement\ModerateComments;
 use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Models\ContentRating;
+use WebBlocks\Cms\Queries\EngagementQuery;
 
 class InternalEngagementController extends Controller
 {
@@ -29,13 +32,9 @@ class InternalEngagementController extends Controller
     }
 
     $filters = $this->commentFilters($request);
-    $query = CommentEntry::query()
-      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
+    $query = $this->contextQuery(CommentEntry::query(), $request, $filters)
       ->with(['site', 'page', 'block.blockType'])
       ->when($filters['status'] !== null, fn (Builder $query) => $query->where('status', $filters['status']))
-      ->when($filters['site_id'] !== null, fn (Builder $query) => $query->where('site_id', $filters['site_id']))
-      ->when($filters['page_id'] !== null, fn (Builder $query) => $query->where('page_id', $filters['page_id']))
-      ->when($filters['block_id'] !== null, fn (Builder $query) => $query->where('block_id', $filters['block_id']))
       ->when($filters['search'] !== null, function (Builder $query) use ($filters): void {
         $query->where(function (Builder $inner) use ($filters): void {
           $inner->where('body', 'like', '%'.$filters['search'].'%')
@@ -76,18 +75,20 @@ class InternalEngagementController extends Controller
       'status' => ['required', Rule::in(CommentEntry::statuses())],
     ]);
 
-    $comment = CommentEntry::query()
-      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
-      ->with(['site', 'page', 'block.blockType'])
-      ->findOrFail($commentEntry);
+    $comment = DB::transaction(function () use ($request, $commentEntry, $validated): CommentEntry {
+      $comment = CommentEntry::query()
+        ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
+        ->lockForUpdate()
+        ->findOrFail($commentEntry);
 
-    $comment->update([
-      'status' => $validated['status'],
-      'approved_at' => $validated['status'] === 'approved' ? now() : null,
-      'approved_by_user_id' => $request->user()?->id,
-    ]);
+      app(ModerateComments::class)->applyStatus(
+        $comment, $validated['status'], $request->user()?->id, recordRepeat: true, recordOtherStatuses: true,
+      );
 
-    $comment->refresh()->load(['site', 'page', 'block.blockType']);
+      return $comment;
+    });
+
+    $comment->load(['site', 'page', 'block.blockType']);
 
     return $this->ok([
       'comment' => $this->comment($comment),
@@ -110,13 +111,9 @@ class InternalEngagementController extends Controller
     }
 
     $filters = $this->ratingFilters($request);
-    $query = ContentRating::query()
-      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
+    $query = $this->contextQuery(ContentRating::query(), $request, $filters)
       ->with(['site', 'page', 'block.blockType'])
-      ->when($filters['status'] !== null, fn (Builder $query) => $query->where('status', $filters['status']))
-      ->when($filters['site_id'] !== null, fn (Builder $query) => $query->where('site_id', $filters['site_id']))
-      ->when($filters['page_id'] !== null, fn (Builder $query) => $query->where('page_id', $filters['page_id']))
-      ->when($filters['block_id'] !== null, fn (Builder $query) => $query->where('block_id', $filters['block_id']));
+      ->when($filters['status'] !== null, fn (Builder $query) => $query->where('status', $filters['status']));
 
     $ratings = (clone $query)
       ->latest()
@@ -226,11 +223,7 @@ class InternalEngagementController extends Controller
 
   private function commentStatusCounts(Request $request, array $filters): array
   {
-    $query = CommentEntry::query()
-      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
-      ->when($filters['site_id'] !== null, fn (Builder $query) => $query->where('site_id', $filters['site_id']))
-      ->when($filters['page_id'] !== null, fn (Builder $query) => $query->where('page_id', $filters['page_id']))
-      ->when($filters['block_id'] !== null, fn (Builder $query) => $query->where('block_id', $filters['block_id']));
+    $query = $this->contextQuery(CommentEntry::query(), $request, $filters);
 
     return $query->selectRaw('status, count(*) as aggregate')
       ->groupBy('status')
@@ -241,12 +234,8 @@ class InternalEngagementController extends Controller
 
   private function ratingValueCounts(Request $request, array $filters): array
   {
-    $query = ContentRating::query()
-      ->when($request->attributes->has('cms_api_allowed_site_ids'), fn (Builder $query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
-      ->when($filters['status'] !== null, fn (Builder $query) => $query->where('status', $filters['status']))
-      ->when($filters['site_id'] !== null, fn (Builder $query) => $query->where('site_id', $filters['site_id']))
-      ->when($filters['page_id'] !== null, fn (Builder $query) => $query->where('page_id', $filters['page_id']))
-      ->when($filters['block_id'] !== null, fn (Builder $query) => $query->where('block_id', $filters['block_id']));
+    $query = $this->contextQuery(ContentRating::query(), $request, $filters)
+      ->when($filters['status'] !== null, fn (Builder $query) => $query->where('status', $filters['status']));
 
     return $query->selectRaw('rating_value, count(*) as aggregate')
       ->groupBy('rating_value')
@@ -254,6 +243,15 @@ class InternalEngagementController extends Controller
       ->pluck('aggregate', 'rating_value')
       ->map(fn ($count): int => (int) $count)
       ->all();
+  }
+
+  private function contextQuery(Builder $query, Request $request, array $filters): Builder
+  {
+    if ($request->attributes->has('cms_api_allowed_site_ids')) {
+      $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids'));
+    }
+
+    return app(EngagementQuery::class)->matchingContext($query, $filters['site_id'], $filters['page_id'], $filters['block_id']);
   }
 
   private function pagination(LengthAwarePaginator $paginator): array

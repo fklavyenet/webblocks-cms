@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use WebBlocks\Cms\Support\Media\MediaUploadRules;
 
 class MediaRemoteFetchRequest extends FormRequest
 {
@@ -16,10 +17,6 @@ class MediaRemoteFetchRequest extends FormRequest
     return [
       'folder_id' => ['nullable', 'integer', 'exists:wbcms_media_folders,id'],
       'source_url' => ['required', 'url:http,https', 'max:2048'],
-      'title' => ['nullable', 'string', 'max:255'],
-      'alt_text' => ['nullable', 'string', 'max:255'],
-      'caption' => ['nullable', 'string'],
-      'description' => ['nullable', 'string'],
-    ];
+    ] + MediaUploadRules::metadata();
   }
 }

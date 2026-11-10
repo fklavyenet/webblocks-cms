@@ -15,6 +15,8 @@ class PluginDefinition
    */
   public const PUBLIC_ROUTE_SEGMENT = 'plugins';
 
+  public const MANUAL_UPLOAD_SOURCE = 'manual upload';
+
   private string $label = '';
 
   private ?string $icon = null;
@@ -403,6 +405,11 @@ class PluginDefinition
   public function installPathValue(): ?string
   {
     return $this->installPath;
+  }
+
+  public function isManuallyInstalled(): bool
+  {
+    return $this->source === self::MANUAL_UPLOAD_SOURCE && $this->installPath !== null;
   }
 
   public function settingsNamespace(?string $namespace): self

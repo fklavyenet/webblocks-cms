@@ -57,6 +57,19 @@ class BlockEditPlacementTest extends TestCase
   }
 
   #[Test]
+  public function changing_only_the_slot_is_a_new_placement_but_an_old_cross_slot_link_can_be_edited(): void
+  {
+    [$brand] = $this->seedBrandInsidePlainContainer();
+    $otherSlot = SlotType::create(['slug' => 'aside', 'name' => 'Aside', 'status' => 'published']);
+
+    $errors = $this->validationErrors($brand, ['slot_type_id' => $otherSlot->id]);
+    $this->assertSame([__('webblocks-cms::admin.blocks.parent_slot_mismatch')], $errors['parent_id']);
+
+    $brand->update(['slot_type_id' => $otherSlot->id]);
+    $this->assertSame([], $this->validationErrors($brand));
+  }
+
+  #[Test]
   public function changing_the_block_type_in_place_is_still_checked(): void
   {
     // Same parent, different type: that is a placement question again, and a

@@ -110,6 +110,32 @@ class PluginCmsCompatibilityGateTest extends TestCase
   }
 
   #[Test]
+  public function api_uninstall_only_removes_disabled_installed_packages_and_preserves_their_tables(): void
+  {
+    $this->register('^'.WebBlocks::version(), useLiveConfig: true);
+    $registry = app(PluginRegistry::class);
+    $registry->register(PluginDefinition::make('compatibility-core')->version('1.0.0'));
+    $registry->register(PluginDefinition::make('compatibility-unattached')->version('1.0.0')->source(PluginDefinition::MANUAL_UPLOAD_SOURCE));
+    $repository = app(InstalledPluginRepository::class);
+    $repository->enable('compatibility-example', '1.0.0');
+    $this->mock(PluginRuntimeRefresher::class)->shouldReceive('refresh')->once()->with(registerRoutes: true);
+
+    $this->deleteJson(self::API)->assertConflict()->assertJsonPath('code', 'plugin_must_be_disabled');
+    $this->assertDirectoryExists($this->pluginPath());
+
+    $repository->disable('compatibility-example');
+    $this->deleteJson('/webadmin/api/plugins/compatibility-core')->assertConflict()->assertJsonPath('code', 'plugin_not_manually_uploaded');
+    $this->deleteJson('/webadmin/api/plugins/compatibility-unattached')->assertConflict()->assertJsonPath('code', 'plugin_not_manually_uploaded');
+    $this->assertDirectoryExists($this->pluginPath());
+
+    Schema::create('compatibility_fixture_data', fn (Blueprint $table) => $table->integer('value'));
+    DB::table('compatibility_fixture_data')->insert(['value' => 42]);
+    $this->deleteJson(self::API)->assertOk()->assertJsonPath('uninstalled.version', '1.0.0');
+    $this->assertDirectoryDoesNotExist($this->pluginPath());
+    $this->assertSame(42, DB::table('compatibility_fixture_data')->value('value'));
+  }
+
+  #[Test]
   public function database_setup_rejects_before_overwriting_completed_state_or_disabling(): void
   {
     $plugin = $this->register('>=99.0.0', true);
@@ -194,13 +220,13 @@ class PluginCmsCompatibilityGateTest extends TestCase
     Process::assertNothingRan();
   }
 
-  private function register(string $constraint, bool $enabled = false): PluginDefinition
+  private function register(string $constraint, bool $enabled = false, bool $useLiveConfig = false): PluginDefinition
   {
     $manifest = ['handle' => 'compatibility-example', 'label' => 'Compatibility Fixture', 'version' => '1.0.0', 'provider' => 'CompatibilityFixture\\Provider', 'required_cms_version' => $constraint, 'migrations' => []];
     File::put($this->pluginPath().'/webblocks-plugin.json', json_encode($manifest, JSON_THROW_ON_ERROR));
     $plugin = PluginDefinition::make('compatibility-example')->label('Compatibility Fixture')->version('1.0.0')
       ->provider('CompatibilityFixture\\Provider')->requiresCms($constraint)->source('manual upload')->installPath($this->pluginPath());
-    $registry = new PluginRegistry(['compatibility-example' => $enabled]);
+    $registry = new PluginRegistry(['compatibility-example' => $enabled], useLiveConfig: $useLiveConfig);
     $registry->register($plugin);
     $this->app->instance(PluginRegistry::class, $registry);
 

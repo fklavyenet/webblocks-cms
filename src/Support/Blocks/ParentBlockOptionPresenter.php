@@ -10,6 +10,13 @@ class ParentBlockOptionPresenter
 {
   public function __construct(private readonly BlockAdminSummary $summary) {}
 
+  public function splitReplacements(Collection $blocks, ?Block $editedBlock): Collection
+  {
+    $candidates = app(PageBlockStructure::class)->splitReplacementCandidates($blocks, $editedBlock);
+
+    return $candidates->isEmpty() ? collect() : $this->present($blocks, $candidates);
+  }
+
   /**
    * Present eligible destinations in tree order using the already resolved slot
    * blocks. Excluded ancestors still contribute to each destination's path.

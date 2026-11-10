@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Media;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
@@ -14,13 +15,19 @@ class MediaUploader
 {
   public function upload(UploadedFile $file, array $data = [], ?int $uploadedBy = null): Media
   {
+    $title = $data['title'] ?? null;
+    if (! $title) {
+      $title = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+      Validator::make(['title' => $title], ['title' => MediaUploadRules::metadata()['title']])->validate();
+    }
+
     $stored = $this->storeFile($file);
 
     try {
       return DB::transaction(fn () => Media::query()->create([
         ...$stored,
         'folder_id' => $data['folder_id'] ?? null,
-        'title' => ($data['title'] ?? null) ?: pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+        'title' => $title,
         'alt_text' => $data['alt_text'] ?? null,
         'caption' => $data['caption'] ?? null,
         'description' => $data['description'] ?? null,

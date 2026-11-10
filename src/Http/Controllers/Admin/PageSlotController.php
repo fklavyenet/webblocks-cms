@@ -6,12 +6,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use WebBlocks\Cms\Actions\Pages\WritePageSlotSource;
 use WebBlocks\Cms\Http\Requests\Admin\StorePageSlotRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SyncPageLayoutSlotsRequest;
 use WebBlocks\Cms\Http\Requests\Admin\UpdatePageSlotSourceRequest;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
-use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
@@ -128,10 +128,8 @@ class PageSlotController extends Controller
     abort_unless($slot->page_id === $page->id, 404);
 
     DB::transaction(function () use ($request, $page, $slot): void {
-      $slot->update($request->validatedData());
-      if ($page->status === Page::STATUS_PUBLISHED) {
-        app(ContactConsentRequirements::class)->assertPage($page->fresh());
-      }
+      $source = $request->validatedData();
+      app(WritePageSlotSource::class)->execute($page, $slot, $source['source_type'], $source['shared_slot_id']);
       $page->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
 
       $this->revisionManager->capture(

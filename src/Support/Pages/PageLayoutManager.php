@@ -66,6 +66,25 @@ class PageLayoutManager
     return $copy;
   }
 
+  public function handlesForPageSettings(?Page $page): array
+  {
+    $handles = array_values(array_unique(array_filter([
+      ...$this->activeHandles(),
+      $page?->publicShellPreset(),
+    ], fn (?string $handle): bool => filled($handle) && $handle !== 'dashboard')));
+
+    if (in_array('docs', $handles, true)) {
+      $handles[] = 'dashboard';
+    }
+
+    return $handles;
+  }
+
+  public function layoutSettings(mixed $handle): array
+  {
+    return ['public_shell' => Page::normalizePublicShellHandle($handle)];
+  }
+
   public function slotsTableExists(): bool
   {
     return $this->tableAvailable(new PageLayoutSlot);

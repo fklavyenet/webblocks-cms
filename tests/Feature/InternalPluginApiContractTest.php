@@ -36,6 +36,16 @@ class InternalPluginApiContractTest extends TestCase
   }
 
   #[Test]
+  public function uninstall_requires_the_dedicated_capability(): void
+  {
+    $route = Route::getRoutes()->getByName('internal-content-api.plugins.uninstall');
+
+    $this->assertNotNull($route);
+    $this->assertContains('internal-api.capability:plugins.uninstall', $route->gatherMiddleware());
+    $this->assertSame(['DELETE'], $route->methods());
+  }
+
+  #[Test]
   public function discovery_documents_compatibility_rejection_for_enable_and_setup(): void
   {
     $paths = $this->app->make(InternalApiDiscoveryController::class)->openapi()->getData(true)['paths'];

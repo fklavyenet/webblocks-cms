@@ -16,9 +16,11 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
+use WebBlocks\Cms\Support\Locales\SiteLocaleAssignments;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Sites\SiteAssetStore;
 use WebBlocks\Cms\Support\Sites\SiteAssetWriteException;
+use WebBlocks\Cms\Support\Sites\SiteSettingsFields;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Theme\BrandPalette;
 
@@ -85,7 +87,7 @@ class InternalSiteController extends Controller
       ]);
     }
 
-    $site->forceFill(['timezone' => $timezone !== '' ? $timezone : null])->save();
+    $site->forceFill(['timezone' => SiteSettingsFields::blankToNull($timezone)])->save();
 
     return response()->json([
       'ok' => true,
@@ -105,7 +107,7 @@ class InternalSiteController extends Controller
    */
   public function updateSeoDefaults(Request $request, Site $site): JsonResponse
   {
-    $fields = ['seo_title' => 255, 'seo_description' => 1000, 'seo_keywords' => 500];
+    $fields = SiteSettingsFields::SEO_LENGTHS;
 
     foreach (array_keys($fields) as $column) {
       if (! Schema::hasColumn('wbcms_sites', $column)) {
@@ -131,9 +133,7 @@ class InternalSiteController extends Controller
       ]);
     }
 
-    $validator = Validator::make($payload, collect($fields)
-      ->map(fn (int $max) => ['sometimes', 'nullable', 'string', 'max:'.$max])
-      ->all());
+    $validator = Validator::make($payload, SiteSettingsFields::seoRules());
 
     if ($validator->fails()) {
       return $this->validationError(collect($validator->errors()->toArray())
@@ -147,7 +147,7 @@ class InternalSiteController extends Controller
     foreach (array_keys($fields) as $field) {
       if (array_key_exists($field, $payload)) {
         $value = trim((string) $payload[$field]);
-        $updates[$field] = $value !== '' ? $value : null;
+        $updates[$field] = SiteSettingsFields::blankToNull($value);
       }
     }
 
@@ -182,7 +182,7 @@ class InternalSiteController extends Controller
     }
 
     $validator = Validator::make($request->json()->all(), [
-      'contact_recipient_email' => ['nullable', 'email:rfc', 'max:255'],
+      'contact_recipient_email' => SiteSettingsFields::CONTACT_RECIPIENT_RULES,
     ]);
 
     if ($validator->fails()) {
@@ -227,15 +227,8 @@ class InternalSiteController extends Controller
         ->all());
     }
 
-    $localeIds = collect($validator->validated()['locale_ids'])->map(fn ($id) => (int) $id)->unique();
-
-    // The default locale is always attached, exactly as the admin form does it,
-    // so a site can never end up without the locale everything falls back to.
-    $defaultLocaleId = (int) Locale::query()->where('is_default', true)->value('id');
-
-    if ($defaultLocaleId !== 0) {
-      $localeIds = $localeIds->push($defaultLocaleId)->unique();
-    }
+    $assignments = app(SiteLocaleAssignments::class);
+    $localeIds = $assignments->withDefault($validator->validated()['locale_ids']);
 
     $disabled = Locale::query()->whereIn('id', $localeIds)->where('is_enabled', false)->pluck('code', 'id');
 
@@ -267,7 +260,7 @@ class InternalSiteController extends Controller
       return $this->validationError($blocked);
     }
 
-    $site->locales()->sync($localeIds->mapWithKeys(fn (int $id) => [$id => ['is_enabled' => true]])->all());
+    $assignments->sync($site, $localeIds);
 
     return response()->json([
       'ok' => true,
@@ -296,7 +289,7 @@ class InternalSiteController extends Controller
       // Raw operator-authored markup for the public <head> (verification meta, SEO,
       // analytics). Nullable/empty clears it. Capped so a single site cannot store an
       // unbounded blob; TEXT holds ~64 KB.
-      'custom_head_html' => ['nullable', 'string', 'max:65000'],
+      'custom_head_html' => SiteSettingsFields::CUSTOM_HEAD_RULES,
     ]);
 
     if ($validator->fails()) {
@@ -306,7 +299,7 @@ class InternalSiteController extends Controller
     }
 
     $value = $validator->validated()['custom_head_html'] ?? null;
-    $value = is_string($value) && trim($value) === '' ? null : $value;
+    $value = SiteSettingsFields::blankToNull($value);
 
     $site->forceFill(['custom_head_html' => $value])->save();
 

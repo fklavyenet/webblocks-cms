@@ -59,6 +59,21 @@
                         @endif
                     </div>
 
+                    @if (($slotSplitReplacementOptions ?? collect())->isNotEmpty())
+                        <div class="wb-stack wb-gap-1">
+                            <label for="replacement_block_id">{{ $blockFormText('split_replacement') }}</label>
+                            <select id="replacement_block_id" name="replacement_block_id" class="wb-select" aria-describedby="split-replacement-help">
+                                <option value="">{{ $blockFormText('split_replacement_none') }}</option>
+                                @foreach ($slotSplitReplacementOptions as $replacement)
+                                    <option value="{{ $replacement['id'] }}" @selected((string) old('replacement_block_id') === (string) $replacement['id'])>
+                                        {{ $replacement['label'] }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div id="split-replacement-help" class="wb-text-sm wb-text-muted">{{ $blockFormText('split_replacement_help') }}</div>
+                        </div>
+                    @endif
+
                     <div class="wb-grid wb-grid-2">
                         <div class="wb-stack wb-gap-1">
                             <label for="sort_order">{{ $blockFormText('sort_order') }}</label>

@@ -7,7 +7,6 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use WebBlocks\Cms\Models\BlockType;
-use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
@@ -15,6 +14,7 @@ use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
+use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class PageRequest extends FormRequest
@@ -30,11 +30,16 @@ class PageRequest extends FormRequest
     $page = $page instanceof Page ? $page : null;
     $title = (string) $this->input('title');
     $slug = (string) $this->input('slug');
+    $slug = Str::slug($slug !== '' ? $slug : $title);
     $submittedSiteId = $this->input('site_id');
+    $translation = $page?->defaultTranslation();
 
     $this->merge([
       'site_id' => filled($submittedSiteId) ? $submittedSiteId : ($page?->site_id ?? Site::primary()?->id),
-      'slug' => Str::slug($slug !== '' ? $slug : $title),
+      'slug' => $slug,
+      'path' => $translation?->slug === $slug && filled($translation->path)
+        ? $translation->path
+        : PageTranslation::pathFromSlug($slug),
     ]);
   }
 
@@ -43,33 +48,17 @@ class PageRequest extends FormRequest
     $page = $this->route('page');
     $page = $page instanceof Page ? $page : null;
     $siteId = (int) $this->input('site_id');
-    $allowedLayoutHandles = array_values(array_unique(array_filter([
-      ...app(PageLayoutManager::class)->activeHandles(),
-      $page?->publicShellPreset(),
-      'dashboard',
-    ])));
-    $defaultLocaleId = (int) Locale::query()->where('is_default', true)->value('id');
-    $translationId = $page
-      ? $page->translations()->where('locale_id', $defaultLocaleId)->value('id')
-      : null;
+    $allowedLayoutHandles = app(PageLayoutManager::class)->handlesForPageSettings($page);
+    $defaultLocaleId = (int) Page::defaultLocaleId();
+    $translation = $page?->defaultTranslation();
+    $identityRules = app(PageTranslationPayload::class)->identityRules($siteId, $defaultLocaleId, $translation?->id);
+    $pathIsUnchanged = $translation?->path === $this->input('path') && $page?->site_id === $siteId;
 
     return [
       'site_id' => ['required', 'integer', 'exists:wbcms_sites,id', ...($page?->isSystemPage() ? [Rule::in([$page->site_id])] : [])],
-      'title' => ['required', 'string', 'max:255'],
-      'slug' => [
-        'required',
-        'string',
-        'max:255',
-        (function () use ($translationId, $siteId, $defaultLocaleId) {
-          $rule = Rule::unique(PageTranslation::class, 'slug')
-            ->where(fn ($query) => $query
-              ->where('site_id', $siteId)
-              ->where('locale_id', $defaultLocaleId)
-            );
-
-          return $translationId ? $rule->ignore($translationId) : $rule;
-        })(),
-      ],
+      'title' => $identityRules['name'],
+      'slug' => $identityRules['slug'],
+      'path' => $pathIsUnchanged ? ['required', 'string'] : $identityRules['path'],
       'public_shell' => ['nullable', Rule::in($allowedLayoutHandles)],
       'blocks' => ['nullable', 'array'],
       'blocks.*.id' => ['nullable', 'integer', 'exists:wbcms_blocks,id'],
@@ -138,6 +127,11 @@ class PageRequest extends FormRequest
     ];
   }
 
+  public function messages(): array
+  {
+    return app(PageTranslationPayload::class)->messages();
+  }
+
   public function validatedData(): array
   {
     /** @var AdminAuthorization $authorization */
@@ -151,10 +145,7 @@ class PageRequest extends FormRequest
     $existingSettings = is_array($existingSettings) ? $existingSettings : [];
 
     if (Page::supportsSettingsColumn()) {
-      $data['settings'] = [
-        'public_shell' => Page::normalizePublicShellHandle($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default')),
-      ];
-      $data['settings'] = $data['settings'] === [] ? null : $data['settings'];
+      $data['settings'] = app(PageLayoutManager::class)->layoutSettings($data['public_shell'] ?? ($existingSettings['public_shell'] ?? 'default'));
     } else {
       unset($data['settings']);
     }
@@ -162,6 +153,7 @@ class PageRequest extends FormRequest
     $data['translation'] = [
       'name' => $data['title'],
       'slug' => $data['slug'],
+      'path' => $data['path'],
     ];
 
     $data['blocks'] = collect($data['blocks'] ?? [])
@@ -360,7 +352,7 @@ class PageRequest extends FormRequest
       ->values()
       ->all();
 
-    unset($data['public_shell']);
+    unset($data['public_shell'], $data['path']);
 
     return $data;
   }

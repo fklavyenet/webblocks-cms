@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Actions\Engagement\StoreRating;
 use WebBlocks\Cms\Http\Controllers\Admin\EngagementController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalEngagementController;
 use WebBlocks\Cms\Http\Requests\Admin\EngagementIndexRequest;
 use WebBlocks\Cms\Http\Requests\Admin\ModerateCommentsRequest;
 use WebBlocks\Cms\Models\Block;
@@ -226,6 +227,62 @@ class EngagementManagementTest extends TestCase
     $this->post('/test-engagement/bulk', ['comment_ids' => [$comment->id], 'status' => 'approved', 'return_query' => 'site='.$page->site_id.'&status=pending&page=2'])->assertRedirect(route('admin.engagement.comments.index', ['site' => $page->site_id, 'status' => 'pending', 'page' => 2]));
     $this->assertSame('approved', $comment->fresh()->status);
     $this->assertNotNull($comment->fresh()->approved_at);
+  }
+
+  #[Test]
+  public function api_engagement_scopes_lists_and_aggregates_and_records_the_delegated_actor(): void
+  {
+    $allowed = $this->page();
+    $foreign = $this->page('foreign');
+    $comment = $this->comment($allowed);
+    $this->comment($foreign, 'hidden');
+    $rating = $this->rating($allowed, 5);
+    $this->rating($foreign, 2);
+    $operator = $this->operator($allowed->site);
+    $controller = app(InternalEngagementController::class);
+    $request = Request::create('/', 'GET');
+    $request->attributes->set('cms_api_allowed_site_ids', [$allowed->site_id]);
+
+    $comments = $controller->comments($request)->getData(true);
+    $ratings = $controller->ratings($request)->getData(true);
+    $this->assertSame([$comment->id], array_column($comments['comments'], 'id'));
+    $this->assertSame(['pending' => 1], $comments['summary']['by_status']);
+    $this->assertSame([$rating->id], array_column($ratings['ratings'], 'id'));
+    $this->assertSame([5 => 1], $ratings['summary']['by_value']);
+
+    $moderation = Request::create('/', 'PATCH', ['status' => 'approved']);
+    $moderation->attributes->set('cms_api_allowed_site_ids', [$allowed->site_id]);
+    $moderation->setUserResolver(fn () => $operator);
+    $response = $controller->updateCommentStatus($moderation, $comment->id);
+    $this->assertSame(200, $response->getStatusCode());
+    $this->assertSame($operator->id, $comment->fresh()->approved_by_user_id);
+  }
+
+  #[Test]
+  public function api_reapproval_preserves_the_original_approver_and_timestamp(): void
+  {
+    $page = $this->page();
+    $comment = $this->comment($page);
+    $firstModerator = $this->operator($page->site);
+    $secondModerator = $this->operator($page->site);
+    $this->assertNotSame($firstModerator->id, $secondModerator->id);
+    $controller = app(InternalEngagementController::class);
+    $request = Request::create('/', 'PATCH', ['status' => 'approved']);
+    $request->attributes->set('cms_api_allowed_site_ids', [$page->site_id]);
+    $request->setUserResolver(fn () => $firstModerator);
+
+    $this->travelTo(now()->subDay(), function () use ($controller, $request, $comment): void {
+      $this->assertSame(200, $controller->updateCommentStatus($request, $comment->id)->getStatusCode());
+    });
+    $firstApproval = $comment->fresh();
+
+    $request->setUserResolver(fn () => $secondModerator);
+    $response = $controller->updateCommentStatus($request, $comment->id);
+
+    $this->assertSame(200, $response->getStatusCode());
+    $this->assertSame($firstApproval->approved_at->toIso8601String(), $response->getData(true)['comment']['approved_at']);
+    $this->assertSame($firstModerator->id, $comment->fresh()->approved_by_user_id);
+    $this->assertTrue($firstApproval->updated_at->eq($comment->fresh()->updated_at));
   }
 
   #[Test]

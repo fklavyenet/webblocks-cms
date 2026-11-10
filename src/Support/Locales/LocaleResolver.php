@@ -80,6 +80,13 @@ class LocaleResolver
     return app(RequestMemo::class)->remember('locale.site', [$site->getConnectionName(), $site->id], fn () => $site->enabledLocales()->get());
   }
 
+  public function resolveReference(string|int|float|null $value): ?Locale
+  {
+    return is_numeric($value)
+      ? Locale::query()->find((int) $value)
+      : $this->resolve((string) $value);
+  }
+
   public function resolve(string $code): ?Locale
   {
     $code = Locale::normalizeCode($code);

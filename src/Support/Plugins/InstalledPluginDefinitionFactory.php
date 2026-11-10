@@ -30,7 +30,7 @@ class InstalledPluginDefinitionFactory
       $declared = $this->publicAssets($manifest);
 
       $definition = $definition
-        ->source('manual upload')
+        ->source(PluginDefinition::MANUAL_UPLOAD_SOURCE)
         ->installPath($path);
 
       // Only when the manifest declares them. A provider that built its own list in
@@ -60,7 +60,7 @@ class InstalledPluginDefinitionFactory
       ->requires($this->requirements($manifest))
         ->dependencies($manifest['dependencies'] ?? [])
       ->publicAssets($this->publicAssets($manifest))
-      ->source('manual upload')
+      ->source(PluginDefinition::MANUAL_UPLOAD_SOURCE)
       ->installPath($path);
 
     $this->applyManifestIcon($definition, $manifest);

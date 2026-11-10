@@ -10,9 +10,35 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SharedSlotBlock;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 
 class SharedSlotSourcePageManager
 {
+  public function syncAfterEdit(SharedSlot $before, SharedSlot $updated): void
+  {
+    $this->ensureFor($updated);
+    $this->rebuildAssignments($updated);
+
+    if (! $before->is_active && $updated->is_active) {
+      app(ContactConsentRequirements::class)->assertSharedSlot($updated);
+    }
+  }
+
+  /** Return the references that prevent deletion. */
+  public function deleteIfUnused(SharedSlot $slot): Collection
+  {
+    return DB::transaction(function () use ($slot): Collection {
+      $locked = SharedSlot::query()->whereKey($slot->id)->lockForUpdate()->firstOrFail();
+      $references = $locked->pageSlots()->with('slotType')->get();
+      if ($references->isEmpty()) {
+        $this->deleteFor($locked);
+        $locked->delete();
+      }
+
+      return $references;
+    }, attempts: 3);
+  }
+
   public function findFor(SharedSlot $sharedSlot): ?Page
   {
     return Page::query()

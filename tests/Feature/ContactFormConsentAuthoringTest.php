@@ -105,6 +105,18 @@ class ContactFormConsentAuthoringTest extends TestCase
   }
 
   #[Test]
+  public function native_contact_copy_keeps_its_required_fields_and_limits(): void
+  {
+    $block = $this->fixture();
+    foreach (['submit_label' => 255, 'success_message' => 1000] as $field => $limit) {
+      $this->rejects(fn () => $this->adminData($block, $block, [$field => '']), $field);
+      $this->rejects(fn () => $this->adminData($block, $block, [$field => str_repeat('x', $limit + 1)]), $field);
+      $value = str_repeat('x', $limit);
+      $this->assertSame($value, $this->adminData($block, $block, [$field => $value])[$field]);
+    }
+  }
+
+  #[Test]
   public function saves_preserve_omitted_notices_and_require_wording_for_new_locale_rows(): void
   {
     $block = $this->fixture();

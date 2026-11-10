@@ -9,9 +9,11 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SiteDomain;
+use WebBlocks\Cms\Support\Locales\SiteLocaleAssignments;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 use WebBlocks\Cms\Support\Sites\SiteDomainNormalizer;
 use WebBlocks\Cms\Support\Sites\SiteHandle;
+use WebBlocks\Cms\Support\Sites\SiteSettingsFields;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Theme\BrandPalette;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
@@ -28,7 +30,6 @@ class SiteRequest extends FormRequest
     $site = $this->route('site');
     $site = $site instanceof Site ? $site : null;
     $domain = app(SiteDomainNormalizer::class)->normalize($this->input('domain'));
-    $defaultLocaleId = (int) Locale::query()->where('is_default', true)->value('id');
     $submittedLocaleIds = collect($this->input('locale_ids', []))
       ->map(fn ($id) => (int) $id)
       ->filter(fn ($id) => $id > 0);
@@ -45,7 +46,7 @@ class SiteRequest extends FormRequest
       'name' => $name,
       'handle' => $normalizedHandle,
       'domain' => $domain,
-      'locale_ids' => $this->normalizedLocaleIds($submittedLocaleIds, $site, $defaultLocaleId)->all(),
+      'locale_ids' => $this->normalizedLocaleIds($submittedLocaleIds, $site)->all(),
       'display_name' => trim((string) $this->input('display_name')),
       'tagline' => trim((string) $this->input('tagline')),
       'contact_recipient_email' => trim((string) $this->input('contact_recipient_email')),
@@ -81,16 +82,14 @@ class SiteRequest extends FormRequest
       'display_name' => ['nullable', 'string', 'max:255'],
       'tagline' => ['nullable', 'string', 'max:255'],
       'favicon_media_id' => ['nullable', 'integer', Rule::exists(Media::class, 'id')],
-      'contact_recipient_email' => ['nullable', 'email:rfc', 'max:255'],
+      'contact_recipient_email' => SiteSettingsFields::CONTACT_RECIPIENT_RULES,
       // Blank means "follow the install-wide system timezone", so this stays
       // optional; anything present must be a timezone the system offers.
       'timezone' => ['nullable', 'string', Rule::in(array_keys(app(SystemSettings::class)->timezoneOptions()))],
-      'seo_title' => ['nullable', 'string', 'max:255'],
-      'seo_description' => ['nullable', 'string', 'max:1000'],
-      'seo_keywords' => ['nullable', 'string', 'max:500'],
+      ...SiteSettingsFields::seoRules(),
       'public_theme_preset' => ['required', 'string', Rule::in(Site::PUBLIC_THEME_PRESETS)],
       // Raw operator-authored markup for the public <head>. Same cap as the API endpoint.
-      'custom_head_html' => ['nullable', 'string', 'max:65000'],
+      'custom_head_html' => SiteSettingsFields::CUSTOM_HEAD_RULES,
       'social_image_media_id' => ['nullable', 'integer', Rule::exists(Media::class, 'id')],
       'locale_ids' => ['required', 'array', 'min:1'],
       'locale_ids.*' => ['integer', Rule::exists(Locale::class, 'id')->where(fn ($query) => $query
@@ -120,7 +119,7 @@ class SiteRequest extends FormRequest
     return parent::getRedirectUrl();
   }
 
-  private function normalizedLocaleIds(Collection $submittedLocaleIds, ?Site $site, int $defaultLocaleId): Collection
+  private function normalizedLocaleIds(Collection $submittedLocaleIds, ?Site $site): Collection
   {
     $fallbackLocaleIds = $site?->locales()->pluck((new Locale)->qualifyColumn('id')) ?? collect();
 
@@ -128,14 +127,6 @@ class SiteRequest extends FormRequest
           ? $submittedLocaleIds
           : $fallbackLocaleIds;
 
-    if ($defaultLocaleId > 0) {
-      $localeIds->push($defaultLocaleId);
-    }
-
-    return $localeIds
-      ->map(fn ($id) => (int) $id)
-      ->filter(fn ($id) => $id > 0)
-      ->unique()
-      ->values();
+    return app(SiteLocaleAssignments::class)->withDefault($localeIds->filter(fn ($id) => (int) $id > 0));
   }
 }

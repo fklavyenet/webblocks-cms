@@ -6,8 +6,10 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Block;
@@ -17,9 +19,7 @@ use WebBlocks\Cms\Models\BlockImageTranslation;
 use WebBlocks\Cms\Models\BlockMedia as BlockAsset;
 use WebBlocks\Cms\Models\BlockPluginTranslation;
 use WebBlocks\Cms\Models\BlockTextTranslation;
-use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageAsset;
 use WebBlocks\Cms\Models\PageLayout;
@@ -31,9 +31,8 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Policies\CmsResourcePolicy;
 use WebBlocks\Cms\Support\Blocks\BlockCopyCatalog;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
-use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
-use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
-use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
+use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactConsentValidationException;
@@ -43,11 +42,11 @@ use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
+use WebBlocks\Cms\Support\Pages\StagedPageBase;
 use WebBlocks\Cms\Support\Pages\StagedPageTranslations;
-use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Revisions\RestoredIndexTargets;
-use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 use WebBlocks\Cms\Support\Search\BlockIndexTargets;
 use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
 
@@ -66,25 +65,6 @@ class InternalContentPlanService
   public const MODE_PROMOTE_STAGED_UPDATE = 'promote_staged_page_update';
 
   private const STAGED_UPDATE_TYPE = 'published_page_update';
-
-  private const FORBIDDEN_KEYS = [
-    'publish',
-    'published',
-    'published_at',
-    'site_create',
-    'create_site',
-    'shared_slot',
-    'media_import',
-    'media_download',
-    'remote_fetch',
-    'fetch_url',
-    'crawl',
-    'crawler',
-    'delete',
-    'destroy',
-    'replace',
-    'overwrite',
-  ];
 
   public const UNSUPPORTED_KEY_ERROR_CODE = 'unsupported_plan_fields';
 
@@ -213,52 +193,17 @@ class InternalContentPlanService
     'staged_page' => ['id'],
   ];
 
-  private const PLAN_MANAGED_RELATION_KEYS = [
-    'id',
-    'parent_id',
-    'block_id',
-    'slot_type_id',
-    'block_type_id',
-  ];
-
-  private const CHILD_REQUIRED_BLOCK_TYPES = [
-    'section',
-    'container',
-    'stack',
-    'split',
-    'cluster',
-    'grid',
-    'slider',
-    'card',
-    'card_body',
-    'card_footer',
-    'sticky-navbar',
-    'sidebar-navigation',
-  ];
-
-  private const TRANSLATABLE_FIELDS = [
-    'title',
-    'eyebrow',
-    'subtitle',
-    'content',
-    'meta',
-    'caption',
-    'alt_text',
-    'submit_label',
-    'success_message',
-    'consent_label',
-  ];
-
   public function __construct(
-    private readonly BlockPayloadWriter $blockPayloadWriter,
     private readonly BlockDeletionManager $blockDeletionManager,
     private readonly PageRevisionManager $pageRevisionManager,
     private readonly PageDraftInitializer $drafts,
+    private readonly PageTranslationPayload $translationPayload,
     private readonly InternalContentApiPresenter $presenter,
     private readonly InternalContentApiOperations $operations,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
-    private readonly ManagedCtaSynchronizer $managedCtaSynchronizer,
+    private readonly StagedPageBase $stagedBase,
     private readonly StagedPageTranslations $stagedTranslations,
+    private readonly PageBlockStructure $blockStructure,
   ) {}
 
   public function validate(array $payload): InternalContentPlanResult
@@ -391,14 +336,11 @@ class InternalContentPlanService
             ->get();
 
           foreach ($topLevelBlocks as $block) {
-            foreach ($this->blockDeletionManager->recursiveDeleteOrder($block) as $deleteBlock) {
-              $deleteBlock->delete();
-              $deletedCount++;
-            }
+            $deletedCount += $this->blockDeletionManager->deleteSubtree($block);
           }
 
           foreach (array_values($blocks) as $index => $blockPayload) {
-            $this->createBlock($page, $slotType, $blockPayload, $plan['locale']['code'], null, $index);
+            $this->operations->createPageSlotBlock($page, $slotType, $blockPayload, $plan['locale']['code'], null, $index);
           }
         }
 
@@ -475,8 +417,9 @@ class InternalContentPlanService
           throw new \InvalidArgumentException($exception->getMessage(), previous: $exception);
         }
 
-        if ($this->splitsMovedBlockSlots($sourcePage, $stagedPage, $plan['staged_update']['promote_slots'], lock: true)) {
-          throw new \InvalidArgumentException('Promote both slots together when a block has moved between them.');
+        $placementError = $this->stagedPlacementError($sourcePage, $stagedPage, $plan['staged_update']['promote_slots'], lock: true);
+        if ($placementError !== null) {
+          throw new \InvalidArgumentException($placementError);
         }
 
         $this->pageRevisionManager->capture(
@@ -572,7 +515,7 @@ class InternalContentPlanService
           }
 
           foreach (array_values($blocks) as $index => $blockPayload) {
-            $this->createBlock($page, $slotType, $blockPayload, $plan['locale']['code'], null, $index);
+            $this->operations->createPageSlotBlock($page, $slotType, $blockPayload, $plan['locale']['code'], null, $index);
           }
         }
 
@@ -697,53 +640,6 @@ class InternalContentPlanService
     );
   }
 
-  private function createBlock(Page $page, SlotType $slotType, array $payload, string $localeCode, ?Block $parent, int $sortOrder): Block
-  {
-    $blockType = BlockType::query()->where('slug', $payload['type'])->where('status', 'published')->firstOrFail();
-    $settings = $payload['settings'] === [] ? null : json_encode($payload['settings'], JSON_UNESCAPED_SLASHES);
-    $translations = $payload['translations'];
-    $data = [
-      'page_id' => $page->id,
-      'parent_id' => $parent?->id,
-      'block_type_id' => $blockType->id,
-      'type' => $blockType->slug,
-      'source_type' => $blockType->source_type ?: 'static',
-      'slot_type_id' => $slotType->id,
-      'slot' => $slotType->slug,
-      'sort_order' => $sortOrder,
-      'status' => 'draft',
-      'is_system' => (bool) $blockType->is_system,
-      'settings' => $settings,
-      // Content plans expose translated copy under `translations`; the admin form
-      // calls the same values `plugin_settings`. Feed the canonical writer both
-      // shapes so plugin-owned translation rows use the API contract too.
-      'plugin_settings' => $translations,
-      'variant' => $payload['variant'] ?? ($payload['settings']['variant'] ?? null),
-      'url' => $payload['settings']['url'] ?? null,
-      'media_id' => $payload['media_id'] ?? null,
-      '_block_media' => $payload['_block_media'] ?? [],
-      '_gallery_items' => $payload['_gallery_items'] ?? [],
-      'title' => $blockType->slug === 'image' ? ($translations['caption'] ?? $translations['title'] ?? null) : ($translations['title'] ?? null),
-      'eyebrow' => $translations['eyebrow'] ?? null,
-      'subtitle' => $blockType->slug === 'image' ? ($translations['alt_text'] ?? $translations['subtitle'] ?? null) : ($translations['subtitle'] ?? null),
-      'content' => $translations['content'] ?? null,
-      'meta' => $translations['meta'] ?? null,
-      'submit_label' => $translations['submit_label'] ?? null,
-      'success_message' => $translations['success_message'] ?? null,
-      ...Arr::only($translations, ['consent_label']),
-    ];
-
-    $block = $this->blockPayloadWriter->save(new Block, $page, $data, $localeCode);
-
-    $this->managedCtaSynchronizer->sync($block, $payload['_managed_ctas'] ?? [], $localeCode);
-
-    foreach (array_values($payload['children']) as $index => $childPayload) {
-      $this->createBlock($page, $slotType, $childPayload, $localeCode, $block, $index);
-    }
-
-    return $block;
-  }
-
   public function prepareAuthoringDraft(Page $page, User $actor, ?array $managedSlots = null, string $event = 'dynamic_content_draft_prepared'): Page
   {
     return DB::transaction(function () use ($page, $actor, $managedSlots, $event): Page {
@@ -866,11 +762,8 @@ class InternalContentPlanService
 
     // This baseline is set once. Reusing a draft may refresh workflow metadata,
     // but cannot make its existing content a copy of a newer published version.
-    if (app(McpConfiguration::class)->enabled() && Schema::hasTable('wbcms_staged_page_bases')) {
-      DB::table('wbcms_staged_page_bases')->insert([
-        'page_id' => $stagedPage->id,
-        'source_fingerprint' => SnapshotContent::hash($this->pageRevisionManager->snapshotForInspection($sourcePage)),
-      ]);
+    if (app(McpConfiguration::class)->enabled()) {
+      $this->stagedBase->record($stagedPage, $sourcePage);
     }
 
     return $stagedPage;
@@ -1129,39 +1022,7 @@ class InternalContentPlanService
     $site = $this->resolveSite($input, $errors);
     $locale = $this->resolveLocale($input, $site, $errors);
     $layout = $hasPagePlan ? $this->resolveLayout($input, $errors) : null;
-    $title = $hasPagePlan ? trim((string) data_get($input, 'page.title', data_get($input, 'title', ''))) : '';
-    $rawPath = $hasPagePlan ? trim((string) data_get($input, 'page.path', data_get($input, 'path', ''))) : '';
-    $path = '';
-    $slug = '';
-
-    if ($hasPagePlan && $rawPath !== '') {
-      try {
-        $path = PagePath::canonicalize($rawPath);
-        $slug = PagePath::slugFromPath($path);
-
-        if (PagePath::isReserved($path)) {
-          $errors[] = $this->error('plan.page.path', 'Page path is reserved by CMS or host routes.');
-        }
-      } catch (\InvalidArgumentException $exception) {
-        $errors[] = $this->error('plan.page.path', $exception->getMessage());
-      }
-    }
-
-    if ($hasPagePlan && $title === '') {
-      $errors[] = $this->error('plan.page.title', 'Page title is required.');
-    }
-
-    if ($hasPagePlan && $slug === '') {
-      $errors[] = $this->error('plan.page.path', 'Page path is required.');
-    }
-
-    if ($hasPagePlan && $site && $locale && $path !== '' && PageTranslation::query()
-      ->where('site_id', $site->id)
-      ->where('locale_id', $locale->id)
-      ->where('path', $path)
-      ->exists()) {
-      $errors[] = $this->error('plan.page.path', 'A page already exists at this path for the selected site and locale.');
-    }
+    $page = $hasPagePlan ? $this->normalizeNewPage($input, $site, $locale, $errors) : null;
 
     $slots = $hasPagePlan ? $this->normalizeSlots($input, $layout, $errors, $warnings) : [];
     $navigationMenus = $this->normalizeNavigationMenus($input, $site, $errors);
@@ -1178,12 +1039,7 @@ class InternalContentPlanService
       'replace_slots' => [],
       'staged_update' => null,
       'page_settings' => $pageSettings,
-      'page' => $hasPagePlan ? [
-        'title' => $title,
-        'path' => $path,
-        'slug' => $slug,
-        'status' => Page::STATUS_DRAFT,
-      ] : null,
+      'page' => $page,
       'slots' => $slots,
       'navigation_menus' => $navigationMenus,
       'shared_slots' => $sharedSlots,
@@ -1197,6 +1053,44 @@ class InternalContentPlanService
       errors: $errors,
       renderability: $this->summarizeRenderability($normalized),
     );
+  }
+
+  private function normalizeNewPage(array $input, ?Site $site, ?Locale $locale, array &$errors): array
+  {
+    $titleInput = data_get($input, 'page.title', data_get($input, 'title'));
+    $pathInput = data_get($input, 'page.path', data_get($input, 'path'));
+    $title = is_scalar($titleInput) ? trim((string) $titleInput) : '';
+    $path = '';
+    $slug = '';
+    $pathError = null;
+
+    try {
+      $path = PagePath::canonicalize(is_scalar($pathInput) ? (string) $pathInput : '');
+      $slug = PagePath::slugFromPath($path);
+    } catch (\InvalidArgumentException $exception) {
+      $pathError = $exception->getMessage();
+    }
+
+    $validator = Validator::make(
+      ['name' => $title, 'path' => $path, 'slug' => $slug],
+      $this->translationPayload->identityRules($site?->id, $locale?->id, null),
+      [
+        'name.required' => 'Page title is required.',
+        'path.unique' => 'A page already exists at this path for the selected site and locale.',
+      ] + $this->translationPayload->messages(),
+      ['name' => 'title'],
+    );
+    $messages = $validator->errors();
+    if ($messages->has('name')) {
+      $errors[] = $this->error('plan.page.title', $messages->first('name'));
+    }
+
+    $routeError = $pathError ?? ($messages->first('path') ?: $messages->first('slug'));
+    if ($routeError !== '') {
+      $errors[] = $this->error('plan.page.path', $routeError);
+    }
+
+    return ['title' => $title, 'path' => $path, 'slug' => $slug, 'status' => Page::STATUS_DRAFT];
   }
 
   /**
@@ -1567,7 +1461,7 @@ class InternalContentPlanService
       $normalized[$slotSlug] = [];
 
       foreach (array_values($blocks) as $index => $block) {
-        $normalizedBlock = $this->normalizeBlock($block, 'plan.replace_slots.'.$slotSlug.'.'.$index, null, $errors, $warnings);
+        $normalizedBlock = $this->operations->normalizeBlock($block, 'plan.replace_slots.'.$slotSlug.'.'.$index, null, $errors, $warnings, contentPlan: true);
 
         if ($normalizedBlock !== null) {
           $normalized[$slotSlug][] = $normalizedBlock;
@@ -1732,28 +1626,67 @@ class InternalContentPlanService
     }
 
     $this->validatePromoteSlotSet($sourcePage, $stagedPage, $slots, $errors);
-    if ($sourcePage && $stagedPage && $this->splitsMovedBlockSlots($sourcePage, $stagedPage, $slots)) {
-      $errors[] = $this->error('plan.promote_slots', 'Promote both slots together when a block has moved between them.');
+    if ($sourcePage && $stagedPage) {
+      $placementError = $this->stagedPlacementError($sourcePage, $stagedPage, $slots);
+      if ($placementError !== null) {
+        $errors[] = $this->error('plan.promote_slots', $placementError);
+      }
     }
 
     return $slots;
   }
 
-  private function splitsMovedBlockSlots(Page $source, Page $draft, array $slots, bool $lock = false): bool
+  private function stagedPlacementError(Page $source, Page $draft, array $slots, bool $lock = false): ?string
   {
+    if ($slots === []) {
+      return null;
+    }
+
     $slotIds = SlotType::query()->whereIn('slug', $slots)->pluck('id')->all();
     $blocks = Block::query()->whereIn('page_id', [$source->id, $draft->id])
-      ->whereNotNull('revision_key')->orderBy('id')
+      ->with('blockType')->orderBy('id')
       ->when($lock, fn ($query) => $query->lockForUpdate())
-      ->get(['id', 'page_id', 'slot_type_id', 'revision_key'])
+      ->get(['id', 'page_id', 'slot_type_id', 'parent_id', 'revision_key', 'type', 'block_type_id'])
       ->groupBy('page_id');
-    $originals = $blocks->get($source->id, collect())->keyBy('revision_key');
+    $sourceBlocks = $blocks->get($source->id, collect())->keyBy('id');
+    $draftBlocks = $blocks->get($draft->id, collect())->keyBy('id');
+    $originals = $sourceBlocks->whereNotNull('revision_key')->keyBy('revision_key');
+    $countChildren = static fn (Collection $tree): Collection => $tree
+      ->filter(fn (Block $child) => $child->parent_id !== null
+        && $tree->get($child->parent_id)?->slot_type_id === $child->slot_type_id)
+      ->countBy('parent_id');
+    $sourceChildCounts = $countChildren($sourceBlocks);
+    $draftChildCounts = $countChildren($draftBlocks);
+    $identity = static fn (array $chain): array => array_map(
+      static fn (Block $block): array => [$block->revision_key, $block->slot_type_id, $block->typeSlug()], $chain,
+    );
 
-    return $blocks->get($draft->id, collect())->contains(function (Block $block) use ($originals, $slotIds): bool {
+    foreach ($draftBlocks as $block) {
       $original = $originals->get($block->revision_key);
+      $promoted = in_array($block->slot_type_id, $slotIds, true);
+      if ($original && $promoted !== in_array($original->slot_type_id, $slotIds, true)) {
+        return 'Promote both slots together when a block has moved between them.';
+      }
+      if (! $promoted) {
+        continue;
+      }
 
-      return $original && in_array($original->slot_type_id, $slotIds, true) !== in_array($block->slot_type_id, $slotIds, true);
-    });
+      if ($original?->typeSlug() === 'split' && $block->typeSlug() === 'split'
+        && ! $this->blockStructure->preservesSplitChildCount($sourceChildCounts->get($original->id, 0), $draftChildCounts->get($block->id, 0))) {
+        return 'A complete Split must keep two direct children when applying a staged update.';
+      }
+
+      $chain = $this->blockStructure->placementChain($block, $draftBlocks);
+      $originalChain = $original ? $this->blockStructure->placementChain($original, $sourceBlocks) : null;
+      if ($chain !== null && $originalChain !== null && $identity($chain) === $identity($originalChain)) {
+        continue;
+      }
+      if ($chain === null || ! $this->blockStructure->allowsPlacementChain($chain)) {
+        return 'Staged block '.$block->id.' must have a valid ancestor chain in its destination slot.';
+      }
+    }
+
+    return null;
   }
 
   private function managedSlotsForStagedUpdate(array $input, ?Page $sourcePage, array &$errors): array
@@ -1891,48 +1824,14 @@ class InternalContentPlanService
   {
     $value = data_get($input, 'site', data_get($input, 'site_handle', data_get($input, 'site_id')));
 
-    if (! is_string($value) && ! is_int($value) && ! is_float($value) && ! is_null($value)) {
-      $errors[] = $this->error('plan.site', 'Site must be a handle string or numeric ID.');
-
-      return null;
-    }
-
-    $site = Site::query()
-      ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('handle', trim((string) $value)))
-      ->first();
-
-    if (! $site) {
-      $errors[] = $this->error('plan.site', 'Site handle or ID must resolve.');
-    }
-
-    return $site;
+    return $this->operations->resolveSite($value, 'plan.site', $errors);
   }
 
   private function resolveLocale(array $input, ?Site $site, array &$errors): ?Locale
   {
     $value = data_get($input, 'locale', data_get($input, 'locale_id'));
 
-    if (! is_string($value) && ! is_int($value) && ! is_float($value) && ! is_null($value)) {
-      $errors[] = $this->error('plan.locale', 'Locale must be a code string or numeric ID.');
-
-      return null;
-    }
-
-    $locale = Locale::query()
-      ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('code', Locale::normalizeCode((string) $value)))
-      ->first();
-
-    if (! $locale) {
-      $errors[] = $this->error('plan.locale', 'Locale must exist.');
-
-      return null;
-    }
-
-    if (! $site || ! $site->locales()->whereKey($locale->id)->wherePivot('is_enabled', true)->exists()) {
-      $errors[] = $this->error('plan.locale', 'Locale must be enabled for the target site.');
-    }
-
-    return $locale;
+    return $this->operations->resolveLocale($value, $site, 'plan.locale', $errors);
   }
 
   private function resolveLayout(array $input, array &$errors): ?PageLayout
@@ -1994,7 +1893,7 @@ class InternalContentPlanService
       $normalized[$slotSlug] = [];
 
       foreach (array_values($blocks) as $index => $block) {
-        $normalizedBlock = $this->normalizeBlock($block, 'plan.slots.'.$slotSlug.'.'.$index, null, $errors, $warnings);
+        $normalizedBlock = $this->operations->normalizeBlock($block, 'plan.slots.'.$slotSlug.'.'.$index, null, $errors, $warnings, contentPlan: true);
 
         if ($normalizedBlock !== null) {
           $normalized[$slotSlug][] = $normalizedBlock;
@@ -2166,175 +2065,6 @@ class InternalContentPlanService
     return $normalized;
   }
 
-  private function normalizeBlock(mixed $block, string $path, ?BlockType $parentType, array &$errors, array &$warnings): ?array
-  {
-    if (! is_array($block)) {
-      $errors[] = $this->error($path, 'Block must be an object.');
-
-      return null;
-    }
-
-    $this->rejectForbiddenKeys($block, $path, $errors);
-    $this->rejectPlanManagedRelationKeys($block, $path, $errors);
-
-    $typeSlug = trim((string) ($block['type'] ?? $block['block_type'] ?? ''));
-    $blockType = BlockType::query()->where('slug', $typeSlug)->where('status', 'published')->first();
-
-    if (! $blockType || $this->pluginBlockUnavailable($blockType)) {
-      $errors[] = $this->error($path.'.type', 'Block type must be published and usable.');
-
-      return null;
-    }
-
-    if (! $this->apiAuthoringPolicy->isApiWritable($blockType->slug)) {
-      $errors[] = $this->apiAuthoringPolicy->error($path.'.type', $blockType->slug);
-
-      return null;
-    }
-
-    if ($parentType && ! $this->parentAcceptsChild($parentType, $blockType)) {
-      $errors[] = $this->error($path.'.type', 'Child block type is not allowed by the parent block contract.');
-    }
-
-    $settings = $block['settings'] ?? [];
-
-    if (! is_array($settings)) {
-      $errors[] = $this->error($path.'.settings', 'Block settings must be an object.');
-      $settings = [];
-    }
-
-    $settingsErrorCount = count($errors);
-    $settings = app(BlockSettingsValidator::class)->normalize($blockType->slug, $settings, $path.'.settings', $errors);
-    if (count($errors) > $settingsErrorCount) {
-      return null;
-    }
-
-    $settings = $this->normalizeCommerceBuyButtonSettings($settings, $blockType, $path, $errors);
-    $settings = $this->operations->normalizePublicIconSlugSettings($settings, $blockType, $path, $errors);
-    $settings = $this->operations->normalizePublicIconToneSettings($settings, $blockType, $path, $errors);
-    $settings = $this->operations->normalizePublicIconSizeSettings($settings, $blockType, $path, $errors);
-    $settings = $this->operations->normalizeApplicationSettings($settings, $blockType, $path, $errors);
-    $settings = $this->operations->normalizeImageViewerSettings($settings, $blockType, $path, $errors);
-    $settings = $this->operations->normalizeCompositionDefaults($settings, $blockType);
-
-    foreach (['remote_url', 'source_url'] as $mediaKey) {
-      if (array_key_exists($mediaKey, $block) || array_key_exists($mediaKey, $settings)) {
-        $errors[] = $this->error($path.'.'.$mediaKey, 'Remote media fetch is not supported. Upload media through the Media API first, then assign the returned media_id.');
-      }
-    }
-
-    $mediaAssignment = $this->normalizeMediaAssignment($block, $settings, $blockType, $path, $errors);
-
-    $translations = $block['translations'] ?? [];
-    if (! is_array($translations)) {
-      $errors[] = $this->error($path.'.translations', 'Translations must be an object.');
-      $translations = [];
-    }
-
-    $this->validateTranslationShape($translations, $path.'.translations', $errors);
-    $errors = [...$errors, ...app(ContactConsentRequirements::class)->payloadErrors($blockType->slug, $settings, $translations, $path)];
-
-    foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta'] as $field) {
-      if (array_key_exists($field, $block) && ! array_key_exists($field, $translations)) {
-        $translations[$field] = $block[$field];
-      }
-    }
-
-    $children = $block['children'] ?? [];
-    if (! is_array($children)) {
-      $errors[] = $this->error($path.'.children', 'Children must be an array.');
-      $children = [];
-    }
-
-    if ($children !== [] && ! (new Block(['type' => $blockType->slug]))->setRelation('blockType', $blockType)->canAcceptChildren()) {
-      $errors[] = $this->error($path.'.children', 'This block type does not accept children.');
-    }
-
-    if ($children === [] && $this->requiresChildren($blockType)) {
-      $errors[] = $this->error($path.'.children', 'This wrapper block type must contain renderable child blocks. Use nested children arrays; flat id/parent_id references are not part of the content plan contract.');
-    }
-
-    if ($blockType->slug === 'split' && count($children) !== 2) {
-      $errors[] = $this->error($path.'.children', 'Split must contain exactly two direct child blocks: a growing first side and a content-sized second side. Put a Stack inside either side when it needs multiple blocks.');
-    }
-
-    $normalizedChildren = [];
-    foreach (array_values($children) as $index => $child) {
-      $normalizedChild = $this->normalizeBlock($child, $path.'.children.'.$index, $blockType, $errors, $warnings);
-
-      if ($normalizedChild !== null) {
-        $normalizedChildren[] = $normalizedChild;
-      }
-    }
-
-    return [
-      'type' => $blockType->slug,
-      'translations' => $translations,
-      'settings' => $settings,
-      'media_id' => $mediaAssignment['media_id'],
-      '_block_media' => $mediaAssignment['_block_media'],
-      '_gallery_items' => $mediaAssignment['_gallery_items'],
-      '_managed_ctas' => $this->managedCtaSynchronizer->normalizeApiPayload($block, $blockType->slug, $path, $errors),
-      'children' => $normalizedChildren,
-    ];
-  }
-
-  private function parentAcceptsChild(BlockType $parentType, BlockType $childType): bool
-  {
-    $parent = new Block(['type' => $parentType->slug]);
-    $parent->setRelation('blockType', $parentType);
-    $allowed = $parent->allowedChildTypeSlugs();
-
-    if ($allowed === null) {
-      return $parent->canAcceptChildren();
-    }
-
-    return in_array($childType->slug, $allowed, true);
-  }
-
-  private function rejectPlanManagedRelationKeys(array $block, string $path, array &$errors): void
-  {
-    foreach (self::PLAN_MANAGED_RELATION_KEYS as $key) {
-      if (! array_key_exists($key, $block)) {
-        continue;
-      }
-
-      $errors[] = $this->error(
-        $path.'.'.$key,
-        'Content plans do not accept flat block relationship fields. Nest child blocks inside the parent block children array instead.',
-      );
-    }
-  }
-
-  private function validateTranslationShape(array $translations, string $path, array &$errors): void
-  {
-    foreach ($translations as $key => $value) {
-      if (! is_array($value)) {
-        continue;
-      }
-
-      $key = (string) $key;
-      if (in_array($key, self::TRANSLATABLE_FIELDS, true)) {
-        continue;
-      }
-
-      $looksLikeLocale = Locale::query()->where('code', Locale::normalizeCode($key))->exists()
-        || preg_match('/^[a-z]{2}(?:[-_][A-Za-z]{2})?$/', $key) === 1;
-
-      if ($looksLikeLocale) {
-        $errors[] = $this->error(
-          $path.'.'.$key,
-          'Locale-keyed translations are not accepted inside block content plans. Put translated fields directly under translations, such as translations.title or translations.content, for the selected plan locale.',
-        );
-      }
-    }
-  }
-
-  private function requiresChildren(BlockType $blockType): bool
-  {
-    return in_array($blockType->slug, self::CHILD_REQUIRED_BLOCK_TYPES, true);
-  }
-
   private function summarizeRenderability(array $normalized): array
   {
     $summary = [
@@ -2397,7 +2127,7 @@ class InternalContentPlanService
       $summary['html_blocks']++;
     }
 
-    if (in_array($type, self::CHILD_REQUIRED_BLOCK_TYPES, true) && $children === []) {
+    if (in_array($type, InternalContentApiOperations::CHILD_REQUIRED_BLOCK_TYPES, true) && $children === []) {
       $summary['wrapper_blocks_without_children']++;
     }
 
@@ -2419,7 +2149,7 @@ class InternalContentPlanService
 
   private function hasVisibleTranslationContent(array $translations): bool
   {
-    foreach (self::TRANSLATABLE_FIELDS as $field) {
+    foreach (BlockTranslationRegistry::coreFields() as $field) {
       $value = $translations[$field] ?? null;
 
       if (is_string($value) && trim(strip_tags($value)) !== '') {
@@ -2428,107 +2158,6 @@ class InternalContentPlanService
     }
 
     return false;
-  }
-
-  private function normalizeMediaAssignment(array $block, array &$settings, BlockType $blockType, string $path, array &$errors): array
-  {
-    $mediaId = $block['media_id'] ?? $block['asset_id'] ?? $settings['media_id'] ?? $settings['asset_id'] ?? null;
-    unset($settings['media_id'], $settings['asset_id']);
-
-    $galleryItems = $block['gallery_items'] ?? $settings['gallery_items'] ?? null;
-    $galleryMediaIds = $block['gallery_media_ids'] ?? $block['gallery_asset_ids'] ?? $settings['gallery_media_ids'] ?? $settings['gallery_asset_ids'] ?? null;
-    unset($settings['gallery_items'], $settings['gallery_media_ids'], $settings['gallery_asset_ids']);
-
-    $payload = [
-      'media_id' => null,
-      '_block_media' => [],
-      '_gallery_items' => [],
-    ];
-
-    if ($mediaId !== null && $mediaId !== '') {
-      if (! array_key_exists($blockType->slug, InternalContentApiOperations::DIRECT_MEDIA_KIND_RULES)) {
-        $errors[] = $this->error($path.'.media_id', 'This block type does not support direct Media Library assignment through media_id.');
-      } else {
-        $media = Media::query()->find((int) $mediaId);
-
-        if (! $media) {
-          $errors[] = $this->error($path.'.media_id', 'Media Library record must exist.');
-        } elseif (! InternalContentApiOperations::acceptsDirectMedia($blockType->slug, $media)) {
-          $errors[] = $this->error($path.'.media_id', 'Media Library record kind is not compatible with this block type.');
-        } else {
-          $payload['media_id'] = (int) $media->id;
-        }
-      }
-    }
-
-    if ($galleryItems === null && $galleryMediaIds === null) {
-      return $payload;
-    }
-
-    if ($blockType->slug !== 'gallery') {
-      $errors[] = $this->error($path.'.gallery_media_ids', 'Gallery media assignment is only supported by Gallery blocks.');
-
-      return $payload;
-    }
-
-    $items = collect(is_array($galleryItems) ? $galleryItems : [])
-      ->map(function (mixed $item, int $index): array {
-        $item = is_array($item) ? $item : [];
-
-        return [
-          'media_id' => (int) ($item['media_id'] ?? $item['asset_id'] ?? 0),
-          'sort_order' => (int) ($item['sort_order'] ?? $index),
-          'alt_text' => trim((string) ($item['alt_text'] ?? '')) ?: null,
-          'caption' => trim((string) ($item['caption'] ?? '')) ?: null,
-          'overlay_title' => trim((string) ($item['overlay_title'] ?? '')) ?: null,
-          'overlay_text' => trim((string) ($item['overlay_text'] ?? '')) ?: null,
-        ];
-      });
-
-    if ($items->isEmpty() && is_array($galleryMediaIds)) {
-      $items = collect($galleryMediaIds)
-        ->map(fn (mixed $id, int $index): array => [
-          'media_id' => (int) $id,
-          'sort_order' => $index,
-          'alt_text' => null,
-          'caption' => null,
-          'overlay_title' => null,
-          'overlay_text' => null,
-        ]);
-    }
-
-    $items = $items
-      ->filter(fn (array $item): bool => (int) $item['media_id'] > 0)
-      ->sortBy('sort_order')
-      ->values();
-
-    $mediaIds = $items->pluck('media_id')->unique()->values()->all();
-
-    if ($mediaIds === []) {
-      return $payload;
-    }
-
-    $validMediaIdSet = Media::query()
-      ->whereIn('id', $mediaIds)
-      ->where('kind', Media::KIND_IMAGE)
-      ->pluck('id')
-      ->mapWithKeys(fn ($id): array => [(int) $id => true])
-      ->all();
-    $validMediaIds = array_values(array_filter($mediaIds, fn (int $id): bool => isset($validMediaIdSet[$id])));
-
-    $invalidMediaIds = array_values(array_diff($mediaIds, $validMediaIds));
-
-    if ($invalidMediaIds !== []) {
-      $errors[] = $this->error($path.'.gallery_media_ids', 'Gallery media items must be existing image Media Library records.');
-    }
-
-    $payload['_block_media'] = ['gallery_item' => $validMediaIds];
-    $payload['_gallery_items'] = $items
-      ->filter(fn (array $item): bool => in_array((int) $item['media_id'], $validMediaIds, true))
-      ->values()
-      ->all();
-
-    return $payload;
   }
 
   /**
@@ -2576,18 +2205,7 @@ class InternalContentPlanService
 
   private function rejectForbiddenKeys(array $data, string $path, array &$errors, array $allowedKeys = []): void
   {
-    foreach ($data as $key => $value) {
-      $keyString = strtolower((string) $key);
-
-      $assignmentReference = $keyString === 'shared_slot' && preg_match('/^plan\.page_slot_shared_slots\.\d+$/D', $path) === 1;
-      if (! in_array($keyString, $allowedKeys, true) && in_array($keyString, self::FORBIDDEN_KEYS, true) && ! $assignmentReference) {
-        $errors[] = $this->error($path.'.'.$key, 'This operation is outside Internal Content API Phase 1.');
-      }
-
-      if (is_array($value)) {
-        $this->rejectForbiddenKeys($value, $path.'.'.$key, $errors, $allowedKeys);
-      }
-    }
+    $this->operations->rejectForbiddenKeys($data, $path, $errors, contentPlan: true, allowedKeys: $allowedKeys);
   }
 
   private function normalizePageSettings(array $input, array &$errors): array
@@ -2765,47 +2383,5 @@ class InternalContentPlanService
       'message' => $message,
       'code' => $code,
     ], fn (mixed $value): bool => $value !== null);
-  }
-
-  private function pluginBlockUnavailable(BlockType $blockType): bool
-  {
-    $catalog = app(PluginBlockCatalog::class);
-
-    return $catalog->isPluginCatalogSlug($blockType->slug) && ! $catalog->isEnabledCatalogSlug($blockType->slug);
-  }
-
-  private function normalizeCommerceBuyButtonSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
-  {
-    if ($blockType->slug !== 'webblocks-commerce-buy-button') {
-      return $settings;
-    }
-
-    $productId = (int) ($settings['commerce_product_id'] ?? $settings['product_id'] ?? 0);
-
-    if ($productId <= 0) {
-      $errors[] = $this->error($path.'.settings.commerce_product_id', 'Commerce Buy Button requires a commerce_product_id from GET /webadmin/api/commerce/products.');
-
-      return $settings;
-    }
-
-    if (! Schema::hasTable('webblocks_commerce_products')) {
-      $errors[] = $this->error($path.'.settings.commerce_product_id', 'WebBlocks Commerce setup is required before using Commerce Buy Button blocks.');
-
-      return $settings;
-    }
-
-    $exists = DB::table('webblocks_commerce_products')
-      ->where('id', $productId)
-      ->where('status', 'active')
-      ->exists();
-
-    if (! $exists) {
-      $errors[] = $this->error($path.'.settings.commerce_product_id', 'Commerce Buy Button product must be an existing active Commerce product.');
-    }
-
-    $settings['commerce_product_id'] = $productId;
-    unset($settings['product_id']);
-
-    return $settings;
   }
 }

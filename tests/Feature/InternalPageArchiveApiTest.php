@@ -2,15 +2,19 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
+use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
+use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -22,6 +26,13 @@ use WebBlocks\Cms\Tests\TestCase;
  */
 class InternalPageArchiveApiTest extends TestCase
 {
+  protected function defineEnvironment($app): void
+  {
+    parent::defineEnvironment($app);
+    $app['config']->set('webblocks-cms.routes.admin', true);
+    $app['config']->set('auth.providers.users.model', User::class);
+  }
+
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
@@ -44,9 +55,45 @@ class InternalPageArchiveApiTest extends TestCase
   public function it_archives_an_in_review_page(): void
   {
     $page = $this->seedPage(Page::STATUS_IN_REVIEW);
+    $page->update(['review_requested_at' => now()]);
 
     $this->assertTrue($this->invokeArchive($page)->getData(true)['ok']);
     $this->assertSame(Page::STATUS_ARCHIVED, $page->fresh()->status);
+    $this->assertNull($page->fresh()->review_requested_at);
+  }
+
+  #[Test]
+  public function panel_and_api_keep_the_last_publication_date_until_the_page_is_published_again(): void
+  {
+    if (! class_exists(User::class)) {
+      class_alias(MaintenanceTestUser::class, User::class);
+    }
+    $this->withoutMiddleware(EnsureInstalled::class);
+    $this->freezeSecond();
+    $page = $this->seedPage(Page::STATUS_PUBLISHED);
+    $firstPublication = $page->published_at;
+    $actor = $this->cmsActor((new User)->forceFill(['role' => 'super_admin']));
+    $workflow = route('admin.pages.workflow', $page);
+    $api = '/webadmin/api/pages/'.$page->id;
+
+    $this->actingAs($actor)->post($workflow, ['action' => 'archive'])->assertRedirect();
+    $this->assertSame(Page::STATUS_ARCHIVED, $page->fresh()->status);
+    $this->assertEquals($firstPublication, $page->fresh()->published_at);
+    $this->postJson($workflow, ['action' => 'archive'])->assertUnprocessable()->assertJsonValidationErrors('action');
+
+    $token = app(CmsApiTokenIssuer::class)->issue('Synthetic workflow', capabilities: ['content.publish'])->plainToken;
+    $this->withToken($token)->postJson($api.'/archive')->assertOk()->assertJsonPath('from_status', 'archived');
+    $this->assertEquals($firstPublication, $page->fresh()->published_at);
+
+    $this->travel(1)->days();
+    $this->postJson($api.'/publish')->assertOk()->assertJsonPath('from_status', 'archived');
+    $this->assertSame(Page::STATUS_PUBLISHED, $page->fresh()->status);
+    $secondPublication = $page->fresh()->published_at;
+    $this->assertTrue($secondPublication->greaterThan($firstPublication));
+    $this->travel(1)->days();
+    $this->postJson($api.'/publish')->assertOk()->assertJsonPath('from_status', 'published');
+    $this->postJson($api.'/archive')->assertOk()->assertJsonPath('from_status', 'published');
+    $this->assertEquals($secondPublication, $page->fresh()->published_at);
   }
 
   #[Test]

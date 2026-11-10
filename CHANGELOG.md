@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.128.0
+
+- Share authoring and validation rules across the panel, Content API, and MCP for blocks, translations, media, page drafts and revisions. Share the corresponding panel and API rules for Shared Slots, navigation, site settings, plugin lifecycle and maintenance.
+- Support mobile images and top-level Cookie Settings variants in Content Plans. Check all ancestors of newly placed or relocated blocks and keep existing blocks editable in place.
+- Exchange a child of a full Split with a block in the destination group in the same slot. Staged updates keep two children on retained full Splits, and editors can still build new Splits one child at a time.
+- Reject an explicitly invalid block translation language, preserve the assigned inactive layout and keep the original approval record when an approved comment is submitted for approval again.
+- Allow 255 characters for new or changed media titles and alt text and 2,000 for captions and descriptions. Reject oversized input and preserve stored values. Panel and MCP media search treat percent and underscore as text by default. API clients can opt into literal matching while existing queries retain wildcard matching.
+- Restore the documented API uninstall action for disabled CMS-installed plugin packages. It requires the existing uninstall capability and preserves plugin-owned tables.
+
 ## 1.127.1
 
 - Accept public documentation source identities and paths about tokens, secrets and passwords in source-sync metadata. Keep credential values and private environment files blocked, and retain the source binding through staged promotion.

@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
+use WebBlocks\Cms\Actions\Media\CreateMediaFolder;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteMediaRequest;
 use WebBlocks\Cms\Http\Requests\Admin\MediaFolderRequest;
 use WebBlocks\Cms\Http\Requests\Admin\MediaRemoteFetchRequest;
@@ -23,6 +24,7 @@ use WebBlocks\Cms\Support\Media\MediaBulkDeleter;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaIndexState;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
+use WebBlocks\Cms\Support\Media\MediaSearchMode;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Media\MediaUsageFilter;
@@ -65,6 +67,7 @@ class MediaController extends Controller
     $user = request()->user();
     $selectedFolderId = request()->integer('folder_id') ?: null;
     $search = trim((string) request('search'));
+    $searchMode = MediaSearchMode::fromInput(request()->query('search_mode')) ?? MediaSearchMode::Literal;
     $kind = request()->string('kind')->toString();
     $usage = request()->string('usage')->toString();
     $tableSort = AdminTableSort::for('media');
@@ -87,11 +90,11 @@ class MediaController extends Controller
       $sort = 'updated_at';
     }
 
-    $listingView = $listingState->context(request(), 'media', ['folder_id' => $selectedFolderId ? (string) $selectedFolderId : '', 'search' => $search, 'kind' => $kind, 'usage' => $usage, 'sort' => $sort, 'direction' => $direction, 'view' => $view], $listingColumns);
+    $listingView = $listingState->context(request(), 'media', ['folder_id' => $selectedFolderId ? (string) $selectedFolderId : '', 'search' => $search, 'search_mode' => $searchMode->value, 'kind' => $kind, 'usage' => $usage, 'sort' => $sort, 'direction' => $direction, 'view' => $view], $listingColumns);
 
     $totalMediaCount = $this->authorization->scopeMediaForUser(Media::query(), $user)->count();
 
-    $mediaPaginator = $this->mediaListingQuery($user, $selectedFolderId, $search, $kind, $usage, $sort, $direction)
+    $mediaPaginator = $this->mediaListingQuery($user, $selectedFolderId, $search, $searchMode, $kind, $usage, $sort, $direction)
       ->when($listingView['blocked'], fn ($query) => $query->whereRaw('1 = 0'))
       ->paginate(AdminPagination::perPage())
       ->withQueryString();
@@ -131,6 +134,7 @@ class MediaController extends Controller
       'media' => $media,
       'selectedFolderId' => $selectedFolderId,
       'search' => $search,
+      'searchMode' => $searchMode,
       'kind' => $kind,
       'usage' => $usage,
       'sort' => $sort,
@@ -292,19 +296,12 @@ class MediaController extends Controller
   public function storeFolder(MediaFolderRequest $request): RedirectResponse
   {
     $data = $request->validated();
-    $name = trim($data['name']);
-    $existing = MediaFolder::query()
-      ->where('parent_id', $data['parent_id'] ?? null)
-      ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
-      ->first();
-
-    if ($existing) {
+    $folder = app(CreateMediaFolder::class)->execute($data['name'], $data['slug'] ?? null, $data['parent_id'] ?? null);
+    if (! $folder->wasRecentlyCreated) {
       return back()
         ->withInput()
         ->withErrors(['name' => __('webblocks-cms::admin.media_index.folder_name_exists')]);
     }
-
-    $folder = MediaFolder::create([...$data, 'name' => $name]);
 
     return redirect()
       ->route('admin.media.index', ['folder_id' => $folder->id])
@@ -320,22 +317,16 @@ class MediaController extends Controller
       ->get();
   }
 
-  private function mediaListingQuery($user, ?int $folderId = null, ?string $search = null, ?string $kind = null, ?string $usage = null, string $sort = 'updated_at', string $direction = 'desc')
+  private function mediaListingQuery($user, ?int $folderId, string $search, MediaSearchMode $searchMode, string $kind, string $usage, string $sort, string $direction)
   {
     $query = $this->authorization->scopeMediaForUser(Media::query(), $user)
       ->with(['folder', 'uploader'])
       ->when($folderId, fn ($query) => $query->where('folder_id', $folderId))
       ->when($kind, fn ($query) => $query->where('kind', $kind))
       ->tap(fn ($query) => $this->mediaUsageFilter->apply($query, $usage))
-      ->when($search, function ($query) use ($search) {
-        $query->where(function ($inner) use ($search) {
-          $inner->where('filename', 'like', "%{$search}%")
-            ->orWhere('original_name', 'like', "%{$search}%")
-            ->orWhere('title', 'like', "%{$search}%")
-            ->orWhere('alt_text', 'like', "%{$search}%")
-            ->orWhere('caption', 'like', "%{$search}%");
-        });
-      });
+      ->when($search, fn ($query) => $query->matchingText(
+        $search, ['filename', 'original_name', 'title', 'alt_text', 'caption'], literal: $searchMode === MediaSearchMode::Literal,
+      ));
 
     return $this->applySorting($query, $sort, $direction);
   }

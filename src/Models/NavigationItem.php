@@ -110,6 +110,24 @@ class NavigationItem extends CmsModel
     return [self::LINK_PAGE, self::LINK_CUSTOM_URL, self::LINK_GROUP, self::LINK_COOKIE_SETTINGS];
   }
 
+  public static function destinationFields(string $type, ?int $pageId, ?string $url, ?string $target, ?string $emptyUrl = null): array
+  {
+    return [
+      'page_id' => $type === self::LINK_PAGE ? $pageId : null,
+      'url' => $type === self::LINK_CUSTOM_URL ? $url : $emptyUrl,
+      'target' => match ($type) {
+        self::LINK_GROUP => null,
+        self::LINK_COOKIE_SETTINGS => '_self',
+        default => $target,
+      },
+    ];
+  }
+
+  public static function overridesCookieDestination(?string $url, mixed $pageId, mixed $target): bool
+  {
+    return ($url !== null && $url !== '') || $pageId || ($target !== null && $target !== '_self');
+  }
+
   public static function visibilities(): array
   {
     return [self::VISIBILITY_VISIBLE, self::VISIBILITY_HIDDEN];

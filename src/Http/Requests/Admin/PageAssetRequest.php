@@ -57,19 +57,7 @@ class PageAssetRequest extends FormRequest
 
   public function assetData(): array
   {
-    $type = $this->assetType();
-    $pathValidator = app(PageAssetPathValidator::class);
-
-    return [
-      'type' => $type,
-      'path' => $pathValidator->normalizeForStorage($type, $this->input('path')),
-      'load_position' => PageAsset::defaultLoadPositionFor($type),
-      'sort_order' => max((int) $this->input('sort_order', 0), 0),
-      'is_enabled' => (bool) $this->boolean('is_enabled', true),
-      'is_defer' => $type === PageAsset::TYPE_JS ? (bool) $this->boolean('is_defer', true) : false,
-      'is_async' => $type === PageAsset::TYPE_JS ? (bool) $this->boolean('is_async') : false,
-      'is_module' => $type === PageAsset::TYPE_JS ? (bool) $this->boolean('is_module') : false,
-    ];
+    return app(PageAssetPathValidator::class)->assetData($this->assetType(), $this->input('path'), $this->input());
   }
 
   protected function getRedirectUrl(): string

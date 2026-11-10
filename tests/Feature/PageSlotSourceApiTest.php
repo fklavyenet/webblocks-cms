@@ -2,8 +2,16 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use Illuminate\Http\Request;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
+use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -14,6 +22,11 @@ use WebBlocks\Cms\Tests\TestCase;
  */
 class PageSlotSourceApiTest extends TestCase
 {
+  protected function defineDatabaseMigrations(): void
+  {
+    $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
+
   private function routes(): string
   {
     return (string) file_get_contents(dirname(__DIR__, 2).'/routes/admin.php');
@@ -55,14 +68,25 @@ class PageSlotSourceApiTest extends TestCase
   #[Test]
   public function detaching_clears_the_shared_slot_reference(): void
   {
-    $controller = $this->controller();
+    Locale::firstOrCreate(['code' => 'en'], ['name' => 'English', 'is_default' => true, 'is_enabled' => true]);
+    $site = Site::create(['handle' => 'synthetic', 'name' => 'Synthetic']);
+    $page = Page::create(['site_id' => $site->id, 'slug' => 'draft', 'status' => Page::STATUS_DRAFT]);
+    $slotType = SlotType::firstOrCreate(['slug' => 'footer'], ['name' => 'Footer', 'status' => 'published']);
+    $shared = SharedSlot::create(['site_id' => $site->id, 'handle' => 'footer', 'name' => 'Footer', 'slot_name' => $slotType->slug]);
+    $slot = $page->slots()->create([
+      'slot_type_id' => $slotType->id,
+      'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
+      'shared_slot_id' => $shared->id,
+    ]);
 
-    // Leaving shared_slot_id populated on a page-owned slot would keep a dangling
-    // reference that still blocks deleting the Shared Slot.
-    $this->assertMatchesRegularExpression(
-      "/'source_type' => \\\$sourceType,\s*\n\s*'shared_slot_id' => null,/",
-      $controller
+    $response = app(InternalSharedSlotController::class)->updatePageSlotSource(
+      Request::create('/', 'PUT', ['source_type' => PageSlot::SOURCE_TYPE_PAGE]), $page, $slotType->slug,
     );
+
+    $this->assertSame(200, $response->getStatusCode());
+    $this->assertSame(PageSlot::SOURCE_TYPE_PAGE, $slot->fresh()->runtimeSourceType());
+    $this->assertNull($slot->fresh()->shared_slot_id);
+    $this->assertFalse($shared->pageSlots()->exists());
   }
 
   #[Test]

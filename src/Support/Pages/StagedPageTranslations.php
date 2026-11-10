@@ -10,7 +10,6 @@ use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
-use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 
 final class StagedPageTranslations
 {
@@ -20,7 +19,7 @@ final class StagedPageTranslations
 
   public function __construct(
     private readonly PageTranslationPayload $payload,
-    private readonly PageRevisionManager $revisions,
+    private readonly StagedPageBase $base,
   ) {}
 
   public function changes(Page $draft): array
@@ -77,8 +76,7 @@ final class StagedPageTranslations
       || (int) $draft->setting('staged_update.source_page_id') !== $source->id) {
       throw ValidationException::withMessages(['draft' => 'The staged translation draft is no longer active.']);
     }
-    $base = DB::table('wbcms_staged_page_bases')->where('page_id', $draft->id)->value('source_fingerprint');
-    if (! $base || ! hash_equals($base, SnapshotContent::hash($this->revisions->snapshotForInspection($source)))) {
+    if (! $this->base->matches($draft, $this->base->fingerprint($source))) {
       throw ValidationException::withMessages(['source_page' => 'The published page changed after the translation draft was prepared.']);
     }
     $locales = $source->availableSiteLocales()->keyBy('id');

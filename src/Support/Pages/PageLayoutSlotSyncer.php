@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Pages;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use RuntimeException;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
@@ -18,7 +19,7 @@ class PageLayoutSlotSyncer
     private readonly CurrentActorResolver $currentActorResolver,
   ) {}
 
-  public function seedInitialSlots(Page $page, string $layoutHandle): int
+  public function seedInitialSlots(Page $page, string $layoutHandle, bool $requirePersistence = false): int
   {
     $layoutSlots = $this->pageLayouts->managedSlotsForHandle($layoutHandle)->values();
 
@@ -40,10 +41,13 @@ class PageLayoutSlotSyncer
         continue;
       }
 
-      $page->slots()->create($this->newPageSlotAttributes(
+      $slot = $page->slots()->create($this->newPageSlotAttributes(
         $slotTypeId,
         $hadExistingSlots ? $nextSortOrder++ : max((int) ($layoutSlot->sort_order ?? 0), 0),
       ));
+      if ($requirePersistence && ! $slot->exists) {
+        throw new RuntimeException('A page slot model event cancelled draft creation.');
+      }
 
       $existingSlotTypeIds[] = $slotTypeId;
       $created++;

@@ -197,15 +197,20 @@ class InstalledPluginRepository
     }
   }
 
-  public function uninstall(string $handle, string $version): void
+  public function uninstall(string $handle, string $version, bool $requireDisabled = false): void
   {
-    $this->withDependencyLock(fn () => $this->uninstallUnlocked($handle, $version));
+    $this->withDependencyLock(function () use ($handle, $version, $requireDisabled): void {
+      $this->assertValidCoordinates($handle, $version);
+      if ($requireDisabled && $this->enabledVersion($handle) !== null) {
+        throw new RuntimeException('Disable the plugin before uninstalling it.');
+      }
+
+      $this->uninstallUnlocked($handle, $version);
+    });
   }
 
   private function uninstallUnlocked(string $handle, string $version): void
   {
-    $this->assertValidCoordinates($handle, $version);
-
     $root = $this->canonicalRootPath();
     $pluginPath = $this->rootPath().DIRECTORY_SEPARATOR.$handle;
     $versionPath = $pluginPath.DIRECTORY_SEPARATOR.$version;

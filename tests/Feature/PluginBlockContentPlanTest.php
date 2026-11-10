@@ -115,6 +115,24 @@ class PluginBlockContentPlanTest extends TestCase
   }
 
   #[Test]
+  public function plugin_copy_declared_for_creation_does_not_gain_patch_access(): void
+  {
+    $applied = app(InternalContentPlanService::class)->apply($this->minimalPlan());
+    $this->assertTrue($applied->ok, json_encode($applied->errors));
+    $block = Block::query()->sole();
+    $request = Request::create('/webadmin/api/blocks/'.$block->id, 'PATCH', [
+      'locale' => 'de', 'translations' => ['intro' => 'Unexpected replacement'],
+    ]);
+
+    $response = app(InternalContentResourceController::class)->updateBlock($request, $block);
+
+    $this->assertSame(422, $response->getStatusCode());
+    $this->assertSame('unsupported_block_translation_fields', $response->getData(true)['code']);
+    $this->assertSame('Wählen Sie einen verfügbaren Termin.', $block->pluginTranslations()
+      ->whereHas('locale', fn ($query) => $query->where('code', 'de'))->where('field', 'intro')->value('value'));
+  }
+
+  #[Test]
   public function direct_page_slot_post_creates_a_plugin_block_with_translations(): void
   {
     $site = Site::query()->where('handle', 'default')->sole();

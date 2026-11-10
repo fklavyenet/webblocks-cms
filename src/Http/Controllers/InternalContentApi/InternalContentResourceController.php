@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use WebBlocks\Cms\Actions\Blocks\SetBlockMobileMedia;
+use WebBlocks\Cms\Actions\Media\CreateMediaFolder;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\BlockMobileMediaRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
@@ -43,9 +43,12 @@ use WebBlocks\Cms\Support\InternalContentApi\DesignFixtureRegistry;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\InternalContentApi\MediaContractRegistry;
+use WebBlocks\Cms\Support\Locales\LocaleAuthoring;
 use WebBlocks\Cms\Support\Locales\LocaleOptionCatalog;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Media\MediaDeleter;
 use WebBlocks\Cms\Support\Media\MediaInUseException;
+use WebBlocks\Cms\Support\Media\MediaSearchMode;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\Media\MediaUploader;
 use WebBlocks\Cms\Support\Media\MediaUploadRules;
@@ -132,11 +135,7 @@ class InternalContentResourceController extends Controller
   public function storeLocale(Request $request): JsonResponse
   {
     $payload = $this->localePayloadWithSelectedOption($request);
-    $validator = Validator::make($payload, [
-      'locale_option' => ['nullable', 'string', 'max:35'],
-      'code' => ['required', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'unique:wbcms_locales,code'],
-      'name' => ['required', 'string', 'max:255'],
-      'is_default' => ['nullable', 'boolean'],
+    $validator = Validator::make($payload, LocaleAuthoring::rules(null) + [
       'is_enabled' => ['nullable', 'boolean'],
     ]);
 
@@ -173,11 +172,7 @@ class InternalContentResourceController extends Controller
   public function updateLocale(Request $request, Locale $locale): JsonResponse
   {
     $payload = $this->localePayloadWithSelectedOption($request);
-    $validator = Validator::make($payload, [
-      'locale_option' => ['nullable', 'string', 'max:35'],
-      'code' => ['nullable', 'string', 'regex:'.Locale::CODE_VALIDATION_PATTERN, 'unique:wbcms_locales,code,'.$locale->id],
-      'name' => ['nullable', 'string', 'max:255'],
-      'is_default' => ['nullable', 'boolean'],
+    $validator = Validator::make($payload, LocaleAuthoring::rules($locale, partial: true) + [
       'is_enabled' => ['nullable', 'boolean'],
     ]);
 
@@ -764,10 +759,15 @@ class InternalContentResourceController extends Controller
    */
   public function updatePageLayout(Request $request, Page $page): JsonResponse
   {
-    $allowedHandles = app(PageLayoutManager::class)->activeHandles();
-    $handle = Page::normalizePublicShellHandle($request->input('layout', $request->input('handle')));
+    $layouts = app(PageLayoutManager::class);
+    $allowedHandles = $layouts->activeHandles();
+    $layout = $layouts->layoutSettings($request->input('layout', $request->input('handle')));
 
-    if (! in_array($handle, $allowedHandles, true)) {
+    if (! in_array($layout['public_shell'], $allowedHandles, true)) {
+      if ($layout['public_shell'] === $page->publicShellPreset()) {
+        return $this->ok(['page' => $this->presenter->page($page), 'writes' => []]);
+      }
+
       return $this->validationError(
         'page.layout',
         'Layout must be one of: '.implode(', ', $allowedHandles).'.',
@@ -775,8 +775,7 @@ class InternalContentResourceController extends Controller
       );
     }
 
-    $settings = is_array($page->settings) ? $page->settings : [];
-    $settings['public_shell'] = $handle;
+    $settings = $layout + (is_array($page->settings) ? $page->settings : []);
 
     DB::transaction(function () use ($page, $settings): void {
       $page->forceFill(['settings' => $settings, 'updated_by_user_id' => null])->save();
@@ -884,34 +883,19 @@ class InternalContentResourceController extends Controller
 
     $data = $validator->validated();
     $name = trim($data['name']);
-    $parentId = $data['parent_id'] ?? null;
+    $slug = CreateMediaFolder::slug($name, trim((string) ($data['slug'] ?? '')));
+    $folder = app(CreateMediaFolder::class)->execute($name, $slug, $data['parent_id'] ?? null);
 
-    // Two sibling folders with the same name are confusing for a human and a
-    // trap for a tool, which would otherwise pile up a copy per retry. Point
-    // the caller at the folder that already exists instead.
-    $existing = MediaFolder::query()
-      ->where('parent_id', $parentId)
-      ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
-      ->first();
-
-    if ($existing) {
+    if (! $folder->wasRecentlyCreated) {
       return response()->json([
         'ok' => false,
         'code' => 'media_folder_exists',
         'message' => 'A folder with this name already exists here. Use it instead of creating a duplicate.',
-        'media_folder' => $this->presenter->mediaFolder($existing),
+        'media_folder' => $this->presenter->mediaFolder($folder),
         'warnings' => [],
-        'errors' => [['path' => 'name', 'message' => 'Folder '.$existing->id.' already uses this name under the same parent.']],
+        'errors' => [['path' => 'name', 'message' => 'Folder '.$folder->id.' already uses this name under the same parent.']],
       ], 422);
     }
-
-    $slug = trim((string) ($data['slug'] ?? ''));
-
-    $folder = MediaFolder::query()->create([
-      'name' => $name,
-      'slug' => Str::slug($slug !== '' ? $slug : $name) ?: null,
-      'parent_id' => $parentId,
-    ]);
 
     return response()->json([
       'ok' => true,
@@ -928,21 +912,19 @@ class InternalContentResourceController extends Controller
       return $this->capabilityError(CmsApiTokenCapabilities::MEDIA_READ, 'Reading Media Library records requires media.read.');
     }
 
+    // Existing API callers use SQL LIKE patterns when no mode is supplied.
+    $searchMode = MediaSearchMode::fromInput($request->query('search_mode', MediaSearchMode::Pattern->value));
+    if ($searchMode === null) {
+      return $this->validationError('search_mode', 'Search mode must be literal or pattern.', 'invalid_media_search_mode');
+    }
+
     $media = Media::query()
       ->when($request->attributes->get('cms_api_user'), fn ($query, $user) => $this->adminAuthorization->scopeMediaForUser($query, $user))
       ->when($request->filled('kind'), fn ($query) => $query->where('kind', (string) $request->query('kind')))
       ->when($request->boolean('image_only'), fn ($query) => $query->where('kind', Media::KIND_IMAGE))
-      ->when($request->filled('search'), function ($query) use ($request): void {
-        $search = trim((string) $request->query('search'));
-
-        $query->where(function ($searchQuery) use ($search): void {
-          $searchQuery
-            ->where('title', 'like', '%'.$search.'%')
-            ->orWhere('filename', 'like', '%'.$search.'%')
-            ->orWhere('original_name', 'like', '%'.$search.'%')
-            ->orWhere('alt_text', 'like', '%'.$search.'%');
-        });
-      })
+      ->when($request->filled('search'), fn ($query) => $query->matchingText(
+        trim((string) $request->query('search')), ['title', 'filename', 'original_name', 'alt_text'], literal: $searchMode === MediaSearchMode::Literal,
+      ))
       ->orderByDesc('created_at')
       ->orderByDesc('id')
       ->limit(min(max((int) $request->query('limit', 50), 1), 100))
@@ -995,20 +977,18 @@ class InternalContentResourceController extends Controller
       ], 422);
     }
 
-    $allowedFields = ['title', 'alt_text', 'caption', 'description'];
-    $payload = [];
+    $input = $request->only(array_keys(MediaUploadRules::METADATA_LIMITS));
 
-    foreach ($allowedFields as $field) {
-      if ($request->has($field)) {
-        $payload[$field] = $this->normalizeNullableString($request->input($field), 2000);
-      }
-    }
-
-    if ($payload === []) {
+    if ($input === []) {
       return $this->validationError('media', 'Provide at least one safe media metadata field: title, alt_text, caption, or description.');
     }
 
-    $media->fill($payload);
+    $validator = Validator::make($input, MediaUploadRules::metadata($media, $input));
+    if ($validator->fails()) {
+      return $this->validationErrors('invalid_media_metadata', 'Media metadata failed validation.', $validator->errors()->toArray());
+    }
+
+    $media->fill(MediaUploadRules::normalizeMetadataPatch($validator->validated()));
     $media->save();
     $media->refresh();
 
@@ -1068,11 +1048,7 @@ class InternalContentResourceController extends Controller
     $validator = Validator::make($request->all(), [
       'folder_id' => ['nullable', 'integer', 'exists:wbcms_media_folders,id'],
       'source_url' => ['required', 'url:http,https', 'max:2048'],
-      'title' => ['nullable', 'string', 'max:255'],
-      'alt_text' => ['nullable', 'string', 'max:255'],
-      'caption' => ['nullable', 'string'],
-      'description' => ['nullable', 'string'],
-    ]);
+    ] + MediaUploadRules::metadata());
 
     if ($validator->fails()) {
       return $this->validationErrors('invalid_remote_media_fetch', 'Remote media fetch failed validation.', $validator->errors()->toArray());
@@ -1110,9 +1086,10 @@ class InternalContentResourceController extends Controller
 
   public function replaceMedia(Request $request, Media $media): JsonResponse
   {
-    $validator = Validator::make($request->all(), [
+    $input = $request->all();
+    $validator = Validator::make($input, [
       'file' => MediaUploadRules::file(),
-    ] + MediaUploadRules::metadata());
+    ] + MediaUploadRules::metadata($media, $input));
 
     if ($validator->fails()) {
       return $this->validationErrors('invalid_media_replace', 'Media replace failed validation.', $validator->errors()->toArray());
@@ -1139,13 +1116,7 @@ class InternalContentResourceController extends Controller
       ], 422);
     }
 
-    $metadata = [];
-
-    foreach (['title', 'alt_text', 'caption', 'description'] as $field) {
-      if ($request->has($field)) {
-        $metadata[$field] = $this->normalizeNullableString($request->input($field), $field === 'title' || $field === 'alt_text' ? 255 : 2000);
-      }
-    }
+    $metadata = MediaUploadRules::normalizeMetadataPatch($validator->validated());
 
     app(MediaTransformService::class)->clear($media);
 
@@ -1306,7 +1277,14 @@ class InternalContentResourceController extends Controller
       return $this->validationError('mobile_media_id', $mobileMediaValidator->errors()->first('mobile_media_id'));
     }
 
-    $locale = $this->resolveLocale($request);
+    $locale = $request->has('locale')
+      ? $this->resolveBlockPatchLocale($request->input('locale'))
+      : $this->resolveLocale($request);
+
+    if ($locale === null) {
+      return $this->validationError('locale', 'Locale must be an existing code or integer ID.', 'invalid_block_translation_locale');
+    }
+
     $translations = $request->input('translations', []);
 
     if ($translations !== [] && ! is_array($translations)) {
@@ -1449,24 +1427,26 @@ class InternalContentResourceController extends Controller
 
     [, $slotType] = $resolved;
 
-    $errors = [];
     $warnings = [];
     $locale = $this->resolveLocale($request);
-    $parent = $this->parentBlockForPageSlot($request, $page, $slotType, $errors);
-    $blockPayload = $request->json()->all();
-    unset($blockPayload['parent_id'], $blockPayload['parent_block_id']);
-    $normalized = $this->operations->normalizeBlock($blockPayload, 'block', $parent?->blockType, $errors, $warnings);
 
-    if ($errors !== [] || ! $normalized) {
-      return $this->blockValidationError($errors);
-    }
+    $block = DB::transaction(function () use ($request, $page, $slotType, $locale, &$warnings): Block|JsonResponse {
+      $errors = [];
+      $parent = $this->parentBlockForPageSlot($request, $page, $slotType, $errors);
+      $blockPayload = $request->json()->all();
+      unset($blockPayload['parent_id'], $blockPayload['parent_block_id']);
+      $normalized = $this->operations->normalizeBlock($blockPayload, 'block', $parent, $errors, $warnings);
 
-    $block = DB::transaction(function () use ($page, $slotType, $normalized, $locale, $parent) {
-      $sortOrder = (int) Block::query()
+      if ($errors !== [] || ! $normalized) {
+        return $this->blockValidationError($errors);
+      }
+
+      $lastOrder = Block::query()
         ->where('page_id', $page->id)
         ->where('slot_type_id', $slotType->id)
         ->where('parent_id', $parent?->id)
-        ->max('sort_order') + 1;
+        ->max('sort_order');
+      $sortOrder = $this->blockStructure->nextSortOrder($lastOrder, firstOrder: 1);
 
       $block = $this->operations->createPageSlotBlock($page, $slotType, $normalized, $locale->code, $parent, $sortOrder);
 
@@ -1482,6 +1462,10 @@ class InternalContentResourceController extends Controller
 
       return $block;
     });
+
+    if ($block instanceof JsonResponse) {
+      return $block;
+    }
 
     $block->refresh()->load([
       'blockType', 'slotType', 'media',
@@ -1533,15 +1517,13 @@ class InternalContentResourceController extends Controller
       ]);
     }
 
-    $parentIds = $blocks->map(fn (Block $block) => $block->parent_id)->uniqueStrict();
-
-    if ($parentIds->count() !== 1) {
+    if (! $this->blockStructure->hasSingleParentGroup($blocks)) {
       return $this->blockValidationError([
         ['path' => 'blocks', 'message' => 'Submitted blocks must belong to the same parent group.'],
       ]);
     }
 
-    $parentId = $parentIds->first();
+    $parentId = $blocks->first()->parent_id;
 
     return DB::transaction(function () use ($page, $slotType, $blockIds, $parentId): JsonResponse {
       $siblings = Block::query()
@@ -1608,8 +1590,7 @@ class InternalContentResourceController extends Controller
     }
 
     $deletedCount = DB::transaction(function () use ($block, $page): int {
-      $order = $this->blockDeletionManager->recursiveDeleteOrder($block);
-      $order->each(fn (Block $candidate) => $candidate->delete());
+      $deleted = $this->blockDeletionManager->deleteSubtree($block);
 
       $page->forceFill(['updated_by_user_id' => null])->save();
       $this->revisionManager->capture(
@@ -1621,7 +1602,7 @@ class InternalContentResourceController extends Controller
         source: 'internal-content-api',
       );
 
-      return $order->count();
+      return $deleted;
     });
 
     return $this->ok([
@@ -1695,13 +1676,19 @@ class InternalContentResourceController extends Controller
 
     $parent = Block::query()
       ->with('blockType')
-      ->whereKey((int) $parentId)
       ->where('page_id', $page->id)
-      ->where('slot_type_id', $slotType->id)
-      ->first();
+      ->lockForUpdate()
+      ->find((int) $parentId);
 
-    if (! $parent) {
+    if (! $parent || ! $this->blockStructure->parentBelongsToSlot($parent, $page->id, $slotType->id)) {
       $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block must belong to this page slot.'];
+
+      return null;
+    }
+
+    $chain = $this->blockStructure->placementChain($parent, lock: true);
+    if ($chain === null || ! $this->blockStructure->allowsPlacementChain($chain)) {
+      $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block must have a valid ancestor chain in this page slot.'];
 
       return null;
     }
@@ -1769,21 +1756,6 @@ class InternalContentResourceController extends Controller
     ], 403);
   }
 
-  private function normalizeNullableString(mixed $value, int $maxLength): ?string
-  {
-    if ($value === null) {
-      return null;
-    }
-
-    $value = trim((string) $value);
-
-    if ($value === '') {
-      return null;
-    }
-
-    return mb_substr($value, 0, $maxLength);
-  }
-
   private function localePayloadWithSelectedOption(Request $request): array
   {
     $payload = $request->all();
@@ -1831,6 +1803,15 @@ class InternalContentResourceController extends Controller
       ?? Locale::query()->where('is_default', true)->firstOrFail();
   }
 
+  private function resolveBlockPatchLocale(mixed $value): ?Locale
+  {
+    if (! is_int($value) && (! is_string($value) || (is_numeric($value) && ! ctype_digit($value)))) {
+      return null;
+    }
+
+    return app(LocaleResolver::class)->resolveReference($value);
+  }
+
   /**
    * Turn the submitted translations object into the payload BlockTranslationWriter
    * expects for this block's translation family, or a 422 when the caller sent a
@@ -1846,7 +1827,7 @@ class InternalContentResourceController extends Controller
   private function normalizeBlockTranslations(Block $block, array $translations): array|JsonResponse
   {
     $family = $this->translationRegistry->familyFor($block);
-    $families = ['text', 'button', 'image', 'contact_form'];
+    $families = BlockTranslationRegistry::coreFamilies();
     $foreign = array_values(array_diff(array_intersect(array_keys($translations), $families), [$family]));
 
     if ($foreign !== []) {
@@ -1876,19 +1857,15 @@ class InternalContentResourceController extends Controller
       );
     }
 
-    $accepted = match ($family) {
-      'text' => ['title' => 'title', 'eyebrow' => 'eyebrow', 'subtitle' => 'subtitle', 'content' => 'content', 'meta' => 'meta'],
-      'button' => ['title' => 'title'],
-      'image' => ['caption' => 'title', 'alt_text' => 'subtitle', 'title' => 'title', 'subtitle' => 'subtitle'],
-      'contact_form' => ['title' => 'title', 'content' => 'content', 'submit_label' => 'submit_label', 'success_message' => 'success_message', 'consent_label' => 'consent_label'],
-    };
+    $accepted = $this->translationRegistry->blockFieldsForFamily($family);
 
     if ($family === 'image') {
       // Both spellings are accepted; the translation column name wins.
-      $input = array_diff_key($input, array_flip(array_filter([
-        array_key_exists('caption', $input) ? 'title' : null,
-        array_key_exists('alt_text', $input) ? 'subtitle' : null,
-      ])));
+      foreach (BlockTranslationRegistry::IMAGE_BLOCK_FIELDS as $field => $alias) {
+        if (array_key_exists($field, $input)) {
+          unset($input[$alias]);
+        }
+      }
     }
 
     $unsupported = array_values(array_diff(array_keys($input), array_keys($accepted)));
@@ -1909,7 +1886,7 @@ class InternalContentResourceController extends Controller
     // keeps the stored value, so accepting one would be a silent no-op.
     $rejectsEmpty = match ($family) {
       'button' => array_keys($accepted),
-      'contact_form' => ['submit_label', 'success_message'],
+      'contact_form' => BlockTranslationRegistry::CONTACT_FORM_FALLBACK_FIELDS,
       default => [],
     };
 

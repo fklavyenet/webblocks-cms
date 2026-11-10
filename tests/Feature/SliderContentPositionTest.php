@@ -81,7 +81,7 @@ class SliderContentPositionTest extends TestCase
     $normalized = $operations->normalizeBlock([
       'type' => $type, 'settings' => ['content_position' => $position],
       'children' => $type === 'slider' ? [['type' => 'slide']] : [],
-    ], 'block', null, $errors, $warnings);
+    ], 'block', $type === 'slide' ? $parent : null, $errors, $warnings);
     $this->assertSame([], $errors);
     $block = $operations->createPageSlotBlock($page, $slot, $normalized, 'en', $type === 'slide' ? $parent : null, 0);
     $this->assertSame($position, $block->setting('content_position'));

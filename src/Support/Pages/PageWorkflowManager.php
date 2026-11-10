@@ -64,7 +64,7 @@ class PageWorkflowManager
     return $actions;
   }
 
-  public function apply(Page $page, User $user, string $action): string
+  public function apply(Page $page, User $user, string $action, bool $includePageOwnedBlocks = false): string
   {
     $normalizedAction = trim($action);
 
@@ -78,17 +78,17 @@ class PageWorkflowManager
       abort(403, 'You do not have permission to perform this workflow action.');
     }
 
-    if (! $this->statusAllowsAction($page, $normalizedAction)) {
+    if (! $this->transitionAuthorizedPage($page, $normalizedAction, $user, includePageOwnedBlocks: $includePageOwnedBlocks)) {
       throw ValidationException::withMessages([
         'action' => 'This workflow transition is not allowed for the current page status.',
       ]);
     }
 
     return match ($normalizedAction) {
-      self::ACTION_SUBMIT_REVIEW => $this->transition($page, $user, Page::STATUS_IN_REVIEW, 'Page submitted for review.'),
-      self::ACTION_PUBLISH => $this->transition($page, $user, Page::STATUS_PUBLISHED, 'Page published.'),
-      self::ACTION_RESTORE_DRAFT => $this->transition($page, $user, Page::STATUS_DRAFT, 'Page moved back to draft.'),
-      self::ACTION_ARCHIVE => $this->transition($page, $user, Page::STATUS_ARCHIVED, 'Page archived.'),
+      self::ACTION_SUBMIT_REVIEW => 'Page submitted for review.',
+      self::ACTION_PUBLISH => 'Page published.',
+      self::ACTION_RESTORE_DRAFT => 'Page moved back to draft.',
+      self::ACTION_ARCHIVE => 'Page archived.',
     };
   }
 
@@ -97,18 +97,44 @@ class PageWorkflowManager
     return $this->roleAllowsAction($user, $action, $page) && $this->statusAllowsAction($page, $action);
   }
 
-  private function transition(Page $page, User $user, string $status, string $message): string
-  {
-    if ($status === Page::STATUS_PUBLISHED) {
-      app(ContactConsentRequirements::class)->assertPage($page->fresh());
+  /** Apply a transition to a locked page after the caller authorizes the action. */
+  public function transitionAuthorizedPage(
+    Page $page,
+    string $action,
+    ?User $user = null,
+    ?string $source = null,
+    bool $allowRepeat = false,
+    bool $includePageOwnedBlocks = false,
+  ): bool {
+    $status = match ($action) {
+      self::ACTION_SUBMIT_REVIEW => Page::STATUS_IN_REVIEW,
+      self::ACTION_PUBLISH => Page::STATUS_PUBLISHED,
+      self::ACTION_RESTORE_DRAFT => Page::STATUS_DRAFT,
+      self::ACTION_ARCHIVE => Page::STATUS_ARCHIVED,
+      default => null,
+    };
+
+    if ($status === null || (! $this->statusAllowsAction($page, $action) && ! ($allowRepeat && $status === $page->status))) {
+      return false;
     }
-    $actor = $this->currentActorResolver->resolve($user);
+
+    if ($status === Page::STATUS_PUBLISHED) {
+      app(ContactConsentRequirements::class)->assertPage($page, $includePageOwnedBlocks);
+    }
+    if ($status === $page->status) {
+      return true;
+    }
+
+    $actor = $this->currentActorResolver->resolve($user, $source);
     $attributes = [
       'status' => $status,
       'review_requested_at' => $status === Page::STATUS_IN_REVIEW ? now() : null,
-      'published_at' => $status === Page::STATUS_PUBLISHED ? now() : null,
       'updated_by_user_id' => $actor['user_id'],
     ];
+
+    if ($status !== Page::STATUS_ARCHIVED) {
+      $attributes['published_at'] = $status === Page::STATUS_PUBLISHED ? now() : null;
+    }
 
     if ($status === Page::STATUS_IN_REVIEW) {
       $attributes['review_requested_by_user_id'] = $actor['user_id'];
@@ -124,7 +150,7 @@ class PageWorkflowManager
 
     $page->forceFill($attributes)->save();
 
-    return $message;
+    return true;
   }
 
   private function roleAllowsAction(User $user, string $action, Page $page): bool

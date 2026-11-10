@@ -1,5 +1,6 @@
 @php
     use WebBlocks\Cms\Models\Media;
+    use WebBlocks\Cms\Support\Media\MediaSearchMode;
     use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
     use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
@@ -15,6 +16,7 @@
         ...app(\WebBlocks\Cms\Support\ListingViews\ListingViewState::class)->presentationQuery(request()),
         'folder_id' => $selectedFolderId,
         'search' => $search ?: null,
+        'search_mode' => $searchMode === MediaSearchMode::Pattern ? $searchMode->value : null,
         'kind' => $kind ?: null,
         'usage' => $usage ?: null,
         'sort' => $sort !== 'updated_at' ? $sort : null,
@@ -54,6 +56,17 @@
                     'placeholder' => $adminText('search_placeholder'),
                 ],
                 'selects' => [
+                    [
+                        'id' => 'media_search_mode',
+                        'name' => 'search_mode',
+                        'label' => $adminText('search_mode'),
+                        'selected' => $searchMode->value,
+                        'placeholder' => null,
+                        'options' => [
+                            MediaSearchMode::Literal->value => $adminText('search_literal'),
+                            MediaSearchMode::Pattern->value => $adminText('search_pattern'),
+                        ],
+                    ],
                     [
                         'id' => 'media_kind',
                         'name' => 'kind',
@@ -110,7 +123,7 @@
                     'folder_id' => $selectedFolderId,
                     'view' => $viewMode,
                 ],
-                'showReset' => $selectedFolderId || $search !== '' || $kind !== '' || $usage !== '' || $sort !== 'updated_at' || $direction !== 'desc' || $viewMode !== 'list',
+                'showReset' => $hasActiveFilters || $searchMode === MediaSearchMode::Pattern || $sort !== 'updated_at' || $direction !== 'desc' || $viewMode !== 'list',
                 'resetUrl' => route('admin.media.index'),
                 'applyLabel' => $adminText('apply'),
                 'resetLabel' => $adminText('clear_filters'),
@@ -135,9 +148,9 @@
         <div class="wb-card-body wb-stack wb-gap-4">
             <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-items-end">
                 <div class="wb-cluster wb-cluster-2">
-                    <a href="{{ route('admin.media.index', array_filter([...app(\WebBlocks\Cms\Support\ListingViews\ListingViewState::class)->presentationQuery(request()), 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-rounded-full {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">{{ $adminText('all_folders') }} <span class="wb-text-sm">{{ $filteredMediaCount }}</span></a>
+                    <a href="{{ route('admin.media.index', array_diff_key($baseQuery, ['folder_id' => true])) }}" class="wb-btn wb-rounded-full {{ $selectedFolderId ? 'wb-btn-secondary' : 'wb-btn-primary' }}">{{ $adminText('all_folders') }} <span class="wb-text-sm">{{ $filteredMediaCount }}</span></a>
                     @foreach ($folders as $folder)
-                        <a href="{{ route('admin.media.index', array_filter([...app(\WebBlocks\Cms\Support\ListingViews\ListingViewState::class)->presentationQuery(request()), 'folder_id' => $folder->id, 'search' => $search ?: null, 'kind' => $kind ?: null, 'usage' => $usage ?: null, 'sort' => $sort !== 'updated_at' ? $sort : null, 'direction' => $direction !== 'desc' ? $direction : null, 'view' => $viewMode !== 'list' ? $viewMode : null])) }}" class="wb-btn wb-rounded-full {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
+                        <a href="{{ route('admin.media.index', [...$baseQuery, 'folder_id' => $folder->id]) }}" class="wb-btn wb-rounded-full {{ (string) $selectedFolderId === (string) $folder->id ? 'wb-btn-primary' : 'wb-btn-secondary' }}">
                             {{ $folder->name }} <span class="wb-text-sm">{{ $folder->assets_count }}</span>
                         </a>
                     @endforeach

@@ -184,7 +184,10 @@ class BlockPatchTranslationFamilyTest extends TestCase
   {
     $block = $this->seedBlock('image');
 
-    $this->patchBlock($block, ['locale' => 'de', 'translations' => ['caption' => 'Bildunterschrift', 'alt_text' => 'Ein Foto']]);
+    $this->patchBlock($block, ['locale' => 'de', 'translations' => [
+      'title' => 'Legacy caption', 'subtitle' => 'Legacy alternative text',
+      'caption' => 'Bildunterschrift', 'alt_text' => 'Ein Foto',
+    ]]);
 
     $translation = BlockImageTranslation::query()
       ->where('block_id', $block->id)
@@ -286,10 +289,41 @@ class BlockPatchTranslationFamilyTest extends TestCase
     $this->assertSame('invalid_block_translation_locale', $response->getData(true)['code']);
   }
 
-  private function patchBlock(Block $block, array $payload): JsonResponse
+  #[Test]
+  public function invalid_explicit_locales_leave_the_block_and_its_translations_unchanged(): void
+  {
+    $block = $this->seedBlock('image', ['url' => '/original']);
+    $this->assertSame(200, $this->patchBlock($block, ['translations' => ['caption' => 'Original']])->getStatusCode());
+    $this->assertSame(200, $this->patchBlock($block, ['translations' => ['caption' => 'Deutsch']], ['locale' => (string) $this->locale('de')->id])->getStatusCode());
+
+    $update = ['url' => '/replacement', 'translations' => ['caption' => 'Do not write']];
+    $attempts = [
+      [['locale' => 'unknown'], []],
+      [['locale' => null], []],
+      [['locale' => ['en']], []],
+      [['locale' => $this->locale('en')->id.'.5'], []],
+      [[], ['locale' => 'unknown']],
+    ];
+
+    foreach ($attempts as [$body, $query]) {
+      $response = $this->patchBlock($block->fresh(), $update + $body, $query);
+      $this->assertSame(422, $response->getStatusCode());
+      $this->assertSame('invalid_block_translation_locale', $response->getData(true)['code']);
+      $this->assertSame('locale', $response->getData(true)['errors'][0]['path']);
+    }
+
+    $this->assertSame('/original', $block->fresh()->url);
+    $this->assertSame([
+      $this->locale('en')->id => 'Original',
+      $this->locale('de')->id => 'Deutsch',
+    ], $block->imageTranslations()->orderBy('locale_id')->pluck('caption', 'locale_id')->all());
+  }
+
+  private function patchBlock(Block $block, array $payload, array $query = []): JsonResponse
   {
     $request = Request::create('/webadmin/api/blocks/'.$block->id, 'PATCH', [], [], [], [], json_encode($payload));
     $request->headers->set('Content-Type', 'application/json');
+    $request->query->add($query);
 
     return app(InternalContentResourceController::class)->updateBlock($request, $block);
   }

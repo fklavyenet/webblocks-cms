@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Pages;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
@@ -13,6 +14,8 @@ use WebBlocks\Cms\Models\PageTranslation;
 
 final class PageTranslationPayload
 {
+  private const MESSAGE_PREFIX = 'webblocks-cms::admin.page_translations.translation_validation.';
+
   public const TEXT_FIELDS = [
     'seo_title' => 255,
     'seo_description' => 1000,
@@ -43,27 +46,65 @@ final class PageTranslationPayload
         : (int) $payload['og_image_media_id'];
     }
 
+    $validator = Validator::make(
+      $candidate,
+      $this->rules($page->site_id, $locale->id, $translation?->id, $creating),
+      $this->messages(),
+    );
+
+    if ($validator->fails()) {
+      throw new ValidationException($validator);
+    }
+
+    if ($error = $this->openGraphImageError($candidate['og_image_media_id'] ?? null)) {
+      throw ValidationException::withMessages(['og_image_media_id' => $error])->errorBag('translation_field');
+    }
+
+    return $candidate;
+  }
+
+  public function identityRules(?int $siteId, ?int $localeId, ?int $translationId, bool $requireIdentity = true): array
+  {
+    $presence = $requireIdentity ? 'required' : 'sometimes';
+
     $rules = [
-      'name' => [$creating ? 'required' : 'sometimes', 'string', 'max:255'],
+      'name' => [$presence, 'string', 'max:255'],
       'slug' => [
-        $creating ? 'required' : 'sometimes',
+        $presence,
         'string',
         'max:255',
         'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-        $this->uniquePerSiteLocale('slug', $page, $locale, $translation),
       ],
-      'path' => [
-        $creating ? 'required' : 'sometimes',
-        'string',
-        'max:255',
-        'regex:/^(?:\/|\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*)$/',
-        function (string $attribute, mixed $value, \Closure $fail): void {
-          if (is_string($value) && PagePath::isReserved($value)) {
-            $fail('This path uses a reserved CMS or host route segment.');
-          }
-        },
-        $this->uniquePerSiteLocale('path', $page, $locale, $translation),
-      ],
+      'path' => $this->pathRules($requireIdentity),
+    ];
+
+    if ($siteId !== null && $localeId !== null) {
+      $rules['slug'][] = $this->uniquePerSiteLocale('slug', $siteId, $localeId, $translationId);
+      $rules['path'][] = $this->uniquePerSiteLocale('path', $siteId, $localeId, $translationId);
+    }
+
+    return $rules;
+  }
+
+  public function pathRules(bool $required = true): array
+  {
+    return [
+      'bail',
+      $required ? 'required' : 'sometimes',
+      'string',
+      'max:255',
+      'regex:/^(?:\/|\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*)$/',
+      function (string $attribute, mixed $value, \Closure $fail): void {
+        if (is_string($value) && PagePath::isReserved($value)) {
+          $fail(__(self::MESSAGE_PREFIX.'reserved_path'));
+        }
+      },
+    ];
+  }
+
+  public function rules(int $siteId, int $localeId, ?int $translationId, bool $requireIdentity = true): array
+  {
+    $rules = $this->identityRules($siteId, $localeId, $translationId, $requireIdentity) + [
       'og_image_media_id' => ['sometimes', 'nullable', 'integer', Rule::exists(Media::class, 'id')],
     ];
 
@@ -71,26 +112,24 @@ final class PageTranslationPayload
       $rules[$field] = ['sometimes', 'nullable', 'string', 'max:'.$max];
     }
 
-    $validator = Validator::make($candidate, $rules, [
-      'slug.regex' => 'Use only lowercase letters, numbers, and hyphens.',
-      'slug.unique' => 'This slug is already used in this site for this locale.',
-      'path.regex' => 'Use a slash path with lowercase letters, numbers, and hyphens only.',
-      'path.unique' => 'This path is already used in this site for this locale.',
-    ]);
+    return $rules;
+  }
 
-    if ($validator->fails()) {
-      throw new ValidationException($validator);
-    }
+  public function messages(): array
+  {
+    return [
+      'slug.regex' => __(self::MESSAGE_PREFIX.'slug_format'),
+      'slug.unique' => __(self::MESSAGE_PREFIX.'slug_unique'),
+      'path.regex' => __(self::MESSAGE_PREFIX.'path_format'),
+      'path.unique' => __(self::MESSAGE_PREFIX.'path_unique'),
+    ];
+  }
 
-    if (array_key_exists('og_image_media_id', $candidate) && $candidate['og_image_media_id'] !== null) {
-      $media = Media::query()->find($candidate['og_image_media_id']);
-
-      if (! $media?->isImage()) {
-        throw ValidationException::withMessages(['og_image_media_id' => 'The Open Graph image must be an image from Media.'])->errorBag('translation_field');
-      }
-    }
-
-    return $candidate;
+  public function openGraphImageError(?int $mediaId): ?string
+  {
+    return $mediaId !== null && ! Media::query()->find($mediaId)?->isImage()
+      ? __(self::MESSAGE_PREFIX.'open_graph_image')
+      : null;
   }
 
   /**
@@ -144,13 +183,13 @@ final class PageTranslationPayload
     return $identity;
   }
 
-  private function uniquePerSiteLocale(string $column, Page $page, Locale $locale, ?PageTranslation $translation)
+  private function uniquePerSiteLocale(string $column, int $siteId, int $localeId, ?int $translationId): Unique
   {
     return Rule::unique(PageTranslation::class, $column)
-      ->ignore($translation?->id)
+      ->ignore($translationId)
       ->where(fn ($query) => $query
-        ->where('site_id', $page->site_id)
-        ->where('locale_id', $locale->id)
+        ->where('site_id', $siteId)
+        ->where('locale_id', $localeId)
       );
   }
 

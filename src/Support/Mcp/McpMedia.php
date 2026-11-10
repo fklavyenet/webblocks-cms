@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Policies\McpPagePolicy;
+use WebBlocks\Cms\Support\Media\MediaSearchMode;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 final class McpMedia
@@ -19,9 +20,8 @@ final class McpMedia
   {
     $query = $this->images($user, $siteId);
     if (isset($input['q'])) {
-      $pattern = '%'.strtr($input['q'], ['!' => '!!', '%' => '!%', '_' => '!_']).'%';
-      $query->where(fn (Builder $query) => $query->whereRaw("title LIKE ? ESCAPE '!'", [$pattern])
-        ->orWhereRaw("original_name LIKE ? ESCAPE '!'", [$pattern]));
+      $searchMode = MediaSearchMode::fromInput($input['search_mode'] ?? null) ?? MediaSearchMode::Literal;
+      $query->matchingText($input['q'], ['title', 'original_name'], literal: $searchMode === MediaSearchMode::Literal);
     }
     $images = $query->orderBy('id')->simplePaginate(20, ['*'], 'page', $input['page'] ?? 1);
 

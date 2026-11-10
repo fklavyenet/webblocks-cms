@@ -44,6 +44,8 @@ class Block extends CmsModel
   use ReindexesPublicSearch;
   use ReusesMediaRelationAliases;
 
+  public const SPLIT_CHILD_COUNT = 2;
+
   protected $fillable = [
     'page_id',
     'parent_id',
@@ -601,7 +603,7 @@ class Block extends CmsModel
     return in_array($slug, ['section', 'container', 'stack', 'split', 'cluster', 'grid', 'card', 'card_header', 'card_body', 'card_footer', 'hero', 'slider', 'slide', 'columns', 'feature-grid', 'cta', 'sticky-navbar', 'sidebar-navigation', 'sidebar-nav-group'], true);
   }
 
-  public function canAcceptMoreChildren(): bool
+  public function canAcceptMoreChildren(?int $existingChildId = null): bool
   {
     if (! $this->canAcceptChildren()) {
       return false;
@@ -611,11 +613,11 @@ class Block extends CmsModel
       return true;
     }
 
-    $childCount = $this->relationLoaded('children')
+    $childCount = $existingChildId === null && $this->relationLoaded('children')
       ? $this->children->count()
-      : $this->children()->count();
+      : $this->children()->when($existingChildId !== null, fn ($children) => $children->whereKeyNot($existingChildId))->count();
 
-    return $childCount < 2;
+    return $childCount < self::SPLIT_CHILD_COUNT;
   }
 
   public function allowedChildTypeSlugs(): ?array
@@ -714,10 +716,14 @@ class Block extends CmsModel
       return false;
     }
 
-    $allowedChildTypeSlugs = $this->allowedChildTypeSlugs();
+    return $this->catalogAcceptsChildType($childTypeSlug);
+  }
 
-    return $allowedChildTypeSlugs === null
-      || in_array($childTypeSlug, $allowedChildTypeSlugs, true);
+  public function catalogAcceptsChildType(string $childTypeSlug): bool
+  {
+    $allowed = $this->allowedChildTypeSlugs();
+
+    return $allowed === null ? $this->canAcceptChildren() : in_array($childTypeSlug, $allowed, true);
   }
 
   public function hasNavbarAncestorOrSelf(): bool

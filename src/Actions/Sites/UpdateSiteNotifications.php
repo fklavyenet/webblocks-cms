@@ -12,7 +12,7 @@ class UpdateSiteNotifications
   {
     return DB::transaction(function () use ($site, $data): Site {
       $site = Site::query()->whereKey($site->id)->lockForUpdate()->firstOrFail();
-      $site->forceFill(['notification_settings' => array_replace(SiteNotificationPolicy::forSite($site), $data)])->save();
+      $site->forceFill(['notification_settings' => SiteNotificationPolicy::withChanges($site, $data)])->save();
 
       return $site;
     });

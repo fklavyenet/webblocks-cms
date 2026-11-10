@@ -193,6 +193,36 @@ class PersonalListingViewsTest extends TestCase
   }
 
   #[Test]
+  public function media_search_is_literal_by_default_and_legacy_views_keep_pattern_search(): void
+  {
+    $folder = MediaFolder::create(['name' => 'Offers', 'slug' => 'offers']);
+    $titles = ['Offer %_2026', 'Offer winterX2026'];
+    $ids = [];
+    foreach ($titles as $index => $title) {
+      $file = 'offer-'.$index.'.png';
+      $ids[] = Media::create(['disk' => 'public', 'path' => $file, 'filename' => $file, 'title' => $title, 'kind' => 'image', 'folder_id' => $folder->id, 'uploaded_by' => $this->actor->id])->id;
+    }
+    $search = ['search' => 'Offer %_2026'];
+    $literal = $this->get(route('admin.media.index', $search))->assertOk()->assertSee('name="search_mode"', false);
+    $this->assertSame([$ids[0]], $literal->viewData('media')->modelKeys());
+
+    $pattern = $this->get(route('admin.media.index', $search + ['search_mode' => 'pattern']))->assertOk();
+    $this->assertEqualsCanonicalizing($ids, $pattern->viewData('media')->modelKeys());
+    $pattern->assertSee(e(route('admin.media.index', $search + ['search_mode' => 'pattern', 'folder_id' => $folder->id])), false);
+
+    $id = $this->createView('media', $this->payload('media', $search, 'preview'));
+    $newView = $this->followingRedirects()->get($this->applyUrl($id, 'media'))->assertOk();
+    $this->assertSame([$ids[0]], $newView->viewData('media')->modelKeys());
+
+    DB::table('wbcms_listing_view_filters')->where('view_id', $id)->where('filter_name', 'search_mode')->delete();
+    $legacy = $this->get($this->applyUrl($id, 'media'))->assertRedirect();
+    $this->assertStringContainsString('search_mode=pattern', $legacy->headers->get('Location'));
+    $legacyView = $this->get($legacy->headers->get('Location'))->assertOk();
+    $this->assertEqualsCanonicalizing($ids, $legacyView->viewData('media')->modelKeys());
+    $this->assertFalse($legacyView->viewData('listingView')['changed']);
+  }
+
+  #[Test]
   public function deleted_sites_and_folders_block_application_until_explicit_correction(): void
   {
     $id = $this->createView();

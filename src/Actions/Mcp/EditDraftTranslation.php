@@ -110,8 +110,7 @@ final class EditDraftTranslation
           throw new McpToolException('invalid_page_translation');
         }
       }
-      $draft->forceFill(['updated_by_user_id' => $user->id])->touch();
-      $this->revisions->capture($draft, $user, event: 'page_updated', source: 'mcp');
+      $this->revisions->recordTranslationChange($draft, $user, source: 'mcp', touch: true);
 
       return $this->result($source, $draft, $locale);
     }, attempts: 3);

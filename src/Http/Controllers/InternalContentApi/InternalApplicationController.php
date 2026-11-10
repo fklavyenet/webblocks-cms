@@ -6,8 +6,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\Rule;
+use WebBlocks\Cms\Actions\Applications\CreateEmbeddedApplication;
 use WebBlocks\Cms\Actions\Applications\DeleteEmbeddedApplication;
+use WebBlocks\Cms\Actions\Applications\UpdateEmbeddedApplication;
 use WebBlocks\Cms\Models\EmbeddedApplication;
+use WebBlocks\Cms\Support\Applications\ApplicationAuthoringFields;
 use WebBlocks\Cms\Support\Applications\ApplicationDefinition;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 
@@ -66,20 +69,20 @@ class InternalApplicationController extends Controller
     ]);
   }
 
-  public function store(Request $request): JsonResponse
+  public function store(Request $request, CreateEmbeddedApplication $action): JsonResponse
   {
-    $application = EmbeddedApplication::query()->create($this->validatedPayload($request));
+    $application = $action->handle($this->validatedPayload($request), null);
 
     return response()->json(['ok' => true, 'application' => $this->present($this->registry->find($application->handle)), 'warnings' => [], 'errors' => []], 201);
   }
 
-  public function update(Request $request, string $application): JsonResponse
+  public function update(Request $request, string $application, UpdateEmbeddedApplication $action): JsonResponse
   {
     $record = EmbeddedApplication::query()->where('handle', $application)->first();
     if (! $record) {
       return $this->notFound($application);
     }
-    $record->update($this->validatedPayload($request, $record, partial: true));
+    $action->handle($record, $this->validatedPayload($request, $record, partial: true), $record->updated_by_user_id);
 
     return $this->ok(['application' => $this->present($this->registry->find($record->handle))]);
   }
@@ -97,16 +100,13 @@ class InternalApplicationController extends Controller
 
   private function validatedPayload(Request $request, ?EmbeddedApplication $application = null, bool $partial = false): array
   {
-    $required = $partial ? 'sometimes' : 'required';
     $data = $request->validate([
-      'handle' => [$required, 'string', 'max:64', 'regex:/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/', Rule::unique(EmbeddedApplication::class, 'handle')->ignore($application)],
-      'name' => [$required, 'string', 'max:255'], 'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
-      'version' => [$required, 'string', 'max:64'], 'render_mode' => [$required, Rule::in(['inline', 'iframe'])],
-      'entry_url' => ['sometimes', 'nullable', 'string', 'max:2048', 'regex:/^\/(?!\/)[^\s]*$/'],
+      ...ApplicationAuthoringFields::identityRules($application, $partial),
+      'entry_url' => ['sometimes', 'nullable', 'string', 'max:2048', 'regex:'.ApplicationAuthoringFields::ASSET_PATH_PATTERN],
       'mount_element' => ['sometimes', 'nullable', Rule::in(['div', 'section', 'canvas'])],
       'mount_classes' => ['sometimes', 'nullable', 'string', 'max:512', 'regex:/^[A-Za-z0-9_-]+(?:\s+[A-Za-z0-9_-]+)*$/'],
-      'css_assets' => ['sometimes', 'array', 'max:20'], 'css_assets.*' => ['string', 'max:2048', 'regex:/^\/(?!\/)[^\s]*$/'],
-      'js_assets' => ['sometimes', 'array', 'max:20'], 'js_assets.*.path' => ['required', 'string', 'max:2048', 'regex:/^\/(?!\/)[^\s]*$/'],
+      'css_assets' => ['sometimes', 'array', 'max:20'], 'css_assets.*' => ['string', 'max:2048', 'regex:'.ApplicationAuthoringFields::ASSET_PATH_PATTERN],
+      'js_assets' => ['sometimes', 'array', 'max:20'], 'js_assets.*.path' => ['required', 'string', 'max:2048', 'regex:'.ApplicationAuthoringFields::ASSET_PATH_PATTERN],
       'js_assets.*.type' => ['required', Rule::in(['classic', 'module'])], 'js_assets.*.load_position' => ['required', Rule::in(['head', 'body_end'])],
       'supports' => ['sometimes', 'array:locale,theme,fullscreen'],
       'supports.*' => ['boolean'],
@@ -120,7 +120,7 @@ class InternalApplicationController extends Controller
     ]);
 
     foreach (array_keys($data['settings_schema'] ?? []) as $key) {
-      if (! is_string($key) || preg_match('/^[a-z][a-z0-9_]{0,63}$/', $key) !== 1) {
+      if (! is_string($key) || preg_match(ApplicationAuthoringFields::SETTINGS_KEY_PATTERN, $key) !== 1) {
         abort(422, 'Application setting keys must use safe snake_case identifiers.');
       }
     }

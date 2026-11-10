@@ -11,6 +11,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
 
@@ -51,7 +52,7 @@ class InternalPageTranslationController extends Controller
 
   public function store(Request $request, Page $page, string $locale): JsonResponse
   {
-    $resolved = $this->resolveLocale($locale);
+    $resolved = app(LocaleResolver::class)->resolveReference($locale);
 
     if (! $resolved) {
       return $this->error('locale', 'Locale must resolve to a code or ID.', 'invalid_page_translation');
@@ -80,7 +81,7 @@ class InternalPageTranslationController extends Controller
     $translation = DB::transaction(function () use ($page, $resolved, $data): PageTranslation {
       $translation = $page->translations()->create(['locale_id' => $resolved->id] + $data);
 
-      $this->touchPage($page, 'Translation added', 'A page translation was added for locale '.$resolved->code.' through the Internal Content API.');
+      $this->revisionManager->recordTranslationChange($page, null, 'Translation added', 'A page translation was added for locale '.$resolved->code.' through the Internal Content API.', source: 'internal-content-api');
 
       return $translation;
     });
@@ -119,7 +120,7 @@ class InternalPageTranslationController extends Controller
     DB::transaction(function () use ($page, $translation, $data, $locale): void {
       $translation->update($data);
 
-      $this->touchPage($page, 'Translation updated', 'A page translation was updated for locale '.$locale->code.' through the Internal Content API.');
+      $this->revisionManager->recordTranslationChange($page, null, 'Translation updated', 'A page translation was updated for locale '.$locale->code.' through the Internal Content API.', source: 'internal-content-api');
     });
 
     return response()->json([
@@ -170,23 +171,6 @@ class InternalPageTranslationController extends Controller
     }
   }
 
-  private function resolveLocale(string $value): ?Locale
-  {
-    $value = trim($value);
-
-    if ($value === '') {
-      return null;
-    }
-
-    return Locale::query()
-      ->when(
-        is_numeric($value),
-        fn ($query) => $query->whereKey((int) $value),
-        fn ($query) => $query->where('code', Locale::normalizeCode($value)),
-      )
-      ->first();
-  }
-
   private function localeEnabledForSite(Page $page, Locale $locale): bool
   {
     $page->loadMissing('site');
@@ -194,20 +178,6 @@ class InternalPageTranslationController extends Controller
     return (bool) $page->site?->enabledLocales()
       ->where((new Locale)->qualifyColumn('id'), $locale->id)
       ->exists();
-  }
-
-  private function touchPage(Page $page, string $label, string $summary): void
-  {
-    $page->forceFill(['updated_by_user_id' => null])->save();
-
-    $this->revisionManager->capture(
-      $page->fresh(),
-      null,
-      $label,
-      $summary,
-      event: 'page_updated',
-      source: 'internal-content-api',
-    );
   }
 
   private function error(string $path, string $message, string $code): JsonResponse

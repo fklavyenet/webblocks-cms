@@ -4,7 +4,6 @@ namespace WebBlocks\Cms\Support\Mcp;
 
 use App\Models\User;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockButtonTranslation;
 use WebBlocks\Cms\Models\BlockImageTranslation;
@@ -21,7 +20,7 @@ use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Pages\PagePath;
-use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\StagedPageBase;
 use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 
 final class McpPages
@@ -30,7 +29,7 @@ final class McpPages
 
   public function __construct(
     private readonly InternalContentPlanService $plans,
-    private readonly PageRevisionManager $revisions,
+    private readonly StagedPageBase $base,
     private readonly BlockTranslationResolver $translations,
     private readonly McpConfiguration $config,
     private readonly McpBlockFields $fields,
@@ -121,7 +120,7 @@ final class McpPages
 
   public function fingerprint(Page $page): string
   {
-    return SnapshotContent::hash($this->revisions->snapshotForInspection($page));
+    return $this->base->fingerprint($page);
   }
 
   public function version(Page $source, string $sourceFingerprint, ?Page $draft, Locale $locale): string
@@ -139,7 +138,7 @@ final class McpPages
 
   public function hasVerifiedBase(Page $draft, string $sourceFingerprint): bool
   {
-    return DB::table('wbcms_staged_page_bases')->where('page_id', $draft->id)->value('source_fingerprint') === $sourceFingerprint;
+    return $this->base->matches($draft, $sourceFingerprint);
   }
 
   public function read(int $siteId, array $input, ?array $grant = null): array

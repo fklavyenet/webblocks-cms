@@ -49,7 +49,7 @@ class InternalPageAssetController extends Controller
     }
 
     $asset = DB::transaction(function () use ($page, $request, $normalizedType, $path): PageAsset {
-      $asset = $page->pageAssets()->create($this->assetData($request, $normalizedType, $path));
+      $asset = $page->pageAssets()->create($this->pathValidator->assetData($normalizedType, $path, $request->input()));
 
       $this->touchAndCaptureRevision($page, 'Page asset added', 'A page asset was added through the Internal Content API.');
 
@@ -84,7 +84,7 @@ class InternalPageAssetController extends Controller
     }
 
     DB::transaction(function () use ($request, $page, $pageAsset, $type, $path): void {
-      $pageAsset->update($this->assetData($request, $type, $path, $pageAsset));
+      $pageAsset->update($this->pathValidator->assetData($type, $path, $request->input(), $pageAsset));
 
       $this->touchAndCaptureRevision($page, 'Page asset updated', 'A page asset was updated through the Internal Content API.');
     });
@@ -107,22 +107,6 @@ class InternalPageAssetController extends Controller
     });
 
     return $this->ok(['message' => 'Deleted']);
-  }
-
-  private function assetData(Request $request, string $type, mixed $path, ?PageAsset $existing = null): array
-  {
-    $isJs = $type === PageAsset::TYPE_JS;
-
-    return [
-      'type' => $type,
-      'path' => $this->pathValidator->normalizeForStorage($type, $path),
-      'load_position' => PageAsset::defaultLoadPositionFor($type),
-      'sort_order' => max((int) $request->input('sort_order', $existing?->sort_order ?? 0), 0),
-      'is_enabled' => $request->boolean('is_enabled', $existing?->is_enabled ?? true),
-      'is_defer' => $isJs ? $request->boolean('is_defer', $existing?->is_defer ?? true) : false,
-      'is_async' => $isJs ? $request->boolean('is_async', $existing?->is_async ?? false) : false,
-      'is_module' => $isJs ? $request->boolean('is_module', $existing?->is_module ?? false) : false,
-    ];
   }
 
   private function present(PageAsset $asset): array

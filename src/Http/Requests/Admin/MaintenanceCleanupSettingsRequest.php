@@ -4,7 +4,7 @@ namespace WebBlocks\Cms\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use WebBlocks\Cms\Support\System\BackupRetentionSettings;
-use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\System\CleanupSettingsFields;
 
 class MaintenanceCleanupSettingsRequest extends FormRequest
 {
@@ -15,23 +15,7 @@ class MaintenanceCleanupSettingsRequest extends FormRequest
 
   public function rules(): array
   {
-    return [
-      ...BackupRetentionSettings::rules(),
-      'automatic' => ['sometimes', 'array:asset-revisions,media-variants,temporary-workspaces,page-revisions,shared-slot-revisions'],
-      'automatic.*' => ['required', 'boolean'],
-      'backup_cleanup_enabled' => ['required', 'boolean'],
-      'backup_cleanup_pre_update_days' => ['required', 'integer', 'min:1', 'max:3650'],
-      'backup_cleanup_keep_latest_pre_update' => ['required', 'integer', 'min:1', 'max:100'],
-      'backup_cleanup_restore_safety_days' => ['required', 'integer', 'min:1', 'max:3650'],
-      'backup_cleanup_content_apply_days' => ['required', 'integer', 'min:1', 'max:3650'],
-      'asset_revision_days' => ['required', 'integer', 'min:1', 'max:3650'],
-      'keep_latest_asset_revisions' => ['required', 'integer', 'min:1', 'max:1000'],
-      'temporary_workspace_hours' => ['required', 'integer', 'min:1', 'max:8760'],
-      'page_revision_days' => ['required', 'integer', 'min:1', 'max:3650'],
-      'keep_latest_page_revisions' => ['required', 'integer', 'min:1', 'max:1000'],
-      'shared_slot_revision_days' => ['required', 'integer', 'min:1', 'max:3650'],
-      'keep_latest_shared_slot_revisions' => ['required', 'integer', 'min:1', 'max:1000'],
-    ];
+    return BackupRetentionSettings::rules() + CleanupSettingsFields::backupRules('backup_cleanup_') + CleanupSettingsFields::maintenanceRules();
   }
 
   protected function prepareForValidation(): void
@@ -41,25 +25,8 @@ class MaintenanceCleanupSettingsRequest extends FormRequest
 
   public function settingsPayload(): array
   {
-    $values = [
-      ...BackupRetentionSettings::payload($this->validated()),
-      SystemSettings::BACKUP_CLEANUP_ENABLED => $this->validated('backup_cleanup_enabled'),
-      SystemSettings::BACKUP_CLEANUP_PRE_UPDATE_DAYS => $this->validated('backup_cleanup_pre_update_days'),
-      SystemSettings::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE => $this->validated('backup_cleanup_keep_latest_pre_update'),
-      SystemSettings::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS => $this->validated('backup_cleanup_restore_safety_days'),
-      SystemSettings::BACKUP_CLEANUP_CONTENT_APPLY_DAYS => $this->validated('backup_cleanup_content_apply_days'),
-      SystemSettings::CLEANUP_ASSET_REVISION_DAYS => $this->validated('asset_revision_days'),
-      SystemSettings::CLEANUP_KEEP_LATEST_ASSET_REVISIONS => $this->validated('keep_latest_asset_revisions'),
-      SystemSettings::CLEANUP_TEMPORARY_WORKSPACE_HOURS => $this->validated('temporary_workspace_hours'),
-      SystemSettings::CLEANUP_PAGE_REVISION_DAYS => $this->validated('page_revision_days'),
-      SystemSettings::CLEANUP_KEEP_LATEST_PAGE_REVISIONS => $this->validated('keep_latest_page_revisions'),
-      SystemSettings::CLEANUP_SHARED_SLOT_REVISION_DAYS => $this->validated('shared_slot_revision_days'),
-      SystemSettings::CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS => $this->validated('keep_latest_shared_slot_revisions'),
-    ];
-    foreach ($this->validated('automatic', []) as $category => $enabled) {
-      $values[SystemSettings::CLEANUP_AUTOMATIC_KEYS[$category]] = $enabled;
-    }
+    $data = $this->validated();
 
-    return $values;
+    return CleanupSettingsFields::backupPayload($data, 'backup_cleanup_') + CleanupSettingsFields::maintenancePayload($data);
   }
 }

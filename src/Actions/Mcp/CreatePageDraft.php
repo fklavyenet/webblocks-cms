@@ -5,9 +5,9 @@ namespace WebBlocks\Cms\Actions\Mcp;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Policies\McpPagePolicy;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
@@ -18,6 +18,7 @@ use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
 use WebBlocks\Cms\Support\Revisions\SnapshotContent;
 
 final class CreatePageDraft
@@ -27,6 +28,7 @@ final class CreatePageDraft
     private readonly LocaleResolver $locales,
     private readonly PageLayoutManager $layouts,
     private readonly PageDraftInitializer $drafts,
+    private readonly PageTranslationPayload $translationPayload,
     private readonly PageRevisionManager $revisions,
     private readonly McpPages $pages,
     private readonly McpDraftAccess $access,
@@ -43,7 +45,7 @@ final class CreatePageDraft
     } catch (\InvalidArgumentException) {
       throw new McpToolException('invalid_page_path');
     }
-    if (strlen($path) > 255 || PagePath::isReserved($path)) {
+    if (Validator::make(['path' => $path], ['path' => $this->translationPayload->pathRules()])->fails()) {
       throw new McpToolException('invalid_page_path');
     }
 
@@ -81,9 +83,8 @@ final class CreatePageDraft
         throw new McpToolException('layout_unavailable');
       }
 
-      $slug = PagePath::slugFromPath($path);
-      if (PageTranslation::query()->where('site_id', $siteId)->where('locale_id', $locale->id)
-        ->where(fn ($query) => $query->where('path', $path)->orWhere('slug', $slug))->exists()) {
+      $identity = ['name' => $input['title'], 'slug' => PagePath::slugFromPath($path), 'path' => $path];
+      if (Validator::make($identity, $this->translationPayload->identityRules($siteId, $locale->id, null))->fails()) {
         throw new McpToolException('page_path_conflict');
       }
 
@@ -93,12 +94,7 @@ final class CreatePageDraft
           'settings' => ['public_shell' => $layout],
           'created_by_user_id' => $user->getAuthIdentifier(),
           'updated_by_user_id' => $user->getAuthIdentifier(),
-        ], [
-          'locale_id' => $locale->id,
-          'name' => $input['title'],
-          'slug' => $slug,
-          'path' => $path,
-        ], $layout);
+        ], ['locale_id' => $locale->id] + $identity, $layout);
       } catch (UniqueConstraintViolationException) {
         throw new McpToolException('page_path_conflict');
       }

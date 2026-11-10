@@ -5,7 +5,6 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\NavigationItemReorderRequest;
 use WebBlocks\Cms\Http\Requests\Admin\NavigationItemRequest;
@@ -142,16 +141,7 @@ class NavigationItemController extends Controller
     $siteId = $request->integer('site_id');
     $items = $this->tree->validateAndNormalizeTreePayload($menuKey, $siteId, $request->validated('items'));
 
-    DB::transaction(function () use ($items): void {
-      foreach ($items as $item) {
-        NavigationItem::query()
-          ->whereKey($item['id'])
-          ->update([
-            'parent_id' => $item['parent_id'],
-            'position' => $item['position'],
-          ]);
-      }
-    });
+    $this->tree->saveTreeOrder($items);
 
     return response()->json([
       'ok' => true,
@@ -206,7 +196,6 @@ class NavigationItemController extends Controller
     $data['is_system'] = (bool) ($request->route('navigation')?->is_system ?? false);
 
     if ($data['link_type'] === NavigationItem::LINK_PAGE) {
-      $data['url'] = null;
       $data['site_id'] = Page::query()->find($data['page_id'])?->site_id ?? $data['site_id'];
 
       if (! $data['title'] && ! empty($data['page_id'])) {
@@ -214,21 +203,7 @@ class NavigationItemController extends Controller
       }
     }
 
-    if ($data['link_type'] === NavigationItem::LINK_CUSTOM_URL) {
-      $data['page_id'] = null;
-    }
-
-    if ($data['link_type'] === NavigationItem::LINK_COOKIE_SETTINGS) {
-      $data['page_id'] = null;
-      $data['url'] = null;
-      $data['target'] = '_self';
-    }
-
-    if ($data['link_type'] === NavigationItem::LINK_GROUP) {
-      $data['page_id'] = null;
-      $data['url'] = null;
-      $data['target'] = null;
-    }
+    $data = array_replace($data, NavigationItem::destinationFields($data['link_type'], $data['page_id'] ?? null, $data['url'], $data['target']));
 
     if (! $request->filled('position')) {
       $maxPosition = NavigationItem::query()

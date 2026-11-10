@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use RuntimeException;
+use WebBlocks\Cms\Actions\Plugins\EnablePlugin;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogRelease;
@@ -14,7 +15,6 @@ use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginCompatibility;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
-use WebBlocks\Cms\Support\Plugins\PluginDependencyManager;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
@@ -213,12 +213,7 @@ class InternalPluginController extends Controller
     }
 
     try {
-      app(PluginDependencyManager::class)->assertEnable([
-        'handle' => $definition->handle(), 'label' => $definition->labelText(), 'version' => $definition->versionText(),
-        'required_cms_version' => $definition->requiredCmsVersion(), 'dependencies' => $definition->dependencyDefinitions(),
-      ]);
-      app(PluginDatabaseSetup::class)->run($definition);
-      $this->plugins->enable($definition->handle(), $version);
+      app(EnablePlugin::class)->execute($definition, $version);
       $this->runtime->refresh(registerRoutes: true);
     } catch (RuntimeException $exception) {
       return $this->apiError('plugin_enable_failed', $exception->getMessage());
@@ -292,7 +287,7 @@ class InternalPluginController extends Controller
       return $definition;
     }
 
-    if ($definition->sourceText() !== 'manual_upload') {
+    if (! $definition->isManuallyInstalled()) {
       return $this->apiError('plugin_not_manually_uploaded', 'Only manually uploaded plugins can be uninstalled through this API.', 409);
     }
 
@@ -307,7 +302,7 @@ class InternalPluginController extends Controller
     }
 
     try {
-      $this->plugins->uninstall($definition->handle(), $version);
+      $this->plugins->uninstall($definition->handle(), $version, requireDisabled: true);
       $this->runtime->refresh(registerRoutes: true);
     } catch (RuntimeException $exception) {
       return $this->apiError('plugin_uninstall_failed', $exception->getMessage());

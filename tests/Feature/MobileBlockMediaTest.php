@@ -97,7 +97,7 @@ class MobileBlockMediaTest extends TestCase
     $normalized = $operations->normalizeBlock([
       'type' => $type, 'media_id' => $desktop->id, 'mobile_media_id' => $mobile->id,
       'children' => $type === 'card' ? [['type' => 'card_body', 'children' => [['type' => 'plain_text', 'translations' => ['content' => 'Example']]]]] : ($type === 'section' ? [['type' => 'plain_text', 'translations' => ['content' => 'Example']]] : []),
-    ], 'block', null, $errors, $warnings);
+    ], 'block', $parent, $errors, $warnings);
     $this->assertSame([], $errors);
     $block = $operations->createPageSlotBlock($page, $slot, $normalized, 'en', $parent, 0);
     $this->assertSame($mobile->id, $block->mobileMedia()?->id);

@@ -28,7 +28,7 @@ class InternalNavigationController extends Controller
 
   public function index(Request $request): JsonResponse
   {
-    $site = $this->siteFromRequest($request);
+    $site = $this->operations->requestedSite($request);
     $items = NavigationItem::query()
       ->when($request->attributes->has('cms_api_allowed_site_ids'), fn ($query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
       ->with(['page', 'children.page', 'translations.locale', 'children.translations.locale'])
@@ -56,7 +56,7 @@ class InternalNavigationController extends Controller
 
   public function show(Request $request, string $navigationMenu): JsonResponse
   {
-    $site = $this->siteFromRequest($request) ?? Site::primary();
+    $site = $this->operations->requestedSite($request) ?? Site::primary();
 
     if (! $site || ! in_array($navigationMenu, NavigationItem::menuKeys(), true)) {
       return $this->validationError([
@@ -78,7 +78,7 @@ class InternalNavigationController extends Controller
   {
     $errors = [];
     $warnings = [];
-    $site = $this->siteFromRequest($request);
+    $site = $this->operations->requestedSite($request);
     $normalized = $this->operations->normalizeNavigationMenu($request->json()->all(), $site, 'navigation_menu', $errors);
 
     if ($errors !== [] || ! $normalized) {
@@ -107,7 +107,7 @@ class InternalNavigationController extends Controller
   public function storeItem(Request $request, string $navigationMenu): JsonResponse
   {
     $errors = [];
-    $site = $this->siteFromRequest($request) ?? Site::primary();
+    $site = $this->operations->requestedSite($request) ?? Site::primary();
 
     if (! $site || ! in_array($navigationMenu, NavigationItem::menuKeys(), true)) {
       return $this->validationError([
@@ -142,7 +142,7 @@ class InternalNavigationController extends Controller
   public function updateItem(Request $request, string $navigationMenu, NavigationItem $item): JsonResponse
   {
     $errors = [];
-    $site = $this->siteFromRequest($request) ?? $item->site;
+    $site = $this->operations->requestedSite($request) ?? $item->site;
 
     if (! $this->itemBelongsToMenu($item, $navigationMenu, $site)) {
       return $this->validationError([
@@ -183,7 +183,7 @@ class InternalNavigationController extends Controller
 
   public function reorderItems(Request $request, string $navigationMenu): JsonResponse
   {
-    $site = $this->siteFromRequest($request) ?? Site::primary();
+    $site = $this->operations->requestedSite($request) ?? Site::primary();
 
     if (! $site || ! in_array($navigationMenu, NavigationItem::menuKeys(), true)) {
       return $this->validationError([
@@ -204,16 +204,7 @@ class InternalNavigationController extends Controller
       return $this->validationError($this->validationExceptionErrors($exception));
     }
 
-    DB::transaction(function () use ($normalized): void {
-      foreach ($normalized as $item) {
-        NavigationItem::query()
-          ->whereKey($item['id'])
-          ->update([
-            'parent_id' => $item['parent_id'],
-            'position' => $item['position'],
-          ]);
-      }
-    });
+    $this->tree->saveTreeOrder($normalized);
 
     $items = NavigationItem::query()
       ->with(['page', 'children.page', 'translations.locale', 'children.translations.locale'])
@@ -230,7 +221,7 @@ class InternalNavigationController extends Controller
 
   public function destroyItem(Request $request, string $navigationMenu, NavigationItem $item): JsonResponse
   {
-    $site = $this->siteFromRequest($request) ?? $item->site;
+    $site = $this->operations->requestedSite($request) ?? $item->site;
 
     if (! $this->itemBelongsToMenu($item, $navigationMenu, $site)) {
       return $this->validationError([
@@ -250,19 +241,6 @@ class InternalNavigationController extends Controller
       'deleted' => ['type' => 'navigation_item', 'id' => $item->id],
       'writes' => [['type' => 'navigation_item_delete', 'id' => $item->id]],
     ]);
-  }
-
-  private function siteFromRequest(Request $request): ?Site
-  {
-    $value = $request->query('site', $request->query('site_id', $request->input('site', $request->input('site_id'))));
-
-    if ($value === null || $value === '') {
-      return null;
-    }
-
-    return Site::query()
-      ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('handle', trim((string) $value)))
-      ->first();
   }
 
   private function itemBelongsToMenu(NavigationItem $item, string $navigationMenu, ?Site $site): bool
@@ -299,7 +277,6 @@ class InternalNavigationController extends Controller
   {
     $this->operations->rejectForbiddenKeys($payload, 'navigation_item', $errors);
 
-    $updates = [];
     $linkType = (string) ($payload['link_type'] ?? $item->link_type);
     $title = array_key_exists('label', $payload)
       ? trim((string) $payload['label'])
@@ -340,17 +317,20 @@ class InternalNavigationController extends Controller
     if ($parentId !== null && $parentChanged) {
       $parent = NavigationItem::query()->with('parent')->find((int) $parentId);
 
-      if (! $parent || $parent->menu_key !== $navigationMenu || (int) $parent->site_id !== (int) $site->id) {
-        $errors[] = $this->operations->error('navigation_item.parent_id', 'Parent item must belong to the same menu.');
-      } elseif ((int) $parent->id === (int) $item->id) {
-        $errors[] = $this->operations->error('navigation_item.parent_id', 'A navigation item cannot be moved under itself.');
-      } elseif ($parent->link_type !== NavigationItem::LINK_GROUP) {
-        $errors[] = $this->operations->error('navigation_item.parent_id', 'Only navigation groups can contain child items.');
-      } elseif ($this->wouldExceedDepth($item, $parent)) {
-        $errors[] = $this->operations->error('navigation_item.parent_id', 'Navigation depth cannot exceed 3 levels.');
+      $issue = $this->tree->parentPlacementIssue($parent, $site->id, $navigationMenu, $item, includeSubtree: true);
+      $message = match ($issue) {
+        'scope' => 'Parent item must belong to the same menu.',
+        'self' => 'A navigation item cannot be moved under itself.',
+        'group' => 'Only navigation groups can contain child items.',
+        'depth', 'cycle' => 'Navigation depth cannot exceed 3 levels.',
+        default => null,
+      };
+      if ($message !== null) {
+        $errors[] = $this->operations->error('navigation_item.parent_id', $message);
       }
     }
 
+    $resolvedPageId = null;
     if ($linkType === NavigationItem::LINK_PAGE) {
       if (! $pageId) {
         $errors[] = $this->operations->error('navigation_item.page_id', 'Select a page for page links.');
@@ -360,12 +340,10 @@ class InternalNavigationController extends Controller
         if (! $page || $page->isSystemPage() || (int) $page->site_id !== (int) $site->id) {
           $errors[] = $this->operations->error('navigation_item.page_id', 'Selected page must belong to the selected site.');
         } else {
-          $updates['page_id'] = $page->id;
+          $resolvedPageId = $page->id;
           $title = $title !== '' ? $title : $page->name;
         }
       }
-
-      $updates['url'] = null;
     }
 
     if ($linkType === NavigationItem::LINK_CUSTOM_URL) {
@@ -376,31 +354,25 @@ class InternalNavigationController extends Controller
       if (! $this->operations->isSafeNavigationUrl($url)) {
         $errors[] = $this->operations->error('navigation_item.url', 'Navigation item URL must be a safe internal path or http(s) URL.');
       }
-
-      $updates['page_id'] = null;
-      $updates['url'] = $url;
     }
 
     if ($linkType === NavigationItem::LINK_COOKIE_SETTINGS) {
-      if ((array_key_exists('url', $payload) && $url !== '') || (array_key_exists('page_id', $payload) && $pageId) || (array_key_exists('target', $payload) && $target !== '_self')) {
+      if (NavigationItem::overridesCookieDestination(
+        array_key_exists('url', $payload) ? $url : null,
+        array_key_exists('page_id', $payload) ? $pageId : null,
+        array_key_exists('target', $payload) ? $target : null,
+      )) {
         $errors[] = $this->operations->error('navigation_item.link_type', __('webblocks-cms::consent.fixed_destination'));
       }
-      $updates['page_id'] = null;
-      $updates['url'] = null;
-      $target = '_self';
     }
 
     if ($linkType === NavigationItem::LINK_GROUP) {
       if ($title === '') {
         $errors[] = $this->operations->error('navigation_item.label', 'Navigation group label is required.');
       }
-
-      $updates['page_id'] = null;
-      $updates['url'] = null;
-      $updates['target'] = null;
-    } else {
-      $updates['target'] = $target;
     }
+
+    $updates = NavigationItem::destinationFields($linkType, $resolvedPageId, $url, $target);
 
     if (array_key_exists('icon', $payload)) {
       $icon = $this->iconCatalog->normalizeSlug($payload['icon']);
@@ -423,37 +395,6 @@ class InternalNavigationController extends Controller
       'visibility' => $visibility,
       'is_system' => (bool) $item->is_system,
     ];
-  }
-
-  private function wouldExceedDepth(NavigationItem $item, NavigationItem $parent): bool
-  {
-    $parentDepth = 1;
-    $cursor = $parent;
-
-    while ($cursor) {
-      if ((int) $cursor->id === (int) $item->id) {
-        return true;
-      }
-
-      $cursor = $cursor->parent;
-
-      if ($cursor) {
-        $parentDepth++;
-      }
-    }
-
-    return ($parentDepth + $this->descendantDepth($item)) > NavigationTree::MAX_DEPTH;
-  }
-
-  private function descendantDepth(NavigationItem $item): int
-  {
-    $item->loadMissing('children.children');
-
-    if ($item->children->isEmpty()) {
-      return 1;
-    }
-
-    return 1 + (int) $item->children->map(fn (NavigationItem $child) => $this->descendantDepth($child))->max();
   }
 
   private function validationExceptionErrors(ValidationException $exception): array

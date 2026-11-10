@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use WebBlocks\Cms\Actions\Pages\WritePageSlotSource;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\Page;
@@ -15,6 +16,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
+use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
@@ -31,6 +33,7 @@ class InternalSharedSlotController extends Controller
     private readonly InternalContentApiPresenter $presenter,
     private readonly SharedSlotSourcePageManager $sourcePages,
     private readonly BlockDeletionManager $blockDeletionManager,
+    private readonly PageBlockStructure $blockStructure,
     private readonly SharedSlotRevisionManager $revisionManager,
     private readonly BlockTypeApiAuthoringPolicy $apiAuthoringPolicy,
     private readonly CmsApiTokenCapabilities $capabilities,
@@ -38,7 +41,7 @@ class InternalSharedSlotController extends Controller
 
   public function index(Request $request): JsonResponse
   {
-    $site = $this->siteFromRequest($request);
+    $site = $this->operations->requestedSite($request);
     $sharedSlots = SharedSlot::query()
       ->when($request->attributes->has('cms_api_allowed_site_ids'), fn ($query) => $query->whereIn('site_id', $request->attributes->get('cms_api_allowed_site_ids')))
       ->with(['site', 'slotBlocks.block.blockType', 'slotBlocks.block.slotType'])
@@ -62,7 +65,7 @@ class InternalSharedSlotController extends Controller
   {
     $errors = [];
     $warnings = [];
-    $site = $this->siteFromRequest($request);
+    $site = $this->operations->requestedSite($request);
     $locale = $this->operations->resolveLocale($request->input('locale', 'en'), $site ?? Site::primary(), 'shared_slot.locale', $errors);
     $normalized = $this->operations->normalizeSharedSlot($request->json()->all(), $site, 'shared_slot', $errors, $warnings);
 
@@ -130,12 +133,7 @@ class InternalSharedSlotController extends Controller
       $sharedSlot->update($updates + ['updated_by_user_id' => null]);
       $fresh = $sharedSlot->fresh();
 
-      $this->sourcePages->ensureFor($fresh);
-      $this->sourcePages->rebuildAssignments($fresh);
-
-      if (! $before->is_active && $fresh->is_active) {
-        app(ContactConsentRequirements::class)->assertSharedSlot($fresh);
-      }
+      $this->sourcePages->syncAfterEdit($before, $fresh);
 
       $this->captureSharedSlotRevision($before, $fresh);
     });
@@ -163,7 +161,7 @@ class InternalSharedSlotController extends Controller
       ], 409);
     }
 
-    $pageSlots = $sharedSlot->pageSlots()->with('page')->get();
+    $pageSlots = $this->sourcePages->deleteIfUnused($sharedSlot);
 
     if ($pageSlots->isNotEmpty()) {
       return response()->json([
@@ -184,11 +182,6 @@ class InternalSharedSlotController extends Controller
     }
 
     $id = $sharedSlot->id;
-
-    DB::transaction(function () use ($sharedSlot): void {
-      $this->sourcePages->deleteFor($sharedSlot);
-      $sharedSlot->delete();
-    });
 
     return $this->ok(['deleted' => ['type' => 'shared_slot', 'id' => $id]]);
   }
@@ -283,20 +276,20 @@ class InternalSharedSlotController extends Controller
 
   public function storeBlock(Request $request, SharedSlot $sharedSlot): JsonResponse
   {
-    $errors = [];
     $warnings = [];
-    $site = $sharedSlot->site ?? $sharedSlot->site()->first();
-    $locale = $this->operations->resolveLocale($request->input('locale', 'en'), $site, 'block.locale', $errors);
-    $parent = $this->parentBlockFromRequest($request, $sharedSlot, $errors);
-    $blockPayload = $request->json()->all();
-    unset($blockPayload['parent_id'], $blockPayload['parent_block_id']);
-    $normalized = $this->operations->normalizeBlock($blockPayload, 'block', $parent?->blockType, $errors, $warnings);
+    $block = DB::transaction(function () use ($request, $sharedSlot, &$warnings): Block|JsonResponse {
+      $errors = [];
+      $site = $sharedSlot->site ?? $sharedSlot->site()->first();
+      $locale = $this->operations->resolveLocale($request->input('locale', 'en'), $site, 'block.locale', $errors);
+      $parent = $this->parentBlockFromRequest($request, $sharedSlot, $errors);
+      $blockPayload = $request->json()->all();
+      unset($blockPayload['parent_id'], $blockPayload['parent_block_id']);
+      $normalized = $this->operations->normalizeBlock($blockPayload, 'block', $parent, $errors, $warnings);
 
-    if ($errors !== [] || ! $normalized || ! $locale) {
-      return $this->validationError($errors);
-    }
+      if ($errors !== [] || ! $normalized || ! $locale) {
+        return $this->validationError($errors);
+      }
 
-    $block = DB::transaction(function () use ($sharedSlot, $normalized, $locale, $parent) {
       $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
       $sortOrder = (int) $sourcePage->blocks()->where('parent_id', $parent?->id)->max('sort_order') + 1;
       $block = $this->operations->createSharedSlotBlock($sharedSlot, $normalized, $locale->code, $parent, $sortOrder);
@@ -304,6 +297,10 @@ class InternalSharedSlotController extends Controller
 
       return $block;
     });
+
+    if ($block instanceof JsonResponse) {
+      return $block;
+    }
 
     return response()->json([
       'ok' => true,
@@ -328,15 +325,23 @@ class InternalSharedSlotController extends Controller
       return null;
     }
 
-    $sourcePage = $this->sourcePages->ensureFor($sharedSlot);
-    $parent = Block::query()
+    $sourcePage = $this->sourcePages->findFor($sharedSlot);
+    $parent = $sourcePage?->blocks()
       ->with('blockType')
       ->whereKey((int) $parentId)
-      ->where('page_id', $sourcePage->id)
+      ->where('slot_type_id', $this->sourcePages->editorSlotTypeFor($sharedSlot)->id)
+      ->lockForUpdate()
       ->first();
 
     if (! $parent) {
       $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block must belong to this Shared Slot source tree.'];
+
+      return null;
+    }
+
+    $chain = $this->blockStructure->placementChain($parent, lock: true);
+    if ($chain === null || ! $this->blockStructure->allowsPlacementChain($chain)) {
+      $errors[] = ['path' => 'block.parent_id', 'message' => 'Parent block must have a valid ancestor chain in this Shared Slot.'];
 
       return null;
     }
@@ -431,14 +436,7 @@ class InternalSharedSlotController extends Controller
     }
 
     DB::transaction(function () use ($page, $pageSlot, $sourceType): void {
-      $pageSlot->update([
-        'source_type' => $sourceType,
-        'shared_slot_id' => null,
-      ]);
-
-      if ($page->status === Page::STATUS_PUBLISHED) {
-        app(ContactConsentRequirements::class)->assertPage($page->fresh());
-      }
+      app(WritePageSlotSource::class)->execute($page, $pageSlot, $sourceType, null);
 
       // Blocks the page already owns are untouched either way: page-owned
       // renders them again, disabled keeps the wrapper and renders nothing.
@@ -515,59 +513,38 @@ class InternalSharedSlotController extends Controller
       ]);
     }
 
-    $parentIds = $blocks->map(fn (Block $block) => $block->parent_id)->uniqueStrict();
-
-    if ($parentIds->count() !== 1) {
+    if (! $this->blockStructure->hasSingleParentGroup($blocks)) {
       return $this->validationError([
         ['path' => 'blocks', 'message' => 'Submitted blocks must belong to the same parent group.'],
       ]);
     }
 
-    $parentId = $parentIds->first();
+    $parentId = $blocks->first()->parent_id;
 
-    $siblingIds = Block::query()
-      ->where('page_id', $sourcePage->id)
-      ->where('slot_type_id', $slotType->id)
-      ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
-      ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
-      ->pluck('id')
-      ->map(fn ($id) => (int) $id);
-
-    if ($siblingIds->sort()->values()->all() !== $blockIds->sort()->values()->all()) {
-      return $this->validationError([
-        ['path' => 'blocks', 'message' => 'Submitted blocks must contain the full sibling group for one parent.'],
-      ]);
-    }
-
-    if ($this->apiAuthoringPolicy->blockIdsScopeHasHumanOnlyBlock($blockIds)) {
-      return $this->apiAuthoringPolicy->rejectionResponse('blocks');
-    }
-
-    DB::transaction(function () use ($sharedSlot, $sourcePage, $slotType, $blockIds, $parentId, $request): void {
+    return DB::transaction(function () use ($sharedSlot, $sourcePage, $slotType, $blockIds, $parentId, $request): JsonResponse {
       $siblings = Block::query()
         ->where('page_id', $sourcePage->id)
         ->where('slot_type_id', $slotType->id)
-        ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
-        ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
+        ->where('parent_id', $parentId)
         ->lockForUpdate()
         ->get(['id', 'sort_order']);
 
-      $positionMap = $blockIds->flip();
+      if (! $this->blockStructure->containsExactly($siblings, $blockIds->all())) {
+        return $this->validationError([
+          ['path' => 'blocks', 'message' => 'Submitted blocks must contain the full sibling group for one parent.'],
+        ]);
+      }
 
-      $siblings
-        ->sortBy(fn (Block $block) => $positionMap->get($block->id))
-        ->values()
-        ->each(function (Block $block, int $index): void {
-          if ($block->sort_order !== $index) {
-            $block->update(['sort_order' => $index]);
-          }
-        });
+      if ($this->apiAuthoringPolicy->blockIdsScopeHasHumanOnlyBlock($blockIds)) {
+        return $this->apiAuthoringPolicy->rejectionResponse('blocks');
+      }
 
+      $this->blockStructure->saveOrder($siblings, $blockIds->all());
       $this->sourcePages->rebuildAssignments($sharedSlot);
       $this->captureRevision($sharedSlot, $request, 'block_reordered', 'Shared Slot block order updated', 'Shared Slot block order was changed through the Internal Content API.');
-    });
 
-    return $this->ok(['message' => 'Saved']);
+      return $this->ok(['message' => 'Saved']);
+    });
   }
 
   public function deleteBlock(Request $request, SharedSlot $sharedSlot, Block $block): JsonResponse
@@ -585,13 +562,12 @@ class InternalSharedSlotController extends Controller
     }
 
     $deletedCount = DB::transaction(function () use ($sharedSlot, $block, $request): int {
-      $order = $this->blockDeletionManager->recursiveDeleteOrder($block);
-      $order->each(fn (Block $candidate) => $candidate->delete());
+      $deleted = $this->blockDeletionManager->deleteSubtree($block);
 
       $this->sourcePages->rebuildAssignments($sharedSlot);
       $this->captureRevision($sharedSlot, $request, 'block_deleted', 'Shared Slot block deleted', 'A Shared Slot block was deleted through the Internal Content API.');
 
-      return $order->count();
+      return $deleted;
     });
 
     return $this->ok(['message' => 'Deleted', 'deleted_blocks_count' => $deletedCount]);
@@ -633,19 +609,6 @@ class InternalSharedSlotController extends Controller
 
     $sharedSlot->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
     $this->revisionManager->capture($sharedSlot->fresh(), $request->user(), $event, $label, $summary);
-  }
-
-  private function siteFromRequest(Request $request): ?Site
-  {
-    $value = $request->query('site', $request->query('site_id', $request->input('site', $request->input('site_id'))));
-
-    if ($value === null || $value === '') {
-      return null;
-    }
-
-    return Site::query()
-      ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('handle', trim((string) $value)))
-      ->first();
   }
 
   private function hasCapability(Request $request, string $capability): bool

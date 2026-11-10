@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use WebBlocks\Cms\Actions\Blocks\UpdateBlockStatus;
 use WebBlocks\Cms\Http\Requests\Admin\BlockIndexRequest;
@@ -402,6 +403,7 @@ class BlockController extends Controller
     DB::transaction(function () use ($block, $page, $columnItems, $featureItems, $linkListItems, $data, $localeCode, $sharedSlot, $existingPage): void {
       app(EditorRecovery::class)->guardSave(request(), $existingPage, $block);
       app(EditorRecovery::class)->completeSave(request(), $existingPage, $block);
+      $data = $this->applySplitMove($block, $data);
       $this->blockPayloadWriter->save($block, $page, $data, $localeCode);
       $this->syncColumnItems($block, $columnItems, $localeCode);
       $this->syncFeatureItems($block, $featureItems, $localeCode);
@@ -454,6 +456,44 @@ class BlockController extends Controller
     return app(EditorRecovery::class)->savedResponse($request, $redirect);
   }
 
+  private function applySplitMove(Block $block, array $data): array
+  {
+    $replacementId = (int) ($data['replacement_block_id'] ?? 0);
+    unset($data['replacement_block_id']);
+    $parentId = array_key_exists('parent_id', $data) ? ((int) $data['parent_id'] ?: null) : $block->parent_id;
+    $sameSlot = (int) $data['page_id'] === $block->page_id && (int) $data['slot_type_id'] === $block->slot_type_id;
+    $checkSplit = $replacementId || ($block->parent_id !== null && (! $sameSlot || $parentId !== $block->parent_id));
+    $blocks = Block::query()->where('page_id', $block->page_id)->where('slot_type_id', $block->slot_type_id)
+      ->when(! $checkSplit, fn (Builder $query) => $query->whereKey($block->id))
+      ->with('blockType')->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+    $current = $blocks->get($block->id);
+    $locale = app(AdminLocaleResolver::class)->locale();
+    $translator = app(CmsTranslator::class);
+    if (! $current || $current->parent_id !== $block->parent_id) {
+      throw ValidationException::withMessages(['parent_id' => $translator->admin('block_form.split_move_stale', $locale)]);
+    }
+
+    if (! $replacementId) {
+      if ($checkSplit && $current->slot_type_id && $this->blockStructure->needsSplitReplacement($current, $blocks)) {
+        throw ValidationException::withMessages(['parent_id' => $translator->admin('block_form.split_replacement_required', $locale)]);
+      }
+
+      return $data;
+    }
+
+    $parent = $blocks->get($parentId);
+    $replacement = $blocks->get($replacementId);
+    $type = BlockType::query()->find($data['block_type_id'])?->slug ?? '';
+    if (! $sameSlot || ($parentId && ! $parent) || ! $replacement
+      || ! $this->blockStructure->exchangeSplitChild($current, $parent, $replacement, $blocks, $type)) {
+      throw ValidationException::withMessages(['replacement_block_id' => $translator->admin('block_form.split_replacement_invalid', $locale)]);
+    }
+
+    $data['sort_order'] = $current->sort_order;
+
+    return $data;
+  }
+
   public function destroy(Request $request, Block $block): RedirectResponse
   {
     [$sharedSlot, $page] = $this->editingContext($block);
@@ -471,9 +511,7 @@ class BlockController extends Controller
       $page = $block->page()->firstOrFail();
 
       if ($deleteDescendants) {
-        $this->blockDeletionManager
-          ->recursiveDeleteOrder($block)
-          ->each(fn (Block $candidate) => $candidate->delete());
+        $this->blockDeletionManager->deleteSubtree($block);
       } else {
         $block->delete();
       }

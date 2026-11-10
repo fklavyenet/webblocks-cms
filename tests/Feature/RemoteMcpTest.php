@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Auth\EloquentUserProvider;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -186,17 +187,23 @@ class RemoteMcpTest extends TestCase
     PageLayout::create(['handle' => 'default', 'name' => 'Default', 'is_active' => true]);
     $user = $this->operator();
     $token = $this->connect($user, $source->site_id, scope: 'pages:read pages:create-draft');
-    $input = ['locale' => 'en', 'title' => 'MCP draft', 'path' => '/guides/mcp'];
+    $input = ['locale' => 'en', 'title' => 'MCP draft', 'path' => '/guides/0'];
     $this->tool('create_page_draft', array_replace($input, ['path' => '/']), $token)
       ->assertJsonPath('result.structuredContent.code', 'page_path_conflict');
+    $this->tool('create_page_draft', array_replace($input, ['path' => '/guides/home']), $token)
+      ->assertJsonPath('result.structuredContent.code', 'page_path_conflict');
     $this->tool('create_page_draft', array_replace($input, ['path' => '/webadmin/test']), $token)
+      ->assertJsonPath('result.structuredContent.code', 'invalid_page_path');
+    $this->tool('create_page_draft', array_replace($input, ['path' => str_repeat('a', 255)]), $token)
       ->assertJsonPath('result.structuredContent.code', 'invalid_page_path');
     $this->tool('create_page_draft', $input + ['layout' => 'missing'], $token)
       ->assertJsonPath('result.structuredContent.code', 'layout_unavailable');
     $this->tool('create_page_draft', array_replace($input, ['locale' => 'fr']), $token)
       ->assertJsonPath('result.structuredContent.code', 'locale_unavailable');
+    $this->assertSame(1, Page::count());
 
     $draftId = $this->tool('create_page_draft', $input, $token)->json('result.structuredContent.draft_id');
+    $this->assertSame('0', Page::findOrFail($draftId)->translations()->sole()->slug);
     $this->tool('create_page_draft', array_replace($input, ['title' => 'Different draft']), $token)
       ->assertJsonPath('result.structuredContent.code', 'page_path_conflict');
     $otherToken = $this->connect($this->operator(), $source->site_id, scope: 'pages:read pages:create-draft');
@@ -208,10 +215,47 @@ class RemoteMcpTest extends TestCase
     $this->assertSame(1, DB::table('wbcms_mcp_page_drafts')->count());
   }
 
+  public function test_new_draft_and_mcp_creation_records_roll_back_together_and_allow_retry(): void
+  {
+    [$source, $hero] = $this->pageFixture();
+    $layout = PageLayout::create(['handle' => 'default', 'name' => 'Default', 'is_active' => true]);
+    $layout->layoutSlots()->create(['slot_type_id' => $hero->slot_type_id, 'slot_name' => 'main', 'is_active' => true]);
+    $token = $this->connect($this->operator(), $source->site_id, scope: 'pages:read pages:create-draft', draftAccess: 'created');
+    $input = ['locale' => 'en', 'title' => 'MCP retry', 'path' => '/guides/mcp-retry'];
+    $armed = true;
+    DB::listen(function (QueryExecuted $query) use (&$armed): void {
+      if ($armed && str_starts_with(strtolower($query->sql), 'insert') && str_contains($query->sql, 'wbcms_mcp_page_drafts')) {
+        $armed = false;
+        throw new \RuntimeException('Synthetic failure after the MCP receipt was written.');
+      }
+    });
+
+    $this->tool('create_page_draft', $input, $token, status: 500);
+    $this->assertFalse($armed);
+    $this->assertDatabaseCount('wbcms_pages', 1);
+    $this->assertDatabaseCount('wbcms_page_translations', 2);
+    $this->assertDatabaseCount('wbcms_page_slots', 1);
+    $this->assertDatabaseEmpty('wbcms_page_revisions');
+    $this->assertDatabaseEmpty('wbcms_mcp_page_drafts');
+    $this->assertDatabaseEmpty('wbcms_mcp_grant_drafts');
+
+    $draft = $this->tool('create_page_draft', $input, $token)->json('result.structuredContent');
+    $page = Page::findOrFail($draft['draft_id']);
+    $this->assertSame(Page::STATUS_DRAFT, $page->status);
+    $this->assertSame($input['path'], $page->translations()->sole()->path);
+    $this->assertSame($hero->slot_type_id, $page->slots()->sole()->slot_type_id);
+    $this->assertSame('page_created', $page->revisions()->sole()->event);
+    $this->tool('create_page_draft', $input, $token)->assertJsonPath('result.structuredContent', $draft);
+    $this->assertDatabaseCount('wbcms_mcp_page_drafts', 1);
+    $this->assertDatabaseCount('wbcms_mcp_grant_drafts', 1);
+  }
+
   public function test_standalone_draft_structure_can_add_move_and_reorder_without_stale_or_partial_writes(): void
   {
     [$page, $hero] = $this->pageFixture();
     $page->update(['status' => Page::STATUS_DRAFT]);
+    $aside = SlotType::create(['slug' => 'aside', 'name' => 'Aside', 'status' => 'published', 'sort_order' => 1]);
+    $page->slots()->create(['slot_type_id' => $aside->id, 'source_type' => 'page', 'sort_order' => 1]);
     foreach (['stack', 'plain_text'] as $type) {
       BlockType::create(['slug' => $type, 'name' => $type, 'status' => 'published']);
     }
@@ -227,6 +271,11 @@ class RemoteMcpTest extends TestCase
     $stack = $this->tool('edit_draft_structure', $reference + [
       'version' => $version, 'operation' => 'add', 'slot' => 'main', 'type' => 'stack',
     ], $token)->assertJsonPath('result.structuredContent.draft_id', $page->id)->json('result.structuredContent');
+    $this->tool('edit_draft_structure', $reference + [
+      'version' => $stack['version'], 'operation' => 'add', 'slot' => 'aside', 'type' => 'plain_text',
+      'parent_id' => $stack['block_ids'][0], 'text' => ['content' => 'Wrong slot'],
+    ], $token)->assertJsonPath('result.structuredContent.code', 'invalid_block_placement');
+    $this->assertSame(2, $page->blocks()->count());
     $paragraph = $this->tool('edit_draft_structure', $reference + [
       'version' => $stack['version'], 'operation' => 'add', 'slot' => 'main', 'type' => 'plain_text',
       'text' => ['content' => 'MCP paragraph'],
@@ -254,6 +303,53 @@ class RemoteMcpTest extends TestCase
     $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
     $this->assertSame(4, $page->revisions()->count());
     $this->get($preview)->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')->assertSee('MCP paragraph');
+  }
+
+  public function test_draft_structure_assembles_a_split_and_requires_an_exchange_to_move_out_of_it(): void
+  {
+    [$page, $heading] = $this->pageFixture(type: 'header');
+    $page->update(['status' => Page::STATUS_DRAFT]);
+    $splitType = BlockType::create(['slug' => 'split', 'name' => 'Split', 'status' => 'published']);
+    $plain = BlockType::create(['slug' => 'plain_text', 'name' => 'Plain Text', 'status' => 'published']);
+    $split = $page->blocks()->create([
+      'type' => 'split', 'block_type_id' => $splitType->id, 'slot_type_id' => $heading->slot_type_id, 'status' => 'draft',
+    ]);
+    $replacement = $page->blocks()->create([
+      'block_type_id' => $plain->id, 'slot_type_id' => $heading->slot_type_id, 'status' => 'draft', 'sort_order' => 7,
+    ]);
+    $heading->update(['parent_id' => $split->id, 'sort_order' => 0]);
+    $token = $this->connect($this->operator(), $page->site_id, 'pages:read pages:write-draft-structure pages:read-draft-structure');
+    $reference = ['page_id' => $page->id, 'locale' => 'en'];
+    $version = $this->tool('get_draft_structure', $reference, $token)->json('result.structuredContent.version');
+    $add = $reference + [
+      'operation' => 'add', 'slot' => 'main', 'type' => 'plain_text', 'parent_id' => $split->id,
+      'text' => ['content' => 'Second side'],
+    ];
+
+    $added = $this->tool('edit_draft_structure', $add + ['version' => $version], $token)
+      ->assertJsonPath('result.structuredContent.draft_id', $page->id)->json('result.structuredContent');
+    $this->tool('edit_draft_structure', $add + ['version' => $added['version']], $token)
+      ->assertJsonPath('result.structuredContent.code', 'invalid_block_placement');
+    $this->assertSame(2, $split->children()->count());
+    $this->assertSame(1, $page->revisions()->count());
+
+    $move = $reference + [
+      'operation' => 'move', 'slot' => 'main', 'block_id' => $heading->id, 'version' => $added['version'],
+    ];
+    $this->tool('edit_draft_structure', $move, $token)->assertJsonPath('result.structuredContent.code', 'invalid_block_placement');
+    $this->tool('edit_draft_structure', $move + ['replacement_block_id' => $added['block_ids'][0]], $token)
+      ->assertJsonPath('result.structuredContent.code', 'invalid_block_placement');
+    $this->assertSame($split->id, $heading->fresh()->parent_id);
+    $this->assertSame(1, $page->revisions()->count());
+
+    $this->tool('edit_draft_structure', $move + ['replacement_block_id' => $replacement->id], $token)
+      ->assertJsonPath('result.structuredContent.block_ids', [$heading->id, $replacement->id]);
+    $this->assertNull($heading->fresh()->parent_id);
+    $this->assertSame(7, $heading->fresh()->sort_order);
+    $this->assertSame($split->id, $replacement->fresh()->parent_id);
+    $this->assertSame(0, $replacement->fresh()->sort_order);
+    $this->assertSame(2, $split->children()->count());
+    $this->assertSame(2, $page->revisions()->count());
   }
 
   public function test_staged_structure_moves_require_both_slots_to_be_promoted_together(): void
@@ -741,9 +837,11 @@ class RemoteMcpTest extends TestCase
       ->assertJsonPath('result.structuredContent.blocks.0.text.content', 'Inherited copy')
       ->json('result.structuredContent.version');
 
-    $this->tool('update_draft_block', $reference + [
-      'block_id' => $hero->id, 'version' => $version, 'text' => ['url' => 'https://example.test/'],
-    ], $token)->assertJsonPath('result.structuredContent.code', 'invalid_request');
+    foreach ([['url' => 'https://example.test/'], ['eyebrow' => 'A valid text field outside the MCP Hero allowlist'], ['content' => str_repeat('x', 8001)]] as $text) {
+      $this->tool('update_draft_block', $reference + [
+        'block_id' => $hero->id, 'version' => $version, 'text' => $text,
+      ], $token)->assertJsonPath('result.structuredContent.code', 'invalid_request');
+    }
     $this->assertSame(0, app(InternalContentPlanService::class)->stagedDrafts($page)->count());
 
     $updated = $this->tool('update_draft_block', $reference + [
@@ -817,13 +915,18 @@ class RemoteMcpTest extends TestCase
     $image->imageTranslations()->create(['locale_id' => $english->id, 'caption' => 'Existing caption', 'alt_text' => 'Existing alt']);
 
     $media = ['disk' => 'public', 'kind' => Media::KIND_IMAGE, 'visibility' => 'public', 'mime_type' => 'image/png', 'uploaded_by' => $user->id];
-    $available = Media::create($media + ['path' => 'example.png', 'filename' => 'example.png', 'original_name' => 'example.png', 'title' => 'MCP image']);
-    $foreign = Media::create($media + ['path' => 'other.png', 'filename' => 'other.png', 'original_name' => 'other.png', 'title' => 'MCP foreign image']);
+    $available = Media::create($media + ['path' => 'example.png', 'filename' => 'example.png', 'original_name' => 'example.png', 'title' => 'MCP 50%_offer']);
+    $foreign = Media::create($media + ['path' => 'other.png', 'filename' => 'other.png', 'original_name' => 'other.png', 'title' => 'MCP foreign 50XXoffer']);
+    $alternate = Media::create($media + ['path' => 'alternate.png', 'filename' => 'alternate.png', 'title' => 'Special 50XXoffer']);
     $otherSite->update(['favicon_media_id' => $foreign->id]);
 
     $token = $this->connect($user, $page->site_id, scope: 'pages:read pages:write-content-draft pages:read-content media:read');
     $this->tool('find_media', ['q' => 'MCP'], $token)->assertJsonCount(1, 'result.structuredContent.images')
       ->assertJsonPath('result.structuredContent.images.0.media_id', $available->id);
+    $this->tool('find_media', ['q' => '50%_offer'], $token)->assertJsonCount(1, 'result.structuredContent.images')
+      ->assertJsonPath('result.structuredContent.images.0.media_id', $available->id);
+    $this->tool('find_media', ['q' => '50%_offer', 'search_mode' => 'pattern'], $token)->assertJsonCount(2, 'result.structuredContent.images')
+      ->assertJsonPath('result.structuredContent.images.1.media_id', $alternate->id);
 
     $reference = ['page_id' => $page->id, 'locale' => 'en'];
     $version = $this->tool('get_page_content', $reference, $token)->json('result.structuredContent.version');
@@ -871,6 +974,11 @@ class RemoteMcpTest extends TestCase
     $this->assertSame($bytes, Storage::disk('public')->get($media->path));
     $this->tool('find_media', ['q' => 'river'], $token)
       ->assertJsonPath('result.structuredContent.images.0.media_id', $id);
+    foreach (['title' => 255, 'alt_text' => 255, 'caption' => 2000, 'description' => 2000] as $field => $limit) {
+      $this->tool('upload_media', [$field => str_repeat('ü', $limit + 1)] + $input, $token)
+        ->assertJsonPath('result.structuredContent.code', 'invalid_request');
+    }
+    $this->assertSame(1, Media::count());
     $this->tool('upload_media', [
       'filename' => 'document.txt', 'content_base64' => base64_encode(str_repeat('a', 512 * 1024)),
     ], $token)->assertJsonPath('result.structuredContent.size', 512 * 1024);

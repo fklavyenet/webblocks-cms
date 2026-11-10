@@ -113,6 +113,25 @@ class PageRevisionManager
       ])->all();
   }
 
+  /** Record a translation change in the caller's transaction. */
+  public function recordTranslationChange(
+    Page $page,
+    ?User $actor,
+    ?string $label = null,
+    ?string $reason = null,
+    ?string $source = null,
+    bool $touch = false,
+  ): void {
+    $page->forceFill(['updated_by_user_id' => $actor?->id]);
+    if ($touch) {
+      $page->touch();
+    } else {
+      $page->save();
+    }
+
+    $this->capture($page->fresh(), $actor, $label, $reason, event: 'page_updated', source: $source);
+  }
+
   public function restore(Page $page, PageRevision $revision, User $actor, array $confirmedTranslationRemovalLocaleIds = []): void
   {
     if (! $this->revisionsTableExists()) {

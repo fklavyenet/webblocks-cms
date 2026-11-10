@@ -6,9 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Symfony\Component\HttpFoundation\Response;
-use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -43,17 +43,7 @@ class InternalPageRenderController extends Controller
       ], 422);
     }
 
-    $page->load([
-      'site',
-      'translations.locale',
-      'slots.slotType',
-      'slots.sharedSlot',
-      'pageAssets',
-      'blocks' => fn ($query) => $query
-        ->with($this->blockRelations())
-        ->orderBy('sort_order')
-        ->orderBy('id'),
-    ]);
+    $this->presenter->loadPreviewRelations($page);
 
     $translation = $this->resolveTranslation($request, $page);
 
@@ -116,13 +106,7 @@ class InternalPageRenderController extends Controller
       return $page->defaultTranslation();
     }
 
-    $locale = Locale::query()
-      ->when(
-        is_numeric($requested),
-        fn ($query) => $query->whereKey((int) $requested),
-        fn ($query) => $query->where('code', Locale::normalizeCode($requested)),
-      )
-      ->first();
+    $locale = app(LocaleResolver::class)->resolveReference($requested);
 
     $translation = $locale
       ? $page->translations->first(fn (PageTranslation $candidate) => (int) $candidate->locale_id === (int) $locale->id)
@@ -145,21 +129,4 @@ class InternalPageRenderController extends Controller
   /**
    * @return array<int|string, mixed>
    */
-  private function blockRelations(): array
-  {
-    return [
-      'blockType',
-      'slotType',
-      'asset',
-      'blockAssets.asset',
-      'textTranslations',
-      'buttonTranslations',
-      'imageTranslations',
-      'contactFormTranslations',
-      'children' => fn ($query) => $query
-        ->with($this->blockRelations())
-        ->orderBy('sort_order')
-        ->orderBy('id'),
-    ];
-  }
 }

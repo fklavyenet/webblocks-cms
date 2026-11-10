@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Controllers\InternalContentApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\MaintenanceCleanupSettingsRequest;
+use WebBlocks\Cms\Support\System\CleanupSettingsFields;
 use WebBlocks\Cms\Support\System\MaintenanceCleanup;
 use WebBlocks\Cms\Support\System\MaintenanceCleanupResult;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -36,20 +37,7 @@ class InternalMaintenanceCleanupController extends Controller
 
   public function update(MaintenanceCleanupSettingsRequest $request): JsonResponse
   {
-    $validated = $request->validated();
-    $values = [
-      SystemSettings::CLEANUP_ASSET_REVISION_DAYS => $validated['asset_revision_days'],
-      SystemSettings::CLEANUP_KEEP_LATEST_ASSET_REVISIONS => $validated['keep_latest_asset_revisions'],
-      SystemSettings::CLEANUP_TEMPORARY_WORKSPACE_HOURS => $validated['temporary_workspace_hours'],
-      SystemSettings::CLEANUP_PAGE_REVISION_DAYS => $validated['page_revision_days'],
-      SystemSettings::CLEANUP_KEEP_LATEST_PAGE_REVISIONS => $validated['keep_latest_page_revisions'],
-      SystemSettings::CLEANUP_SHARED_SLOT_REVISION_DAYS => $validated['shared_slot_revision_days'],
-      SystemSettings::CLEANUP_KEEP_LATEST_SHARED_SLOT_REVISIONS => $validated['keep_latest_shared_slot_revisions'],
-    ];
-    foreach ($validated['automatic'] ?? [] as $category => $enabled) {
-      $values[SystemSettings::CLEANUP_AUTOMATIC_KEYS[$category]] = $enabled;
-    }
-    $this->settings->save($values);
+    $this->settings->save(CleanupSettingsFields::maintenancePayload($request->validated()));
 
     return $this->show();
   }

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\InternalContentApi;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Str;
+use WebBlocks\Cms\Support\Media\MediaUploadRules;
 
 /**
  * Builds the `media_library` section of GET /content-contract from the router.
@@ -91,12 +92,8 @@ class MediaContractRegistry
       'read_transitional_capability' => 'content.read',
       'write_requires_capability' => 'media.write',
       'write_scope' => $this->writeScope(),
-      'supported_update_fields' => [
-        'title',
-        'alt_text',
-        'caption',
-        'description',
-      ],
+      'supported_update_fields' => array_keys(MediaUploadRules::METADATA_LIMITS),
+      'metadata_max_lengths' => MediaUploadRules::METADATA_LIMITS,
       'supported_operations' => $supported,
       'unsupported_operations' => array_values($unsupported),
       'operations_source' => 'Derived from the registered internal API route table, the same source openapi.json describes. supported_operations and unsupported_operations are disjoint by construction.',

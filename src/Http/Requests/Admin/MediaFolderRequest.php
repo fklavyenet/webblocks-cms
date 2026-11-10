@@ -3,7 +3,7 @@
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
+use WebBlocks\Cms\Actions\Media\CreateMediaFolder;
 
 class MediaFolderRequest extends FormRequest
 {
@@ -18,7 +18,7 @@ class MediaFolderRequest extends FormRequest
     $slug = (string) $this->input('slug');
 
     $this->merge([
-      'slug' => Str::slug($slug !== '' ? $slug : $name) ?: null,
+      'slug' => CreateMediaFolder::slug($name, $slug),
     ]);
   }
 

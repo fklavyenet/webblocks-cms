@@ -17,11 +17,23 @@ class ModerateComments
         abort_unless(app(EngagementPolicy::class)->update($user, $comment), 403);
       }
       foreach ($comments as $comment) {
-        if ($comment->status === $status) {
-          continue;
-        }
-        $comment->update(['status' => $status, 'approved_at' => $status === 'approved' ? now() : null, 'approved_by_user_id' => $status === 'approved' ? $user->id : null]);
+        $this->applyStatus($comment, $status, $user->id);
       }
     });
+  }
+
+  /** Apply a status after the calling channel authorizes the operation. */
+  public function applyStatus(CommentEntry $comment, string $status, ?int $actorId, bool $recordRepeat = false, bool $recordOtherStatuses = false): void
+  {
+    $approved = $status === 'approved';
+    if ($comment->status === $status && ($approved || ! $recordRepeat)) {
+      return;
+    }
+
+    $comment->update([
+      'status' => $status,
+      'approved_at' => $approved ? now() : null,
+      'approved_by_user_id' => $approved || $recordOtherStatuses ? $actorId : null,
+    ]);
   }
 }

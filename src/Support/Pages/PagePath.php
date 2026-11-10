@@ -106,7 +106,7 @@ class PagePath
 
     $segments = explode('/', trim($path, '/'));
 
-    return end($segments) ?: 'home';
+    return $segments[array_key_last($segments)];
   }
 
   public static function isReserved(string $path): bool

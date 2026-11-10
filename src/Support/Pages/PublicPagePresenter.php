@@ -24,6 +24,39 @@ class PublicPagePresenter
     private readonly ApplicationAssetCollector $applicationAssetCollector,
   ) {}
 
+  public function loadPreviewRelations(Page $page): void
+  {
+    $page->load([
+      'site',
+      'translations.locale',
+      'slots.slotType',
+      'slots.sharedSlot',
+      'pageAssets',
+      'blocks' => fn ($query) => $query
+        ->with($this->previewBlockRelations())
+        ->orderBy('sort_order')
+        ->orderBy('id'),
+    ]);
+  }
+
+  private function previewBlockRelations(): array
+  {
+    return [
+      'blockType',
+      'slotType',
+      'asset',
+      'blockAssets.asset',
+      'textTranslations',
+      'buttonTranslations',
+      'imageTranslations',
+      'contactFormTranslations',
+      'children' => fn ($query) => $query
+        ->with($this->previewBlockRelations())
+        ->orderBy('sort_order')
+        ->orderBy('id'),
+    ];
+  }
+
   /**
    * A caller that renders outside the public locale-prefixed route has no route
    * locale for the resolvers to read, so it must say which locale it is

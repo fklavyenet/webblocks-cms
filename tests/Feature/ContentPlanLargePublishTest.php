@@ -180,6 +180,97 @@ class ContentPlanLargePublishTest extends TestCase
   }
 
   #[Test]
+  public function new_api_draft_plans_validate_path_and_slug_in_the_selected_site_and_language(): void
+  {
+    $source = $this->seedPage(0);
+    $token = app(CmsApiTokenIssuer::class)->issue('Synthetic draft validation', capabilities: ['content.validate', 'content.apply'])->plainToken;
+    $plan = [
+      'site_id' => $source->site_id, 'locale' => 'tr', 'layout' => 'default',
+      'page' => ['title' => 'API draft', 'path' => '/guides/large-page'],
+      'slots' => ['main' => [['type' => 'plain_text', 'translations' => ['content' => 'Initial API copy']]]],
+    ];
+    $this->withToken($token);
+    foreach (['validate', 'apply'] as $operation) {
+      $this->postJson('/webadmin/api/content/'.$operation, ['plan' => $plan])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.0.path', 'plan.page.path')
+        ->assertJsonPath('errors.0.message', 'This slug is already used in this site for this locale.');
+    }
+
+    foreach ([
+      [['path' => '/large-page'], 'plan.page.path'],
+      [['path' => '/webadmin/draft'], 'plan.page.path'],
+      [['path' => '/'.str_repeat('a', 255)], 'plan.page.path'],
+      [['title' => str_repeat('a', 256), 'path' => '/guides/unoccupied'], 'plan.page.title'],
+    ] as [$fields, $errorPath]) {
+      $this->postJson('/webadmin/api/content/validate', ['plan' => ['page' => $fields + $plan['page']] + $plan])
+        ->assertUnprocessable()->assertJsonPath('errors.0.path', $errorPath);
+    }
+    $this->assertDatabaseCount('wbcms_pages', 1);
+    $this->assertDatabaseCount('wbcms_page_translations', 6);
+    $this->assertDatabaseEmpty('wbcms_page_revisions');
+
+    $plan['page']['path'] = '/guides/0';
+    $result = $this->postJson('/webadmin/api/content/apply', ['plan' => $plan])->assertCreated();
+    $translation = Page::findOrFail($result->json('data.page.id'))->translations()->sole();
+    $this->assertSame(['0', '/guides/0'], [$translation->slug, $translation->path]);
+
+    $this->postJson('/webadmin/api/content/validate', ['plan' => ['locale' => 'en'] + $plan])->assertOk();
+    $otherSite = Site::create(['name' => 'Another site', 'handle' => 'another-site']);
+    $otherSite->locales()->sync([$translation->locale_id => ['is_enabled' => true]]);
+    $this->postJson('/webadmin/api/content/validate', ['plan' => ['site_id' => $otherSite->id] + $plan])->assertOk();
+
+    Locale::query()->whereKey($translation->locale_id)->update(['is_enabled' => false]);
+    $disabled = ['site_id' => $otherSite->id, 'page' => ['path' => '/guides/disabled-locale'] + $plan['page']] + $plan;
+    $this->postJson('/webadmin/api/content/apply', ['plan' => $disabled])
+      ->assertUnprocessable()->assertJsonPath('errors.0.path', 'plan.locale');
+  }
+
+  #[Test]
+  public function a_cancelled_layout_slot_rolls_back_new_api_draft_creation_and_allows_retry(): void
+  {
+    $source = $this->seedPage(0);
+    $layout = PageLayout::where('handle', 'default')->sole();
+    $aside = SlotType::create(['name' => 'Aside', 'slug' => 'aside', 'status' => 'published']);
+    $layout->layoutSlots()->create(['slot_type_id' => $aside->id, 'slot_name' => 'aside', 'sort_order' => 2, 'is_active' => true]);
+    $token = app(CmsApiTokenIssuer::class)->issue('Synthetic draft creator', capabilities: ['content.apply'])->plainToken;
+    $plan = ['plan' => [
+      'site_id' => $source->site_id, 'locale' => 'tr', 'layout' => $layout->handle,
+      'page' => ['title' => 'API draft', 'path' => '/guides/api-draft'],
+      'slots' => ['main' => [['type' => 'plain_text', 'translations' => ['content' => 'Initial API copy']]]],
+    ]];
+    $cancel = true;
+    $attempted = [];
+    PageSlot::creating(function (PageSlot $slot) use ($aside, &$cancel, &$attempted): bool {
+      if (! $cancel) {
+        return true;
+      }
+
+      $attempted[] = $slot->slot_type_id;
+
+      return $slot->slot_type_id !== $aside->id;
+    });
+
+    $this->withToken($token)->postJson('/webadmin/api/content/apply', $plan)
+      ->assertUnprocessable()->assertJsonPath('errors.0.code', 'content_apply_write_failed');
+    $this->assertSame([$source->slots()->sole()->slot_type_id, $aside->id], $attempted);
+    $this->assertDatabaseCount('wbcms_pages', 1);
+    $this->assertDatabaseCount('wbcms_page_translations', 6);
+    $this->assertDatabaseCount('wbcms_page_slots', 1);
+    $this->assertDatabaseEmpty('wbcms_page_revisions');
+
+    $cancel = false;
+    $result = $this->postJson('/webadmin/api/content/apply', $plan)->assertCreated();
+    $draft = Page::findOrFail($result->json('data.page.id'));
+    $this->assertSame(Page::STATUS_DRAFT, $draft->status);
+    $translation = $draft->translations()->sole();
+    $this->assertSame(['tr', 'API draft', '/guides/api-draft'], [$translation->locale->code, $translation->name, $translation->path]);
+    $this->assertSame($attempted, $draft->slots()->orderBy('sort_order')->pluck('slot_type_id')->all());
+    $this->assertSame('Initial API copy', $draft->blocks()->sole()->textTranslations()->where('locale_id', $translation->locale_id)->sole()->content);
+    $this->assertSame('internal_content_api_plan_applied', $draft->revisions()->sole()->event);
+  }
+
+  #[Test]
   #[TestWith([Block::class])]
   #[TestWith([BlockTextTranslation::class])]
   public function a_creation_event_veto_rolls_back_the_copy_and_does_not_leave_metadata_pending(string $modelClass): void

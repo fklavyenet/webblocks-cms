@@ -85,6 +85,26 @@ class PageAssetPathValidator
     return strtolower(trim((string) $type));
   }
 
+  public function assetData(string $type, mixed $path, array $input, ?PageAsset $existing = null): array
+  {
+    $isJs = $type === PageAsset::TYPE_JS;
+    $flag = fn (string $key, bool $default): bool => filter_var(
+      array_key_exists($key, $input) ? $input[$key] : ($existing?->{$key} ?? $default),
+      FILTER_VALIDATE_BOOL,
+    );
+
+    return [
+      'type' => $type,
+      'path' => $this->normalizeForStorage($type, $path),
+      'load_position' => PageAsset::defaultLoadPositionFor($type),
+      'sort_order' => max((int) (array_key_exists('sort_order', $input) ? $input['sort_order'] : ($existing?->sort_order ?? 0)), 0),
+      'is_enabled' => $flag('is_enabled', true),
+      'is_defer' => $isJs && $flag('is_defer', true),
+      'is_async' => $isJs && $flag('is_async', false),
+      'is_module' => $isJs && $flag('is_module', false),
+    ];
+  }
+
   public function relativePublicPath(string $path): string
   {
     $normalized = $this->normalizePath($path);

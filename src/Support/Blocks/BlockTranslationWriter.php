@@ -44,9 +44,7 @@ class BlockTranslationWriter
     }
 
     if ($family === 'contact_form') {
-      $settings = $this->decodeSettings($data['settings'] ?? null);
-
-      unset($settings['submit_label'], $settings['success_message'], $settings['consent_label']);
+      $settings = array_diff_key($this->decodeSettings($data['settings'] ?? null), array_flip(BlockTranslationRegistry::CONTACT_FORM_COPY_FIELDS));
 
       $data['settings'] = $settings === []
         ? null
@@ -136,9 +134,7 @@ class BlockTranslationWriter
     }
 
     if ($family === 'contact_form') {
-      $settings = $this->decodeSettings($block->serializedSettings());
-
-      unset($settings['submit_label'], $settings['success_message'], $settings['consent_label']);
+      $settings = array_diff_key($this->decodeSettings($block->serializedSettings()), array_flip(BlockTranslationRegistry::CONTACT_FORM_COPY_FIELDS));
 
       $updates['settings'] = $settings === []
         ? null
@@ -294,13 +290,8 @@ class BlockTranslationWriter
 
   private function resolvedImageTranslationValue(array $data, Block $block, int $localeId, string $field): ?string
   {
-    $sourceField = match ($block->typeSlug()) {
-      default => $field === 'caption' ? 'title' : 'subtitle',
-    };
-
-    $fallback = match ($block->typeSlug()) {
-      default => $field === 'caption' ? $block->getRawOriginal('title') : $block->getRawOriginal('subtitle'),
-    };
+    $sourceField = BlockTranslationRegistry::IMAGE_BLOCK_FIELDS[$field];
+    $fallback = $block->getRawOriginal($sourceField);
 
     if (array_key_exists($sourceField, $data)) {
       $value = trim((string) $data[$sourceField]);

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalSharedSlotController;
+use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
@@ -13,6 +14,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -25,6 +27,28 @@ class SharedSlotUpdateDeleteApiTest extends TestCase
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
+
+  #[Test]
+  public function it_reorders_a_complete_sibling_group_without_moving_its_children(): void
+  {
+    $slot = $this->seedSharedSlot();
+    $sourcePages = app(SharedSlotSourcePageManager::class);
+    $page = $sourcePages->ensureFor($slot);
+    $data = ['slot_type_id' => $sourcePages->editorSlotTypeFor($slot)->id, 'type' => 'stack', 'status' => 'draft'];
+    $first = $page->blocks()->create($data + ['sort_order' => 0]);
+    $second = $page->blocks()->create($data + ['sort_order' => 1]);
+    $child = $page->blocks()->create($data + ['parent_id' => $first->id, 'sort_order' => 0]);
+    $controller = app(InternalSharedSlotController::class);
+
+    $this->assertSame(422, $controller->reorderBlocks(Request::create('/', 'PATCH', ['blocks' => [$second->id]]), $slot)->getStatusCode());
+    $this->assertSame(0, $first->fresh()->sort_order);
+    $this->assertSame(1, $second->fresh()->sort_order);
+
+    $response = $controller->reorderBlocks(Request::create('/', 'PATCH', ['blocks' => [$second->id, $first->id]]), $slot);
+    $this->assertSame(200, $response->getStatusCode());
+    $this->assertSame([$second->id, $first->id], $page->blocks()->whereNull('parent_id')->orderBy('sort_order')->pluck('id')->all());
+    $this->assertSame($first->id, Block::findOrFail($child->id)->parent_id);
   }
 
   #[Test]

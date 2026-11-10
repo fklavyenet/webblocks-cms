@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\ListingViews;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Queries\ListingViews\ListingViewQuery;
+use WebBlocks\Cms\Support\Media\MediaSearchMode;
 
 final class ListingViewState
 {
@@ -22,11 +23,15 @@ final class ListingViewState
   public function stored(object $view, $user): array
   {
     $definition = app(ListingViewDefinition::class);
-    if (count($view->filters) !== count($definition->defaults($view->listing)) && ! ($view->listing === 'pages' && ! array_key_exists('type', $view->filters) && count($view->filters) === count($definition->defaults('pages')) - 1)) {
+    $filters = $view->filters;
+    $missing = array_keys(array_diff_key($definition->defaults($view->listing), $filters));
+    if ($view->listing === 'media' && $missing === ['search_mode']) {
+      $filters['search_mode'] = $filters['search'] !== '' ? MediaSearchMode::Pattern->value : MediaSearchMode::Literal->value;
+    } elseif ($missing !== [] && ! ($view->listing === 'pages' && $missing === ['type'])) {
       throw ValidationException::withMessages(['saved_view' => __('webblocks-cms::listing_views.invalid')]);
     }
 
-    return [$definition->normalize($view->listing, $view->filters, $user), $definition->normalizeColumns($view->listing, $view->columns)];
+    return [$definition->normalize($view->listing, $filters, $user), $definition->normalizeColumns($view->listing, $view->columns)];
   }
 
   public function context(Request $request, string $listing, array $filters, array $columns): array

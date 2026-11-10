@@ -8,6 +8,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryContro
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
 use WebBlocks\Cms\Tests\TestCase;
@@ -62,6 +63,27 @@ class PageLayoutUpdateApiTest extends TestCase
 
     $this->assertTrue($response->getData(true)['ok']);
     $this->assertSame('docs', $page->fresh()->settings['public_shell']);
+  }
+
+  #[Test]
+  public function it_retains_an_assigned_inactive_layout_but_cannot_select_it_again(): void
+  {
+    $page = $this->seedPage(['public_shell' => 'docs']);
+    PageLayout::query()->where('handle', 'docs')->firstOrFail()->update(['is_active' => false]);
+
+    $response = $this->invokeUpdate($page, 'dashboard');
+
+    $this->assertSame(200, $response->getStatusCode());
+    $this->assertSame([], $response->getData(true)['writes']);
+    $this->assertSame('docs', $page->fresh()->publicShellPreset());
+    $this->assertSame(0, $page->revisions()->count());
+
+    $this->assertSame(200, $this->invokeUpdate($page->fresh(), 'article')->getStatusCode());
+    $response = $this->invokeUpdate($page->fresh(), 'docs');
+
+    $this->assertSame(422, $response->getStatusCode());
+    $this->assertSame('invalid_page_layout', $response->getData(true)['code']);
+    $this->assertSame('article', $page->fresh()->publicShellPreset());
   }
 
   #[Test]

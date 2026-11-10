@@ -20,6 +20,7 @@ use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Queries\SiteDeletionAvailabilityQuery;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Locales\SiteLocaleAssignments;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 use WebBlocks\Cms\Support\Sites\ExportImport\ExportablePages;
@@ -27,6 +28,7 @@ use WebBlocks\Cms\Support\Sites\SiteCloneOptions;
 use WebBlocks\Cms\Support\Sites\SiteCloneService;
 use WebBlocks\Cms\Support\Sites\SiteDeleteService;
 use WebBlocks\Cms\Support\Sites\SitePublicDirectoryManager;
+use WebBlocks\Cms\Support\Sites\SiteSettingsFields;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
@@ -267,7 +269,7 @@ class SiteController extends Controller
       $data = $this->runtimeSafeSiteData($data);
 
       if (isset($data['notification_settings'])) {
-        $data['notification_settings'] = array_replace(SiteNotificationPolicy::forSite($site), $data['notification_settings']);
+        $data['notification_settings'] = SiteNotificationPolicy::withChanges($site, $data['notification_settings']);
       }
       $site->update($data);
 
@@ -286,20 +288,8 @@ class SiteController extends Controller
 
   private function syncLocales(Site $site, array $localeIds): void
   {
-    $defaultLocaleId = (int) Locale::query()->where('is_default', true)->value('id');
-
-    if ($defaultLocaleId && ! in_array($defaultLocaleId, $localeIds, true)) {
-      $localeIds[] = (int) $defaultLocaleId;
-    }
-
-    if ($localeIds === []) {
-      $localeIds[] = (int) $defaultLocaleId;
-    }
-
-    $site->locales()->sync(collect($localeIds)
-      ->unique()
-      ->mapWithKeys(fn (int $localeId) => [$localeId => ['is_enabled' => true]])
-      ->all());
+    $assignments = app(SiteLocaleAssignments::class);
+    $assignments->sync($site, $assignments->withDefault($localeIds));
   }
 
   private function runtimeSafeSiteData(array $data): array
@@ -322,14 +312,14 @@ class SiteController extends Controller
       unset($data['timezone']);
     } elseif (array_key_exists('timezone', $data)) {
       // Blank stores null, which reads as "follow the system timezone".
-      $data['timezone'] = trim((string) $data['timezone']) === '' ? null : $data['timezone'];
+      $data['timezone'] = SiteSettingsFields::blankToNull($data['timezone']);
     }
 
     if (! Schema::hasColumn('wbcms_sites', 'custom_head_html')) {
       unset($data['custom_head_html']);
     } elseif (array_key_exists('custom_head_html', $data)) {
       // Blank clears it, matching the API endpoint rather than storing an empty string.
-      $data['custom_head_html'] = trim((string) $data['custom_head_html']) === '' ? null : $data['custom_head_html'];
+      $data['custom_head_html'] = SiteSettingsFields::blankToNull($data['custom_head_html']);
     }
 
     foreach ([

@@ -17,6 +17,23 @@ class BlockTranslationRegistry
    */
   public const PLUGIN_FAMILY = 'plugin';
 
+  public const IMAGE_BLOCK_FIELDS = ['caption' => 'title', 'alt_text' => 'subtitle'];
+
+  public const TEXT_FIELDS = ['title', 'eyebrow', 'subtitle', 'content', 'meta'];
+
+  public const CONTACT_FORM_FALLBACK_FIELDS = ['submit_label', 'success_message'];
+
+  public const CONTACT_FORM_NOTICE_FIELD = 'consent_label';
+
+  public const CONTACT_FORM_COPY_FIELDS = [...self::CONTACT_FORM_FALLBACK_FIELDS, self::CONTACT_FORM_NOTICE_FIELD];
+
+  private const CORE_FAMILY_FIELDS = [
+    'text' => self::TEXT_FIELDS,
+    'button' => ['title'],
+    'image' => self::IMAGE_BLOCK_FIELDS,
+    'contact_form' => ['title', 'content', ...self::CONTACT_FORM_COPY_FIELDS],
+  ];
+
   public function familyFor(Block|string|null $block): ?string
   {
     $slug = $block instanceof Block ? $block->typeSlug() : $block;
@@ -115,7 +132,7 @@ class BlockTranslationRegistry
    *
    * @return list<string>
    */
-  private function pluginFieldsFor(?string $slug): array
+  public function pluginFieldsFor(?string $slug): array
   {
     if ($slug === null || $slug === '') {
       return [];
@@ -144,12 +161,30 @@ class BlockTranslationRegistry
 
   public function translatedFieldMap(string $family): array
   {
-    return match ($family) {
-      'text' => ['title', 'eyebrow', 'subtitle', 'content', 'meta'],
-      'button' => ['title'],
-      'image' => ['caption', 'alt_text'],
-      'contact_form' => ['title', 'content', 'submit_label', 'success_message', 'consent_label'],
-      default => [],
-    };
+    return $family === 'image' ? array_keys(self::IMAGE_BLOCK_FIELDS) : (self::CORE_FAMILY_FIELDS[$family] ?? []);
+  }
+
+  public static function coreFamilies(): array
+  {
+    return array_keys(self::CORE_FAMILY_FIELDS);
+  }
+
+  public static function coreFields(): array
+  {
+    $families = self::CORE_FAMILY_FIELDS;
+    $families['image'] = array_keys(self::IMAGE_BLOCK_FIELDS);
+
+    return array_values(array_unique(array_merge(...array_values($families))));
+  }
+
+  public function blockFieldsForFamily(string $family): array
+  {
+    if ($family === 'image') {
+      return self::IMAGE_BLOCK_FIELDS + array_combine(self::IMAGE_BLOCK_FIELDS, self::IMAGE_BLOCK_FIELDS);
+    }
+
+    $fields = $this->translatedFieldMap($family);
+
+    return array_combine($fields, $fields);
   }
 }

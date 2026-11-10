@@ -103,8 +103,7 @@ class EngagementQuery
   {
     $isComment = $query->getModel() instanceof CommentEntry;
 
-    return $query->when($filters['site'] ?? '', fn ($query, $site) => $query->where('site_id', $site))
-      ->when($filters['page_id'] ?? '', fn ($query, $page) => $query->where('page_id', $page))
+    return $this->matchingContext($query, ($filters['site'] ?? null) ?: null, ($filters['page_id'] ?? null) ?: null)
       ->when($filters['from'] ?? '', fn ($query, $date) => $query->where('created_at', '>=', $date.' 00:00:00'))
       ->when($filters['until'] ?? '', fn ($query, $date) => $query->where('created_at', '<', Carbon::parse($date)->addDay()->format('Y-m-d').' 00:00:00'))
       ->when($filters['search'] ?? '', fn ($query, $search) => $query->where(function ($query) use ($search, $isComment): void {
@@ -113,5 +112,12 @@ class EngagementQuery
           $query->orWhere('author_name', 'like', "%{$search}%")->orWhere('body', 'like', "%{$search}%");
         }
       }));
+  }
+
+  public function matchingContext(Builder $query, int|string|null $siteId, int|string|null $pageId, ?int $blockId = null): Builder
+  {
+    return $query->when($siteId !== null, fn (Builder $builder) => $builder->where('site_id', $siteId))
+      ->when($pageId !== null, fn (Builder $builder) => $builder->where('page_id', $pageId))
+      ->when($blockId !== null, fn (Builder $builder) => $builder->where('block_id', $blockId));
   }
 }

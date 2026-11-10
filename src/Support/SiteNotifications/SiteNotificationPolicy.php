@@ -43,6 +43,11 @@ final class SiteNotificationPolicy
     ];
   }
 
+  public static function withChanges(Site $site, array $changes): array
+  {
+    return array_replace(self::forSite($site), $changes);
+  }
+
   public static function deliveryStatus(Site $site): array
   {
     if (! Schema::hasTable('wbcms_site_notification_events')) {

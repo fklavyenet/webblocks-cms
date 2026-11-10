@@ -27,8 +27,8 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockDeletionManager;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
+use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\Blocks\ParentBlockOptionPresenter;
-use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
@@ -43,6 +43,7 @@ class SharedSlotController extends Controller
   public function __construct(
     private readonly BlockTranslationResolver $blockTranslationResolver,
     private readonly BlockDeletionManager $blockDeletionManager,
+    private readonly PageBlockStructure $blockStructure,
     private readonly CurrentActorResolver $currentActorResolver,
     private readonly PageWorkflowManager $workflowManager,
     private readonly AdminAuthorization $authorization,
@@ -213,15 +214,11 @@ class SharedSlotController extends Controller
         'updated_by_user_id' => $request->user()?->id,
       ]);
       $freshSharedSlot = $sharedSlot->fresh();
-      $this->sourcePages->ensureFor($freshSharedSlot);
-      $this->sourcePages->rebuildAssignments($freshSharedSlot);
+      $this->sourcePages->syncAfterEdit($before, $freshSharedSlot);
 
       $metadataChanged = collect(['name', 'handle', 'slot_name', 'public_shell'])
         ->contains(fn (string $key) => data_get($before, $key) !== data_get($freshSharedSlot, $key));
       $statusChanged = (bool) $before->is_active !== (bool) $freshSharedSlot->is_active;
-      if ($statusChanged && $freshSharedSlot->is_active) {
-        app(ContactConsentRequirements::class)->assertSharedSlot($freshSharedSlot);
-      }
 
       if ($metadataChanged && $this->revisionManager->revisionsTableExists()) {
         $this->revisionManager->capture(
@@ -265,18 +262,13 @@ class SharedSlotController extends Controller
       );
     }
 
-    if ($sharedSlot->pageSlots()->exists()) {
+    if ($this->sourcePages->deleteIfUnused($sharedSlot)->isNotEmpty()) {
       return redirect()
         ->route('admin.shared-slots.edit', $sharedSlot)
         ->withErrors(['shared_slot' => 'Shared Slot cannot be deleted while it is referenced by one or more page slots.']);
     }
 
     $siteId = $sharedSlot->site_id;
-
-    DB::transaction(function () use ($sharedSlot): void {
-      $this->sourcePages->deleteFor($sharedSlot);
-      $sharedSlot->delete();
-    });
 
     return redirect()
       ->route('admin.shared-slots.index', ['site' => $siteId])
@@ -351,6 +343,7 @@ class SharedSlotController extends Controller
       'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
       'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
       'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']),
+      'slotSplitReplacementOptions' => app(ParentBlockOptionPresenter::class)->splitReplacements($resolvedBlocks, $modalState['block']),
       'expandedBlockIds' => $expandedBlockIds,
       'activeLocale' => $activeLocale,
       'availableLocales' => $sourcePage->translationStatusForSite(),
@@ -412,6 +405,7 @@ class SharedSlotController extends Controller
       'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
       'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
       'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']),
+      'slotSplitReplacementOptions' => app(ParentBlockOptionPresenter::class)->splitReplacements($resolvedBlocks, $modalState['block']),
     ]);
   }
 
@@ -500,54 +494,32 @@ class SharedSlotController extends Controller
       ], 422);
     }
 
-    $parentIds = $blocks->pluck('parent_id')->uniqueStrict();
-
-    if ($parentIds->count() !== 1) {
+    if (! $this->blockStructure->hasSingleParentGroup($blocks)) {
       return response()->json([
         'message' => 'Submitted blocks must belong to the same parent group.',
         'errors' => ['blocks' => ['Submitted blocks must belong to the same parent group.']],
       ], 422);
     }
 
-    $parentId = $parentIds->first();
-    $siblings = Block::query()
-      ->where('page_id', $sourcePage->id)
-      ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
-      ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
-      ->orderBy('sort_order')
-      ->orderBy('id')
-      ->get(['id', 'sort_order']);
+    $parentId = $blocks->first()->parent_id;
 
-    if ($siblings->count() !== $blockIds->count() || $siblings->pluck('id')->sort()->values()->all() !== $blockIds->sort()->values()->all()) {
-      return response()->json([
-        'message' => 'Submitted blocks must contain the full sibling group for one parent.',
-        'errors' => ['blocks' => ['Submitted blocks must contain the full sibling group for one parent.']],
-      ], 422);
-    }
-
-    DB::transaction(function () use ($sharedSlot, $sourcePage, $blockIds, $parentId): void {
+    return DB::transaction(function () use ($sharedSlot, $sourcePage, $blockIds, $parentId): JsonResponse {
       $siblings = Block::query()
         ->where('page_id', $sourcePage->id)
-        ->when($parentId === null, fn ($query) => $query->whereNull('parent_id'))
-        ->when($parentId !== null, fn ($query) => $query->where('parent_id', $parentId))
+        ->where('parent_id', $parentId)
         ->orderBy('sort_order')
         ->orderBy('id')
         ->lockForUpdate()
         ->get(['id', 'sort_order']);
 
-      $positionMap = $blockIds->flip();
+      if (! $this->blockStructure->containsExactly($siblings, $blockIds->all())) {
+        return response()->json([
+          'message' => 'Submitted blocks must contain the full sibling group for one parent.',
+          'errors' => ['blocks' => ['Submitted blocks must contain the full sibling group for one parent.']],
+        ], 422);
+      }
 
-      $siblings
-        ->sortBy(fn (Block $block) => $positionMap->get($block->id))
-        ->values()
-        ->each(function (Block $block, int $index): void {
-          if ($block->sort_order === $index) {
-            return;
-          }
-
-          $block->update(['sort_order' => $index]);
-        });
-
+      $this->blockStructure->saveOrder($siblings, $blockIds->all());
       $this->sourcePages->rebuildAssignments($sharedSlot);
       if ($this->revisionManager->revisionsTableExists()) {
         $sharedSlot->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
@@ -559,12 +531,12 @@ class SharedSlotController extends Controller
           'Shared Slot block order was changed.',
         );
       }
-    });
 
-    return response()->json([
-      'ok' => true,
-      'message' => 'Saved',
-    ]);
+      return response()->json([
+        'ok' => true,
+        'message' => 'Saved',
+      ]);
+    });
   }
 
   private function canManageSharedSlots($user): bool
@@ -746,6 +718,7 @@ class SharedSlotController extends Controller
       $ignoredIds = $this->descendantIdsFor($blocks, $editedBlock->id)->prepend($editedBlock->id);
     }
 
+    $exchangeParents = app(PageBlockStructure::class)->splitReplacementCandidates($blocks, $editedBlock)->pluck('parent_id');
     $candidates = $blocks
       ->reject(fn (Block $block) => $block->isColumnItem())
       ->reject(fn (Block $block) => $ignoredIds->contains($block->id))
@@ -754,7 +727,8 @@ class SharedSlotController extends Controller
       // always offered, so saving it does not read as a request to detach it.
       ->filter(fn (Block $block) => $editedBlock
         ? (int) $editedBlock->parent_id === (int) $block->id
-          || ($block->canAcceptMoreChildren() && $block->canAcceptChildType($editedBlock->typeSlug()))
+          || (($block->canAcceptMoreChildren() || $exchangeParents->containsStrict($block->id))
+            && $block->canAcceptChildType($editedBlock->typeSlug()))
         : $block->canAcceptMoreChildren());
 
     return app(ParentBlockOptionPresenter::class)->present($blocks, $candidates);

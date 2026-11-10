@@ -24,7 +24,6 @@ use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevisionCandidate;
 use WebBlocks\Cms\Models\PageSlot;
-use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
@@ -44,10 +43,10 @@ use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 use WebBlocks\Cms\Support\ListingViews\ListingViewState;
 use WebBlocks\Cms\Support\Pages\PageBulkDeleter;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
+use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotComparison;
-use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PageOwnedBlockPublisher;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
@@ -73,7 +72,7 @@ class PageController extends Controller
     private readonly PageIndexState $pageIndexState,
     private readonly PageLayoutManager $pageLayouts,
     private readonly PageLayoutSlotComparison $pageLayoutSlotComparison,
-    private readonly PageLayoutSlotSyncer $pageLayoutSlotSyncer,
+    private readonly PageDraftInitializer $drafts,
     private readonly PageOwnedBlockPublisher $pageOwnedBlockPublisher,
     private readonly PageWorkflowManager $workflowManager,
     private readonly AdminAuthorization $authorization,
@@ -275,9 +274,10 @@ class PageController extends Controller
   {
     $this->authorization->abortUnlessSiteAccess($request->user(), (int) $request->validated('site_id'));
 
-    $page = DB::transaction(function () use ($request) {
+    $page = DB::transaction(function () use ($request): Page {
+      $locale = Locale::query()->where('is_default', true)->firstOrFail();
       $recovery = app(EditorFormRecovery::class);
-      $context = $recovery->guardSave($request, 'new-page', ['site_id' => $request->integer('site_id'), 'locale' => Locale::query()->where('is_default', true)->value('code')]);
+      $context = $recovery->guardSave($request, 'new-page', ['site_id' => $request->integer('site_id'), 'locale' => $locale->code]);
       $data = $request->validatedData();
       $blocks = $data['blocks'] ?? [];
       $translation = $data['translation'];
@@ -288,15 +288,8 @@ class PageController extends Controller
       $data['created_by_user_id'] = $actor['user_id'];
       $data['updated_by_user_id'] = $actor['user_id'];
 
-      $page = Page::create($data);
-      $this->syncDefaultTranslation($page, $translation);
-      $this->pageLayoutSlotSyncer->seedInitialSlots($page, $selectedLayoutHandle);
-
-      if ($blocks === []) {
-        $this->syncBlocks($page, []);
-      } else {
-        $this->syncBlocks($page, $blocks);
-      }
+      $page = $this->drafts->create($data, ['locale_id' => $locale->id] + $translation, $selectedLayoutHandle);
+      $this->syncBlocks($page, $blocks);
 
       $this->revisionManager->capture(
         $page->fresh(),
@@ -405,17 +398,7 @@ class PageController extends Controller
 
     $request = app(PagePreviewRequest::class);
 
-    $page->load([
-      'site',
-      'translations.locale',
-      'slots.slotType',
-      'slots.sharedSlot',
-      'pageAssets',
-      'blocks' => fn ($query) => $query
-        ->with($this->previewBlockRelations())
-        ->orderBy('sort_order')
-        ->orderBy('id'),
-    ]);
+    $presenter->loadPreviewRelations($page);
 
     $translation = $request->filled('locale')
       ? $page->translationForLocale($request->validated('locale'))
@@ -513,24 +496,6 @@ class PageController extends Controller
     ];
   }
 
-  private function previewBlockRelations(): array
-  {
-    return [
-      'blockType',
-      'slotType',
-      'asset',
-      'blockAssets.asset',
-      'textTranslations',
-      'buttonTranslations',
-      'imageTranslations',
-      'contactFormTranslations',
-      'children' => fn ($query) => $query
-        ->with($this->previewBlockRelations())
-        ->orderBy('sort_order')
-        ->orderBy('id'),
-    ];
-  }
-
   public function editSlotBlocks(Page $page, PageSlot $slot): View
   {
     $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
@@ -598,6 +563,7 @@ class PageController extends Controller
       'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
       'expandedBlockIds' => $expandedBlockIds,
       'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']),
+      'slotSplitReplacementOptions' => app(ParentBlockOptionPresenter::class)->splitReplacements($resolvedBlocks, $modalState['block']),
       'slotDeleteModalBlock' => $deleteModalState['block'],
       'slotDeleteModalMeta' => $deleteModalState['meta'],
       'slotDeleteAllModalMeta' => $this->blockDeletionManager->slotMetadata($page->id, $slot->slot_type_id),
@@ -652,6 +618,7 @@ class PageController extends Controller
       'slotModalSelectedGalleryAssets' => $modalState['selectedGalleryAssets'],
       'slotModalSelectedAttachmentAsset' => $modalState['selectedAttachmentAsset'],
       'slotParentBlocks' => $this->slotParentBlocks($resolvedBlocks, $modalState['block']),
+      'slotSplitReplacementOptions' => app(ParentBlockOptionPresenter::class)->splitReplacements($resolvedBlocks, $modalState['block']),
     ]);
   }
 
@@ -699,15 +666,16 @@ class PageController extends Controller
 
   public function updateWorkflow(Request $request, Page $page): RedirectResponse
   {
-    $this->authorization->abortUnlessSiteAccess($request->user(), $page);
-    abort_if($page->isRevisionRestoreCandidate(), 404);
-
     $action = $request->string('action')->toString();
     $includePageOwnedBlocks = $action === PageWorkflowManager::ACTION_PUBLISH
       && $request->boolean('include_page_owned_blocks');
-    $fromStatus = $page->status;
-    $message = DB::transaction(function () use ($page, $request, $action, $fromStatus, $includePageOwnedBlocks): string {
-      $message = $this->workflowManager->apply($page, $request->user(), $action);
+    $message = DB::transaction(function () use ($page, $request, $action, $includePageOwnedBlocks): string {
+      $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+      $this->authorization->abortUnlessSiteAccess($request->user(), $page);
+      abort_if($page->isRevisionRestoreCandidate(), 404);
+
+      $fromStatus = $page->status;
+      $message = $this->workflowManager->apply($page, $request->user(), $action, $includePageOwnedBlocks);
       $updatedPage = $page->fresh();
       $blockPublishResult = null;
 
@@ -798,18 +766,14 @@ class PageController extends Controller
       ], 422);
     }
 
-    $parentIds = $blocks
-      ->map(fn (Block $block) => $block->parent_id)
-      ->uniqueStrict();
-
-    if ($parentIds->count() !== 1) {
+    if (! $this->blockStructure->hasSingleParentGroup($blocks)) {
       return response()->json([
         'message' => 'Submitted blocks must belong to the same parent group.',
         'errors' => ['blocks' => ['Submitted blocks must belong to the same parent group.']],
       ], 422);
     }
 
-    $parentId = $parentIds->first();
+    $parentId = $blocks->first()->parent_id;
 
     return DB::transaction(function () use ($page, $slot, $blockIds, $parentId, $request): JsonResponse {
       $siblings = $this->authorization->scopeBlocksForUser(Block::query(), $request->user())
@@ -999,7 +963,7 @@ class PageController extends Controller
         'site_id' => $page->site_id,
         'name' => $translation['name'],
         'slug' => $translation['slug'],
-        'path' => PageTranslation::pathFromSlug($translation['slug']),
+        'path' => $translation['path'],
       ],
     );
 
@@ -1121,6 +1085,7 @@ class PageController extends Controller
       $ignoredIds = $this->descendantIdsFor($blocks, $editedBlock->id)->prepend($editedBlock->id);
     }
 
+    $exchangeParents = app(PageBlockStructure::class)->splitReplacementCandidates($blocks, $editedBlock)->pluck('parent_id');
     $candidates = $blocks
       ->reject(fn (Block $block) => $block->isColumnItem())
       ->reject(fn (Block $block) => $ignoredIds->contains($block->id))
@@ -1131,7 +1096,8 @@ class PageController extends Controller
       // failed as if the editor had asked to detach the block.
       ->filter(fn (Block $block) => $editedBlock
         ? (int) $editedBlock->parent_id === (int) $block->id
-          || ($block->canAcceptMoreChildren() && $block->canAcceptChildType($editedBlock->typeSlug()))
+          || (($block->canAcceptMoreChildren() || $exchangeParents->containsStrict($block->id))
+            && $block->canAcceptChildType($editedBlock->typeSlug()))
         : $block->canAcceptMoreChildren());
 
     return app(ParentBlockOptionPresenter::class)->present($blocks, $candidates);

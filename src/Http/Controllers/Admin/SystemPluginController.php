@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
+use WebBlocks\Cms\Actions\Plugins\EnablePlugin;
 use WebBlocks\Cms\Actions\Plugins\UpdatePluginAppearance;
 use WebBlocks\Cms\Http\Requests\Admin\PluginAppearanceRequest;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
@@ -19,7 +20,6 @@ use WebBlocks\Cms\Support\Plugins\PluginAppearance;
 use WebBlocks\Cms\Support\Plugins\PluginCompatibility;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
-use WebBlocks\Cms\Support\Plugins\PluginDependencyManager;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -113,12 +113,7 @@ class SystemPluginController extends Controller
     abort_if($version === null, 422);
 
     try {
-      app(PluginDependencyManager::class)->assertEnable([
-        'handle' => $definition->handle(), 'label' => $definition->labelText(), 'version' => $definition->versionText(),
-        'required_cms_version' => $definition->requiredCmsVersion(), 'dependencies' => $definition->dependencyDefinitions(),
-      ]);
-      app(PluginDatabaseSetup::class)->run($definition, repairRecordedMigrations: $this->setupRequired($definition));
-      $this->installedPlugins->enable($plugin, $version);
+      app(EnablePlugin::class)->execute($definition, $version, repairRecordedMigrations: $this->setupRequired($definition));
     } catch (RuntimeException $exception) {
       return back()->withErrors(['plugin' => $exception->getMessage()]);
     }
@@ -203,7 +198,7 @@ class SystemPluginController extends Controller
 
     $definition = $this->plugins->get($plugin);
 
-    abort_if($definition === null || $definition->installPathValue() === null || $definition->sourceText() !== 'manual upload', 404);
+    abort_unless($definition?->isManuallyInstalled(), 404);
 
     if ($this->plugins->isConfiguredEnabled($plugin)) {
       return back()->withErrors(['plugin' => 'Disable this plugin before uninstalling it. Plugin-owned database tables are preserved.']);
@@ -214,7 +209,7 @@ class SystemPluginController extends Controller
     abort_if($version === null, 422);
 
     try {
-      $this->installedPlugins->uninstall($plugin, $version);
+      $this->installedPlugins->uninstall($plugin, $version, requireDisabled: true);
     } catch (RuntimeException $exception) {
       return back()->withErrors(['plugin' => $exception->getMessage()]);
     }
@@ -328,7 +323,7 @@ class SystemPluginController extends Controller
       $settingsRoute = $settings->routeName ?? $this->routes->defaultSettingsRouteName($definition);
     }
 
-    $manual = $definition->sourceText() === 'manual upload' && $definition->installPathValue() !== null;
+    $manual = $definition->isManuallyInstalled();
     $filesAvailable = $definition->installPathValue() === null || is_dir($definition->installPathValue());
     $compatible = (bool) $summary['compatible'];
     $enabled = (bool) $summary['enabled'];

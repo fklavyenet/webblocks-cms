@@ -73,14 +73,11 @@ class PageTranslationController extends Controller
         $request->validatedTranslation(),
       );
 
-      $page->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
-
-      $this->revisionManager->capture(
-        $page->fresh(),
+      $this->revisionManager->recordTranslationChange(
+        $page,
         $request->user(),
         'Translation added',
         'Page translation was added for locale '.$locale->code.'.',
-        event: 'page_updated',
       );
       $recovery->completeSave($request, $context, $page, translation: $translation);
     });
@@ -128,14 +125,11 @@ class PageTranslationController extends Controller
       $recovery = app(EditorFormRecovery::class);
       $context = $recovery->guardSave($request, 'translation', ['page_id' => $page->id, 'locale' => $translation->locale->code, 'translation_id' => $translation->id]);
       $translation->update($request->validatedTranslation());
-      $page->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
-
-      $this->revisionManager->capture(
-        $page->fresh(),
+      $this->revisionManager->recordTranslationChange(
+        $page,
         $request->user(),
         'Translation updated',
         'Page translation was updated for locale '.$translation->locale->code.'.',
-        event: 'page_updated',
       );
       $recovery->completeSave($request, $context, $page, translation: $translation);
     });

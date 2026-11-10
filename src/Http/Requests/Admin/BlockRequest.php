@@ -19,9 +19,12 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
+use WebBlocks\Cms\Support\Blocks\BlockComposition;
+use WebBlocks\Cms\Support\Blocks\BlockMediaCompatibility;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
+use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\Consent\ConsentPresets;
@@ -143,6 +146,10 @@ class BlockRequest extends FormRequest
     $supportsBackgroundMedia = in_array($selectedBlockType?->slug, ['hero', 'section', 'card', 'cta', 'content_header', 'slide'], true);
     $isLocaleRequest = $this->filled('locale');
     $requiresContactCopy = $isContactForm && (! $isLocaleRequest || $this->route('block') instanceof Block);
+    $contactCopyRules = [];
+    foreach (BlockTranslationRegistry::CONTACT_FORM_FALLBACK_FIELDS as $field) {
+      $contactCopyRules[$field] = [$requiresContactCopy ? 'required' : 'nullable', 'string', 'max:'.($field === 'submit_label' ? 255 : 1000)];
+    }
 
     return [
       'page_id' => ['required', 'integer', 'exists:wbcms_pages,id'],
@@ -152,6 +159,7 @@ class BlockRequest extends FormRequest
         'exists:wbcms_blocks,id',
         Rule::notIn([$block?->id]),
       ],
+      'replacement_block_id' => [$block instanceof Block ? 'nullable' : 'prohibited', 'integer', 'min:1', Rule::notIn([$block?->id])],
       'block_type_id' => ['required', 'integer', 'exists:wbcms_block_types,id'],
       'slot_type_id' => ['required', 'integer', 'exists:wbcms_slot_types,id'],
       'sort_order' => ['required', 'integer', 'min:0'],
@@ -387,13 +395,12 @@ class BlockRequest extends FormRequest
       'plugin_settings.*' => [$isPluginBlock ? 'nullable' : 'prohibited'],
       'heading' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:255'],
       'intro_text' => [$isContactForm ? 'nullable' : 'nullable', 'string'],
-      'submit_label' => [$requiresContactCopy ? 'required' : 'nullable', 'string', 'max:255'],
-      'success_message' => [$requiresContactCopy ? 'required' : 'nullable', 'string', 'max:1000'],
+      ...$contactCopyRules,
       'recipient_email' => [($isContactForm && ! $isLocaleRequest) ? 'nullable' : 'nullable', 'email:rfc', 'max:255'],
       'send_email_notification' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
       'store_submissions' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
       'consent_required' => [($isContactForm && ! $isLocaleRequest) ? 'nullable' : 'nullable', 'boolean'],
-      'consent_label' => [$isContactForm ? 'nullable' : 'nullable', 'string', 'max:1000'],
+      BlockTranslationRegistry::CONTACT_FORM_NOTICE_FIELD => ['nullable', 'string', 'max:1000'],
       'privacy_notice_url' => [$isContactForm ? 'nullable' : 'prohibited', 'string', 'max:2048'],
       'navigation_menu_key' => [$isNavigationAuto ? 'required' : 'nullable', Rule::in(NavigationItem::menuKeys())],
       'header_actions_show_mode_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
@@ -678,7 +685,7 @@ class BlockRequest extends FormRequest
       if (in_array($selectedBlockType?->slug, ['download', 'file'], true) && ($this->filled('media_id') || $this->filled('asset_id'))) {
         $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
 
-        if (! $asset || ! in_array($asset->kind, [Media::KIND_DOCUMENT, Media::KIND_OTHER], true)) {
+        if (! $asset || ! BlockMediaCompatibility::accepts($selectedBlockType->slug, $asset)) {
           $validator->errors()->add('media_id', 'File and download media must be a document or file from Media.');
         }
       }
@@ -686,7 +693,7 @@ class BlockRequest extends FormRequest
       if ($selectedBlockType?->slug === 'video' && ($this->filled('media_id') || $this->filled('asset_id'))) {
         $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
 
-        if (! $asset?->isVideo()) {
+        if (! $asset || ! BlockMediaCompatibility::accepts($selectedBlockType->slug, $asset)) {
           $validator->errors()->add('media_id', 'Video block media must be a video from Media.');
         }
       }
@@ -805,8 +812,10 @@ class BlockRequest extends FormRequest
 
       $parent = Block::query()->with(['parent', 'blockType'])->find($parentId);
       $block = $this->route('block');
+      $pageId = $this->integer('page_id');
+      $slotTypeId = $this->integer('slot_type_id');
 
-      if (! $parent || $parent->page_id !== $this->integer('page_id')) {
+      if (! $parent || $parent->page_id !== $pageId) {
         $validator->errors()->add('parent_id', 'Parent block must belong to the same page.');
 
         return;
@@ -823,28 +832,28 @@ class BlockRequest extends FormRequest
       // re-checking it locks a block out of editing whenever the rules tighten
       // or the tree was built by an importer -- a footer brand block renders
       // publicly but could not have its own text saved.
-      // Changing the block's type is a placement question again, so the skip
-      // only applies while both the parent and the type stay as stored.
+      // Recheck placement when the page, slot, parent, or type changes.
       $placementUnchanged = $block instanceof Block
+        && $block->page_id === $pageId
         && (int) $block->parent_id === (int) $parentId
+        && $block->slot_type_id === $slotTypeId
         && (int) ($selectedBlockType?->id ?? 0) === (int) $block->block_type_id;
 
       if ($placementUnchanged) {
         return;
       }
 
-      if ($parent->typeSlug() === 'split') {
-        $splitChildren = $parent->children();
+      if (! app(PageBlockStructure::class)->parentBelongsToSlot($parent, $pageId, $slotTypeId)) {
+        $validator->errors()->add('parent_id', __('webblocks-cms::admin.blocks.parent_slot_mismatch'));
 
-        if ($block instanceof Block) {
-          $splitChildren->whereKeyNot($block->getKey());
-        }
+        return;
+      }
 
-        if ($splitChildren->count() >= 2) {
-          $validator->errors()->add('parent_id', 'Split accepts exactly two direct child blocks. Put a Stack inside either side when it needs multiple blocks.');
+      if (! $parent->canAcceptMoreChildren($block instanceof Block ? $block->id : null)
+        && ! ($parent->typeSlug() === 'split' && $this->filled('replacement_block_id'))) {
+        $validator->errors()->add('parent_id', 'Split accepts exactly two direct child blocks. Put a Stack inside either side when it needs multiple blocks.');
 
-          return;
-        }
+        return;
       }
 
       if ($selectedBlockType && ! $parent->canAcceptChildType($selectedBlockType->slug)) {
@@ -887,16 +896,8 @@ class BlockRequest extends FormRequest
         return;
       }
 
-      $cursor = $parent;
-
-      while ($cursor) {
-        if ($cursor->id === $block->id) {
-          $validator->errors()->add('parent_id', 'A block cannot be moved under its own child tree.');
-
-          return;
-        }
-
-        $cursor = $cursor->parent;
+      if (app(PageBlockStructure::class)->wouldCreateCycle($block, $parent)) {
+        $validator->errors()->add('parent_id', 'A block cannot be moved under its own child tree.');
       }
     }];
   }
@@ -924,49 +925,10 @@ class BlockRequest extends FormRequest
   {
     $url = trim($url);
 
-    if ($url === '') {
-      return false;
-    }
-
-    if (preg_match('/\s/', $url) === 1) {
-      return false;
-    }
-
-    if (preg_match('/^[A-Za-z][A-Za-z0-9+.-]*:/', $url) === 1) {
-      $scheme = Str::lower((string) parse_url($url, PHP_URL_SCHEME));
-
-      if (in_array($scheme, ['http', 'https'], true)) {
-        return filter_var($url, FILTER_VALIDATE_URL) !== false;
-      }
-
-      if ($scheme === 'mailto') {
-        $target = substr($url, strlen('mailto:'));
-
-        return $target !== '';
-      }
-
-      if ($scheme === 'tel') {
-        $target = substr($url, strlen('tel:'));
-
-        return $target !== '';
-      }
-
-      return false;
-    }
-
-    if (str_starts_with($url, '/')) {
-      return true;
-    }
-
-    if (str_starts_with($url, '#')) {
-      return strlen($url) > 1;
-    }
-
-    if (preg_match('/^[A-Za-z0-9._\/-]+(?:\?[A-Za-z0-9._~!$&\'()*+,;=:@%\/-]*)?(?:#[A-Za-z0-9._~!$&\'()*+,;=:@%\/-]*)?$/', $url) !== 1) {
-      return false;
-    }
-
-    return ! str_starts_with($url, '//');
+    // The editor historically accepts network paths. Public rendering still
+    // applies the canonical URL policy when resolving an editorial destination.
+    return Block::safePublicUrl($url) !== null
+      || (str_starts_with($url, '//') && preg_match('/\s/', $url) !== 1);
   }
 
   private function slotEditorRedirectUrl(): ?string
@@ -1166,7 +1128,7 @@ class BlockRequest extends FormRequest
         $definition = app(PluginBlockCatalog::class)->enabledDefinitionForCatalogSlug($blockType->slug);
         $raw = $data['plugin_settings'] ?? [];
         if ($definition?->settingRules() !== null) {
-          $copy = array_intersect_key($raw, array_flip($definition->translatedFieldNames()));
+          $copy = array_intersect_key($raw, array_flip(app(BlockTranslationRegistry::class)->pluginFieldsFor($blockType->slug)));
           $errors = [];
           $shared = app(BlockSettingsValidator::class)->normalize($blockType->slug, array_diff_key($raw, $copy), 'plugin_settings', $errors, 'admin', $existingBlock?->decodedSettings() ?? []);
           if ($errors !== []) {
@@ -2282,7 +2244,7 @@ class BlockRequest extends FormRequest
         $splitGap = trim((string) ($data['split_gap'] ?? ''));
         $splitAlign = trim((string) ($data['split_align'] ?? ''));
         $splitWidth = trim((string) ($data['split_width'] ?? ''));
-        $splitResponsive = trim((string) ($data['split_responsive'] ?? 'stack'));
+        $splitResponsive = trim((string) ($data['split_responsive'] ?? BlockComposition::DEFAULT_SPLIT_RESPONSIVE));
         $clusterGap = trim((string) ($data['cluster_gap'] ?? ''));
         $clusterJustify = trim((string) ($data['cluster_justify'] ?? ''));
         $clusterAlign = trim((string) ($data['cluster_align'] ?? ''));
@@ -2430,11 +2392,7 @@ class BlockRequest extends FormRequest
             unset($settings['gap']);
           }
 
-          if ($gridColumns === '2' && in_array($gridRatio, ['lead-left', 'lead-right'], true)) {
-            $settings['ratio'] = $gridRatio;
-          } else {
-            unset($settings['ratio']);
-          }
+          $settings['ratio'] = $gridRatio;
 
           $settings['alternate_media_text_sections'] = (bool) ($data['grid_alternate_media_text_sections'] ?? false);
 
@@ -2444,9 +2402,7 @@ class BlockRequest extends FormRequest
             unset($settings['alternate_start']);
           }
 
-          if (! $settings['alternate_media_text_sections']) {
-            unset($settings['alternate_media_text_sections'], $settings['alternate_start']);
-          }
+          $settings = BlockComposition::normalizeGrid($settings);
 
           unset($settings['spacing'], $settings['width'], $settings['alignment']);
         }
@@ -2697,7 +2653,7 @@ class BlockRequest extends FormRequest
     $oldSettings = $existingBlock?->decodedSettings() ?? [];
     $settings = array_replace(array_diff_key($oldSettings, $schema['fields']), $settings);
     $schemaErrors = [];
-    $translatedKeys = app(PluginBlockCatalog::class)->enabledDefinitionForCatalogSlug((string) ($data['type'] ?? ''))?->translatedFieldNames() ?? [];
+    $translatedKeys = app(BlockTranslationRegistry::class)->pluginFieldsFor((string) ($data['type'] ?? ''));
     $copy = array_intersect_key($settings, array_flip($translatedKeys));
     $settings = array_replace(app(BlockSettingsValidator::class)->normalize((string) ($data['type'] ?? ''), array_diff_key($settings, $copy), 'settings', $schemaErrors, 'admin', $oldSettings), $copy);
     if ($schemaErrors !== []) {

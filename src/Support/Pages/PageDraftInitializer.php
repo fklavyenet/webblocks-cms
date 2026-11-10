@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Support\Pages;
 
+use RuntimeException;
 use WebBlocks\Cms\Models\Page;
 
 final class PageDraftInitializer
@@ -15,8 +16,16 @@ final class PageDraftInitializer
       'page_type' => Page::TYPE_DEFAULT,
       'status' => Page::STATUS_DRAFT,
     ] + $attributes);
-    $page->translations()->create(['site_id' => $page->site_id] + $translation);
-    $this->slots->seedInitialSlots($page, $layout);
+    if (! $page->exists) {
+      throw new RuntimeException('A page model event cancelled draft creation.');
+    }
+
+    $firstTranslation = $page->translations()->create(['site_id' => $page->site_id] + $translation);
+    if (! $firstTranslation->exists) {
+      throw new RuntimeException('A translation model event cancelled draft creation.');
+    }
+
+    $this->slots->seedInitialSlots($page, $layout, requirePersistence: true);
 
     return $page;
   }

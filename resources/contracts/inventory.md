@@ -51,7 +51,7 @@ Under **System Settings → MCP**, the Super admin can limit which optional perm
 | `update_draft_heading` | Provide the source page ID, source block ID, locale, new title and version returned by the read. Edits the localized title of a page-owned `header`, `hero` or `content_header` block inside a staged update, saves a revision and returns a private preview URL. Creates an update draft from the source if needed, with the selected heading's slot as its managed slot. |
 | `create_page_draft` | Create an unpublished page with its first translation in the selected enabled locale. Provide a title and localized path, and optionally an active layout handle (default `default`). The tool seeds the layout slots, records the initial revision and returns a private preview link for the new draft. |
 | `get_draft_structure` | Read page-owned slots, managed scope, supported add types, block IDs, parents, and sibling order. Use the new page ID for a standalone draft or the published source page ID for an update draft. Read the current version before writing. |
-| `edit_draft_structure` | Prepare an update draft with an explicit list of page-owned slots, add a supported block with optional localized text, move a supported subtree, or reorder all siblings in a group. Use draft block IDs and the current version. Returns the new version and a private preview link. |
+| `edit_draft_structure` | Prepare an update draft with an explicit list of page-owned slots, add a supported block with optional localized text, move a supported subtree, or reorder all siblings in a group. To move a child out of a full Split, send `replacement_block_id` with `operation: move`. The replacement must be a supported block in the destination sibling group in the same slot. Both block IDs are returned after the exchange. Use draft block IDs and the current version. Returns the new version and a private preview link. |
 | `get_draft_translation` | Read localized page name, slug, path, SEO and Open Graph fields, pending translation changes, and the current translation version. Use a standalone draft ID or the published source page ID and an enabled site locale. |
 | `update_draft_translation` | Edit selected fields in a standalone draft or an update draft. Add a missing locale by providing its page name. SEO fields include the list excerpt and Open Graph image. Use a permitted image from the site library. Null clears SEO fields. The tool returns a private preview and a new version. |
 | `update_draft_seo` | Edit SEO, list excerpt and Open Graph fields only. Requires `pages:write-draft-seo` and the current CMS SEO permission. Read `get_draft_translation` to obtain a fresh version. Rejects page name, slug and path. |
@@ -65,11 +65,31 @@ Draft creation recognizes the same normalized title, path, locale, and layout fo
 
 An existing update draft retains its managed slots. Moves between two managed slots preserve the subtree and its block identities. If a published block has moved between slots, both slots must be selected together when the update draft is promoted. Structural changes apply only to page-owned drafts and preserve the existing placement, capacity, dynamic content, and human-only restrictions. An omitted parent targets the slot root. Adds and moves append to the destination group. Reordering takes the complete sibling list. A stale version rejects the write before any change is saved.
 
-The panel, Content API, and MCP use the same sibling order writer. MCP and the Content API use the same page draft initializer and media site usage relationships. Each interface applies its own authorization and records its own revision context.
+The panel, Content API, and MCP share the sibling order writer and the initializer for a new page draft, its first translation, and its layout slots. Each entry point saves the draft, its initial revision, and its own creation records within one transaction. The panel uses the default locale. The API and MCP use the requested enabled site locale. MCP and the Content API also share media site usage relationships. Each interface applies its own authorization and records its own revision context.
 
-The broader `pages:write-draft-translation` grant allows page identity and SEO edits through `update_draft_translation`. The separate `pages:write-draft-seo` grant enables `update_draft_seo` for SEO, list excerpt and Open Graph fields only. The SEO-only tool rejects name, slug and path inputs. Both tools use the existing CMS field permissions and the connection draft access restriction. A task-specific SEO authorization may explicitly select the earlier draft. It expires after one hour or on revocation; task completion does not automatically revoke it. A write response includes translation values and pending changes only if the client also has the read grant. Localized identity changes require translation permission. SEO changes require SEO permission, and changes in a non-default locale also require translation permission. The Content API and MCP use the same translation payload validation. An update draft keeps its private route and stores proposed public route values separately. Promotion applies only explicitly edited translation fields after checking that the draft is still active and belongs to the source page, the published baseline still matches, the locales are enabled, and the proposed routes are available. Translation-only drafts can be promoted with an empty slot list. For a combined block and translation update, prepare the managed slots before adding translation changes.
+Content API plan validation requires the requested language to be enabled both
+globally and on the target site. A globally disabled language is rejected
+before the plan writes a page or its blocks. Shared Slot reorder requests
+validate the complete sibling group under the write lock and use the same
+order writer as page-owned slots.
+
+When adding a child or changing its placement, a selected parent must belong to
+the destination page and slot. The panel preserves an existing cross-slot
+parent link during a content-only edit in place.
+
+New drafts share the page identity field limits and reserved path rules. Both
+the slug and canonical path must be unique within the selected site and locale.
+The API and MCP derive the slug from the final path segment and use `home` for
+`/`. API plan validation reports a slug conflict under `plan.page.path` even
+when the submitted path has a different prefix.
+
+The broader `pages:write-draft-translation` grant allows page identity and SEO edits through `update_draft_translation`. The separate `pages:write-draft-seo` grant enables `update_draft_seo` for SEO, list excerpt and Open Graph fields only. The SEO-only tool rejects name, slug and path inputs. Both tools use the existing CMS field permissions and the connection draft access restriction. A task-specific SEO authorization may explicitly select the earlier draft. It expires after one hour or on revocation; task completion does not automatically revoke it. A write response includes translation values and pending changes only if the client also has the read grant. Localized identity changes require translation permission. SEO changes require SEO permission, and changes in a non-default locale also require translation permission. The panel, Content API and MCP share page translation field rules. An update draft keeps its private route and stores proposed public route values separately. Promotion applies only explicitly edited translation fields after checking that the draft is still active and belongs to the source page, the published baseline still matches, the locales are enabled, and the proposed routes are available. Translation-only drafts can be promoted with an empty slot list. For a combined block and translation update, prepare the managed slots before adding translation changes.
 
 Media upload requires the separate `media:upload` grant and the current CMS media upload permission on the consenting site. The panel, Content API and MCP share file validation and the uploader. MCP validates the extension against the detected MIME type and excludes SVG. The public library entry belongs to the consenting uploader. It can be selected under the existing media rules. Upload does not attach a file to a page. Each successful call creates one library entry, and storage is cleaned up if saving the entry fails.
+
+New or changed Media Library text uses shared character limits in the panel, Content API and MCP. `title` and `alt_text` allow 255 characters each, and `caption` and `description` allow 2,000 each. Upload, remote fetch, metadata edits and optional file-replacement metadata reject over-limit input before writing or fetching a file. Existing longer values are preserved when omitted or resubmitted unchanged. `media_library.metadata_max_lengths` in the API content contract exposes the limits.
+
+Media Library searches use literal substring matching by default in the panel and MCP `find_media`. Select Pattern in the panel or set `search_mode: pattern` in MCP to use `%` for zero or more characters and `_` for one character. `GET /webadmin/api/media` retains its existing pattern behavior when `search_mode` is omitted. Set `search_mode=literal` to search for `%` and `_` as text or `search_mode=pattern` to request the legacy behavior explicitly. Older saved panel views with a search term retain their original pattern matching. Search fields, media scope and permissions remain specific to each interface.
 
 The discovery result reflects the current account and draft. `write.blocked_by` explains block-wide restrictions such as `unmanaged_slot`, `conflict` for a draft under review, `unverified_base`, or `forbidden`. `write.media_blocked_by` also covers image-specific restrictions, including `media_default_locale_required`. Before applying an edit, the write tool checks permissions, draft state, and version again.
 
@@ -125,6 +145,12 @@ user return 403 rather than a server error; system tokens do not acquire additio
 revision permissions.
 
 The page-version detail API includes bounded `inspection.capture_history` with up to 100 recent events and a `has_more` flag; access uses the existing version-read permission. Historical rows retain their original revision metadata when no capture events exist. Snapshot size metadata is measured outside ordered queries. Cleanup scans fixed-size metadata batches through an ordered continuation key, preserves the age/newest-version rules, and rechecks active restore sources and the newest-version floor under owner locks before deleting each batch.
+
+An existing page can keep its assigned Page Layout after that layout is deactivated. Panel page settings can still be saved, and `PATCH /webadmin/api/pages/{page}/layout` accepts the same inactive handle with an empty `writes` list and no revision capture. An explicit layout selection for a new page or a change to a different layout requires an active handle. The legacy `dashboard` alias follows the eligibility of `docs` in panel page settings and the layout PATCH endpoint.
+
+`PATCH /webadmin/api/blocks/{block}` uses the existing default locale only when `locale` is omitted. An explicitly supplied unknown or malformed locale code or ID returns HTTP 422 with `invalid_block_translation_locale` before any block or translation write. Translation writes also require the resolved locale to be enabled for the block's site.
+
+Content Plans and page and Shared Slot block creation validate the entire destination ancestor chain. For example, Navbar Brand needs a Navbar ancestor, even when its immediate parent is a Container. A persisted destination must stay in the same page and slot and must have a complete, acyclic chain. Staged promotion checks new placements and relocated branches, including descendants whose immediate parent did not change. Existing blocks can still receive field-only PATCH updates, and a staged copy can retain an unchanged legacy placement.
 
 ## HTML Block API Policy
 
@@ -213,10 +239,12 @@ Content-plan conventions:
 
 - Put locale-owned copy directly under `translations` for the selected plan locale.
 - Put URL, target, presentation variant, and other shared options under `settings`.
+- Cookie Settings also accepts `variant` directly on the block. If a page-owned block in a plan includes both forms, `settings.variant` keeps its existing precedence.
 - Put direct Media Library assignment in `media_id`.
 - `slide`, `image`, `hero`, `section`, `card`, `cta`, `content_header`, and
   `link-list-item` also accept an optional top-level `mobile_media_id` referencing
-  an image Media Library record. It is stored in `block_media` with role
+  an image Media Library record. Content plans and single-block creation use
+  the same block type and Media Library checks. It is stored in `block_media` with role
   `mobile_image`, shared across locales, and editable through the admin media
   picker and `PATCH /blocks/{block}`. On screens up to 768 px wide it replaces
   the default image; an absent, deleted, or private mobile image falls back to
@@ -323,7 +351,7 @@ The current published core catalog contains 57 rows:
 | Purpose | Two-sided composition where the first child grows and the second stays content-sized. |
 | Admin-editable content | No visible copy; optional editor-only `layout_name`. |
 | Settings | `gap`: empty/default, 0, 1, 2, 3, 4, 6, 8; `items_alignment`: center/default, start, end, stretch; `width`: auto/default or full; `responsive`: stack or preserve. New admin/API blocks default to stack while existing empty settings preserve the legacy row. |
-| Children | Exactly two direct children. Put a Stack inside either side when that side needs multiple blocks. |
+| Children | The panel, Content API, and MCP use the same two-child limit for direct placement. Authors can add the two children separately and the panel can retype an existing child in place. A move out of a full Split in the panel or MCP exchanges positions with a block from the destination sibling group in the same slot. Staged API promotion validates that a retained full Split still has two direct children. Nested API payloads for a new Split require exactly two direct children. Put a Stack inside either side when that side needs multiple blocks. |
 | HTML | Root-owning `<div class="wb-split …" data-wb-public-block-type="split">…</div>` with allowlisted `wb-*` classes. Responsive stack adds package-owned `.wb-public-split--stack-mobile` and changes to a full-width column at 48rem and below. |
 | Example appearance | Product identity on the left and a price plus buy action on the right. |
 | Avoid | Repeated equal columns, wrapping button groups, or more than two direct children. |
@@ -634,7 +662,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Kind | System block (`is_system=true`), with no editorial translations, children, media or authored URL. |
-| Settings and variants | Shared `variant`: text/default, primary or secondary. API creation accepts the root variant or settings.variant; PATCH supports both. Appearance uses existing typed block fields. |
+| Settings and variants | Shared `variant`: text/default, primary or secondary. Content plans, single-block creation and PATCH accept `variant` directly on the block or `settings.variant`. A page-owned block in a plan keeps the `settings.variant` value when both forms are present. Appearance uses existing typed block fields. |
 | Label and destination | The label comes from consent.settings in the render language. The destination is the current page fragment `#cookie-settings`; the localized label comes from the existing consent settings. |
 | Placement | Page-owned or Shared Slot content, ordinary layout containers, Hero/CTA action areas and Navbar. Existing parent eligibility rules still apply. |
 | HTML | Owns one link or button-styled anchor with data-cms-consent-open, aria-controls and aria-haspopup. Reuses the single layout-owned preference center, including after acceptance or rejection. Disabled site consent hides the public link; the editor explains its absence. Zero optional services still allow the necessary-features explanation. |
@@ -934,6 +962,8 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Avoid | Custom comment storage or raw form markup. |
 
 ### Engagement administration
+
+Approving an already approved comment in the panel or Internal Content API succeeds without changing the recorded approver or approval time. A transition into approval records the actor and time for that transition.
 
 Engagement uses authorized site-scoped aggregates and a sortable, paginated page summary. The all-time pending-review queue and its oldest submission are distinct from new submission counts for the last 7 and 30 days. Ratings mean and distribution include only active 5-point votes; saved-record totals can include inactive or other-scale rows and do not represent unique people. Comments and Ratings share labeled site/page/date/search filters; Comments adds localized status filters and counts, while Ratings adds a value filter and separate submitted/updated dates. Ratings remain read-only with a public-page view icon. Full escaped comment content and spam reasons are available through a policy-guarded detail page. Standard WebBlocks UI action icons expose applicable moderation transitions; selecting comments supports up to 100 per atomic status mutation with policy checks for every record before any update. Mutations retain listing filters and pagination, with the shared out-of-range redirect handling a reduced result set. Reading panels does not moderate submissions or send mail, and needs no scheduler. Staged previews use their own persisted page identity; previously collected page-scoped results reappear after promotion onto the original page. Moderation permissions do not imply publication of a page.
 
@@ -1255,6 +1285,11 @@ Successful updates retain the previous package and record whether migrations ran
 Database setup failures leave the plugin disabled and preserve its tables and packages.
 Runtime source/route failures quarantine the plugin; an explicit disable overrides
 configuration-based enablement. Lifecycle JSON records use atomic replacement.
+
+Panel and API uninstall share the installed-package check. A package must be
+disabled before either entry point removes its code and published assets.
+The panel requires Super admin access and the API requires `plugins.uninstall`.
+Plugin-owned database tables are preserved.
 
 `/webadmin/plugin-recovery` and its login form load without installed plugin source,
 routes, or commands. Existing CMS login controls, active admin-access and Super admin authorization, and CSRF
@@ -1893,6 +1928,22 @@ unchanged.
 The page translation table reports that a page translation record exists. This
 is a title/routing record, not evidence of complete or current block/provider
 translations. API translation-status fields and fallback behavior are unchanged.
+
+## Page workflow and translation validation
+
+The panel and Content API share page status transition rules. Archiving retains
+the last publication date, publishing from another status records a new date,
+and leaving review clears the review request timestamp. The Content API accepts
+repeated publish and archive requests without changing the publication date.
+Publication requires the caller's existing authority and includes draft
+page-owned blocks only when explicitly requested.
+
+Page translation writes share site-and-language slug and path checks, SEO field
+limits and the requirement that an Open Graph image be an image from Media.
+The page settings form validates a new path derived from the slug and retains
+the saved path when the slug stays the same. Translation forms submit full
+values and apply the existing field permissions. Content API and MCP
+translation updates preserve omitted values.
 
 
 ## Shared Publisher Client progress (1.104.3)

@@ -33,6 +33,15 @@ class BlockDeletionManager
     ];
   }
 
+  /** Delete a single subtree in the caller's transaction. */
+  public function deleteSubtree(Block $block): int
+  {
+    $order = $this->recursiveDeleteOrder($block);
+    $order->each(fn (Block $candidate) => $candidate->delete());
+
+    return $order->count();
+  }
+
   public function recursiveDeleteOrder(Block $block, ?Collection $scopedBlocks = null): Collection
   {
     $scopedBlocks = $scopedBlocks === null ? $this->scopedBlocks($block) : $scopedBlocks->filter(

@@ -5,7 +5,7 @@ namespace WebBlocks\Cms\Http\Controllers\InternalContentApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\BackupCleanupSettingsRequest;
-use WebBlocks\Cms\Support\System\BackupRetentionSettings;
+use WebBlocks\Cms\Support\System\CleanupSettingsFields;
 use WebBlocks\Cms\Support\System\SystemBackupCleanup;
 use WebBlocks\Cms\Support\System\SystemSettings;
 
@@ -23,16 +23,7 @@ class InternalBackupCleanupController extends Controller
 
   public function update(BackupCleanupSettingsRequest $request): JsonResponse
   {
-    $validated = $request->validated();
-
-    $this->settings->save([
-      ...BackupRetentionSettings::payload($validated),
-      SystemSettings::BACKUP_CLEANUP_ENABLED => $validated['enabled'],
-      SystemSettings::BACKUP_CLEANUP_PRE_UPDATE_DAYS => $validated['pre_update_days'],
-      SystemSettings::BACKUP_CLEANUP_KEEP_LATEST_PRE_UPDATE => $validated['keep_latest_pre_update'],
-      SystemSettings::BACKUP_CLEANUP_RESTORE_SAFETY_DAYS => $validated['restore_safety_days'],
-      SystemSettings::BACKUP_CLEANUP_CONTENT_APPLY_DAYS => $validated['content_apply_days'],
-    ]);
+    $this->settings->save(CleanupSettingsFields::backupPayload($request->validated()));
 
     return $this->show();
   }

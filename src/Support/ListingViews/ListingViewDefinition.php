@@ -7,6 +7,7 @@ use WebBlocks\Cms\Models\MediaFolder;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
+use WebBlocks\Cms\Support\Media\MediaSearchMode;
 
 final class ListingViewDefinition
 {
@@ -14,7 +15,7 @@ final class ListingViewDefinition
   {
     return $listing === 'pages'
       ? ['site' => 'all', 'search' => '', 'status' => '', 'type' => '', 'sort' => 'created_at', 'direction' => 'desc']
-      : ['folder_id' => '', 'search' => '', 'kind' => '', 'usage' => '', 'sort' => 'updated_at', 'direction' => 'desc', 'view' => 'list'];
+      : ['folder_id' => '', 'search' => '', 'search_mode' => MediaSearchMode::Literal->value, 'kind' => '', 'usage' => '', 'sort' => 'updated_at', 'direction' => 'desc', 'view' => 'list'];
   }
 
   public function columns(string $listing): array
@@ -57,6 +58,7 @@ final class ListingViewDefinition
         $values['site'] = (string) $site->id;
       }
     } else {
+      $this->ensure(MediaSearchMode::fromInput($values['search_mode']) !== null);
       $this->ensure(in_array($values['kind'], ['', 'image', 'video', 'document', 'other'], true));
       $this->ensure(in_array($values['usage'], ['', 'used', 'unused'], true));
       $this->ensure(in_array($values['view'], ['list', 'grid'], true));

@@ -13,6 +13,7 @@ class MediaIndexState
   private const ALLOWED_QUERY_KEYS = [
     'folder_id',
     'search',
+    'search_mode',
     'kind',
     'usage',
     'sort',
@@ -134,6 +135,10 @@ class MediaIndexState
       }
 
       if ($key === 'usage' && ! in_array($stringValue, ['used', 'unused'], true)) {
+        continue;
+      }
+
+      if ($key === 'search_mode' && MediaSearchMode::fromInput($stringValue) === null) {
         continue;
       }
 

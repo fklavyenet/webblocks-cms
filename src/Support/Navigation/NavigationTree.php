@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\Navigation;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
@@ -12,6 +13,55 @@ use WebBlocks\Cms\Support\Pages\PublicPageAccess;
 class NavigationTree
 {
   public const MAX_DEPTH = 3;
+
+  public function parentPlacementIssue(?NavigationItem $parent, int $siteId, string $menuKey, ?NavigationItem $item, bool $includeSubtree = false): ?string
+  {
+    if (! $parent || $parent->menu_key !== $menuKey || (int) $parent->site_id !== $siteId) {
+      return 'scope';
+    }
+    if ($parent->id === $item?->id) {
+      return 'self';
+    }
+    if ($parent->link_type !== NavigationItem::LINK_GROUP) {
+      return 'group';
+    }
+
+    $depth = $includeSubtree && $item ? $this->descendantDepth($item) : 1;
+    $seen = [];
+    for ($ancestor = $parent; $ancestor; $ancestor = $ancestor->parent) {
+      if (++$depth > self::MAX_DEPTH) {
+        return 'depth';
+      }
+      if ($ancestor->id === $item?->id || isset($seen[$ancestor->id])) {
+        return 'cycle';
+      }
+      $seen[$ancestor->id] = true;
+    }
+
+    return null;
+  }
+
+  private function descendantDepth(NavigationItem $item, int $remaining = self::MAX_DEPTH): int
+  {
+    if ($remaining === 0) {
+      return 1;
+    }
+
+    return 1 + (int) $item->children->map(fn (NavigationItem $child) => $this->descendantDepth($child, $remaining - 1))->max();
+  }
+
+  /** Persist positions and parents validated by validateAndNormalizeTreePayload. */
+  public function saveTreeOrder(array $items): void
+  {
+    DB::transaction(function () use ($items): void {
+      foreach ($items as $item) {
+        NavigationItem::query()->whereKey($item['id'])->update([
+          'parent_id' => $item['parent_id'],
+          'position' => $item['position'],
+        ]);
+      }
+    });
+  }
 
   /** Context-free public data, copied before renderers filter or mark the tree. */
   public function buildPublicMenuTree(string $menuKey, Site|int|null $site = null): Collection

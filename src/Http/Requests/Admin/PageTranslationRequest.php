@@ -4,13 +4,13 @@ namespace WebBlocks\Cms\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 use WebBlocks\Cms\Models\Locale;
-use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Pages\PagePath;
+use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class PageTranslationRequest extends FormRequest
@@ -29,17 +29,16 @@ class PageTranslationRequest extends FormRequest
     $authorization = app(AdminAuthorization::class);
     $user = $this->user();
 
-    $this->merge([
+    $input = [
       'slug' => $normalizedSlug,
       'path' => $path !== '' ? $this->normalizePathInput($path) : PageTranslation::pathFromSlug($normalizedSlug),
-      'seo_title' => $this->nullableTrimmed('seo_title'),
-      'seo_description' => $this->nullableTrimmed('seo_description'),
-      'seo_keywords' => $this->nullableTrimmed('seo_keywords'),
-      'list_excerpt' => $this->nullableTrimmed('list_excerpt'),
-      'og_title' => $this->nullableTrimmed('og_title'),
-      'og_description' => $this->nullableTrimmed('og_description'),
       'og_image_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('og_image_media_id') ?: $this->integer('og_image_asset_id') ?: null) : null,
-    ]);
+    ];
+    foreach (array_keys(PageTranslationPayload::TEXT_FIELDS) as $field) {
+      $input[$field] = $this->nullableTrimmed($field);
+    }
+
+    $this->merge($input);
   }
 
   public function rules(): array
@@ -53,54 +52,24 @@ class PageTranslationRequest extends FormRequest
     $siteId = (int) ($page?->site_id ?? 0);
     $localeId = (int) ($translation?->locale_id ?? $locale?->id ?? 0);
 
-    return [
-      'name' => ['required', 'string', 'max:255'],
-      'slug' => [
-        'required',
-        'string',
-        'max:255',
-        'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-        Rule::unique(PageTranslation::class, 'slug')
-          ->ignore($translation?->id)
-          ->where(fn ($query) => $query
-            ->where('site_id', $siteId)
-            ->where('locale_id', $localeId)
-          ),
-      ],
-      'path' => [
-        'required',
-        'string',
-        'max:255',
-        'regex:/^(?:\/|\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*)$/',
-        function (string $attribute, mixed $value, \Closure $fail): void {
-          if (is_string($value) && PagePath::isReserved($value)) {
-            $fail('This path uses a reserved CMS or host route segment.');
-          }
-        },
-        Rule::unique(PageTranslation::class, 'path')
-          ->ignore($translation?->id)
-          ->where(fn ($query) => $query
-            ->where('site_id', $siteId)
-            ->where('locale_id', $localeId)
-          ),
-      ],
-      'seo_title' => ['nullable', 'string', 'max:255'],
-      'seo_description' => ['nullable', 'string', 'max:1000'],
-      'seo_keywords' => ['nullable', 'string', 'max:500'],
-      'list_excerpt' => ['nullable', 'string', 'max:300'],
-      'og_title' => ['nullable', 'string', 'max:255'],
-      'og_description' => ['nullable', 'string', 'max:1000'],
-      'og_image_media_id' => ['nullable', 'integer', Rule::exists(Media::class, 'id')],
-    ];
+    return app(PageTranslationPayload::class)->rules($siteId, $localeId, $translation?->id);
   }
 
   public function messages(): array
   {
+    return app(PageTranslationPayload::class)->messages();
+  }
+
+  public function after(): array
+  {
     return [
-      'slug.regex' => 'Use only lowercase letters, numbers, and hyphens.',
-      'slug.unique' => 'This slug is already used in this site for this locale.',
-      'path.regex' => 'Use a slash path with lowercase letters, numbers, and hyphens only.',
-      'path.unique' => 'This path is already used in this site for this locale.',
+      function (Validator $validator): void {
+        $field = 'og_image_media_id';
+        if (! $validator->errors()->has($field)
+          && ($error = app(PageTranslationPayload::class)->openGraphImageError($this->input($field)))) {
+          $validator->errors()->add($field, $error);
+        }
+      },
     ];
   }
 
@@ -108,18 +77,8 @@ class PageTranslationRequest extends FormRequest
   {
     $data = $this->validated();
 
-    $translation = [
-      'name' => $data['name'],
-      'slug' => $data['slug'],
-      'path' => PagePath::canonicalize($data['path']),
-      'seo_title' => $data['seo_title'] ?? null,
-      'seo_description' => $data['seo_description'] ?? null,
-      'seo_keywords' => $data['seo_keywords'] ?? null,
-      'list_excerpt' => $data['list_excerpt'] ?? null,
-      'og_title' => $data['og_title'] ?? null,
-      'og_description' => $data['og_description'] ?? null,
-      'og_image_media_id' => $data['og_image_media_id'] ?? null,
-    ];
+    $translation = $data + array_fill_keys(PageTranslationPayload::SEO_FIELDS, null);
+    $translation['path'] = PagePath::canonicalize($translation['path']);
     $acl = app(CmsAuthorization::class);
     if ($acl->ready() && ! $acl->allows($this->user(), 'cms.seo.update', $this->route('page')?->site_id)) {
       $translation = array_intersect_key($translation, array_flip(['name', 'slug', 'path', 'list_excerpt']));

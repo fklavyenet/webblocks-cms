@@ -2,11 +2,13 @@
 
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use WebBlocks\Cms\Actions\Pages\WritePageSlotSource;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\BlockMobileMediaRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
@@ -20,13 +22,18 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
+use WebBlocks\Cms\Support\Blocks\BlockComposition;
+use WebBlocks\Cms\Support\Blocks\BlockMediaCompatibility;
 use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\ManagedCtaSynchronizer;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
+use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
@@ -60,7 +67,7 @@ class InternalContentApiOperations
     'block_type_id',
   ];
 
-  private const CHILD_REQUIRED_BLOCK_TYPES = [
+  public const CHILD_REQUIRED_BLOCK_TYPES = [
     'section',
     'container',
     'stack',
@@ -73,19 +80,6 @@ class InternalContentApiOperations
     'card_footer',
     'sticky-navbar',
     'sidebar-navigation',
-  ];
-
-  private const TRANSLATABLE_FIELDS = [
-    'title',
-    'eyebrow',
-    'subtitle',
-    'content',
-    'meta',
-    'caption',
-    'alt_text',
-    'submit_label',
-    'success_message',
-    'consent_label',
   ];
 
   /**
@@ -117,27 +111,11 @@ class InternalContentApiOperations
    *
    * @var array<string, list<string>>
    */
-  public const DIRECT_MEDIA_KIND_RULES = [
-    'image' => [Media::KIND_IMAGE],
-    'navbar-brand' => [Media::KIND_IMAGE],
-    'sidebar-brand' => [Media::KIND_IMAGE],
-    'hero' => [Media::KIND_IMAGE],
-    'section' => [Media::KIND_IMAGE],
-    'slide' => [Media::KIND_IMAGE],
-    'card' => [Media::KIND_IMAGE],
-    'cta' => [Media::KIND_IMAGE],
-    'content_header' => [Media::KIND_IMAGE],
-    'link-list-item' => [Media::KIND_IMAGE],
-    'download' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
-    'file' => [Media::KIND_DOCUMENT, Media::KIND_OTHER],
-    'video' => [Media::KIND_VIDEO],
-    'audio' => [Media::KIND_OTHER],
-  ];
+  public const DIRECT_MEDIA_KIND_RULES = BlockMediaCompatibility::DIRECT_KINDS;
 
   public static function acceptsDirectMedia(string $type, Media $media): bool
   {
-    return in_array($media->kind, self::DIRECT_MEDIA_KIND_RULES[$type] ?? [], true)
-      && ($type !== 'audio' || preg_match('/\Aaudio\/[a-z0-9][a-z0-9!#$&^_.+\-]*\z/i', (string) $media->mime_type) === 1);
+    return BlockMediaCompatibility::accepts($type, $media);
   }
 
   public function __construct(
@@ -148,6 +126,7 @@ class InternalContentApiOperations
     private readonly ApplicationRegistry $applicationRegistry,
     private readonly ApplicationSettingsValidator $applicationSettingsValidator,
     private readonly SharedSlotRevisionManager $revisionManager,
+    private readonly PageBlockStructure $blockStructure,
   ) {}
 
   public function resolveSite(mixed $value, string $path, array &$errors): ?Site
@@ -158,15 +137,31 @@ class InternalContentApiOperations
       return null;
     }
 
-    $site = Site::query()
-      ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('handle', trim((string) $value)))
-      ->first();
+    $site = $this->findSite($value);
 
     if (! $site) {
       $errors[] = $this->error($path, 'Site handle or ID must resolve.');
     }
 
     return $site;
+  }
+
+  public function findSite(mixed $value): ?Site
+  {
+    if (! is_scalar($value) && $value !== null) {
+      return null;
+    }
+
+    return Site::query()
+      ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('handle', trim((string) $value)))
+      ->first();
+  }
+
+  public function requestedSite(Request $request): ?Site
+  {
+    $value = $request->query('site', $request->query('site_id', $request->input('site', $request->input('site_id'))));
+
+    return $value === null || $value === '' ? null : $this->findSite($value);
   }
 
   public function resolveLocale(mixed $value, ?Site $site, string $path, array &$errors): ?Locale
@@ -177,9 +172,7 @@ class InternalContentApiOperations
       return null;
     }
 
-    $locale = Locale::query()
-      ->when(is_numeric($value), fn ($query) => $query->whereKey((int) $value), fn ($query) => $query->where('code', Locale::normalizeCode((string) $value)))
-      ->first();
+    $locale = app(LocaleResolver::class)->resolveReference($value);
 
     if (! $locale) {
       $errors[] = $this->error($path, 'Locale must exist.');
@@ -187,7 +180,7 @@ class InternalContentApiOperations
       return null;
     }
 
-    if (! $site || ! $site->locales()->whereKey($locale->id)->wherePivot('is_enabled', true)->exists()) {
+    if (! $site || ! $site->enabledLocales()->whereKey($locale->id)->exists()) {
       $errors[] = $this->error($path, 'Locale must be enabled for the target site.');
     }
 
@@ -288,7 +281,7 @@ class InternalContentApiOperations
 
       $url = '';
     } elseif ($linkType === NavigationItem::LINK_COOKIE_SETTINGS) {
-      if ($url !== '' || $pageId || $target !== '_self') {
+      if (NavigationItem::overridesCookieDestination($url, $pageId, $target)) {
         $errors[] = $this->error($path.'.link_type', __('webblocks-cms::consent.fixed_destination'));
       }
       $url = '';
@@ -330,9 +323,7 @@ class InternalContentApiOperations
       'menu_key' => $menuHandle ?: NavigationItem::MENU_PRIMARY,
       'title' => $label,
       'link_type' => $linkType,
-      'page_id' => $resolvedPageId,
-      'url' => $url,
-      'target' => $linkType === NavigationItem::LINK_GROUP ? null : $target,
+      ...NavigationItem::destinationFields($linkType, $resolvedPageId, $url, $target, emptyUrl: ''),
       'position' => $sortOrder > 0 ? $sortOrder : 1,
       'visibility' => NavigationItem::VISIBILITY_VISIBLE,
       'is_system' => false,
@@ -478,38 +469,7 @@ class InternalContentApiOperations
   {
     $page = $this->sharedSlotSourcePages->ensureFor($sharedSlot);
     $slotType = $this->sharedSlotSourcePages->editorSlotTypeFor($sharedSlot);
-    $blockType = BlockType::query()->where('slug', $payload['type'])->where('status', 'published')->firstOrFail();
-    $translations = $payload['translations'];
-    $settings = $payload['settings'] === [] ? null : json_encode($payload['settings'], JSON_UNESCAPED_SLASHES);
-
-    $block = $this->blockPayloadWriter->save(new Block, $page, [
-      'page_id' => $page->id,
-      'parent_id' => $parent?->id,
-      'block_type_id' => $blockType->id,
-      'type' => $blockType->slug,
-      'source_type' => $blockType->source_type ?: 'static',
-      'slot_type_id' => $slotType->id,
-      'slot' => $slotType->slug,
-      'sort_order' => $sortOrder,
-      'status' => 'draft',
-      'is_system' => (bool) $blockType->is_system,
-      'settings' => $settings,
-      'plugin_settings' => $translations,
-      'variant' => $payload['variant'] ?? ($payload['settings']['variant'] ?? null),
-      'url' => $payload['settings']['url'] ?? null,
-      'media_id' => $payload['media_id'] ?? null,
-      '_block_media' => $payload['_block_media'] ?? [],
-      '_gallery_items' => $payload['_gallery_items'] ?? [],
-      'title' => $blockType->slug === 'image' ? ($translations['caption'] ?? $translations['title'] ?? null) : ($translations['title'] ?? null),
-      'subtitle' => $blockType->slug === 'image' ? ($translations['alt_text'] ?? $translations['subtitle'] ?? null) : ($translations['subtitle'] ?? null),
-      'content' => $translations['content'] ?? null,
-      'meta' => $translations['meta'] ?? null,
-      'submit_label' => $translations['submit_label'] ?? null,
-      'success_message' => $translations['success_message'] ?? null,
-      ...Arr::only($translations, ['consent_label']),
-    ], $localeCode);
-
-    $this->managedCtaSynchronizer->sync($block, $payload['_managed_ctas'] ?? [], $localeCode);
+    $block = $this->writeSlotBlock($page, $slotType, $payload, $localeCode, $parent, $sortOrder);
 
     foreach (array_values($payload['children']) as $index => $childPayload) {
       $this->createSharedSlotBlock($sharedSlot, $childPayload, $localeCode, $block, $index);
@@ -528,9 +488,26 @@ class InternalContentApiOperations
    */
   public function createPageSlotBlock(Page $page, SlotType $slotType, array $payload, string $localeCode, ?Block $parent, int $sortOrder): Block
   {
+    $block = $this->writeSlotBlock($page, $slotType, $payload, $localeCode, $parent, $sortOrder, ['eyebrow' => $payload['translations']['eyebrow'] ?? null]);
+
+    foreach (array_values($payload['children']) as $index => $childPayload) {
+      $this->createPageSlotBlock($page, $slotType, $childPayload, $localeCode, $block, $index);
+    }
+
+    return $block;
+  }
+
+  private function writeSlotBlock(Page $page, SlotType $slotType, array $payload, string $localeCode, ?Block $parent, int $sortOrder, array $extraFields = []): Block
+  {
     $blockType = BlockType::query()->where('slug', $payload['type'])->where('status', 'published')->firstOrFail();
     $translations = $payload['translations'];
     $settings = $payload['settings'] === [] ? null : json_encode($payload['settings'], JSON_UNESCAPED_SLASHES);
+    $copy = Arr::only($translations, ['title', 'subtitle']);
+    if ($blockType->slug === 'image') {
+      foreach (BlockTranslationRegistry::IMAGE_BLOCK_FIELDS as $field => $alias) {
+        $copy[$alias] = $translations[$field] ?? $copy[$alias] ?? null;
+      }
+    }
 
     $block = $this->blockPayloadWriter->save(new Block, $page, [
       'page_id' => $page->id,
@@ -550,26 +527,20 @@ class InternalContentApiOperations
       'media_id' => $payload['media_id'] ?? null,
       '_block_media' => $payload['_block_media'] ?? [],
       '_gallery_items' => $payload['_gallery_items'] ?? [],
-      'title' => $blockType->slug === 'image' ? ($translations['caption'] ?? $translations['title'] ?? null) : ($translations['title'] ?? null),
-      'eyebrow' => $translations['eyebrow'] ?? null,
-      'subtitle' => $blockType->slug === 'image' ? ($translations['alt_text'] ?? $translations['subtitle'] ?? null) : ($translations['subtitle'] ?? null),
+      'title' => $copy['title'] ?? null,
+      'subtitle' => $copy['subtitle'] ?? null,
+      ...$extraFields,
       'content' => $translations['content'] ?? null,
       'meta' => $translations['meta'] ?? null,
-      'submit_label' => $translations['submit_label'] ?? null,
-      'success_message' => $translations['success_message'] ?? null,
-      ...Arr::only($translations, ['consent_label']),
+      ...Arr::only($translations, BlockTranslationRegistry::CONTACT_FORM_COPY_FIELDS),
     ], $localeCode);
 
     $this->managedCtaSynchronizer->sync($block, $payload['_managed_ctas'] ?? [], $localeCode);
 
-    foreach (array_values($payload['children']) as $index => $childPayload) {
-      $this->createPageSlotBlock($page, $slotType, $childPayload, $localeCode, $block, $index);
-    }
-
     return $block;
   }
 
-  public function normalizeBlock(mixed $block, string $path, ?BlockType $parentType, array &$errors, array &$warnings, bool $allowEmptyWrapper = false): ?array
+  public function normalizeBlock(mixed $block, string $path, ?Block $parent, array &$errors, array &$warnings, bool $allowEmptyWrapper = false, bool $contentPlan = false): ?array
   {
     if (! is_array($block)) {
       $errors[] = $this->error($path, 'Block must be an object.');
@@ -577,7 +548,7 @@ class InternalContentApiOperations
       return null;
     }
 
-    $this->rejectForbiddenKeys($block, $path, $errors);
+    $this->rejectForbiddenKeys($block, $path, $errors, contentPlan: $contentPlan);
     $this->rejectPlanManagedRelationKeys($block, $path, $errors);
 
     $typeSlug = trim((string) ($block['type'] ?? $block['block_type'] ?? ''));
@@ -595,9 +566,10 @@ class InternalContentApiOperations
       return null;
     }
 
-    if ($parentType && ! $this->parentAcceptsChild($parentType, $blockType)) {
-      $errors[] = $this->error($path.'.type', 'Child block type is not allowed by the parent block contract.');
+    if (! $this->blockStructure->allowsPlacement($parent, $typeSlug)) {
+      $errors[] = $this->error($path.'.type', 'Block type is not allowed in this parent chain.');
     }
+    $node = (new Block(['type' => $typeSlug]))->setRelation('blockType', $blockType)->setRelation('parent', $parent);
 
     $settings = $block['settings'] ?? [];
     if (! is_array($settings)) {
@@ -606,10 +578,11 @@ class InternalContentApiOperations
     }
 
     if ($blockType->slug === 'cookie-settings') {
-      if (array_key_exists('variant', $block)) {
+      // Page plans already honored settings.variant when both forms were sent.
+      if (array_key_exists('variant', $block) && (! $contentPlan || ! array_key_exists('variant', $settings))) {
         $settings['variant'] = $block['variant'];
       }
-      if (! empty($block['url'])) {
+      if (! $contentPlan && ! empty($block['url'])) {
         $errors[] = $this->error($path.'.url', 'Cookie settings use the site preference destination.');
       }
     }
@@ -645,7 +618,7 @@ class InternalContentApiOperations
     $this->validateTranslationShape($translations, $path.'.translations', $errors);
     $errors = [...$errors, ...app(ContactConsentRequirements::class)->payloadErrors($blockType->slug, $settings, $translations, $path)];
 
-    foreach (['title', 'eyebrow', 'subtitle', 'content', 'meta'] as $field) {
+    foreach (BlockTranslationRegistry::TEXT_FIELDS as $field) {
       if (array_key_exists($field, $block) && ! array_key_exists($field, $translations)) {
         $translations[$field] = $block[$field];
       }
@@ -657,7 +630,7 @@ class InternalContentApiOperations
       $children = [];
     }
 
-    if ($children !== [] && ! (new Block(['type' => $blockType->slug]))->setRelation('blockType', $blockType)->canAcceptChildren()) {
+    if ($children !== [] && ! $node->canAcceptChildren()) {
       $errors[] = $this->error($path.'.children', 'This block type does not accept children.');
     }
 
@@ -665,13 +638,13 @@ class InternalContentApiOperations
       $errors[] = $this->error($path.'.children', 'This wrapper block type must contain renderable child blocks. Use nested children arrays; flat id/parent_id references are not part of the content plan contract.');
     }
 
-    if ($blockType->slug === 'split' && count($children) !== 2) {
+    if ($blockType->slug === 'split' && count($children) !== Block::SPLIT_CHILD_COUNT) {
       $errors[] = $this->error($path.'.children', 'Split must contain exactly two direct child blocks: a growing first side and a content-sized second side. Put a Stack inside either side when it needs multiple blocks.');
     }
 
     $normalizedChildren = [];
     foreach (array_values($children) as $index => $child) {
-      $normalizedChild = $this->normalizeBlock($child, $path.'.children.'.$index, $blockType, $errors, $warnings);
+      $normalizedChild = $this->normalizeBlock($child, $path.'.children.'.$index, $node, $errors, $warnings, contentPlan: $contentPlan);
 
       if ($normalizedChild !== null) {
         $normalizedChildren[] = $normalizedChild;
@@ -732,14 +705,7 @@ class InternalContentApiOperations
       return null;
     }
 
-    $slot->update([
-      'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT,
-      'shared_slot_id' => $sharedSlot->id,
-    ]);
-
-    if ($page->status === Page::STATUS_PUBLISHED) {
-      app(ContactConsentRequirements::class)->assertPage($page->fresh());
-    }
+    app(WritePageSlotSource::class)->execute($page, $slot, PageSlot::SOURCE_TYPE_SHARED_SLOT, $sharedSlot->id);
 
     return $slot->fresh(['slotType', 'sharedSlot']);
   }
@@ -755,17 +721,22 @@ class InternalContentApiOperations
     return $this->apiAuthoringPolicy->scopeHasHumanOnlyBlock($blocks);
   }
 
-  public function rejectForbiddenKeys(array $data, string $path, array &$errors): void
+  public function rejectForbiddenKeys(array $data, string $path, array &$errors, bool $contentPlan = false, array $allowedKeys = []): void
   {
     foreach ($data as $key => $value) {
       $keyString = strtolower((string) $key);
 
-      if (in_array($keyString, self::FORBIDDEN_KEYS, true)) {
-        $errors[] = $this->error($path.'.'.$key, 'This operation is outside the supported Internal Content API phase.');
+      $assignmentReference = $keyString === 'shared_slot' && preg_match('/^plan\.page_slot_shared_slots\.\d+$/D', $path) === 1;
+      $forbidden = in_array($keyString, self::FORBIDDEN_KEYS, true)
+        || ($contentPlan && $keyString === 'shared_slot' && ! $assignmentReference);
+      if ($forbidden && ! in_array($keyString, $allowedKeys, true)) {
+        $errors[] = $this->error($path.'.'.$key, $contentPlan
+          ? 'This operation is outside Internal Content API Phase 1.'
+          : 'This operation is outside the supported Internal Content API phase.');
       }
 
       if (is_array($value)) {
-        $this->rejectForbiddenKeys($value, $path.'.'.$key, $errors);
+        $this->rejectForbiddenKeys($value, $path.'.'.$key, $errors, $contentPlan, $allowedKeys);
       }
     }
   }
@@ -786,39 +757,7 @@ class InternalContentApiOperations
    */
   public function normalizeCompositionDefaults(array $settings, BlockType $blockType): array
   {
-    if ($blockType->slug === 'columns' && ! array_key_exists('variant', $settings)) {
-      $settings['variant'] = 'plain';
-    }
-
-    if ($blockType->slug === 'split' && ! array_key_exists('responsive', $settings)) {
-      $settings['responsive'] = 'stack';
-    }
-
-    if ($blockType->slug === 'grid') {
-      if (($settings['alternate_media_text_sections'] ?? false) !== true) {
-        unset($settings['alternate_media_text_sections'], $settings['alternate_start']);
-      }
-      $ratio = $settings['ratio'] ?? null;
-      if (($settings['columns'] ?? null) !== '2' || ! in_array($ratio, ['lead-left', 'lead-right'], true)) {
-        unset($settings['ratio']);
-      }
-    }
-
-    if ($blockType->slug === 'hero' && array_key_exists('layout', $settings)) {
-      $layout = $settings['layout'];
-      if (! in_array($layout, ['left', 'centered', 'split', 'full-bleed'], true)) {
-        unset($settings['layout']);
-      }
-    }
-
-    if ($blockType->slug === 'section' && array_key_exists('flow', $settings)) {
-      $flow = $settings['flow'];
-      if (! in_array($flow, ['offset-up', 'overlap-previous'], true)) {
-        unset($settings['flow']);
-      }
-    }
-
-    return $settings;
+    return BlockComposition::normalize($settings, $blockType->slug);
   }
 
   public function normalizeImageViewerSettings(array $settings, BlockType $blockType, string $path, array &$errors): array
@@ -850,19 +789,6 @@ class InternalContentApiOperations
     return $settings;
   }
 
-  private function parentAcceptsChild(BlockType $parentType, BlockType $childType): bool
-  {
-    $parent = new Block(['type' => $parentType->slug]);
-    $parent->setRelation('blockType', $parentType);
-    $allowed = $parent->allowedChildTypeSlugs();
-
-    if ($allowed === null) {
-      return $parent->canAcceptChildren();
-    }
-
-    return in_array($childType->slug, $allowed, true);
-  }
-
   private function rejectPlanManagedRelationKeys(array $block, string $path, array &$errors): void
   {
     foreach (self::PLAN_MANAGED_RELATION_KEYS as $key) {
@@ -879,13 +805,14 @@ class InternalContentApiOperations
 
   private function validateTranslationShape(array $translations, string $path, array &$errors): void
   {
+    $coreFields = BlockTranslationRegistry::coreFields();
     foreach ($translations as $key => $value) {
       if (! is_array($value)) {
         continue;
       }
 
       $key = (string) $key;
-      if (in_array($key, self::TRANSLATABLE_FIELDS, true)) {
+      if (in_array($key, $coreFields, true)) {
         continue;
       }
 

@@ -12,6 +12,7 @@ use WebBlocks\Cms\Actions\Mcp\EditDraftTranslation;
 use WebBlocks\Cms\Actions\Mcp\UpdateDraftBlock;
 use WebBlocks\Cms\Actions\Mcp\UploadMedia;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\Media\MediaSearchMode;
 use WebBlocks\Cms\Support\Media\MediaUploadRules;
 use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
 
@@ -45,8 +46,6 @@ final class McpTools
 
   public const UPLOAD = 'upload_media';
 
-  private const UPLOAD_COPY_LIMIT = 2000;
-
   public function __construct(
     private readonly McpPages $pages,
     private readonly UpdateDraftBlock $updateBlock,
@@ -55,6 +54,7 @@ final class McpTools
     private readonly EditDraftStructure $structure,
     private readonly EditDraftTranslation $translation,
     private readonly UploadMedia $upload,
+    private readonly McpBlockFields $blockFields,
   ) {}
 
   public function descriptors(array $available = McpConfiguration::SCOPES): array
@@ -65,14 +65,7 @@ final class McpTools
     $version = ['type' => 'string', 'pattern' => '^[0-9a-f]{64}$'];
     $page = ['type' => 'integer', 'minimum' => 1, 'maximum' => McpPages::MAX_PAGE_NUMBER];
     $text = ['type' => 'string', 'maxLength' => 255];
-    $copy = [
-      'title' => $text,
-      'subtitle' => $text,
-      'eyebrow' => $text,
-      'caption' => $text,
-      'alt_text' => $text,
-      'content' => ['type' => 'string', 'maxLength' => 8000],
-    ];
+    $copy = array_map(fn (int $limit): array => ['type' => 'string', 'maxLength' => $limit], $this->blockFields->textLimits());
 
     $slot = ['type' => 'string', 'minLength' => 1, 'maxLength' => 100];
     $parent = ['type' => ['integer', 'null'], 'minimum' => 1];
@@ -114,7 +107,9 @@ final class McpTools
         'page' => $page,
       ], ['locale', 'q']),
       $this->descriptor(self::MEDIA, 'media_description', [
-        'q' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120], 'page' => $page,
+        'q' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120],
+        'search_mode' => ['type' => 'string', 'enum' => array_column(MediaSearchMode::cases(), 'value'), 'default' => MediaSearchMode::Literal->value],
+        'page' => $page,
       ], []),
       $this->descriptor(self::CREATE, 'create_draft_description', [
         'locale' => $locale,
@@ -136,6 +131,7 @@ final class McpTools
         'type' => ['type' => 'string', 'enum' => EditDraftStructure::ADD_TYPES],
         'text' => ['type' => 'object', 'properties' => $copy, 'additionalProperties' => false],
         'block_id' => $id,
+        'replacement_block_id' => $id + ['description' => 'For a move out of a full Split, exchange positions with this block in the destination group in the same slot.'],
         'block_ids' => ['type' => 'array', 'items' => $id, 'minItems' => 1, 'maxItems' => 500, 'uniqueItems' => true],
       ], ['locale', 'page_id', 'version', 'operation'], [
         'oneOf' => [
@@ -154,11 +150,7 @@ final class McpTools
       $this->descriptor(self::UPLOAD, 'upload_description', [
         'filename' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 255],
         'content_base64' => ['type' => 'string', 'contentEncoding' => 'base64', 'minLength' => 4, 'maxLength' => UploadMedia::MAX_BASE64_LENGTH],
-        'title' => $text,
-        'alt_text' => $text,
-        'caption' => ['type' => 'string', 'maxLength' => self::UPLOAD_COPY_LIMIT],
-        'description' => ['type' => 'string', 'maxLength' => self::UPLOAD_COPY_LIMIT],
-      ], ['filename', 'content_base64']),
+      ] + array_map(fn (int $limit): array => ['type' => 'string', 'maxLength' => $limit], MediaUploadRules::METADATA_LIMITS), ['filename', 'content_base64']),
       $this->descriptor(self::EDIT_SEO, 'edit_seo_description', [
         'locale' => $locale, 'page_id' => $id, 'version' => $version,
       ] + array_intersect_key($translation, array_flip(PageTranslationPayload::SEO_FIELDS)), ['locale', 'page_id', 'version']),
@@ -217,7 +209,6 @@ final class McpTools
     $id = ['required', 'integer', 'min:1'];
     $version = ['required', 'string', 'regex:/\A[0-9a-f]{64}\z/'];
     $page = ['sometimes', 'integer', 'min:1', 'max:'.McpPages::MAX_PAGE_NUMBER];
-    $shortText = ['sometimes', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'];
     $rules += match ($name) {
       self::READ => [
         'page_id' => ['required_without:path', 'prohibits:path', 'integer', 'min:1'],
@@ -240,24 +231,16 @@ final class McpTools
       ],
       self::CONTENT, self::STRUCTURE => ['page_id' => $id, 'page' => $page],
       self::EDIT_STRUCTURE => ['page_id' => $id, 'version' => $version] + $this->structureRules($args['operation'] ?? null),
-      self::MEDIA => ['q' => ['sometimes', 'required', 'string', 'max:120'], 'page' => $page],
+      self::MEDIA => ['q' => ['sometimes', 'required', 'string', 'max:120'], 'search_mode' => ['sometimes', 'required', Rule::enum(MediaSearchMode::class)], 'page' => $page],
       self::UPLOAD => [
         'filename' => ['required', 'string', 'max:255', 'not_regex:~[/:\\\\\x00-\x1F\x7F]~'],
         'content_base64' => ['required', 'string', 'max:'.UploadMedia::MAX_BASE64_LENGTH],
-        'caption' => [...MediaUploadRules::metadata()['caption'], 'max:'.self::UPLOAD_COPY_LIMIT],
-        'description' => [...MediaUploadRules::metadata()['description'], 'max:'.self::UPLOAD_COPY_LIMIT],
       ] + MediaUploadRules::metadata(),
       self::EDIT => [
         'page_id' => $id,
         'block_id' => $id,
         'version' => $version,
-        'text' => ['required_without:media_id', 'array:title,subtitle,eyebrow,caption,alt_text,content', 'min:1'],
-        'text.title' => $shortText,
-        'text.subtitle' => $shortText,
-        'text.eyebrow' => $shortText,
-        'text.caption' => $shortText,
-        'text.alt_text' => $shortText,
-        'text.content' => ['sometimes', 'string', 'max:8000', 'not_regex:/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/'],
+      ] + $this->blockTextRules('required_without:media_id', ['min:1']) + [
         'media_id' => ['required_without:text', 'integer', 'min:1'],
       ],
     };
@@ -285,20 +268,12 @@ final class McpTools
   {
     $slot = ['required', 'string', 'max:100'];
     $placement = ['slot' => $slot, 'parent_id' => ['nullable', 'integer', 'min:1']];
-    $shortText = ['sometimes', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'];
     $rules = match ($operation) {
       'prepare' => ['slots' => ['required', 'array', 'list', 'min:1', 'max:32'], 'slots.*' => [...$slot, 'distinct']],
       'add' => $placement + [
         'type' => ['required', 'string', Rule::in(EditDraftStructure::ADD_TYPES)],
-        'text' => ['sometimes', 'array:title,subtitle,eyebrow,caption,alt_text,content'],
-        'text.title' => $shortText,
-        'text.subtitle' => $shortText,
-        'text.eyebrow' => $shortText,
-        'text.caption' => $shortText,
-        'text.alt_text' => $shortText,
-        'text.content' => ['sometimes', 'string', 'max:8000', 'not_regex:/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/'],
-      ],
-      'move' => $placement + ['block_id' => ['required', 'integer', 'min:1']],
+      ] + $this->blockTextRules('sometimes'),
+      'move' => $placement + ['block_id' => ['required', 'integer', 'min:1'], 'replacement_block_id' => ['sometimes', 'required', 'integer', 'min:1', 'different:block_id']],
       'reorder' => $placement + [
         'block_ids' => ['required', 'array', 'list', 'min:1', 'max:500'],
         'block_ids.*' => ['required', 'integer', 'min:1', 'distinct'],
@@ -307,6 +282,20 @@ final class McpTools
     };
 
     return ['operation' => ['required', 'string']] + $rules;
+  }
+
+  private function blockTextRules(string $presence, array $additionalRules = []): array
+  {
+    $limits = $this->blockFields->textLimits();
+    $rules = ['text' => [$presence, 'array:'.implode(',', array_keys($limits)), ...$additionalRules]];
+    foreach ($limits as $field => $limit) {
+      $characters = $field === 'content'
+        ? 'not_regex:/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/'
+        : 'not_regex:/[\x00-\x1F\x7F]/';
+      $rules['text.'.$field] = ['sometimes', 'string', 'max:'.$limit, $characters];
+    }
+
+    return $rules;
   }
 
   private function translationRules(): array

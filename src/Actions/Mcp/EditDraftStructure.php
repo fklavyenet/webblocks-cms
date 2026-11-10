@@ -128,13 +128,13 @@ final class EditDraftStructure
       $all = $draft->blocks->keyBy('id');
       $editable = $this->pages->staticBlocks($draft);
       $parent = isset($input['parent_id']) ? $editable->get($input['parent_id']) : null;
-      if (isset($input['parent_id']) && (! $parent || $parent->slot_type_id !== $slot->slot_type_id)) {
+      if (isset($input['parent_id']) && (! $parent || ! $this->structure->parentBelongsToSlot($parent, $draft->id, $slot->slot_type_id))) {
         throw new McpToolException('invalid_block_placement');
       }
 
       $changedIds = match ($input['operation']) {
         'add' => [$this->add($draft, $slot, $parent, $all, $locale, $input)->id],
-        'move' => [$this->move($slot, $parent, $all, $editable, $slots, $managed, $input['block_id'])],
+        'move' => $this->move($slot, $parent, $all, $editable, $slots, $managed, $input['block_id'], $input['replacement_block_id'] ?? null),
         'reorder' => $this->reorder($slot, $parent, $all, $editable, $input['block_ids']),
       };
 
@@ -188,19 +188,19 @@ final class EditDraftStructure
     $warnings = [];
     $normalized = $this->blocks->normalizeBlock(
       ['type' => $type, 'translations' => $text],
-      'block', $parent?->blockType, $errors, $warnings,
+      'block', $parent, $errors, $warnings,
       allowEmptyWrapper: in_array($type, ['container', 'stack'], true),
     );
     if (! $normalized || $errors !== []) {
       throw new McpToolException('invalid_block_placement');
     }
 
-    $order = ($this->structure->siblings($all, $slot->slot_type_id, $parent?->id)->max('sort_order') ?? -1) + 1;
+    $order = $this->structure->nextSortOrder($this->structure->siblings($all, $slot->slot_type_id, $parent?->id)->max('sort_order'));
 
     return $this->blocks->createPageSlotBlock($draft, $slot->slotType, $normalized, $locale->code, $parent, $order);
   }
 
-  private function move(PageSlot $slot, ?Block $parent, Collection $all, Collection $editable, Collection $slots, array $managed, int $id): int
+  private function move(PageSlot $slot, ?Block $parent, Collection $all, Collection $editable, Collection $slots, array $managed, int $id, ?int $replacementId): array
   {
     $block = $editable->get($id);
     $origin = $block ? $slots->get($block->slot_type_id) : null;
@@ -209,11 +209,13 @@ final class EditDraftStructure
     }
     // MCP only moves types that do not depend on a specific ancestor.
     $movable = $editable->filter(fn (Block $candidate) => in_array($candidate->typeSlug(), self::MOVE_TYPES, true));
-    if (! $this->structure->move($block, $slot->slot_type_id, $parent, $all, $movable)) {
+    $replacement = $replacementId === null ? null : $movable->get($replacementId);
+    if (($replacementId !== null && ! $replacement)
+      || ! $this->structure->move($block, $slot->slot_type_id, $parent, $all, $movable, $replacement)) {
       throw new McpToolException('invalid_block_placement');
     }
 
-    return $id;
+    return $replacement ? [$id, $replacement->id] : [$id];
   }
 
   private function reorder(PageSlot $slot, ?Block $parent, Collection $all, Collection $editable, array $ids): array

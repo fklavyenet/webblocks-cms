@@ -9,17 +9,16 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Page;
-use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
-use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Pages\PageOwnedBlockPublisher;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
+use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 
 class InternalPagePublishController extends Controller
 {
   public function __construct(
-    private readonly CurrentActorResolver $currentActorResolver,
+    private readonly PageWorkflowManager $workflowManager,
     private readonly InternalContentApiPresenter $presenter,
     private readonly PageOwnedBlockPublisher $pageOwnedBlockPublisher,
     private readonly PageRevisionManager $revisionManager,
@@ -40,26 +39,19 @@ class InternalPagePublishController extends Controller
     ]);
 
     $includePageOwnedBlocks = (bool) ($validated['include_page_owned_blocks'] ?? false);
-    $fromStatus = $page->status;
-
-    $result = DB::transaction(function () use ($page, $includePageOwnedBlocks, $fromStatus): array {
+    $result = DB::transaction(function () use ($page, $includePageOwnedBlocks): array {
       $lockedPage = Page::query()->lockForUpdate()->findOrFail($page->id);
-
-      if (! in_array($lockedPage->status, [Page::STATUS_DRAFT, Page::STATUS_IN_REVIEW, Page::STATUS_ARCHIVED, Page::STATUS_PUBLISHED], true)) {
+      $fromStatus = $lockedPage->status;
+      if (! $this->workflowManager->transitionAuthorizedPage(
+        $lockedPage,
+        PageWorkflowManager::ACTION_PUBLISH,
+        source: 'internal-api',
+        allowRepeat: true,
+        includePageOwnedBlocks: $includePageOwnedBlocks,
+      )) {
         throw ValidationException::withMessages([
           'page' => 'This page cannot be published from its current status.',
         ]);
-      }
-
-      app(ContactConsentRequirements::class)->assertPage($lockedPage, $includePageOwnedBlocks);
-      if ($lockedPage->status !== Page::STATUS_PUBLISHED) {
-        $actor = $this->currentActorResolver->resolve(preferredSource: 'internal-api');
-        $lockedPage->forceFill([
-          'status' => Page::STATUS_PUBLISHED,
-          'published_at' => now(),
-          'published_by_user_id' => $actor['user_id'],
-          'updated_by_user_id' => $actor['user_id'],
-        ])->save();
       }
 
       $blockResult = $includePageOwnedBlocks
@@ -107,26 +99,18 @@ class InternalPagePublishController extends Controller
   {
     $this->rejectStagedUpdatePageArchive($page);
 
-    $fromStatus = $page->status;
-
-    $result = DB::transaction(function () use ($page, $fromStatus): array {
+    $result = DB::transaction(function () use ($page): array {
       $lockedPage = Page::query()->lockForUpdate()->findOrFail($page->id);
-
-      // Same transition rule as the admin workflow: draft pages are not
-      // archivable, and re-archiving an archived page is a no-op success.
-      if (! in_array($lockedPage->status, [Page::STATUS_IN_REVIEW, Page::STATUS_PUBLISHED, Page::STATUS_ARCHIVED], true)) {
+      $fromStatus = $lockedPage->status;
+      if (! $this->workflowManager->transitionAuthorizedPage(
+        $lockedPage,
+        PageWorkflowManager::ACTION_ARCHIVE,
+        source: 'internal-api',
+        allowRepeat: true,
+      )) {
         throw ValidationException::withMessages([
           'page' => 'This page cannot be archived from its current status.',
         ]);
-      }
-
-      if ($lockedPage->status !== Page::STATUS_ARCHIVED) {
-        $actor = $this->currentActorResolver->resolve(preferredSource: 'internal-api');
-        $lockedPage->forceFill([
-          'status' => Page::STATUS_ARCHIVED,
-          'archived_by_user_id' => $actor['user_id'],
-          'updated_by_user_id' => $actor['user_id'],
-        ])->save();
       }
 
       $updatedPage = $lockedPage->fresh(['site.locales', 'translations.locale', 'slots.slotType']);
