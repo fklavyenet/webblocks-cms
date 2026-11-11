@@ -10,6 +10,7 @@ use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\CmsApiTokenRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Policies\PanelLanguagePolicy;
+use WebBlocks\Cms\Policies\PublicThemePolicy;
 use WebBlocks\Cms\Policies\SystemUpdateApiPolicy;
 use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
@@ -174,6 +175,12 @@ class CmsApiTokenController extends Controller
         'label' => __('webblocks-cms::panel-languages.title'),
         'description' => __('webblocks-cms::panel-languages.token_scope'),
         'capabilities' => [CmsApiTokenCapabilities::PANEL_LANGUAGES_MANAGE],
+      ]] : []),
+      ...(app(PublicThemePolicy::class)->managePackages(request()->user()) ? [[
+        'key' => 'themes',
+        'label' => __('webblocks-cms::themes.title'),
+        'description' => __('webblocks-cms::themes.token_scope'),
+        'capabilities' => [CmsApiTokenCapabilities::THEMES_MANAGE],
       ]] : []),
       // Enabled plugins (e.g. WebBlocks Commerce) contribute their own groups below.
       [

@@ -270,6 +270,8 @@ class InternalApiDiscoveryController extends Controller
       'page_html_preview' => '/webadmin/pages/{page}/preview',
       'admin_render_system_updates' => '/webadmin/api/admin-render/system-updates',
       'admin_render_system_updates_html' => '/webadmin/api/admin-render/system-updates?format=html',
+      'theme_packages' => '/webadmin/api/system/themes',
+      'site_themes' => '/webadmin/api/sites/{site}/themes',
       'panel_languages' => '/webadmin/api/system/panel-languages',
       'panel_language_template' => '/webadmin/api/system/panel-languages/template',
       'system_updates_check' => '/webadmin/api/system/updates/check',
@@ -383,7 +385,70 @@ class InternalApiDiscoveryController extends Controller
       ],
     ];
 
+    $themeOperation = static fn (string $summary, string $capability, int $status = 200): array => [
+      'summary' => $summary,
+      'x-required-capability' => $capability,
+      'responses' => [
+        $status => ['description' => 'Theme result', 'content' => $json],
+        '403' => ['description' => 'Missing theme authority', 'content' => $json],
+        '422' => ['description' => 'Validation or compatibility error', 'content' => $json],
+      ],
+    ];
+    $themeBody = static fn (string $mime, array $properties, array $required): array => [
+      'required' => true,
+      'content' => [$mime => ['schema' => ['type' => 'object', 'properties' => $properties, 'required' => $required]]],
+    ];
+    $themeParameter = static fn (string $name, string $in, array $schema): array => [
+      'name' => $name, 'in' => $in, 'required' => $in === 'path' || $name === 'version', 'schema' => $schema,
+    ];
+    $siteThemePath = [$themeParameter('site', 'path', ['type' => 'integer'])];
+    $previewTheme = $themeOperation('Render a private theme preview on a page in this site', 'site-settings.write');
+    $previewTheme['x-additional-required-capability'] = 'content.read';
+    $previewTheme['responses'][200] = [
+      'description' => 'Private HTML preview',
+      'content' => ['text/html' => ['schema' => ['type' => 'string']]],
+      'headers' => [
+        'X-WebBlocks-Theme-Confirmation' => [
+          'description' => 'Present for a compatible candidate. Send as confirmation when activating within 30 minutes.',
+          'schema' => ['type' => 'string'],
+        ],
+      ],
+    ];
+    $previewTheme['parameters'] = [
+      $themeParameter('version', 'query', ['type' => 'integer']),
+      $themeParameter('page', 'query', ['type' => 'integer']),
+      $themeParameter('side', 'query', ['type' => 'string', 'enum' => ['current', 'candidate']]),
+      $themeParameter('mode', 'query', ['type' => 'string', 'enum' => ['light', 'dark', 'auto']]),
+      $themeParameter('button_corners', 'query', ['type' => 'string', 'enum' => ['default', 'sharp', 'soft']]),
+      $themeParameter('locale', 'query', ['type' => 'string']),
+      $themeParameter('omit_site_css', 'query', ['type' => 'integer', 'enum' => [0, 1]]),
+    ];
+
     return [
+      '/system/themes' => [
+        'get' => $themeOperation('List installed public theme versions', 'themes.manage'),
+        'post' => $themeOperation('Validate and install a ZIP without changing site appearance', 'themes.manage', 201)
+          + ['requestBody' => $themeBody('multipart/form-data', ['package' => ['type' => 'string', 'format' => 'binary']], ['package'])],
+      ],
+      '/system/themes/{version}' => [
+        'parameters' => [$themeParameter('version', 'path', ['type' => 'integer'])],
+        'delete' => $themeOperation('Remove an installed version unused in site theme history', 'themes.manage'),
+      ],
+      '/sites/{site}/themes' => [
+        'parameters' => $siteThemePath,
+        'get' => $themeOperation('Read installed versions and this site’s selected theme and history', 'site-settings.write'),
+      ],
+      '/sites/{site}/themes/preview' => ['parameters' => $siteThemePath, 'get' => $previewTheme],
+      '/sites/{site}/themes/activate' => [
+        'parameters' => $siteThemePath,
+        'post' => $themeOperation('Activate the version and settings confirmed in preview', 'site-settings.write')
+          + ['requestBody' => $themeBody('application/json', ['confirmation' => ['type' => 'string']], ['confirmation'])],
+      ],
+      '/sites/{site}/themes/restore' => [
+        'parameters' => $siteThemePath,
+        'post' => $themeOperation('Restore a previous theme configuration or the built-in preset', 'site-settings.write')
+          + ['requestBody' => $themeBody('application/json', ['expected' => ['type' => 'integer'], 'revision' => ['type' => 'integer', 'nullable' => true]], ['expected'])],
+      ],
       '/notes' => [
         'get' => $noteOperation('List visible notes, newest first', 'read') + [
           'x-filters' => ['search (title)', 'audience (general, private, administration)', 'status (read, unread)', 'page', 'per_page (1–50)'],

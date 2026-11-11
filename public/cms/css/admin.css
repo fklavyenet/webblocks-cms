@@ -1666,3 +1666,6 @@ input.wb-admin-table-grid-input:focus {
     white-space: normal;
     overflow-wrap: anywhere;
 }
+
+.wb-theme-checksum { overflow-wrap: anywhere; }
+.wb-theme-viewport iframe { max-width: 100%; }

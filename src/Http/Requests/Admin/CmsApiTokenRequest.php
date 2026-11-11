@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Policies\PanelLanguagePolicy;
+use WebBlocks\Cms\Policies\PublicThemePolicy;
 use WebBlocks\Cms\Policies\SystemUpdateApiPolicy;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 
@@ -41,6 +42,13 @@ class CmsApiTokenRequest extends FormRequest
         $token = $this->route('token');
         if (! $policy->manage($this->user()) || ($token instanceof CmsApiToken && ! $policy->allowsToken($token))) {
           $validator->errors()->add('capabilities', __('webblocks-cms::panel-languages.token_scope'));
+        }
+      }
+      if (is_array($capabilities) && in_array(CmsApiTokenCapabilities::THEMES_MANAGE, $capabilities, true)) {
+        $policy = app(PublicThemePolicy::class);
+        $token = $this->route('token');
+        if (! $policy->managePackages($this->user()) || ($token instanceof CmsApiToken && ! $policy->managePackagesWithToken($token))) {
+          $validator->errors()->add('capabilities', __('webblocks-cms::themes.token_scope'));
         }
       }
       if (! is_array($capabilities) || array_intersect($capabilities, [CmsApiTokenCapabilities::SYSTEM_UPDATES_READ, CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN]) === []) {

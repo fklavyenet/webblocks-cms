@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.132.0
+
+- Install public theme ZIPs from System → Public themes and choose a theme version per site. Compare the current and candidate appearances on saved pages in light or dark mode and at desktop or phone widths.
+- Confirm activation after layout compatibility checks. Restore a previous theme version and settings, or return to the built-in preset. Site CSS and saved content are preserved.
+- Manage theme packages and site appearance through the Internal Content API with separate installation and site permissions.
+
 ## 1.131.1
 
 - Use standard Webadmin headings, tabs, upload controls, feedback, and pagination on Panel Languages. Add catalog activation and confirmed deletion of inactive catalogs, and show the English source alongside sample translations in the preview.

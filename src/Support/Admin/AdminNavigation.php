@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Admin;
 use WebBlocks\Cms\Policies\CmsNavigationPolicy;
 use WebBlocks\Cms\Policies\JobPolicy;
 use WebBlocks\Cms\Support\Plugins\PluginSidebarGroups;
+use WebBlocks\Cms\Support\Theme\PublicThemes;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
 final class AdminNavigation
@@ -88,6 +89,10 @@ final class AdminNavigation
                         'items' => [
                             ['label' => $adminText('navigation.domains'), 'route' => 'admin.domains.index', 'active' => ['admin.domains.*', 'admin.sites.domains.*'], 'icon' => 'wb-icon-globe'],
                             ['label' => $adminText('navigation.icons'), 'route' => 'admin.system.icons.index', 'active' => ['admin.system.icons.*'], 'icon' => 'wb-icon-sparkles'],
+                            ...($user->can('manage-public-themes') && app(PublicThemes::class)->ready() ? [[
+                                'label' => $adminTranslator->get('themes.title', $adminLocale), 'route' => 'admin.system.themes.index',
+                                'active' => ['admin.system.themes.*'], 'icon' => 'wb-icon-palette',
+                            ]] : []),
                             ...($user->can('manage-panel-languages') ? [[
                                 'label' => $adminTranslator->get('panel-languages.title', $adminLocale), 'route' => 'admin.system.panel-languages.index',
                                 'active' => ['admin.system.panel-languages.*'], 'icon' => 'wb-icon-languages',

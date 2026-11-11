@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Policies\PanelLanguagePolicy;
+use WebBlocks\Cms\Policies\PublicThemePolicy;
 
 class CmsApiTokenIssuer
 {
@@ -28,6 +29,11 @@ class CmsApiTokenIssuer
     if (in_array(CmsApiTokenCapabilities::PANEL_LANGUAGES_MANAGE, $capabilities, true)) {
       abort_unless($tokenType === 'system' && $allowedSiteIds === null
         && app(PanelLanguagePolicy::class)->manage($creator), 403);
+    }
+
+    if (in_array(CmsApiTokenCapabilities::THEMES_MANAGE, $capabilities, true)) {
+      abort_unless($tokenType === 'system' && $allowedSiteIds === null
+        && app(PublicThemePolicy::class)->managePackages($creator), 403);
     }
 
     $plainToken = self::TOKEN_PREFIX.Str::random(64);

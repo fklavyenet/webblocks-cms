@@ -2780,3 +2780,35 @@ unchanged during reordering; order, deletion and form values remain CMS-owned.
 The flat block-tree table retains its hierarchy, search, persisted expansion and
 ancestor visibility rules rather than hiding table rows through generic panel
 CSS. No new authoring field, block catalog entry or persistence is introduced.
+
+## Installable public themes
+
+Super admins install immutable ZIP packages under System → Public themes.
+The package management screen uses native Installed versions and Upload theme
+tabs and disclosure panels for technical metadata. API package management requires the explicit `themes.manage` capability on an
+installation-wide system token owned by an active Super admin. Packages contain
+a format-1 `webblocks-theme.json` manifest, root `theme.css` and optional
+declared-by-path local WOFF2 or raster assets under `assets/`. The manifest
+defines identity, version, license, CMS and WebBlocks UI constraints, supported
+core layout handles and the optional `button_corners` setting
+(`default`, `sharp`, `soft`). Runtime selection, assets and change history
+are relational. Versions referenced by site history are retained for restoration.
+
+Site Appearance links to a separate theme workspace. Site settings mutation
+permission controls activation and restoration. Page read permission also
+applies to previews. The API uses `site-settings.write` with `content.read`
+additionally required for HTML previews. API preview returns a short-lived
+`X-WebBlocks-Theme-Confirmation` for compatible candidates. Activation
+rechecks the site selection, appearance settings, package integrity and layout
+coverage before recording a new site revision. Preview is private and uses the
+saved page graph inside a non-interactive frame. It suppresses scripts and
+visitor overlays. Page and Shared Slot structure, content translations, URLs and
+site assets remain site-owned. An uploaded update stays available alongside
+existing versions until explicitly selected per site.
+
+Public rendering adds scoped package CSS after CMS preset CSS and before brand
+overrides and site CSS. The six packaged presets remain the built-in appearance.
+Unsupported layouts or unavailable package styles fall back to the site's built-in
+preset at render time. Returning to the preset or a previous revision changes
+the theme selection and its typed setting only. The package adds no new block
+type, locale, shell or template override.

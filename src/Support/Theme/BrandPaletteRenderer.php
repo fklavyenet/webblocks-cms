@@ -15,7 +15,7 @@ use WebBlocks\Cms\Models\Site;
  */
 class BrandPaletteRenderer
 {
-  public function render(?Site $site): string
+  public function render(?Site $site, bool $hasThemePackage = false): string
   {
     if (! $site) {
       return '';
@@ -32,16 +32,17 @@ class BrandPaletteRenderer
     $fonts = $palette->fontTokens();
 
     $blocks = [];
+    $root = 'body[data-wb-public-theme]'.($hasThemePackage ? '[data-wb-theme-package]' : '');
 
     if ($light !== []) {
-      $blocks[] = 'body[data-wb-public-theme]{'.self::declarations($light).'}';
+      $blocks[] = $root.'{'.self::declarations($light).'}';
     }
 
     if ($dark !== []) {
       $darkDeclarations = self::declarations($dark);
 
-      $blocks[] = 'html[data-mode="dark"] body[data-wb-public-theme]{'.$darkDeclarations.'}';
-      $blocks[] = '@media (prefers-color-scheme:dark){html[data-mode="auto"] body[data-wb-public-theme]{'
+      $blocks[] = 'html[data-mode="dark"] '.$root.'{'.$darkDeclarations.'}';
+      $blocks[] = '@media (prefers-color-scheme:dark){html[data-mode="auto"] '.$root.'{'
         .$darkDeclarations.'}}';
     }
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', $publicLocaleCode ?? app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', $publicLocaleCode ?? app()->getLocale()) }}"@isset($themePreview) data-mode="{{ $themePreview['mode'] }}"@endisset>
     @php
         use WebBlocks\Cms\Support\Blocks\PublicBodyEndRegistry;
         use WebBlocks\Cms\Support\Blocks\PublicOverlayRegistry;
@@ -32,7 +32,10 @@
             ->values();
         $resolvedSite = isset($page) ? $page->site : ($site ?? ($resolvedPublicSite ?? null));
         $siteAssetResolver = app(SiteAssetResolver::class);
-        $siteCssPath = $siteAssetResolver->cssPathFor($resolvedSite);
+        $themePackage = isset($themePreview)
+            ? $themePreview['theme']
+            : app(\WebBlocks\Cms\Support\Theme\PublicThemes::class)->render($resolvedSite, $page ?? null);
+        $siteCssPath = ($themePreview['omit_site_css'] ?? false) ? null : $siteAssetResolver->cssPathFor($resolvedSite);
         $siteJsPath = $siteAssetResolver->jsPathFor($resolvedSite);
         $publicThemePreset = $resolvedSite?->resolvedPublicThemePreset() ?? \WebBlocks\Cms\Models\Site::PUBLIC_THEME_CANVAS;
         $publicMeta = $publicMeta ?? [
@@ -54,7 +57,7 @@
         // written through the internal content API. Emitted verbatim below, so it is trusted
         // operator input by design — never populate this from untrusted/visitor sources.
         $customHeadHtml = trim((string) ($resolvedSite?->custom_head_html ?? ''));
-        $brandPaletteCss = app(\WebBlocks\Cms\Support\Theme\BrandPaletteRenderer::class)->render($resolvedSite);
+        $brandPaletteCss = app(\WebBlocks\Cms\Support\Theme\BrandPaletteRenderer::class)->render($resolvedSite, $themePackage !== null);
         $applicationAssets = $applicationAssets ?? ['css' => collect(), 'head_js' => collect(), 'body_end_js' => collect(), 'has_applications' => false];
         $applicationRuntimePath = public_path('cms/js/public/application-runtime.js');
     @endphp
@@ -62,7 +65,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+        @unless (isset($themePreview))
+            <meta name="csrf-token" content="{{ csrf_token() }}">
+        @endunless
 
         @include('webblocks-cms::partials.head-meta', [
             'brandName' => WebBlocks::name(),
@@ -81,7 +86,7 @@
             'hreflangPage' => $page ?? null,
             'hreflangSite' => $resolvedSite,
         ])
-        @if (($previewMode ?? false) || ($systemPageRuntime ?? false))
+        @if (isset($themePreview) || ($previewMode ?? false) || ($systemPageRuntime ?? false))
             <meta name="robots" content="noindex, nofollow">
         @elseif (request()->boolean('cms_search'))
             <meta name="robots" content="noindex">
@@ -92,6 +97,9 @@
         <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
         @if (is_file($cmsPublicCssPath))
             <link rel="stylesheet" href="{{ asset('cms/css/public.css') }}?v={{ filemtime($cmsPublicCssPath) }}">
+        @endif
+        @if ($themePackage)
+            <link rel="stylesheet" href="{{ $themePackage['url'] }}" data-wb-theme-stylesheet>
         @endif
         {{-- Site brand palette: derived public theme tokens. Overrides the preset,
              stays overridable by the site CSS asset below. --}}
@@ -112,37 +120,39 @@
         @endforeach
 
         {{-- Public JS assets --}}
-        <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
-        @if (is_file($publicJsAssets['public-search-modal']))
-            <script src="{{ asset('cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
-        @endif
-        @if (is_file($publicJsAssets['sidebar-navigation']))
-            <script src="{{ asset('cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
-        @endif
-        @if (is_file($publicJsAssets['grouped-image-viewer']))
-            <script src="{{ asset('cms/js/public/grouped-image-viewer.js') }}?v={{ filemtime($publicJsAssets['grouped-image-viewer']) }}" defer></script>
-        @endif
-        @if ($siteJsPath)
-            <script src="{{ $siteJsPath }}" defer></script>
-        @endif
-        @foreach ($deferredHeadJsPageAssets as $pageAsset)
-            <script src="{{ $pageAsset->path }}" @if ($pageAsset->is_module) type="module" @endif @if ($pageAsset->is_async) async @else defer @endif></script>
-        @endforeach
-        @foreach ($headJsPluginAssets as $pluginAsset)
-            <script src="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}" @if ($pluginAsset->isModule()) type="module" @endif @if ($pluginAsset->isAsync()) async @else defer @endif></script>
-        @endforeach
-        @foreach ($applicationAssets['head_js'] as $applicationAsset)
-            <script src="{{ $applicationAsset['path'] }}" @if (($applicationAsset['type'] ?? 'classic') === 'module') type="module" @else defer @endif data-wb-application-asset></script>
-        @endforeach
+        @unless (isset($themePreview))
+            <script src="{{ WebBlocks::uiJsUrl() }}" defer></script>
+            @if (is_file($publicJsAssets['public-search-modal']))
+                <script src="{{ asset('cms/js/public/public-search-modal.js') }}?v={{ filemtime($publicJsAssets['public-search-modal']) }}" defer></script>
+            @endif
+            @if (is_file($publicJsAssets['sidebar-navigation']))
+                <script src="{{ asset('cms/js/public/sidebar-navigation.js') }}?v={{ filemtime($publicJsAssets['sidebar-navigation']) }}" defer></script>
+            @endif
+            @if (is_file($publicJsAssets['grouped-image-viewer']))
+                <script src="{{ asset('cms/js/public/grouped-image-viewer.js') }}?v={{ filemtime($publicJsAssets['grouped-image-viewer']) }}" defer></script>
+            @endif
+            @if ($siteJsPath)
+                <script src="{{ $siteJsPath }}" defer></script>
+            @endif
+            @foreach ($deferredHeadJsPageAssets as $pageAsset)
+                <script src="{{ $pageAsset->path }}" @if ($pageAsset->is_module) type="module" @endif @if ($pageAsset->is_async) async @else defer @endif></script>
+            @endforeach
+            @foreach ($headJsPluginAssets as $pluginAsset)
+                <script src="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}" @if ($pluginAsset->isModule()) type="module" @endif @if ($pluginAsset->isAsync()) async @else defer @endif></script>
+            @endforeach
+            @foreach ($applicationAssets['head_js'] as $applicationAsset)
+                <script src="{{ $applicationAsset['path'] }}" @if (($applicationAsset['type'] ?? 'classic') === 'module') type="module" @else defer @endif data-wb-application-asset></script>
+            @endforeach
+        @endunless
 
         {{-- Operator-authored custom head markup (verification meta, SEO, analytics). Trusted, raw. --}}
-        @if ($customHeadHtml !== '')
+        @if ($customHeadHtml !== '' && ! isset($themePreview))
             @if ($headSeoMarker = request()->attributes->get('cms_seo_marker'))<!--{{ $headSeoMarker }}:site-head-->@endif
         {!! $customHeadHtml !!}
         @if ($headSeoMarker)<!--/{{ $headSeoMarker }}:site-head-->@endif
         @endif
     </head>
-    <body class="{{ $publicBodyClass ?? 'wb-public-body' }}" data-wb-public-theme="{{ $publicThemePreset }}">
+    <body class="{{ $publicBodyClass ?? 'wb-public-body' }}" data-wb-public-theme="{{ $publicThemePreset }}"@if ($themePackage) data-wb-theme-package="{{ $themePackage['handle'] }}" data-wb-theme-corners="{{ $themePackage['corners'] }}"@endif@isset($themePreview) inert@endisset>
         @if ($previewMode ?? false)
             <div class="wb-alert wb-alert-warning wb-m-0" role="status">
                 <strong>{{ $publicText('preview.title') }}</strong> - {{ $publicText('preview.body') }}
@@ -245,23 +255,27 @@
             $publicBodyEnd = app(PublicBodyEndRegistry::class)->all();
             $publicOverlays = app(PublicOverlayRegistry::class)->all();
         @endphp
-        @foreach ($publicBodyEnd as $bodyEndHtml)
-            {!! $bodyEndHtml !!}
-        @endforeach
+        @unless (isset($themePreview))
+            @foreach ($publicBodyEnd as $bodyEndHtml)
+                {!! $bodyEndHtml !!}
+            @endforeach
+        @endunless
         @foreach ($bodyEndPluginAssets as $pluginAsset)
             @if ($pluginAsset->type() === PluginPublicAsset::TYPE_CSS)
                 <link rel="stylesheet" href="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}">
-            @else
+            @elseif (! isset($themePreview))
                 <script src="{{ $pluginAsset->url() }}" data-plugin-asset="{{ $pluginAsset->handle() }}" data-plugin-handle="{{ $pluginAsset->pluginHandle() }}" @if ($pluginAsset->isModule()) type="module" @endif @if ($pluginAsset->isAsync()) async @else defer @endif></script>
             @endif
         @endforeach
-        @foreach ($applicationAssets['body_end_js'] as $applicationAsset)
-            <script src="{{ $applicationAsset['path'] }}" @if (($applicationAsset['type'] ?? 'classic') === 'module') type="module" @else defer @endif data-wb-application-asset></script>
-        @endforeach
-        @if ($applicationAssets['has_applications'] && is_file($applicationRuntimePath))
-            <script src="{{ asset('cms/js/public/application-runtime.js') }}?v={{ filemtime($applicationRuntimePath) }}" defer></script>
-        @endif
-        @unless ($systemMaintenance ?? false)
+        @unless (isset($themePreview))
+            @foreach ($applicationAssets['body_end_js'] as $applicationAsset)
+                <script src="{{ $applicationAsset['path'] }}" @if (($applicationAsset['type'] ?? 'classic') === 'module') type="module" @else defer @endif data-wb-application-asset></script>
+            @endforeach
+            @if ($applicationAssets['has_applications'] && is_file($applicationRuntimePath))
+                <script src="{{ asset('cms/js/public/application-runtime.js') }}?v={{ filemtime($applicationRuntimePath) }}" defer></script>
+            @endif
+        @endunless
+        @unless (($systemMaintenance ?? false) || isset($themePreview))
         @include('webblocks-cms::search.partials.noscript')
         @if ($resolvedSite)
             @php($consent = app(\WebBlocks\Cms\Support\Consent\ConsentPresenter::class)->forSite($resolvedSite, $publicLocaleCode ?? app()->getLocale(), (bool) ($previewMode ?? false)))

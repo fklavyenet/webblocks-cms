@@ -55,6 +55,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SiteExportController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteImportController;
 use WebBlocks\Cms\Http\Controllers\Admin\SitePromotionController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteSeoAuditController;
+use WebBlocks\Cms\Http\Controllers\Admin\SiteThemeController;
 use WebBlocks\Cms\Http\Controllers\Admin\SiteVariableController;
 use WebBlocks\Cms\Http\Controllers\Admin\SlotTypeController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemBackupController;
@@ -66,6 +67,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SystemPluginController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
+use WebBlocks\Cms\Http\Controllers\Admin\ThemePackageController;
 use WebBlocks\Cms\Http\Controllers\Admin\TwoFactorResetController;
 use WebBlocks\Cms\Http\Controllers\Admin\UserController;
 use WebBlocks\Cms\Http\Controllers\Admin\VerificationEmailSettingsController;
@@ -112,6 +114,22 @@ $internalApiCsrfMiddleware = [
   'Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken',
 ];
 
+$themePackageRoutes = function (): void {
+  Route::get('/', [ThemePackageController::class, 'index'])->name('index');
+  Route::post('/', [ThemePackageController::class, 'store'])->name('store');
+  Route::delete('/{version}', [ThemePackageController::class, 'destroy'])->whereNumber('version')->name('destroy');
+};
+
+$siteThemeRoutes = function (bool $api = false): void {
+  Route::get('/', [SiteThemeController::class, 'index'])->name('index');
+  $preview = Route::get('/preview', [SiteThemeController::class, 'preview'])->name('preview');
+  if ($api) {
+    $preview->middleware('internal-api.capability:content.read');
+  }
+  Route::post('/activate', [SiteThemeController::class, 'activate'])->name('activate');
+  Route::post('/restore', [SiteThemeController::class, 'restore'])->name('restore');
+};
+
 Route::post('webblocks-jobs/tick', JobTickController::class)
   ->middleware(['install.required', 'throttle:12,1'])->name('webblocks.jobs.tick');
 
@@ -126,7 +144,9 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
   ->withoutMiddleware($internalApiCsrfMiddleware)
   ->prefix('webadmin/api')
   ->name('internal-content-api.')
-  ->group(function () {
+  ->group(function () use ($themePackageRoutes, $siteThemeRoutes) {
+    Route::prefix('system/themes')->name('system.themes.')->middleware('internal-api.capability:themes.manage')->group($themePackageRoutes);
+    Route::prefix('sites/{site}/themes')->name('sites.themes.')->middleware('internal-api.capability:site-settings.write')->group(fn () => $siteThemeRoutes(true));
     Route::prefix('notes')->name('notes.')->group(function () {
       Route::get('/', [InternalNoteController::class, 'index'])->middleware('internal-api.capability:notes.read')->name('index');
       Route::get('/recipients', [InternalNoteController::class, 'recipients'])->middleware('internal-api.capability:notes.write')->name('recipients');
@@ -297,7 +317,9 @@ Route::middleware(['web', 'install.required', AllowPagePreviewAccess::class])
 Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::class, 'admin.access', UseAdminLocale::class, CoalesceSearchIndexing::class, ApplyEditorRecovery::class])
   ->prefix('webadmin')
   ->name('admin.')
-  ->group(function () {
+  ->group(function () use ($themePackageRoutes, $siteThemeRoutes) {
+    Route::prefix('system/themes')->name('system.themes.')->middleware('can:manage-public-themes')->group($themePackageRoutes);
+    Route::prefix('sites/{site}/themes')->name('sites.themes.')->group(fn () => $siteThemeRoutes());
     Route::prefix('notes')->name('notes.')->group(function () {
       Route::get('/', [NoteController::class, 'index'])->name('index');
       Route::post('/', [NoteController::class, 'store'])->name('store');
