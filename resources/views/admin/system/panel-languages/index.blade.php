@@ -1,83 +1,106 @@
-@extends('webblocks-cms::layouts.admin')
+@php
+    $text = static fn (string $key) => __('webblocks-cms::panel-languages.'.$key);
+    $tabs = ['catalogs', 'import', 'settings'];
+    $tab = old('panel_language_tab', request()->query('tab'));
+    $tab = in_array($tab, $tabs, true) ? $tab : 'catalogs';
+@endphp
 
-@php($text = static fn ($key) => __('webblocks-cms::panel-languages.'.$key))
+@extends('webblocks-cms::layouts.admin', ['title' => $text('title'), 'heading' => $text('title')])
 
 @section('content')
-<div class="wb-stack wb-gap-4">
-    <h1>{{ $text('title') }}</h1>
+    @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title')])
+    @include('webblocks-cms::admin.system.panel-languages.feedback')
 
-    @if ($errors->any())
-        <div class="wb-alert wb-alert-danger" role="alert">{{ $errors->first() }}</div>
-    @endif
-
-    <div class="wb-card">
-        <div class="wb-card-body wb-stack wb-gap-3">
-            <p>{{ $text('help') }}</p>
-            <div><a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.panel-languages.template') }}">{{ $text('template') }}</a></div>
-            <form method="POST" action="{{ route('admin.system.panel-languages.store') }}" enctype="multipart/form-data" class="wb-stack wb-gap-3">
-                @csrf
-                <div class="wb-field">
-                    <label for="panel-language-catalog">{{ $text('file') }}</label>
-                    <input class="wb-input" type="file" id="panel-language-catalog" name="catalog" accept=".json,application/json" required>
-                </div>
-                <div><button type="submit" class="wb-btn wb-btn-primary">{{ $text('upload') }}</button></div>
-            </form>
+    <div class="wb-tabs" data-wb-tabs>
+        <div class="wb-tabs-nav" role="tablist" aria-label="{{ $text('title') }}">
+            @foreach ($tabs as $section)
+                <button type="button" role="tab" id="panel-languages-tab-{{ $section }}"
+                    class="wb-tabs-btn{{ $tab === $section ? ' is-active' : '' }}"
+                    data-wb-tab="panel-languages-{{ $section }}"
+                    aria-controls="panel-languages-{{ $section }}" aria-selected="{{ $tab === $section ? 'true' : 'false' }}"
+                    @if ($tab !== $section) tabindex="-1" @endif>{{ $text($section) }}</button>
+            @endforeach
         </div>
-    </div>
 
-    <div class="wb-card">
-        <form method="POST" action="{{ route('admin.system.panel-languages.default') }}" class="wb-card-body wb-stack wb-gap-3">
-            @csrf
-            @method('PUT')
-            <div class="wb-field">
-                <label for="panel-language-default">{{ $text('default') }}</label>
-                <select class="wb-select" id="panel-language-default" name="code" required>
-                    @foreach ($options as $code => $label)
-                        <option value="{{ $code }}" @selected($code === $defaultLocale)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div><button type="submit" class="wb-btn wb-btn-primary">{{ $text('save_default') }}</button></div>
-        </form>
-    </div>
-
-    @if ($catalogs->isEmpty())
-        <p>{{ $text('empty') }}</p>
-    @else
-        <div class="wb-table-wrap">
-            <table class="wb-table">
-                <thead>
-                    <tr>
-                        <th scope="col">{{ $text('language') }}</th>
-                        <th scope="col">{{ $text('source_version') }}</th>
-                        <th scope="col">{{ $text('status') }}</th>
-                        <th scope="col">{{ $text('actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($catalogs as $catalog)
-                        @php($active = (int) $catalog->active_catalog_id === (int) $catalog->id)
-                        <tr>
-                            <th scope="row" lang="{{ $catalog->language_code }}">{{ $catalog->name }} ({{ $catalog->language_code }})</th>
-                            <td>{{ $catalog->source_version }}</td>
-                            <td>{{ $text($active ? 'active' : 'inactive') }}</td>
-                            <td>
-                                <div class="wb-cluster wb-gap-2">
-                                    <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.panel-languages.show', $catalog->id) }}">{{ $text('preview') }}</a>
-                                    @if ($active)
-                                        <form method="POST" action="{{ route('admin.system.panel-languages.deactivate', $catalog->language_code) }}">
-                                            @csrf
-                                            <button type="submit" class="wb-btn wb-btn-secondary">{{ $text(in_array($catalog->language_code, $packaged, true) ? 'use_package' : 'deactivate') }}</button>
-                                        </form>
-                                    @endif
+        <div class="wb-tabs-panels">
+            <div class="wb-tabs-panel{{ $tab === 'catalogs' ? ' is-active' : '' }}" id="panel-languages-catalogs" role="tabpanel" aria-labelledby="panel-languages-tab-catalogs">
+                <div class="wb-card">
+                    <div class="wb-card-body">
+                        @if ($catalogs->isEmpty())
+                            <div class="wb-empty">
+                                <div class="wb-empty-title">{{ $text('empty') }}</div>
+                                <div class="wb-empty-action">
+                                    <a class="wb-btn wb-btn-primary" href="{{ route('admin.system.panel-languages.index', ['tab' => 'import']) }}">{{ $text('import') }}</a>
                                 </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                            </div>
+                        @else
+                            @include('webblocks-cms::admin.system.panel-languages.catalogs')
+                        @endif
+                    </div>
+                    @include('webblocks-cms::admin.partials.pagination', ['paginator' => $catalogs, 'ariaLabel' => $text('catalogs'), 'compact' => true])
+                </div>
+            </div>
+
+            <div class="wb-tabs-panel{{ $tab === 'import' ? ' is-active' : '' }}" id="panel-languages-import" role="tabpanel" aria-labelledby="panel-languages-tab-import">
+                <form method="POST" action="{{ route('admin.system.panel-languages.store') }}" enctype="multipart/form-data" class="wb-card">
+                    @csrf
+                    <input type="hidden" name="panel_language_tab" value="import">
+                    <div class="wb-card-body">
+                        <div class="wb-field">
+                            <label class="wb-label" for="panel-language-catalog">{{ $text('file') }}</label>
+                            <input class="wb-file" type="file" id="panel-language-catalog" name="catalog" accept=".json,application/json"
+                                aria-describedby="panel-language-file-help" @if ($tab === 'import' && $errors->has('catalog')) aria-invalid="true" @endif required>
+                            <p class="wb-text-sm wb-text-muted wb-m-0" id="panel-language-file-help">{{ $text('help') }}</p>
+                        </div>
+                    </div>
+                    <div class="wb-card-footer wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+                        <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.panel-languages.template') }}">{{ $text('template') }}</a>
+                        <button type="submit" class="wb-btn wb-btn-primary">{{ $text('upload') }}</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="wb-tabs-panel{{ $tab === 'settings' ? ' is-active' : '' }}" id="panel-languages-settings" role="tabpanel" aria-labelledby="panel-languages-tab-settings">
+                <form method="POST" action="{{ route('admin.system.panel-languages.default') }}" class="wb-card">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="panel_language_tab" value="settings">
+                    <div class="wb-card-body">
+                        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                            <label class="wb-label" for="panel-language-default">{{ $text('default') }}</label>
+                            <div>
+                                <select class="wb-select" id="panel-language-default" name="code"
+                                    @if ($tab === 'settings' && $errors->any()) aria-invalid="true" @endif required>
+                                    @foreach ($options as $code => $label)
+                                        <option value="{{ $code }}" @selected($code === $defaultLocale)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wb-card-footer wb-cluster wb-cluster-end">
+                        <button type="submit" class="wb-btn wb-btn-primary">{{ $text('save_default') }}</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        {{ $catalogs->links() }}
-    @endif
-</div>
+    </div>
 @endsection
+
+@push('overlays')
+    @foreach ($catalogs as $catalog)
+        @if ((int) $catalog->active_catalog_id !== (int) $catalog->id)
+            @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
+                'id' => 'delete-panel-catalog-'.$catalog->id,
+                'title' => $text('delete'),
+                'description' => $text('delete_description'),
+                'action' => route('admin.system.panel-languages.destroy', $catalog->id),
+                'submitLabel' => $text('delete'),
+                'nativeDialog' => true,
+            ])
+                <input type="hidden" name="panel_language_tab" value="catalogs">
+                <p><strong lang="{{ $catalog->language_code }}">{{ $catalog->name }}</strong> <code>{{ $catalog->language_code }}</code></p>
+            @endcomponent
+        @endif
+    @endforeach
+@endpush

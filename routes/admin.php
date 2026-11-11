@@ -570,6 +570,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
         Route::post('/catalogs', [PanelLanguageController::class, 'store'])->name('store');
         Route::get('/catalogs/{catalog}', [PanelLanguageController::class, 'show'])->where('catalog', '[1-9][0-9]{0,17}')->name('show');
         Route::post('/catalogs/{catalog}/activate', [PanelLanguageController::class, 'activate'])->where('catalog', '[1-9][0-9]{0,17}')->name('activate');
+        Route::delete('/catalogs/{catalog}', [PanelLanguageController::class, 'destroy'])->where('catalog', '[1-9][0-9]{0,17}')->name('destroy');
         Route::post('/{code}/deactivate', [PanelLanguageController::class, 'deactivate'])->name('deactivate');
         Route::put('/default', [PanelLanguageController::class, 'updateDefault'])->name('default');
       });

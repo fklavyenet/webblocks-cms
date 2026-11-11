@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.131.1
+
+- Use standard Webadmin headings, tabs, upload controls, feedback, and pagination on Panel Languages. Add catalog activation and confirmed deletion of inactive catalogs, and show the English source alongside sample translations in the preview.
+
 ## 1.131.0
 
 - Let Super admins upload, preview, and activate custom Webadmin languages from Panel Languages or the dedicated system API. Custom catalogs support Russian plural forms, remain active when the package adds the same language, and use compatible package translations or English for missing messages.

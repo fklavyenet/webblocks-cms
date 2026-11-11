@@ -48,12 +48,12 @@ final class PanelLanguages
     });
   }
 
-  public function catalogs(): LengthAwarePaginator
+  public function catalogs(int $perPage = 25): LengthAwarePaginator
   {
     return DB::table(self::CATALOGS.' as catalogs')
       ->join(self::LANGUAGES.' as languages', 'languages.code', '=', 'catalogs.language_code')
       ->select('catalogs.*', 'languages.active_catalog_id')
-      ->orderByDesc('catalogs.id')->paginate(25);
+      ->orderByDesc('catalogs.id')->paginate($perPage);
   }
 
   public function import(string $json): int
@@ -122,13 +122,28 @@ final class PanelLanguages
 
   public function activate(int $id): void
   {
-    $catalog = $this->catalog($id);
-    if ($this->compatibleLines($id, $this->source->messages()) === []) {
-      $this->invalid('stale_catalog');
-    }
+    DB::transaction(function () use ($id): void {
+      $language = $this->lockCatalogLanguage($id);
+      if ($this->compatibleLines($id, $this->source->messages()) === []) {
+        $this->invalid('stale_catalog');
+      }
 
-    DB::table(self::LANGUAGES)->where('code', $catalog->language_code)->update(['active_catalog_id' => $id]);
+      DB::table(self::LANGUAGES)->where('code', $language->code)->update(['active_catalog_id' => $id]);
+    });
+
     $this->memo->clear();
+  }
+
+  public function delete(int $id): void
+  {
+    DB::transaction(function () use ($id): void {
+      $language = $this->lockCatalogLanguage($id);
+      if ((int) $language->active_catalog_id === $id) {
+        $this->invalid('delete_active');
+      }
+
+      DB::table(self::CATALOGS)->where('id', $id)->delete();
+    });
   }
 
   public function deactivate(string $code): void
@@ -196,6 +211,20 @@ final class PanelLanguages
     return DB::table(self::LANGUAGES.' as languages')->join(self::CATALOGS.' as catalogs', function ($join): void {
       $join->on('catalogs.id', '=', 'languages.active_catalog_id')->on('catalogs.language_code', '=', 'languages.code');
     });
+  }
+
+  private function lockCatalogLanguage(int $id): object
+  {
+    $code = DB::table(self::CATALOGS)->where('id', $id)->value('language_code');
+    abort_if($code === null, 404);
+
+    // Serialize activation and deletion on the same language row. A locking read
+    // also detects a catalog deleted while this transaction waited for that row.
+    $language = DB::table(self::LANGUAGES)->where('code', $code)->lockForUpdate()->first();
+    $catalog = DB::table(self::CATALOGS)->where('id', $id)->lockForUpdate()->first(['id']);
+    abort_if($language === null || $catalog === null, 404);
+
+    return $language;
   }
 
   private function catalog(int $id): object
