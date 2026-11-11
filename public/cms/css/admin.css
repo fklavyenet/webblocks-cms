@@ -753,6 +753,55 @@ input.wb-admin-table-grid-input:focus {
     flex-wrap: nowrap;
 }
 
+.wb-admin-blocks-index-filters .wb-filter-bar-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--wb-s2) var(--wb-s3);
+}
+
+.wb-admin-blocks-index-filters .wb-filter-bar-fields > .wb-field {
+    min-inline-size: 0;
+}
+
+.wb-admin-blocks-index-filters .wb-filter-bar-extra-search > .wb-cluster {
+    align-self: end;
+    flex-wrap: nowrap;
+}
+
+.wb-admin-blocks-index-filters .wb-filter-bar-actions {
+    justify-self: end;
+}
+
+@container (min-width: 22rem) {
+    .wb-admin-blocks-index-filters .wb-filter-bar-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@container (min-width: 40rem) {
+    .wb-admin-blocks-index-filters .wb-filter-bar-fields {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .wb-admin-blocks-index-filters .wb-filter-bar-fields > * {
+        grid-column: span 2;
+    }
+
+    .wb-admin-blocks-index-filters .wb-filter-bar-fields > :is(.wb-filter-bar-search, .wb-filter-bar-extra-search) {
+        grid-column: span 3;
+    }
+}
+
+@container (min-width: 60rem) {
+    .wb-admin-blocks-index-filters .wb-filter-bar-fields {
+        grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(max-content, 1fr);
+    }
+
+    .wb-admin-blocks-index-filters .wb-filter-bar-fields > * {
+        grid-column: span 1;
+    }
+}
+
 .wb-cms-block-tree-toggle-icon {
     transition: transform var(--wb-t);
 }

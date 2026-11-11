@@ -1091,6 +1091,7 @@ $translations = [
   ],
   'blocks_index' => [
     'page_search' => 'Seitenauswahl durchsuchen',
+    'page_search_help_label' => 'Hilfe zur Suche in der Seitenauswahl',
     'page_search_help' => 'Nach Seitenname, Pfad oder ID suchen und anwenden. Bis zu :limit Treffer werden angezeigt; die ausgewählte Seite bleibt erhalten.',
     'blocks' => 'Blöcke',
     'blocks_for_page' => 'Blöcke für :title',

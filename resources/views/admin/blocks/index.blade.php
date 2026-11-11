@@ -23,7 +23,7 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
-    <div class="wb-card wb-card-muted">
+    <div class="wb-card wb-card-muted wb-admin-blocks-index-filters">
         <div class="wb-card-body">
             @include('webblocks-cms::admin.partials.listing-filters', [
                 'action' => route('admin.blocks.index'),
@@ -40,6 +40,7 @@
                     'label' => $blocksIndexText('page_search'),
                     'value' => $filters['page_search'] ?? '',
                     'hint' => $blocksIndexText('page_search_help', ['limit' => $pageOptionsLimit ?? \WebBlocks\Cms\Queries\AdminBlockPageOptions::LIMIT]),
+                    'hintLabel' => $blocksIndexText('page_search_help_label'),
                 ]],
                 'selects' => [
                     [

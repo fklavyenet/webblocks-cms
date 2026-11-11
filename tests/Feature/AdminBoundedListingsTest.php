@@ -3,6 +3,8 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use App\Models\User;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -121,6 +123,17 @@ class AdminBoundedListingsTest extends TestCase
     $this->assertSame(2, $nextOptions->viewData('blocks')->currentPage());
     $this->assertSame(2, $nextOptions->viewData('pageOptionsPaginator')->currentPage());
     $this->assertSame(2, substr_count($nextOptions->getContent(), 'class="wb-pagination wb-border-0 wb-pagination-compact"'));
+    $document = new DOMDocument;
+    @$document->loadHTML($nextOptions->getContent());
+    $xpath = new DOMXPath($document);
+    $hintId = 'blocks_page_search_hint';
+    $this->assertSame(1, $xpath->query('//input[@id="blocks_page_search"][@aria-describedby="'.$hintId.'"]')->length);
+    $trigger = $xpath->query('//label[@for="blocks_page_search"]/following-sibling::*[@data-wb-popover]/button[@type="button"][@data-wb-toggle="popover"][@aria-controls="'.$hintId.'"][@aria-expanded="false"]');
+    $this->assertSame(1, $trigger->length);
+    $this->assertSame('Help finding page options', $trigger->item(0)->getAttribute('aria-label'));
+    $panel = $xpath->query('//*[@id="'.$hintId.'"][@popover="manual"]');
+    $this->assertSame(1, $panel->length);
+    $this->assertStringContainsString('Up to 50 matches', $panel->item(0)->textContent);
     $this->get(route('admin.blocks.index', ['page_options_page' => 99, 'sort' => 'id', 'direction' => 'asc']))
       ->assertRedirect(route('admin.blocks.index', ['page_options_page' => 2, 'sort' => 'id', 'direction' => 'asc']));
     $tr = Locale::create(['code' => 'tr', 'name' => 'Turkish', 'is_enabled' => true]);
@@ -131,7 +144,8 @@ class AdminBoundedListingsTest extends TestCase
     $translated = $this->get(route('admin.blocks.index', ['page_search' => 'Özel rehber', 'page' => 2, 'sort' => 'id', 'direction' => 'asc']))->assertOk();
     $this->assertSame([$first], array_keys($translated->viewData('filterPages')));
     $this->assertSame(2, $translated->viewData('blocks')->currentPage());
-    $translated->assertSee('Sayfa seçeneklerini ara')->assertSee('name="page_search"', false);
+    $translated->assertSee('Sayfa seçeneklerini ara')->assertSee('name="page_search"', false)
+      ->assertSee('aria-label="Sayfa seçeneklerini arama yardımı"', false);
     $this->getJson(route('admin.blocks.index', ['page_search' => str_repeat('x', 201)]))->assertUnprocessable();
     $this->getJson(route('admin.blocks.index', ['page_search' => ['invalid']]))->assertUnprocessable();
   }

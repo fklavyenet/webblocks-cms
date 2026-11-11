@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.130.3
+
+- Align Blocks filters in a compact responsive grid and move Find page options help into a keyboard-accessible popover beside its label.
+
 ## 1.130.2
 
 - Remove the outer frame from shared Webadmin pagination while keeping individual control borders and keyboard focus indicators. Use the shared list footer in Page and Shared Slot version histories.

@@ -1089,6 +1089,7 @@ $translations = [
   ],
   'blocks_index' => [
     'page_search' => 'Cerca nelle opzioni pagina',
+    'page_search_help_label' => 'Guida alla ricerca nelle opzioni pagina',
     'page_search_help' => 'Cerca per nome, percorso o ID della pagina e applica. Sono mostrate fino a :limit corrispondenze; la pagina selezionata viene mantenuta.',
     'blocks' => 'Blocchi',
     'blocks_for_page' => 'Blocchi di :title',

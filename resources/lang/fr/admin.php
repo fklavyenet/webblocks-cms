@@ -1090,6 +1090,7 @@ $translations = [
   ],
   'blocks_index' => [
     'page_search' => 'Rechercher une page',
+    'page_search_help_label' => 'Aide à la recherche de pages',
     'page_search_help' => 'Recherchez par nom, chemin ou ID de page, puis appliquez. Jusqu’à :limit résultats sont affichés ; la page sélectionnée est conservée.',
     'blocks' => 'Blocs',
     'blocks_for_page' => 'Blocs de :title',

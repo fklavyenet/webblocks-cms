@@ -2095,6 +2095,10 @@ selection, search, sort and pagination remain explicit URL state. Choice
 pagination uses `page_options_page` independently of the block table's `page`;
 out-of-range windows return to the last available window. This is a
 read-only native panel form, not an Internal Content API authoring field.
+From CMS 1.130.3, the Blocks filter card aligns fields in a responsive grid.
+The information button beside Find page options opens localized help in a
+WebBlocks UI popover. The search field references the help for assistive
+technology.
 
 The Sites index loads export page choices only when the selected site's export
 modal is opened, preserving archived defaults and exclusions for source pages

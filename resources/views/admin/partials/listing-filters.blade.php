@@ -51,11 +51,26 @@
         @endif
 
         @foreach ($extraSearches as $extraSearch)
-            <div class="wb-field">
-                <label for="{{ $extraSearch['id'] }}" class="wb-label">{{ $extraSearch['label'] }}</label>
-                <input id="{{ $extraSearch['id'] }}" name="{{ $extraSearch['name'] }}" type="search" class="wb-input" value="{{ $extraSearch['value'] }}" @if (! empty($extraSearch['hint'])) aria-describedby="{{ $extraSearch['id'] }}_hint" @endif>
-                @if (! empty($extraSearch['hint']))
-                    <div id="{{ $extraSearch['id'] }}_hint" class="wb-field-hint">{{ $extraSearch['hint'] }}</div>
+            @php($hintId = $extraSearch['id'].'_hint')
+            <div class="wb-field wb-filter-bar-extra-search">
+                @if (! empty($extraSearch['hintLabel']) && ! empty($extraSearch['hint']))
+                    <div class="wb-cluster wb-gap-1">
+                        <label for="{{ $extraSearch['id'] }}" class="wb-label">{{ $extraSearch['label'] }}</label>
+                        <div class="wb-popover" data-wb-popover>
+                            <button type="button" class="wb-action-btn" data-wb-toggle="popover" aria-controls="{{ $hintId }}" aria-expanded="false" aria-label="{{ $extraSearch['hintLabel'] }}">
+                                <i class="wb-icon wb-icon-info" aria-hidden="true"></i>
+                            </button>
+                            <div id="{{ $hintId }}" class="wb-popover-panel" popover="manual">
+                                <div class="wb-popover-body">{{ $extraSearch['hint'] }}</div>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <label for="{{ $extraSearch['id'] }}" class="wb-label">{{ $extraSearch['label'] }}</label>
+                @endif
+                <input id="{{ $extraSearch['id'] }}" name="{{ $extraSearch['name'] }}" type="search" class="wb-input" value="{{ $extraSearch['value'] }}" @if (! empty($extraSearch['hint'])) aria-describedby="{{ $hintId }}" @endif>
+                @if (! empty($extraSearch['hint']) && empty($extraSearch['hintLabel']))
+                    <div id="{{ $hintId }}" class="wb-field-hint">{{ $extraSearch['hint'] }}</div>
                 @endif
             </div>
         @endforeach

@@ -1090,6 +1090,7 @@ $translations = [
   ],
   'blocks_index' => [
     'page_search' => 'Sayfa seçeneklerini ara',
+    'page_search_help_label' => 'Sayfa seçeneklerini arama yardımı',
     'page_search_help' => 'Sayfa adı, yol veya ID ile arayıp uygula. En fazla :limit eşleşme gösterilir; seçili sayfa korunur.',
     'blocks' => 'Bloklar',
     'blocks_for_page' => ':title için Bloklar',
