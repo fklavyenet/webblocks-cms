@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.34.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.34.1 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -3006,7 +3006,7 @@ margin-bottom: 0;
 .wb-table-wrap > .wb-toolbar + .wb-table thead th {
 background: var(--wb-surface);
 }
-.wb-table tbody tr:last-child td {
+.wb-table > :is(tbody, tfoot):last-child > tr:last-child > :is(th, td) {
 border-bottom: none;
 }
 .wb-table-hover tbody tr:hover td {

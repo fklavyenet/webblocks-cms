@@ -2458,6 +2458,11 @@ UI supplies themed native track/fill styling without JavaScript or inline CSS.
 This adds no core block type, editor field, stored setting, permission or API.
 UI assets remain versioned and bundled with the package for offline rendering.
 
+CMS 1.129.2 bundles WebBlocks UI 2.34.1. The shared table style removes the
+inner border from both header and data cells in the final row. Dividers
+between table sections span the full row. The Notes modal and other CMS
+summary tables retain their semantic row headings.
+
 ## Site cookie and privacy management
 
 The sidebar has a Cookies and Privacy group with General Settings, Services and Languages and Texts. It remains accessible to permitted operators when consent is disabled. Settings are site-scoped, independent of Visitor Reports, and stored in `wbcms_consent_settings`, `wbcms_consent_services`, `wbcms_consent_translations` and `wbcms_consent_cookies`. General fields are `enabled`, `lifetime_days` (1–730), `privacy_url` (safe site path or HTTPS URL) and `position` (bottom/top). Existing installations inherit their former effective consent-banner setting once; subsequent site settings are independent. The former System Settings privacy panel links to the site workspace instead of displaying an ineffective global toggle. New sites default to enabled, without prompting when there are no optional services in use.

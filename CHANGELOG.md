@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.129.2
+
+- Bundle WebBlocks UI 2.34.1 to remove duplicate bottom borders in tables with row headers, including the Notes read modal. Keep full-width dividers between table sections.
+
 ## 1.129.1
 
 - Open Notes in a read-only modal over the list and mark them as read for the current user. Show the author, recipient, and creation date in the modal.
