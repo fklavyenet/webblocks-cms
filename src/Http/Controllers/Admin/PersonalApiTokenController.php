@@ -103,6 +103,12 @@ class PersonalApiTokenController extends Controller
       ['key' => 'page-building', 'label' => 'Page building', 'description' => 'Draft content, navigation, Shared Slots, media discovery, and safe site presentation.', 'capabilities' => CmsApiTokenCapabilities::DEFAULT],
       ['key' => 'media', 'label' => 'Media management', 'description' => 'Upload, edit, replace, move, or delete accessible Media Library records.', 'capabilities' => [CmsApiTokenCapabilities::MEDIA_WRITE, CmsApiTokenCapabilities::MEDIA_UPLOAD, CmsApiTokenCapabilities::MEDIA_REPLACE, CmsApiTokenCapabilities::MEDIA_MOVE, CmsApiTokenCapabilities::MEDIA_DELETE]],
       ['key' => 'destructive', 'label' => 'Publishing and destructive actions', 'description' => 'Publish content or delete pages, blocks, navigation items, and Shared Slots.', 'capabilities' => [CmsApiTokenCapabilities::NAVIGATION_DELETE, CmsApiTokenCapabilities::SHARED_SLOTS_DELETE, CmsApiTokenCapabilities::CONTENT_PUBLISH, CmsApiTokenCapabilities::PAGES_DELETE, CmsApiTokenCapabilities::CONTENT_BLOCKS_DELETE]],
+      [
+        'key' => 'notes',
+        'label' => __('webblocks-cms::notes.title'),
+        'description' => __('webblocks-cms::notes.token_description'),
+        'capabilities' => CmsApiTokenCapabilities::PERSONAL_ONLY,
+      ],
       ['key' => 'personal-site-feedback', 'label' => 'Site feedback', 'description' => 'Read and moderate public comments and ratings for allowed sites.', 'capabilities' => [CmsApiTokenCapabilities::ENGAGEMENT_READ, CmsApiTokenCapabilities::ENGAGEMENT_MODERATE]],
     ];
 

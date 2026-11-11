@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Http\Controllers\InternalContentApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use WebBlocks\Cms\Http\Requests\NoteRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
 use WebBlocks\Cms\Models\CommentEntry;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenAuthenticator;
@@ -65,6 +66,7 @@ class InternalApiDiscoveryController extends Controller
         'When editing site.css, keep public page designs mode-aware: prefer WebBlocks UI/CMS public theme tokens and native wb-* component styles over hard-coded light or dark colors.',
         'When assigning block icons, read `GET /webadmin/api/icon-catalog?context=content` and use only returned slugs. Do not guess icon names; unknown or inactive icons are rejected by content validation or skipped by public rendering.',
         'Use PATCH /webadmin/api/blocks/{block} for supported existing block fields such as brand logo media; Shared Slot source blocks also require shared-slots.write.',
+        'Notes are installation-wide and require a personal API token with notes.read, notes.write or notes.delete. Site scoping does not limit Notes. Notes visibility and ownership are checked separately.',
         'Use GET /webadmin/api/engagement/comments and GET /webadmin/api/engagement/ratings with engagement.read to analyze public feedback. Use PATCH /webadmin/api/engagement/comments/{comment} with engagement.moderate to approve, reject, hide, or mark comments as spam.',
         'System updates affect the entire installation. Obtain explicit operator approval for the exact target version and checksum, then use system-updates.run with a stable idempotency_key. Only installation-wide system tokens owned by an active system administrator can use these endpoints. Personal, site-scoped and public demo credentials are excluded. Execution is synchronous; after a connection loss repeat the identical request/key or read the operation, never automatically submit a new key. Maintenance can temporarily return 503. A requires_attention result requires operator recovery; it is not proof of failure or rollback.',
         'Use plugin lifecycle endpoints only with explicit plugin capabilities: plugins.install uploads a plugin ZIP, plugins.manage enables/disables, plugins.setup runs plugin migrations, and plugins.uninstall removes disabled manually uploaded plugins without dropping plugin-owned tables.',
@@ -314,6 +316,11 @@ class InternalApiDiscoveryController extends Controller
       'applications' => '/webadmin/api/applications',
       'application' => '/webadmin/api/applications/{application}',
       'application_schema' => '/webadmin/api/applications/{application}/schema',
+      'notes' => '/webadmin/api/notes',
+      'note' => '/webadmin/api/notes/{note}',
+      'note_edit' => '/webadmin/api/notes/{note}/edit',
+      'note_recipients' => '/webadmin/api/notes/recipients',
+      'note_read_state' => '/webadmin/api/notes/{note}/read-state',
       'engagement_comments' => '/webadmin/api/engagement/comments',
       'engagement_comment_update' => '/webadmin/api/engagement/comments/{comment}',
       'engagement_ratings' => '/webadmin/api/engagement/ratings',
@@ -340,7 +347,58 @@ class InternalApiDiscoveryController extends Controller
       'schema' => ['type' => 'string'],
     ];
 
+    $noteParameter = ['name' => 'note', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer', 'minimum' => 1]];
+    $noteFields = ['title' => ['type' => 'string', 'maxLength' => 180],
+      'body' => ['type' => 'string', 'maxLength' => NoteRequest::MAX_BODY],
+      'recipient_id' => ['type' => ['integer', 'null'], 'minimum' => 1],
+      'visibility' => ['type' => 'string', 'enum' => ['general', 'private']],
+    ];
+    $noteBody = static fn (array $fields, array $required = []): array => [
+      'required' => true,
+      'content' => ['application/json' => ['schema' => ['type' => 'object', 'properties' => $fields, 'required' => $required]]],
+    ];
+    $noteOperation = static fn (string $summary, string $capability, int $status = 200): array => [
+      'summary' => $summary,
+      'x-required-capability' => 'notes.'.$capability,
+      'x-token-type' => 'personal',
+      'responses' => [
+        $status => ['description' => 'Notes JSON', 'content' => $json],
+        '403' => ['description' => 'Personal actor or required capability unavailable'],
+        '404' => ['description' => 'Note missing or unavailable for this operation'],
+        '422' => ['description' => 'Invalid fields or recipient'],
+      ],
+    ];
+
     return [
+      '/notes' => [
+        'get' => $noteOperation('List visible notes, newest first', 'read') + [
+          'x-filters' => ['search (title)', 'audience (general, private, administration)', 'status (read, unread)', 'page', 'per_page (1–50)'],
+          'x-privacy' => 'Administration results are edit-only references for Super admins and ignore title and read status filters.',
+        ],
+        'post' => $noteOperation('Create an installation-wide plain-text note as the authenticated user', 'write', 201)
+          + ['requestBody' => $noteBody($noteFields, ['title', 'body'])],
+      ],
+      '/notes/recipients' => [
+        'get' => $noteOperation('List eligible recipients by ID and name', 'write'),
+      ],
+      '/notes/{note}' => [
+        'parameters' => [$noteParameter],
+        'get' => $noteOperation('Read one visible note without changing its read state', 'read'),
+        'patch' => $noteOperation('Edit a note as its author or a Super admin', 'write') + [
+          'requestBody' => $noteBody($noteFields),
+          'x-privacy' => 'A null recipient leaves a private note private. Set visibility to general explicitly to share it with everyone.',
+        ],
+        'delete' => $noteOperation('Delete a note as its author', 'delete'),
+      ],
+      '/notes/{note}/edit' => [
+        'parameters' => [$noteParameter],
+        'get' => $noteOperation('Read a note for editing as its author or a Super admin', 'write'),
+      ],
+      '/notes/{note}/read-state' => [
+        'parameters' => [$noteParameter],
+        'patch' => $noteOperation('Set your own read state for a visible note', 'read')
+          + ['requestBody' => $noteBody(['read' => ['type' => 'boolean']], ['read'])],
+      ],
       '/' => ['get' => ['summary' => 'API discovery', 'responses' => ['200' => ['description' => 'Discovery JSON', 'content' => $json]]]],
       '/openapi.json' => ['get' => ['summary' => 'OpenAPI schema', 'responses' => ['200' => ['description' => 'OpenAPI JSON', 'content' => $json]]]],
       '/ai-guide' => ['get' => ['summary' => 'AI usage guide', 'responses' => ['200' => ['description' => 'AI guide JSON', 'content' => $json]]]],

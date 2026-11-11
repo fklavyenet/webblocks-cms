@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\InternalApiTokens;
 
 use App\Models\User;
+use WebBlocks\Cms\Policies\NotePolicy;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
 
@@ -49,13 +50,17 @@ class PersonalApiTokenPolicy
 
   public static function legacyCapabilities(string $role): array
   {
-    return array_values(array_diff(CmsApiTokenCapabilities::ALL, self::SYSTEM_ONLY, $role === 'editor' ? self::SITE_ADMIN_ONLY : []));
+    return array_values(array_diff(CmsApiTokenCapabilities::ALL, self::SYSTEM_ONLY, CmsApiTokenCapabilities::PERSONAL_ONLY, $role === 'editor' ? self::SITE_ADMIN_ONLY : []));
   }
 
   public function canUse(User $user, string $capability): bool
   {
     if (! in_array($capability, CmsApiTokenCapabilities::ALL, true) || in_array($capability, self::SYSTEM_ONLY, true)) {
       return false;
+    }
+
+    if (in_array($capability, CmsApiTokenCapabilities::PERSONAL_ONLY, true)) {
+      return app(NotePolicy::class)->access($user);
     }
 
     $acl = app(CmsAuthorization::class);

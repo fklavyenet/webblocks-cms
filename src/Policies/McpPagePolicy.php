@@ -33,6 +33,7 @@ final class McpPagePolicy
         McpConfiguration::SEO => $this->write($user, $siteId) && $this->editSeo($user, $siteId),
         McpConfiguration::CREATE => $this->createDraft($user, $siteId),
         McpConfiguration::READ_MEDIA => $this->readMedia($user, $siteId),
+        McpConfiguration::NOTES_READ, McpConfiguration::NOTES_WRITE, McpConfiguration::NOTES_DELETE => app(NotePolicy::class)->access($user),
         McpConfiguration::UPLOAD => $this->uploadMedia($user, $siteId),
         default => false,
       };

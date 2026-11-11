@@ -23,6 +23,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Tests\CmsSqlTestUser;
@@ -74,9 +75,9 @@ class RemoteMcpTest extends TestCase
     $this->get(self::ORIGIN.'/.well-known/oauth-authorization-server/webadmin/mcp')
       ->assertOk()->assertJsonPath('issuer', self::MCP)->assertJsonPath('registration_endpoint', self::MCP.'/register')
       ->assertJsonPath('code_challenge_methods_supported', ['S256'])
-      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure', 'pages:write-draft-translation', 'media:upload', 'pages:read-content', 'pages:read-draft-structure', 'pages:read-draft-translation', 'media:read', 'pages:write-draft-seo']);
+      ->assertJsonPath('scopes_supported', ['pages:read', 'pages:write-draft', 'pages:write-content-draft', 'pages:create-draft', 'pages:write-draft-structure', 'pages:write-draft-translation', 'media:upload', 'pages:read-content', 'pages:read-draft-structure', 'pages:read-draft-translation', 'media:read', 'pages:write-draft-seo', 'notes:read', 'notes:write', 'notes:delete']);
     $this->rpc('initialize', ['protocolVersion' => '2025-03-26'])->assertJsonPath('result.protocolVersion', '2025-03-26');
-    $this->rpc('tools/list')->assertJsonCount(14, 'result.tools')
+    $this->rpc('tools/list')->assertJsonCount(22, 'result.tools')
       ->assertJsonPath('result.tools.1.annotations.readOnlyHint', false)
       ->assertJsonPath('result.tools.3.annotations.readOnlyHint', true)
       ->assertJsonPath('result.tools.4.annotations.readOnlyHint', false)
@@ -1244,6 +1245,174 @@ class RemoteMcpTest extends TestCase
     DB::table('wbcms_acl_role_permissions')->where('role_id', $role->id)->where('permission', 'cms.seo.update')->delete();
     $this->tool('update_draft_seo', $ref + ['version' => $version, 'seo_title' => 'Revoked'], $token)
       ->assertJsonPath('result.structuredContent.code', 'forbidden');
+  }
+
+  public function test_notes_use_the_same_visibility_and_ownership_in_all_three_channels(): void
+  {
+    [$page] = $this->pageFixture();
+    $otherSite = Site::create(['handle' => 'second-office', 'name' => 'Second office']);
+    $author = $this->notesUser('Note Author', $page->site_id);
+    $recipient = $this->notesUser('Note Recipient', $otherSite->id);
+    $third = $this->notesUser('Third Operator', $page->site_id);
+    $admin = $this->operator();
+    $inactive = $this->notesUser('Disabled Recipient', $page->site_id, false);
+    $noPanel = $this->cmsActor((new User)->forceFill(['name' => 'Host Account', 'role' => 'editor']), []);
+    $panel = self::ORIGIN.'/webadmin/notes';
+    $api = self::ORIGIN.'/webadmin/api/notes';
+    $auth = fn (User $actor, int $site) => $this->noteBearer($actor, $site);
+    $allScopes = 'pages:read notes:read notes:write notes:delete';
+    $body = "<script>unsafe()</script>\n".str_repeat('🗒', 1800);
+
+    $this->actingAs($author)->get($panel)->assertOk()
+      ->assertSee('data-wb-target="#notes-add"', false)->assertSee('Note Recipient')
+      ->assertDontSee('Disabled Recipient')->assertDontSee('Host Account');
+    $this->post($panel, ['title' => 'Retain these words', 'body' => '', 'audience_target' => (string) $recipient->id])
+      ->assertRedirect($panel)->assertSessionHasErrors('body', null, 'note');
+    $this->get($panel)->assertOk()->assertSee('Retain these words')
+      ->assertSee('data-wb-admin-autoload-overlay', false)->assertSee('aria-invalid="true"', false);
+    $this->post($panel, ['title' => 'Private Northstar', 'body' => $body, 'audience_target' => (string) $recipient->id])
+      ->assertRedirect($panel);
+    $id = (int) DB::table('wbcms_notes')->value('id');
+    $this->get($panel.'/'.$id)->assertOk()->assertSee($body)->assertDontSee('<script>unsafe()</script>', false);
+    $this->patch($panel.'/'.$id, ['title' => 'Preserved edit input', 'body' => $body, 'audience_target' => (string) $inactive->id])
+      ->assertRedirect($panel.'/'.$id.'/edit')->assertSessionHasErrors('recipient_id', null, 'note');
+    $this->get($panel.'/'.$id.'/edit')->assertOk()->assertSee('Preserved edit input')->assertSee($body);
+
+    $recipientAuth = $auth($recipient, $otherSite->id);
+    $thirdAuth = $auth($third, $page->site_id);
+    $adminAuth = $auth($admin, $page->site_id);
+    $authorAuth = $auth($author, $page->site_id);
+    $note = '/'.$id;
+    $this->getJson($api.$note, $recipientAuth)->assertOk()->assertJsonPath('note.body', $body)->assertJsonPath('note.read', false);
+    $this->getJson($api.$note, $thirdAuth)->assertNotFound();
+    $this->getJson($api.'?search=Northstar', $thirdAuth)->assertOk()->assertJsonPath('pagination.total', 0);
+    $this->getJson($api.'?audience=administration', $thirdAuth)->assertForbidden();
+    $this->getJson($api.$note, $adminAuth)->assertNotFound();
+    $this->getJson($api.$note.'/edit', $adminAuth)->assertOk()->assertJsonPath('note.body', $body)->assertJsonMissingPath('note.read');
+    $this->getJson($api.'?audience=administration', $adminAuth)->assertJsonPath('notes', [['id' => $id, 'edit_only' => true]]);
+    $this->deleteJson($api.$note, [], $adminAuth)->assertNotFound();
+    $this->patchJson($api.$note, ['title' => 'Recipient cannot edit'], $recipientAuth)->assertNotFound();
+
+    $adminMcp = $this->connect($admin, $page->site_id, $allScopes);
+    $recipientMcp = $this->connect($recipient, $otherSite->id, 'pages:read notes:read');
+    $thirdMcp = $this->connect($third, $page->site_id, $allScopes);
+    $authorMcp = $this->connect($author, $page->site_id, $allScopes);
+    $ref = ['note_id' => $id];
+    $this->tool('get_note', $ref, $recipientMcp)->assertJsonPath('result.structuredContent.note.body', $body);
+    $this->tool('get_note', $ref, $thirdMcp)->assertJsonPath('result.structuredContent.code', 'note_unavailable');
+    $this->tool('get_note', $ref, $adminMcp)->assertJsonPath('result.structuredContent.code', 'note_unavailable');
+    $this->tool('get_note_for_edit', $ref, $adminMcp)->assertJsonPath('result.structuredContent.note.body', $body);
+    $this->tool('list_note_recipients', [], $recipientMcp, 403)->assertJsonPath('result.structuredContent.code', 'auth_required');
+    $this->tool('list_note_recipients', [], $authorMcp)->assertJsonFragment(['id' => $recipient->id, 'name' => 'Note Recipient'])
+      ->assertJsonMissing(['name' => 'Disabled Recipient'])->assertJsonMissing(['name' => 'Host Account']);
+    $this->tool('update_note', $ref + ['body' => $body], $adminMcp)->assertJsonPath('result.structuredContent.note.id', $id);
+    $this->tool('delete_note', $ref, $adminMcp)->assertJsonPath('result.structuredContent.code', 'note_unavailable');
+    $this->tool('update_note', $ref + ['recipient_id' => $inactive->id], $authorMcp)
+      ->assertJsonPath('result.structuredContent.code', 'invalid_note_arguments');
+
+    $this->actingAs($admin)->get($panel.'?audience=administration')->assertOk()
+      ->assertSee('Private note #'.$id)->assertDontSee('Private Northstar')->assertDontSee('unsafe()');
+    $this->get($panel.$note)->assertNotFound();
+    $this->get($panel.$note.'/edit?audience=administration')->assertOk()->assertSee($body);
+    $this->actingAs($third)->get($panel.$note.'/edit')->assertNotFound();
+
+    $this->patchJson($api.$note.'/read-state', ['read' => true], $recipientAuth)->assertOk();
+    $this->getJson($api.$note, $authorAuth)->assertJsonPath('note.read', false);
+    DB::table('users')->where('id', $recipient->id)->delete();
+    $this->assertDatabaseHas('wbcms_notes', ['id' => $id, 'is_private' => true, 'recipient_id' => null]);
+    $this->assertDatabaseMissing('wbcms_note_reads', ['note_id' => $id, 'user_id' => $recipient->id]);
+    $this->patchJson($api.$note, ['title' => 'Still private', 'recipient_id' => null], $authorAuth)
+      ->assertOk()->assertJsonPath('note.visibility', 'private');
+    $this->getJson($api.$note, $thirdAuth)->assertNotFound();
+    $this->tool('get_note', $ref, $recipientMcp, 401)->assertJsonPath('result.structuredContent.code', 'auth_required');
+    $this->tool('delete_note', $ref, $authorMcp)->assertJsonPath('result.structuredContent.deleted', true);
+    $this->assertDatabaseMissing('wbcms_notes', ['id' => $id]);
+  }
+
+  public function test_notes_filter_paginate_and_keep_general_read_state_personal(): void
+  {
+    [$page] = $this->pageFixture();
+    $site = $page->site_id;
+    $author = $this->notesUser('Notes Editor', $site);
+    $other = $this->notesUser('Another Editor', $site);
+    $ownerAuth = $this->noteBearer($author, $site);
+    $otherAuth = $this->noteBearer($other, $site, ['notes.read']);
+    $api = self::ORIGIN.'/webadmin/api/notes';
+    $panel = self::ORIGIN.'/webadmin/notes';
+
+    $legacy = $this->connect($other, $site, 'pages:read');
+    $this->tool('list_notes', [], $legacy, 403)->assertJsonPath('result.structuredContent.code', 'auth_required');
+    $system = app(CmsApiTokenIssuer::class)
+      ->issue('System credential', $this->operator(), ['notes.read', 'notes.write'])->plainToken;
+    $this->getJson($api, ['Authorization' => 'Bearer '.$system])->assertForbidden();
+    $this->getJson($api.'/recipients', ['Authorization' => 'Bearer '.$system])->assertForbidden();
+    $this->getJson($api.'/recipients', $otherAuth)->assertForbidden();
+    $this->postJson($api, ['title' => 'No write', 'body' => 'Example'], $otherAuth)->assertForbidden();
+
+    foreach (['100% ready', '1000 ready', 'New general'] as $title) {
+      $this->postJson($api, ['title' => $title, 'body' => 'Example', 'author_id' => $other->id], $ownerAuth)
+        ->assertCreated()->assertJsonPath('note.author.id', $author->id)->assertJsonPath('note.visibility', 'general');
+    }
+
+    $this->getJson($api.'?per_page=2', $ownerAuth)->assertJsonPath('pagination.total', 3)
+      ->assertJsonPath('notes.0.title', 'New general')->assertJsonPath('notes.1.title', '1000 ready');
+    $match = $this->getJson($api.'?search=100%25', $ownerAuth)->assertJsonPath('pagination.total', 1)
+      ->assertJsonPath('notes.0.title', '100% ready')->json('notes.0.id');
+    $this->actingAs($other)->get($panel.'?per_page=1&page=2')->assertOk()->assertSee('1000 ready')->assertDontSee('New general');
+    $this->get($panel.'/'.$match)->assertOk();
+    $this->assertDatabaseCount('wbcms_note_reads', 0);
+    $this->patch($panel.'/'.$match.'/read-state', ['read' => '1'])->assertRedirect($panel.'/'.$match);
+    $this->getJson($api.'?status=read&audience=general', $otherAuth)->assertJsonPath('pagination.total', 1);
+    $this->getJson($api.'?status=unread', $otherAuth)->assertJsonPath('pagination.total', 2);
+    $this->getJson($api.'/'.$match, $ownerAuth)->assertJsonPath('note.read', false);
+
+    $token = $this->connect($other, $site, 'pages:read notes:read');
+    $this->tool('set_note_read_state', ['note_id' => $match, 'read' => true], $token)
+      ->assertJsonPath('result.structuredContent.read', true);
+    $this->assertDatabaseCount('wbcms_note_reads', 1);
+    $this->tool('set_note_read_state', ['note_id' => $match, 'read' => false], $token)
+      ->assertJsonPath('result.structuredContent.read', false);
+    $this->assertDatabaseCount('wbcms_note_reads', 0);
+    $this->getJson($api.'?status=unread', $ownerAuth)->assertJsonPath('pagination.total', 3);
+    $write = $this->connect($other, $site, 'pages:read notes:write');
+    $self = $this->tool('create_note', ['title' => 'Personal', 'body' => 'Only for me', 'recipient_id' => $other->id], $write)
+      ->assertJsonPath('result.structuredContent.note.visibility', 'private')->json('result.structuredContent.note.id');
+    $this->getJson($api.'/'.$self, $otherAuth)->assertOk();
+    $this->getJson($api.'/'.$self, $ownerAuth)->assertNotFound();
+    $this->tool('update_note', ['note_id' => $self, 'recipient_id' => null], $write)
+      ->assertJsonPath('result.structuredContent.note.visibility', 'private');
+    $this->getJson($api.'/'.$self, $ownerAuth)->assertNotFound();
+    $this->tool('update_note', ['note_id' => $self, 'visibility' => 'general'], $write)
+      ->assertJsonPath('result.structuredContent.note.visibility', 'general');
+    $this->getJson($api.'/'.$self, $ownerAuth)->assertOk();
+  }
+
+  public function test_notes_migrations_create_relational_tables_and_do_not_extend_existing_grants(): void
+  {
+    $this->assertTrue(Schema::hasTable('wbcms_notes'));
+    $this->assertTrue(Schema::hasTable('wbcms_note_reads'));
+    [$page] = $this->pageFixture();
+    $token = $this->connect($this->operator(), $page->site_id, 'pages:read');
+    $migration = require dirname(__DIR__, 2).'/database/migrations/updates/2026_11_11_120000_create_cms_notes.php';
+    $migration->down();
+    $this->assertFalse(Schema::hasTable('wbcms_notes'));
+    $migration->up();
+    $migration->up();
+    $this->assertDatabaseHas('wbcms_mcp_grants', ['can_read_notes' => false, 'can_write_notes' => false, 'can_delete_notes' => false]);
+    $this->tool('list_notes', [], $token, 403)->assertJsonPath('result.structuredContent.code', 'auth_required');
+  }
+
+  private function notesUser(string $name, int $site, bool $active = true): User
+  {
+    return $this->cmsActor((new User)->forceFill(['name' => $name, 'role' => 'editor', 'is_active' => $active]), [$site]);
+  }
+
+  private function noteBearer(User $actor, int $site, array $capabilities = ['notes.read', 'notes.write', 'notes.delete']): array
+  {
+    $token = app(CmsApiTokenIssuer::class)
+      ->issue('Notes tests', $actor, $capabilities, 'personal', [$site])->plainToken;
+
+    return ['Authorization' => 'Bearer '.$token];
   }
 
   private function operator(): User

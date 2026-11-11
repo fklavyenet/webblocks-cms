@@ -17,6 +17,9 @@ class SystemSettings
   public const MCP_ENABLED = 'system.mcp_enabled';
 
   public const MCP_SCOPE_KEYS = [
+    McpConfiguration::NOTES_READ => 'system.mcp_notes_read',
+    McpConfiguration::NOTES_WRITE => 'system.mcp_notes_write',
+    McpConfiguration::NOTES_DELETE => 'system.mcp_notes_delete',
     McpConfiguration::READ_CONTENT => 'system.mcp_read_content',
     McpConfiguration::READ_STRUCTURE => 'system.mcp_read_structure',
     McpConfiguration::READ_TRANSLATION => 'system.mcp_read_translation',

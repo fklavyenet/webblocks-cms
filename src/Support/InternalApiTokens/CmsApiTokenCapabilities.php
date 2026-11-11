@@ -105,6 +105,14 @@ class CmsApiTokenCapabilities
 
   public const APPLICATIONS_DELETE = 'applications.delete';
 
+  public const NOTES_READ = 'notes.read';
+
+  public const NOTES_WRITE = 'notes.write';
+
+  public const NOTES_DELETE = 'notes.delete';
+
+  public const PERSONAL_ONLY = [self::NOTES_READ, self::NOTES_WRITE, self::NOTES_DELETE];
+
   public const DEFAULT = [
     self::CONTENT_READ,
     self::CONTENT_VALIDATE,
@@ -168,6 +176,7 @@ class CmsApiTokenCapabilities
   ];
 
   public const DESTRUCTIVE = [
+    self::NOTES_DELETE,
     self::SYSTEM_UPDATES_RUN,
     self::MEDIA_REPLACE,
     self::MEDIA_DELETE,
@@ -183,6 +192,7 @@ class CmsApiTokenCapabilities
   ];
 
   public const ALL = [
+    ...self::PERSONAL_ONLY,
     self::CONSENT_READ,
     self::CONSENT_WRITE,
     self::CONSENT_CODE_WRITE,
@@ -232,6 +242,9 @@ class CmsApiTokenCapabilities
   ];
 
   public const LABELS = [
+    self::NOTES_READ => 'List and read notes and change your own read state',
+    self::NOTES_WRITE => 'Create and edit notes and list eligible recipients',
+    self::NOTES_DELETE => 'Delete notes you wrote',
     self::CONSENT_READ => 'Read site consent settings and services',
     self::CONSENT_WRITE => 'Manage site consent settings, services and translations',
     self::CONSENT_CODE_WRITE => 'Manage executable consent service sources',
@@ -288,7 +301,7 @@ class CmsApiTokenCapabilities
    */
   public function grantable(): array
   {
-    return array_values(array_unique([...self::ALL, ...$this->pluginCapabilities->names()]));
+    return array_values(array_unique([...array_diff(self::ALL, self::PERSONAL_ONLY), ...$this->pluginCapabilities->names()]));
   }
 
   /**
@@ -351,7 +364,7 @@ class CmsApiTokenCapabilities
     }
 
     if (! $token?->isPersonal()) {
-      return true;
+      return ! in_array($capability, self::PERSONAL_ONLY, true);
     }
 
     $token->loadMissing('creator');
@@ -402,6 +415,9 @@ class CmsApiTokenCapabilities
         'delete_site_domains' => $this->has($token, self::DOMAINS_DELETE),
         'read_site_assets' => $this->has($token, self::SITE_ASSETS_READ),
         'write_site_assets' => $this->has($token, self::SITE_ASSETS_WRITE),
+        'read_notes' => $this->has($token, self::NOTES_READ),
+        'write_notes' => $this->has($token, self::NOTES_WRITE),
+        'delete_notes' => $this->has($token, self::NOTES_DELETE),
         'read_engagement' => $this->has($token, self::ENGAGEMENT_READ),
         'moderate_engagement_comments' => $this->has($token, self::ENGAGEMENT_MODERATE),
         'read_plugins' => $this->has($token, self::PLUGINS_READ),

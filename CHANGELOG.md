@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.129.0
+
+- Add Notes to Webadmin for installation-wide or private plain-text notes with personal read status.
+- Add Notes operations to personal Content API tokens and remote MCP with explicit permissions. Authors can edit and delete their notes. Super admins can edit private notes through the administration view.
+
 ## 1.128.4
 
 - Fix Save Block when exchanging children between two full Splits in the same slot. A valid replacement now saves both positions in one revision.

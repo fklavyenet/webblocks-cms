@@ -30,6 +30,55 @@ This contract describes the supported authoring surface of the reviewed package 
 
 Legacy renderer compatibility does not make an unpublished handle available for new authoring. Use the current catalog and field contracts rather than historical counts or implementation milestones.
 
+## CMS Notes
+
+**Webadmin → Notes** lists installation-wide plain-text notes newest first with
+title search, recipient-scope and personal read-status filters. Add and edit
+use the same modal. Titles are required and limited to 180 characters. The
+required body supports up to 10,000 characters and renders as escaped text with
+line breaks. Notes have no site, page or block association.
+
+Active CMS panel accounts can create notes and select another active panel
+account, including themselves, as recipient. A general note is visible to
+everyone with panel access. Only the author and recipient can normally open a
+private note. A Super admin can list references to other private notes via
+`audience=administration` and open one for editing. These references omit the
+title, body, account names and read state, and ignore title and read-status
+filters. The author and a Super admin can edit. Only the author can delete.
+Opening a note leaves read state unchanged. A read-state mutation affects only
+the current account. The relational visibility flag survives recipient
+deletion. Clearing the recipient of a private note keeps it author-only.
+Sharing it with everyone requires an explicit general visibility choice.
+
+| Operation | Internal Content API under `/webadmin/api` | Personal token | MCP tool | Additional OAuth scope |
+| --- | --- | --- | --- | --- |
+| List | `GET /notes` | `notes.read` | `list_notes` | `notes:read` |
+| Read | `GET /notes/{note}` | `notes.read` | `get_note` | `notes:read` |
+| Read for editing | `GET /notes/{note}/edit` | `notes.write` | `get_note_for_edit` | `notes:write` |
+| Eligible recipients | `GET /notes/recipients` | `notes.write` | `list_note_recipients` | `notes:write` |
+| Create | `POST /notes` | `notes.write` | `create_note` | `notes:write` |
+| Update | `PATCH /notes/{note}` | `notes.write` | `update_note` | `notes:write` |
+| Delete | `DELETE /notes/{note}` | `notes.delete` | `delete_note` | `notes:delete` |
+| Set personal read state | `PATCH /notes/{note}/read-state` | `notes.read` | `set_note_read_state` | `notes:read` |
+
+The API uses the personal token's active owner. System tokens cannot access
+Notes. MCP uses the consenting user on an existing site-bound connection.
+The selected or allowed sites remain part of transport authentication. Notes
+visibility is installation-wide. The grant never overrides note-level
+visibility, ownership or edit policy. Existing tokens and MCP connections
+receive no Notes permissions on upgrade.
+
+List filters are `search` (literal title substring), `audience`
+(`general`, `private`, or Super admin `administration`), `status`
+(`read` or `unread`), `page` and `per_page` (1–50, default 20). List
+results omit bodies. Writes accept `title`, `body`, `recipient_id` and
+`visibility` (`general` or `private`). Create with a recipient defaults to
+private, and create without a recipient defaults to general. Partial updates
+preserve omitted fields. Send `recipient_id: null` to clear the recipient,
+or explicitly set `visibility: general` to share with all panel users. Send
+`read` as a boolean to set personal read state. MCP uses `note_id` for a
+specific note. Recipient discovery returns only eligible account IDs and names.
+
 ## Remote MCP Page Editing
 
 A Super admin enables the Streamable HTTP endpoint from **System Settings → MCP**. Copy the displayed server URL into a compatible MCP client. The canonical HTTPS origin comes from `APP_URL`. The host serves the two OAuth discovery URLs under `/.well-known/` on that origin. MCP is off by default.

@@ -55,6 +55,7 @@ final class McpTools
     private readonly EditDraftTranslation $translation,
     private readonly UploadMedia $upload,
     private readonly McpBlockFields $blockFields,
+    private readonly McpNotes $notes,
   ) {}
 
   public function descriptors(array $available = McpConfiguration::SCOPES): array
@@ -156,6 +157,10 @@ final class McpTools
       ] + array_intersect_key($translation, array_flip(PageTranslationPayload::SEO_FIELDS)), ['locale', 'page_id', 'version']),
     ];
 
+    foreach ($this->notes->descriptors() as $name => [$properties, $required]) {
+      $tools[] = $this->descriptor($name, 'tool_'.$name, $properties, $required);
+    }
+
     return array_values(array_filter($tools, fn (array $tool) => in_array($this->scope($tool['name']), $available, true)));
   }
 
@@ -174,12 +179,16 @@ final class McpTools
       self::CONTENT => McpConfiguration::READ_CONTENT,
       self::EDIT => McpConfiguration::CONTENT,
       self::MEDIA => McpConfiguration::READ_MEDIA,
-      default => null,
+      default => McpNotes::scope($name),
     };
   }
 
   public function call(string $name, array $args, array $grant): array
   {
+    if (McpNotes::scope($name) !== null) {
+      return $this->notes->call($name, $args, $grant['user']);
+    }
+
     $input = $this->validate($name, $args);
 
     $result = match ($name) {
@@ -309,9 +318,9 @@ final class McpTools
     return $rules;
   }
 
-  private function descriptor(string $name, string $description, array $properties, array $required, array $constraints = []): array
+  private function descriptor(string $name, string $description, array|stdClass $properties, array $required, array $constraints = []): array
   {
-    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE, self::EDIT_STRUCTURE, self::EDIT_TRANSLATION, self::EDIT_SEO, self::UPLOAD], true);
+    $readOnly = ! in_array($name, [self::WRITE, self::EDIT, self::CREATE, self::EDIT_STRUCTURE, self::EDIT_TRANSLATION, self::EDIT_SEO, self::UPLOAD, ...McpNotes::MUTATIONS], true);
     $scope = $this->scope($name);
     $scopes = $scope === McpConfiguration::READ ? [$scope] : [McpConfiguration::READ, $scope];
     $security = [['type' => 'oauth2', 'scopes' => $scopes]];
@@ -320,7 +329,7 @@ final class McpTools
       'name' => $name,
       'description' => __('webblocks-cms::mcp.'.$description),
       'inputSchema' => ['type' => 'object', 'properties' => $properties, 'required' => $required, 'additionalProperties' => false] + $constraints,
-      'annotations' => ['readOnlyHint' => $readOnly, 'destructiveHint' => ! $readOnly && ! in_array($name, [self::CREATE, self::UPLOAD], true), 'openWorldHint' => false]
+      'annotations' => ['readOnlyHint' => $readOnly, 'destructiveHint' => ! $readOnly && ! in_array($name, [self::CREATE, self::UPLOAD, McpNotes::CREATE, McpNotes::READ_STATE], true), 'openWorldHint' => false]
         + match ($name) {
           self::CREATE => ['idempotentHint' => true],
           self::UPLOAD => ['idempotentHint' => false],

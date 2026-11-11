@@ -39,7 +39,16 @@ final class McpConfiguration
 
   public const READ_MEDIA = 'media:read';
 
+  public const NOTES_READ = 'notes:read';
+
+  public const NOTES_WRITE = 'notes:write';
+
+  public const NOTES_DELETE = 'notes:delete';
+
   public const GRANT_COLUMNS = [
+    self::NOTES_READ => 'can_read_notes',
+    self::NOTES_WRITE => 'can_write_notes',
+    self::NOTES_DELETE => 'can_delete_notes',
     self::WRITE => 'can_write',
     self::CONTENT => 'can_edit_content',
     self::CREATE => 'can_create_draft',
@@ -54,9 +63,12 @@ final class McpConfiguration
   ];
 
   public const SCOPES = [self::READ, self::WRITE, self::CONTENT, self::CREATE, self::STRUCTURE, self::TRANSLATION, self::UPLOAD,
-    self::READ_CONTENT, self::READ_STRUCTURE, self::READ_TRANSLATION, self::READ_MEDIA, self::SEO];
+    self::READ_CONTENT, self::READ_STRUCTURE, self::READ_TRANSLATION, self::READ_MEDIA, self::SEO, self::NOTES_READ, self::NOTES_WRITE, self::NOTES_DELETE];
 
   public const LABELS = [
+    self::NOTES_READ => 'scope_notes_read',
+    self::NOTES_WRITE => 'scope_notes_write',
+    self::NOTES_DELETE => 'scope_notes_delete',
     self::READ => 'scope_read',
     self::READ_CONTENT => 'scope_read_content',
     self::READ_STRUCTURE => 'scope_read_structure',

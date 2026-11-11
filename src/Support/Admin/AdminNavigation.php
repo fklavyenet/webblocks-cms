@@ -21,6 +21,7 @@ final class AdminNavigation
                 ['label' => $adminText('navigation.shared_slots'), 'route' => 'admin.shared-slots.index', 'active' => ['admin.shared-slots.*'], 'icon' => 'wb-icon-component'],
                 ['label' => $adminText('navigation.navigation'), 'route' => 'admin.navigation.index', 'active' => ['admin.navigation.*'], 'icon' => 'wb-icon-network'],
                 ['label' => $adminText('navigation.media'), 'route' => 'admin.media.index', 'active' => ['admin.media.*'], 'icon' => 'wb-icon-image'],
+                ['label' => $adminTranslator->get('notes.title', $adminLocale), 'route' => 'admin.notes.index', 'active' => ['admin.notes.*'], 'icon' => 'wb-icon-sticky-note'],
                 ['label' => $adminText('navigation.assets'), 'route' => 'admin.site-assets.index', 'active' => ['admin.site-assets.*'], 'icon' => 'wb-icon-code'],
             ];
 
@@ -70,7 +71,7 @@ final class AdminNavigation
                     'items' => array_values(array_filter($menuItems, fn ($item) => $item['route'] === 'admin.access.roles.index')),
                 ],
             ];
-            $menuItems = array_values(array_filter($menuItems, fn ($item) => in_array($item['route'], ['admin.dashboard', 'admin.sites.index', 'admin.pages.index', 'admin.media.index', 'admin.site-assets.index'], true)));
+            $menuItems = array_values(array_filter($menuItems, fn ($item) => in_array($item['route'], ['admin.dashboard', 'admin.sites.index', 'admin.pages.index', 'admin.media.index', 'admin.site-assets.index', 'admin.notes.index'], true)));
             $sidebarGroups = [];
 
             if ($user?->can('access-system')) {

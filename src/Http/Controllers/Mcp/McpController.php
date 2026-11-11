@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Policies\McpPagePolicy;
 use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Mcp\McpGrants;
+use WebBlocks\Cms\Support\Mcp\McpNotes;
 use WebBlocks\Cms\Support\Mcp\McpToolException;
 use WebBlocks\Cms\Support\Mcp\McpTools;
 
@@ -57,8 +58,13 @@ final class McpController
       return $this->error(null, -32700, 'Parse error.', 400);
     }
 
-    if ($size > self::REQUEST_LIMIT
-      && (($message->method ?? null) !== 'tools/call' || ($message->params->name ?? null) !== McpTools::UPLOAD)) {
+    $tool = ($message->method ?? null) === 'tools/call' ? ($message->params->name ?? null) : null;
+    $limit = match ($tool) {
+      McpTools::UPLOAD => self::UPLOAD_REQUEST_LIMIT,
+      McpNotes::CREATE, McpNotes::UPDATE => McpNotes::MAX_REQUEST_BYTES,
+      default => self::REQUEST_LIMIT,
+    };
+    if ($size > $limit) {
       return $this->error(null, -32600, 'Invalid request.', 400);
     }
 
@@ -130,10 +136,12 @@ final class McpController
       return $this->toolError($id, $exception);
     }
 
-    return $this->result($id, [
+    $response = $this->result($id, [
       'content' => [['type' => 'text', 'text' => json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]],
       'structuredContent' => $data,
     ]);
+
+    return McpNotes::scope($name) === null ? $response : $response->header('Cache-Control', 'private, no-store');
   }
 
   private function toolError(string|int $id, McpToolException $exception, array $meta = []): JsonResponse

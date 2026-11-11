@@ -1610,3 +1610,18 @@ input.wb-admin-table-grid-input:focus {
 }
 
 .wb-cms-update-log { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.wb-cms-note-title,
+.wb-cms-note-body,
+.wb-cms-note-heading {
+    overflow-wrap: anywhere;
+}
+
+.wb-cms-note-title {
+    min-width: 12ch;
+    max-width: 36ch;
+}
+
+.wb-cms-note-body {
+    white-space: pre-wrap;
+}

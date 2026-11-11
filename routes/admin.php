@@ -26,6 +26,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\MaintenanceCleanupController;
 use WebBlocks\Cms\Http\Controllers\Admin\McpConnectionsController;
 use WebBlocks\Cms\Http\Controllers\Admin\MediaController;
 use WebBlocks\Cms\Http\Controllers\Admin\NavigationItemController;
+use WebBlocks\Cms\Http\Controllers\Admin\NoteController;
 use WebBlocks\Cms\Http\Controllers\Admin\PackageAdminStatusController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageAssetController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageController;
@@ -82,6 +83,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalEngagementControll
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalInventoryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalMaintenanceCleanupController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNoteController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageAssetController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPagePublishController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRenderController;
@@ -124,6 +126,17 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
   ->prefix('webadmin/api')
   ->name('internal-content-api.')
   ->group(function () {
+    Route::prefix('notes')->name('notes.')->group(function () {
+      Route::get('/', [InternalNoteController::class, 'index'])->middleware('internal-api.capability:notes.read')->name('index');
+      Route::get('/recipients', [InternalNoteController::class, 'recipients'])->middleware('internal-api.capability:notes.write')->name('recipients');
+      Route::post('/', [InternalNoteController::class, 'store'])->middleware('internal-api.capability:notes.write')->name('store');
+      Route::get('/{note}', [InternalNoteController::class, 'show'])->whereNumber('note')->middleware('internal-api.capability:notes.read')->name('show');
+      Route::get('/{note}/edit', [InternalNoteController::class, 'edit'])->whereNumber('note')->middleware('internal-api.capability:notes.write')->name('edit');
+      Route::patch('/{note}', [InternalNoteController::class, 'update'])->whereNumber('note')->middleware('internal-api.capability:notes.write')->name('update');
+      Route::delete('/{note}', [InternalNoteController::class, 'destroy'])->whereNumber('note')->middleware('internal-api.capability:notes.delete')->name('destroy');
+      Route::patch('/{note}/read-state', [InternalNoteController::class, 'readState'])->whereNumber('note')->middleware('internal-api.capability:notes.read')->name('read-state');
+    });
+
     Route::get('/sites/{site}/consent', [InternalConsentController::class, 'show'])->middleware('internal-api.capability:consent.read')->name('consent.show');
     Route::patch('/sites/{site}/consent', [InternalConsentController::class, 'settings'])->middleware('internal-api.capability:consent.write')->name('consent.settings.update');
     Route::put('/sites/{site}/consent/services/{service}', [InternalConsentController::class, 'service'])->middleware('internal-api.capability:consent.write')->name('consent.services.update');
@@ -275,6 +288,16 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
   ->prefix('webadmin')
   ->name('admin.')
   ->group(function () {
+    Route::prefix('notes')->name('notes.')->group(function () {
+      Route::get('/', [NoteController::class, 'index'])->name('index');
+      Route::post('/', [NoteController::class, 'store'])->name('store');
+      Route::get('/{note}', [NoteController::class, 'show'])->whereNumber('note')->name('show');
+      Route::get('/{note}/edit', [NoteController::class, 'edit'])->whereNumber('note')->name('edit');
+      Route::patch('/{note}', [NoteController::class, 'update'])->whereNumber('note')->name('update');
+      Route::delete('/{note}', [NoteController::class, 'destroy'])->whereNumber('note')->name('destroy');
+      Route::patch('/{note}/read-state', [NoteController::class, 'readState'])->whereNumber('note')->name('read-state');
+    });
+
     Route::prefix('listing-views/{listing}')->where(['listing' => 'pages|media'])->group(function () {
       Route::post('/', [ListingViewController::class, 'store'])->name('listing-views.store');
       Route::get('/{listingView}/apply', [ListingViewController::class, 'apply'])->whereNumber('listingView')->name('listing-views.apply');

@@ -33,6 +33,10 @@ final class CmsResourcePolicy
     if (! str_starts_with($route, 'admin.') && ! $api) {
     return;
     } // Plugin permissions have their own registered contract.
+    if (str_starts_with($name, 'notes.')) {
+      // Notes belong to the installation. Each entry point applies NotePolicy.
+      return;
+    }
     if (! $api && str_starts_with($name, 'jobs.')) {
       // Every jobs endpoint uses JobRequest and its per-run/site policy.
       return;
