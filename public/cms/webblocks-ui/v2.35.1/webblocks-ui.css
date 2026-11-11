@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.35.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.35.1 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -3462,6 +3462,7 @@ border: 1px solid var(--wb-border);
 border-radius: var(--wb-r-lg);
 box-shadow: var(--wb-shadow-lg);
 padding: var(--wb-s1) 0;
+overflow: hidden;
 animation: wb-dropdown-in 0.12s ease;
 }
 html:not(.wb-js) .wb-dropdown-menu {
@@ -3482,7 +3483,6 @@ position: fixed;
 inset: auto;
 margin: 0;
 color: var(--wb-text);
-overflow: visible;
 animation: none;
 }
 .wb-dropdown-menu[popover]:not(:popover-open) { display: none; }
@@ -3553,9 +3553,6 @@ max-width: 92vw;
 max-height: min(70vh, 420px);
 overflow-y: auto;
 }
-@supports selector(:popover-open) {
-.wb-dropdown-menu[popover].wb-dropdown-menu--panel { overflow-y: auto; }
-}
 .wb-tabs {
 display: flex;
 flex-direction: column;
@@ -3565,7 +3562,7 @@ flex-direction: column;
 display: flex;
 align-items: flex-end;
 gap: 0;
-border-bottom: 2px solid var(--wb-border);
+background: linear-gradient(var(--wb-border), var(--wb-border)) bottom / 100% 1px no-repeat;
 overflow-x: auto;
 scrollbar-width: none;
 }
@@ -3600,7 +3597,7 @@ color: var(--wb-text);
 .wb-tabs-btn.is-active,
 .wb-tab-item.is-active {
 color: var(--wb-primary);
-box-shadow: inset 0 -2px 0 var(--wb-primary);
+border-bottom-color: var(--wb-primary);
 }
 .wb-tab:focus-visible,
 .wb-tabs-btn:focus-visible,
@@ -3619,7 +3616,6 @@ display: block;
 }
 .wb-tabs-pills .wb-tabs-nav,
 .wb-tabs-pills .wb-tab-list {
-border-bottom: none;
 gap: var(--wb-s1);
 padding: var(--wb-s2);
 background: var(--wb-surface-2);

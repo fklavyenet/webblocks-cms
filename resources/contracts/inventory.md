@@ -2481,6 +2481,9 @@ dialog roots for modals, drawers and the command palette, the Popover API for
 dropdowns and popovers, and `details`/`summary` for navigation groups. The
 existing WebBlocks UI component APIs also support these forms of markup.
 
+CMS 1.130.5 bundles WebBlocks UI 2.35.1. Dropdown row highlights stay within
+the rounded menu, and the active tab underline shares the tab strip baseline.
+
 From CMS 1.130.1, the Webadmin sidebar groups use native details and summary
 elements. The group containing the current page renders open on the server,
 and its active link retains aria-current. Each group can be toggled by keyboard

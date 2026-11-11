@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.130.5
+
+- Bundle WebBlocks UI 2.35.1 to keep dropdown highlights within rounded corners and align the active tab underline with the tab strip divider.
+
 ## 1.130.4
 
 - Keep the last confirmed update phase and elapsed time visible during short status interruptions. Show a reconnecting message after 15 seconds and keep checking the same update.
