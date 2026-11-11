@@ -1,5 +1,5 @@
 @php
-    $locale = request('locale', app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale());
+    $locale = request('locale', app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->packagedLocale(request()->user()));
     $t = fn ($key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('consent.'.$key, $locale);
     $consent = app(\WebBlocks\Cms\Support\Consent\ConsentPresenter::class)->forSite($site, $locale, true);
 @endphp

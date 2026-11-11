@@ -97,6 +97,7 @@ use WebBlocks\Cms\Models\SiteImport;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemSetting;
 use WebBlocks\Cms\Policies\AutomaticPagePolicy;
+use WebBlocks\Cms\Policies\PanelLanguagePolicy;
 use WebBlocks\Cms\Policies\SystemBackupPolicy;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Access\PermissionCatalog;
@@ -1726,6 +1727,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     Gate::policy(SystemBackup::class, SystemBackupPolicy::class);
     Gate::policy(AutomaticPageRule::class, AutomaticPagePolicy::class);
     Gate::define('access-admin', fn ($user) => is_object($user) && method_exists($user, 'canAccessAdmin') && $user->canAccessAdmin());
+    Gate::define('manage-panel-languages', fn ($user) => app(PanelLanguagePolicy::class)->manage($user));
     Gate::define('manage-users', fn ($user) => app(PluginAccessResolver::class)->isSuperAdmin($user));
     Gate::define('access-system', fn ($user) => app(PluginAccessResolver::class)->canAccessSystem($user));
     Gate::define('manage-site-operations', fn ($user) => app(CmsAuthorization::class)->allows($user, 'cms.messages.read') || app(CmsAuthorization::class)->allows($user, 'cms.engagement.read'));

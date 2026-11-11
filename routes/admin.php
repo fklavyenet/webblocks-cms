@@ -41,6 +41,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\PageSeoFreshnessController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageSiteMoveController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageSlotController;
 use WebBlocks\Cms\Http\Controllers\Admin\PageTranslationController;
+use WebBlocks\Cms\Http\Controllers\Admin\PanelLanguageController;
 use WebBlocks\Cms\Http\Controllers\Admin\PersonalApiTokenController;
 use WebBlocks\Cms\Http\Controllers\Admin\PluginCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\ProfileController;
@@ -157,6 +158,15 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/system/backup-cleanup', [InternalBackupCleanupController::class, 'show'])->middleware('internal-api.capability:backups.read')->name('system.backup-cleanup.show');
     Route::put('/system/backup-cleanup', [InternalBackupCleanupController::class, 'update'])->middleware('internal-api.capability:backups.settings.write')->name('system.backup-cleanup.update');
     Route::post('/system/backup-cleanup/run', [InternalBackupCleanupController::class, 'run'])->middleware('internal-api.capability:backups.delete')->name('system.backup-cleanup.run');
+    Route::prefix('system/panel-languages')->name('system.panel-languages.')->middleware('internal-api.capability:panel-languages.manage')->group(function () {
+      Route::get('/', [PanelLanguageController::class, 'index'])->name('index');
+      Route::get('/template', [PanelLanguageController::class, 'template'])->name('template');
+      Route::post('/catalogs', [PanelLanguageController::class, 'store'])->name('store');
+      Route::get('/catalogs/{catalog}', [PanelLanguageController::class, 'show'])->where('catalog', '[1-9][0-9]{0,17}')->name('show');
+      Route::post('/catalogs/{catalog}/activate', [PanelLanguageController::class, 'activate'])->where('catalog', '[1-9][0-9]{0,17}')->name('activate');
+      Route::post('/{code}/deactivate', [PanelLanguageController::class, 'deactivate'])->name('deactivate');
+      Route::put('/default', [PanelLanguageController::class, 'updateDefault'])->name('default');
+    });
     Route::get('/system/health', [InternalSystemHealthController::class, 'show'])->middleware('internal-api.capability:system-health.read')->name('system.health.show');
     Route::get('/system/cleanup', [InternalMaintenanceCleanupController::class, 'show'])->middleware('internal-api.capability:maintenance.read')->name('system.cleanup.show');
     Route::put('/system/cleanup', [InternalMaintenanceCleanupController::class, 'update'])->middleware('internal-api.capability:maintenance.settings.write')->name('system.cleanup.update');
@@ -554,6 +564,15 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::get('system/cleanup', [MaintenanceCleanupController::class, 'index'])->name('system.cleanup.index');
       Route::put('system/cleanup', [MaintenanceCleanupController::class, 'update'])->name('system.cleanup.update');
       Route::post('system/cleanup/{category}', [MaintenanceCleanupController::class, 'run'])->name('system.cleanup.run');
+      Route::prefix('system/panel-languages')->name('system.panel-languages.')->middleware('can:manage-panel-languages')->group(function () {
+        Route::get('/', [PanelLanguageController::class, 'index'])->name('index');
+        Route::get('/template', [PanelLanguageController::class, 'template'])->name('template');
+        Route::post('/catalogs', [PanelLanguageController::class, 'store'])->name('store');
+        Route::get('/catalogs/{catalog}', [PanelLanguageController::class, 'show'])->where('catalog', '[1-9][0-9]{0,17}')->name('show');
+        Route::post('/catalogs/{catalog}/activate', [PanelLanguageController::class, 'activate'])->where('catalog', '[1-9][0-9]{0,17}')->name('activate');
+        Route::post('/{code}/deactivate', [PanelLanguageController::class, 'deactivate'])->name('deactivate');
+        Route::put('/default', [PanelLanguageController::class, 'updateDefault'])->name('default');
+      });
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
       Route::get('system/scheduler', [SystemHealthController::class, 'scheduler'])->name('system.scheduler.index');
       Route::get('system/health', [SystemHealthController::class, 'index'])->name('system.health.index');

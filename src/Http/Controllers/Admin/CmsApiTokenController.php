@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\CmsApiTokenRequest;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Policies\PanelLanguagePolicy;
 use WebBlocks\Cms\Policies\SystemUpdateApiPolicy;
 use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
@@ -168,6 +169,12 @@ class CmsApiTokenController extends Controller
         'description' => 'Installation-wide update checks and explicitly approved execution.',
         'capabilities' => [CmsApiTokenCapabilities::SYSTEM_UPDATES_READ, CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN],
       ],
+      ...(app(PanelLanguagePolicy::class)->manage(request()->user()) ? [[
+        'key' => 'panel-languages',
+        'label' => __('webblocks-cms::panel-languages.title'),
+        'description' => __('webblocks-cms::panel-languages.token_scope'),
+        'capabilities' => [CmsApiTokenCapabilities::PANEL_LANGUAGES_MANAGE],
+      ]] : []),
       // Enabled plugins (e.g. WebBlocks Commerce) contribute their own groups below.
       [
         'key' => 'site-feedback',

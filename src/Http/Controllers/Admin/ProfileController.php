@@ -66,7 +66,7 @@ class ProfileController extends Controller
 
     validator(
       ['admin_locale' => $locale],
-      ['admin_locale' => ['required', 'string', Rule::in(AdminLocaleResolver::SUPPORTED_LOCALES)]],
+      ['admin_locale' => ['required', 'string', Rule::in(array_keys($adminLocaleResolver->options()))]],
     )->validate();
 
     /** @var User $user */

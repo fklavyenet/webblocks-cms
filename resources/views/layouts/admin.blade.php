@@ -280,7 +280,7 @@
                                     </button>
 
                                     <div class="wb-dropdown-menu" id="admin-language-menu">
-                                        @foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $localeCode)
+                                        @foreach (app(AdminLocaleResolver::class)->options() as $localeCode => $localeLabel)
                                             <form method="POST" action="{{ route('admin.profile.locale.update') }}">
                                                 @csrf
                                                 @method('PATCH')
@@ -292,7 +292,7 @@
                                                     @if ($adminLocale === $localeCode) aria-current="true" @endif
                                                 >
                                                     <span class="wb-language-switcher-item-code">{{ strtoupper($localeCode) }}</span>
-                                                    {{ $adminText('topbar.language_'.$localeCode) }}
+                                                    {{ in_array($localeCode, AdminLocaleResolver::SUPPORTED_LOCALES, true) ? $adminText('topbar.language_'.$localeCode) : \Illuminate\Support\Str::after($localeLabel, ' - ') }}
                                                 </button>
                                             </form>
                                         @endforeach

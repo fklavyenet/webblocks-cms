@@ -102,7 +102,7 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
         {{-- New tokens start with every grantable capability checked so operators can
              uncheck what a token must not have instead of hunting through each group. --}}
         @php($grantableCapabilities = collect($capabilityGroups)->pluck('capabilities')->flatten()->unique()->values()->all())
-        @php($selectedCapabilities = $editingTokenId === '' ? old('capabilities', $grantableCapabilities) : $grantableCapabilities)
+        @php($selectedCapabilities = $editingTokenId === '' ? old('capabilities', array_diff($grantableCapabilities, [\WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities::PANEL_LANGUAGES_MANAGE])) : $grantableCapabilities)
 
         <form method="POST" action="{{ route('admin.system.api-tokens.store') }}">
             @csrf

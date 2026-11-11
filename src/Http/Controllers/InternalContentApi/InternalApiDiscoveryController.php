@@ -270,6 +270,8 @@ class InternalApiDiscoveryController extends Controller
       'page_html_preview' => '/webadmin/pages/{page}/preview',
       'admin_render_system_updates' => '/webadmin/api/admin-render/system-updates',
       'admin_render_system_updates_html' => '/webadmin/api/admin-render/system-updates?format=html',
+      'panel_languages' => '/webadmin/api/system/panel-languages',
+      'panel_language_template' => '/webadmin/api/system/panel-languages/template',
       'system_updates_check' => '/webadmin/api/system/updates/check',
       'system_updates_run' => '/webadmin/api/system/updates',
       'system_updates_operation' => '/webadmin/api/system/updates/operations/{operation}',
@@ -369,6 +371,18 @@ class InternalApiDiscoveryController extends Controller
       ],
     ];
 
+    $panelCatalogParameter = ['name' => 'catalog', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'integer']];
+    $panelLanguages = static fn (string $summary, string $status = '200'): array => [
+      'summary' => $summary,
+      'x-required-capability' => 'panel-languages.manage',
+      'x-scope' => 'Installation-wide system token owned by an active Super admin',
+      'responses' => [
+        $status => ['description' => 'Panel language catalog result', 'content' => $json],
+        '403' => ['description' => 'Missing panel language authority', 'content' => $json],
+        '422' => ['description' => 'Validation error', 'content' => $json],
+      ],
+    ];
+
     return [
       '/notes' => [
         'get' => $noteOperation('List visible notes, newest first', 'read') + [
@@ -411,6 +425,30 @@ class InternalApiDiscoveryController extends Controller
       '/examples/contact-page' => ['get' => ['summary' => 'Contact page example', 'responses' => ['200' => ['description' => 'Example JSON', 'content' => $json]]]],
       '/examples/landing-page' => ['get' => ['summary' => 'Landing page example', 'responses' => ['200' => ['description' => 'Example JSON', 'content' => $json]]]],
       '/admin-render/system-updates' => ['get' => ['summary' => 'Render the allowlisted System Updates admin screen for visual QA', 'x-required-capability' => 'admin.render', 'x-query-parameters' => ['format=html returns text/html instead of JSON'], 'responses' => ['200' => ['description' => 'Rendered admin screen HTML snapshot', 'content' => $json], '403' => ['description' => 'Requires admin.render and a system-capable token creator', 'content' => $json]]]],
+      '/system/panel-languages' => ['get' => $panelLanguages('List panel languages and uploaded catalogs')],
+      '/system/panel-languages/template' => ['get' => $panelLanguages('Download the English catalog template for this CMS version')],
+      '/system/panel-languages/catalogs' => ['post' => $panelLanguages('Upload a UTF-8 catalog as an inactive draft', '201') + [
+        'requestBody' => ['required' => true, 'content' => ['multipart/form-data' => ['schema' => [
+          'type' => 'object', 'required' => ['catalog'], 'properties' => ['catalog' => ['type' => 'string', 'format' => 'binary']],
+        ]]]],
+      ]],
+      '/system/panel-languages/catalogs/{catalog}' => [
+        'parameters' => [$panelCatalogParameter],
+        'get' => $panelLanguages('Preview catalog coverage and sample translations'),
+      ],
+      '/system/panel-languages/catalogs/{catalog}/activate' => [
+        'parameters' => [$panelCatalogParameter],
+        'post' => $panelLanguages('Activate the reviewed catalog for the panel'),
+      ],
+      '/system/panel-languages/{code}/deactivate' => [
+        'parameters' => [['name' => 'code', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'string']]],
+        'post' => $panelLanguages('Deactivate the custom catalog and retain its stored translations'),
+      ],
+      '/system/panel-languages/default' => ['put' => $panelLanguages('Set the installation-wide default panel language') + [
+        'requestBody' => ['required' => true, 'content' => ['application/json' => ['schema' => [
+          'type' => 'object', 'required' => ['code'], 'properties' => ['code' => ['type' => 'string']],
+        ]]]],
+      ]],
       '/system/updates/check' => ['get' => [
         'summary' => 'Check the offered system update without applying it',
         'x-required-capability' => 'system-updates.read',

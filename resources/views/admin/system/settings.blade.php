@@ -108,15 +108,6 @@
                         <div class="wb-text-sm wb-text-muted">{{ $systemText('admin_listing_per_page_help') }}</div>
                     </div>
 
-                    <div class="wb-stack-2 wb-field">
-                        <label for="settings_admin_locale">{{ $adminText('settings.admin_locale') }}</label>
-                        <select id="settings_admin_locale" name="admin_locale" class="wb-select" required>
-                            @foreach ($adminLocaleOptions as $code => $label)
-                                <option value="{{ $code }}" @selected($settings['admin_locale'] === $code)>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('settings.admin_locale_help') }}</div>
-                    </div>
                 </div>
 
                 <div class="wb-card-footer">

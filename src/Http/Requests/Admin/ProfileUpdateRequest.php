@@ -28,7 +28,7 @@ class ProfileUpdateRequest extends FormRequest
     return [
       'name' => ['required', 'string', 'max:255'],
       'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class, 'email')->ignore($this->user()?->id)],
-      'admin_locale' => ['nullable', 'string', Rule::in(AdminLocaleResolver::SUPPORTED_LOCALES)],
+      'admin_locale' => ['nullable', 'string', Rule::in(array_keys(app(AdminLocaleResolver::class)->options()))],
     ];
   }
 }

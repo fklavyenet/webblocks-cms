@@ -90,6 +90,9 @@
                             </select>
                             <div class="wb-text-sm wb-text-muted">{{ $adminText('interface_language_help') }}</div>
 
+                            @if ($user->admin_locale && ! isset($adminLocaleOptions[$user->admin_locale]))
+                                <div class="wb-alert wb-alert-warning" role="status">{{ __('webblocks-cms::panel-languages.unavailable') }}</div>
+                            @endif
                             @error('admin_locale')
                                 <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
                             @enderror

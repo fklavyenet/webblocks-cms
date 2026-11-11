@@ -11,7 +11,7 @@ class CmsTranslator
   {
     $translationKey = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::'.$key;
 
-    foreach ($this->candidateLocales($locale) as $candidateLocale) {
+    foreach ($this->candidateLocales($locale, $key) as $candidateLocale) {
       if (! app('translator')->hasForLocale($translationKey, $candidateLocale)) {
         continue;
       }
@@ -35,7 +35,7 @@ class CmsTranslator
   {
     $translationKey = WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::'.$key;
 
-    foreach ($this->candidateLocales($locale) as $candidateLocale) {
+    foreach ($this->candidateLocales($locale, $key) as $candidateLocale) {
       if (app('translator')->hasForLocale($translationKey, $candidateLocale)) {
         $value = trans($translationKey, $replace, $candidateLocale);
 
@@ -77,10 +77,13 @@ class CmsTranslator
     return $this->replace($fallback ?? $key, $replace);
   }
 
-  private function candidateLocales(?string $locale): array
+  private function candidateLocales(?string $locale, ?string $key = null): array
   {
     $locale = Locale::normalizeCode($locale);
-    $fallback = Locale::normalizeCode(config('app.fallback_locale', 'en')) ?: 'en';
+    $fallback = $key !== null && $locale !== null && request()->attributes->get('cms_panel_catalog_locale') === $locale
+      && app(PanelLanguageSource::class)->isPanelGroup($key)
+      ? 'en'
+      : (Locale::normalizeCode(config('app.fallback_locale', 'en')) ?: 'en');
 
     return collect([
       $locale,

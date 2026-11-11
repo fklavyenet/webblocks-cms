@@ -30,6 +30,29 @@ This contract describes the supported authoring surface of the reviewed package 
 
 Legacy renderer compatibility does not make an unpublished handle available for new authoring. Use the current catalog and field contracts rather than historical counts or implementation milestones.
 
+## Panel Languages
+
+**Webadmin → System → Panel Languages** lets a Super admin download the
+current English template, upload a UTF-8 JSON catalog, review coverage and
+sample text, then activate it. The template has `format_version`, `source_version`,
+`code`, `name` and a list of `translations` rows with `key` and `text`.
+Retain the listed keys and their placeholders. Catalogs can be partial.
+The enabled language is available in the profile and toolbar, and can be
+saved as the default panel language. Existing bundled language files stay
+intact. If a later release bundles the same code, the active custom catalog
+keeps precedence. Missing or outdated messages use matching package strings
+when available, then English.
+
+The `/webadmin/api/system/panel-languages` endpoints expose the same lifecycle
+to an installation-wide system token with `panel-languages.manage` owned by
+an active Super admin. Upload to `POST /catalogs` with a multipart `catalog`
+file and review `GET /catalogs/{catalog}` before calling
+`POST /catalogs/{catalog}/activate`. `GET /template` returns the source
+template. `PUT /default` accepts a JSON `code`. `POST /{code}/deactivate`
+keeps the custom catalog available for reactivation. Panel catalogs never
+register site locales or translate page content, and do not expand the
+required plugin or content provider language sets.
+
 ## CMS Notes
 
 **Webadmin → Notes** lists installation-wide plain-text notes newest first with

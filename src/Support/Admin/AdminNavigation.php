@@ -88,6 +88,10 @@ final class AdminNavigation
                         'items' => [
                             ['label' => $adminText('navigation.domains'), 'route' => 'admin.domains.index', 'active' => ['admin.domains.*', 'admin.sites.domains.*'], 'icon' => 'wb-icon-globe'],
                             ['label' => $adminText('navigation.icons'), 'route' => 'admin.system.icons.index', 'active' => ['admin.system.icons.*'], 'icon' => 'wb-icon-sparkles'],
+                            ...($user->can('manage-panel-languages') ? [[
+                                'label' => $adminTranslator->get('panel-languages.title', $adminLocale), 'route' => 'admin.system.panel-languages.index',
+                                'active' => ['admin.system.panel-languages.*'], 'icon' => 'wb-icon-languages',
+                            ]] : []),
                             ['label' => $adminText('navigation.locales'), 'route' => 'admin.locales.index', 'active' => ['admin.locales.*'], 'icon' => 'wb-icon-languages'],
                             ['label' => $adminText('navigation.page_layouts'), 'route' => 'admin.page-layouts.index', 'active' => ['admin.page-layouts.*'], 'icon' => 'wb-icon-layout'],
                             ['label' => $adminText('navigation.slot_types'), 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*'], 'icon' => 'wb-icon-columns2'],

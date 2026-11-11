@@ -10,7 +10,17 @@ use WebBlocks\Cms\Support\System\SystemSettings;
 
 class AdminLocaleResolver
 {
+  // Baseline used by shipped mail, plugin and provider contracts.
   public const SUPPORTED_LOCALES = ['en', 'de', 'tr', 'es', 'it', 'fr'];
+
+  public const PACKAGED_OPTIONS = [
+    'en' => 'EN - English',
+    'de' => 'DE - Deutsch',
+    'tr' => 'TR - Türkçe',
+    'es' => 'ES - Español',
+    'it' => 'IT - Italiano',
+    'fr' => 'FR - Français',
+  ];
 
   public function __construct(
     private readonly SystemSettings $systemSettings,
@@ -18,37 +28,32 @@ class AdminLocaleResolver
 
   public function locale(?Authenticatable $user = null): string
   {
-    $userLocale = $this->userLocale($user ?? request()?->user());
+    $options = $this->options();
 
-    if ($userLocale !== null) {
-      return $userLocale;
-    }
+    return $this->userLocale($user ?? request()?->user(), $options) ?? $this->configuredLocale($options);
+  }
 
-    $configured = Locale::normalizeCode((string) $this->systemSettings->get(SystemSettings::ADMIN_LOCALE, ''));
+  public function defaultLocale(): string
+  {
+    return $this->configuredLocale($this->options());
+  }
 
-    if ($configured !== '' && in_array($configured, self::SUPPORTED_LOCALES, true)) {
-      return $configured;
-    }
-
-    $appLocale = Locale::normalizeCode((string) config('app.locale', 'en'));
-
-    if ($appLocale !== '' && in_array($appLocale, self::SUPPORTED_LOCALES, true)) {
-      return $appLocale;
-    }
-
-    return 'en';
+  public function packagedLocale(?Authenticatable $user = null): string
+  {
+    return $this->userLocale($user, self::PACKAGED_OPTIONS) ?? $this->configuredLocale(self::PACKAGED_OPTIONS);
   }
 
   public function options(): array
   {
-    return [
-      'en' => 'EN - English',
-      'de' => 'DE - Deutsch',
-      'tr' => 'TR - Türkçe',
-      'es' => 'ES - Español',
-      'it' => 'IT - Italiano',
-      'fr' => 'FR - Français',
-    ];
+    return app(PanelLanguages::class)->options();
+  }
+
+  private function configuredLocale(array $options): string
+  {
+    $configured = Locale::normalizeCode((string) $this->systemSettings->get(SystemSettings::ADMIN_LOCALE, ''));
+    $appLocale = Locale::normalizeCode((string) config('app.locale', 'en'));
+
+    return isset($options[$configured]) ? $configured : (isset($options[$appLocale]) ? $appLocale : 'en');
   }
 
   public function userPreferencesAvailable(): bool
@@ -64,7 +69,7 @@ class AdminLocaleResolver
     }
   }
 
-  private function userLocale(?Authenticatable $user): ?string
+  private function userLocale(?Authenticatable $user, array $options): ?string
   {
     if (! $user || ! $this->userPreferencesAvailable()) {
       return null;
@@ -72,6 +77,6 @@ class AdminLocaleResolver
 
     $locale = Locale::normalizeCode((string) ($user->getAuthIdentifier() ? $user->getAttribute('admin_locale') : ''));
 
-    return $locale !== '' && in_array($locale, self::SUPPORTED_LOCALES, true) ? $locale : null;
+    return isset($options[$locale]) ? $locale : null;
   }
 }

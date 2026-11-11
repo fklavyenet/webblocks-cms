@@ -11,7 +11,7 @@
             <div class="wb-field">
                 <label for="verification-email-locale">{{ $verificationText('language') }}</label>
                 <select id="verification-email-locale" class="wb-select" name="verification_locale">
-                    @foreach ($adminLocaleOptions as $localeCode => $localeLabel)
+                    @foreach ($verificationLocaleOptions as $localeCode => $localeLabel)
                         <option value="{{ $localeCode }}" @selected($verificationLocale === $localeCode)>{{ $localeLabel }}</option>
                     @endforeach
                 </select>

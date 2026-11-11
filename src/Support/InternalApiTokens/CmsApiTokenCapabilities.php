@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\InternalApiTokens;
 
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Policies\PanelLanguagePolicy;
 use WebBlocks\Cms\Policies\SystemHealthPolicy;
 use WebBlocks\Cms\Policies\SystemUpdateApiPolicy;
 use WebBlocks\Cms\Support\Plugins\PluginApiCapabilityRegistrar;
@@ -44,6 +45,8 @@ class CmsApiTokenCapabilities
   public const SYSTEM_UPDATES_READ = 'system-updates.read';
 
   public const SYSTEM_UPDATES_RUN = 'system-updates.run';
+
+  public const PANEL_LANGUAGES_MANAGE = 'panel-languages.manage';
 
   public const SYSTEM_HEALTH_READ = 'system-health.read';
 
@@ -138,6 +141,7 @@ class CmsApiTokenCapabilities
     self::CONSENT_READ,
     self::CONSENT_WRITE,
     self::CONSENT_CODE_WRITE,
+    self::PANEL_LANGUAGES_MANAGE,
     self::SYSTEM_UPDATES_READ,
     self::SYSTEM_UPDATES_RUN,
     self::DOMAINS_WRITE,
@@ -196,6 +200,7 @@ class CmsApiTokenCapabilities
     self::CONSENT_READ,
     self::CONSENT_WRITE,
     self::CONSENT_CODE_WRITE,
+    self::PANEL_LANGUAGES_MANAGE,
     self::SYSTEM_UPDATES_READ,
     self::SYSTEM_UPDATES_RUN,
     self::CONTENT_READ,
@@ -248,6 +253,7 @@ class CmsApiTokenCapabilities
     self::CONSENT_READ => 'Read site consent settings and services',
     self::CONSENT_WRITE => 'Manage site consent settings, services and translations',
     self::CONSENT_CODE_WRITE => 'Manage executable consent service sources',
+    self::PANEL_LANGUAGES_MANAGE => 'Manage panel language catalogs and the default panel language',
     self::SYSTEM_UPDATES_READ => 'Read system update status and results',
     self::SYSTEM_UPDATES_RUN => 'Run an approved installation-wide system update',
     self::CONTENT_READ => 'Read content metadata and contracts',
@@ -353,6 +359,10 @@ class CmsApiTokenCapabilities
   {
     if (! in_array($capability, $this->capabilitiesFor($token), true)) {
       return false;
+    }
+
+    if ($capability === self::PANEL_LANGUAGES_MANAGE) {
+      return app(PanelLanguagePolicy::class)->allowsToken($token);
     }
 
     if ($capability === self::SYSTEM_HEALTH_READ) {

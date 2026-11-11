@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\InternalApiTokens;
 use App\Models\User;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\CmsApiToken;
+use WebBlocks\Cms\Policies\PanelLanguagePolicy;
 
 class CmsApiTokenIssuer
 {
@@ -22,6 +23,11 @@ class CmsApiTokenIssuer
   ): IssuedCmsApiToken {
     if (array_intersect($capabilities, [CmsApiTokenCapabilities::SYSTEM_UPDATES_READ, CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN]) !== []) {
       abort_unless($tokenType === 'system' && $allowedSiteIds === null && $creator?->can('access-system') && (bool) ($creator->is_active ?? true), 403);
+    }
+
+    if (in_array(CmsApiTokenCapabilities::PANEL_LANGUAGES_MANAGE, $capabilities, true)) {
+      abort_unless($tokenType === 'system' && $allowedSiteIds === null
+        && app(PanelLanguagePolicy::class)->manage($creator), 403);
     }
 
     $plainToken = self::TOKEN_PREFIX.Str::random(64);

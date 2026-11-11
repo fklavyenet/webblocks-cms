@@ -27,7 +27,7 @@ class CmsResetPassword extends ResetPassword
 
   public function toMail($notifiable): MailMessage
   {
-    $locale = app(AdminLocaleResolver::class)->locale($notifiable);
+    $locale = app(AdminLocaleResolver::class)->packagedLocale($notifiable);
     $translator = app(CmsTranslator::class);
     $minutes = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
     $message = (new MailMessage)

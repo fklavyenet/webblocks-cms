@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.131.0
+
+- Let Super admins upload, preview, and activate custom Webadmin languages from Panel Languages or the dedicated system API. Custom catalogs support Russian plural forms, remain active when the package adds the same language, and use compatible package translations or English for missing messages.
+
 ## 1.130.5
 
 - Bundle WebBlocks UI 2.35.1 to keep dropdown highlights within rounded corners and align the active tab underline with the tab strip divider.

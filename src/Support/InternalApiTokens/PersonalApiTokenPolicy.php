@@ -11,6 +11,7 @@ class PersonalApiTokenPolicy
 {
   private const SYSTEM_ONLY = [
     CmsApiTokenCapabilities::CONSENT_CODE_WRITE,
+    CmsApiTokenCapabilities::PANEL_LANGUAGES_MANAGE,
     CmsApiTokenCapabilities::SYSTEM_UPDATES_READ,
     CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN,
     CmsApiTokenCapabilities::ADMIN_RENDER,
