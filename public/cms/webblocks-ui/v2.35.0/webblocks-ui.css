@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.34.1 (https://webblocksui.com/)
+ * WebBlocks UI v2.35.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -3232,6 +3232,15 @@ inset: 0;
 pointer-events: none;
 overflow: visible;
 }
+.wb-overlay-layer[data-wb-native-layer] > .wb-overlay-backdrop {
+position: fixed;
+}
+dialog.wb-modal::backdrop,
+dialog.wb-drawer::backdrop {
+background: var(--wb-overlay);
+backdrop-filter: blur(2px);
+-webkit-backdrop-filter: blur(2px);
+}
 .wb-overlay-layer > * {
 pointer-events: auto;
 }
@@ -3273,6 +3282,19 @@ padding: var(--wb-s4);
 .wb-modal.is-open {
 display: flex;
 }
+dialog.wb-modal {
+width: 100%;
+height: 100%;
+max-width: none;
+max-height: none;
+margin: 0;
+border: 0;
+background: transparent;
+color: var(--wb-text);
+overflow: visible;
+}
+dialog.wb-modal:not([open]) { display: none; }
+dialog.wb-modal[open] { display: flex; }
 .wb-modal-dialog {
 position: relative;
 z-index: 1;
@@ -3454,6 +3476,20 @@ margin: 0;
 .wb-dropdown-menu.is-open {
 display: block;
 }
+@supports selector(:popover-open) {
+.wb-dropdown-menu[popover] {
+position: fixed;
+inset: auto;
+margin: 0;
+color: var(--wb-text);
+overflow: visible;
+animation: none;
+}
+.wb-dropdown-menu[popover]:not(:popover-open) { display: none; }
+  .wb-dropdown-menu[popover]:popover-open { display: block; }
+  :where(.wb-dropdown-menu[popover]) { pointer-events: auto; }
+  .wb-dropdown-menu[popover]::backdrop { background: transparent; pointer-events: none; }
+}
 @keyframes wb-dropdown-in {
 from { opacity: 0; transform: translateY(-4px); }
 to   { opacity: 1; transform: translateY(0);    }
@@ -3516,6 +3552,9 @@ min-width: 320px;
 max-width: 92vw;
 max-height: min(70vh, 420px);
 overflow-y: auto;
+}
+@supports selector(:popover-open) {
+.wb-dropdown-menu[popover].wb-dropdown-menu--panel { overflow-y: auto; }
 }
 .wb-tabs {
 display: flex;
@@ -4191,6 +4230,12 @@ color: var(--wb-text);
 .wb-nav-group-toggle.is-active {
 color: var(--wb-primary);
 }
+details.wb-nav-group > summary.wb-nav-group-toggle {
+list-style: none;
+}
+details.wb-nav-group > summary.wb-nav-group-toggle::-webkit-details-marker {
+display: none;
+}
 .wb-nav-group-icon {
 font-size: 1.05rem;
 flex-shrink: 0;
@@ -4212,7 +4257,8 @@ background-repeat: no-repeat;
 background-position: center;
 background-size: contain;
 }
-.wb-nav-group.is-open > .wb-nav-group-toggle .wb-nav-group-arrow {
+.wb-nav-group.is-open:where(:not(details)) > .wb-nav-group-toggle .wb-nav-group-arrow,
+details.wb-nav-group[open] > .wb-nav-group-toggle .wb-nav-group-arrow {
 transform: rotate(180deg);
 }
 .wb-nav-group-items {
@@ -4223,7 +4269,8 @@ padding-left: calc(var(--wb-s3) + 1.2em + var(--wb-s3));
 padding-top: var(--wb-s1);
 padding-bottom: var(--wb-s1);
 }
-.wb-nav-group.is-open > .wb-nav-group-items {
+.wb-nav-group.is-open:where(:not(details)) > .wb-nav-group-items,
+details.wb-nav-group[open] > .wb-nav-group-items {
 display: flex;
 }
 .wb-nav-group-item {
@@ -5090,6 +5137,20 @@ margin: 0;
 .wb-popover-panel.is-open {
 display: block;
 }
+@supports selector(:popover-open) {
+.wb-popover-panel[popover] {
+position: fixed;
+inset: auto;
+margin: 0;
+color: var(--wb-text);
+overflow: visible;
+animation: none;
+}
+.wb-popover-panel[popover]:not(:popover-open) { display: none; }
+  .wb-popover-panel[popover]:popover-open { display: block; }
+  :where(.wb-popover-panel[popover]) { pointer-events: auto; }
+  .wb-popover-panel[popover]::backdrop { background: transparent; pointer-events: none; }
+}
 @keyframes wb-popover-in {
 from { opacity: 0; transform: translateY(-6px); }
 to   { opacity: 1; transform: translateY(0);    }
@@ -5293,6 +5354,42 @@ transform: translateY(0);
 .wb-drawer-sm { width: min(320px, 90vw); }
 .wb-drawer-lg { width: min(560px, 90vw); }
 .wb-drawer-xl { width: min(720px, 90vw); }
+dialog.wb-drawer {
+margin: 0;
+padding: 0;
+max-width: none;
+max-height: none;
+left: auto;
+border: 0;
+border-left: 1px solid var(--wb-border);
+color: var(--wb-text);
+}
+dialog.wb-drawer:not(.wb-drawer-top):not(.wb-drawer-bottom) {
+height: 100vh;
+height: 100dvh;
+}
+dialog.wb-drawer-left {
+left: 0;
+right: auto;
+border-left: 0;
+border-right: 1px solid var(--wb-border);
+}
+dialog.wb-drawer-top,
+dialog.wb-drawer-bottom {
+left: 0;
+right: 0;
+border-left: 0;
+}
+dialog.wb-drawer-top { border-bottom: 1px solid var(--wb-border); }
+dialog.wb-drawer-bottom { border-top: 1px solid var(--wb-border); }
+dialog.wb-drawer:not([open]) { display: none; }
+dialog.wb-drawer[open] {
+display: flex;
+visibility: visible;
+transform: none;
+transition: none;
+overflow: visible;
+}
 .wb-drawer-header {
 display: flex;
 align-items: center;
@@ -5367,6 +5464,26 @@ padding-inline: var(--wb-s4);
 }
 .wb-cmd-backdrop.is-open {
 display: flex;
+}
+dialog.wb-cmd-backdrop {
+width: 100%;
+height: 100%;
+max-width: none;
+max-height: none;
+margin: 0;
+padding-bottom: 0;
+border: 0;
+background: transparent;
+color: var(--wb-text);
+overflow: visible;
+}
+dialog.wb-cmd-backdrop:not([open]) { display: none; }
+dialog.wb-cmd-backdrop[open] { display: flex; }
+dialog.wb-cmd-backdrop::backdrop {
+background: var(--wb-overlay-dark);
+backdrop-filter: blur(4px);
+-webkit-backdrop-filter: blur(4px);
+animation: wb-overlay-backdrop-in 0.18s ease;
 }
 .wb-cmd-dialog {
 width: 100%;

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.130.0
+
+- Bundle WebBlocks UI 2.35.0, including opt-in native modal, drawer, command palette, dropdown, popover and navigation groups.
+
 ## 1.129.2
 
 - Bundle WebBlocks UI 2.34.1 to remove duplicate bottom borders in tables with row headers, including the Notes read modal. Keep full-width dividers between table sections.

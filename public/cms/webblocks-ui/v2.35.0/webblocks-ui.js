@@ -1,5 +1,5 @@
 /*!
- * WebBlocks UI v2.34.1 (https://webblocksui.com/)
+ * WebBlocks UI v2.35.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -96,6 +96,11 @@
   }
 
   function focusContainer(container) {
+    // Native dialogs are programmatically focusable without an authored tabindex.
+    if (container.tagName === 'DIALOG') {
+      container.focus({ preventScroll: true });
+      return;
+    }
     if (!container.hasAttribute('tabindex')) {
       container.setAttribute('tabindex', '-1');
       container.addEventListener('blur', function () {
@@ -239,10 +244,36 @@
     return root;
   }
 
-  function ensureLayer(name) {
-    if (layers[name] && ensureRoot().contains(layers[name])) return layers[name];
+  function getNativeHost(except) {
+    var top = getTopmost(function (instance) {
+      return instance !== except && ((instance.nativeDialog && instance.element.open) ||
+        (instance.nativePopover && instance.element.matches(':popover-open') && except &&
+          ((except.trigger && instance.element.contains(except.trigger)) || instance.element.contains(except.element))));
+    });
+    return top ? top.element : null;
+  }
 
-    var layer = ensureRoot().querySelector('.wb-overlay-layer--' + name);
+  function ensureLayer(name, nativeHost) {
+    // Native child surfaces share their host's browser top-layer subtree.
+    // For dialogs this also preserves native inertness outside the subtree.
+    if (arguments.length < 2) nativeHost = getNativeHost();
+    if (nativeHost) {
+      var nativeLayer = Array.from(nativeHost.children).find(function (child) {
+        return child.getAttribute('data-wb-native-layer') === name;
+      });
+      if (!nativeLayer) {
+        nativeLayer = document.createElement('div');
+        nativeLayer.className = 'wb-overlay-layer wb-overlay-layer--' + name;
+        nativeLayer.setAttribute('data-wb-native-layer', name);
+        nativeHost.appendChild(nativeLayer);
+      }
+      return nativeLayer;
+    }
+    if (layers[name] && layers[name].parentElement === ensureRoot()) return layers[name];
+
+    var layer = Array.from(ensureRoot().children).find(function (child) {
+      return child.classList.contains('wb-overlay-layer--' + name);
+    });
     if (!layer) {
       layer = document.createElement('div');
       layer.className = 'wb-overlay-layer wb-overlay-layer--' + name;
@@ -463,7 +494,8 @@
     var el;
 
     if (!instance || !instance.backdrop) return null;
-    if (instance.backdropElement && ensureLayer('dialog').contains(instance.backdropElement)) {
+    var layer = ensureLayer('dialog', instance.nativeHost);
+    if (instance.backdropElement && layer.contains(instance.backdropElement)) {
       return instance.backdropElement;
     }
 
@@ -472,7 +504,7 @@
     el.hidden = true;
     el.setAttribute('data-wb-overlay-backdrop', 'true');
     el.setAttribute('data-wb-overlay-owner', instance.id);
-    ensureLayer('dialog').appendChild(el);
+    layer.appendChild(el);
     instance.backdropElement = el;
     return el;
   }
@@ -593,6 +625,7 @@
 
   function portalToLayer(instance) {
     if (!instance.portal || !instance.element) return;
+    if (instance.nativePopover && instance.element.matches(':popover-open')) return;
 
     if (!instance.placeholder && instance.element.parentNode) {
       instance.originalParent = instance.element.parentNode;
@@ -601,7 +634,8 @@
       instance.originalParent.insertBefore(instance.placeholder, instance.element);
     }
 
-    ensureLayer(instance.layer).appendChild(instance.element);
+    instance.nativeHost = instance.nativeBorrowHost || instance.dialogNativeHost || getNativeHost(instance);
+    ensureLayer(instance.layer, instance.nativeHost).appendChild(instance.element);
     instance.element.setAttribute('data-wb-overlay-portaled', 'true');
     instance.element.setAttribute('data-wb-overlay-runtime', 'true');
     instance.element.setAttribute('data-wb-overlay-kind', instance.kind || 'overlay');
@@ -630,6 +664,14 @@
     instance.element.removeAttribute('data-wb-overlay-layer');
   }
 
+  function restorePopoverSource(instance) {
+    if (!instance.nativeBorrowHost) return;
+    restoreFromLayer(instance);
+    instance.nativeBorrowHost = null;
+    instance.nativeHost = null;
+    instance.portal = false;
+  }
+
   function syncTriggerAria(instance, expanded) {
     if (!instance.trigger) return;
 
@@ -647,15 +689,16 @@
 
     if (!instance.returnFocus) return;
 
-    if (canReceiveFocus(instance.previouslyFocused)) {
+    fallback = getTopmost(function (activeInstance) {
+      return activeInstance.active && activeInstance.trapFocus;
+    });
+
+    if (canReceiveFocus(instance.previouslyFocused) && (!(instance.nativeDialog || instance.nativePopover) || !fallback ||
+        fallback.element.contains(instance.previouslyFocused))) {
       instance.previouslyFocused.focus();
       instance.previouslyFocused = null;
       return;
     }
-
-    fallback = getTopmost(function (activeInstance) {
-      return activeInstance.active && activeInstance.trapFocus;
-    });
 
     if (fallback) {
       WBDom.focusFirst(fallback.panel || fallback.element);
@@ -711,6 +754,9 @@
   function closeByGroup(group, except) {
     activeStack.slice().forEach(function (instance) {
       if (!instance.active || instance === except) return;
+      // A nested anchored overlay must not close the native surface hosting it.
+      if ((instance.nativePopover || except.nativePopover) &&
+          instance.element && except.trigger && instance.element.contains(except.trigger)) return;
       if (instance.group === group) requestClose(instance, 'group-switch');
     });
   }
@@ -737,25 +783,84 @@
 
   function open(instance) {
     if (!instance || !instance.element) return;
+    if (instance.nativeDialog && instance.active && instance.element.open) return;
+    var popoverOpen = instance.nativePopover && instance.element.matches(':popover-open');
+    if (popoverOpen && instance.active) return;
+
+    if (instance.layer === 'dialog' && instance.trigger) {
+      instance.dialogNativeHost = null;
+      // Selecting a dropdown action may open a dialog. Close native dropdown
+      // ancestors first so their delayed item-close cannot tear down that dialog.
+      var menu = getTopmost(function (candidate) {
+        return candidate.nativePopover && candidate.kind === 'dropdown' && candidate.element.contains(instance.trigger);
+      });
+      while (menu) {
+        instance.dialogNativeHost = menu.trigger && menu.trigger.closest('dialog:modal, [popover]:popover-open');
+        close(menu, 'dialog-open');
+        menu = getTopmost(function (candidate) {
+          return candidate.nativePopover && candidate.kind === 'dropdown' && candidate.element.contains(instance.trigger);
+        });
+      }
+    }
 
     if (instance.group && instance.exclusive !== false) {
       closeByGroup(instance.group, instance);
     }
 
-    instance.previouslyFocused = document.activeElement;
+    instance.previouslyFocused = instance.nativePopover ? (instance.trigger || document.activeElement) : document.activeElement;
     instance.active = true;
+
+    if (instance.nativePopover) {
+      var host = getNativeHost(instance);
+      var parent = getParentOverlay(instance);
+      if (isDialogInstance(parent)) host = parent.nativeDialog ? parent.element : (parent.panel || parent.element);
+      // Out-of-tree targets must join their invoker's modal/focus scope. Most
+      // native panels already belong there and never leave their source DOM.
+      if (host && !host.contains(instance.element)) {
+        if (popoverOpen) { instance.element.hidePopover(); popoverOpen = false; }
+        instance.nativeBorrowHost = host;
+        instance.portal = true;
+      }
+    }
 
     portalToLayer(instance);
     trackVisibility(instance);
 
     instance.element.classList.add('is-open');
+    if (instance.nativeDialog) {
+      // Upgrade a declaratively open/non-modal dialog to the supported modal
+      // lifecycle. Never emulate showModal with the open attribute alone.
+      if (instance.element.open && !instance.element.matches(':modal')) instance.element.close();
+      if (!instance.element.open) instance.element.showModal();
+    }
+    if (instance.nativePopover && !popoverOpen) {
+      try {
+        instance.element.showPopover({ source: instance.trigger });
+      } catch (error) {
+        instance.active = false;
+        instance.element.classList.remove('is-open');
+        untrackVisibility(instance);
+        syncTriggerAria(instance, false);
+        restorePopoverSource(instance);
+        throw error;
+      }
+      // beforetoggle can cancel opening. Leave no stale runtime/ARIA state.
+      if (!instance.element.matches(':popover-open')) {
+        instance.active = false;
+        instance.element.classList.remove('is-open');
+        untrackVisibility(instance);
+        syncTriggerAria(instance, false);
+        restorePopoverSource(instance);
+        return;
+      }
+    }
     if (typeof instance.onToggle === 'function') instance.onToggle(true, instance);
     syncTriggerAria(instance, true);
     registerActive(instance);
     syncStackState();
     update(instance);
 
-    if (instance.autoFocus === true) {
+    if (instance.autoFocus === true && !instance.nativeDialog) {
       WBDom.focusFirst(instance.panel || instance.element);
     }
 
@@ -763,10 +868,26 @@
   }
 
   function close(instance, reason) {
-    if (!instance || !instance.element || !instance.active) return;
+    if (!instance || !instance.element) return;
+    if (!instance.active) {
+      // A direct native show may precede its queued toggle notification.
+      if (instance.nativePopover && instance.element.matches(':popover-open')) open(instance);
+      else return;
+    }
+
+    if (instance.nativeDialog || instance.nativePopover || instance.layer === 'dialog') {
+      // Close owned menus and nested overlays before removing their native
+      // modal subtree; otherwise they would retain body locks and active state.
+      activeStack.slice().reverse().forEach(function (child) {
+        if (child !== instance && instance.element.contains(child.element) &&
+            (instance.nativeDialog || instance.nativePopover || child.nativePopover)) close(child, 'parent-close');
+      });
+    }
 
     instance.active = false;
     instance.element.classList.remove('is-open');
+    if (instance.nativeDialog && instance.element.open) instance.element.close();
+    if (instance.nativePopover && instance.element.matches(':popover-open')) instance.element.hidePopover();
     if (typeof instance.onToggle === 'function') instance.onToggle(false, instance);
     syncTriggerAria(instance, false);
     unregisterActive(instance);
@@ -774,7 +895,8 @@
     if (instance.backdropElement) {
       instance.backdropElement.hidden = true;
     }
-    if (instance.restoreOnClose !== false) {
+    if (instance.nativeBorrowHost) restorePopoverSource(instance);
+    else if (instance.restoreOnClose !== false) {
       restoreFromLayer(instance);
     }
     syncStackState();
@@ -803,7 +925,12 @@
   function create(options) {
     options = options || {};
 
-    return {
+    var nativeDialog = !!(options.element && options.element.tagName === 'DIALOG' &&
+      (options.kind === 'modal' || options.kind === 'drawer' || options.kind === 'command-palette') &&
+      typeof options.element.showModal === 'function');
+    var nativePopover = !!(options.element && options.element.hasAttribute('popover') &&
+      (options.kind === 'dropdown' || options.kind === 'popover') && typeof options.element.showPopover === 'function');
+    var instance = {
       id: options.id || nextId(options.kind || 'overlay'),
       kind: options.kind || 'overlay',
       group: options.group || null,
@@ -811,14 +938,14 @@
       element: options.element || null,
       panel: options.panel || options.element || null,
       trigger: options.trigger || null,
-      portal: options.portal !== false,
+      portal: options.portal !== false && !nativePopover,
       exclusive: options.exclusive !== false,
       position: options.position || null,
       placement: options.placement || 'bottom-start',
       offset: options.offset,
       viewportPadding: options.viewportPadding,
       matchWidth: !!options.matchWidth,
-      backdrop: !!options.backdrop,
+      backdrop: !!options.backdrop && !nativeDialog,
       backdropClass: options.backdropClass || '',
       lockScroll: !!options.lockScroll,
       trapFocus: !!options.trapFocus,
@@ -844,6 +971,38 @@
       visibilityAncestors: [],
       restoreElementHidden: false
     };
+    instance.nativeDialog = nativeDialog;
+    instance.nativePopover = nativePopover;
+    instance.nativeHost = null;
+    if (nativePopover) {
+      // Native panels stay in their source DOM. The top layer handles clipping;
+      // toggle also reconciles direct native API and browser auto-dismiss changes.
+      instance.element.addEventListener('toggle', function () {
+        if (instance.element.matches(':popover-open')) {
+          if (!instance.active) open(instance);
+        } else if (instance.active) close(instance, 'native');
+      });
+    }
+    if (nativeDialog) {
+      instance.element.addEventListener('cancel', function (event) {
+        if (!instance.active || event.defaultPrevented) return;
+        // Let the browser finish an allowed requestClose (and preserve its
+        // returnValue); a rejected request must leave the dialog modal/open.
+        if (instance.escapeClose === false || !dispatchCloseRequest(instance, 'escape', event)) event.preventDefault();
+      });
+      instance.element.addEventListener('close', function () {
+        // close is queued; a dialog reopened before delivery must stay open.
+        if (instance.active && !instance.element.open) close(instance, 'native');
+      });
+      instance.element.addEventListener('submit', function (event) {
+        var form = event.target;
+        if (!instance.active || event.defaultPrevented || form.closest('dialog') !== instance.element) return;
+        var method = event.submitter && event.submitter.hasAttribute('formmethod') ? event.submitter.formMethod : form.method;
+        if (method !== 'dialog') return;
+        if (!dispatchCloseRequest(instance, 'dismiss-control', event)) event.preventDefault();
+      });
+    }
+    return instance;
   }
 
   document.addEventListener('click', function (e) {
@@ -861,6 +1020,15 @@
     });
 
     if (!top) return;
+    if (top.nativeDialog && e.target === top.element) {
+      var bounds = top.element.getBoundingClientRect();
+      if (top.kind === 'modal' || top.kind === 'command-palette' ||
+          e.clientX < bounds.left || e.clientX > bounds.right ||
+          e.clientY < bounds.top || e.clientY > bounds.bottom) {
+        requestClose(top, 'outside', { originalEvent: e });
+      }
+      return;
+    }
     if (top.element && top.element.contains(e.target)) return;
     if (top.trigger && top.trigger.contains(e.target)) return;
     requestClose(top, 'outside', { originalEvent: e });
@@ -882,7 +1050,7 @@
       var trap = getTopmost(function (instance) {
         return instance.active && instance.trapFocus;
       });
-      if (trap) WBDom.trapFocus(e, trap.panel || trap.element);
+      if (trap) WBDom.trapFocus(e, trap.nativeDialog ? trap.element : (trap.panel || trap.element));
     }
   });
 
@@ -1336,6 +1504,9 @@
 /* ============================================================
    WebBlocks UI — Dropdown (dropdown.js)
 
+   Native opt-in: add popover="manual" to the existing wb-dropdown-menu.
+   The shared manager owns native show/hide, placement and policy.
+
    Usage:
      <div class="wb-dropdown">
        <button data-wb-toggle="dropdown" data-wb-target="#myMenu">
@@ -1463,7 +1634,7 @@
     var menu = getMenu(trigger);
     if (!menu) return;
     var instance = ensureInstance(menu, trigger);
-    if (instance.active) {
+    if (instance.active || (instance.nativePopover && menu.matches(':popover-open'))) {
       close(menu);
     } else {
       open(trigger, menu);
@@ -1475,6 +1646,10 @@
   document.addEventListener('click', function (e) {
     var trigger = e.target.closest('[data-wb-toggle="dropdown"]');
     if (trigger) {
+      // popovertarget may coexist for native invoker semantics; do not run its
+      // default action after the shared runtime has already toggled the panel.
+      var menu = getMenu(trigger);
+      if (menu && menu.hasAttribute('popover') && typeof menu.showPopover === 'function') e.preventDefault();
       toggle(trigger);
       return;
     }
@@ -1523,6 +1698,9 @@
 })();
 /* ============================================================
    WebBlocks UI — Modal (modal.js)
+
+   Native opt-in: use dialog.wb-modal with the same inner anatomy.
+   The shared overlay manager owns showModal/close and the browser top layer.
 
    Usage:
      <!-- Trigger -->
@@ -1653,7 +1831,7 @@
 
     // Backdrop click — close if click is directly on .wb-modal (backdrop layer)
     var activeModal = getActiveModal();
-    if (activeModal && e.target === activeModal) {
+    if (activeModal && activeModal.tagName !== 'DIALOG' && e.target === activeModal) {
       requestUserClose(activeModal, 'outside', e);
     }
   });
@@ -4211,28 +4389,33 @@
    Options (data attributes on .wb-nav-group):
      data-wb-nav-group-open  — open by default
      data-wb-nav-group-accordion — close siblings when opening
+
+   Native groups use details.wb-nav-group with a first-child
+   summary.wb-nav-group-toggle. The open attribute owns state.
    ============================================================ */
 
 (function () {
   'use strict';
 
-  // ── Toggle a single group ─────────────────────────────────
+  function isOpen(group) {
+    return group.tagName === 'DETAILS' ? group.open : group.classList.contains('is-open');
+  }
+
+  function closeSiblings(group, openOnly) {
+    if (group.dataset.wbNavGroupAccordion === undefined && !group.closest('[data-wb-accordion]')) return;
+    var parent = group.parentElement;
+    if (!parent) return;
+
+    parent.querySelectorAll(':scope > [data-wb-nav-group]').forEach(function (sibling) {
+      if (sibling !== group && (!openOnly || isOpen(sibling))) closeGroup(sibling);
+    });
+  }
 
   function toggle(group) {
-    var isOpen = group.classList.contains('is-open');
+    var wasOpen = isOpen(group);
+    if (group.tagName !== 'DETAILS') closeSiblings(group, false);
 
-    // Accordion: close siblings in the same parent
-    if (group.dataset.wbNavGroupAccordion !== undefined || group.closest('[data-wb-accordion]')) {
-      var parent = group.parentElement;
-      if (parent) {
-        var siblings = Array.from(parent.querySelectorAll(':scope > [data-wb-nav-group]'));
-        siblings.forEach(function (sibling) {
-          if (sibling !== group) closeGroup(sibling);
-        });
-      }
-    }
-
-    if (isOpen) {
+    if (wasOpen) {
       closeGroup(group);
     } else {
       openGroup(group);
@@ -4248,12 +4431,24 @@
   }
 
   function openGroup(group) {
+    if (group.tagName === 'DETAILS') {
+      if (group.open) return;
+      group.open = true;
+      closeSiblings(group, true);
+      return;
+    }
+
     group.classList.add('is-open');
     normalizeToggle(group, true);
     WBDom.emit(group, 'wb:navgroup:open');
   }
 
   function closeGroup(group) {
+    if (group.tagName === 'DETAILS') {
+      group.open = false;
+      return;
+    }
+
     group.classList.remove('is-open');
     normalizeToggle(group, false);
     WBDom.emit(group, 'wb:navgroup:close');
@@ -4277,7 +4472,7 @@
       }
 
       // Keep the accessibility state in sync for initially closed groups too.
-      normalizeToggle(group, false);
+      if (group.tagName !== 'DETAILS') normalizeToggle(group, false);
     });
   }
 
@@ -4289,10 +4484,21 @@
 
     var group = toggleBtn.closest('[data-wb-nav-group]');
     if (!group) return;
+    if (group.tagName === 'DETAILS' && toggleBtn.tagName === 'SUMMARY') return;
 
     e.preventDefault();
     toggle(group);
   });
+
+  // Native toggle does not bubble. Capture also covers groups added later.
+  document.addEventListener('toggle', function (event) {
+    var group = event.target;
+    if (!group.matches('details[data-wb-nav-group]')) return;
+    if (event.oldState && event.oldState === event.newState) return;
+
+    if (group.open) closeSiblings(group, true);
+    WBDom.emit(group, group.open ? 'wb:navgroup:open' : 'wb:navgroup:close');
+  }, true);
 
   // ── Init on DOM ready ─────────────────────────────────────
 
@@ -4314,6 +4520,9 @@
 })();
 /* ============================================================
    WebBlocks UI — Drawer (drawer.js)
+
+   Native opt-in: use dialog.wb-drawer with the same inner anatomy.
+   The shared overlay manager owns showModal/close and the browser top layer.
 
    Usage:
      <!-- Trigger -->
@@ -4477,6 +4686,9 @@
    Default keyboard shortcut: Cmd/Ctrl + K
    Note: custom shortcut override is not wired in the shipped implementation.
 
+   Native opt-in: use dialog.wb-cmd-backdrop with the same inner markup.
+   Open it through the existing trigger or API.
+
    Items can be static HTML .wb-cmd-item elements, or provided via a
    custom search function assigned to WBCommandPalette.onSearch(query, callback).
    ============================================================ */
@@ -4570,6 +4782,7 @@
 
     // Focus the input
     requestAnimationFrame(function () {
+      if (instance.nativeDialog && (!instance.active || !palette.open)) return;
       var input = palette.querySelector('.wb-cmd-input');
       if (input) {
         input.value = '';
@@ -4667,17 +4880,32 @@
     // Backdrop click to close
     var backdrop = e.target.closest('.wb-cmd-backdrop');
     if (backdrop && e.target === backdrop) {
-      requestUserClose(backdrop, 'outside', e);
+      var instance = instances.get(backdrop);
+      // The shared manager handles native backdrops, including close guards.
+      if (instance && !instance.nativeDialog) requestUserClose(backdrop, 'outside', e);
       return;
     }
 
     // Item click — close after selection
     var item = e.target.closest('.wb-cmd-item');
-    if (item && getActivePalette()) {
+    var itemPalette = item && item.closest('.wb-cmd-backdrop');
+    if (itemPalette && itemPalette === getActivePalette()) {
       // Allow item click to propagate first, then close
-      setTimeout(function () { close(getActivePalette()); }, 80);
+      setTimeout(function () {
+        if (itemPalette !== getActivePalette()) return;
+        // A newly opened child dialog still needs its native parent.
+        if (instances.get(itemPalette).nativeDialog && !isTopInteractive(itemPalette)) return;
+        close(itemPalette);
+      }, 80);
     }
   });
+
+  function isTopInteractive(palette) {
+    var top = WBDom.overlay.getTopmost(function (instance) {
+      return instance.interactive !== false;
+    });
+    return top && top.element === palette;
+  }
 
   document.addEventListener('keydown', function (e) {
     // Global shortcut: Cmd/Ctrl + K (or custom)
@@ -4696,7 +4924,7 @@
     }
 
     var activePalette = getActivePalette();
-    if (!activePalette) return;
+    if (!activePalette || !isTopInteractive(activePalette)) return;
 
     switch (e.key) {
       case 'ArrowDown':
@@ -4778,7 +5006,11 @@
 
   function getContainer(position) {
     position = position || 'top-right';
-    if (containers[position]) return containers[position];
+    var layer = WBDom.overlay.ensureLayer('toast');
+    if (containers[position]) {
+      if (containers[position].parentElement !== layer) layer.appendChild(containers[position]);
+      return containers[position];
+    }
 
     var el = document.createElement('div');
     el.className = 'wb-toast-container';
@@ -4787,7 +5019,7 @@
     if (position !== 'top-right') {
       el.classList.add('wb-toast-container-' + position);
     }
-    WBDom.overlay.ensureLayer('toast').appendChild(el);
+    layer.appendChild(el);
     containers[position] = el;
     return el;
   }
@@ -4974,6 +5206,9 @@
 })();
 /* ============================================================
    WebBlocks UI — Popover (popover.js)
+
+   Native opt-in: add popover="manual" to the existing wb-popover-panel.
+   The shared manager owns native show/hide, placement and policy.
 
    Usage (HTML):
      <div class="wb-popover" data-wb-popover>
@@ -5188,8 +5423,9 @@
       var wrapper = getWrapperFromTrigger(trigger);
       if (!wrapper) return;
       var panel = getPanel(wrapper, trigger);
+      if (panel && panel.hasAttribute('popover') && typeof panel.showPopover === 'function') e.preventDefault();
       var instance = panel && ensureInstance(wrapper, trigger, panel);
-      if (instance && instance.active) {
+      if (instance && (instance.active || (instance.nativePopover && panel.matches(':popover-open')))) {
         close(wrapper);
       } else {
         open(wrapper);
@@ -5269,7 +5505,7 @@
     layer: 'anchored',
     element: tooltip,
     panel: tooltip,
-    portal: false,
+    portal: true,
     position: 'anchored',
     placement: 'top-center',
     offset: 8,

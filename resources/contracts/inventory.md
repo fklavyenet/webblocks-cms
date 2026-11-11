@@ -2463,6 +2463,11 @@ inner border from both header and data cells in the final row. Dividers
 between table sections span the full row. The Notes modal and other CMS
 summary tables retain their semantic row headings.
 
+CMS 1.130.0 bundles WebBlocks UI 2.35.0. Consumers can opt in to browser-native
+dialog roots for modals, drawers and the command palette, the Popover API for
+dropdowns and popovers, and `details`/`summary` for navigation groups. The
+existing WebBlocks UI component APIs also support these forms of markup.
+
 ## Site cookie and privacy management
 
 The sidebar has a Cookies and Privacy group with General Settings, Services and Languages and Texts. It remains accessible to permitted operators when consent is disabled. Settings are site-scoped, independent of Visitor Reports, and stored in `wbcms_consent_settings`, `wbcms_consent_services`, `wbcms_consent_translations` and `wbcms_consent_cookies`. General fields are `enabled`, `lifetime_days` (1–730), `privacy_url` (safe site path or HTTPS URL) and `position` (bottom/top). Existing installations inherit their former effective consent-banner setting once; subsequent site settings are independent. The former System Settings privacy panel links to the site workspace instead of displaying an ineffective global toggle. New sites default to enabled, without prompting when there are no optional services in use.
