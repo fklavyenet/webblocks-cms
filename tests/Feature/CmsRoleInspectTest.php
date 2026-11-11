@@ -182,7 +182,7 @@ class CmsRoleInspectTest extends TestCase
     $this->assertSame(array_keys(PermissionCatalog::GROUPS), $groups->keys()->all());
     $this->assertSame(PermissionCatalog::GROUPS['pages'], $groups['pages']->keys()->map(fn ($key) => substr($key, strlen('cms.pages.')))->all());
     $xpath = $this->document($response->getContent());
-    $this->assertSame(0, $xpath->query('//details[@open]')->length);
+    $this->assertSame(0, $xpath->query('//details[@open][summary[starts-with(@id, "acl-inspect-group-")]]')->length);
     foreach (['q', 'user_id', 'site_id', 'status'] as $name) {
       $field = $xpath->query('//*[@name="'.$name.'"]')->item(0);
       $this->assertNotNull($field);
@@ -218,7 +218,7 @@ class CmsRoleInspectTest extends TestCase
     $group = $this->get($this->url(['q' => 'Comments and ratings']))->assertOk();
     $this->assertSame(['cms.engagement.read' => false, 'cms.engagement.moderate' => false, 'cms.engagement.delete' => false], $this->rows($group));
     $xpath = $this->document($allowed->getContent());
-    $this->assertSame(1, $xpath->query('//details[@open]')->length);
+    $this->assertSame(1, $xpath->query('//details[@open][summary[starts-with(@id, "acl-inspect-group-")]]')->length);
     $this->assertSame(1, $xpath->query('//select[@name="user_id"]/option[@selected][@value="'.$this->subject->id.'"]')->length);
     $this->assertSame(1, $xpath->query('//select[@name="site_id"]/option[@selected][@value="'.$this->site->id.'"]')->length);
     $this->assertSame(1, $xpath->query('//select[@name="status"]/option[@selected][@value="allowed"]')->length);

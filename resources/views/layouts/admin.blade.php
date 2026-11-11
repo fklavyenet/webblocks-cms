@@ -154,12 +154,12 @@
 
                     @foreach ($sidebarGroups as $group)
                         @php($groupIsActive = collect($group['items'])->contains(fn ($item) => $matchesActiveRoute($item)))
-                        <div class="wb-nav-group {{ $groupIsActive ? 'is-open' : '' }}" data-wb-nav-group @if ($groupIsActive) data-wb-nav-group-open @endif>
-                            <button type="button" class="wb-nav-group-toggle {{ $groupIsActive ? 'is-active' : '' }}" aria-expanded="{{ $groupIsActive ? 'true' : 'false' }}">
+                        <details class="wb-nav-group" data-wb-nav-group @if ($groupIsActive) open @endif>
+                            <summary class="wb-nav-group-toggle {{ $groupIsActive ? 'is-active' : '' }}">
                                 <i class="wb-icon {{ $group['icon'] }} wb-nav-group-icon" aria-hidden="true"></i>
                                 <span class="wb-nav-group-label">{{ $group['label'] }}</span>
                                 <span class="wb-nav-group-arrow" aria-hidden="true"></span>
-                            </button>
+                            </summary>
 
                             <div class="wb-nav-group-items">
                                 @foreach ($group['items'] as $item)
@@ -174,7 +174,7 @@
                                     </a>
                                 @endforeach
                             </div>
-                        </div>
+                        </details>
                     @endforeach
                     <a href="{{ app(DocumentationUrlResolver::class)->url($adminLocale) }}" class="wb-sidebar-link" target="_blank" rel="noopener noreferrer">
                         <i class="wb-icon wb-icon-help-circle wb-sidebar-icon" aria-hidden="true"></i>

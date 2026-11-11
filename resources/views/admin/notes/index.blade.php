@@ -1,6 +1,12 @@
 @php
     $text = fn (string $key, array $replace = []) => __('webblocks-cms::notes.'.$key, $replace);
     $indexUrl = route('admin.notes.index', $filters);
+    $closeFocus = match (true) {
+        $editing && ($permissions[$editing->id]['update'] ?? false) => 'notes-edit-trigger-'.$editing->id,
+        $reading && ($permissions[$reading->id]['view'] ?? false) => 'notes-read-trigger-'.$reading->id,
+        default => 'notes-add-trigger',
+    };
+    $closeUrl = $indexUrl.'#'.$closeFocus;
     $audiences = ['general' => $text('general'), 'private' => $text('private')];
     if ($administer) {
         $audiences['administration'] = $text('administration');
@@ -39,7 +45,7 @@
                 <strong>{{ $text($administration ? 'administration' : 'title') }}</strong>
                 <span class="wb-status-pill wb-status-info">{{ $notes->total() }}</span>
             </div>
-            <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#notes-add" aria-haspopup="dialog">
+            <button type="button" id="notes-add-trigger" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#notes-add" aria-haspopup="dialog">
                 <i class="wb-icon wb-icon-plus" aria-hidden="true"></i> {{ $text('add') }}
             </button>
         </div>
@@ -111,13 +117,13 @@
                                             @if ($permissions[$note->id]['view'])
                                                 <form method="POST" action="{{ route('admin.notes.open', $row) }}">
                                                     @csrf
-                                                    <button type="submit" class="wb-action-btn wb-action-btn-view" aria-haspopup="dialog" title="{{ $text('read_note') }}" aria-label="{{ $text('read_note') }} — {{ $label }}">
+                                                    <button type="submit" id="notes-read-trigger-{{ $note->id }}" class="wb-action-btn wb-action-btn-view" aria-haspopup="dialog" title="{{ $text('read_note') }}" aria-label="{{ $text('read_note') }} — {{ $label }}">
                                                         <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                     </button>
                                                 </form>
                                             @endif
                                             @if ($permissions[$note->id]['update'])
-                                                <a href="{{ route('admin.notes.edit', $row) }}" class="wb-action-btn" title="{{ $text('edit') }}" aria-label="{{ $text('edit') }} — {{ $label }}">
+                                                <a href="{{ route('admin.notes.edit', $row) }}" id="notes-edit-trigger-{{ $note->id }}" class="wb-action-btn" aria-haspopup="dialog" title="{{ $text('edit') }}" aria-label="{{ $text('edit') }} — {{ $label }}">
                                                     <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                                 </a>
                                             @endif
@@ -150,6 +156,7 @@
             @if ($permissions[$note->id]['delete'])
                 @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
                     'id' => 'note-delete-'.$note->id,
+                    'nativeDialog' => true,
                     'title' => $text('delete'),
                     'description' => $text('delete_prompt', ['title' => $note->title]),
                     'action' => route('admin.notes.destroy', ['note' => $note->id] + $filters),

@@ -1,5 +1,6 @@
 @php
     $description = $description ?? null;
+    $modalTag = ($nativeDialog ?? false) ? 'dialog' : 'div';
     $method = $method ?? 'DELETE';
     $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
@@ -50,7 +51,7 @@
         ->implode(' ');
 @endphp
 
-<div class="wb-modal wb-modal-lg" id="{{ $id }}" role="dialog" aria-modal="true" aria-labelledby="{{ $id }}-title" @if ($description) aria-describedby="{{ $id }}-description" @endif>
+<{{ $modalTag }} class="wb-modal wb-modal-lg" id="{{ $id }}" @if ($modalTag === 'div') role="dialog" aria-modal="true" @endif aria-labelledby="{{ $id }}-title" @if ($description) aria-describedby="{{ $id }}-description" @endif>
     <div class="wb-modal-dialog">
         <div class="wb-modal-header">
             <div>
@@ -83,4 +84,4 @@
             </div>
         </form>
     </div>
-</div>
+</{{ $modalTag }}>

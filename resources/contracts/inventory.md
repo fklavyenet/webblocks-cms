@@ -34,7 +34,10 @@ Legacy renderer compatibility does not make an unpublished handle available for 
 
 **Webadmin → Notes** lists installation-wide plain-text notes newest first with
 title search, recipient-scope and personal read-status filters. The heading
-shows the filtered total. Add, edit, and read use the same modal layout.
+shows the filtered total. From CMS 1.130.1, add, read, edit and delete
+confirmation use managed native dialogs. Closing the read or edit dialog
+returns focus to the corresponding list action, or Add Note when the row
+is outside the filtered results.
 The read modal displays the author, recipient, and creation date alongside
 the read-only title and body. Titles are required and limited to 180 characters. The
 required body supports up to 10,000 characters and renders as escaped text with
@@ -2467,6 +2470,11 @@ CMS 1.130.0 bundles WebBlocks UI 2.35.0. Consumers can opt in to browser-native
 dialog roots for modals, drawers and the command palette, the Popover API for
 dropdowns and popovers, and `details`/`summary` for navigation groups. The
 existing WebBlocks UI component APIs also support these forms of markup.
+
+From CMS 1.130.1, the Webadmin sidebar groups use native details and summary
+elements. The group containing the current page renders open on the server,
+and its active link retains aria-current. Each group can be toggled by keyboard
+without JavaScript.
 
 ## Site cookie and privacy management
 

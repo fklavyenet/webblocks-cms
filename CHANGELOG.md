@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.130.1
+
+- Use browser-native dialogs for Notes and return keyboard focus to the list action after closing a note.
+- Use native details and summary elements for Webadmin sidebar groups, with the current section initially open.
+
 ## 1.130.0
 
 - Bundle WebBlocks UI 2.35.0, including opt-in native modal, drawer, command palette, dropdown, popover and navigation groups.

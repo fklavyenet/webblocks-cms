@@ -66,8 +66,8 @@ class AdminSidebarGroupingTest extends TestCase
   private function sidebarGroups(DOMXPath $xpath): array
   {
     $groups = [];
-    foreach ($xpath->query('//aside[@id="admin-sidebar"]/nav/div[@data-wb-nav-group]') as $node) {
-      $label = trim($xpath->query('./button/span[@class="wb-nav-group-label"]', $node)->item(0)->textContent);
+    foreach ($xpath->query('//aside[@id="admin-sidebar"]/nav/details[@data-wb-nav-group]') as $node) {
+      $label = trim($xpath->query('./summary/span[@class="wb-nav-group-label"]', $node)->item(0)->textContent);
       $groups[$label] = $node;
     }
 
@@ -116,14 +116,17 @@ class AdminSidebarGroupingTest extends TestCase
     $user = $this->user();
     foreach (['admin.dynamic-content.index' => 'Content', 'admin.engagement.index' => 'Contact & analytics', 'admin.access.inspect' => 'Users & access', 'admin.system.api-tokens.index' => 'Users & access', 'admin.system.settings.edit' => 'System', 'admin.system.health.index' => 'Maintenance'] as $route => $expectedGroup) {
       $xpath = $this->sidebar($user, $route);
-      $openGroups = array_filter($this->sidebarGroups($xpath), fn ($group) => $group->hasAttribute('data-wb-nav-group-open'));
+      $openGroups = array_filter($this->sidebarGroups($xpath), fn ($group) => $group->hasAttribute('open'));
       $this->assertSame([$expectedGroup], array_keys($openGroups), $route);
-      $this->assertSame('true', $xpath->query('./button', $openGroups[$expectedGroup])->item(0)->getAttribute('aria-expanded'));
+      $group = $openGroups[$expectedGroup];
+      $this->assertSame(1, $xpath->query('./*[1][self::summary]', $group)->length);
+      $this->assertSame(0, $xpath->query('./summary[@aria-expanded or @role or @tabindex]', $group)->length);
+      $this->assertFalse($group->hasAttribute('data-wb-nav-group-open'));
       $this->assertSame(1, $xpath->query('.//a[@aria-current="page"]', $openGroups[$expectedGroup])->length);
     }
     foreach (['admin.pages.edit', 'admin.media.edit', 'admin.notes.edit', 'admin.site-assets.index'] as $route) {
       $xpath = $this->sidebar($user, $route);
-      $this->assertSame([], array_keys(array_filter($this->sidebarGroups($xpath), fn ($group) => $group->hasAttribute('data-wb-nav-group-open'))));
+      $this->assertSame([], array_keys(array_filter($this->sidebarGroups($xpath), fn ($group) => $group->hasAttribute('open'))));
       $this->assertSame(1, $xpath->query('//aside[@id="admin-sidebar"]/nav/div[1]//a[@aria-current="page"]')->length);
     }
 
@@ -131,7 +134,7 @@ class AdminSidebarGroupingTest extends TestCase
       $xpath = $this->sidebar($user, $route);
       $maintenance = $this->sidebarGroups($xpath)['Maintenance'];
       $activeItems = $xpath->query('.//a[@aria-current="page"]', $maintenance);
-      $this->assertTrue($maintenance->hasAttribute('data-wb-nav-group-open'));
+      $this->assertTrue($maintenance->hasAttribute('open'));
       $this->assertSame(1, $activeItems->length);
       $this->assertSame(route('admin.system.health.index'), $activeItems->item(0)->getAttribute('href'));
     }
@@ -185,8 +188,8 @@ class AdminSidebarGroupingTest extends TestCase
     $this->assertContains('/synthetic-chat/setup', $this->paths($xpath, $groups['Sistem']));
     $this->assertContains('/synthetic-chat/health', $this->paths($xpath, $groups['Bakım']));
     $this->assertSame(['/synthetic-chat/inbox'], $this->paths($xpath, $groups['Live Chat']));
-    $this->assertTrue($groups['Live Chat']->hasAttribute('data-wb-nav-group-open'));
-    $this->assertSame('wb-icon wb-icon-message-square wb-nav-group-icon', $xpath->query('./button/i', $groups['Live Chat'])->item(0)->getAttribute('class'));
+    $this->assertTrue($groups['Live Chat']->hasAttribute('open'));
+    $this->assertSame('wb-icon wb-icon-message-square wb-nav-group-icon', $xpath->query('./summary/i', $groups['Live Chat'])->item(0)->getAttribute('class'));
     $this->assertSame('wb-icon wb-icon-inbox', $xpath->query('.//a/i', $groups['Live Chat'])->item(0)->getAttribute('class'));
     $this->assertSame('wb-icon wb-icon-palette', $xpath->query('.//a[contains(@href,"/synthetic-chat/setup")]/i', $groups['Sistem'])->item(0)->getAttribute('class'));
     $this->assertSame('wb-icon wb-icon-file', $xpath->query('.//a[contains(@href,"/synthetic-chat/health")]/i', $groups['Bakım'])->item(0)->getAttribute('class'));
@@ -202,7 +205,7 @@ class AdminSidebarGroupingTest extends TestCase
     $groups = $this->sidebarGroups($xpath);
     $this->assertSame(['/synthetic-chat/inbox'], $this->paths($xpath, $groups['Live Chat']));
     $this->assertSame(['/synthetic-chat/setup'], $this->paths($xpath, $groups['System']));
-    $this->assertTrue($groups['Live Chat']->hasAttribute('data-wb-nav-group-open'));
+    $this->assertTrue($groups['Live Chat']->hasAttribute('open'));
   }
 
   #[Test]
@@ -215,12 +218,12 @@ class AdminSidebarGroupingTest extends TestCase
     Route::get('/synthetic-example/items', fn () => 'Fixture')->name('plugins.example.items.index');
     Route::getRoutes()->refreshNameLookups();
     $xpath = $this->sidebar($this->user(), 'plugins.example.items.index');
-    $groups = $xpath->query('//aside[@id="admin-sidebar"]/nav/div[@data-wb-nav-group][button/span[@class="wb-nav-group-label"]="Content"]');
+    $groups = $xpath->query('//aside[@id="admin-sidebar"]/nav/details[@data-wb-nav-group][summary/span[@class="wb-nav-group-label"]="Content"]');
     $this->assertSame(2, $groups->length);
     $this->assertNotContains('/synthetic-example/items', $this->paths($xpath, $groups->item(0)));
-    $this->assertFalse($groups->item(0)->hasAttribute('data-wb-nav-group-open'));
+    $this->assertFalse($groups->item(0)->hasAttribute('open'));
     $this->assertSame(['/synthetic-example/items'], $this->paths($xpath, $groups->item(1)));
-    $this->assertTrue($groups->item(1)->hasAttribute('data-wb-nav-group-open'));
+    $this->assertTrue($groups->item(1)->hasAttribute('open'));
   }
 }
 

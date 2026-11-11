@@ -17,7 +17,7 @@
     $selected = $input('audience_target', $target);
 @endphp
 
-<div class="wb-modal wb-modal-lg" id="{{ $id }}" role="dialog" aria-modal="true" aria-labelledby="{{ $id }}-heading" @if ($open) data-wb-admin-autoload-overlay @endif @if ($record) data-wb-admin-close-url="{{ $indexUrl }}" @endif hidden>
+<dialog class="wb-modal wb-modal-lg" id="{{ $id }}" aria-labelledby="{{ $id }}-heading" @if ($open) data-wb-admin-autoload-overlay @endif @if ($record) data-wb-admin-close-url="{{ $closeUrl }}" @endif>
     <div class="wb-modal-dialog">
         <div class="wb-modal-header">
             <h2 class="wb-modal-title" id="{{ $id }}-heading">{{ $title }}</h2>
@@ -87,13 +87,12 @@
             <div class="wb-modal-footer">
                 <x-webblocks-cms::admin.form-actions
                     :show-submit="!$readOnly"
-                    :cancel-url="$record ? $indexUrl : null"
                     :cancel-label="$readOnly ? __('webblocks-cms::admin.common.close') : null"
-                    :cancel-type="$record ? 'link' : 'button'"
+                    cancel-type="button"
                     :cancel-attributes="['data-wb-dismiss' => 'modal']" />
             </div>
         @unless ($readOnly)
             </form>
         @endunless
     </div>
-</div>
+</dialog>

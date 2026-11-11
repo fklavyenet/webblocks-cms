@@ -70,7 +70,7 @@ class NativeDisclosureTest extends TestCase
         $source = file_get_contents($file->getPathname());
         preg_match_all('/<details\b[^>]*>/s', $source, $details);
         foreach ($details[0] as $tag) {
-          $this->assertMatchesRegularExpression('/\bwb-(?:accordion-item|collapse-panel)\b/', $tag, $file->getPathname());
+          $this->assertMatchesRegularExpression('/["\s]wb-(?:accordion-item|collapse-panel|nav-group)["\s]/', $tag, $file->getPathname());
         }
         $this->assertDoesNotMatchRegularExpression('/<button\b[^>]*class="[^"]*wb-accordion-trigger/s', $source, $file->getPathname());
         $this->assertStringNotContainsString('wb-accordion-icon', $source, $file->getPathname());

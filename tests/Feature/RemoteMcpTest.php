@@ -1264,7 +1264,8 @@ class RemoteMcpTest extends TestCase
     $body = "<script>unsafe()</script>\n".str_repeat('🗒', 1800);
 
     $this->actingAs($author)->get($panel)->assertOk()
-      ->assertSee('data-wb-target="#notes-add"', false)->assertSee('Note Recipient')
+      ->assertSee('data-wb-target="#notes-add"', false)->assertSee('<dialog class="wb-modal wb-modal-lg" id="notes-add"', false)
+      ->assertSee('Note Recipient')
       ->assertDontSee('Disabled Recipient')->assertDontSee('Host Account');
     $this->post($panel, ['title' => 'Retain these words', 'body' => '', 'audience_target' => (string) $recipient->id])
       ->assertRedirect($panel)->assertSessionHasErrors('body', null, 'note');
@@ -1273,10 +1274,14 @@ class RemoteMcpTest extends TestCase
     $this->post($panel, ['title' => 'Private Northstar', 'body' => $body, 'audience_target' => (string) $recipient->id])
       ->assertRedirect($panel);
     $id = (int) DB::table('wbcms_notes')->value('id');
-    $this->get($panel.'/'.$id)->assertOk()->assertSee($body)->assertDontSee('<script>unsafe()</script>', false);
+    $this->get($panel.'/'.$id)->assertOk()->assertSee($body)->assertDontSee('<script>unsafe()</script>', false)
+      ->assertSee('data-wb-admin-close-url="'.$panel.'#notes-read-trigger-'.$id.'"', false)
+      ->assertSee('<dialog class="wb-modal wb-modal-lg" id="note-delete-'.$id.'"', false);
     $this->patch($panel.'/'.$id, ['title' => 'Preserved edit input', 'body' => $body, 'audience_target' => (string) $inactive->id])
       ->assertRedirect($panel.'/'.$id.'/edit')->assertSessionHasErrors('recipient_id', null, 'note');
-    $this->get($panel.'/'.$id.'/edit')->assertOk()->assertSee('Preserved edit input')->assertSee($body);
+    $this->get($panel.'/'.$id.'/edit')->assertOk()->assertSee('Preserved edit input')->assertSee($body)
+      ->assertSee('<dialog class="wb-modal wb-modal-lg" id="notes-edit"', false)
+      ->assertSee('data-wb-admin-close-url="'.$panel.'#notes-edit-trigger-'.$id.'"', false);
 
     $recipientAuth = $auth($recipient, $otherSite->id);
     $thirdAuth = $auth($third, $page->site_id);
@@ -1372,6 +1377,8 @@ class RemoteMcpTest extends TestCase
     $document = new DOMDocument;
     @$document->loadHTML($readModal->getContent());
     $modal = new DOMXPath($document);
+    $this->assertSame(1, $modal->query('//dialog[@id="notes-read" and @aria-labelledby="notes-read-heading" and @data-wb-admin-autoload-overlay and not(@role or @aria-modal or @open or @hidden or @tabindex)]')->length);
+    $this->assertSame($panel.'?audience=general&status=unread#notes-add-trigger', $modal->query('//dialog[@id="notes-read"]')->item(0)->getAttribute('data-wb-admin-close-url'));
     $this->assertSame(2, $modal->query('//*[@id="notes-read"]//*[@readonly]')->length);
     $this->assertSame(0, $modal->query('//*[@id="notes-read"]//form')->length);
     $this->assertSame('100% ready', $modal->query('//*[@id="notes-read-title"]')->item(0)->getAttribute('value'));
