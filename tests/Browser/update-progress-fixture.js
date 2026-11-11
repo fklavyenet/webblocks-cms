@@ -110,10 +110,29 @@
         await poll(progress(0, 'Backup', { steps: Array.from({ length: 12 }, function () { return { label: 'Backup', state: 'complete', elapsed_ms: 1 }; }) }));
         assert(seconds() >= beforePoll, 'Lower server samples never move elapsed time backwards');
         if (scenario !== 'legacy') { assert(modal.querySelector('.wb-modal-dialog').offsetHeight === height, 'Additional recorded phases do not grow the modal'); }
+        var beforeOutage = seconds();
+        await poll(null, 503);
+        assert(!bar.hidden && message.hidden, 'A short HTTP outage keeps the last progress visible without a warning');
+        assert(scenario === 'legacy' || stage.textContent === 'Backup', 'The last confirmed phase stays visible');
+        if (scenario === 'reconnect') {
+            var pending = await request('GET');
+            assert(new URL(pending.url).searchParams.get('operation') === operation, 'Network failure retry tracks the same operation');
+            pending.reject(new TypeError('Synthetic network failure'));
+            await wait(40);
+            assert(message.hidden, 'A second failed poll does not warn before the grace period');
+            for (var attempt = 0; attempt < 9; attempt += 1) { await poll(null, 503); }
+            assert(!message.hidden && message.textContent === opener.getAttribute('data-progress-reconnecting'), 'A continuous outage shows the reconnecting message');
+            assert(!bar.hidden && stage.textContent === 'Backup' && seconds() > beforeOutage, 'A continuous outage preserves the phase and elapsed timer');
+        }
+        await poll(progress(100, 'Apply'));
+        assert(!bar.hidden && message.hidden, 'Confirmed progress clears the outage warning and updates the phase');
+        if (scenario === 'reconnect') {
+            await poll(null, 503);
+            assert(message.hidden && stage.textContent === 'Apply', 'A new short outage starts a fresh grace period');
+            await poll(progress(150, 'Apply'));
+        }
         await poll(progress(0, 'Foreign', { operation_id: '00000000-0000-4000-8000-000000000099' }));
         assert(bar.hidden && message.textContent === opener.getAttribute('data-progress-unknown'), 'Foreign operation cannot claim activity or completion');
-        await poll(null, 503);
-        assert(bar.hidden && message.textContent === opener.getAttribute('data-progress-unreachable'), 'Unavailable status hides unconfirmed activity');
         await poll(progress(100, 'Apply'));
         assert(!bar.hidden, 'Confirmed progress restores the activity indicator');
         await poll(progress(100, 'Apply', { state: 'interrupted' }));

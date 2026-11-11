@@ -2421,6 +2421,12 @@ silently install OS tasks or enable destructive cleanup categories.
 
 ### Update progress copy and activity visibility (1.105.26)
 
+From CMS 1.130.4, a temporary status request failure keeps the last confirmed
+phase and elapsed timer visible. After 15 seconds of continuous status request
+failures, the modal displays a reconnecting message while it continues polling
+the same operation. A valid status response clears the warning. Operation
+admission, terminal result verification, authorization and recovery are unchanged.
+
 The CMS progress payload uses one label resolver for the current phase and
 recorded steps: product translation, shared Client translation, then a readable
 CMS fallback. All current engine phases have product labels in six panel

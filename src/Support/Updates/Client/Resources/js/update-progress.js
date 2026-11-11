@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var submitted = false;
     var timer = null;
     var pollTimer = null;
+    var reconnectTimer = null;
     var elapsedBase = 0;
     var sampleAt = clock();
     var localStart = false;
@@ -54,6 +55,17 @@ document.addEventListener('DOMContentLoaded', function () {
         sampleAt = clock();
         tick();
     }
+    function clearReconnectWarning() {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+    }
+    function scheduleReconnectWarning(startedAt) {
+        if (stopped || reconnectTimer !== null) { return; }
+        reconnectTimer = setTimeout(function () {
+            message.textContent = label('reconnecting') || label('unreachable');
+            message.hidden = false;
+        }, Math.max(0, 15000 - (clock() - startedAt)));
+    }
     function halt(text, retry) {
         stopped = true;
         elapsedBase = elapsedNow();
@@ -61,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
         timer = null;
         tick();
         clearTimeout(pollTimer);
+        clearReconnectWarning();
         if (text) { message.textContent = text; message.hidden = false; }
         recheck.hidden = !retry;
         returnLink.hidden = false;
@@ -116,6 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (stopped || !operation) { return; }
         var url = new URL(health, window.location.href);
         url.searchParams.set('operation', operation);
+        var startedAt = clock();
         var controller = window.AbortController ? new AbortController() : null;
         var timeout = controller ? setTimeout(function () { controller.abort(); }, 10000) : null;
         fetch(url.href, {
@@ -129,8 +143,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!response.ok || response.redirected) { throw new Error('Unavailable'); }
             return response.json();
         }).then(function (data) {
-            if (stopped || !data) { return; }
-            var progress = data.progress;
+            if (stopped) { return; }
+            clearReconnectWarning();
+            var progress = data && data.progress;
             if (!progress || progress.operation_id !== operation
                 || typeof progress.terminal !== 'boolean' || !Number.isFinite(progress.elapsed_ms)
                 || !Array.isArray(progress.steps)
@@ -141,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 loading.hidden = true;
             } else { render(progress); }
         }).catch(function () {
-            if (!stopped) { message.textContent = label('unreachable'); message.hidden = false; loading.hidden = true; }
+            scheduleReconnectWarning(startedAt);
         }).finally(function () { clearTimeout(timeout); retryPoll(); });
     }
     function monitor(id) {

@@ -347,6 +347,7 @@
             data-progress-interrupted="{{ __('publisher-client::updates.progress.interrupted') }}"
             data-progress-auth="{{ __('publisher-client::updates.progress.auth') }}"
             data-progress-unreachable="{{ __('publisher-client::updates.progress.unreachable') }}"
+            data-progress-reconnecting="{{ $adminText('updates.reconnecting') }}"
             data-progress-running="{{ __('publisher-client::updates.progress.running') }}"
             data-progress-complete="{{ __('publisher-client::updates.progress.complete') }}"
             data-progress-failed="{{ __('publisher-client::updates.progress.failed') }}"

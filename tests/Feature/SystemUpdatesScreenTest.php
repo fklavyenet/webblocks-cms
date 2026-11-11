@@ -149,6 +149,7 @@ class SystemUpdatesScreenTest extends TestCase
     $opener = $xpath->query('//*[@id="pc-update-progress-open"]')->item(0);
     $this->assertInstanceOf(DOMElement::class, $opener);
     $this->assertSame('server', $opener->getAttribute('data-pc-admission'));
+    $this->assertStringContainsString('checking again', $opener->getAttribute('data-progress-reconnecting'));
     $this->assertSame(route('admin.system.updates.indicator'), $opener->getAttribute('data-pc-health-url'));
     $this->assertSame('#pc-update-progress', $opener->getAttribute('data-wb-target'));
     $this->assertCount(1, $xpath->query('//*[@id="pc-update-progress" and @data-pc-update-modal]'));

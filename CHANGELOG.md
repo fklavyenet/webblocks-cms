@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.130.4
+
+- Keep the last confirmed update phase and elapsed time visible during short status interruptions. Show a reconnecting message after 15 seconds and keep checking the same update.
+
 ## 1.130.3
 
 - Align Blocks filters in a compact responsive grid and move Find page options help into a keyboard-accessible popover beside its label.
