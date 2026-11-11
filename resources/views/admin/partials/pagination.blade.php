@@ -29,7 +29,7 @@
 @if ($paginator->hasPages())
   <div class="wb-card-footer">
     <div class="wb-cluster wb-cluster-end wb-cluster-2" data-admin-pagination>
-      <nav class="wb-pagination{{ $compact ? ' wb-pagination-compact' : '' }}" aria-label="{{ $ariaLabel }}">
+      <nav class="wb-pagination wb-border-0{{ $compact ? ' wb-pagination-compact' : '' }}" aria-label="{{ $ariaLabel }}">
         <ol class="wb-pagination-list">
           <li class="wb-pagination-item{{ $paginator->onFirstPage() ? ' is-disabled' : '' }}">
             @if ($paginator->onFirstPage())

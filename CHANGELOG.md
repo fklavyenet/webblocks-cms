@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.130.2
+
+- Remove the outer frame from shared Webadmin pagination while keeping individual control borders and keyboard focus indicators. Use the shared list footer in Page and Shared Slot version histories.
+
 ## 1.130.1
 
 - Use browser-native dialogs for Notes and return keyboard focus to the list action after closing a note.

@@ -90,8 +90,8 @@
                         </tbody>
                     </table>
                 </div>
-                {{ $revisions->links() }}
             @endif
         </div>
+        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $revisions, 'compact' => true])
     </div>
 @endsection

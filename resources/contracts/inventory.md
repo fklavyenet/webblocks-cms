@@ -2476,6 +2476,11 @@ elements. The group containing the current page renders open on the server,
 and its active link retains aria-current. Each group can be toggled by keyboard
 without JavaScript.
 
+From CMS 1.130.2, the shared Webadmin list pagination removes the outer frame
+around the navigation with `wb-border-0`. Individual controls keep their
+borders and keyboard focus styles. Page and Shared Slot version histories use
+the same list footer.
+
 ## Site cookie and privacy management
 
 The sidebar has a Cookies and Privacy group with General Settings, Services and Languages and Texts. It remains accessible to permitted operators when consent is disabled. Settings are site-scoped, independent of Visitor Reports, and stored in `wbcms_consent_settings`, `wbcms_consent_services`, `wbcms_consent_translations` and `wbcms_consent_cookies`. General fields are `enabled`, `lifetime_days` (1–730), `privacy_url` (safe site path or HTTPS URL) and `position` (bottom/top). Existing installations inherit their former effective consent-banner setting once; subsequent site settings are independent. The former System Settings privacy panel links to the site workspace instead of displaying an ineffective global toggle. New sites default to enabled, without prompting when there are no optional services in use.

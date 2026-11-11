@@ -120,6 +120,7 @@ class AdminBoundedListingsTest extends TestCase
     $this->assertArrayHasKey($first, $nextOptions->viewData('filterPages'));
     $this->assertSame(2, $nextOptions->viewData('blocks')->currentPage());
     $this->assertSame(2, $nextOptions->viewData('pageOptionsPaginator')->currentPage());
+    $this->assertSame(2, substr_count($nextOptions->getContent(), 'class="wb-pagination wb-border-0 wb-pagination-compact"'));
     $this->get(route('admin.blocks.index', ['page_options_page' => 99, 'sort' => 'id', 'direction' => 'asc']))
       ->assertRedirect(route('admin.blocks.index', ['page_options_page' => 2, 'sort' => 'id', 'direction' => 'asc']));
     $tr = Locale::create(['code' => 'tr', 'name' => 'Turkish', 'is_enabled' => true]);

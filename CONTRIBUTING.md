@@ -73,6 +73,10 @@ messages in page content or next to the action. Do not use toast notifications o
 hide feedback automatically. Success and failure must remain visible and be
 announced with an appropriate status/alert live region.
 
+Admin lists use the shared `admin.partials.pagination` in the list card footer.
+Use `wb-border-0` on the `wb-pagination` navigation to remove its outer frame.
+Keep the individual controls and their visible keyboard focus styles.
+
 Admin modal forms that submit in the current tab show a busy submit button
 after validation. Longer requests also show an indeterminate progress bar and
 guidance to keep the tab open. Keep the dialog visible while awaiting the
