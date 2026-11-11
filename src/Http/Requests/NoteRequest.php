@@ -22,6 +22,10 @@ final class NoteRequest extends FormRequest
       return;
     }
 
+    if ($this->routeIs('admin.notes.bulk-read-state')) {
+      $this->errorBag = 'notesBulk';
+    }
+
     if ($this->routeIs('admin.notes.store', 'admin.notes.update')) {
       $target = $this->getInputSource()->all()['audience_target'] ?? null;
       if ($target === 'keep' && $this->routeIs('admin.notes.update')) {
@@ -41,7 +45,7 @@ final class NoteRequest extends FormRequest
   protected function getRedirectUrl(): string
   {
     return match (true) {
-      $this->routeIs('admin.notes.store') => route('admin.notes.index', $this->query()),
+      $this->routeIs('admin.notes.store', 'admin.notes.bulk-read-state') => route('admin.notes.index', $this->query()),
       $this->routeIs('admin.notes.update') => route('admin.notes.edit', ['note' => $this->route('note')] + $this->query()),
       $this->routeIs('admin.notes.read-state') => route('admin.notes.show', ['note' => $this->route('note')] + $this->query()),
       default => route('admin.notes.index'),
@@ -71,6 +75,10 @@ final class NoteRequest extends FormRequest
   {
     return match (true) {
       $this->routeIs('*.read-state') => self::readRules(),
+      $this->routeIs('admin.notes.bulk-read-state') => self::readRules() + [
+        'note_ids' => ['required', 'array', 'list', 'min:1', 'max:50'],
+        'note_ids.*' => ['required', 'integer', 'min:1', 'distinct'],
+      ],
       $this->isMethodSafe() => self::filterRules(),
       default => self::writeRules($this->isMethod('POST')) + ($this->routeIs('admin.notes.*')
         ? ['audience_target' => ['required', 'string']]

@@ -33,8 +33,10 @@ Legacy renderer compatibility does not make an unpublished handle available for 
 ## CMS Notes
 
 **Webadmin → Notes** lists installation-wide plain-text notes newest first with
-title search, recipient-scope and personal read-status filters. Add and edit
-use the same modal. Titles are required and limited to 180 characters. The
+title search, recipient-scope and personal read-status filters. The heading
+shows the filtered total. Add, edit, and read use the same modal layout.
+The read modal displays the author, recipient, and creation date alongside
+the read-only title and body. Titles are required and limited to 180 characters. The
 required body supports up to 10,000 characters and renders as escaped text with
 line breaks. Notes have no site, page or block association.
 
@@ -45,8 +47,10 @@ private note. A Super admin can list references to other private notes via
 `audience=administration` and open one for editing. These references omit the
 title, body, account names and read state, and ignore title and read-status
 filters. The author and a Super admin can edit. Only the author can delete.
-Opening a note leaves read state unchanged. A read-state mutation affects only
-the current account. The relational visibility flag survives recipient
+Using Read in the panel marks the note as read for the current account and
+opens the modal over the filtered list. Use the row checkboxes to mark
+selected notes on the current page as read or unread. API and MCP reads
+leave read state unchanged. The relational visibility flag survives recipient
 deletion. Clearing the recipient of a private note keeps it author-only.
 Sharing it with everyone requires an explicit general visibility choice.
 

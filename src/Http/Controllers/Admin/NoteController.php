@@ -29,10 +29,16 @@ final class NoteController
   public function show(NoteRequest $request, string $note): Response
   {
     $actor = $request->user();
-    $record = $this->notes->details($this->notes->find($actor, $note, 'view'), $actor);
-    $filters = $request->validated();
+    $record = $this->notes->details($this->notes->find($actor, $note, 'view'));
 
-    return response()->view('webblocks-cms::admin.notes.show', compact('record', 'filters'))->header('Cache-Control', 'private, no-store');
+    return $this->listing($request, reading: $record);
+  }
+
+  public function open(Request $request, string $note): RedirectResponse
+  {
+    $this->actions->readState($request->user(), $note, true);
+
+    return redirect()->route('admin.notes.show', ['note' => $note] + $request->query(), 303);
   }
 
   public function edit(NoteRequest $request, string $note): Response
@@ -66,11 +72,25 @@ final class NoteController
       ->with('note_status', $read ? 'marked_read' : 'marked_unread');
   }
 
-  private function listing(NoteRequest $request, ?Note $editing = null): Response
+  public function bulkReadState(NoteRequest $request): RedirectResponse
+  {
+    $read = (bool) $request->validated('read');
+    $this->actions->bulkReadState($request->user(), $request->validated('note_ids'), $read);
+
+    return redirect()->route('admin.notes.index', $request->query())
+      ->with('note_status', $read ? 'bulk_marked_read' : 'bulk_marked_unread');
+  }
+
+  private function listing(NoteRequest $request, ?Note $editing = null, ?Note $reading = null): Response
   {
     $actor = $request->user();
     $filters = $request->validated();
-    $notes = $this->notes->listing($actor, $filters)->appends($filters);
+    $notes = $this->notes->listing($actor, $filters);
+    if ($notes->currentPage() > $notes->lastPage()) {
+      $filters['page'] = $notes->lastPage();
+      $notes = $this->notes->listing($actor, $filters);
+    }
+    $notes->appends($filters);
     $administer = $this->policy->administer($actor);
     $administration = ($filters['audience'] ?? null) === 'administration';
     $recipients = $this->notes->recipients();
@@ -81,7 +101,7 @@ final class NoteController
     ]);
 
     return response()->view('webblocks-cms::admin.notes.index', compact(
-      'notes', 'filters', 'administer', 'administration', 'recipients', 'editing', 'permissions',
+      'notes', 'filters', 'administer', 'administration', 'recipients', 'editing', 'reading', 'permissions',
     ))->header('Cache-Control', 'private, no-store');
   }
 

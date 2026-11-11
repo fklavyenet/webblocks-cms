@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.129.1
+
+- Open Notes in a read-only modal over the list and mark them as read for the current user. Show the author, recipient, and creation date in the modal.
+- Add bulk read and unread actions and a filtered count beside the Notes heading. Match the title cell styling to the rest of the row.
+
 ## 1.129.0
 
 - Add Notes to Webadmin for installation-wide or private plain-text notes with personal read status.

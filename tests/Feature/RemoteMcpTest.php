@@ -1311,8 +1311,10 @@ class RemoteMcpTest extends TestCase
       ->assertJsonPath('result.structuredContent.code', 'invalid_note_arguments');
 
     $this->actingAs($admin)->get($panel.'?audience=administration')->assertOk()
-      ->assertSee('Private note #'.$id)->assertDontSee('Private Northstar')->assertDontSee('unsafe()');
+      ->assertSee('Private note #'.$id)->assertDontSee('Private Northstar')->assertDontSee('unsafe()')
+      ->assertDontSee('data-wb-admin-row-select', false);
     $this->get($panel.$note)->assertNotFound();
+    $this->post($panel.$note)->assertNotFound();
     $this->get($panel.$note.'/edit?audience=administration')->assertOk()->assertSee($body);
     $this->actingAs($third)->get($panel.$note.'/edit')->assertNotFound();
 
@@ -1361,7 +1363,18 @@ class RemoteMcpTest extends TestCase
     $this->actingAs($other)->get($panel.'?per_page=1&page=2')->assertOk()->assertSee('1000 ready')->assertDontSee('New general');
     $this->get($panel.'/'.$match)->assertOk();
     $this->assertDatabaseCount('wbcms_note_reads', 0);
-    $this->patch($panel.'/'.$match.'/read-state', ['read' => '1'])->assertRedirect($panel.'/'.$match);
+    $this->post($panel.'/'.$match.'?audience=general&status=unread')->assertStatus(303)
+      ->assertRedirect($panel.'/'.$match.'?audience=general&status=unread');
+    $readModal = $this->get($panel.'/'.$match.'?audience=general&status=unread')->assertOk()
+      ->assertSee('data-admin-page-count>2</span>', false)
+      ->assertSee('<td class="wb-cms-note-title">', false)
+      ->assertSee('id="notes-read"', false);
+    $document = new DOMDocument;
+    @$document->loadHTML($readModal->getContent());
+    $modal = new DOMXPath($document);
+    $this->assertSame(2, $modal->query('//*[@id="notes-read"]//*[@readonly]')->length);
+    $this->assertSame(0, $modal->query('//*[@id="notes-read"]//form')->length);
+    $this->assertSame('100% ready', $modal->query('//*[@id="notes-read-title"]')->item(0)->getAttribute('value'));
     $this->getJson($api.'?status=read&audience=general', $otherAuth)->assertJsonPath('pagination.total', 1);
     $this->getJson($api.'?status=unread', $otherAuth)->assertJsonPath('pagination.total', 2);
     $this->getJson($api.'/'.$match, $ownerAuth)->assertJsonPath('note.read', false);
@@ -1385,6 +1398,36 @@ class RemoteMcpTest extends TestCase
     $this->tool('update_note', ['note_id' => $self, 'visibility' => 'general'], $write)
       ->assertJsonPath('result.structuredContent.note.visibility', 'general');
     $this->getJson($api.'/'.$self, $ownerAuth)->assertOk();
+  }
+
+  public function test_notes_bulk_read_state_is_personal_and_rejects_hidden_notes_atomically(): void
+  {
+    [$page] = $this->pageFixture();
+    $author = $this->notesUser('Notes author', $page->site_id);
+    $reader = $this->notesUser('Notes reader', $page->site_id);
+    $panel = self::ORIGIN.'/webadmin/notes';
+    $bulk = $panel.'/bulk-read-state?audience=general';
+    $this->actingAs($author);
+    foreach (['General one', 'General two', 'Private note'] as $title) {
+      $this->post($panel, ['title' => $title, 'body' => 'Text', 'audience_target' => $title === 'Private note' ? 'author' : 'everyone'])
+        ->assertRedirect($panel);
+    }
+    [$first, $second, $hidden] = DB::table('wbcms_notes')->orderBy('id')->pluck('id')->all();
+    $this->post($panel.'/'.$first)->assertStatus(303);
+
+    $this->actingAs($reader)->get($panel.'?audience=general')->assertOk()
+      ->assertSee('data-wb-admin-select-all-visible', false)->assertSee('Mark selected as read')->assertDontSee('Private note</strong>', false);
+    $this->patch($bulk, ['read' => '1', 'note_ids' => [$first, $hidden]])->assertNotFound();
+    $this->assertDatabaseMissing('wbcms_note_reads', ['note_id' => $first, 'user_id' => $reader->id]);
+    $this->patch($bulk, ['read' => '1', 'note_ids' => []])->assertRedirect($panel.'?audience=general')
+      ->assertSessionHasErrors('note_ids', null, 'notesBulk');
+    $this->patch($bulk, ['read' => '1', 'note_ids' => [$first, $second]])->assertRedirect($panel.'?audience=general');
+    $this->get($panel.'?audience=general')->assertOk()->assertSee('Selected notes marked as read.');
+    $this->assertDatabaseCount('wbcms_note_reads', 3);
+
+    $this->patch($bulk, ['read' => '0', 'note_ids' => [$first, $second]])->assertRedirect($panel.'?audience=general');
+    $this->assertDatabaseCount('wbcms_note_reads', 1);
+    $this->assertDatabaseHas('wbcms_note_reads', ['note_id' => $first, 'user_id' => $author->id]);
   }
 
   public function test_notes_migrations_create_relational_tables_and_do_not_extend_existing_grants(): void

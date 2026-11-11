@@ -56,11 +56,35 @@ final class ManageNote
   {
     DB::transaction(function () use ($actor, $id, $read): void {
       $note = $this->notes->find($actor, $id, 'view', lock: true);
-      if ($read) {
-        DB::table('wbcms_note_reads')->upsert(['note_id' => $note->id, 'user_id' => $actor->id], ['note_id', 'user_id'], ['note_id']);
-      } else {
-        DB::table('wbcms_note_reads')->where('note_id', $note->id)->where('user_id', $actor->id)->delete();
-      }
+      $this->writeReadState($actor, [$note->id], $read);
     }, 3);
+  }
+
+  public function bulkReadState(User $actor, array $ids, bool $read): void
+  {
+    abort_unless($this->policy->access($actor), 403);
+
+    DB::transaction(function () use ($actor, $ids, $read): void {
+      $notes = Note::query()->whereKey($ids)->orderBy('id')->lockForUpdate()
+        ->get(['id', 'author_id', 'recipient_id', 'is_private']);
+      abort_unless($notes->count() === count($ids)
+        && $notes->every(fn (Note $note) => $this->policy->view($actor, $note)), 404);
+
+      $this->writeReadState($actor, $notes->modelKeys(), $read);
+    }, 3);
+  }
+
+  private function writeReadState(User $actor, array $ids, bool $read): void
+  {
+    $states = DB::table('wbcms_note_reads');
+    if ($read) {
+      $states->upsert(
+        array_map(fn ($id) => ['note_id' => $id, 'user_id' => $actor->id], $ids),
+        ['note_id', 'user_id'],
+        ['note_id'],
+      );
+    } else {
+      $states->whereIn('note_id', $ids)->where('user_id', $actor->id)->delete();
+    }
   }
 }

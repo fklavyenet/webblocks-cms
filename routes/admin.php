@@ -291,6 +291,8 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
     Route::prefix('notes')->name('notes.')->group(function () {
       Route::get('/', [NoteController::class, 'index'])->name('index');
       Route::post('/', [NoteController::class, 'store'])->name('store');
+      Route::patch('/bulk-read-state', [NoteController::class, 'bulkReadState'])->name('bulk-read-state');
+      Route::post('/{note}', [NoteController::class, 'open'])->whereNumber('note')->name('open');
       Route::get('/{note}', [NoteController::class, 'show'])->whereNumber('note')->name('show');
       Route::get('/{note}/edit', [NoteController::class, 'edit'])->whereNumber('note')->name('edit');
       Route::patch('/{note}', [NoteController::class, 'update'])->whereNumber('note')->name('update');
