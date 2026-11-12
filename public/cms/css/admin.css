@@ -1667,5 +1667,17 @@ input.wb-admin-table-grid-input:focus {
     overflow-wrap: anywhere;
 }
 
-.wb-theme-checksum { overflow-wrap: anywhere; }
-.wb-theme-viewport iframe { max-width: 100%; }
+/* Fit both previews only when their selected viewport widths are available. */
+.wb-theme-comparison {
+    --wb-theme-preview-width: 1024px;
+    --wb-theme-card-width: calc(var(--wb-theme-preview-width) + 2px);
+    display: grid;
+    gap: var(--wb-s3);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--wb-theme-card-width)), 1fr));
+    max-inline-size: calc(2 * var(--wb-theme-card-width) + var(--wb-s3));
+}
+.wb-theme-comparison[data-width="phone"] { --wb-theme-preview-width: 390px; }
+.wb-theme-viewport iframe {
+    max-width: min(100%, var(--wb-theme-preview-width));
+    height: min(720px, 70vh);
+}

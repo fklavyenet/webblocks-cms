@@ -1,6 +1,13 @@
 <?php
 
 return [
+  'site_heading' => 'Thème du site : :site',
+  'preview_heading' => 'Aperçu : :name :version',
+  'back_to_themes' => 'Revenir au thème du site',
+  'upload_new' => 'Importer un nouveau thème',
+  'search_placeholder' => 'Nom ou version',
+  'no_matches' => 'Aucune version ne correspond à la recherche.',
+  'uploaded_at' => 'Date de téléversement',
   'title' => 'Thèmes publics',
   'site_title' => 'Thème du site',
   'package' => 'Paquet de thème',
@@ -17,7 +24,6 @@ return [
   'retained' => 'Conservée dans l’historique du site',
   'delete' => 'Supprimer la version',
   'delete_help' => 'Supprimer cette version de thème inutilisée ?',
-  'details' => 'Détails',
   'back' => 'Retour à Apparence',
   'builtin' => 'Apparence intégrée',
   'current' => 'Apparence actuelle',

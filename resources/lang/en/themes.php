@@ -1,6 +1,13 @@
 <?php
 
 return [
+  'site_heading' => 'Site theme: :site',
+  'preview_heading' => 'Preview: :name :version',
+  'back_to_themes' => 'Back to Site theme',
+  'upload_new' => 'Upload new theme',
+  'search_placeholder' => 'Name or version',
+  'no_matches' => 'No theme versions match your search.',
+  'uploaded_at' => 'Uploaded at',
   'title' => 'Public themes',
   'site_title' => 'Site theme',
   'package' => 'Theme package',
@@ -17,7 +24,6 @@ return [
   'retained' => 'Kept for site history',
   'delete' => 'Delete version',
   'delete_help' => 'Delete this unused theme version from the installation?',
-  'details' => 'Details',
   'back' => 'Back to Appearance',
   'builtin' => 'Built-in appearance',
   'current' => 'Current appearance',

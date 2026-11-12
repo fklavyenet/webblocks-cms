@@ -125,6 +125,8 @@ $siteThemeRoutes = function (bool $api = false): void {
   $preview = Route::get('/preview', [SiteThemeController::class, 'preview'])->name('preview');
   if ($api) {
     $preview->middleware('internal-api.capability:content.read');
+  } else {
+    Route::get('/preview/{version}', [SiteThemeController::class, 'comparison'])->whereNumber('version')->name('comparison');
   }
   Route::post('/activate', [SiteThemeController::class, 'activate'])->name('activate');
   Route::post('/restore', [SiteThemeController::class, 'restore'])->name('restore');

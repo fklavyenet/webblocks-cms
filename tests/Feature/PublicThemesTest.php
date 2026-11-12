@@ -47,7 +47,12 @@ final class PublicThemesTest extends TestCase
     [$site, $page] = $this->sitePage('one', true);
     [$other, $otherPage] = $this->sitePage('two');
     $content = DB::table('wbcms_page_translations')->orderBy('id')->get()->toArray();
-    $this->get(route('admin.system.themes.index'))->assertOk()->assertSee('Upload theme');
+    $packages = route('admin.system.themes.index');
+    $this->get($packages)->assertOk()->assertSee('Upload new theme')->assertSee('id="upload-theme"', false)
+      ->assertSee('data-admin-listing-filters', false);
+    $this->from($packages)->post(route('admin.system.themes.store'), ['theme_operation' => 'upload'])
+      ->assertRedirect($packages)->assertSessionHasErrors('package');
+    $this->get($packages)->assertSee('data-wb-admin-autoload-overlay', false)->assertSee('aria-invalid="true"', false);
     $this->post(route('admin.system.themes.store'), ['package' => $this->archive()])->assertRedirect();
     $version = DB::table('wbcms_theme_versions')->value('id');
     $checksum = DB::table('wbcms_theme_versions')->value('checksum');
@@ -55,8 +60,16 @@ final class PublicThemesTest extends TestCase
 
     $this->get(route('admin.sites.edit', [$site, 'tab' => 'theme']))->assertOk()->assertSee($overview);
     $this->assertDatabaseCount('wbcms_site_theme_changes', 0);
-    $workspace = $this->get(route('admin.sites.themes.index', [$site, 'version' => $version, 'page' => $page->id, 'button_corners' => 'soft']))
-      ->assertOk()->assertSee('Current appearance')->assertSee('Candidate appearance')->assertSee('Activate on this site');
+    $comparison = route('admin.sites.themes.comparison', [$site, $version]);
+    $this->get($overview)->assertOk()->assertSee('Site theme: one')->assertSee($comparison)->assertDontSee('<iframe', false);
+    $this->get(route('admin.sites.themes.index', [$site, 'version' => $version]))->assertRedirect($comparison);
+    $workspace = $this->get(route('admin.sites.themes.comparison', [$site, $version, 'page' => $page->id, 'button_corners' => 'soft']))
+      ->assertOk()->assertSee('Preview: Editorial 1.0.0')->assertSee('Apply')
+      ->assertSee('Current appearance')->assertSee('Candidate appearance')->assertSee('Activate on this site');
+    $this->get($packages.'?search=1.0.0')->assertOk()->assertSee('Editorial · 1.0.0')->assertSee('Uploaded at')
+      ->assertSee('wb-icon-trash')->assertDontSee('<details class="wb-collapse-panel"', false);
+    $this->get($packages.'?search=unmatched')->assertOk()->assertSee('No theme versions match your search.')
+      ->assertDontSee('Editorial · 1.0.0');
     preg_match('/name="confirmation" value="([^"]+)"/', $workspace->getContent(), $matches);
     $preview = route('admin.sites.themes.preview', [$site, 'version' => $version, 'page' => $page->id, 'mode' => 'dark']);
     $this->get($preview)->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')

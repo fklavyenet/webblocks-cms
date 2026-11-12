@@ -18,6 +18,7 @@ final class SiteThemeRequest extends FormRequest
       default => [
         'version' => [$action === 'preview' ? 'required' : 'nullable', 'integer', 'min:1'],
         'page' => ['nullable', 'integer', 'min:1'],
+        'page_list' => ['nullable', 'integer', 'min:1'],
         'button_corners' => ['nullable', Rule::in(PublicThemes::CORNERS)],
         'mode' => ['nullable', Rule::in(['light', 'dark', 'auto'])],
         'width' => ['nullable', Rule::in(['desktop', 'phone'])],

@@ -7,6 +7,7 @@
     $extraSearches = $extraSearches ?? [];
     $selects = $selects ?? [];
     $dates = $dates ?? [];
+    $checkboxes = $checkboxes ?? [];
     $hidden = $hidden ?? [];
     if (isset($tableSort)) {
         $visibleFields = array_column($selects, 'name');
@@ -106,6 +107,13 @@
                 </div>
             @endforeach
         @endif
+
+        @foreach ($checkboxes as $checkbox)
+            <label class="wb-field wb-check">
+                <input type="checkbox" name="{{ $checkbox['name'] }}" value="{{ $checkbox['value'] }}" @checked($checkbox['checked'])>
+                <span>{{ $checkbox['label'] }}</span>
+            </label>
+        @endforeach
 
         @if ($showActions || $liveSearch)
             <div class="wb-filter-bar-actions" data-admin-listing-filters-actions>

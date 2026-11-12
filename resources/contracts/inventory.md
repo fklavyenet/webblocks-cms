@@ -2784,8 +2784,10 @@ CSS. No new authoring field, block catalog entry or persistence is introduced.
 ## Installable public themes
 
 Super admins install immutable ZIP packages under System → Public themes.
-The package management screen uses native Installed versions and Upload theme
-tabs and disclosure panels for technical metadata. API package management requires the explicit `themes.manage` capability on an
+The package management screen filters installed versions by name or version,
+shows the upload date, and opens a ZIP upload dialog from the list header.
+Unused versions are deleted through the row action and confirmation dialog.
+API package management requires the explicit `themes.manage` capability on an
 installation-wide system token owned by an active Super admin. Packages contain
 a format-1 `webblocks-theme.json` manifest, root `theme.css` and optional
 declared-by-path local WOFF2 or raster assets under `assets/`. The manifest
@@ -2794,17 +2796,21 @@ core layout handles and the optional `button_corners` setting
 (`default`, `sharp`, `soft`). Runtime selection, assets and change history
 are relational. Versions referenced by site history are retained for restoration.
 
-Site Appearance links to a separate theme workspace. Site settings mutation
+Site Appearance links to a site theme list. Each installed version opens its
+own comparison page with a standard filter card and an Apply action.
+Site settings mutation
 permission controls activation and restoration. Page read permission also
 applies to previews. The API uses `site-settings.write` with `content.read`
 additionally required for HTML previews. API preview returns a short-lived
 `X-WebBlocks-Theme-Confirmation` for compatible candidates. Activation
 rechecks the site selection, appearance settings, package integrity and layout
 coverage before recording a new site revision. Preview is private and uses the
-saved page graph inside a non-interactive frame. It suppresses scripts and
-visitor overlays. Page and Shared Slot structure, content translations, URLs and
-site assets remain site-owned. An uploaded update stays available alongside
-existing versions until explicitly selected per site.
+saved page graph inside non-interactive frames. The frames sit side by side
+when the comparison area can fit both at the selected desktop or phone width.
+They stack in narrower areas. Preview suppresses scripts and visitor overlays.
+Page and Shared Slot structure, content translations, URLs and site assets remain
+site-owned. An uploaded update stays available alongside existing versions until
+explicitly selected per site.
 
 Public rendering adds scoped package CSS after CMS preset CSS and before brand
 overrides and site CSS. The six packaged presets remain the built-in appearance.

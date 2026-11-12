@@ -1,6 +1,13 @@
 <?php
 
 return [
+  'site_heading' => 'Website-Theme: :site',
+  'preview_heading' => 'Vorschau: :name :version',
+  'back_to_themes' => 'Zurück zum Website-Theme',
+  'upload_new' => 'Neues Theme hochladen',
+  'search_placeholder' => 'Name oder Version',
+  'no_matches' => 'Keine Theme-Version entspricht der Suche.',
+  'uploaded_at' => 'Hochgeladen am',
   'title' => 'Öffentliche Themes',
   'site_title' => 'Website-Theme',
   'package' => 'Theme-Paket',
@@ -17,7 +24,6 @@ return [
   'retained' => 'Für den Website-Verlauf aufbewahrt',
   'delete' => 'Version löschen',
   'delete_help' => 'Diese ungenutzte Theme-Version aus der Installation löschen?',
-  'details' => 'Details',
   'back' => 'Zurück zum Erscheinungsbild',
   'builtin' => 'Integriertes Erscheinungsbild',
   'current' => 'Aktuelles Erscheinungsbild',

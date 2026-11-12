@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.132.1
+
+- Open each theme version on its own preview page with an Apply filter card. Compare current and candidate appearance side by side when both fit at the selected viewport width.
+- Manage public themes from a filterable list with upload dates and row delete actions. Upload new packages in a dialog from the list header.
+
 ## 1.132.0
 
 - Install public theme ZIPs from System → Public themes and choose a theme version per site. Compare the current and candidate appearances on saved pages in light or dark mode and at desktop or phone widths.

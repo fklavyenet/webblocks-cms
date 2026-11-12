@@ -1,6 +1,13 @@
 <?php
 
 return [
+  'site_heading' => 'Site teması: :site',
+  'preview_heading' => 'Önizleme: :name :version',
+  'back_to_themes' => 'Site temasına dön',
+  'upload_new' => 'Yeni tema yükle',
+  'search_placeholder' => 'Ad veya sürüm',
+  'no_matches' => 'Aramanıza uyan tema sürümü yok.',
+  'uploaded_at' => 'Yükleme tarihi',
   'title' => 'Site temaları',
   'site_title' => 'Site teması',
   'package' => 'Tema paketi',
@@ -17,7 +24,6 @@ return [
   'retained' => 'Site geçmişi için saklanıyor',
   'delete' => 'Sürümü sil',
   'delete_help' => 'Kullanılmayan bu tema sürümü silinsin mi?',
-  'details' => 'Ayrıntılar',
   'back' => 'Görünüm sekmesine dön',
   'builtin' => 'Yerleşik görünüm',
   'current' => 'Mevcut görünüm',

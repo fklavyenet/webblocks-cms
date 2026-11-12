@@ -1,14 +1,15 @@
 @php
     $text = static fn (string $key) => __('webblocks-cms::themes.'.$key);
+    $title = __('webblocks-cms::themes.site_heading', ['site' => $site->name]);
     $preset = $site->resolvedPublicThemePreset();
     $label = static fn ($change) => $change?->theme_version_id ? $change->name.' · '.$change->version : $text('builtin').' · '.str($preset)->headline();
     $back = '<a class="wb-btn wb-btn-secondary" href="'.e(route('admin.sites.edit', ['site' => $site, 'tab' => 'theme'])).'">'.e($text('back')).'</a>';
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $text('site_title'), 'heading' => $text('site_title')])
+@extends('webblocks-cms::layouts.admin', ['title' => $title, 'heading' => $title])
 
 @section('content')
-    @include('webblocks-cms::admin.partials.page-header', ['title' => $text('site_title'), 'description' => $site->name, 'actions' => $back])
+    @include('webblocks-cms::admin.partials.page-header', ['title' => $title, 'actions' => $back])
     @include('webblocks-cms::admin.system.themes.feedback')
 
     <div class="wb-stack wb-gap-4">
@@ -38,7 +39,7 @@
                                             <td>{{ implode(', ', $version->layouts) }}</td>
                                             <td>
                                                 @if ($version->compatible)
-                                                    <a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ route('admin.sites.themes.index', ['site' => $site, 'version' => $version->id]) }}#theme-preview">{{ $text('preview') }}</a>
+                                                    <a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ route('admin.sites.themes.comparison', ['site' => $site, 'version' => $version->id]) }}">{{ $text('preview') }}</a>
                                                 @else
                                                     {{ $text('incompatible') }}
                                                 @endif
@@ -52,10 +53,6 @@
                 </div>
                 @include('webblocks-cms::admin.partials.pagination', ['paginator' => $versions->withQueryString(), 'ariaLabel' => $text('versions'), 'compact' => true])
             </div>
-        @endif
-
-        @if ($candidate)
-            @include('webblocks-cms::admin.sites.themes.preview')
         @endif
 
         @if ($history->isNotEmpty())
@@ -89,12 +86,6 @@
 @endsection
 
 @push('overlays')
-    @if ($confirmation)
-        @include('webblocks-cms::admin.sites.themes.confirm', [
-            'id' => 'theme-activate', 'operation' => 'activate', 'description' => $text('activate_help'),
-            'target' => $candidate->name.' · '.$candidate->version,
-        ])
-    @endif
     @if ($current?->theme_version_id)
         @include('webblocks-cms::admin.sites.themes.confirm', [
             'id' => 'theme-restore-builtin', 'operation' => 'restore', 'description' => $text('restore_help'),

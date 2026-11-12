@@ -38,12 +38,14 @@ final class PublicThemes
     return $this->memo->remember('public-themes.schema', [], fn () => Schema::hasTable(self::CHANGES));
   }
 
-  public function versions(int $perPage = 25, bool $packageManagement = false): LengthAwarePaginator
+  public function versions(int $perPage = 25, bool $packageManagement = false, string $search = ''): LengthAwarePaginator
   {
     $versions = DB::table(self::VERSIONS.' as versions')->select('versions.*')
       ->when($packageManagement, fn ($query) => $query->selectSub(
         DB::table(self::CHANGES)->selectRaw('count(*)')->whereColumn('theme_version_id', 'versions.id'), 'uses'
       ))
+      ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
+        ->whereLike('versions.name', '%'.$search.'%')->orWhereLike('versions.version', '%'.$search.'%')))
       ->orderBy('handle')->orderByDesc('id')->paginate($perPage, ['*'], $packageManagement ? 'page' : 'version_page');
 
     return $versions->through(fn (object $version) => $this->describe($version));

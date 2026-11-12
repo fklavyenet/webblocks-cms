@@ -1,6 +1,13 @@
 <?php
 
 return [
+  'site_heading' => 'Tema del sito: :site',
+  'preview_heading' => 'Anteprima: :name :version',
+  'back_to_themes' => 'Torna al tema del sito',
+  'upload_new' => 'Carica un nuovo tema',
+  'search_placeholder' => 'Nome o versione',
+  'no_matches' => 'Nessuna versione corrisponde alla ricerca.',
+  'uploaded_at' => 'Data di caricamento',
   'title' => 'Temi pubblici',
   'site_title' => 'Tema del sito',
   'package' => 'Pacchetto del tema',
@@ -17,7 +24,6 @@ return [
   'retained' => 'Conservata nella cronologia del sito',
   'delete' => 'Elimina versione',
   'delete_help' => 'Eliminare questa versione inutilizzata del tema?',
-  'details' => 'Dettagli',
   'back' => 'Torna ad Aspetto',
   'builtin' => 'Aspetto integrato',
   'current' => 'Aspetto attuale',

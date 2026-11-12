@@ -22,27 +22,44 @@ final class SiteThemeController
     private readonly PublicThemePolicy $policy,
   ) {}
 
-  public function index(SiteThemeRequest $request, Site $site): View|JsonResponse
+  public function index(SiteThemeRequest $request, Site $site): View|JsonResponse|RedirectResponse
   {
     $this->authorize($request, $site);
-    $history = $this->themes->history($site);
-    $versions = $this->themes->versions();
-    $current = $this->themes->current($site);
     if ($request->routeIs('internal-content-api.*')) {
-      return response()->json(compact('history', 'versions', 'current') + ['preset' => $site->resolvedPublicThemePreset()]);
+      return response()->json([
+        'history' => $this->themes->history($site),
+        'versions' => $this->themes->versions(),
+        'current' => $this->themes->current($site),
+        'preset' => $site->resolvedPublicThemePreset(),
+      ]);
     }
 
     $canPreview = $this->policy->manageSite($request, $site, preview: true);
-    $candidate = $canPreview && $request->filled('version') ? $this->candidate($request) : null;
-    $page = $candidate ? $this->page($request, $site) : null;
-    $report = $candidate ? $this->themes->report($site, $candidate) : null;
-    $options = $candidate ? $this->options($request, $page, $candidate, $current) : [];
+    if ($canPreview && $request->filled('version')) {
+      return redirect()->route('admin.sites.themes.comparison', ['site' => $site] + $request->safe()->except('side'));
+    }
+
+    $history = $this->themes->history($site);
+    $versions = $this->themes->versions();
+    $current = $this->themes->current($site);
+
+    return view('webblocks-cms::admin.sites.themes.index', compact('site', 'history', 'versions', 'current', 'canPreview'));
+  }
+
+  public function comparison(SiteThemeRequest $request, Site $site, int $version): View
+  {
+    $this->authorize($request, $site, preview: true);
+    $candidate = $this->themes->describe($this->themes->version($version));
+    $current = $this->themes->current($site);
+    $page = $this->page($request, $site);
+    $report = $this->themes->report($site, $candidate);
+    $options = $this->options($request, $page, $candidate, $current);
     $confirmation = $page && $this->canActivate($report)
       ? $this->themes->confirmation($site, $candidate, $options['button_corners'], (int) ($current?->id ?? 0))
       : null;
-    $pages = $candidate ? $this->themes->pages($site)->with('translations.locale')->orderBy('id')->simplePaginate(50, ['*'], 'page_list')->withQueryString() : null;
+    $pages = $this->themes->pages($site)->with('translations.locale')->orderBy('id')->simplePaginate(50, ['*'], 'page_list')->withQueryString();
 
-    return view('webblocks-cms::admin.sites.themes.index', compact('site', 'history', 'versions', 'current', 'candidate', 'page', 'pages', 'report', 'options', 'confirmation', 'canPreview'));
+    return view('webblocks-cms::admin.sites.themes.preview', compact('site', 'current', 'candidate', 'page', 'pages', 'report', 'options', 'confirmation'));
   }
 
   public function preview(SiteThemeRequest $request, Site $site, PublicPagePresenter $presenter): Response
@@ -50,7 +67,7 @@ final class SiteThemeController
     $this->authorize($request, $site, preview: true);
     $page = $this->page($request, $site);
     abort_if($page === null, 404);
-    $candidate = $this->candidate($request);
+    $candidate = $this->themes->describe($this->themes->version($request->integer('version')));
     $side = $request->validated('side') ?? 'candidate';
     $current = $this->themes->current($site);
     $options = $this->options($request, $page, $candidate, $current);
@@ -110,11 +127,6 @@ final class SiteThemeController
   {
     abort_unless($this->policy->manageSite($request, $site, $preview), 403);
     abort_unless($this->themes->ready(), 503);
-  }
-
-  private function candidate(SiteThemeRequest $request): object
-  {
-    return $this->themes->describe($this->themes->version($request->integer('version')));
   }
 
   private function page(SiteThemeRequest $request, Site $site): ?Page

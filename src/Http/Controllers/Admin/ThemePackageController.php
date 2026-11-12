@@ -18,13 +18,14 @@ final class ThemePackageController
   {
     abort_unless($this->themes->ready(), 503);
     $api = $request->routeIs('internal-content-api.*');
-    $versions = $this->themes->versions($api ? 25 : AdminPagination::perPage(), packageManagement: true);
+    $search = $api ? '' : $this->search($request);
+    $versions = $this->themes->versions($api ? 25 : AdminPagination::perPage(), packageManagement: true, search: $search);
     if ($api) {
       return response()->json($versions);
     }
     AdminPagination::redirectOutOfRange($versions, $request);
 
-    return view('webblocks-cms::admin.system.themes.index', compact('versions'));
+    return view('webblocks-cms::admin.system.themes.index', compact('versions', 'search'));
   }
 
   public function store(ThemePackageRequest $request): RedirectResponse|JsonResponse
@@ -44,6 +45,13 @@ final class ThemePackageController
 
     return $request->routeIs('internal-content-api.*')
       ? response()->json(['ok' => true])
-      : redirect()->route('admin.system.themes.index')->with('theme_status', 'deleted');
+      : redirect()->route('admin.system.themes.index', array_filter(['search' => $this->search($request)], fn ($value) => $value !== ''))->with('theme_status', 'deleted');
+  }
+
+  private function search(Request $request): string
+  {
+    $search = $request->query('search');
+
+    return is_string($search) ? mb_substr(trim($search), 0, 120) : '';
   }
 }

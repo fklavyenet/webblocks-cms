@@ -1,6 +1,13 @@
 <?php
 
 return [
+  'site_heading' => 'Tema del sitio: :site',
+  'preview_heading' => 'Vista previa: :name :version',
+  'back_to_themes' => 'Volver al tema del sitio',
+  'upload_new' => 'Subir un tema nuevo',
+  'search_placeholder' => 'Nombre o versión',
+  'no_matches' => 'Ninguna versión coincide con la búsqueda.',
+  'uploaded_at' => 'Fecha de carga',
   'title' => 'Temas públicos',
   'site_title' => 'Tema del sitio',
   'package' => 'Paquete de tema',
@@ -17,7 +24,6 @@ return [
   'retained' => 'Conservada en el historial del sitio',
   'delete' => 'Eliminar versión',
   'delete_help' => '¿Eliminar esta versión del tema sin uso?',
-  'details' => 'Detalles',
   'back' => 'Volver a Apariencia',
   'builtin' => 'Apariencia integrada',
   'current' => 'Apariencia actual',
