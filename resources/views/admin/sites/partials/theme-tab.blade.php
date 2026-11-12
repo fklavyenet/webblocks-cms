@@ -16,12 +16,6 @@
     : \WebBlocks\Cms\Models\Site::PUBLIC_THEME_CANVAS;
 @endphp
 
-@if (($canManageSiteSettings ?? false) && $site->exists && app(\WebBlocks\Cms\Support\Theme\PublicThemes::class)->ready())
-  <div class="wb-cluster wb-mb-3">
-    <a class="wb-btn wb-btn-secondary" href="{{ route('admin.sites.themes.index', $site) }}">{{ __('webblocks-cms::themes.site_title') }}</a>
-  </div>
-@endif
-
 <div class="wb-grid wb-grid-2 wb-gap-4">
   <div class="wb-card wb-card-muted">
     <div class="wb-card-header">

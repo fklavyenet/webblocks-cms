@@ -61,7 +61,14 @@ final class PublicThemesTest extends TestCase
     $this->get(route('admin.sites.edit', [$site, 'tab' => 'theme']))->assertOk()->assertSee($overview);
     $this->assertDatabaseCount('wbcms_site_theme_changes', 0);
     $comparison = route('admin.sites.themes.comparison', [$site, $version]);
-    $this->get($overview)->assertOk()->assertSee('Site theme: one')->assertSee($comparison)->assertDontSee('<iframe', false);
+    $this->get($overview)->assertOk()->assertSee('Site theme: one')->assertSee('Status on this site')
+      ->assertSee('<span class="wb-badge">Available</span>', false)
+      ->assertSee('wb-icon-eye')->assertSee($comparison)->assertDontSee('<iframe', false);
+    $docs = Page::query()->create(['site_id' => $other->id, 'title' => 'Docs', 'slug' => 'docs', 'settings' => ['public_shell' => 'docs']]);
+    $this->get(route('admin.sites.themes.index', $other))->assertOk()
+      ->assertSee('Unsupported site layouts: docs.')->assertSee('wb-icon-eye')
+      ->assertDontSee('<span class="wb-badge">Available</span>', false);
+    $docs->delete();
     $this->get(route('admin.sites.themes.index', [$site, 'version' => $version]))->assertRedirect($comparison);
     $workspace = $this->get(route('admin.sites.themes.comparison', [$site, $version, 'page' => $page->id, 'button_corners' => 'soft']))
       ->assertOk()->assertSee('Preview: Editorial 1.0.0')->assertSee('Apply')
@@ -78,6 +85,7 @@ final class PublicThemesTest extends TestCase
 
     $activate = route('admin.sites.themes.activate', $site);
     $this->post($activate, ['confirmation' => $matches[1]])->assertRedirect($overview);
+    $this->get($overview)->assertOk()->assertSee('<span class="wb-badge wb-badge-success">Active</span>', false);
     $this->get('/one')->assertOk()->assertSee('data-wb-theme-corners="soft"', false)->assertSee('Title for one');
     $this->get(route('admin.pages.preview', $otherPage))->assertOk()->assertDontSee('data-wb-theme-package=', false);
     $assetUrl = route('public-theme-assets.show', [$version, $checksum, 'theme.css'], false);

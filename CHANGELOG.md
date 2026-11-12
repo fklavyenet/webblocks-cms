@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.132.2
+
+- Open Manage Site Theme from the Edit Site header, after Site SEO audit.
+- Distinguish the built-in preset and its preview from theme packages, and space those cards apart from Brand palette.
+- See which installed theme versions are active, available, or incompatible for the selected site. Open the comparison page from the Preview icon.
+
 ## 1.132.1
 
 - Open each theme version on its own preview page with an Apply filter card. Compare current and candidate appearance side by side when both fit at the selected viewport width.

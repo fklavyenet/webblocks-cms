@@ -60,6 +60,27 @@ final class PublicThemes
     return $version;
   }
 
+  public function siteVersions(Site $site): LengthAwarePaginator
+  {
+    $versions = $this->versions();
+    if ($versions->isEmpty()) {
+      return $versions;
+    }
+
+    $siteLayouts = [];
+    foreach ($this->pages($site)->lazyById() as $page) {
+      $siteLayouts[$page->publicShellPreset()] = true;
+    }
+
+    return $versions->through(function (object $version) use ($siteLayouts): object {
+      $version->intact = $version->compatible && $this->intact($version);
+      $version->missing_layouts = array_diff(array_keys($siteLayouts), $version->layouts);
+      $version->has_pages = $siteLayouts !== [];
+
+      return $version;
+    });
+  }
+
   public function install(string $file): object
   {
     $package = $this->packages->read($file);

@@ -37,6 +37,10 @@
     $actions[] = '<a href="'.route('admin.sites.seo-audits.index', $site).'" class="wb-btn wb-btn-secondary">'.e($adminTranslator->get('seo.audit_title', $adminLocale)).'</a>';
   }
 
+  if ($site->exists && $canManageSiteSettings && app(\WebBlocks\Cms\Support\Theme\PublicThemes::class)->ready()) {
+    $actions[] = '<a href="'.route('admin.sites.themes.index', $site).'" class="wb-btn wb-btn-secondary">'.e($adminText('manage_site_theme')).'</a>';
+  }
+
   $pageHeaderActions = $actions !== []
     ? '<div class="wb-cluster wb-cluster-2">'.implode('', $actions).'</div>'
     : '';
@@ -333,7 +337,7 @@
                 'selectedPublicThemePreset' => $selectedPublicThemePreset,
               ])
 
-                <div class="wb-card wb-card-muted">
+                <div class="wb-card wb-card-muted wb-mt-4">
                   <div class="wb-card-header"><strong>{{ $adminText('brand_palette') }}</strong></div>
                   <div class="wb-card-body wb-stack wb-gap-3">
                     <div class="wb-text-sm wb-text-muted">{{ $adminText('brand_palette_help') }}</div>

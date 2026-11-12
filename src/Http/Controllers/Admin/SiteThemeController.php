@@ -40,7 +40,7 @@ final class SiteThemeController
     }
 
     $history = $this->themes->history($site);
-    $versions = $this->themes->versions();
+    $versions = $canPreview ? $this->themes->siteVersions($site) : null;
     $current = $this->themes->current($site);
 
     return view('webblocks-cms::admin.sites.themes.index', compact('site', 'history', 'versions', 'current', 'canPreview'));

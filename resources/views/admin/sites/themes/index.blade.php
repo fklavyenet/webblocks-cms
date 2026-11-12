@@ -31,17 +31,45 @@
                     @else
                         <div class="wb-table-wrap">
                             <table class="wb-table">
-                                <thead><tr><th scope="col">{{ $text('theme') }}</th><th scope="col">{{ $text('layouts') }}</th><th scope="col">{{ $text('actions') }}</th></tr></thead>
+                                <thead><tr><th scope="col">{{ $text('theme') }}</th><th scope="col">{{ $text('layouts') }}</th><th scope="col">{{ $text('site_status') }}</th><th scope="col" class="wb-table-actions">{{ $text('actions') }}</th></tr></thead>
                                 <tbody>
                                     @foreach ($versions as $version)
+                                        @php
+                                            $active = (int) $version->id === (int) $current?->theme_version_id;
+                                            $issue = match (true) {
+                                                ! $version->compatible => $text('incompatible'),
+                                                ! $version->intact => $text('damaged'),
+                                                $version->missing_layouts !== [] => __('webblocks-cms::themes.missing_site_layouts', ['layouts' => implode(', ', $version->missing_layouts)]),
+                                                default => null,
+                                            };
+                                        @endphp
                                         <tr>
                                             <th scope="row">{{ $version->name }} · {{ $version->version }}</th>
                                             <td>{{ implode(', ', $version->layouts) }}</td>
                                             <td>
-                                                @if ($version->compatible)
-                                                    <a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ route('admin.sites.themes.comparison', ['site' => $site, 'version' => $version->id]) }}">{{ $text('preview') }}</a>
-                                                @else
-                                                    {{ $text('incompatible') }}
+                                                @if ($active)
+                                                    <span class="wb-badge wb-badge-success">{{ $text('site_status_active') }}</span>
+                                                @endif
+                                                @if ($issue !== null)
+                                                    <span class="wb-badge wb-badge-warning">{{ $text('site_status_incompatible') }}</span>
+                                                    <div class="wb-text-sm wb-text-muted">{{ $issue }}</div>
+                                                @elseif (! $active)
+                                                    @if ($version->has_pages)
+                                                        <span class="wb-badge">{{ $text('site_status_available') }}</span>
+                                                    @else
+                                                        <span class="wb-text-sm wb-text-muted">{{ $text('no_pages') }}</span>
+                                                    @endif
+                                                @endif
+                                            </td>
+                                            <td class="wb-table-actions">
+                                                @if ($version->intact)
+                                                    <div class="wb-action-group">
+                                                        <a class="wb-action-btn wb-action-btn-view"
+                                                            href="{{ route('admin.sites.themes.comparison', ['site' => $site, 'version' => $version->id]) }}"
+                                                            title="{{ $text('preview') }}" aria-label="{{ $text('preview') }}">
+                                                            <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
+                                                        </a>
+                                                    </div>
                                                 @endif
                                             </td>
                                         </tr>

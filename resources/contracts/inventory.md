@@ -2796,8 +2796,12 @@ core layout handles and the optional `button_corners` setting
 (`default`, `sharp`, `soft`). Runtime selection, assets and change history
 are relational. Versions referenced by site history are retained for restoration.
 
-Site Appearance links to a site theme list. Each installed version opens its
-own comparison page with a standard filter card and an Apply action.
+The Edit Site header links to the site theme list through Manage Site Theme.
+The Appearance tab groups the Public Preset and Preset Preview cards above
+Brand palette. Installed versions show whether they are active, can be
+activated, or have compatibility issues on the selected site, with reasons
+for blocked activation. Versions eligible for preview offer an eye action
+that opens their own comparison page with a standard filter card and Apply.
 Site settings mutation
 permission controls activation and restoration. Page read permission also
 applies to previews. The API uses `site-settings.write` with `content.read`
