@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.132.4
+
+- Compare the environment and CMS custom mail settings side by side. Select a mode with radio buttons and save it to switch the active delivery method.
+- Edit custom mail settings in a dialog with localized examples. Saving the dialog updates the custom configuration independently of the selected delivery mode.
+
 ## 1.132.3
 
 - Show the active CMS mail delivery method and move Diagnostics and Send test email to the Mail card header. Open custom mail fields as soon as the mode is selected.

@@ -23,6 +23,7 @@ use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class SystemSettingsController extends Controller
@@ -39,6 +40,12 @@ class SystemSettingsController extends Controller
     $verificationLocale = request()->query('verification_locale', $this->adminLocaleResolver->packagedLocale(request()->user()));
     $verificationLocale = is_string($verificationLocale) && in_array($verificationLocale, AdminLocaleResolver::SUPPORTED_LOCALES, true) ? $verificationLocale : 'en';
     $canManageVerificationEmail = app(VerificationEmailPolicy::class)->update(request()->user());
+    $customMail = $this->systemSettings->cmsMailSettings();
+    $mailSummaries = [
+      SystemSettings::CMS_MAIL_MODE_ENV => $this->mailSettingsResolver->environmentSummary(),
+      SystemSettings::CMS_MAIL_MODE_CUSTOM => $this->mailSettingsResolver->customSummary($customMail),
+    ];
+    unset($customMail['password']);
 
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.settings', [
       'title' => 'System Settings',
@@ -52,18 +59,9 @@ class SystemSettingsController extends Controller
         'timezone' => old('timezone', $this->systemSettings->timezone()),
         'admin_listing_per_page' => old('admin_listing_per_page', $this->systemSettings->adminListingPerPage()),
         'visitor_consent_banner_enabled' => old('visitor_consent_banner_enabled', $this->systemSettings->visitorConsentBannerEnabled()),
-        'cms_mail_mode' => old('cms_mail_mode', $this->systemSettings->cmsMailSettings()['mode']),
-        'cms_mail_mailer' => old('cms_mail_mailer', $this->systemSettings->cmsMailSettings()['mailer']),
-        'cms_mail_host' => old('cms_mail_host', $this->systemSettings->cmsMailSettings()['host']),
-        'cms_mail_port' => old('cms_mail_port', $this->systemSettings->cmsMailSettings()['port']),
-        'cms_mail_encryption' => old('cms_mail_encryption', $this->systemSettings->cmsMailSettings()['encryption']),
-        'cms_mail_username' => old('cms_mail_username', $this->systemSettings->cmsMailSettings()['username']),
-        'cms_mail_from_address' => old('cms_mail_from_address', $this->systemSettings->cmsMailSettings()['from_address']),
-        'cms_mail_from_name' => old('cms_mail_from_name', $this->systemSettings->cmsMailSettings()['from_name']),
-        'cms_mail_reply_to_address' => old('cms_mail_reply_to_address', $this->systemSettings->cmsMailSettings()['reply_to_address']),
-        'cms_mail_timeout' => old('cms_mail_timeout', $this->systemSettings->cmsMailSettings()['timeout']),
-        'cms_mail_password_configured' => $this->systemSettings->cmsMailPasswordConfigured(),
       ],
+      'customMail' => $customMail,
+      'mailSummaries' => $mailSummaries,
       'mcpEnabled' => $mcp->enabled(),
       'mcpReady' => $mcp->ready(),
       'mcpResource' => $mcp->resource(),
@@ -92,11 +90,27 @@ class SystemSettingsController extends Controller
 
   public function update(SystemSettingsRequest $request): RedirectResponse
   {
+    $section = $request->validated('section');
+    if (in_array($section, ['mail_mode', 'mail_custom'], true)) {
+      DB::transaction(fn () => $this->systemSettings->save($request->settingsPayload()));
+
+      $status = app(CmsTranslator::class)->admin(
+        'system_settings.'.$section.'_saved',
+        $this->adminLocaleResolver->locale(),
+      );
+      $response = redirect()->route('admin.system.settings.edit', [
+        'tab' => 'mail', 'verification_locale' => $request->query('verification_locale'),
+      ])->with('status', $status);
+      $pending = $request->validated('cms_mail_pending_mode');
+
+      return $section === 'mail_custom' && $pending ? $response->withInput(['cms_mail_pending_mode' => $pending]) : $response;
+    }
+
     $this->systemSettings->save($request->settingsPayload());
 
     return redirect()
-      ->route('admin.system.settings.edit', ['tab' => $request->validated('section')])
-      ->with('status', $request->validated('section') === 'logging'
+      ->route('admin.system.settings.edit', ['tab' => $section])
+      ->with('status', $section === 'logging'
         ? __('webblocks-cms::admin.system_settings.logging_saved') : 'Settings updated successfully.');
   }
 

@@ -29,7 +29,8 @@ class SystemSettingsTabsStructureTest extends TestCase
   {
     $controller = (string) file_get_contents((new ReflectionClass(SystemSettingsController::class))->getFileName());
 
-    $this->assertStringContainsString("['tab' => \$request->validated('section')]", $controller);
+    $this->assertStringContainsString("\$section = \$request->validated('section');", $controller);
+    $this->assertStringContainsString("['tab' => \$section]", $controller);
     $this->assertStringContainsString("['tab' => 'mail']", $controller);
   }
 

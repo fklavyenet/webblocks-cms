@@ -63,44 +63,76 @@
     }
 
     function bindMailMode() {
-        var mode = document.querySelector('[data-wb-mail-mode]');
-        if (!mode) return;
+        var modeForm = document.querySelector('[data-wb-mail-settings]');
+        if (!modeForm) return;
 
-        var customFields = mode.form.querySelector('[data-wb-mail-custom-fields]');
-        var controls = customFields.querySelectorAll('input, select');
+        var modes = modeForm.elements.namedItem('cms_mail_mode');
+        var activeMode = modeForm.dataset.activeMode;
+        var pending = document.getElementById('settings-mail-mode-pending');
+        var save = modeForm.querySelector('button[type="submit"]');
+        var cancel = modeForm.querySelector('[data-wb-mail-mode-cancel]');
+        var customForm = document.querySelector('[data-wb-mail-custom]');
+        var mailer = customForm.elements.namedItem('cms_mail_mailer');
+        var smtp = customForm.querySelector('[data-wb-mail-smtp-fields]');
+        var smtpControls = smtp.querySelectorAll('input, select');
 
-        function syncMailMode() {
-            var custom = mode.value === 'custom';
-            customFields.hidden = !custom;
-            controls.forEach(function (control) {
-                control.disabled = !custom;
+        function syncMode() {
+            var changed = modes.value !== activeMode;
+            pending.hidden = !changed;
+            save.disabled = !changed;
+            modeForm.toggleAttribute('data-wb-mail-unsaved', changed);
+        }
+
+        function syncSmtpFields() {
+            var enabled = mailer.value === 'smtp';
+            smtp.hidden = !enabled;
+            smtpControls.forEach(function (control) {
+                control.disabled = !enabled;
             });
         }
 
-        mode.addEventListener('change', syncMailMode);
-        window.addEventListener('pageshow', syncMailMode);
-        syncMailMode();
+        modeForm.addEventListener('change', syncMode);
+        cancel.addEventListener('click', function (event) {
+            event.preventDefault();
+            modes.value = activeMode;
+            syncMode();
+            Array.from(modes).find(function (radio) { return radio.checked; }).focus();
+        });
+        mailer.addEventListener('change', syncSmtpFields);
+        customForm.addEventListener('submit', function () {
+            customForm.elements.namedItem('cms_mail_pending_mode').value = modes.value;
+        });
+        customForm.closest('dialog').addEventListener('wb:modal:close', function () {
+            customForm.reset();
+            syncSmtpFields();
+        });
+        window.addEventListener('pageshow', function () {
+            syncMode();
+            syncSmtpFields();
+        });
+        syncMode();
+        syncSmtpFields();
     }
 
     function bindVerificationEmail() {
         var editor = document.querySelector('[data-wb-verification-editor]');
         if (!editor || !window.WBModal) return;
 
-        var mailForm = document.querySelector('[data-wb-mail-settings]');
+        var modeForm = document.querySelector('[data-wb-mail-settings]');
+        var customMailForm = document.querySelector('[data-wb-mail-custom]');
         var languageForm = document.querySelector('[data-wb-verification-language]');
         var language = languageForm.elements.namedItem('verification_locale');
         var currentLanguage = editor.elements.namedItem('locale').value;
         var languageConfirm = document.getElementById('verification-email-language-confirm');
         var pendingLanguage;
-        var watchedForms = [mailForm, editor];
-        var initialValues = watchedForms.map(getFormSnapshot);
+        var initialEditorValues = getFormSnapshot(editor);
 
         language.addEventListener('change', function () {
             if (language.value === currentLanguage) return;
 
-            var hasUnsavedChanges = watchedForms.some(function (form, index) {
-                return form.hasAttribute('data-wb-mail-unsaved') || getFormSnapshot(form) !== initialValues[index];
-            });
+            var hasUnsavedChanges = [modeForm, customMailForm, editor].some(function (form) {
+                return form.hasAttribute('data-wb-mail-unsaved');
+            }) || getFormSnapshot(editor) !== initialEditorValues;
             if (!hasUnsavedChanges) {
                 languageForm.submit();
                 return;

@@ -17,6 +17,9 @@
         'runtime' => $systemText('runtime_information'),
     ];
     $systemTab = old('section', request()->query('tab', 'general'));
+    if (in_array($systemTab, ['mail_mode', 'mail_custom'], true)) {
+        $systemTab = 'mail';
+    }
 
     if ($errors->has('recipient_email')) {
         $systemTab = 'mail';
@@ -169,103 +172,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('admin.system.settings.update') }}" class="wb-stack wb-gap-0" data-wb-mail-settings @if (old('section') === 'mail') data-wb-mail-unsaved @endif>
-                @csrf
-                @method('PUT')
-                <input type="hidden" name="section" value="mail">
-
-                <div class="wb-card-body wb-stack wb-gap-4">
-                    <div class="wb-stack wb-gap-2">
-                        <p class="wb-text-sm wb-text-muted">{{ $systemText('mail_help') }}</p>
-                        <p class="wb-text-sm">
-                            <strong>{{ $systemText('active_delivery_method') }}</strong>
-                            {{ $systemText($mailDiagnostics['mode'] === 'custom' ? 'custom_mail_configuration' : 'environment_mail_configuration') }}
-                            ({{ $mailDiagnostics['mailer'] ?: $systemText('not_configured') }})
-                        </p>
-                    </div>
-
-                    <div class="wb-stack-2 wb-field">
-                        <label for="settings_cms_mail_mode">{{ $systemText('mail_mode') }}</label>
-                        <select id="settings_cms_mail_mode" name="cms_mail_mode" class="wb-select" data-wb-mail-mode aria-controls="settings-cms-mail-custom-fields" required>
-                            <option value="env" @selected($settings['cms_mail_mode'] === 'env')>{{ $systemText('mail_mode_env') }}</option>
-                            <option value="custom" @selected($settings['cms_mail_mode'] === 'custom')>{{ $systemText('mail_mode_custom') }}</option>
-                        </select>
-                    </div>
-
-                    <div id="settings-cms-mail-custom-fields" class="wb-grid wb-grid-2 wb-gap-4" data-wb-mail-custom-fields @if ($settings['cms_mail_mode'] !== 'custom') hidden @endif>
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_cms_mail_mailer">{{ $systemText('mailer') }}</label>
-                            <select id="settings_cms_mail_mailer" name="cms_mail_mailer" class="wb-select">
-                                @foreach ($cmsMailMailerOptions as $value => $label)
-                                    <option value="{{ $value }}" @selected($settings['cms_mail_mailer'] === $value)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_cms_mail_host">{{ $systemText('host') }}</label>
-                            <input id="settings_cms_mail_host" name="cms_mail_host" type="text" class="wb-input" maxlength="255" value="{{ $settings['cms_mail_host'] }}">
-                        </div>
-
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_cms_mail_port">{{ $systemText('port') }}</label>
-                            <input id="settings_cms_mail_port" name="cms_mail_port" type="number" class="wb-input" min="1" max="65535" step="1" value="{{ $settings['cms_mail_port'] }}">
-                        </div>
-
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_cms_mail_encryption">{{ $systemText('encryption') }}</label>
-                            <select id="settings_cms_mail_encryption" name="cms_mail_encryption" class="wb-select">
-                                <option value="" @selected($settings['cms_mail_encryption'] === null || $settings['cms_mail_encryption'] === '')>{{ $systemText('none') }}</option>
-                                <option value="tls" @selected($settings['cms_mail_encryption'] === 'tls')>tls</option>
-                                <option value="ssl" @selected($settings['cms_mail_encryption'] === 'ssl')>ssl</option>
-                            </select>
-                        </div>
-
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_cms_mail_timeout">{{ $systemText('timeout') }}</label>
-                            <input id="settings_cms_mail_timeout" name="cms_mail_timeout" type="number" class="wb-input" min="1" max="300" step="1" value="{{ $settings['cms_mail_timeout'] }}">
-                        </div>
-
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_cms_mail_username">{{ $systemText('username') }}</label>
-                            <input id="settings_cms_mail_username" name="cms_mail_username" type="text" class="wb-input" maxlength="255" value="{{ $settings['cms_mail_username'] }}">
-                        </div>
-
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_cms_mail_password">{{ $systemText('password_secret') }}</label>
-                            <input id="settings_cms_mail_password" name="cms_mail_password" type="password" class="wb-input" autocomplete="new-password" value="">
-                            <div class="wb-text-sm wb-text-muted">{{ $settings['cms_mail_password_configured'] ? $systemText('secret_stored') : $systemText('secret_not_stored') }}</div>
-                            <input type="hidden" name="cms_mail_clear_password" value="0">
-                            <label class="wb-cluster wb-cluster-2" for="settings_cms_mail_clear_password">
-                                <input id="settings_cms_mail_clear_password" name="cms_mail_clear_password" type="checkbox" value="1">
-                                <span>{{ $systemText('clear_stored_secret') }}</span>
-                            </label>
-                        </div>
-
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_cms_mail_from_address">{{ $systemText('from_address') }}</label>
-                            <input id="settings_cms_mail_from_address" name="cms_mail_from_address" type="email" class="wb-input" maxlength="255" value="{{ $settings['cms_mail_from_address'] }}">
-                        </div>
-
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_cms_mail_from_name">{{ $systemText('from_name') }}</label>
-                            <input id="settings_cms_mail_from_name" name="cms_mail_from_name" type="text" class="wb-input" maxlength="255" value="{{ $settings['cms_mail_from_name'] }}">
-                        </div>
-
-                        <div class="wb-stack-2 wb-field">
-                            <label for="settings_cms_mail_reply_to_address">{{ $systemText('reply_to_address') }}</label>
-                            <input id="settings_cms_mail_reply_to_address" name="cms_mail_reply_to_address" type="email" class="wb-input" maxlength="255" value="{{ $settings['cms_mail_reply_to_address'] }}">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="wb-card-footer wb-justify-end">
-                    <x-webblocks-cms::admin.form-actions
-                        :cancel-url="route('admin.system.settings.edit', ['tab' => 'mail'])"
-                        :submit-label="$systemText('save_changes')"
-                    />
-                </div>
-            </form>
+            @include('webblocks-cms::admin.system.partials.mail-settings')
 
             @php
                 $mailDiagnosticItems = [

@@ -2,8 +2,10 @@
 
 namespace WebBlocks\Cms\Http\Requests\Admin;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Policies\LogFormatPolicy;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
@@ -47,10 +49,11 @@ class SystemSettingsRequest extends FormRequest
 
   public function rules(): array
   {
-    $customSmtpRequired = Rule::requiredIf(fn (): bool => $this->input('cms_mail_mode') === SystemSettings::CMS_MAIL_MODE_CUSTOM && $this->input('cms_mail_mailer') === 'smtp');
+    $custom = $this->input('section') === 'mail_custom' || $this->input('cms_mail_mode') === SystemSettings::CMS_MAIL_MODE_CUSTOM;
+    $customSmtpRequired = Rule::requiredIf($custom && $this->input('cms_mail_mailer') === 'smtp');
 
     $sectionRules = [
-      'section' => ['required', Rule::in(['general', 'project', 'mail', 'privacy', 'logging'])],
+      'section' => ['required', Rule::in(['general', 'project', 'mail', 'mail_mode', 'mail_custom', 'privacy', 'logging'])],
     ];
 
     return match ($this->input('section')) {
@@ -73,25 +76,55 @@ class SystemSettingsRequest extends FormRequest
         'project_name' => ['nullable', 'string', 'max:255'],
         'project_tagline' => ['nullable', 'string', 'max:255'],
       ],
-      'mail' => $sectionRules + [
-        'cms_mail_mode' => ['required', Rule::in([SystemSettings::CMS_MAIL_MODE_ENV, SystemSettings::CMS_MAIL_MODE_CUSTOM])],
-        'cms_mail_mailer' => ['required_if:cms_mail_mode,'.SystemSettings::CMS_MAIL_MODE_CUSTOM, Rule::in(CmsMailSettingsResolver::SUPPORTED_MAILERS)],
+      'mail_mode' => $sectionRules + [
+        'cms_mail_mode' => [
+          'bail', 'required', Rule::in([SystemSettings::CMS_MAIL_MODE_ENV, SystemSettings::CMS_MAIL_MODE_CUSTOM]),
+          function (string $attribute, mixed $value, \Closure $fail): void {
+            if ($value === SystemSettings::CMS_MAIL_MODE_CUSTOM
+              && ! app(CmsMailSettingsResolver::class)->customSettingsAreComplete()) {
+              $fail('webblocks-cms::admin.system_settings.mail_custom_incomplete')->translate();
+            }
+          },
+        ],
+      ],
+      'mail', 'mail_custom' => $sectionRules + [
+        ...($this->input('section') === 'mail' ? [
+          'cms_mail_mode' => ['required', Rule::in([SystemSettings::CMS_MAIL_MODE_ENV, SystemSettings::CMS_MAIL_MODE_CUSTOM])],
+        ] : []),
+        'cms_mail_mailer' => [Rule::requiredIf($custom), Rule::in(CmsMailSettingsResolver::SUPPORTED_MAILERS)],
         'cms_mail_host' => ['nullable', $customSmtpRequired, 'string', 'max:255'],
         'cms_mail_port' => ['nullable', $customSmtpRequired, 'integer', 'min:1', 'max:65535'],
         'cms_mail_encryption' => ['nullable', Rule::in(['', 'tls', 'ssl'])],
         'cms_mail_username' => ['nullable', 'string', 'max:255'],
         'cms_mail_password' => ['nullable', 'string', 'max:1024'],
         'cms_mail_clear_password' => ['required', 'boolean'],
-        'cms_mail_from_address' => ['nullable', 'required_if:cms_mail_mode,'.SystemSettings::CMS_MAIL_MODE_CUSTOM, 'email', 'max:255'],
+        'cms_mail_from_address' => ['nullable', Rule::requiredIf($custom), 'email', 'max:255'],
         'cms_mail_from_name' => ['nullable', 'string', 'max:255'],
         'cms_mail_reply_to_address' => ['nullable', 'email', 'max:255'],
         'cms_mail_timeout' => ['nullable', 'integer', 'min:1', 'max:300'],
+        'cms_mail_pending_mode' => ['nullable', Rule::in([SystemSettings::CMS_MAIL_MODE_ENV, SystemSettings::CMS_MAIL_MODE_CUSTOM])],
       ],
       'privacy' => $sectionRules + [
         'visitor_consent_banner_enabled' => ['required', 'boolean'],
       ],
       default => $sectionRules,
     };
+  }
+
+  protected function failedValidation(Validator $validator): void
+  {
+    if ($this->expectsJson() || ! in_array($this->input('section'), ['mail', 'mail_mode', 'mail_custom'], true)) {
+      parent::failedValidation($validator);
+    }
+
+    throw new ValidationException($validator, redirect()
+      ->route('admin.system.settings.edit', ['tab' => 'mail', 'verification_locale' => $this->query('verification_locale')])
+      ->withErrors($validator, $this->errorBag)
+      ->withInput($this->only([
+        'section', 'cms_mail_mode', 'cms_mail_pending_mode', 'cms_mail_mailer', 'cms_mail_host', 'cms_mail_port',
+        'cms_mail_encryption', 'cms_mail_timeout', 'cms_mail_username', 'cms_mail_clear_password', 'cms_mail_from_address',
+        'cms_mail_from_name', 'cms_mail_reply_to_address',
+      ])));
   }
 
   public function settingsPayload(): array
@@ -121,14 +154,14 @@ class SystemSettingsRequest extends FormRequest
       ];
     }
 
-    if ($this->validated('cms_mail_mode') === SystemSettings::CMS_MAIL_MODE_ENV) {
+    if ($this->validated('section') === 'mail_mode' || $this->validated('cms_mail_mode') === SystemSettings::CMS_MAIL_MODE_ENV) {
       return [
-        SystemSettings::CMS_MAIL_MODE => SystemSettings::CMS_MAIL_MODE_ENV,
+        SystemSettings::CMS_MAIL_MODE => $this->validated('cms_mail_mode'),
       ];
     }
 
     $payload = [
-      SystemSettings::CMS_MAIL_MODE => $this->validated('cms_mail_mode'),
+      ...($this->validated('section') === 'mail' ? [SystemSettings::CMS_MAIL_MODE => $this->validated('cms_mail_mode')] : []),
       SystemSettings::CMS_MAIL_MAILER => $this->validated('cms_mail_mailer'),
       SystemSettings::CMS_MAIL_HOST => $this->validated('cms_mail_host'),
       SystemSettings::CMS_MAIL_PORT => $this->validated('cms_mail_port'),
@@ -139,6 +172,13 @@ class SystemSettingsRequest extends FormRequest
       SystemSettings::CMS_MAIL_REPLY_TO_ADDRESS => $this->validated('cms_mail_reply_to_address'),
       SystemSettings::CMS_MAIL_TIMEOUT => $this->validated('cms_mail_timeout'),
     ];
+
+    if ($this->validated('section') === 'mail_custom' && $this->validated('cms_mail_mailer') !== 'smtp') {
+      return array_diff_key($payload, array_flip([
+        SystemSettings::CMS_MAIL_HOST, SystemSettings::CMS_MAIL_PORT, SystemSettings::CMS_MAIL_ENCRYPTION,
+        SystemSettings::CMS_MAIL_USERNAME, SystemSettings::CMS_MAIL_TIMEOUT,
+      ]));
+    }
 
     if ($this->validated('cms_mail_clear_password')) {
       $payload[SystemSettings::CMS_MAIL_PASSWORD] = null;

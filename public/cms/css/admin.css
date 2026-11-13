@@ -1688,3 +1688,13 @@ input.wb-admin-table-grid-input:focus {
     border-radius: var(--wb-r-md);
     background: #fff;
 }
+
+.wb-mail-mode-card:has(input[type="radio"]:checked) {
+    border-color: var(--wb-primary);
+    box-shadow: inset 0 0 0 1px var(--wb-primary);
+}
+
+.wb-mail-mode-card .wb-table th {
+    width: 42%;
+    overflow-wrap: anywhere;
+}

@@ -57,6 +57,55 @@ class VerificationEmailSettingsTest extends TestCase
     return ['locale' => $locale, 'intent' => 'save'] + app(VerificationEmailTemplates::class)->defaults($locale);
   }
 
+  public function test_mail_mode_and_custom_settings_are_saved_independently(): void
+  {
+    $this->actingAs($this->actor());
+    $settings = app(SystemSettings::class);
+    $saveUrl = route('admin.system.settings.update', ['verification_locale' => 'tr']);
+    $mailUrl = route('admin.system.settings.edit', ['tab' => 'mail', 'verification_locale' => 'tr']);
+    $mode = ['section' => 'mail_mode', 'cms_mail_mode' => 'custom'];
+    $custom = [
+      'section' => 'mail_custom', 'cms_mail_pending_mode' => 'custom', 'cms_mail_mailer' => 'smtp',
+      'cms_mail_host' => 'smtp.example.test', 'cms_mail_port' => '587', 'cms_mail_encryption' => 'tls',
+      'cms_mail_username' => 'custom-smtp-user', 'cms_mail_password' => 'synthetic-custom-secret',
+      'cms_mail_from_address' => 'cms@example.test',
+    ];
+
+    $this->put($saveUrl, $mode + $custom)->assertRedirect($mailUrl)->assertSessionHasErrors('cms_mail_mode');
+    $this->assertSame('env', $settings->cmsMailMode());
+    $this->assertNull($settings->cmsMailSettings()['host']);
+
+    $this->put($saveUrl, array_replace($custom, ['cms_mail_port' => 'invalid']))
+      ->assertRedirect($mailUrl)->assertSessionHasErrors('cms_mail_port')
+      ->assertSessionMissing('_old_input.cms_mail_password');
+    $this->get($mailUrl)->assertOk()
+      ->assertSee('data-wb-admin-autoload-overlay', false)->assertDontSee('synthetic-custom-secret');
+
+    $this->put($saveUrl, $custom + ['cms_mail_mode' => 'custom'])
+      ->assertRedirect($mailUrl)->assertSessionHasNoErrors()
+      ->assertSessionHasInput('cms_mail_pending_mode', 'custom');
+    $this->assertSame('env', $settings->cmsMailMode());
+    $this->assertSame('smtp.example.test', $settings->cmsMailSettings()['host']);
+
+    config(['mail.mailers.smtp.url' => 'smtp://env-user:synthetic-env-secret@environment.example.test:2525']);
+    $this->get($mailUrl)->assertOk()
+      ->assertSee('data-active-mode="env"', false)->assertSee('value="custom" checked', false)
+      ->assertSee('environment.example.test')->assertSee('smtp.example.test')->assertSee('2525')
+      ->assertDontSee('synthetic-env-secret')->assertDontSee('synthetic-custom-secret');
+
+    $this->put($saveUrl, $mode + ['cms_mail_host' => 'ignored.example.test'])
+      ->assertRedirect($mailUrl)->assertSessionHasNoErrors();
+    $this->assertSame('custom', $settings->cmsMailMode());
+    $this->assertSame('smtp.example.test', $settings->cmsMailSettings()['host']);
+
+    $this->put($saveUrl, [
+      'section' => 'mail_custom', 'cms_mail_mailer' => 'sendmail', 'cms_mail_from_address' => 'cms@example.test',
+    ])->assertRedirect($mailUrl)->assertSessionHasNoErrors();
+    $this->assertSame('custom', $settings->cmsMailMode());
+    $this->assertSame('smtp.example.test', $settings->cmsMailSettings()['host']);
+    $this->assertTrue($settings->cmsMailPasswordConfigured());
+  }
+
   public function test_only_active_super_admins_with_system_access_can_save_preview_or_reset(): void
   {
     foreach (['save', 'preview', 'reset'] as $intent) {

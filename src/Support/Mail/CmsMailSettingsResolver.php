@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Mail;
 
 use Illuminate\Contracts\Mail\Factory as MailFactory;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\ConfigurationUrlParser;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -61,24 +62,60 @@ class CmsMailSettingsResolver
     $settings = $this->systemSettings->cmsMailSettings();
     $custom = $settings['mode'] === SystemSettings::CMS_MAIL_MODE_CUSTOM;
 
-    $normalizedCustomSettings = $custom ? $this->normalizedCustomSettings($settings) : $settings;
-    $ready = $custom ? $this->customSettingsAreComplete($normalizedCustomSettings) : true;
+    $details = $custom ? $this->customSummary($settings) : $this->environmentSummary();
+    $ready = ! $custom || $this->customSettingsAreComplete($settings);
 
-    return [
+    return $details + [
       'active_mode' => $custom ? 'CMS custom settings' : 'Environment config',
       'mode' => $settings['mode'],
-      'mailer' => $custom ? $normalizedCustomSettings['mailer'] : (string) config('mail.default', 'log'),
-      'host' => $custom ? ($normalizedCustomSettings['host'] ?? '') : (string) config('mail.mailers.'.config('mail.default').'.host', ''),
-      'port' => $custom ? ($normalizedCustomSettings['port'] ?? '') : (string) config('mail.mailers.'.config('mail.default').'.port', ''),
-      'encryption' => $custom ? ($normalizedCustomSettings['encryption'] ?? '') : (string) (config('mail.mailers.'.config('mail.default').'.scheme') ?? config('mail.mailers.'.config('mail.default').'.encryption', '')),
-      'username_configured' => $custom ? $normalizedCustomSettings['username'] !== null : filled(config('mail.mailers.'.config('mail.default').'.username')),
-      'password_configured' => $custom ? $this->systemSettings->cmsMailPasswordConfigured() : filled(config('mail.mailers.'.config('mail.default').'.password')),
-      'from_address' => $custom ? ($normalizedCustomSettings['from_address'] ?? '') : (string) config('mail.from.address', ''),
-      'from_name' => $custom ? ($normalizedCustomSettings['from_name'] ?? '') : (string) config('mail.from.name', ''),
       'config_cached' => app()->configurationIsCached(),
       'environment' => app()->environment(),
       'ready' => $ready,
       'status' => $ready ? 'Ready' : 'Incomplete or invalid custom settings',
+    ];
+  }
+
+  public function environmentSummary(): array
+  {
+    $mailer = (string) config('mail.default', 'log');
+    $settings = (array) (config('mail.driver') ? config('mail') : config('mail.mailers.'.$mailer));
+    if (isset($settings['url'])) {
+      try {
+        $settings = (new ConfigurationUrlParser)->parseConfiguration($settings);
+      } catch (\InvalidArgumentException) {
+        // Keep the configured fallback fields available for diagnosis.
+      }
+    }
+    $settings['from_address'] = data_get($settings, 'from.address', config('mail.from.address'));
+    $settings['from_name'] = data_get($settings, 'from.name', config('mail.from.name'));
+    $settings['reply_to_address'] = data_get($settings, 'reply_to.address', config('mail.reply_to.address'));
+
+    $transport = $settings['driver'] ?? $settings['transport'] ?? $mailer;
+
+    return $this->summary($settings, $mailer, in_array($transport, ['smtp', 'smtps'], true));
+  }
+
+  public function customSummary(array $settings): array
+  {
+    $settings = $this->normalizedCustomSettings($settings);
+
+    return $this->summary($settings, $settings['mailer'], $settings['mailer'] === 'smtp');
+  }
+
+  private function summary(array $settings, string $mailer, bool $smtp): array
+  {
+    return [
+      'mailer' => $mailer,
+      'smtp' => $smtp,
+      'host' => $settings['host'] ?? '',
+      'port' => $settings['port'] ?? '',
+      'encryption' => $settings['scheme'] ?? $settings['encryption'] ?? '',
+      'timeout' => $settings['timeout'] ?? '',
+      'username_configured' => filled($settings['username'] ?? null),
+      'password_configured' => filled($settings['password'] ?? null),
+      'from_address' => $settings['from_address'] ?? '',
+      'from_name' => $settings['from_name'] ?? '',
+      'reply_to_address' => $settings['reply_to_address'] ?? '',
     ];
   }
 
@@ -126,7 +163,7 @@ class CmsMailSettingsResolver
   public function customSettingsAreComplete(?array $settings = null): bool
   {
     try {
-      $this->assertCustomSettingsAreComplete($settings ?? $this->systemSettings->cmsMailSettings());
+      $this->assertCustomSettingsAreComplete($this->normalizedCustomSettings($settings ?? $this->systemSettings->cmsMailSettings()));
 
       return true;
     } catch (CmsMailConfigurationException) {
