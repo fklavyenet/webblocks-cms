@@ -325,6 +325,7 @@ return [
     'updated' => 'Locale updated successfully.',
   ],
   'topbar' => [
+    'view_site' => 'View site',
     'quick_settings' => 'Quick settings',
     'system_updates' => 'System Updates',
     'color_mode' => 'Color mode',
@@ -363,6 +364,8 @@ return [
     'admin_locale_help' => 'Controls the default CMS admin interface language until user-level language preferences are available.',
   ],
   'system_settings' => [
+    'panel_appearance' => 'Panel appearance',
+    'panel_appearance_help' => 'Preset and accent changes apply immediately and are saved in this browser.',
     'logging' => 'Logging',
     'log_format' => 'Log format',
     'logging_unset' => 'Choose a format',

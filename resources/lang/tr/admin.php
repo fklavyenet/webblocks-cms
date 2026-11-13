@@ -219,6 +219,7 @@ $translations = [
     'updated' => 'Dil güncellendi.',
   ],
   'topbar' => [
+    'view_site' => 'Siteyi gör',
     'quick_settings' => 'Hızlı ayarlar',
     'system_updates' => 'Sistem Güncellemeleri',
     'color_mode' => 'Renk modu',
@@ -257,6 +258,8 @@ $translations = [
     'admin_locale_help' => 'Kullanıcı bazli dil tercihleri eklenene kadar CMS yönetim arayüzünün varsayılan dilini belirler.',
   ],
   'system_settings' => [
+    'panel_appearance' => 'Panel görünümü',
+    'panel_appearance_help' => 'Görünüm ve vurgu rengi değişiklikleri anında uygulanır ve bu tarayıcıya kaydedilir.',
     'logging' => 'Loglar',
     'log_format' => 'Log biçimi',
     'logging_unset' => 'Bir biçim seçin',

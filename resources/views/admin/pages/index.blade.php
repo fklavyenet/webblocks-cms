@@ -158,15 +158,15 @@
                     <table class="wb-table wb-table-striped wb-table-hover wb-admin-pages-table" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
-                                @if ($showViewColumn)
-                                    @include('webblocks-cms::admin.pages.columns.view', ['columnHeading' => true])
-                                @endif
                                 <th>
                                     <label class="wb-check" for="select_all_visible_pages">
                                         <input id="select_all_visible_pages" type="checkbox" @disabled($deletablePageIds === []) data-wb-admin-select-all-visible aria-label="{{ $adminText('pages.select_all_visible') }}">
                                         <span class="wb-sr-only">{{ $adminText('pages.select_all_visible') }}</span>
                                     </label>
                                 </th>
+                                @if ($showViewColumn)
+                                    @include('webblocks-cms::admin.pages.columns.view', ['columnHeading' => true])
+                                @endif
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'title', 'label' => $adminText('pages.columns.title_id')])
                                 @foreach ($detailColumns as $listingColumn)
                                     @include('webblocks-cms::admin.pages.columns.'.$listingColumn, ['columnHeading' => true])
@@ -185,15 +185,15 @@
                                     $editUrl = route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]);
                                 @endphp
                                 <tr>
-                                    @if ($showViewColumn)
-                                        @include('webblocks-cms::admin.pages.columns.view', ['columnHeading' => false])
-                                    @endif
                                     <td>
                                         <label class="wb-check" for="page_select_{{ $page->id }}">
                                             <input id="page_select_{{ $page->id }}" type="checkbox" @disabled(! in_array($page->id, $deletablePageIds, true)) value="{{ $page->id }}" data-wb-admin-row-select aria-label="{{ $adminText('pages.select_page', ['title' => $page->title]) }}">
                                             <span class="wb-sr-only">{{ $adminText('pages.select_page', ['title' => $page->title]) }}</span>
                                         </label>
                                     </td>
+                                    @if ($showViewColumn)
+                                        @include('webblocks-cms::admin.pages.columns.view', ['columnHeading' => false])
+                                    @endif
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-page-cell">
                                         <div class="wb-admin-pages-page-meta">
                                             <div class="wb-admin-pages-title-row wb-cluster wb-cluster-2 wb-flex-wrap">

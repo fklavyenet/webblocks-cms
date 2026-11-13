@@ -77,6 +77,10 @@ class LocaleResolver
 
   public function enabledForSite(Site $site): Collection
   {
+    if ($site->relationLoaded('enabledLocales')) {
+      return $site->getRelation('enabledLocales');
+    }
+
     return app(RequestMemo::class)->remember('locale.site', [$site->getConnectionName(), $site->id], fn () => $site->enabledLocales()->get());
   }
 

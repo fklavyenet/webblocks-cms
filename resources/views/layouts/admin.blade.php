@@ -8,7 +8,7 @@
 
     $adminLocale = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
-    $adminText = static fn (string $key) => $adminTranslator->admin($key, $adminLocale);
+    $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocale, $replace);
 @endphp
 <html lang="{{ str_replace('_', '-', $adminLocale) }}">
     @php
@@ -193,7 +193,7 @@
             </aside>
 
             <div class="wb-dashboard-body">
-                <header class="wb-navbar">
+                <header class="wb-navbar wb-admin-navbar">
                     <button
                         class="wb-navbar-toggle"
                         type="button"
@@ -211,7 +211,7 @@
                     </div>
 
                     <div class="wb-navbar-end wb-ms-auto">
-                        <div class="wb-cluster">
+                        <div class="wb-cluster wb-cluster-2">
                             @include('webblocks-cms::admin.partials.panel-notifications-indicator')
                             @include('webblocks-cms::admin.partials.quick-settings')
                             @if ($user?->can('access-system') && Route::has('admin.system.updates.indicator'))
@@ -239,31 +239,7 @@
                                 <i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>
                             </button>
 
-                            <div class="wb-theme-switcher wb-dropdown wb-dropdown-end">
-                                <button class="wb-btn wb-btn-ghost wb-theme-switcher-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-theme-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.theme_settings') }}" title="{{ $adminText('topbar.theme_settings') }}">
-                                    <i class="wb-icon wb-icon-palette wb-theme-switcher-icon" aria-hidden="true"></i>
-                                    <i class="wb-icon wb-icon-chevron-down wb-theme-switcher-chevron" aria-hidden="true"></i>
-                                </button>
-
-                                <div class="wb-dropdown-menu" id="admin-theme-menu">
-                                    <div class="wb-dropdown-label">{{ $adminText('topbar.presets') }}</div>
-                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="modern">{{ $adminText('topbar.modern') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="minimal">{{ $adminText('topbar.minimal') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="editorial">{{ $adminText('topbar.editorial') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="playful">{{ $adminText('topbar.playful') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-preset-set="corporate">{{ $adminText('topbar.corporate') }}</button>
-                                    <hr class="wb-dropdown-divider">
-                                    <div class="wb-dropdown-label">{{ $adminText('topbar.accent') }}</div>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="ocean">{{ $adminText('topbar.ocean') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="forest">{{ $adminText('topbar.forest') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="sunset">{{ $adminText('topbar.sunset') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="royal">{{ $adminText('topbar.royal') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="mint">{{ $adminText('topbar.mint') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="amber">{{ $adminText('topbar.amber') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="rose">{{ $adminText('topbar.rose') }}</button>
-                                    <button type="button" class="wb-dropdown-item" data-wb-accent-set="slate-fire">{{ $adminText('topbar.slate_fire') }}</button>
-                                </div>
-                            </div>
+                            @include('webblocks-cms::admin.partials.public-site-menu')
 
                             @if (app(AdminLocaleResolver::class)->userPreferencesAvailable())
                                 <div class="wb-language-switcher wb-language-switcher--code wb-dropdown wb-dropdown-end">
@@ -302,9 +278,10 @@
 
                         </div>
 
-                        <div class="wb-user-menu wb-user-menu--avatar wb-dropdown wb-dropdown-end">
-                            <button class="wb-btn wb-btn-ghost wb-btn-icon wb-user-menu-trigger" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.user_menu') }}">
+                        <div class="wb-user-menu wb-dropdown wb-dropdown-end">
+                            <button class="wb-btn wb-btn-ghost wb-user-menu-trigger wb-gap-1" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-controls="admin-user-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.user_menu') }}">
                                 <span class="wb-avatar wb-avatar-sm" aria-hidden="true">{{ $userInitials }}</span>
+                                <i class="wb-icon wb-icon-chevron-down wb-user-menu-chevron" aria-hidden="true"></i>
                             </button>
 
                             <div class="wb-dropdown-menu" id="admin-user-menu">

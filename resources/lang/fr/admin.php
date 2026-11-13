@@ -217,6 +217,7 @@ $translations = [
     'updated' => 'Langue mise à jour avec succès.',
   ],
   'topbar' => [
+    'view_site' => 'Voir le site',
     'quick_settings' => 'Réglages rapides',
     'system_updates' => 'Mises à jour du système',
     'color_mode' => 'Mode de couleur',
@@ -255,6 +256,8 @@ $translations = [
     'admin_locale_help' => 'Définit la langue par défaut de l\'interface d\'administration du CMS tant que les préférences linguistiques par utilisateur ne sont pas disponibles.',
   ],
   'system_settings' => [
+    'panel_appearance' => 'Apparence du panneau',
+    'panel_appearance_help' => 'Les changements de préréglage et de couleur d’accent sont appliqués immédiatement et enregistrés dans ce navigateur.',
     'logging' => 'Journaux',
     'log_format' => 'Format du journal',
     'logging_unset' => 'Choisir un format',

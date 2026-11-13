@@ -9,6 +9,7 @@
     $systemTabs = [
         'general' => $systemText('general'),
         'project' => $systemText('project_identity'),
+        'appearance' => $systemText('panel_appearance'),
         'mail' => $systemText('mail'),
         'privacy' => $systemText('privacy'),
         'security' => $systemText('security'),
@@ -161,6 +162,10 @@
         </div>
 
         </div>
+
+                    <div class="wb-tabs-panel {{ $systemTab === 'appearance' ? 'is-active' : '' }}" id="system-settings-appearance-panel">
+                        @include('webblocks-cms::admin.system.partials.panel-appearance')
+                    </div>
 
                     <div class="wb-tabs-panel {{ $systemTab === 'mail' ? 'is-active' : '' }}" id="system-settings-mail-panel">
         <div class="wb-card wb-card-muted">

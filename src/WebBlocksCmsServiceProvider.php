@@ -105,6 +105,7 @@ use WebBlocks\Cms\Support\Access\PermissionCatalog;
 use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
 use WebBlocks\Cms\Support\Admin\PanelNotificationSources;
 use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
+use WebBlocks\Cms\Support\Admin\PublicSiteMenuComposer;
 use WebBlocks\Cms\Support\Admin\QuickSettingsComposer;
 use WebBlocks\Cms\Support\Auth\TwoFactorAccountState;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
@@ -1643,6 +1644,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->make('view')->composer(self::VIEW_NAMESPACE.'::layouts.admin', PluginAppearanceComposer::class);
     $this->app->make('view')->composer(self::VIEW_NAMESPACE.'::layouts.admin', PanelNotificationsComposer::class);
     $this->app->make('view')->composer(self::VIEW_NAMESPACE.'::layouts.admin', QuickSettingsComposer::class);
+    $this->app->make('view')->composer(self::VIEW_NAMESPACE.'::layouts.admin', PublicSiteMenuComposer::class);
   }
 
   /**

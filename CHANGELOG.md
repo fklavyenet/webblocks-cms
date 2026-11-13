@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.133.3
+
+- Open the active site from the Webadmin top bar, or choose from the sites you can access. Site home pages open in a new tab.
+- Keep bulk selection first and View second in the Pages list. Add a chevron to the account menu and right-align Delete in Site Settings.
+- Move panel presets and accent colors to System Settings → Panel appearance. Changes apply immediately in the current browser.
+
 ## 1.133.2
 
 - Open the page editor by clicking Title – ID in the Pages list.

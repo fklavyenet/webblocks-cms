@@ -131,8 +131,10 @@ class PersonalListingViewsTest extends TestCase
 
     $this->assertSame('Pages: Synthetic studio', trim($xpath->evaluate('string('.$heading.'//h1)')));
     $this->assertSame('1', trim($xpath->evaluate('string('.$heading.'//*[@data-admin-page-count])')));
-    $this->assertSame('View', trim($xpath->evaluate('string('.$table.'/thead/tr/th[1])')));
-    $this->assertSame(route('admin.pages.preview', $page), $xpath->evaluate('string('.$row.'/td[1]/a/@href)'));
+    $this->assertSame(1, $xpath->query($table.'/thead/tr/th[1]//input[@data-wb-admin-select-all-visible]')->length);
+    $this->assertSame(1, $xpath->query($row.'/td[1]//input[@data-wb-admin-row-select]')->length);
+    $this->assertSame('View', trim($xpath->evaluate('string('.$table.'/thead/tr/th[2])')));
+    $this->assertSame(route('admin.pages.preview', $page), $xpath->evaluate('string('.$row.'/td[2]/a/@href)'));
     $this->assertSame('Title – ID', trim($xpath->evaluate('string('.$table.'/thead//th[@data-wb-sort="title"]/a)')));
     $this->assertSame('Blocks', trim($xpath->evaluate('string('.$table.'/thead//th[@data-wb-sort="blocks_count"]/a)')));
     $this->assertSame(0, $xpath->query($table.'/thead//th[@data-wb-sort="id"]')->length);
@@ -146,6 +148,44 @@ class PersonalListingViewsTest extends TestCase
     $this->index(['site' => $this->site->id, 'search' => 'Missing'])->assertOk()
       ->assertSee('No pages found')
       ->assertSee('wb-card-header wb-flex-wrap wb-gap-2 wb-justify-end', false);
+  }
+
+  #[Test]
+  public function top_bar_uses_the_current_site_and_offers_only_accessible_sites_without_context(): void
+  {
+    $this->site->update(['domain' => 'first.example.test']);
+    $other = Site::create(['name' => 'Other site', 'handle' => 'other', 'domain' => 'other.example.test']);
+    $this->index(['site' => $this->site->id])->assertOk()
+      ->assertSee('data-admin-public-site', false)->assertSee($this->site->publicHomeUrl(), false);
+
+    $system = $this->get(route('admin.system.settings.edit', ['tab' => 'appearance']))->assertOk();
+    $system->assertSee('data-admin-public-site', false)
+      ->assertSee('id="system-settings-appearance-panel"', false)
+      ->assertSee('data-wb-admin-panel-preset', false)
+      ->assertSee('data-wb-admin-panel-accent', false)
+      ->assertSee('wb-icon-chevron-down wb-user-menu-chevron', false)
+      ->assertDontSee('id="admin-theme-menu"', false);
+
+    $settings = $this->get(route('admin.sites.edit', $other))->assertOk();
+    $dom = new \DOMDocument;
+    @$dom->loadHTML($system->getContent(), LIBXML_NONET);
+    $xpath = new \DOMXPath($dom);
+    $this->assertSame($this->site->publicHomeUrl(), $xpath->evaluate('string(//a[@data-admin-public-site and @target="_blank"]/@href)'));
+    $this->assertSame('true', $xpath->evaluate('string(//button[@data-wb-tab="system-settings-appearance-panel"]/@aria-selected)'));
+    @$dom->loadHTML($settings->getContent(), LIBXML_NONET);
+    $xpath = new \DOMXPath($dom);
+    $this->assertSame($other->publicHomeUrl(), $xpath->evaluate('string(//a[@data-admin-public-site and @target="_blank"]/@href)'));
+    $this->assertSame(1, $xpath->query('//*[@data-admin-form-actions-danger and contains(@class, "wb-ms-auto")]')->length);
+
+    $editor = $this->cmsActor($this->user(), [$this->site->id]);
+    $this->actingAs($editor);
+    $all = $this->index(['site' => 'all'])->assertOk();
+    @$dom->loadHTML($all->getContent(), LIBXML_NONET);
+    $xpath = new \DOMXPath($dom);
+    $this->assertSame(0, $xpath->query('//a[@data-admin-public-site]')->length);
+    $links = $xpath->query('//*[@id="admin-public-sites"]/a[@target="_blank"]');
+    $this->assertSame(1, $links->length);
+    $this->assertSame($this->site->publicHomeUrl(), $links->item(0)->getAttribute('href'));
   }
 
   #[Test]

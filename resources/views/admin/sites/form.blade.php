@@ -434,6 +434,8 @@
           :cancel-url="route('admin.sites.index')"
           :show-submit="$canManageSiteSettings"
           :submit-label="$site->exists ? $adminText('save_changes') : $adminText('create')"
+          container-class="wb-flex wb-items-center wb-gap-3 wb-flex-wrap wb-w-full"
+          danger-group-class="wb-ms-auto"
           :delete-href="$site->exists && isset($siteDeleteReport) && $canManageDomains ? route('admin.sites.delete', $site) : null"
           :delete-disabled="$site->exists && isset($siteDeleteReport) ? ! $siteDeleteReport->canDelete : false"
           :delete-attributes="$site->exists && isset($siteDeleteReport) && ! $siteDeleteReport->canDelete ? ['title' => implode(' ', $siteDeleteReport->blockers)] : []"

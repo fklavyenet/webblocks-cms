@@ -264,7 +264,7 @@ class AdminTableSortingTest extends TestCase
       $this->assertSame(0, $xpath->query('//select[@id="listing_column_0"]/option[@value="id"]')->length);
       foreach (['view' => null, 'blocks' => 'blocks_count', 'status' => 'status', 'updated' => 'updated_at'] as $column => $sortKey) {
         $heading = $sortKey === null
-          ? $xpath->query('//table[contains(@class, "wb-admin-pages-table")]/thead/tr/th[1]')->item(0)
+          ? $xpath->query('//table[contains(@class, "wb-admin-pages-table")]/thead/tr/th[2]')->item(0)
           : $xpath->query('//th[@data-wb-sort="'.$sortKey.'"]')->item(0);
         $this->assertSame(trim($heading->textContent), trim($xpath->query('//select[@id="listing_column_0"]/option[@value="'.$column.'"]')->item(0)->textContent));
       }

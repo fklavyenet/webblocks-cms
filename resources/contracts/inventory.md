@@ -2090,8 +2090,8 @@ dropped to broaden the query. Renaming preserves the saved configuration;
 updating explicitly replaces it from the currently applied configuration.
 
 Page optional columns are View (public/preview link), Blocks, status and last
-edited. View occupies the first table column when shown. The fixed Title – ID
-column links to the same editor and return URL as the edit icon. Older saved
+edited. Bulk selection occupies the first column. View follows it when shown.
+The fixed Title – ID links to the same editor and return URL as the edit icon. Older saved
 views with a standalone ID column use the combined identity.
 Media optional columns are preview, folder/kind, usage and updated time.
 Optional columns may be hidden or selected once. The other optional columns
@@ -2109,6 +2109,12 @@ and action rows, and responsive column controls. Title – ID sorts by title.
 Blocks, status and last edited also support server-side heading sorting. ID,
 created time and slug are available in Sort by. A personal view can retain any
 of these sort choices. Selection, View and actions are not sortable.
+
+The Webadmin top bar opens the active site's public home in a new tab. Without
+a single-site context, it lists only sites available to the operator. Panel
+presets and accent colors are browser preferences under System Settings →
+Panel appearance. Changes apply immediately in the current browser. The site's
+Public Theme remains a site-level setting for visitor-facing pages.
 
 ## Admin list lookups and bounded page choices
 

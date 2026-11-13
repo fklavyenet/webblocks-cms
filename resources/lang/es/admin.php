@@ -217,6 +217,7 @@ $translations = [
     'updated' => 'Idioma actualizado correctamente.',
   ],
   'topbar' => [
+    'view_site' => 'Ver sitio',
     'quick_settings' => 'Ajustes rápidos',
     'system_updates' => 'Actualizaciones del sistema',
     'color_mode' => 'Modo de color',
@@ -255,6 +256,8 @@ $translations = [
     'admin_locale_help' => 'Controla el idioma predeterminado de la interfaz de administración del CMS hasta que estén disponibles las preferencias de idioma por usuario.',
   ],
   'system_settings' => [
+    'panel_appearance' => 'Apariencia del panel',
+    'panel_appearance_help' => 'Los cambios de estilo y color de acento se aplican de inmediato y se guardan en este navegador.',
     'logging' => 'Registros',
     'log_format' => 'Formato del registro',
     'logging_unset' => 'Seleccione un formato',

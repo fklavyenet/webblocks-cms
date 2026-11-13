@@ -85,6 +85,34 @@
         syncSubmit();
     }
 
+    function bindPanelAppearance() {
+        var panel = document.querySelector('[data-wb-admin-panel-appearance]');
+        var theme = window.WBTheme;
+        if (!panel || !theme) return;
+
+        var preset = panel.querySelector('[data-wb-admin-panel-preset]');
+        var accent = panel.querySelector('[data-wb-admin-panel-accent]');
+
+        function syncAppearance() {
+            var currentPreset = theme.getPreset();
+            preset.value = theme.presets[currentPreset] ? currentPreset : '';
+            accent.value = theme.getAccent();
+        }
+
+        preset.addEventListener('change', function () {
+            theme.setPreset(preset.value);
+            syncAppearance();
+        });
+        accent.addEventListener('change', function () {
+            theme.setAccent(accent.value);
+            syncAppearance();
+        });
+        window.addEventListener('pageshow', syncAppearance);
+        syncAppearance();
+        preset.disabled = false;
+        accent.disabled = false;
+    }
+
     function bindMailMode() {
         var modeForm = document.querySelector('[data-wb-mail-settings]');
         if (!modeForm) return;
@@ -891,6 +919,7 @@
 
     bindSeoEvidence();
     bindDiagnosticConsent();
+    bindPanelAppearance();
     bindMailMode();
     bindVerificationEmail();
     bindAdminTransientUiReset();
