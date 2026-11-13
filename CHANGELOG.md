@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.133.2
+
+- Open the page editor by clicking Title – ID in the Pages list.
+- Show View first and shorten Total Blocks to Blocks. Sort by ID from the list filters.
+- Show the site and count badge in the Pages heading and align list actions to the right.
+
 ## 1.133.1
 
 - Show the translated Edit label on the CMS custom mail settings card.

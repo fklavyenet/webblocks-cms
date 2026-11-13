@@ -2669,6 +2669,8 @@ $translations = [
   ],
   'pages' => [
     'title' => 'Sayfalar',
+    'list_heading' => 'Sayfalar: :site',
+    'title_with_id' => ':title – :id',
     'all_sites' => 'Tüm siteler',
     'all_sites_description' => 'Tüm sitelerdeki sayfalar gösteriliyor. Normal editor akışına dönmek için bir site seçin.',
     'site_description' => ':site:domain için sayfalar gösteriliyor.',
@@ -2717,7 +2719,8 @@ $translations = [
       'page' => 'Sayfa',
       'view' => 'Görünüm',
       'title' => 'Başlık',
-      'total_blocks' => 'Toplam Blok',
+      'title_id' => 'Başlık – Kimlik',
+      'blocks' => 'Bloklar',
     ],
     'converter' => [
       'title' => 'Sayfa Dönüştürücü',

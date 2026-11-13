@@ -2656,6 +2656,8 @@ $translations = [
   ],
   'pages' => [
     'title' => 'Seiten',
+    'list_heading' => 'Seiten: :site',
+    'title_with_id' => ':title – :id',
     'all_sites' => 'Alle Websites',
     'all_sites_description' => 'Seiten aller Websites werden angezeigt. Wählen Sie eine Website, um zum normalen redaktionellen Ablauf zurückzukehren.',
     'site_description' => 'Seiten für :site:domain werden angezeigt.',
@@ -2704,7 +2706,8 @@ $translations = [
       'page' => 'Seite',
       'view' => 'Ansicht',
       'title' => 'Titel',
-      'total_blocks' => 'Blöcke gesamt',
+      'title_id' => 'Titel – ID',
+      'blocks' => 'Blöcke',
     ],
     'converter' => [
       'title' => 'Seitenkonverter',

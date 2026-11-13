@@ -658,17 +658,6 @@ input.wb-admin-table-grid-input:focus {
     line-height: 1.25;
 }
 
-/* The page cell takes the slack, so the id column has none to give: without
-   this the browser wrapped "54" onto two lines. The table class has to be in
-   the selector -- webblocks-ui ships `.wb-table td { white-space: normal;
-   overflow-wrap: anywhere }`, and a lone class loses to it on specificity. */
-.wb-admin-pages-table .wb-admin-pages-id-cell {
-    width: 1%;
-    white-space: nowrap;
-    overflow-wrap: normal;
-    font-variant-numeric: tabular-nums;
-}
-
 .wb-admin-pages-page-cell {
     min-width: 0;
 }
@@ -705,8 +694,7 @@ input.wb-admin-table-grid-input:focus {
     line-height: 1.2;
 }
 
-/* Scoped by the table class on purpose: see the id cell above -- the base
-   `.wb-table td` rule outranks a lone class and these all read as wrapped. */
+/* Scope these overrides to the table to outrank the base cell styles. */
 .wb-admin-pages-table .wb-admin-pages-count-cell,
 .wb-admin-pages-table .wb-admin-pages-status-cell,
 .wb-admin-pages-table .wb-admin-pages-view-cell,

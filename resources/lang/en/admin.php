@@ -2886,6 +2886,8 @@ return [
   ],
   'pages' => [
     'title' => 'Pages',
+    'list_heading' => 'Pages: :site',
+    'title_with_id' => ':title – :id',
     'all_sites' => 'All sites',
     'all_sites_description' => 'Showing pages across all sites. Choose a site to return to the normal editorial flow.',
     'site_description' => 'Showing pages for :site:domain.',
@@ -2934,7 +2936,8 @@ return [
       'page' => 'Page',
       'view' => 'View',
       'title' => 'Title',
-      'total_blocks' => 'Total Blocks',
+      'title_id' => 'Title – ID',
+      'blocks' => 'Blocks',
     ],
     'converter' => [
       'title' => 'Page Converter',

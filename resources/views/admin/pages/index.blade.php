@@ -6,6 +6,8 @@
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
     $siteContext = $activeSite?->name ?? $adminText('pages.all_sites');
+    $showViewColumn = in_array('view', $listingColumns, true);
+    $detailColumns = array_diff($listingColumns, ['view']);
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
     $clearUrl = route('admin.pages.index', ['reset' => 1]);
     // The site filter is a scope, not a narrowing filter: a site with no pages
@@ -33,7 +35,7 @@
     $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('pages');
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => $adminText('pages.title').' · '.$siteContext,
+        'title' => $adminText('pages.list_heading', ['site' => $siteContext]),
         'description' => null,
         'count' => $filteredCount,
     ])
@@ -41,9 +43,8 @@
     @include('webblocks-cms::admin.partials.flash')
     @include('webblocks-cms::admin.pages.partials.system-pages')
     @include('webblocks-cms::admin.partials.listing-views', ['listingColumnLabels' => [
-        'id' => $adminText('pages.columns.id'),
         'view' => $adminText('pages.columns.view'),
-        'blocks' => $adminText('pages.columns.total_blocks'),
+        'blocks' => $adminText('pages.columns.blocks'),
         'status' => $adminText('common.status'),
         'updated' => $adminText('pages.last_edited'),
     ]])
@@ -89,9 +90,9 @@
                         'label' => $adminText('common.sort_by'),
                         'selected' => $filters['sort'],
                         'options' => [
-                            'title' => $adminText('pages.columns.page'),
+                            'title' => $adminText('pages.columns.title'),
                             'id' => $adminText('pages.columns.id'),
-                            'blocks_count' => $adminText('pages.columns.total_blocks'),
+                            'blocks_count' => $adminText('pages.columns.blocks'),
                             'status' => $adminText('common.status'),
                             'updated_at' => $adminText('pages.last_edited'),
                             'created_at' => $adminText('pages.created_at'),
@@ -117,57 +118,35 @@
         </div>
     </div>
 
-    @if ($pages->isEmpty())
-        <div class="wb-card">
-            <div class="wb-card-header wb-cluster wb-cluster-end wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    @if ($canCreatePage)
-                    <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.new_page') }}</a>
-                    @endif
-                    @if ($canCreatePage)
-                    <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.page_converter') }}</a>
-                    @endif
-                    @if ($canCreatePage)
-                    <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">{{ $adminText('pages.import_page') }}</a>
-                    @endif
-                </div>
+    <div class="wb-card" @if ($pages->isNotEmpty()) data-wb-admin-bulk-listing @endif>
+        @if ($canCreatePage)
+            <div class="wb-card-header wb-flex-wrap wb-gap-2 wb-justify-end">
+                <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.new_page') }}</a>
+                <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.page_converter') }}</a>
+                <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">{{ $adminText('pages.import_page') }}</a>
             </div>
+        @endif
 
+        @if ($pages->isEmpty())
             <div class="wb-card-body">
-                    <div class="wb-empty">
-                        <div class="wb-empty-title">{{ $adminText('pages.no_pages') }}</div>
-                        <div class="wb-empty-text">
-                            {{ $hasActiveFilters
-                                ? $adminText('pages.no_pages_filtered_help')
-                                : $adminText('pages.no_pages_help', ['site' => strtolower($siteContext)]) }}
-                        </div>
-                        <div class="wb-empty-action">
-                            @if ($hasActiveFilters)
-                                <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.clear_filters') }}</a>
-                            @endif
-                            @if ($canCreatePage)
+                <div class="wb-empty">
+                    <div class="wb-empty-title">{{ $adminText('pages.no_pages') }}</div>
+                    <div class="wb-empty-text">
+                        {{ $hasActiveFilters
+                            ? $adminText('pages.no_pages_filtered_help')
+                            : $adminText('pages.no_pages_help', ['site' => strtolower($siteContext)]) }}
+                    </div>
+                    <div class="wb-empty-action">
+                        @if ($hasActiveFilters)
+                            <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.clear_filters') }}</a>
+                        @endif
+                        @if ($canCreatePage)
                             <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.create_page') }}</a>
-                            @endif
-                        </div>
+                        @endif
                     </div>
                 </div>
-        </div>
-    @else
-        <div class="wb-card" data-wb-admin-bulk-listing>
-            <div class="wb-card-header wb-cluster wb-cluster-end wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    @if ($canCreatePage)
-                    <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.new_page') }}</a>
-                    @endif
-                    @if ($canCreatePage)
-                    <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.page_converter') }}</a>
-                    @endif
-                    @if ($canCreatePage)
-                    <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">{{ $adminText('pages.import_page') }}</a>
-                    @endif
-                </div>
             </div>
-
+        @else
             <div class="wb-card-body">
                 @include('webblocks-cms::admin.partials.listing-bulk-actions', [
                     'label' => $adminText('common.selected'),
@@ -179,14 +158,17 @@
                     <table class="wb-table wb-table-striped wb-table-hover wb-admin-pages-table" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
+                                @if ($showViewColumn)
+                                    @include('webblocks-cms::admin.pages.columns.view', ['columnHeading' => true])
+                                @endif
                                 <th>
                                     <label class="wb-check" for="select_all_visible_pages">
                                         <input id="select_all_visible_pages" type="checkbox" @disabled($deletablePageIds === []) data-wb-admin-select-all-visible aria-label="{{ $adminText('pages.select_all_visible') }}">
                                         <span class="wb-sr-only">{{ $adminText('pages.select_all_visible') }}</span>
                                     </label>
                                 </th>
-                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'title', 'label' => $adminText('pages.columns.page')])
-                                @foreach ($listingColumns as $listingColumn)
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'title', 'label' => $adminText('pages.columns.title_id')])
+                                @foreach ($detailColumns as $listingColumn)
                                     @include('webblocks-cms::admin.pages.columns.'.$listingColumn, ['columnHeading' => true])
                                 @endforeach
                                 <th>{{ $adminText('common.actions') }}</th>
@@ -200,8 +182,12 @@
                                     $missingTranslations = max($enabledLocaleCount - $translations->count(), 0);
                                     $defaultPublicUrl = $page->isPublished() ? $page->publicUrl() : null;
                                     $previewUrl = route('admin.pages.preview', $page);
+                                    $editUrl = route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]);
                                 @endphp
                                 <tr>
+                                    @if ($showViewColumn)
+                                        @include('webblocks-cms::admin.pages.columns.view', ['columnHeading' => false])
+                                    @endif
                                     <td>
                                         <label class="wb-check" for="page_select_{{ $page->id }}">
                                             <input id="page_select_{{ $page->id }}" type="checkbox" @disabled(! in_array($page->id, $deletablePageIds, true)) value="{{ $page->id }}" data-wb-admin-row-select aria-label="{{ $adminText('pages.select_page', ['title' => $page->title]) }}">
@@ -211,7 +197,7 @@
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-page-cell">
                                         <div class="wb-admin-pages-page-meta">
                                             <div class="wb-admin-pages-title-row wb-cluster wb-cluster-2 wb-flex-wrap">
-                                                <strong>{{ $page->title }}</strong>
+                                                <strong><a href="{{ $editUrl }}" class="wb-link">{{ $adminText('pages.title_with_id', ['id' => $page->id, 'title' => $page->title]) }}</a></strong>
                                                 @if ($page->isSystemPage())<span class="wb-badge">{{ __('webblocks-cms::system_pages.badge') }}</span>@endif
                                                 @if ($showAllSites)
                                                     <span class="wb-status-pill {{ $page->site?->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $page->site?->name }}</span>
@@ -255,7 +241,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    @foreach ($listingColumns as $listingColumn)
+                                    @foreach ($detailColumns as $listingColumn)
                                         @include('webblocks-cms::admin.pages.columns.'.$listingColumn, ['columnHeading' => false])
                                     @endforeach
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-actions-cell">
@@ -271,7 +257,7 @@
                                                 <i class="wb-icon wb-icon-panel-right" aria-hidden="true"></i>
                                             </a>
 
-                                            <a href="{{ route('admin.pages.edit', ['page' => $page, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('pages.edit_page') }}" aria-label="{{ $adminText('pages.edit_page') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('pages.edit_page') }}" aria-label="{{ $adminText('pages.edit_page') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                             @if (in_array($page->id, $deletablePageIds, true))
                                             <button
                                                 type="button"
@@ -286,7 +272,7 @@
                                             @endif
                                         </div>
                                     </td>
-</tr>
+                                </tr>
 
                                 @push('overlays')
                                     @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
@@ -315,8 +301,10 @@
             </div>
 
             @include('webblocks-cms::admin.partials.pagination', ['paginator' => $pages, 'ariaLabel' => $adminText('pages.pagination'), 'compact' => true])
-        </div>
+        @endif
+    </div>
 
+    @if ($pages->isNotEmpty())
         @push('overlays')
             @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
                 'id' => 'bulk-delete-pages-modal',

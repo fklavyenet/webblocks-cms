@@ -112,6 +112,43 @@ class PersonalListingViewsTest extends TestCase
   }
 
   #[Test]
+  public function page_list_shows_the_combined_edit_link_and_keeps_legacy_views_usable(): void
+  {
+    $page = Page::create(['site_id' => $this->site->id, 'title' => 'Synthetic page', 'slug' => 'synthetic-page', 'status' => 'draft']);
+    $id = $this->createView('pages', $this->payload('pages', ['sort' => 'id'], 'status,view,blocks,updated'));
+    DB::table('wbcms_listing_view_columns')->insert(['view_id' => $id, 'position' => 4, 'column_name' => 'id']);
+    DB::table('wbcms_listing_view_columns')->where('view_id', $id)->where('column_name', 'view')->update(['position' => 5]);
+
+    $response = $this->followingRedirects()->get($this->applyUrl($id))->assertOk()
+      ->assertViewHas('listingView', fn ($view) => ! $view['blocked'] && ! $view['changed'])
+      ->assertViewHas('listingColumns', ['view', 'status', 'blocks', 'updated']);
+    $dom = new \DOMDocument;
+    @$dom->loadHTML($response->getContent(), LIBXML_NONET);
+    $xpath = new \DOMXPath($dom);
+    $table = '//table[contains(@class, "wb-admin-pages-table")]';
+    $row = $table.'/tbody/tr[1]';
+    $heading = '//div[contains(@class, "wb-page-header-main")]';
+
+    $this->assertSame('Pages: Synthetic studio', trim($xpath->evaluate('string('.$heading.'//h1)')));
+    $this->assertSame('1', trim($xpath->evaluate('string('.$heading.'//*[@data-admin-page-count])')));
+    $this->assertSame('View', trim($xpath->evaluate('string('.$table.'/thead/tr/th[1])')));
+    $this->assertSame(route('admin.pages.preview', $page), $xpath->evaluate('string('.$row.'/td[1]/a/@href)'));
+    $this->assertSame('Title – ID', trim($xpath->evaluate('string('.$table.'/thead//th[@data-wb-sort="title"]/a)')));
+    $this->assertSame('Blocks', trim($xpath->evaluate('string('.$table.'/thead//th[@data-wb-sort="blocks_count"]/a)')));
+    $this->assertSame(0, $xpath->query($table.'/thead//th[@data-wb-sort="id"]')->length);
+    $title = $xpath->query($row.'//div[contains(@class, "wb-admin-pages-title-row")]/strong/a')->item(0);
+    $this->assertSame('Synthetic page – '.$page->id, $title->textContent);
+    $editUrl = route('admin.pages.edit', ['page' => $page, 'return_url' => $response->viewData('pageReturnUrl')]);
+    $this->assertSame($editUrl, $title->getAttribute('href'));
+    $this->assertSame($editUrl, $xpath->evaluate('string('.$row.'//a[contains(@class, "wb-action-btn-edit")]/@href)'));
+    $this->assertSame(3, $xpath->query('//div[contains(@class, "wb-card-header") and contains(@class, "wb-justify-end")]/a')->length);
+
+    $this->index(['site' => $this->site->id, 'search' => 'Missing'])->assertOk()
+      ->assertSee('No pages found')
+      ->assertSee('wb-card-header wb-flex-wrap wb-gap-2 wb-justify-end', false);
+  }
+
+  #[Test]
   public function page_views_survive_sessions_reset_pagination_and_preserve_results_and_permissions(): void
   {
     foreach (['Beta', 'Alpha'] as $title) {
@@ -304,7 +341,7 @@ class PersonalListingViewsTest extends TestCase
     $redirect = $this->get($this->applyUrl($id))->assertRedirect();
     $this->get($redirect->headers->get('Location'))->assertOk();
     $this->index(['reset' => 1])->assertRedirect(route('admin.pages.index'));
-    $this->index()->assertOk()->assertViewHas('listingColumns', ['id', 'view', 'blocks', 'status', 'updated']);
+    $this->index()->assertOk()->assertViewHas('listingColumns', ['view', 'blocks', 'status', 'updated']);
     $response = $this->index(['site' => 'all', 'columns' => ['status', 'updated', '', '', '']])->assertOk();
     $this->assertSame(['status', 'updated'], $response->viewData('listingColumns'));
     $this->assertStringContainsString('name="columns" value="status,updated"', $response->getContent());

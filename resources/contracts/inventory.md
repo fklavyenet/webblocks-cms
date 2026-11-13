@@ -2089,10 +2089,14 @@ explicit correction or a return to Standard view; they are never silently
 dropped to broaden the query. Renaming preserves the saved configuration;
 updating explicitly replaces it from the currently applied configuration.
 
-Page optional columns are ID, public/preview link, total blocks, status and last
-edited. Media optional columns are preview, folder/kind, usage and updated time.
-Each may be hidden or selected once in a chosen order. Selection, row identity
-and permitted actions remain fixed and available. Grid cards retain their
+Page optional columns are View (public/preview link), Blocks, status and last
+edited. View occupies the first table column when shown. The fixed Title – ID
+column links to the same editor and return URL as the edit icon. Older saved
+views with a standalone ID column use the combined identity.
+Media optional columns are preview, folder/kind, usage and updated time.
+Optional columns may be hidden or selected once. The other optional columns
+follow the chosen order. Selection, row identity and permitted actions remain
+fixed and available. Grid cards retain their
 standard layout. Native query results, counts, pagination and bulk authorization
 remain authoritative. Applied changes show whether they differ from the selected
 view, while unapplied form edits require Apply before a view is saved. Clear
@@ -2101,12 +2105,10 @@ retain their existing site-context rules. Pagination, list/grid/folder links,
 details and safe return URLs preserve the current view and column context.
 
 Personal view management uses the native WebBlocks UI accordion, compact name
-and action rows, and responsive column controls. Pages use the same localized
-labels in the column chooser, table headings and corresponding sort choices.
-Page, ID, total blocks, status and last edited support server-side heading
-sorting; ID and total-block sorting can also be retained in a personal view.
-Created time and slug remain additional sort choices even without standalone
-table columns. Selection, public/preview links and actions are not sortable.
+and action rows, and responsive column controls. Title – ID sorts by title.
+Blocks, status and last edited also support server-side heading sorting. ID,
+created time and slug are available in Sort by. A personal view can retain any
+of these sort choices. Selection, View and actions are not sortable.
 
 ## Admin list lookups and bounded page choices
 

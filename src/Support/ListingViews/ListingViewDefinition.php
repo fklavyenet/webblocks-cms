@@ -20,19 +20,30 @@ final class ListingViewDefinition
 
   public function columns(string $listing): array
   {
-    return $listing === 'pages' ? ['id', 'view', 'blocks', 'status', 'updated'] : ['preview', 'folder', 'usage', 'updated'];
+    return $listing === 'pages' ? ['view', 'blocks', 'status', 'updated'] : ['preview', 'folder', 'usage', 'updated'];
   }
 
   public function normalizeColumns(string $listing, mixed $value): array
   {
     $columns = is_string($value) ? (in_array($value, ['', 'none'], true) ? [] : explode(',', $value)) : $value;
-    $this->ensure(is_array($columns) && count($columns) <= count($this->columns($listing)));
+    $allowed = $this->columns($listing);
+    // Accept the five slots and standalone ID key from older Pages configurations.
+    if ($listing === 'pages') {
+      $allowed[] = 'id';
+    }
+    $this->ensure(is_array($columns) && count($columns) <= count($allowed));
     $columns = array_values(array_filter($columns, fn ($column) => $column !== '' && $column !== null));
     foreach ($columns as $column) {
-      $this->ensure(is_string($column) && in_array($column, $this->columns($listing), true));
+      $this->ensure(is_string($column) && in_array($column, $allowed, true));
     }
 
     $this->ensure(count(array_unique($columns)) === count($columns));
+
+    if ($listing === 'pages') {
+      $remaining = array_values(array_diff($columns, ['id', 'view']));
+
+      return in_array('view', $columns, true) ? ['view', ...$remaining] : $remaining;
+    }
 
     return $columns;
   }

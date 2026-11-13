@@ -13,7 +13,6 @@ class PagesMobileDensityTest extends TestCase
     $view .= (string) file_get_contents($root.'/resources/views/admin/pages/columns/updated.blade.php');
     $css = (string) file_get_contents($root.'/public/cms/css/admin.css');
 
-    $this->assertStringContainsString("'title' => \$adminText('pages.title').' · '.\$siteContext", $view);
     $this->assertStringContainsString('wb-admin-locale-pill', $view);
     $this->assertStringNotContainsString("updatedByUser?->name ?? \$adminText('common.not_recorded')", $view);
     $this->assertStringContainsString('@if ($page->updatedByUser?->name)', $view);
