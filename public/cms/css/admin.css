@@ -1681,3 +1681,10 @@ input.wb-admin-table-grid-input:focus {
     max-width: min(100%, var(--wb-theme-preview-width));
     height: min(720px, 70vh);
 }
+.wb-verification-email-preview-frame {
+    width: 100%;
+    height: min(55vh, 34rem);
+    border: 1px solid var(--wb-border);
+    border-radius: var(--wb-r-md);
+    background: #fff;
+}

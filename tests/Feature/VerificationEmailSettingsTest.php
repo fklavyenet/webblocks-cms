@@ -133,6 +133,11 @@ class VerificationEmailSettingsTest extends TestCase
       ->assertHeader('Cache-Control', 'no-store, private')->assertSee('123456')->assertSee('Northstar Studio')
       ->assertDontSee('<script>', false)->assertDontSee('<a href="https://example.test">', false);
     $this->assertStringContainsString('[Open](https://example.test) **text**', $response->getContent());
+    $this->postJson(route('admin.system.settings.mail.verification'), $payload)
+      ->assertOk()
+      ->assertHeader('Cache-Control', 'no-store, private')
+      ->assertJsonPath('subject', '123456 — Your CMS verification code')
+      ->assertJsonPath('html', $response->getContent());
     $this->assertSame(0, SystemSetting::query()->where('key', 'like', 'system.verification_email.%')->count());
     Notification::assertNothingSent();
   }
@@ -157,10 +162,14 @@ class VerificationEmailSettingsTest extends TestCase
     $this->actingAs($this->actor());
     $this->get(route('admin.system.settings.edit', ['tab' => 'mail', 'verification_locale' => 'tr']))->assertOk()
       ->assertSee('id="verification-email-title"', false)->assertSee('value="{code} — CMS doğrulama kodunuz"', false)
+      ->assertSee('aria-controls="verification-email-preview"', false)
+      ->assertSee('id="verification-email-language-confirm"', false)
+      ->assertSee('sandbox hidden', false)
       ->assertSee('id="verification-email-reset" role="dialog"', false)->assertDontSee('<fieldset', false);
     $this->post(route('admin.system.settings.mail.verification'), array_replace($this->payload('tr'), ['subject' => '{unknown}']))->assertSessionHasErrors('subject');
     $this->get(route('admin.system.settings.edit', ['tab' => 'mail', 'verification_locale' => 'tr']))->assertOk()
-      ->assertSee('value="{unknown}"', false)->assertSee('value="tr" selected', false);
+      ->assertSee('value="{unknown}"', false)->assertSee('value="tr" selected', false)
+      ->assertSee('data-wb-mail-unsaved', false);
     $this->get(route('admin.system.settings.edit', ['tab' => 'mail', 'verification_locale' => ['tr']]))->assertOk();
   }
 }

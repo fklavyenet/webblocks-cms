@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.132.3
+
+- Show the active CMS mail delivery method and move Diagnostics and Send test email to the Mail card header. Open custom mail fields as soon as the mode is selected.
+- Change the verification email language from the card header, with confirmation when the Mail tab has unsaved edits. Preview the current subject and body in a dialog using a sample code.
+- Keep Restore defaults and Save verification email at opposite ends of the card footer.
+
 ## 1.132.2
 
 - Open Manage Site Theme from the Edit Site header, after Site SEO audit.

@@ -62,6 +62,118 @@
         syncSubmit();
     }
 
+    function bindMailMode() {
+        var mode = document.querySelector('[data-wb-mail-mode]');
+        if (!mode) return;
+
+        var customFields = mode.form.querySelector('[data-wb-mail-custom-fields]');
+        var controls = customFields.querySelectorAll('input, select');
+
+        function syncMailMode() {
+            var custom = mode.value === 'custom';
+            customFields.hidden = !custom;
+            controls.forEach(function (control) {
+                control.disabled = !custom;
+            });
+        }
+
+        mode.addEventListener('change', syncMailMode);
+        window.addEventListener('pageshow', syncMailMode);
+        syncMailMode();
+    }
+
+    function bindVerificationEmail() {
+        var editor = document.querySelector('[data-wb-verification-editor]');
+        if (!editor || !window.WBModal) return;
+
+        var mailForm = document.querySelector('[data-wb-mail-settings]');
+        var languageForm = document.querySelector('[data-wb-verification-language]');
+        var language = languageForm.elements.namedItem('verification_locale');
+        var currentLanguage = editor.elements.namedItem('locale').value;
+        var languageConfirm = document.getElementById('verification-email-language-confirm');
+        var pendingLanguage;
+        var watchedForms = [mailForm, editor];
+        var initialValues = watchedForms.map(getFormSnapshot);
+
+        language.addEventListener('change', function () {
+            if (language.value === currentLanguage) return;
+
+            var hasUnsavedChanges = watchedForms.some(function (form, index) {
+                return form.hasAttribute('data-wb-mail-unsaved') || getFormSnapshot(form) !== initialValues[index];
+            });
+            if (!hasUnsavedChanges) {
+                languageForm.submit();
+                return;
+            }
+
+            pendingLanguage = language.value;
+            language.value = currentLanguage;
+            window.WBModal.open(languageConfirm, language);
+        });
+
+        languageConfirm.querySelector('[data-wb-verification-language-confirm]').addEventListener('click', function () {
+            language.value = pendingLanguage;
+            languageForm.submit();
+        });
+
+        var preview = document.getElementById('verification-email-preview');
+        var previewButton = document.querySelector('[data-wb-verification-preview]');
+        var status = preview.querySelector('[data-wb-verification-preview-status]');
+        var error = preview.querySelector('[data-wb-verification-preview-error]');
+        var subject = preview.querySelector('[data-wb-verification-preview-subject]');
+        var frame = preview.querySelector('iframe');
+        var previewRequest;
+
+        previewButton.hidden = false;
+        previewButton.addEventListener('click', async function () {
+            if (!editor.reportValidity()) return;
+
+            var request = new AbortController();
+            previewRequest = request;
+            var payload = new FormData(editor);
+            payload.set('intent', 'preview');
+            status.hidden = false;
+            error.hidden = true;
+            subject.hidden = true;
+            frame.hidden = true;
+            window.WBModal.open(preview, previewButton);
+
+            try {
+                var response = await fetch(editor.action, {
+                    method: 'POST', body: payload, credentials: 'same-origin',
+                    headers: { Accept: 'application/json' }, signal: request.signal
+                });
+                var result = await response.json();
+                if (request.signal.aborted) return;
+                if (response.status === 422) {
+                    error.textContent = result.message || error.dataset.errorMessage;
+                    error.hidden = false;
+                    return;
+                }
+                if (!response.ok || typeof result.html !== 'string' || typeof result.subject !== 'string') {
+                    throw new Error();
+                }
+
+                subject.querySelector('span').textContent = result.subject;
+                subject.hidden = false;
+                frame.srcdoc = result.html.replace('<head>', '<head><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:; base-uri \'none\'; form-action \'none\'">');
+                frame.hidden = false;
+            } catch (_) {
+                if (request.signal.aborted) return;
+                error.textContent = error.dataset.errorMessage;
+                error.hidden = false;
+            } finally {
+                if (previewRequest === request) status.hidden = true;
+            }
+        });
+
+        preview.addEventListener('wb:modal:close', function () {
+            if (previewRequest) previewRequest.abort();
+            previewRequest = null;
+            frame.removeAttribute('srcdoc');
+        });
+    }
+
     function hideLegacyOverlayShell(overlay) {
         var legacyLayer = overlay ? overlay.closest('.wb-overlay-layer--dialog') : null;
 
@@ -724,6 +836,8 @@
 
     bindSeoEvidence();
     bindDiagnosticConsent();
+    bindMailMode();
+    bindVerificationEmail();
     bindAdminTransientUiReset();
     bindAdminHistoryModalLinks();
     bindSiteHandleAutosuggest();
