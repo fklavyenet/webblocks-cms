@@ -33,6 +33,7 @@ return [
     ],
   ],
   'contact_form' => [
+    'default_consent_notice' => 'Doy mi consentimiento para que se traten los datos que comparto en este formulario con el fin de responder a mi mensaje.',
     'privacy_notice' => 'Aviso de privacidad',
     'submit' => 'Enviar mensaje',
     'review' => 'Revisa el formulario',

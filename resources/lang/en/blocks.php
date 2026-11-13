@@ -36,6 +36,7 @@ return [
     ],
   ],
   'contact_form' => [
+    'default_consent_notice' => 'I consent to the information I share through this form being processed so you can respond to my message.',
     'privacy_notice' => 'Privacy notice',
     'submit' => 'Send message',
     'review' => 'Please review the form',

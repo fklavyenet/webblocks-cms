@@ -8,8 +8,13 @@
     $sendEmailNotification = (bool) old('send_email_notification', $block->setting('send_email_notification', true));
     $storeSubmissions = (bool) old('store_submissions', $block->setting('store_submissions', true));
     $consentRequired = (bool) old('consent_required', $block->setting('consent_required', false));
-    $consentLabel = old('consent_label', $block->consent_label ?? '');
+    $contactLocale = $activeLocale?->code ?? app(\WebBlocks\Cms\Support\Locales\LocaleResolver::class)->default()->code;
+    $defaultNotice = $adminTranslator->get('blocks.contact_form.default_consent_notice', $contactLocale);
+    $savedNotice = $block->getAttribute('translation_state') === 'fallback' ? null : $block->consent_label;
+    $consentLabel = old('consent_label', filled($savedNotice) ? $savedNotice : ($consentRequired ? $defaultNotice : ''));
     $privacyNoticeUrl = old('privacy_notice_url', $block->setting('privacy_notice_url', ''));
+    $canEditSharedFields = ! isset($activeLocale) || $isDefaultLocale;
+    $visibilitySettings = \WebBlocks\Cms\Support\Contact\ContactFormFields::VISIBILITY;
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -85,19 +90,73 @@
         toggle is product-owned and shared across locales, while the wording the
         visitor agreed to is translated, because that wording is the notice.
     --}}
-    <div class="wb-stack wb-gap-2">
+    <div class="wb-stack wb-gap-2" data-wb-contact-consent>
         <label>{{ $adminText('consent_section_label') }}</label>
 
         <label class="wb-check">
             <input type="hidden" name="consent_required" value="0">
-            <input type="checkbox" name="consent_required" value="1" @checked($consentRequired) @disabled(isset($activeLocale) && ! $isDefaultLocale)>
+            <input type="checkbox" name="consent_required" value="1" @checked($consentRequired) @disabled(! $canEditSharedFields) data-wb-contact-consent-toggle>
             <span>{{ $adminText('consent_required') }}</span>
         </label>
 
         <div class="wb-stack wb-gap-1">
-            <label for="consent_label">{{ $adminText('consent_label') }}</label>
-            <textarea id="consent_label" name="consent_label" class="wb-textarea" rows="3">{{ $consentLabel }}</textarea>
-            <span class="wb-text-sm wb-text-muted">{{ $adminText('consent_help') }}</span>
+            <div class="wb-cluster wb-cluster-between wb-cluster-2">
+                <label for="consent_label">{{ $adminText('consent_label') }}</label>
+                <button type="button" class="wb-btn wb-btn-outline wb-btn-sm" data-wb-contact-consent-reset aria-controls="consent_label">{{ $adminText('consent_reset') }}</button>
+            </div>
+            <textarea id="consent_label" name="consent_label" class="wb-textarea" rows="3" maxlength="1000" aria-describedby="contact-consent-help" data-wb-contact-consent-default="{{ $defaultNotice }}">{{ $consentLabel }}</textarea>
+            <span id="contact-consent-help" class="wb-text-sm wb-text-muted">{{ $adminText('consent_help') }}</span>
+            @error('consent_label')
+                <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+            @enderror
+        </div>
+    </div>
+
+    <div class="wb-card" role="group" aria-labelledby="contact-fields-heading">
+        <div class="wb-card-header"><strong id="contact-fields-heading">{{ $adminText('visitor_fields') }}</strong></div>
+        <div class="wb-card-body wb-stack wb-gap-2">
+            <p class="wb-text-sm wb-text-muted">{{ $adminText($canEditSharedFields ? 'visitor_fields_help' : 'visitor_fields_locked_help') }}</p>
+            <div class="wb-table-wrap">
+                <table class="wb-table">
+                    <thead><tr>
+                        <th scope="col">{{ $adminText('visitor_field') }}</th>
+                        <th scope="col">{{ $adminText('visitor_visibility') }}</th>
+                        <th scope="col">{{ $adminText('visitor_label') }}</th>
+                    </tr></thead>
+                    <tbody>
+                        @foreach (['name', 'email', 'subject', 'message'] as $field)
+                            @php
+                                $labelKey = $field.'_label';
+                                $fieldName = $adminTranslator->get('blocks.contact_form.'.$field, $adminLocale);
+                                $defaultLabel = $adminTranslator->get('blocks.contact_form.'.$field, $contactLocale);
+                                $visibilityKey = isset($visibilitySettings[$field]) ? 'contact_'.$visibilitySettings[$field] : null;
+                            @endphp
+                            <tr>
+                                <th scope="row">{{ $fieldName }}</th>
+                                <td>
+                                    @if ($visibilityKey)
+                                        @if ($canEditSharedFields)
+                                            <input type="hidden" name="{{ $visibilityKey }}" value="0">
+                                        @endif
+                                        <label class="wb-check">
+                                            <input type="checkbox" name="{{ $visibilityKey }}" value="1" @checked(old($visibilityKey, $block->setting($visibilitySettings[$field], true))) @disabled(! $canEditSharedFields) aria-label="{{ $adminText('visitor_show') }}: {{ $fieldName }}">
+                                            <span>{{ $adminText('visitor_show') }}</span>
+                                        </label>
+                                    @else
+                                        {{ $adminText('visitor_always_required') }}
+                                    @endif
+                                </td>
+                                <td>
+                                    <input type="text" name="{{ $labelKey }}" class="wb-input" maxlength="255" value="{{ old($labelKey, $block->getAttribute($labelKey)) }}" placeholder="{{ $defaultLabel }}" aria-label="{{ $adminText('visitor_label') }}: {{ $fieldName }}">
+                                    @error($labelKey)
+                                        <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                                    @enderror
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

@@ -36,6 +36,7 @@ use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactConsentValidationException;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Database\ContentVersionUpdates;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mcp\McpConfiguration;
@@ -957,6 +958,7 @@ class InternalContentPlanService
         'submit_label' => $translation->submit_label,
         'success_message' => $translation->success_message,
         'consent_label' => $translation->consent_label,
+        ...$translation->only(ContactFormFields::LABELS),
       ]);
     }
 

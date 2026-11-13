@@ -42,10 +42,10 @@ class StagedUpdateMetadataTest extends TestCase
       }
     }
     $form = $this->block($page, $slot, 'contact_form');
-    $form->settings = json_encode(['consent_required' => true, 'send_email_notification' => false, 'privacy_notice_url' => '/privacy']);
+    $form->settings = json_encode(['consent_required' => true, 'send_email_notification' => false, 'privacy_notice_url' => '/privacy', 'show_name' => false]);
     $form->save();
     foreach ($locales as $locale) {
-      $form->contactFormTranslations()->create(['locale_id' => $locale->id, 'title' => 'Contact', 'submit_label' => 'Send', 'success_message' => 'Thanks', 'consent_label' => $locale->code.' notice']);
+      $form->contactFormTranslations()->create(['locale_id' => $locale->id, 'title' => 'Contact', 'submit_label' => 'Send', 'success_message' => 'Thanks', 'consent_label' => $locale->code.' notice', 'subject_label' => $locale->code.' custom subject']);
     }
 
     $service = app(InternalContentPlanService::class);
@@ -169,6 +169,10 @@ class StagedUpdateMetadataTest extends TestCase
     }
     $form = $page->blocks()->where('type', 'contact_form')->firstOrFail();
     $this->assertSame('/privacy', $form->setting('privacy_notice_url'));
+    $this->assertFalse($form->setting('show_name'));
+    foreach ($locales as $locale) {
+      $this->assertSame($locale->code.' custom subject', $form->contactFormTranslations()->where('locale_id', $locale->id)->value('subject_label'));
+    }
     foreach ($locales as $locale) {
       $this->assertSame($locale->code.' notice', $form->contactFormTranslations()->where('locale_id', $locale->id)->value('consent_label'));
     }

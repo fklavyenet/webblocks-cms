@@ -32,6 +32,7 @@ use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
@@ -616,6 +617,13 @@ class InternalContentApiOperations
     }
 
     $this->validateTranslationShape($translations, $path.'.translations', $errors);
+    if ($blockType->slug === 'contact_form') {
+      foreach (ContactFormFields::LABELS as $field) {
+        if (! ContactFormFields::validLabel($translations[$field] ?? null)) {
+          $errors[] = $this->error($path.'.translations.'.$field, 'Use a text label of at most 255 characters or null.');
+        }
+      }
+    }
     $errors = [...$errors, ...app(ContactConsentRequirements::class)->payloadErrors($blockType->slug, $settings, $translations, $path)];
 
     foreach (BlockTranslationRegistry::TEXT_FIELDS as $field) {

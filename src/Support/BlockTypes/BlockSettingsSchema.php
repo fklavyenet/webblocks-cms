@@ -78,6 +78,7 @@ final class BlockSettingsSchema
     }
     if ($type === 'contact_form') {
       $rules += ['recipient_email' => ['email'], 'send_email_notification' => ['bool'], 'store_submissions' => ['bool'], 'consent_required' => ['bool'], 'submit_label' => ['text', 255], 'success_message' => ['text', 1000], 'consent_label' => ['text', 1000]];
+      $rules += ['show_name' => ['bool'], 'show_subject' => ['bool']];
     }
     if ($type === 'comments') {
       $rules['show_author_name'] = ['bool'];

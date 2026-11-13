@@ -111,7 +111,7 @@ final class BlockSettingsPatchPolicy
       'show_approved' => ['bool'],
       'sort_order' => ['enum', ['newest', 'oldest']],
     ],
-    'contact_form' => ['privacy_notice_url' => ['web_url']],
+    'contact_form' => ['privacy_notice_url' => ['web_url'], 'show_name' => ['bool'], 'show_subject' => ['bool']],
     'container' => [
       'layout_name' => ['text', 255],
       'width' => ['enum', ['sm', 'md', 'lg', 'xl', 'full']],

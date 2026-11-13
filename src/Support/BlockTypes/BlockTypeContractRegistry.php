@@ -800,12 +800,14 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'contact_form' => [
-        'admin_form_fields' => ['Heading', 'Intro text', 'Submit label', 'Success message', 'Recipient email', 'Send email notification', 'Store submissions', 'Privacy notice URL', 'Require a consent checkbox', 'Consent notice'],
-        'translatable_fields' => ['title', 'content', 'submit_label', 'success_message', 'consent_label'],
-        'shared_settings_fields' => ['settings.recipient_email', 'settings.send_email_notification', 'settings.store_submissions', 'settings.consent_required', 'settings.privacy_notice_url'],
+        'admin_form_fields' => ['Heading', 'Intro text', 'Submit label', 'Success message', 'Recipient email', 'Send email notification', 'Store submissions', 'Privacy notice URL', 'Require a consent checkbox', 'Consent notice and reset', 'Visitor field visibility and localized labels'],
+        'translatable_fields' => ['title', 'content', ...BlockTranslationRegistry::CONTACT_FORM_COPY_FIELDS],
+        'shared_settings_fields' => ['settings.recipient_email', 'settings.send_email_notification', 'settings.store_submissions', 'settings.consent_required', 'settings.privacy_notice_url', 'settings.show_name', 'settings.show_subject'],
         'storage_fields' => [
           'Translated visible copy lives in block_contact_form_translations rows.',
           'Shared recipient and notification settings stay in block settings.',
+          'Name and Subject are visible by default and can be hidden across all languages. Hidden values are discarded before validation and storage. Email and Message stay required. Blank or missing field label overrides use the visitor language’s standard label.',
+          'The native editor offers a default consent notice in the selected content language when required. Reset replaces only the unsaved notice for that language; existing custom wording takes precedence until edited or reset and saved.',
           'Optional privacy_notice_url is a shared internal path or HTTP(S) URL in typed relational settings, preserved in revisions and staging. It renders a separately labelled link without changing consent policy. Internal page paths follow the visitor locale with the existing stored-URL fallback; external URLs stay unchanged.',
           'Public submissions are stored as contact_messages rows before notification delivery is attempted.',
           'Required consent rejects missing, null, empty or whitespace-only notice wording on native saves, API creation and translation PATCH. Omission preserves an existing locale notice; new locale rows need their own wording. Page/block/bulk publication, staged promotion and live revision restore check enabled site locales, visible content and active Shared Slots; absent rows use default fallback but existing blank rows fail before publication. Historical drafts remain repairable.',

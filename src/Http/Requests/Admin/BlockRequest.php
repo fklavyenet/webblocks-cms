@@ -29,6 +29,7 @@ use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\Consent\ConsentPresets;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Contact\ContactPrivacyNotice;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoring;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoringException;
@@ -401,6 +402,9 @@ class BlockRequest extends FormRequest
       'store_submissions' => [($isContactForm && ! $isLocaleRequest) ? 'required' : 'nullable', 'boolean'],
       'consent_required' => [($isContactForm && ! $isLocaleRequest) ? 'nullable' : 'nullable', 'boolean'],
       BlockTranslationRegistry::CONTACT_FORM_NOTICE_FIELD => ['nullable', 'string', 'max:1000'],
+      ...array_fill_keys(ContactFormFields::LABELS, [$isContactForm ? 'nullable' : 'prohibited', 'string', 'max:255']),
+      'contact_show_name' => [$isContactForm ? 'nullable' : 'prohibited', 'boolean'],
+      'contact_show_subject' => [$isContactForm ? 'nullable' : 'prohibited', 'boolean'],
       'privacy_notice_url' => [$isContactForm ? 'nullable' : 'prohibited', 'string', 'max:2048'],
       'navigation_menu_key' => [$isNavigationAuto ? 'required' : 'nullable', Rule::in(NavigationItem::menuKeys())],
       'header_actions_show_mode_toggle' => [$isHeaderActions ? 'nullable' : 'prohibited', 'boolean'],
@@ -1329,7 +1333,7 @@ class BlockRequest extends FormRequest
           : [];
         $existingSettings = is_array($existingSettings) ? $existingSettings : [];
         $isTranslatedContactFormEdit = $data['locale'] !== null;
-        $isPrivacyNoticeTranslationEdit = $data['locale'] !== null
+        $isNonDefaultContactFormEdit = $data['locale'] !== null
           && ! Locale::query()->where('code', $data['locale'])->where('is_default', true)->exists();
 
         $data['title'] = trim((string) ($data['heading'] ?? '')) ?: null;
@@ -1351,12 +1355,18 @@ class BlockRequest extends FormRequest
             : (bool) ($data['store_submissions'] ?? true),
           // Shared like the other three: the requirement is one policy for the
           // form, while the wording it is enforced against is translated.
-          'consent_required' => $isPrivacyNoticeTranslationEdit || ! array_key_exists('consent_required', $data)
+          'consent_required' => $isNonDefaultContactFormEdit || ! array_key_exists('consent_required', $data)
             ? (bool) ($existingSettings['consent_required'] ?? false)
             : (bool) $data['consent_required'],
-          'privacy_notice_url' => $isPrivacyNoticeTranslationEdit || ! array_key_exists('privacy_notice_url', $data)
+          'privacy_notice_url' => $isNonDefaultContactFormEdit || ! array_key_exists('privacy_notice_url', $data)
             ? ($existingSettings['privacy_notice_url'] ?? null)
             : ContactPrivacyNotice::normalizeUrl($data['privacy_notice_url']),
+          'show_name' => $isNonDefaultContactFormEdit || ! isset($data['contact_show_name'])
+            ? (bool) ($existingSettings['show_name'] ?? true)
+            : (bool) $data['contact_show_name'],
+          'show_subject' => $isNonDefaultContactFormEdit || ! isset($data['contact_show_subject'])
+            ? (bool) ($existingSettings['show_subject'] ?? true)
+            : (bool) $data['contact_show_subject'],
         ], JSON_UNESCAPED_SLASHES);
       }
 
@@ -2554,6 +2564,7 @@ class BlockRequest extends FormRequest
     }
 
     unset($data['heading'], $data['intro_text'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions'], $data['consent_required'], $data['privacy_notice_url']);
+    unset($data['contact_show_name'], $data['contact_show_subject']);
     unset($data['layout']);
     unset($data['title_tag']);
     unset($data['language']);

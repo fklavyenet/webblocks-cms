@@ -28,6 +28,7 @@ use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
 use WebBlocks\Cms\Support\Pages\PublicPageAccess;
@@ -554,6 +555,8 @@ class SitePromotionApplier
             'content' => $translation['content'] ?? null,
             'submit_label' => $translation['submit_label'] ?? null,
             'success_message' => $translation['success_message'] ?? null,
+            'consent_label' => $translation['consent_label'] ?? null,
+            ...array_intersect_key($translation, array_flip(ContactFormFields::LABELS)),
           ]);
         }
 

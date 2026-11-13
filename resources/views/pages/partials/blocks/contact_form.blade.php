@@ -6,12 +6,14 @@
     $contactFormCopy = [
         'submit' => $translator->get('blocks.contact_form.submit', $resolvedLocaleCode),
         'review' => $translator->get('blocks.contact_form.review', $resolvedLocaleCode),
-        'name' => $translator->get('blocks.contact_form.name', $resolvedLocaleCode),
-        'email' => $translator->get('blocks.contact_form.email', $resolvedLocaleCode),
-        'subject' => $translator->get('blocks.contact_form.subject', $resolvedLocaleCode),
-        'message' => $translator->get('blocks.contact_form.message', $resolvedLocaleCode),
         'storage' => $translator->get('blocks.contact_form.storage', $resolvedLocaleCode),
     ];
+    foreach (['name', 'email', 'subject', 'message'] as $field) {
+        $label = trim((string) $block->getAttribute($field.'_label'));
+        $contactFormCopy[$field] = $label !== '' ? $label : $translator->get('blocks.contact_form.'.$field, $block->renderLocaleCode());
+    }
+    $showName = \WebBlocks\Cms\Support\Contact\ContactFormFields::visible($block, 'name');
+    $showSubject = \WebBlocks\Cms\Support\Contact\ContactFormFields::visible($block, 'subject');
     $resolvedSubmitLabel = trim((string) ($block->submit_label ?? ''));
     $submitLabel = $resolvedSubmitLabel === '' || ($resolvedLocaleCode !== 'en' && $resolvedSubmitLabel === 'Send message')
         ? $contactFormCopy['submit']
@@ -60,20 +62,22 @@
                 <input id="contact-form-check-{{ $block->id }}" type="text" name="{{ $formCheckName }}" tabindex="-1" autocomplete="off">
             </div>
 
-            <div class="wb-grid wb-grid-2">
-                <div class="wb-stack wb-gap-1">
-                    <label for="contact-name-{{ $block->id }}" class="wb-label">{{ $contactFormCopy['name'] }}</label>
-                    <input id="contact-name-{{ $block->id }}" name="name" type="text" class="wb-input" value="{{ old('block_id') == $block->id ? old('name') : '' }}" required>
-                    @if ((int) old('block_id') === $block->id)
-                        @foreach ($errors->get('name') as $message)
-                            <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
-                        @endforeach
-                    @endif
-                </div>
+            <div @class(['wb-grid wb-grid-2' => $showName])>
+                @if ($showName)
+                    <div class="wb-stack wb-gap-1">
+                        <label for="contact-name-{{ $block->id }}" class="wb-label">{{ $contactFormCopy['name'] }}</label>
+                        <input id="contact-name-{{ $block->id }}" name="name" type="text" class="wb-input" value="{{ old('block_id') == $block->id ? old('name') : '' }}" maxlength="255" autocomplete="name" required>
+                        @if ((int) old('block_id') === $block->id)
+                            @foreach ($errors->get('name') as $message)
+                                <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                            @endforeach
+                        @endif
+                    </div>
+                @endif
 
                 <div class="wb-stack wb-gap-1">
                     <label for="contact-email-{{ $block->id }}" class="wb-label">{{ $contactFormCopy['email'] }}</label>
-                    <input id="contact-email-{{ $block->id }}" name="email" type="email" class="wb-input" value="{{ old('block_id') == $block->id ? old('email') : '' }}" required>
+                    <input id="contact-email-{{ $block->id }}" name="email" type="email" class="wb-input" value="{{ old('block_id') == $block->id ? old('email') : '' }}" maxlength="255" autocomplete="email" required>
                     @if ((int) old('block_id') === $block->id)
                         @foreach ($errors->get('email') as $message)
                             <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
@@ -82,15 +86,17 @@
                 </div>
             </div>
 
-            <div class="wb-stack wb-gap-1">
-                <label for="contact-subject-{{ $block->id }}" class="wb-label">{{ $contactFormCopy['subject'] }}</label>
-                <input id="contact-subject-{{ $block->id }}" name="subject" type="text" class="wb-input" value="{{ old('block_id') == $block->id ? old('subject') : '' }}">
-                @if ((int) old('block_id') === $block->id)
-                    @foreach ($errors->get('subject') as $message)
-                        <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
-                    @endforeach
-                @endif
-            </div>
+            @if ($showSubject)
+                <div class="wb-stack wb-gap-1">
+                    <label for="contact-subject-{{ $block->id }}" class="wb-label">{{ $contactFormCopy['subject'] }}</label>
+                    <input id="contact-subject-{{ $block->id }}" name="subject" type="text" class="wb-input" value="{{ old('block_id') == $block->id ? old('subject') : '' }}" maxlength="255">
+                    @if ((int) old('block_id') === $block->id)
+                        @foreach ($errors->get('subject') as $message)
+                            <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
+                        @endforeach
+                    @endif
+                </div>
+            @endif
 
             <div class="wb-stack wb-gap-1">
                 <label for="contact-message-{{ $block->id }}" class="wb-label">{{ $contactFormCopy['message'] }}</label>

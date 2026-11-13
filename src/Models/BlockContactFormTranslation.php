@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use WebBlocks\Cms\Models\Concerns\ValidatesBlockTranslationLocale;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 
 class BlockContactFormTranslation extends CmsModel
@@ -36,6 +37,7 @@ class BlockContactFormTranslation extends CmsModel
     'submit_label',
     'success_message',
     'consent_label',
+    ...ContactFormFields::LABELS,
   ];
 
   public function block(): BelongsTo

@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRenderControll
 use WebBlocks\Cms\Http\Controllers\Public\ContactMessageController;
 use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Http\Requests\ContactMessageRequest;
+use WebBlocks\Cms\Mail\ContactMessageNotification;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\ContactMessage;
 use WebBlocks\Cms\Models\Locale;
@@ -41,6 +42,43 @@ class ContactFormConsentTest extends TestCase
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
+
+  #[Test]
+  public function hidden_fields_are_ignored_and_a_nameless_message_can_still_be_answered(): void
+  {
+    $block = $this->seedForm(consentRequired: true, consentLabel: 'I agree.');
+    $this->assertStringContainsString('name="name"', $this->renderPage($block));
+    $this->assertStringContainsString('name="subject"', $this->renderPage($block));
+    $block->update(['settings' => array_replace($block->decodedSettings(), ['show_name' => false, 'show_subject' => false])]);
+
+    $html = $this->renderPage($block->fresh());
+    $this->assertStringNotContainsString('name="name"', $html);
+    $this->assertStringNotContainsString('name="subject"', $html);
+    $this->assertMatchesRegularExpression('/<input[^>]*name="email"[^>]*required/', $html);
+    $this->assertMatchesRegularExpression('/<textarea[^>]*name="message"[^>]*required/', $html);
+    $this->assertStringContainsString('name="consent"', $html);
+
+    $payload = $this->submissionPayload($block, '1', 'Please reply to this email.', '/about');
+    $invalid = ContactMessageRequest::create('/contact-messages', 'POST', array_diff_key($payload, array_flip(['email', 'message'])));
+    $invalid->setContainer($this->app)->setRedirector(app('redirect'));
+    try {
+      $invalid->validateResolved();
+      $this->fail('Email and message are still required.');
+    } catch (ValidationException $exception) {
+      $this->assertSame(['email', 'message'], array_keys($exception->errors()));
+    }
+
+    $request = ContactMessageRequest::create('/contact-messages', 'POST', array_replace($payload, ['name' => ['forged'], 'subject' => 'Forged subject']));
+    $request->setContainer($this->app)->setRedirector(app('redirect'));
+    $request->validateResolved();
+    app(ContactMessageController::class)->store($request);
+
+    $message = ContactMessage::sole();
+    $this->assertNull($message->name);
+    $this->assertNull($message->subject);
+    $this->assertSame('I agree.', $message->consent_label);
+    $this->assertSame('visitor@example.com', (new ContactMessageNotification($message))->envelope()->replyTo[0]->address);
   }
 
   #[Test]

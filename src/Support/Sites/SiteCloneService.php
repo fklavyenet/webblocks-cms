@@ -25,6 +25,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 
 class SiteCloneService
@@ -621,6 +622,8 @@ class SiteCloneService
         'content' => $translation->content,
         'submit_label' => $translation->submit_label,
         'success_message' => $translation->success_message,
+        'consent_label' => $translation->consent_label,
+        ...$translation->only(ContactFormFields::LABELS),
         'created_at' => $translation->created_at,
         'updated_at' => $translation->updated_at,
       ]);

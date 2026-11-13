@@ -39,7 +39,7 @@
             <div class="wb-table-wrap">
                 <table class="wb-table wb-table-striped">
                     <tbody>
-                        <tr><th scope="row" class="wb-table-key">{{ $adminText('name') }}</th><td>{{ $message->name }}</td></tr>
+                        <tr><th scope="row" class="wb-table-key">{{ $adminText('name') }}</th><td>{{ $message->name ?? $adminText('empty_value') }}</td></tr>
                         <tr><th scope="row" class="wb-table-key">{{ $adminText('email') }}</th><td><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></td></tr>
                         <tr><th scope="row" class="wb-table-key">{{ $adminText('subject') }}</th><td>{{ $message->subject ?? $adminText('empty_value') }}</td></tr>
                         <tr><th scope="row" class="wb-table-key">{{ $adminText('message') }}</th><td><div class="wb-contact-message-body">{{ $message->message }}</div></td></tr>
@@ -171,7 +171,7 @@
         <div class="wb-card wb-card-muted">
             <div class="wb-card-body wb-stack wb-gap-2">
                 <div><strong>{{ $message->subject ?: $adminText('contact_message_number', ['id' => $message->id]) }}</strong></div>
-                <div class="wb-text-sm wb-text-muted">{{ $adminText('from_sender', ['name' => $message->name, 'email' => $message->email]) }}</div>
+                <div class="wb-text-sm wb-text-muted">{{ $adminText('from_sender', ['name' => $message->name ?? $adminText('empty_value'), 'email' => $message->email]) }}</div>
             </div>
         </div>
 

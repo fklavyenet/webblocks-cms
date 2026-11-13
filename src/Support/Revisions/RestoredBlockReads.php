@@ -21,6 +21,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Support\Blocks\BlockCopyCatalog;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Relational\RestoredSettingWrites;
 use WebBlocks\Cms\Support\Relational\StructuredSettings;
@@ -137,7 +138,7 @@ final class RestoredBlockReads
       'block_text_translations' => ['title', 'eyebrow', 'subtitle', 'content'],
       'block_button_translations' => ['title'],
       'block_image_translations' => ['caption', 'alt_text'],
-      'block_contact_form_translations' => ['title', 'content', 'submit_label', 'success_message', 'consent_label'],
+      'block_contact_form_translations' => ['title', 'content', ...BlockTranslationRegistry::CONTACT_FORM_COPY_FIELDS],
       'block_plugin_translations' => ['field', 'value'],
     ] as $table => $fields) {
       $lengths = array_map(function ($field) use ($grammar): string {

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Blocks;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Revisions\RestoredBlockReads;
 
@@ -75,7 +76,10 @@ class BlockTranslationWriter
     $isDefaultLocaleEdit = $locale->id === $defaultLocale->id;
 
     if ($isDefaultLocaleEdit || $duplicateDefaultOnCreate) {
-      $this->writeTranslation($block, $family, $defaultLocale->id, $this->translationPayload($family, $data, $translationSourceBlock, $defaultLocale->id));
+      $defaultData = $family === 'contact_form' && ! $isDefaultLocaleEdit
+        ? array_diff_key($data, array_flip(ContactFormFields::LABELS))
+        : $data;
+      $this->writeTranslation($block, $family, $defaultLocale->id, $this->translationPayload($family, $defaultData, $translationSourceBlock, $defaultLocale->id));
     } else {
       $this->ensureDefaultTranslation($block, $family, $defaultLocale->id, $translationSourceBlock);
     }
@@ -258,6 +262,12 @@ class BlockTranslationWriter
         // Authoring validation rejects blank required notices; historical
         // snapshots remain lossless, including the nonblank string '0'.
         'consent_label' => $consentLabel === '' ? null : $consentLabel,
+        ...array_combine(ContactFormFields::LABELS, array_map(
+          fn (string $field) => array_key_exists($field, $data)
+            ? $this->submittedString($data, $field)
+            : $this->existingTranslationValue($block, 'contactFormTranslations', $localeId, $field),
+          ContactFormFields::LABELS,
+        )),
       ],
     };
   }

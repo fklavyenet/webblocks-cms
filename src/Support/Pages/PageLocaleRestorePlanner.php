@@ -28,7 +28,7 @@ final class PageLocaleRestorePlanner
     'text_translations' => ['textTranslations', ['title', 'eyebrow', 'subtitle', 'content', 'meta']],
     'button_translations' => ['buttonTranslations', ['title']],
     'image_translations' => ['imageTranslations', ['caption', 'alt_text']],
-    'contact_form_translations' => ['contactFormTranslations', ['title', 'content', 'submit_label', 'success_message', 'consent_label']],
+    'contact_form_translations' => ['contactFormTranslations', ['title', 'content', ...BlockTranslationRegistry::CONTACT_FORM_COPY_FIELDS]],
   ];
 
   public const GALLERY_FIELDS = ['alt_text', 'caption', 'overlay_title', 'overlay_text'];

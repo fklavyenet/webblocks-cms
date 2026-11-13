@@ -21,9 +21,11 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -32,6 +34,115 @@ class ContactFormPrivacyNoticeTest extends TestCase
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
+
+  #[Test]
+  public function the_editor_offers_a_consent_default_and_reset_for_the_content_language(): void
+  {
+    $block = $this->fixture(null);
+    $block->update(['settings' => ['consent_required' => true]]);
+    $tr = Locale::where('code', 'tr')->firstOrFail();
+    $block->contactFormTranslations()->create(['locale_id' => $tr->id, 'consent_label' => null]);
+    $default = app(CmsTranslator::class)->get('blocks.contact_form.default_consent_notice', 'tr');
+    $render = fn () => view('webblocks-cms::admin.blocks.types.contact_form', [
+      'block' => app(BlockTranslationResolver::class)->resolve($block->fresh(), $tr),
+      'activeLocale' => $tr,
+      'isDefaultLocale' => false,
+      'errors' => new ViewErrorBag,
+    ])->render();
+    $this->assertStringContainsString('data-wb-contact-consent-default="'.$default.'">'.$default.'</textarea>', $render());
+    $this->assertStringContainsString('data-wb-contact-consent-reset', $render());
+
+    $writer = app(BlockPayloadWriter::class);
+    $writer->save($block, $block->page, $this->adminData($block, ['locale' => 'tr', 'consent_label' => 'Özel onay metni.']), 'tr');
+    $this->assertStringContainsString('data-wb-contact-consent-default="'.$default.'">Özel onay metni.</textarea>', $render());
+    $this->assertStringContainsString('Özel onay metni.', $this->renderForm($block->fresh(), 'tr'));
+    $writer->save($block, $block->page, $this->adminData($block, ['locale' => 'tr', 'consent_label' => $default]), 'tr');
+    $this->assertSame($default, $block->contactFormTranslations()->where('locale_id', $tr->id)->value('consent_label'));
+    $this->assertSame('I agree.', $block->contactFormTranslations()->where('locale_id', '!=', $tr->id)->value('consent_label'));
+  }
+
+  #[Test]
+  public function visibility_and_localized_labels_survive_preview_save_and_revision_restore(): void
+  {
+    $block = $this->fixture(null);
+    $writer = app(BlockPayloadWriter::class);
+    $data = $this->adminData($block, ['contact_show_name' => '0', 'contact_show_subject' => '0', 'email_label' => 'Reply address']);
+    $preview = $writer->preview($block, $block->page, $data, 'en');
+    $previewHtml = $this->renderForm($preview, 'en');
+    $this->assertStringContainsString('>Reply address</label>', $previewHtml);
+    $this->assertStringNotContainsString('name="name"', $previewHtml);
+    $this->assertStringContainsString('name="name"', $this->renderForm($block->fresh(), 'en'));
+
+    $writer->save($block, $block->page, $data, 'en');
+    $tr = $this->adminData($block, ['locale' => 'tr', 'contact_show_name' => '1', 'message_label' => 'Talebiniz <örnek>']);
+    $writer->save($block, $block->page, $tr, 'tr');
+    $trHtml = $this->renderForm($block->fresh(), 'tr');
+    $this->assertStringContainsString('>Talebiniz &lt;örnek&gt;</label>', $trHtml);
+    $this->assertStringContainsString('>E-posta adresiniz</label>', $trHtml);
+    $this->assertStringNotContainsString('name="name"', $trHtml);
+    $this->assertStringNotContainsString('name="subject"', $trHtml);
+
+    $revisions = app(PageRevisionManager::class);
+    $revision = $revisions->capture($block->page->fresh());
+    $writer->save($block, $block->page, $this->adminData($block, ['email_label' => '']), 'en');
+    $this->assertStringContainsString('>Email</label>', $this->renderForm($block->fresh(), 'en'));
+    $candidate = Page::create(['site_id' => $block->page->site_id, 'status' => 'draft']);
+    $revisions->applySnapshotToCandidate($candidate, $revision->fresh()->snapshot, ['source_page_id' => $block->page_id, 'revision_id' => $revision->id]);
+    $restored = $candidate->blocks()->sole();
+    $this->assertFalse($restored->setting('show_name'));
+    $this->assertFalse($restored->setting('show_subject'));
+    $this->assertStringContainsString('>Reply address</label>', $this->renderForm($restored, 'en'));
+    $this->assertStringContainsString('>Talebiniz &lt;örnek&gt;</label>', $this->renderForm($restored, 'tr'));
+  }
+
+  #[Test]
+  public function the_api_keeps_labels_locale_owned_and_supports_clearing_an_override(): void
+  {
+    $block = $this->fixture(null);
+    $controller = app(InternalContentResourceController::class);
+    $response = $controller->updateBlock($this->jsonRequest([
+      'locale' => 'tr',
+      'settings' => ['show_subject' => false],
+      'translations' => ['contact_form' => ['subject_label' => 'Sipariş numarası']],
+    ]), $block);
+    $this->assertSame(200, $response->getStatusCode(), $response->getContent());
+    $this->assertFalse($block->fresh()->setting('show_subject'));
+    $tr = $block->contactFormTranslations()->whereHas('locale', fn ($query) => $query->where('code', 'tr'));
+    $this->assertSame('Sipariş numarası', $tr->value('subject_label'));
+    $response = $controller->updateBlock($this->jsonRequest([
+      'locale' => 'tr',
+      'settings' => ['show_subject' => true],
+      'translations' => ['subject_label' => null],
+    ]), $block->fresh());
+    $this->assertSame(200, $response->getStatusCode(), $response->getContent());
+    $this->assertNull($tr->value('subject_label'));
+    $this->assertStringContainsString('>Konu</label>', $this->renderForm($block->fresh(), 'tr'));
+  }
+
+  #[Test]
+  public function the_update_migration_adds_label_and_visibility_storage_without_replacing_existing_copy(): void
+  {
+    $block = $this->fixture('/privacy');
+    $labels = ['name_label', 'email_label', 'subject_label', 'message_label'];
+    Schema::table('wbcms_block_contact_form_translations', fn (Blueprint $table) => $table->dropColumn($labels));
+    Schema::table('wbcms_contact_messages', fn (Blueprint $table) => $table->string('name')->change());
+    foreach (['wbcms_block_content_settings', 'wbcms_snapshot_block_content_settings', 'wbcms_snapshot_contact_translations'] as $table) {
+      $fields = $table === 'wbcms_snapshot_contact_translations' ? $labels : ['show_name', 'show_subject'];
+      $columns = array_merge(...array_map(fn ($field) => [$field, $field.'_kind', $field.'_text'], $fields));
+      Schema::table($table, fn (Blueprint $schema) => $schema->dropColumn($columns));
+    }
+
+    $migration = require dirname(__DIR__, 2).'/database/migrations/updates/2026_11_13_120000_configure_contact_form_fields.php';
+    $migration->up();
+    $migration->up();
+    $this->assertTrue(Schema::hasColumns('wbcms_block_contact_form_translations', $labels));
+    $this->assertTrue(Schema::hasColumns('wbcms_snapshot_contact_translations', $labels));
+    $this->assertTrue(Schema::hasColumns('wbcms_block_content_settings', ['show_name', 'show_subject']));
+    $this->assertTrue(Schema::hasColumns('wbcms_snapshot_block_content_settings', ['show_name', 'show_subject']));
+    $this->assertTrue(collect(Schema::getColumns('wbcms_contact_messages'))->firstWhere('name', 'name')['nullable']);
+    $this->assertSame('I agree.', $block->contactFormTranslations()->sole()->consent_label);
+    $this->assertSame('/privacy', $block->fresh()->setting('privacy_notice_url'));
   }
 
   #[Test]

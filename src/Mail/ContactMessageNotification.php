@@ -25,7 +25,7 @@ class ContactMessageNotification extends Mailable
 
     return new Envelope(
       subject: $subject,
-      replyTo: [new Address($this->contactMessage->email, $this->contactMessage->name)],
+      replyTo: [new Address($this->contactMessage->email, $this->contactMessage->name ?? '')],
     );
   }
 

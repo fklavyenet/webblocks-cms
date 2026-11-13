@@ -19,6 +19,7 @@ use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Revisions\RestoredBlockReads;
@@ -370,6 +371,7 @@ class PageRevisionManager
               'submit_label' => $translation->submit_label,
               'success_message' => $translation->success_message,
               'consent_label' => $translation->consent_label,
+              ...$translation->only(ContactFormFields::LABELS),
             ])
             ->all(),
         ])

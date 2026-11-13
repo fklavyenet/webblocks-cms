@@ -36,6 +36,7 @@ use WebBlocks\Cms\Models\SystemPage;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
 use WebBlocks\Cms\Support\Pages\PublicPageAccess;
@@ -1454,6 +1455,8 @@ class ImportDataMapper
           'content' => $translationData['content'] ?? null,
           'submit_label' => $translationData['submit_label'] ?? null,
           'success_message' => $translationData['success_message'] ?? null,
+          'consent_label' => $translationData['consent_label'] ?? null,
+          ...array_intersect_key($translationData, array_flip(ContactFormFields::LABELS)),
           'created_at' => $translationData['created_at'] ?? null,
           'updated_at' => $translationData['updated_at'] ?? null,
         ]);

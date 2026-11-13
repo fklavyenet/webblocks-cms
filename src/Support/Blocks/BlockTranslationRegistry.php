@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\Blocks;
 
 use WebBlocks\Cms\Models\Block;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 
 class BlockTranslationRegistry
@@ -25,7 +26,7 @@ class BlockTranslationRegistry
 
   public const CONTACT_FORM_NOTICE_FIELD = 'consent_label';
 
-  public const CONTACT_FORM_COPY_FIELDS = [...self::CONTACT_FORM_FALLBACK_FIELDS, self::CONTACT_FORM_NOTICE_FIELD];
+  public const CONTACT_FORM_COPY_FIELDS = [...self::CONTACT_FORM_FALLBACK_FIELDS, self::CONTACT_FORM_NOTICE_FIELD, ...ContactFormFields::LABELS];
 
   private const CORE_FAMILY_FIELDS = [
     'text' => self::TEXT_FIELDS,

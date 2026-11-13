@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Sites\SiteTokenRenderer;
 
@@ -56,6 +57,9 @@ class BlockTranslationResolver
       };
 
       $this->applyResolvedFields($resolved, $family, $translation);
+      if ($family === 'contact_form' && $state === 'translated') {
+        $this->applyAttributes($resolved, $translation->only(ContactFormFields::LABELS));
+      }
     }
 
     if ($this->registry->supportsImageTranslations($resolved)) {
@@ -258,7 +262,7 @@ class BlockTranslationResolver
       'content' => $translation->content,
       'submit_label' => $translation->submit_label ?: 'Send message',
       'success_message' => $translation->success_message ?: config('contact.success_message'),
-      'consent_label' => $translation->consent_label ?: null,
+      'consent_label' => $translation->consent_label,
       'settings' => $settings,
     ]);
   }

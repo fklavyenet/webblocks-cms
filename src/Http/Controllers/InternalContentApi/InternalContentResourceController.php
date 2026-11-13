@@ -32,6 +32,7 @@ use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoring;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceAuthoringException;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
@@ -1893,6 +1894,10 @@ class InternalContentResourceController extends Controller
     $payload = [];
 
     foreach ($input as $field => $value) {
+      if ($family === 'contact_form' && in_array($field, ContactFormFields::LABELS, true)
+        && ! ContactFormFields::validLabel($value)) {
+        return $this->validationError('translations.'.$field, 'Use a text label of at most 255 characters or null.', 'invalid_block_translation_field');
+      }
       $normalized = is_array($value)
         ? json_encode($value, JSON_UNESCAPED_SLASHES)
         : trim((string) $value);
@@ -2101,6 +2106,8 @@ class InternalContentResourceController extends Controller
         'recipient_email' => 'nullable email string; overrides the site and environment recipient fallback chain when present',
         'send_email_notification' => 'boolean; default true',
         'store_submissions' => 'boolean; always true in the native CMS contract',
+        'show_name' => 'boolean; default true. Shared across locales and PATCH-writable. Hidden submissions do not store a name.',
+        'show_subject' => 'boolean; default true. Shared across locales and PATCH-writable. Hidden submissions do not store a subject.',
         'privacy_notice_url' => 'nullable internal path starting with / or valid HTTP(S) URL, max 2048 characters. Shared across locales and PATCH-writable. The separate privacy notice link follows internal page translations in the visitor locale; missing translations fall back to the stored URL. External URLs are unchanged. Omission preserves and null/blank clears the link without changing consent_required.',
         'consent_required' => 'boolean; default false. When true, requires an accepted checkbox and nonblank consent_label for the resolved locale. Missing wording disables the public submit button and all submissions are rejected before storage or notification, even with a forged acceptance. Accepted submissions record consent_accepted_at plus a copy of the wording.',
       ];
@@ -2113,9 +2120,9 @@ class InternalContentResourceController extends Controller
       $payload['validation_rules'] = [
         'block_id' => 'required integer existing block id',
         'page_id' => 'nullable integer existing page id',
-        'name' => 'required string max 255',
+        'name' => 'required string max 255 when visible; ignored otherwise',
         'email' => 'required RFC email max 255',
-        'subject' => 'nullable string max 255',
+        'subject' => 'nullable string max 255 when visible; ignored otherwise',
         'message' => 'required string',
         'consent' => 'when consent_required is true, an accepted value and a nonblank resolved notice are both mandatory',
         '_form_check_name' => 'renderer-generated signed metadata; not normal visitor input',

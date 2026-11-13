@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.133.0
+
+- Fill an empty Contact Form consent notice in the selected content language when consent is required. Edit the notice or reset it to that language’s default. Existing consent records keep the wording accepted at submission.
+- Choose whether to show Name and Subject under Block Fields. Email and Message remain required. Customize all four labels per language, or leave a label blank to use the built-in translation. Hidden fields are ignored on submission.
+
 ## 1.132.4
 
 - Compare the environment and CMS custom mail settings side by side. Select a mode with radio buttons and save it to switch the active delivery method.

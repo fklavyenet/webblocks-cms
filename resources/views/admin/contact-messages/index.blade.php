@@ -159,16 +159,16 @@
                                 <tr>
                                     <td>
                                         <label class="wb-check" for="contact_message_select_{{ $message->id }}">
-                                            <input id="contact_message_select_{{ $message->id }}" type="checkbox" value="{{ $message->id }}" data-wb-admin-row-select aria-label="{{ $adminText('select_message_from', ['name' => $message->name]) }}"
+                                            <input id="contact_message_select_{{ $message->id }}" type="checkbox" value="{{ $message->id }}" data-wb-admin-row-select aria-label="{{ $adminText('select_message_from', ['name' => $message->name ?? $message->email]) }}"
                                                 @if (isset($editableMessageIds[$message->id]))
                                                     name="contact_message_ids[]" form="bulk-contact-message-status" data-wb-admin-bulk-editable-status="{{ $message->status }}"
                                                 @endif
                                             >
-                                            <span class="wb-sr-only">{{ $adminText('select_message_from', ['name' => $message->name]) }}</span>
+                                            <span class="wb-sr-only">{{ $adminText('select_message_from', ['name' => $message->name ?? $message->email]) }}</span>
                                         </label>
                                     </td>
                                     <td class="wb-contact-message-cell">
-                                        <strong>{{ $message->name }}</strong>
+                                        <strong>{{ $message->name ?? '—' }}</strong>
                                     </td>
                                     <td class="wb-contact-message-cell"><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></td>
                                     <td class="wb-contact-message-cell">

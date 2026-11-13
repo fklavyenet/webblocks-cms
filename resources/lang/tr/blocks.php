@@ -33,6 +33,7 @@ return [
     ],
   ],
   'contact_form' => [
+    'default_consent_notice' => 'Bu formda paylaştığım bilgilerin, mesajıma yanıt verilmesi amacıyla işlenmesine onay veriyorum.',
     'privacy_notice' => 'Aydınlatma metni',
     'submit' => 'Mesaj gönder',
     'review' => 'Lütfen formu kontrol edin',

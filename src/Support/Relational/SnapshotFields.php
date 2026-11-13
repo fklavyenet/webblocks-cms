@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Support\Relational;
 
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
+
 final class SnapshotFields
 {
   public static function tables(): array
@@ -28,7 +30,7 @@ final class SnapshotFields
       'snapshot_button_translations' => $ints('locale_id') + $text('title url'),
       'snapshot_image_translations' => $ints('locale_id') + $text('caption alt_text url'),
       'snapshot_plugin_translations' => $ints('locale_id') + $text('field value'),
-      'snapshot_contact_translations' => $ints('locale_id') + $text('title content submit_label success_message consent_label'),
+      'snapshot_contact_translations' => $ints('locale_id') + $text('title content submit_label success_message consent_label') + array_fill_keys(ContactFormFields::LABELS, 'text'),
     ];
     foreach (['block_appearance_settings', 'block_media_settings', 'block_navigation_settings', 'block_content_settings', 'block_content_bindings', 'block_content_collections'] as $name) {
       $tables['snapshot_'.$name] = SettingDefinitions::tables()[$name];

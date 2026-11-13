@@ -2,6 +2,29 @@
     var admin = window.WebBlocksCmsAdmin = window.WebBlocksCmsAdmin || {};
     var body = document.body;
 
+    function fillContactConsent(control, replace) {
+        var group = control.closest('[data-wb-contact-consent]');
+        var notice = group && group.querySelector('[data-wb-contact-consent-default]');
+        if (!notice || (!replace && notice.value.trim())) {
+            return;
+        }
+        notice.value = notice.dataset.wbContactConsentDefault;
+        notice.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    document.addEventListener('change', function (event) {
+        if (event.target.matches('[data-wb-contact-consent-toggle]') && event.target.checked) {
+            fillContactConsent(event.target, false);
+        }
+    });
+
+    document.addEventListener('click', function (event) {
+        var reset = event.target.closest('[data-wb-contact-consent-reset]');
+        if (reset) {
+            fillContactConsent(reset, true);
+        }
+    });
+
     if (body && body.dataset && body.dataset.wbAdminLoginUrl) {
         admin.loginUrl = body.dataset.wbAdminLoginUrl;
     }

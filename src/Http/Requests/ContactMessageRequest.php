@@ -7,6 +7,7 @@ use Illuminate\Validation\Validator;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Support\Contact\ContactFormCheck;
+use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Contact\ContactFormRedirects;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Support\Translations\PublicLocaleContext;
@@ -14,26 +15,40 @@ use WebBlocks\Cms\Support\Translations\PublicLocaleContext;
 class ContactMessageRequest extends FormRequest
 {
   /**
-   * The consent block is read during rules() and again while building the
+   * The form block is read during validation and again while building the
    * payload. `false` is the "not looked up yet" marker so a genuine miss caches
    * as null instead of re-querying on every call.
    */
-  private Block|null|false $resolvedConsentBlock = false;
+  private Block|null|false $resolvedFormBlock = false;
 
   public function authorize(): bool
   {
     return true;
   }
 
+  protected function prepareForValidation(): void
+  {
+    $block = $this->resolvedBlock();
+    foreach (array_keys(ContactFormFields::VISIBILITY) as $field) {
+      if (! ContactFormFields::visible($block, $field)) {
+        // Do not flash values that this form did not ask for after a failed POST.
+        $this->getInputSource()->remove($field);
+        $this->query->remove($field);
+      }
+    }
+  }
+
   public function rules(): array
   {
+    $block = $this->resolvedBlock();
+
     return [
       'block_id' => ['required', 'integer', 'exists:wbcms_blocks,id'],
       'page_id' => ['nullable', 'integer', 'exists:wbcms_pages,id'],
       'source_url' => ['nullable', 'string', 'max:2048'],
-      'name' => ['required', 'string', 'max:255'],
+      'name' => ContactFormFields::visible($block, 'name') ? ['required', 'string', 'max:255'] : ['exclude'],
       'email' => ['required', 'email:rfc', 'max:255'],
-      'subject' => ['nullable', 'string', 'max:255'],
+      'subject' => ContactFormFields::visible($block, 'subject') ? ['nullable', 'string', 'max:255'] : ['exclude'],
       'message' => ['required', 'string'],
       '_form_check_name' => ['nullable', 'string', 'max:255'],
       '_form_stamp' => ['required', 'string', 'max:255'],
@@ -68,14 +83,15 @@ class ContactMessageRequest extends FormRequest
   public function payload(): array
   {
     $data = $this->validated();
+    $subject = trim((string) ($data['subject'] ?? ''));
 
     return [
       'block_id' => (int) $data['block_id'],
       'page_id' => ! empty($data['page_id']) ? (int) $data['page_id'] : null,
       'source_url' => $data['source_url'] ?? null,
-      'name' => trim((string) $data['name']),
+      'name' => array_key_exists('name', $data) ? trim((string) $data['name']) : null,
       'email' => trim((string) $data['email']),
-      'subject' => trim((string) ($data['subject'] ?? '')) ?: null,
+      'subject' => $subject !== '' ? $subject : null,
       'message' => trim((string) $data['message']),
       'form_check_filled' => app(ContactFormCheck::class)->isFilled($this->all(), (int) $data['block_id']),
       'elapsed_seconds' => app(ContactFormCheck::class)->elapsedSeconds($data['_form_stamp'], (int) $data['block_id']),
@@ -83,13 +99,13 @@ class ContactMessageRequest extends FormRequest
       // block's copy can be edited later, and a consent record that changes
       // meaning afterwards proves nothing.
       'consent_accepted_at' => $this->blockRequiresConsent() ? now() : null,
-      'consent_label' => $this->blockRequiresConsent() ? $this->consentBlock()?->consent_label : null,
+      'consent_label' => $this->blockRequiresConsent() ? trim((string) $this->resolvedBlock()?->consent_label) : null,
     ];
   }
 
   private function blockRequiresConsent(): bool
   {
-    $block = $this->consentBlock();
+    $block = $this->resolvedBlock();
 
     if (! $block) {
       return false;
@@ -101,13 +117,13 @@ class ContactMessageRequest extends FormRequest
   private function consentNoticeIsMissing(): bool
   {
     return $this->blockRequiresConsent()
-      && trim((string) ($this->consentBlock()?->consent_label ?? '')) === '';
+      && trim((string) ($this->resolvedBlock()?->consent_label ?? '')) === '';
   }
 
-  private function consentBlock(): ?Block
+  private function resolvedBlock(): ?Block
   {
-    if ($this->resolvedConsentBlock !== false) {
-      return $this->resolvedConsentBlock;
+    if ($this->resolvedFormBlock !== false) {
+      return $this->resolvedFormBlock;
     }
 
     $blockId = $this->input('block_id');
@@ -123,7 +139,7 @@ class ContactMessageRequest extends FormRequest
       );
     }
 
-    return $this->resolvedConsentBlock = $block;
+    return $this->resolvedFormBlock = $block;
   }
 
   protected function getRedirectUrl(): string
