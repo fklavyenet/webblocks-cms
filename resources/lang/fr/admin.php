@@ -367,6 +367,7 @@ $translations = [
     'apply' => 'Appliquer',
     'clear_filters' => 'Effacer les filtres',
     'ascending' => 'Croissant',
+    'edit' => 'Modifier',
     'cancel' => 'Annuler',
     'close' => 'Fermer',
     'default' => 'Par défaut',

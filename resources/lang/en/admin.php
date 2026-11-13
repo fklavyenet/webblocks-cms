@@ -489,6 +489,7 @@ return [
     'apply' => 'Apply',
     'clear_filters' => 'Clear Filters',
     'ascending' => 'Ascending',
+    'edit' => 'Edit',
     'cancel' => 'Cancel',
     'close' => 'Close',
     'default' => 'Default',

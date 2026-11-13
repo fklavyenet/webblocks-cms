@@ -96,6 +96,9 @@ class AdminSidebarGroupingTest extends TestCase
     $this->assertSame(['/webadmin/privacy', '/webadmin/privacy/services', '/webadmin/privacy/texts'], $this->paths($xpath, $groups['Cookies and Privacy']));
     $this->assertNotContains('/webadmin/users', $this->paths($xpath, $groups['System']));
     $this->assertNotContains('/webadmin/system/api-tokens', $this->paths($xpath, $groups['System']));
+    $pluginsLink = $xpath->query('.//a[@href="'.route('admin.system.plugins.index').'"]', $groups['System']);
+    $this->assertSame(1, $pluginsLink->length);
+    $this->assertSame('Plugins', trim($pluginsLink->item(0)->textContent));
     $nav = $xpath->query('//aside[@id="admin-sidebar"]/nav')->item(0);
     $primary = $xpath->query('./div[1]', $nav)->item(0);
     $this->assertSame(['/webadmin', '/webadmin/sites', '/webadmin/pages', '/webadmin/media', '/webadmin/notes', '/webadmin/assets'], $this->paths($xpath, $primary));

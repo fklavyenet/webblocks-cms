@@ -367,6 +367,7 @@ $translations = [
     'apply' => 'Uygula',
     'clear_filters' => 'Filtreleri Temizle',
     'ascending' => 'Artan',
+    'edit' => 'Düzenle',
     'cancel' => 'İptal',
     'close' => 'Kapat',
     'default' => 'Varsayılan',

@@ -145,12 +145,6 @@ final class AdminNavigation
       if ($group['key'] === 'system') {
         $structure = array_values(array_filter($group['items'], fn ($item) => in_array($item['route'], $structureRoutes, true)));
         $group['items'] = array_values(array_filter($group['items'], fn ($item) => ! in_array($item['route'], $structureRoutes, true)));
-        foreach ($group['items'] as &$item) {
-          if ($item['route'] === 'admin.system.plugins.index') {
-          $item['label'] = $adminTranslator->get('jobs.plugin_management', $adminLocale);
-          }
-        }
-        unset($item);
       }
     }
     unset($group);

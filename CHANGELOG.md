@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.133.1
+
+- Show the translated Edit label on the CMS custom mail settings card.
+- Place Save verification email on the left and Restore defaults on the right.
+- Use Plugins for the System sidebar menu item.
+
 ## 1.133.0
 
 - Fill an empty Contact Form consent notice in the selected content language when consent is required. Edit the notice or reset it to that language’s default. Existing consent records keep the wording accepted at submission.

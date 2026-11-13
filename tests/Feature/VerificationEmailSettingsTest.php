@@ -211,6 +211,8 @@ class VerificationEmailSettingsTest extends TestCase
     $this->actingAs($this->actor());
     $this->get(route('admin.system.settings.edit', ['tab' => 'mail', 'verification_locale' => 'tr']))->assertOk()
       ->assertSee('id="verification-email-title"', false)->assertSee('value="{code} — CMS doğrulama kodunuz"', false)
+      ->assertSee('data-wb-target="#settings-custom-mail-modal" aria-haspopup="dialog">Edit</button>', false)
+      ->assertSeeInOrder(['>Save verification email</button>', '>Restore defaults</button>'], false)
       ->assertSee('aria-controls="verification-email-preview"', false)
       ->assertSee('id="verification-email-language-confirm"', false)
       ->assertSee('sandbox hidden', false)

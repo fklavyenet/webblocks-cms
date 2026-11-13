@@ -45,8 +45,8 @@
             @endforeach
         </div>
         <div class="wb-card-footer">
-            <button type="button" class="wb-btn wb-btn-secondary" data-wb-toggle="modal" data-wb-target="#verification-email-reset" aria-haspopup="dialog">{{ $verificationText('reset') }}</button>
             <button type="submit" class="wb-btn wb-btn-primary" name="intent" value="save">{{ $verificationText('save') }}</button>
+            <button type="button" class="wb-btn wb-btn-secondary" data-wb-toggle="modal" data-wb-target="#verification-email-reset" aria-haspopup="dialog">{{ $verificationText('reset') }}</button>
         </div>
     </form>
 </section>
