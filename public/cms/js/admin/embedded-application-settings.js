@@ -100,6 +100,7 @@
     function buildRow(setting) {
         var row = document.createElement('tr');
         var keyCell = document.createElement('td');
+        var keyButton = document.createElement('button');
         var typeCell = document.createElement('td');
         var typeCode = document.createElement('code');
         var defaultCell = document.createElement('td');
@@ -108,7 +109,14 @@
         var actions = document.createElement('div');
 
         row.setAttribute('data-wb-setting-row', '');
-        keyCell.setAttribute('data-wb-setting-summary', 'key');
+        keyButton.type = 'button';
+        keyButton.className = 'wb-link wb-cms-row-title-button';
+        keyButton.setAttribute('data-wb-setting-summary', 'key');
+        keyButton.setAttribute('data-wb-setting-edit', '');
+        keyButton.setAttribute('data-wb-toggle', 'modal');
+        keyButton.setAttribute('data-wb-target', '#embedded-application-setting-modal');
+        keyButton.setAttribute('aria-haspopup', 'dialog');
+        keyCell.appendChild(keyButton);
         typeCode.setAttribute('data-wb-setting-summary', 'type');
         defaultCell.setAttribute('data-wb-setting-summary', 'default');
         constraintsCell.setAttribute('data-wb-setting-summary', 'constraints');

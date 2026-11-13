@@ -107,6 +107,7 @@
                                 $pageBlockCount = $preview['is_empty'] ? 0 : $preview['items']->count() + $preview['remaining'];
                                 $sourceModalId = 'slot-source-modal-'.$pageSlot->id;
                                 $slotName = $pageSlot->slotType?->name ?? $adminText('fallback_slot');
+                                $editBlocksUrl = route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'return_url' => $pageReturnUrl]);
                                 $topLevelLabel = $pageBlockCount === 1 ? $adminText('top_level_block') : $adminText('top_level_blocks_count');
                                 $pageBlockCountLabel = $sourceType === PageSlot::SOURCE_TYPE_PAGE
                                     ? $adminText('count_label', ['count' => $pageBlockCount, 'label' => $topLevelLabel])
@@ -115,7 +116,13 @@
                             <tr>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
-                                        <strong>{{ $slotName }}</strong>
+                                        <strong>
+                                            @if ($canEditContent && $sourceType === PageSlot::SOURCE_TYPE_PAGE)
+                                                <a class="wb-link" href="{{ $editBlocksUrl }}">{{ $slotName }}</a>
+                                            @else
+                                                {{ $slotName }}
+                                            @endif
+                                        </strong>
                                         <div class="wb-cluster wb-cluster-2">
                                             <span class="wb-status-pill wb-status-info">{{ $pageSlot->slotSlug() }}</span>
                                         </div>
@@ -165,10 +172,10 @@
                                             @endif
 
                                             @if ($sourceType === PageSlot::SOURCE_TYPE_PAGE)
-                                                <a href="{{ route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'return_url' => $pageReturnUrl]) }}" class="wb-btn wb-btn-primary wb-btn-sm">{{ $adminText('edit_blocks') }}</a>
+                                                <a href="{{ $editBlocksUrl }}" class="wb-btn wb-btn-primary wb-btn-sm">{{ $adminText('edit_blocks') }}</a>
                                             @else
                                                 <a
-                                                    href="{{ route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $pageSlot, 'return_url' => $pageReturnUrl]) }}"
+                                                    href="{{ $editBlocksUrl }}"
                                                     class="wb-btn wb-btn-secondary wb-btn-sm"
                                                     title="{{ $adminText('preserved_blocks_title') }}"
                                                     aria-label="{{ $adminText('edit_preserved_blocks') }}"

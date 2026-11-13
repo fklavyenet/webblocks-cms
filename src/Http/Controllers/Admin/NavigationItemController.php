@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Navigation\NavigationTree;
@@ -38,11 +39,13 @@ class NavigationItemController extends Controller
 
     $site = $sites->firstWhere('id', $siteId) ?? abort(403);
     $parentOptions = $this->tree->parentOptions($menuKey, $site);
+    $acl = app(CmsAuthorization::class);
 
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.navigation.index', [
       'site' => $site,
       'sites' => $sites,
       'activeMenuKey' => $menuKey,
+      'canEditNavigationItems' => ! $acl->ready() || $acl->allows(request()->user(), 'cms.navigation.update', $site->id),
       'menuOptions' => NavigationItem::menuOptions(),
       'items' => $this->tree->buildMenuTree($menuKey, $site),
       'pages' => Page::query()->visibleInAdmin()->where('page_type', '!=', Page::TYPE_SYSTEM)->where('site_id', $site->id)->with('translations')->orderByDefaultTranslation('name')->get(),

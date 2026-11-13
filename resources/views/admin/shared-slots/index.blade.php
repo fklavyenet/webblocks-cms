@@ -170,8 +170,15 @@
                         </thead>
                         <tbody>
                             @foreach ($sharedSlots as $sharedSlot)
+                                @php($editUrl = route('admin.shared-slots.edit', $sharedSlot))
                                 <tr>
-                                    <td><strong>{{ $sharedSlot->name }}</strong></td>
+                                    <td><strong>
+                                        @if (in_array($sharedSlot->id, $editableSharedSlotIds, true))
+                                            <a href="{{ $editUrl }}" class="wb-link">{{ $sharedSlot->name }}</a>
+                                        @else
+                                            {{ $sharedSlot->name }}
+                                        @endif
+                                    </strong></td>
                                     <td><code>{{ $sharedSlot->handle }}</code></td>
                                     <td>{{ $sharedSlot->site?->name }}</td>
                                     <td>{{ $sharedSlot->slotLabel() }}</td>
@@ -184,7 +191,7 @@
                                     <td>{{ $sharedSlot->updated_at?->format('Y-m-d H:i') }}</td>
                                     <td>
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.shared-slots.edit', $sharedSlot) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_shared_slot') }}" aria-label="{{ $adminText('edit_shared_slot') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_shared_slot') }}" aria-label="{{ $adminText('edit_shared_slot') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                             <a href="{{ route('admin.shared-slots.blocks.edit', $sharedSlot) }}" class="wb-action-btn" title="{{ $adminText('edit_shared_slot_blocks') }}" aria-label="{{ $adminText('edit_shared_slot_blocks') }}"><i class="wb-icon wb-icon-layout" aria-hidden="true"></i></a>
                                             <button
                                                 type="button"

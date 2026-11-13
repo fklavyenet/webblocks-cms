@@ -53,11 +53,18 @@
                         </thead>
                         <tbody>
                             @foreach ($variables as $siteVariable)
+                                @php($editUrl = route('admin.sites.edit', ['site' => $site, 'tab' => 'variables', 'modal' => 'edit-variable', 'site_variable' => $siteVariable->id]))
                                 @php($token = '{{ site.'.$siteVariable->key.' }}')
                                 <tr>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
-                                            <strong>{{ $siteVariable->displayLabel() }}</strong>
+                                            <strong>
+                                                @if ($canManageSiteSettings)
+                                                    <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog">{{ $siteVariable->displayLabel() }}</a>
+                                                @else
+                                                    {{ $siteVariable->displayLabel() }}
+                                                @endif
+                                            </strong>
                                             @if ($siteVariable->label)
                                                 <span class="wb-text-sm wb-text-muted"><code>{{ $siteVariable->key }}</code></span>
                                             @endif
@@ -74,7 +81,7 @@
                                     <td>
                                         @if ($canManageSiteSettings)
                                             <div class="wb-action-group">
-                                                <a href="{{ route('admin.sites.edit', ['site' => $site, 'tab' => 'variables', 'modal' => 'edit-variable', 'site_variable' => $siteVariable->id]) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_variable') }}" aria-label="{{ $adminText('edit_variable') }}" aria-haspopup="dialog">
+                                                <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_variable') }}" aria-label="{{ $adminText('edit_variable') }}" aria-haspopup="dialog">
                                                     <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                                 </a>
 

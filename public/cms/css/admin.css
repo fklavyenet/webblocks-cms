@@ -4,6 +4,26 @@
  |--------------------------------------------------------------------------
  */
 
+.wb-cms-row-title-button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--wb-primary);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.wb-cms-row-title-button:hover {
+    text-decoration: underline;
+}
+
+.wb-cms-row-title-button:focus-visible {
+    outline: 2px solid var(--wb-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
 .wb-cms-dashboard {
     --wb-cms-status-success: var(--wb-success);
     --wb-cms-status-warning: var(--wb-warning);
@@ -720,7 +740,7 @@ input.wb-admin-table-grid-input:focus {
 }
 
 .wb-admin-public-site-label {
-    max-width: 10rem;
+    max-width: clamp(4rem, 18vw, 10rem);
 }
 
 @media (max-width: 720px) {

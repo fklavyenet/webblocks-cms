@@ -13,13 +13,22 @@
                         <thead><tr><th scope="col">{{ __('webblocks-cms::system_pages.screen') }}</th><th scope="col">{{ __('webblocks-cms::system_pages.state') }}</th><th scope="col">{{ __('webblocks-cms::admin.common.actions') }}</th></tr></thead>
                         <tbody>
                         @foreach ($systemPageDefinitions as $definition)
-                            @php($design = $systemPageBindings->get($definition->key)?->page)
+                            @php
+                                $design = $systemPageBindings->get($definition->key)?->page;
+                                $editUrl = $design ? route('admin.pages.edit', $design) : null;
+                            @endphp
                             <tr>
-                                <th scope="row">{{ $definition->label() }}</th>
+                                <th scope="row">
+                                    @if (in_array($definition->key, $editableSystemPageKeys, true))
+                                        <a class="wb-link" href="{{ $editUrl }}">{{ $definition->label() }}</a>
+                                    @else
+                                        {{ $definition->label() }}
+                                    @endif
+                                </th>
                                 <td>{{ $design ? $design->workflowLabel() : __('webblocks-cms::system_pages.default') }}</td>
                                 <td>
                                     @if ($design)
-                                        <a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ route('admin.pages.edit', $design) }}">{{ __('webblocks-cms::system_pages.edit') }}</a>
+                                        <a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ $editUrl }}">{{ __('webblocks-cms::system_pages.edit') }}</a>
                                     @else
                                         <form method="POST" action="{{ route('admin.pages.system.store') }}">
                                             @csrf

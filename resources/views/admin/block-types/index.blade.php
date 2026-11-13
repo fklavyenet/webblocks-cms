@@ -120,10 +120,17 @@
                         </thead>
                         <tbody>
                             @foreach ($blockTypes as $blockType)
+                                @php($editUrl = route('admin.block-types.index', array_filter(array_merge($baseQuery, ['modal' => 'edit-block-type', 'block_type' => $blockType->id]))))
                                 <tr>
                                         <td>
                                             <div class="wb-stack wb-stack-1">
-                                                <strong>{{ $blockType->name }}</strong>
+                                                <strong>
+                                                    @if (! $blockType->is_system)
+                                                        <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">{{ $blockType->name }}</a>
+                                                    @else
+                                                        {{ $blockType->name }}
+                                                    @endif
+                                                </strong>
                                                 <span class="wb-text-sm wb-text-muted"><code>{{ $blockType->slug }}</code> | {{ $blockType->source_type ?: 'static' }} | {{ $blockType->is_system ? $blockTypesIndexText('system') : $blockTypesIndexText('user') }}{{ $blockType->is_container ? ' | '.$blockTypesIndexText('container') : '' }}</span>
                                             </div>
                                         </td>
@@ -155,7 +162,7 @@
                                                 </a>
 
                                                 @if (! $blockType->is_system)
-                                                    <a href="{{ route('admin.block-types.index', array_filter(array_merge($baseQuery, ['modal' => 'edit-block-type', 'block_type' => $blockType->id]))) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $blockTypesIndexText('edit_block_type') }}" aria-label="{{ $blockTypesIndexText('edit_block_type') }}" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">
+                                                    <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $blockTypesIndexText('edit_block_type') }}" aria-label="{{ $blockTypesIndexText('edit_block_type') }}" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">
                                                         <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                                     </a>
                                                     <form method="POST" action="{{ route('admin.block-types.destroy', $blockType) }}">

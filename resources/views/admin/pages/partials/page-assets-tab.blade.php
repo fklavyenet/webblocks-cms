@@ -51,13 +51,20 @@
                     </thead>
                     <tbody>
                         @foreach ($pageAssets as $pageAsset)
+                            @php($editUrl = route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'edit-page-asset', 'page_asset' => $pageAsset->id, 'return_url' => $pageReturnUrl])))
                             <tr>
                                 <td>
                                     <span class="wb-status-pill {{ $pageAsset->type === 'js' ? 'wb-status-pending' : 'wb-status-info' }}">{{ strtoupper($pageAsset->type) }}</span>
                                 </td>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
-                                        <span title="{{ $pageAsset->path }}"><code>{{ $pageAsset->path }}</code></span>
+                                        <span title="{{ $pageAsset->path }}"><code>
+                                            @if ($canManagePageAssets)
+                                                <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog">{{ $pageAsset->path }}</a>
+                                            @else
+                                                {{ $pageAsset->path }}
+                                            @endif
+                                        </code></span>
                                     </div>
                                 </td>
                                 <td>
@@ -81,7 +88,7 @@
                                 <td>
                                     @if ($canManagePageAssets)
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'edit-page-asset', 'page_asset' => $pageAsset->id, 'return_url' => $pageReturnUrl])) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $pageAssetsText('edit_asset') }}" aria-label="{{ $pageAssetsText('edit_asset') }}" aria-haspopup="dialog">
+                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $pageAssetsText('edit_asset') }}" aria-label="{{ $pageAssetsText('edit_asset') }}" aria-haspopup="dialog">
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                             </a>
 

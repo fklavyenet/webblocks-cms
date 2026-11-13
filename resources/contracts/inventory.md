@@ -681,6 +681,7 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | Ordered Gallery items with locale-owned `alt_text`, `caption`, `overlay_title`, `overlay_text`; optional shared viewer title. Gallery intro copy is intentionally separate. Item translations resolve in the requested visitor locale with default-locale fallback, independently of missing Gallery heading translations. Staged creation and promotion preserve every item translation, media relationship, and position. |
+| Gallery item editor | The item name and its Edit action both open the existing metadata dialog, including for newly added items. |
 | Settings and variants | `variant`: grid, masonry, collage; `columns`: 2–5; `gap`: none, sm, md, lg; `aspect_ratio`: auto, square, 4:3, 16:9, portrait; `captions_mode`: hidden, below, overlay, on-hover; `overlay_mode`: none, gradient, solid; `lightbox_enabled`: boolean. |
 | Children/media | `gallery_items` or `gallery_media_ids` referencing image Media records; no block children. |
 | HTML | Root-owning `.wb-gallery.wb-gallery--{variant}` with gallery items, responsive media, captions, and optional registry-owned viewer under the canonical overlay root. |
@@ -1317,6 +1318,11 @@ Health badges use the saved health snapshot and current scheduler evidence.
 Missing results remain unverified; stale snapshots retain their recorded time.
 Opening the dashboard does not start maintenance scans or external release checks.
 Installation health remains restricted to system operators.
+
+The administrator navbar's **View site** control lists all sites available to the
+signed-in account on every admin screen. With one available site, its name links
+directly to its public home. With multiple sites, the globe and chevron open a
+menu of named public home links. Each link opens in a new tab.
 
 Trusted plugin PHP definitions may register `PluginQuickSetting` entries through
 `PluginDefinition::quickSettings()`. The navbar exposes a native WebBlocks UI

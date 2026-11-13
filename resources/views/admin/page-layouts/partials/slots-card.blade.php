@@ -47,12 +47,13 @@
                     </thead>
                     <tbody>
                         @foreach ($layoutSlots as $layoutSlot)
+                            @php($editUrl = route('admin.page-layouts.slots.edit', [$pageLayout, $layoutSlot]))
                             <tr>
                                 <td class="wb-nowrap">{{ $layoutSlot->sort_order }}</td>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
                                         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                                            <strong>{{ $layoutSlot->label ?: ($layoutSlot->slotType?->name ?? $layoutSlot->slot_name) }}</strong>
+                                            <strong><a href="{{ $editUrl }}" class="wb-link">{{ $layoutSlot->label ?: ($layoutSlot->slotType?->name ?? $layoutSlot->slot_name) }}</a></strong>
                                             <span class="wb-status-pill wb-status-info">{{ $layoutSlot->slotType?->name ?? $pageLayoutsText('no_slot_type') }}</span>
                                         </div>
                                         <div class="wb-text-sm wb-text-muted"><code>{{ $layoutSlot->slot_name }}</code></div>
@@ -75,7 +76,7 @@
                                 </td>
                                 <td class="wb-nowrap">
                                     <div class="wb-action-group">
-                                        <a href="{{ route('admin.page-layouts.slots.edit', [$pageLayout, $layoutSlot]) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $pageLayoutsText('edit_slot') }}" aria-label="{{ $pageLayoutsText('edit_slot') }}">
+                                        <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $pageLayoutsText('edit_slot') }}" aria-label="{{ $pageLayoutsText('edit_slot') }}">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>
                                         @if (! $layoutSlot->is_system && ! $layoutSlot->is_required)

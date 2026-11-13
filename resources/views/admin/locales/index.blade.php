@@ -43,10 +43,11 @@
                     </thead>
                     <tbody>
                         @foreach ($locales as $locale)
+                            @php($editUrl = route('admin.locales.edit', $locale))
                             @php($report = $reports->get($locale->id))
                             <tr>
                                 <td><code>{{ $locale->code }}</code></td>
-                                <td><strong>{{ $locale->name }}</strong></td>
+                                <td><strong><a href="{{ $editUrl }}" class="wb-link">{{ $locale->name }}</a></strong></td>
                                 <td>
                                     <div class="wb-cluster wb-cluster-2">
                                         @if ($locale->is_default)
@@ -80,7 +81,7 @@
                                 </td>
                                 <td>
                                     <div class="wb-cluster wb-cluster-2">
-                                        <a href="{{ route('admin.locales.edit', $locale) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $localesIndexText('edit_locale') }}" aria-label="{{ $localesIndexText('edit_locale') }}">
+                                        <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $localesIndexText('edit_locale') }}" aria-label="{{ $localesIndexText('edit_locale') }}">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>
 

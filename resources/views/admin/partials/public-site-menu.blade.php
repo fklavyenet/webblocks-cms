@@ -1,10 +1,13 @@
-@if ($adminPublicSite)
-    @php($openSiteLabel = $adminText('sites.open_home_new_tab', ['name' => $adminPublicSite['name']]))
+@if (count($adminPublicSiteChoices) === 1)
+    @php
+        $adminPublicSite = $adminPublicSiteChoices[0];
+        $openSiteLabel = $adminText('sites.open_home_new_tab', ['name' => $adminPublicSite['name']]);
+    @endphp
     <a href="{{ $adminPublicSite['url'] }}" target="_blank" rel="noopener noreferrer"
         class="wb-btn wb-btn-ghost wb-theme-switcher-trigger" data-admin-public-site
         aria-label="{{ $openSiteLabel }}" title="{{ $openSiteLabel }}">
         <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
-        <span class="wb-admin-public-site-label wb-visible-desktop wb-truncate">{{ $adminPublicSite['name'] }}</span>
+        <span class="wb-admin-public-site-label wb-truncate">{{ $adminPublicSite['name'] }}</span>
     </a>
 @elseif ($adminPublicSiteChoices !== [])
     <div class="wb-dropdown wb-dropdown-end">

@@ -420,6 +420,36 @@ class CmsSqlRbacTest extends TestCase
   }
 
   #[Test]
+  public function site_title_links_follow_per_site_edit_permissions(): void
+  {
+    $this->withoutMiddleware([RedirectIfNotInstalled::class]);
+    Locale::create(['code' => 'en', 'name' => 'English', 'is_default' => true, 'is_enabled' => true]);
+    $user = $this->user();
+    $editable = $this->site('editable');
+    $readOnly = $this->site('read-only');
+    $this->assign($user, $editable, $this->role(['cms.site-settings.read', 'cms.site-settings.update']));
+    $reader = app(WriteCmsAccess::class)->role($this->user('super_admin'), [
+      'name' => 'Site settings reader', 'permissions' => ['cms.panel.access', 'cms.site-settings.read'],
+    ]);
+    $this->assign($user, $readOnly, $reader);
+
+    $html = $this->actingAs($user)->get('/webadmin/sites')->assertOk()->getContent();
+    $document = new \DOMDocument;
+    @$document->loadHTML($html);
+    $xpath = new \DOMXPath($document);
+
+    foreach ([$editable, $readOnly] as $site) {
+      $row = '//tr[@data-site-id="'.$site->id.'"]';
+      $title = $xpath->query($row.'/td[2]/strong')->item(0);
+      $this->assertSame($site->name, trim($title->textContent));
+      $editLink = $xpath->query('./a', $title)->item(0);
+      $pencilLink = $xpath->query($row.'//a[contains(@class, "wb-action-btn-edit")]')->item(0);
+      $this->assertSame(route('admin.sites.edit', $site), $pencilLink->getAttribute('href'));
+      $this->assertSame($site->is($editable) ? $pencilLink->getAttribute('href') : null, $editLink?->getAttribute('href'));
+    }
+  }
+
+  #[Test]
   public function role_panel_renders_copy_and_effective_permissions(): void
   {
     $root = $this->user('super_admin');

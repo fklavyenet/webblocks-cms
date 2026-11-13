@@ -178,7 +178,7 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                                 <tr>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
-                                            <strong>{{ $token->name }}</strong>
+                                            <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#edit-cms-api-token-{{ $token->id }}" aria-haspopup="dialog">{{ $token->name }}</button></strong>
                                             <span class="wb-text-sm wb-text-muted">{{ $capabilitiesPresenter->summary($token) }}</span>
                                             @if ($token->creator)
                                                 <span class="wb-text-sm wb-text-muted">{{ $adminText('created_by', ['name' => $token->creator->name]) }}</span>

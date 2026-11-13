@@ -148,6 +148,8 @@ class BlockController extends Controller
 
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.blocks.index', [
       'blocks' => $blocks,
+      'editableBlockIds' => $blocks->getCollection()->filter(fn (Block $block) => $block->page
+        && $this->workflowManager->canEditContent($request->user(), $block->page))->modelKeys(),
       'currentPage' => $currentPage,
       'filters' => $filters,
       'filterSites' => $this->blockIndexSiteOptions(),

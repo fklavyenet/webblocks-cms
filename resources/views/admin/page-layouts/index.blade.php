@@ -44,10 +44,11 @@
                     </thead>
                     <tbody>
                         @foreach ($pageLayouts as $pageLayout)
+                            @php($editUrl = route('admin.page-layouts.edit', $pageLayout))
                             <tr>
                                 <td>
                                     <div class="wb-stack wb-stack-1">
-                                        <strong>{{ $pageLayout->name }}</strong>
+                                        <strong><a href="{{ $editUrl }}" class="wb-link">{{ $pageLayout->name }}</a></strong>
                                         <span class="wb-text-sm wb-text-muted">{{ $pageLayout->description ?: '-' }}</span>
                                     </div>
                                 </td>
@@ -58,7 +59,7 @@
                                 <td class="wb-nowrap">{{ $pageLayout->sort_order }}</td>
                                 <td class="wb-nowrap">
                                     <div class="wb-action-group">
-                                        <a href="{{ route('admin.page-layouts.edit', $pageLayout) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $pageLayoutsText('edit_page_layout') }}" aria-label="{{ $pageLayoutsText('edit_page_layout') }}">
+                                        <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $pageLayoutsText('edit_page_layout') }}" aria-label="{{ $pageLayoutsText('edit_page_layout') }}">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>
                                     </div>

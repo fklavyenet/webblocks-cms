@@ -57,6 +57,7 @@
                     </thead>
                     <tbody>
                         @foreach ($sites as $site)
+                            @php($editUrl = route('admin.sites.edit', $site))
                             <tr data-site-id="{{ $site->id }}">
                                 <td data-column="view">
                                     <a
@@ -70,7 +71,13 @@
                                         <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
                                     </a>
                                 </td>
-                                <td><strong>{{ $site->name }}</strong></td>
+                                <td><strong>
+                                    @if (in_array($site->id, $editableSiteIds, true))
+                                        <a href="{{ $editUrl }}" class="wb-link">{{ $site->name }}</a>
+                                    @else
+                                        {{ $site->name }}
+                                    @endif
+                                </strong></td>
                                 <td><code>{{ $site->handle }}</code></td>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
@@ -109,7 +116,7 @@
                                         </a>
 
                                         <a
-                                            href="{{ route('admin.sites.edit', $site) }}"
+                                            href="{{ $editUrl }}"
                                             class="wb-action-btn wb-action-btn-edit"
                                             title="{{ $adminText('sites.edit_site') }}"
                                             aria-label="{{ $adminText('sites.edit_site') }}"

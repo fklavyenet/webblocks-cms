@@ -80,7 +80,7 @@
                                             ])->filter()->implode(' · ');
                                         @endphp
                                         <tr data-wb-setting-row>
-                                            <td data-wb-setting-summary="key">{{ $setting['key'] ?? '' }}</td>
+                                            <td><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#embedded-application-setting-modal" aria-haspopup="dialog" data-wb-setting-edit data-wb-setting-summary="key">{{ $setting['key'] ?? '' }}</button></td>
                                             <td><code data-wb-setting-summary="type">{{ $setting['type'] ?? 'string' }}</code></td>
                                             <td data-wb-setting-summary="default">{{ $default !== '' ? $default : $text('no_default') }}</td>
                                             <td data-wb-setting-summary="constraints">{{ $constraints ?: $text('no_constraints') }}</td>

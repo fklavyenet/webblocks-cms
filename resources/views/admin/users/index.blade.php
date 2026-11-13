@@ -131,6 +131,7 @@
                         </thead>
                         <tbody>
                             @foreach ($users as $managedUser)
+                                @php($editUrl = route('admin.users.edit', $managedUser))
                                 @php($deleteBlockedMessage = $userLifecycleGuard->deletionBlocker($managedUser, auth()->user()))
                                 <tr>
                                     <td>
@@ -148,7 +149,7 @@
                                     </td>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
-                                            <strong>{{ $managedUser->name }}</strong>
+                                            <strong><a href="{{ $editUrl }}" class="wb-link">{{ $managedUser->name }}</a></strong>
                                             <div class="wb-cluster wb-cluster-2 wb-text-sm">
                                                 @if (auth()->id() === $managedUser->id)
                                                     <span class="wb-text-sm wb-text-muted">{{ $adminText('you') }}</span>
@@ -166,7 +167,7 @@
                                     <td>{{ $managedUser->lastLoginLabel() }}</td>
                                     <td class="wb-table-actions">
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.users.edit', $managedUser) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_user') }}" aria-label="{{ $adminText('edit_user') }}">
+                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_user') }}" aria-label="{{ $adminText('edit_user') }}">
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                             </a>
 

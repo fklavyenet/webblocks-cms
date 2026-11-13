@@ -94,6 +94,7 @@
                                 @php
                                     $row = ['note' => $note->id] + $filters;
                                     $label = $administration ? $text('edit_only', ['id' => $note->id]) : $note->title;
+                                    $editUrl = $permissions[$note->id]['update'] ? route('admin.notes.edit', $row) : null;
                                 @endphp
                                 <tr>
                                     @unless ($administration)
@@ -105,7 +106,15 @@
                                             </label>
                                         </td>
                                     @endunless
-                                    <td class="wb-cms-note-title"><strong>{{ $label }}</strong></td>
+                                    <td class="wb-cms-note-title">
+                                        <strong>
+                                            @if ($editUrl)
+                                                <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog">{{ $label }}</a>
+                                            @else
+                                                {{ $label }}
+                                            @endif
+                                        </strong>
+                                    </td>
                                     @unless ($administration)
                                         <td>{{ $note->author?->name ?? $text('unavailable_account') }}</td>
                                         <td>{{ $note->is_private ? ($note->recipient?->name ?? $text('author_only')) : $text('everyone') }}</td>
@@ -123,7 +132,7 @@
                                                 </form>
                                             @endif
                                             @if ($permissions[$note->id]['update'])
-                                                <a href="{{ route('admin.notes.edit', $row) }}" id="notes-edit-trigger-{{ $note->id }}" class="wb-action-btn" aria-haspopup="dialog" title="{{ $text('edit') }}" aria-label="{{ $text('edit') }} — {{ $label }}">
+                                                <a href="{{ $editUrl }}" id="notes-edit-trigger-{{ $note->id }}" class="wb-action-btn" aria-haspopup="dialog" title="{{ $text('edit') }}" aria-label="{{ $text('edit') }} — {{ $label }}">
                                                     <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                                 </a>
                                             @endif

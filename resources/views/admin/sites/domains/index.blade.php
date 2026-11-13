@@ -78,10 +78,11 @@
                             </thead>
                             <tbody>
                                 @foreach ($domains as $domain)
+                                    @php($editUrl = route('admin.sites.domains.index', ['site' => $site, 'modal' => 'manage-domain', 'site_domain' => $domain->id]))
                                     <tr>
                                         <td>
                                             <div class="wb-stack wb-gap-1">
-                                                <strong>{{ $domain->domain }}</strong>
+                                                <strong><a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog" aria-controls="siteDomainManageModal-{{ $domain->id }}">{{ $domain->domain }}</a></strong>
                                                 <span class="wb-text-sm wb-text-muted">https://{{ $domain->domain }}</span>
                                             </div>
                                         </td>
@@ -95,7 +96,7 @@
                                         <td>
                                             <div class="wb-action-group">
                                                 <a
-                                                    href="{{ route('admin.sites.domains.index', ['site' => $site, 'modal' => 'manage-domain', 'site_domain' => $domain->id]) }}"
+                                                    href="{{ $editUrl }}"
                                                     class="wb-action-btn wb-action-btn-edit"
                                                     title="{{ $adminText('domain_manage_settings') }}"
                                                     aria-label="{{ $adminText('domain_manage_settings') }}"

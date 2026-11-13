@@ -6,6 +6,7 @@
 
 <ul class="{{ $depth === 1 ? 'wb-navigation-tree' : 'wb-navigation-children' }}" {{ $listAttribute }}>
     @foreach ($items as $item)
+        @php($editUrl = route('admin.navigation.index', ['site_id' => $item->site_id, 'menu_key' => $item->menu_key, 'modal' => 'edit-item', 'navigation' => $item->id]))
         <li class="wb-navigation-tree-item" data-navigation-item data-item-id="{{ $item->id }}" data-depth="{{ $depth }}" data-item-link-type="{{ $item->link_type }}">
             <div class="wb-navigation-row">
                 <button type="button" class="wb-navigation-handle" data-navigation-handle title="{{ $navigationItemsText('drag_to_reorder') }}" aria-label="{{ $navigationItemsText('drag_to_reorder') }}" aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight">
@@ -14,7 +15,13 @@
 
                 <div class="wb-navigation-meta">
                     <div class="wb-navigation-title-row">
-                        <strong>{{ $item->resolvedTitle() }}</strong>
+                        <strong>
+                            @if ($canEditNavigationItems)
+                                <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog" aria-controls="navigationEditModal-{{ $item->id }}">{{ $item->resolvedTitle() }}</a>
+                            @else
+                                {{ $item->resolvedTitle() }}
+                            @endif
+                        </strong>
                         <span class="wb-navigation-badge">{{ $item->typeLabel() }}</span>
                         @if ($item->is_system)
                             <span class="wb-navigation-badge">{{ $navigationItemsText('system') }}</span>
@@ -28,7 +35,7 @@
 
                 <div class="wb-navigation-actions">
                     <a
-                        href="{{ route('admin.navigation.index', ['site_id' => $item->site_id, 'menu_key' => $item->menu_key, 'modal' => 'edit-item', 'navigation' => $item->id]) }}"
+                        href="{{ $editUrl }}"
                         class="wb-action-btn wb-action-btn-edit"
                         aria-haspopup="dialog"
                         aria-controls="navigationEditModal-{{ $item->id }}"

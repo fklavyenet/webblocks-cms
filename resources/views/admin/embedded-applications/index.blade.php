@@ -23,12 +23,13 @@
                 <thead><tr>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $text('name')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'handle', 'label' => $text('handle')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'render_mode', 'label' => $text('mode')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_enabled', 'label' => $text('status')])<th>{{ $text('actions') }}</th></tr></thead>
                 <tbody>
                 @forelse ($applications as $application)
+                    @php($editUrl = route('admin.embedded-applications.edit', $application))
                     <tr>
-                        <td><strong>{{ $application->name }}</strong><div class="wb-text-sm wb-text-muted">{{ $application->version }}</div></td>
+                        <td><strong><a href="{{ $editUrl }}" class="wb-link">{{ $application->name }}</a></strong><div class="wb-text-sm wb-text-muted">{{ $application->version }}</div></td>
                         <td><code>{{ $application->handle }}</code></td>
                         <td>{{ $application->render_mode }}</td>
                         <td><span class="wb-status-pill {{ $application->is_enabled ? 'wb-status-success' : 'wb-status-muted' }}">{{ $application->is_enabled ? $text('enabled') : $text('disabled') }}</span></td>
-                        <td><a class="wb-btn wb-btn-secondary" href="{{ route('admin.embedded-applications.edit', $application) }}">{{ $text('edit') }}</a></td>
+                        <td><a class="wb-btn wb-btn-secondary" href="{{ $editUrl }}">{{ $text('edit') }}</a></td>
                     </tr>
                 @empty
                     <tr><td colspan="5">{{ $text('empty') }}</td></tr>

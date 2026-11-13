@@ -56,21 +56,22 @@ class SiteIndexViewColumnTest extends TestCase
   #[Test]
   public function the_view_column_leads_the_row(): void
   {
-    $this->makeSite('shop.example.test');
+    $site = $this->makeSite('shop.example.test');
 
-    $html = $this->renderIndex();
+    $html = $this->renderIndex([$site->id]);
 
     $document = new \DOMDocument;
     @$document->loadHTML($html);
-    $headers = (new \DOMXPath($document))->query('//table/thead/tr/th');
+    $xpath = new \DOMXPath($document);
+    $headers = $xpath->query('//table/thead/tr/th');
     $this->assertSame('View', trim($headers->item(0)->textContent));
     $this->assertSame('Name', trim($headers->item(1)->textContent));
     $this->assertFalse($headers->item(0)->hasAttribute('data-wb-sort'));
-    $this->assertLessThan(
-      strpos($html, '<td><strong>Shop</strong></td>'),
-      strpos($html, 'data-column="view"'),
-      'The View cell opens the row.'
-    );
+    $cells = $xpath->query('//table/tbody/tr[@data-site-id="'.$site->id.'"]/td');
+    $this->assertSame('view', $cells->item(0)->getAttribute('data-column'));
+    $titleLink = $xpath->query('.//a', $cells->item(1))->item(0);
+    $this->assertSame('Shop', $titleLink->textContent);
+    $this->assertSame(route('admin.sites.edit', $site), $titleLink->getAttribute('href'));
   }
 
   #[Test]
@@ -168,7 +169,7 @@ class SiteIndexViewColumnTest extends TestCase
     return $site->refresh();
   }
 
-  private function renderIndex(): string
+  private function renderIndex(array $editableSiteIds = []): string
   {
     $sites = Site::query()
       ->with(['locales' => fn ($query) => $query->orderBy('name')])
@@ -177,6 +178,7 @@ class SiteIndexViewColumnTest extends TestCase
 
     return view('webblocks-cms::admin.sites.index', [
       'sites' => $sites,
+      'editableSiteIds' => $editableSiteIds,
       'exportablePages' => [],
       'siteDeleteReports' => [],
       'siteCount' => $sites->total(),

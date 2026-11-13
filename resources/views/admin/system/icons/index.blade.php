@@ -107,6 +107,7 @@
                         </thead>
                         <tbody>
                             @foreach ($icons as $icon)
+                                @php($editUrl = route('admin.system.icons.index', array_filter(array_merge(request()->query(), ['modal' => 'edit-icon', 'icon' => $icon->id]))))
                                 <tr>
                                     <td class="wb-nowrap">
                                         <span class="wb-cluster wb-cluster-2">
@@ -116,7 +117,7 @@
                                     </td>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
-                                            <strong>{{ $icon->label }}</strong>
+                                            <strong><a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog" aria-controls="iconEditModal-{{ $icon->id }}">{{ $icon->label }}</a></strong>
                                             <span class="wb-text-sm wb-text-muted"><code>{{ $icon->slug }}</code></span>
                                         </div>
                                     </td>
@@ -134,7 +135,7 @@
                                     <td>{{ $icon->sort_order }}</td>
                                     <td>
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.system.icons.index', array_filter(array_merge(request()->query(), ['modal' => 'edit-icon', 'icon' => $icon->id]))) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_icon') }}" aria-label="{{ $adminText('edit_icon') }}" aria-haspopup="dialog" aria-controls="iconEditModal-{{ $icon->id }}">
+                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_icon') }}" aria-label="{{ $adminText('edit_icon') }}" aria-haspopup="dialog" aria-controls="iconEditModal-{{ $icon->id }}">
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                             </a>
                                         </div>

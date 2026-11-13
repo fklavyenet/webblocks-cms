@@ -156,7 +156,7 @@
                       @endif
                     </td>
                     <td>
-                      <strong>{{ $itemLabel }}</strong>
+                      <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" aria-haspopup="dialog">{{ $itemLabel }}</button></strong>
                       <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                     </td>
                     <td>
@@ -312,7 +312,7 @@
                   @endif
                 </td>
                 <td>
-                  <strong>{{ $itemLabel }}</strong>
+                  <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" aria-haspopup="dialog">{{ $itemLabel }}</button></strong>
                   <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                 </td>
                 <td>
@@ -407,7 +407,7 @@
         __PREVIEW_HTML__
       </td>
       <td>
-        <strong>__ITEM_LABEL__</strong>
+        <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#__MODAL_ID__" aria-haspopup="dialog">__ITEM_LABEL__</button></strong>
         <div class="wb-text-sm wb-text-muted">__ITEM_META__</div>
       </td>
       <td>

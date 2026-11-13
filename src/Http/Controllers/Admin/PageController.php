@@ -211,10 +211,15 @@ class PageController extends Controller
     $acl = app(CmsAuthorization::class);
     $deletablePageIds = $pages->getCollection()->filter(fn (Page $page) => $acl->allows($request->user(), 'cms.pages.delete', $page->site_id)
       && ($page->status !== Page::STATUS_PUBLISHED || $acl->allows($request->user(), 'cms.pages.delete-published', $page->site_id)))->modelKeys();
+    $systemPageBindings = $activeSite && Schema::hasTable('wbcms_system_pages')
+      ? SystemPage::query()->with('page')->where('site_id', $activeSite->id)->get()->keyBy('key')
+      : collect();
 
     return view('webblocks-cms::admin.pages.index', [
       'systemPageDefinitions' => app(SystemPageRegistry::class)->all(),
-      'systemPageBindings' => $activeSite && Schema::hasTable('wbcms_system_pages') ? SystemPage::query()->with('page')->where('site_id', $activeSite->id)->get()->keyBy('key') : collect(),
+      'systemPageBindings' => $systemPageBindings,
+      'editableSystemPageKeys' => $systemPageBindings->filter(fn (SystemPage $binding) => $binding->page
+        && $this->workflowManager->canEditContent($request->user(), $binding->page))->keys()->all(),
       'listingView' => $listingView,
       'listingColumns' => $listingColumns,
       'canCreatePage' => $acl->allows($request->user(), 'cms.pages.create', $activeSite?->id),
@@ -371,6 +376,7 @@ class PageController extends Controller
       'sharedSlotSourcesAvailable' => $this->sharedSlotsSchemaAvailable(),
       'translationStatuses' => $page->translationStatusForSite(),
       'canEditContent' => $canEditContent,
+      'canEditTranslationTitles' => $canEditContent && app(CmsAuthorization::class)->allows(request()->user(), 'cms.translations.update', $page->site_id),
       'canViewRevisions' => $canViewRevisions,
       'canDuplicatePage' => $canDuplicatePage,
       'canMoveToAnotherSite' => $canMoveToAnotherSite,

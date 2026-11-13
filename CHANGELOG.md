@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.133.4
+
+- Click a record’s title in supported Webadmin lists to open its editor or edit dialog. Existing permissions and Edit actions still apply.
+- Show all accessible sites in the View site menu on every Webadmin screen. The globe and chevron open the menu when multiple sites are available. With one site, its name links directly to its public home in a new tab.
+
 ## 1.133.3
 
 - Open the active site from the Webadmin top bar, or choose from the sites you can access. Site home pages open in a new tab.

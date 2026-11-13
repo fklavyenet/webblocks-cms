@@ -8,13 +8,16 @@ use Illuminate\Http\Response;
 use WebBlocks\Cms\Actions\Seo\ManageSeoAudit;
 use WebBlocks\Cms\Http\Requests\Admin\SiteSeoAuditRequest;
 use WebBlocks\Cms\Models\JobRun;
+use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\SeoAudit;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Queries\SiteSeoAuditQuery;
+use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Jobs\JobAutomation;
 use WebBlocks\Cms\Support\Jobs\JobProgress;
 use WebBlocks\Cms\Support\Jobs\JobRunner;
 use WebBlocks\Cms\Support\Jobs\JobSchema;
+use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 
 final class SiteSeoAuditController
@@ -23,8 +26,26 @@ final class SiteSeoAuditController
   {
     $data = $query->run($site, $request->validated(), app(AdminLocaleResolver::class)->locale());
 
-    return $this->privateResponse($this->api($request) ? response()->json(['ok' => true, ...$data])
-      : response()->view('webblocks-cms::admin.sites.seo', ['site' => $site, 'filters' => $request->validated(), ...$data, 'seoAutomatic' => collect(app(JobAutomation::class)->status()['sources'])->contains(fn ($source) => $source['verified'])]));
+    if ($this->api($request)) {
+      return $this->privateResponse(response()->json(['ok' => true, ...$data]));
+    }
+
+    $auditedPageIds = $data['pages']?->getCollection()->pluck('page_id')->filter()->unique();
+    $canEditSeo = app(CmsAuthorization::class)->allows($request->user(), 'cms.seo.update', $site->id);
+    $workflow = app(PageWorkflowManager::class);
+    $editablePageIds = $canEditSeo && $auditedPageIds?->isNotEmpty()
+      ? Page::query()->visibleInAdmin()->where('site_id', $site->id)->whereKey($auditedPageIds->all())->get()
+        ->filter(fn (Page $page) => ! $page->isRevisionRestoreCandidate()
+          && $workflow->canEditContent($request->user(), $page))->modelKeys()
+      : [];
+
+    return $this->privateResponse(response()->view('webblocks-cms::admin.sites.seo', [
+      'site' => $site,
+      'filters' => $request->validated(),
+      ...$data,
+      'editablePageIds' => $editablePageIds,
+      'seoAutomatic' => collect(app(JobAutomation::class)->status()['sources'])->contains(fn ($source) => $source['verified']),
+    ]));
   }
 
   public function store(SiteSeoAuditRequest $request, Site $site, ManageSeoAudit $manage): JsonResponse|RedirectResponse

@@ -151,41 +151,56 @@ class PersonalListingViewsTest extends TestCase
   }
 
   #[Test]
-  public function top_bar_uses_the_current_site_and_offers_only_accessible_sites_without_context(): void
+  public function top_bar_site_choices_stay_the_same_across_admin_screens(): void
   {
     $this->site->update(['domain' => 'first.example.test']);
     $other = Site::create(['name' => 'Other site', 'handle' => 'other', 'domain' => 'other.example.test']);
-    $this->index(['site' => $this->site->id])->assertOk()
-      ->assertSee('data-admin-public-site', false)->assertSee($this->site->publicHomeUrl(), false);
+    $third = Site::create(['name' => 'Third site', 'handle' => 'third', 'domain' => 'third.example.test']);
 
+    $pages = $this->index(['site' => $this->site->id])->assertOk();
+    $dashboard = $this->get(route('admin.dashboard'))->assertOk();
+    $sites = $this->get(route('admin.sites.index'))->assertOk();
+    $settings = $this->get(route('admin.sites.edit', $other))->assertOk();
     $system = $this->get(route('admin.system.settings.edit', ['tab' => 'appearance']))->assertOk();
-    $system->assertSee('data-admin-public-site', false)
-      ->assertSee('id="system-settings-appearance-panel"', false)
+    $system->assertSee('id="system-settings-appearance-panel"', false)
       ->assertSee('data-wb-admin-panel-preset', false)
       ->assertSee('data-wb-admin-panel-accent', false)
       ->assertSee('wb-icon-chevron-down wb-user-menu-chevron', false)
       ->assertDontSee('id="admin-theme-menu"', false);
 
-    $settings = $this->get(route('admin.sites.edit', $other))->assertOk();
     $dom = new \DOMDocument;
+    foreach ([$pages, $dashboard, $sites, $settings, $system] as $response) {
+      @$dom->loadHTML($response->getContent(), LIBXML_NONET);
+      $xpath = new \DOMXPath($dom);
+      $this->assertSame(0, $xpath->query('//a[@data-admin-public-site]')->length);
+      $trigger = $xpath->query('//button[@data-wb-toggle="dropdown" and @aria-controls="admin-public-sites"]')->item(0);
+      $this->assertSame(1, $xpath->query('./i[contains(@class, "wb-icon-globe")]', $trigger)->length);
+      $this->assertSame(1, $xpath->query('./i[contains(@class, "wb-icon-chevron-down")]', $trigger)->length);
+
+      $links = $xpath->query('//*[@id="admin-public-sites"]/a[@target="_blank"]');
+      $this->assertSame(3, $links->length);
+      foreach ([$this->site, $other, $third] as $index => $site) {
+        $this->assertSame($site->name, trim($links->item($index)->textContent));
+        $this->assertSame($site->publicHomeUrl(), $links->item($index)->getAttribute('href'));
+      }
+    }
+
     @$dom->loadHTML($system->getContent(), LIBXML_NONET);
     $xpath = new \DOMXPath($dom);
-    $this->assertSame($this->site->publicHomeUrl(), $xpath->evaluate('string(//a[@data-admin-public-site and @target="_blank"]/@href)'));
     $this->assertSame('true', $xpath->evaluate('string(//button[@data-wb-tab="system-settings-appearance-panel"]/@aria-selected)'));
     @$dom->loadHTML($settings->getContent(), LIBXML_NONET);
     $xpath = new \DOMXPath($dom);
-    $this->assertSame($other->publicHomeUrl(), $xpath->evaluate('string(//a[@data-admin-public-site and @target="_blank"]/@href)'));
     $this->assertSame(1, $xpath->query('//*[@data-admin-form-actions-danger and contains(@class, "wb-ms-auto")]')->length);
 
-    $editor = $this->cmsActor($this->user(), [$this->site->id]);
-    $this->actingAs($editor);
+    $this->actingAs($this->cmsActor($this->user(), [$this->site->id]));
     $all = $this->index(['site' => 'all'])->assertOk();
     @$dom->loadHTML($all->getContent(), LIBXML_NONET);
     $xpath = new \DOMXPath($dom);
-    $this->assertSame(0, $xpath->query('//a[@data-admin-public-site]')->length);
-    $links = $xpath->query('//*[@id="admin-public-sites"]/a[@target="_blank"]');
-    $this->assertSame(1, $links->length);
-    $this->assertSame($this->site->publicHomeUrl(), $links->item(0)->getAttribute('href'));
+    $this->assertSame(0, $xpath->query('//*[@id="admin-public-sites"]')->length);
+    $link = $xpath->query('//a[@data-admin-public-site and @target="_blank"]')->item(0);
+    $this->assertSame($this->site->name, trim($link->textContent));
+    $this->assertSame($this->site->publicHomeUrl(), $link->getAttribute('href'));
+    $this->assertSame(0, $xpath->query('./i[contains(@class, "wb-icon-chevron-down")]', $link)->length);
   }
 
   #[Test]

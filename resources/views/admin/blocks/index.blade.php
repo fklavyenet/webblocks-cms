@@ -114,8 +114,15 @@
                         <thead><tr>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'id', 'label' => $blocksIndexText('id')])<th>{{ $blocksIndexText('page') }}</th><th>{{ $blocksIndexText('parent') }}</th><th>{{ $blocksIndexText('block_type') }}</th><th>{{ $blocksIndexText('slot_type') }}</th>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'sort_order', 'label' => $blocksIndexText('order')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $blocksIndexText('status')])<th>{{ $blocksIndexText('kind') }}</th><th>{{ $blocksIndexText('actions') }}</th></tr></thead>
                         <tbody>
                             @foreach ($blocks as $block)
+                                @php($editUrl = route('admin.blocks.edit', $block))
                                 <tr>
-                                    <td>{{ $block->id }}</td>
+                                    <td>
+                                        @if (in_array($block->id, $editableBlockIds, true))
+                                            <a href="{{ $editUrl }}" class="wb-link">{{ $block->id }}</a>
+                                        @else
+                                            {{ $block->id }}
+                                        @endif
+                                    </td>
                                     <td>
                                         @if ($block->page)
                                             <a href="{{ route('admin.pages.edit', $block->page) }}">{{ $block->page->title }}</a>
@@ -140,7 +147,7 @@
                                     </td>
                                      <td>
                                          <div class="wb-action-group">
-                                             <a href="{{ route('admin.blocks.edit', $block) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $blocksIndexText('edit_block') }}" aria-label="{{ $blocksIndexText('edit_block') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                             <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $blocksIndexText('edit_block') }}" aria-label="{{ $blocksIndexText('edit_block') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                               <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#delete-block-{{ $block->id }}" title="{{ $blocksIndexText('delete_block') }}" aria-label="{{ $blocksIndexText('delete_block') }}" aria-haspopup="dialog"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                           </div>
                                       </td>

@@ -75,6 +75,8 @@ class SiteController extends Controller
       'exportablePages' => $canManageSites && $requestedModal === 'export-site' && $selectedExportSite
         ? app(ExportablePages::class)->grouped((int) $selectedExportSite->id) : [],
       'sites' => $sites,
+      'editableSiteIds' => $sites->getCollection()->filter(fn (Site $site) => $this->authorization->canViewSiteSettings($user, $site)
+        && $this->authorization->canMutateSiteSettings($user, $site))->modelKeys(),
       'deletableSiteIds' => $canManageSites ? app(SiteDeletionAvailabilityQuery::class)->deletableIds($sites->getCollection(), $siteCount) : [],
       'siteCount' => $siteCount,
       'canManageSites' => $canManageSites,

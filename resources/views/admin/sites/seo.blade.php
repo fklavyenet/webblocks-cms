@@ -91,7 +91,23 @@
           </section>
           <section class="wb-tabs-panel {{ $seoTab === 'pages' ? 'is-active' : '' }}" id="seo-pages" role="tabpanel" @if ($seoTab !== 'pages') hidden @endif>
             <div class="wb-table-wrap"><table class="wb-table"><thead><tr><th>{{ $workspaceText('page_id') }}</th><th>{{ $seoText('language') }}</th><th>{{ $seoText('page_status') }}</th><th>{{ $workspaceText('result') }}</th><th>{{ $seoText('checked_at') }}</th><th>{{ $seoText('metadata_title') }}</th></tr></thead><tbody>
-              @foreach ($pages as $row)<tr><td>@if ($row->page_id)<a href="{{ route('admin.pages.edit', ['page' => $row->page_id, 'tab' => 'seo', 'seo_locale' => $row->locale]) }}">#{{ $row->page_id }}</a>@else{{ $workspaceText('navigation_definition') }}@endif</td><td>{{ $row->locale }}</td><td>{{ $workspaceText('page_states.'.$row->page_status) }}</td><td>{{ $workspaceText('results.'.$row->state) }}</td><td>{{ $row->checked_at ?? '—' }}</td><td>{{ $row->title ?? '—' }}</td></tr>@endforeach
+              @foreach ($pages as $row)
+                @php($seoUrl = $row->page_id ? route('admin.pages.edit', ['page' => $row->page_id, 'tab' => 'seo', 'seo_locale' => $row->locale]) : null)
+                <tr>
+                  <td>@if ($seoUrl)<a href="{{ $seoUrl }}">#{{ $row->page_id }}</a>@else{{ $workspaceText('navigation_definition') }}@endif</td>
+                  <td>{{ $row->locale }}</td>
+                  <td>{{ $workspaceText('page_states.'.$row->page_status) }}</td>
+                  <td>{{ $workspaceText('results.'.$row->state) }}</td>
+                  <td>{{ $row->checked_at ?? '—' }}</td>
+                  <td>
+                    @if (filled($row->title) && in_array((int) $row->page_id, $editablePageIds, true))
+                      <a class="wb-link" href="{{ $seoUrl }}">{{ $row->title }}</a>
+                    @else
+                      {{ $row->title ?? '—' }}
+                    @endif
+                  </td>
+                </tr>
+              @endforeach
             </tbody></table></div>
             @include('webblocks-cms::admin.partials.pagination', ['paginator' => $pages->appends(['tab' => 'pages'])])
           </section>

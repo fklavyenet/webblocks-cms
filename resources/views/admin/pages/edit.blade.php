@@ -339,12 +339,19 @@
               @php
                 $locale = $translationStatus['locale'];
                 $translation = $translationStatus['translation'];
+                $editTranslationUrl = $canEditContent && $translation
+                  ? route('admin.pages.translations.edit', ['page' => $page, 'translation' => $translation, 'return_url' => $pageReturnUrl])
+                  : null;
               @endphp
               <tr>
                 <td>
                   <div class="wb-cluster wb-cluster-2">
                     <strong>{{ strtoupper($locale->code) }}</strong>
-                    <span>{{ $locale->name }}</span>
+                    @if ($editTranslationUrl && $canEditTranslationTitles)
+                      <a class="wb-link" href="{{ $editTranslationUrl }}">{{ $locale->name }}</a>
+                    @else
+                      <span>{{ $locale->name }}</span>
+                    @endif
                     @if ($translationStatus['is_default'])
                       <span class="wb-status-pill wb-status-info">{{ $adminText('default') }}</span>
                     @endif
@@ -379,7 +386,7 @@
                     @if (! $canEditContent)
                       <span class="wb-text-sm wb-text-muted">{{ $adminText('locked_by_workflow') }}</span>
                     @elseif ($translation)
-                      <a href="{{ route('admin.pages.translations.edit', ['page' => $page, 'translation' => $translation, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn" title="{{ $adminText('edit_translation') }}: {{ $locale->name }}" aria-label="{{ $adminText('edit_translation') }}: {{ $locale->name }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                      <a href="{{ $editTranslationUrl }}" class="wb-action-btn" title="{{ $adminText('edit_translation') }}: {{ $locale->name }}" aria-label="{{ $adminText('edit_translation') }}: {{ $locale->name }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                     @else
                       <a href="{{ route('admin.pages.translations.create', ['page' => $page, 'locale' => $locale, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn" title="{{ $adminText('add_translation') }}: {{ $locale->name }}" aria-label="{{ $adminText('add_translation') }}: {{ $locale->name }}"><i class="wb-icon wb-icon-plus" aria-hidden="true"></i></a>
                     @endif

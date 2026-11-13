@@ -112,8 +112,14 @@ class SharedSlotController extends Controller
       ]);
     }
 
+    $acl = app(CmsAuthorization::class);
+    $editableSharedSlotIds = $sharedSlots?->getCollection()->filter(fn (SharedSlot $slot) => $acl
+      ->allows($request->user(), 'cms.shared-slots.update-content', $slot->site_id)
+      && (! $acl->ready() || $acl->allows($request->user(), 'cms.shared-slots.manage', $slot->site_id)))->modelKeys() ?? [];
+
     return view('webblocks-cms::admin.shared-slots.index', [
       'sharedSlots' => $sharedSlots,
+      'editableSharedSlotIds' => $editableSharedSlotIds,
       'sharedSlotsReady' => $sharedSlotsReady,
       'sites' => $sites,
       'activeSite' => $activeSite,
