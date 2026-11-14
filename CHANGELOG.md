@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.133.5
+
+- Show separate timings in the backup operational log for the database dump, raw SQL validation, file scanning, ZIP writing, and final archive validation. Backup contents and restore behavior stay the same.
+
 ## 1.133.4
 
 - Click a record’s title in supported Webadmin lists to open its editor or edit dialog. Existing permissions and Edit actions still apply.

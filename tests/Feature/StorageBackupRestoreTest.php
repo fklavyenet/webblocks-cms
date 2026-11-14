@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Actions\SystemBackups\CreateManagedBackup;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
 use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
@@ -104,6 +105,12 @@ class StorageBackupRestoreTest extends TestCase
 
     $manager = app(SystemBackupManager::class);
     $backup = $manager->createManualBackup();
+    $databaseStages = DB::connection()->getDriverName() === 'sqlite'
+      ? ['SQLite SQL export']
+      : ['MySQL dump', 'Raw SQL validation'];
+    foreach ([...$databaseStages, 'File scan and ZIP entry registration', 'ZIP writing', 'Final archive validation'] as $stage) {
+      $this->assertMatchesRegularExpression('/^'.preg_quote($stage, '/').': [0-9]+ ms$/m', $backup->output);
+    }
     $source = Storage::disk('backups')->path($backup->archive_path);
     $sourceHash = hash_file('sha256', $source);
     $zip = new ZipArchive;
@@ -155,6 +162,27 @@ class StorageBackupRestoreTest extends TestCase
     $this->assertSame(SystemBackupRestore::STATUS_COMPLETED, $safety->restoreRecord->status);
     $this->assertDatabaseIntegrity();
 
+  }
+
+  #[Test]
+  public function a_failed_final_inspection_keeps_the_timings_in_the_failed_backup_log(): void
+  {
+    $this->mock(BackupRestoreArchiveInspector::class)->shouldReceive('inspect')->once()
+      ->andThrow(new \RuntimeException('Synthetic validation failure.'));
+
+    try {
+      app(SystemBackupManager::class)->createPreUpdateBackup();
+      $this->fail('The backup should fail when its final inspection fails.');
+    } catch (\RuntimeException $exception) {
+      $this->assertSame('Synthetic validation failure.', $exception->getMessage());
+    }
+
+    $backup = SystemBackup::query()->sole();
+    $this->assertSame(SystemBackup::STATUS_FAILED, $backup->status);
+    $this->assertMatchesRegularExpression('/^ZIP writing: [0-9]+ ms$/m', $backup->output);
+    $this->assertMatchesRegularExpression('/^Final archive validation: [0-9]+ ms$/m', $backup->output);
+    $this->assertStringContainsString('Backup failed: Synthetic validation failure.', $backup->output);
+    Storage::disk('backups')->assertMissing($backup->archive_path);
   }
 
   #[Test]

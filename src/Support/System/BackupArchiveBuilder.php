@@ -24,9 +24,10 @@ class BackupArchiveBuilder
     $archive->addFile($databaseDumpPath, 'database/database.sql');
     $archive->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
 
-    $uploadsCount = $this->addUploads($archive);
-    $sitePublicCount = $this->addSitePublicFiles($archive);
-    $archive->close();
+    [$uploadsCount, $sitePublicCount] = BackupTiming::measure($output, 'File scan and ZIP entry registration',
+      fn () => [$this->addUploads($archive), $this->addSitePublicFiles($archive)]);
+    // libzip reads and compresses the registered files when the archive closes.
+    BackupTiming::measure($output, 'ZIP writing', fn () => $archive->close());
 
     $output[] = 'Archive created as '.basename($archivePath).'.';
     $output[] = 'Added '.$uploadsCount.' upload file(s) from storage/app/public.';

@@ -34,6 +34,7 @@ class DatabaseDumpWriter
 
   private function dumpSqlite(Connection $connection, string $destinationPath, array &$output): array
   {
+    $startedAt = hrtime(true);
     $pdo = $connection->getPdo();
     $tables = $connection->select("select name, sql from sqlite_master where type = 'table' and name not like 'sqlite_%' and sql is not null order by name");
     $secondaryObjects = $connection->select("select type, name, tbl_name, sql from sqlite_master where type in ('index', 'trigger', 'view') and name not like 'sqlite_%' and sql is not null order by case type when 'view' then 0 when 'index' then 1 else 2 end, name");
@@ -88,6 +89,7 @@ class DatabaseDumpWriter
 
     File::put($destinationPath, implode(PHP_EOL, $lines));
 
+    BackupTiming::record($output, 'SQLite SQL export', $startedAt);
     $output[] = 'SQLite SQL dump written to '.basename($destinationPath).'.';
 
     return [
@@ -101,7 +103,7 @@ class DatabaseDumpWriter
   {
     $config = $connection->getConfig();
     $strategy = $this->resolveMysqlDumpStrategy();
-    $this->runDirectMysqlDump($destinationPath, $config);
+    $this->runDirectMysqlDump($destinationPath, $config, $output);
 
     $output[] = 'Using '.$this->describeMysqlDumpCommand($strategy, $connection->getDriverName()).' for database dump.';
     $output[] = 'MySQL-compatible SQL dump written to '.basename($destinationPath).'.';
@@ -118,7 +120,7 @@ class DatabaseDumpWriter
     return $this->strategyResolver->resolveMysqlStrategy();
   }
 
-  private function runDirectMysqlDump(string $destinationPath, array $config): void
+  private function runDirectMysqlDump(string $destinationPath, array $config, array &$output): void
   {
     $defaultsFile = $this->createMysqlDefaultsFile($destinationPath, $config);
 
@@ -126,13 +128,15 @@ class DatabaseDumpWriter
       $command = $this->buildDirectMysqlDumpCommand($destinationPath, $defaultsFile, $config);
       $process = $this->makeDumpProcess($command);
       $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
-      $process->run();
+      BackupTiming::measure($output, 'MySQL dump', function () use ($process): void {
+        $process->run();
 
-      if (! $process->isSuccessful()) {
-        throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database dump command failed.');
-      }
+        if (! $process->isSuccessful()) {
+          throw new RuntimeException(trim($process->getErrorOutput()) ?: 'Database dump command failed.');
+        }
+      });
 
-      $this->assertValidDumpFile($destinationPath);
+      BackupTiming::measure($output, 'Raw SQL validation', fn () => $this->assertValidDumpFile($destinationPath));
     } finally {
       File::delete($defaultsFile);
     }

@@ -55,7 +55,7 @@ class BackupArchiveValidation
     return hash('sha256', implode(':', [realpath($path), $stat['dev'], $stat['ino'], $stat['size'], $stat['mtime'], $stat['ctime']]));
   }
 
-  public function validate(SystemBackup $backup, bool $alreadyInspected = false): void
+  public function validate(SystemBackup $backup, bool $alreadyInspected = false, ?array &$output = null): void
   {
     if (! Schema::hasTable(self::TABLE)) {
       return; // An incomplete upgrade cannot make an unverified archive trusted by reports.
@@ -64,6 +64,7 @@ class BackupArchiveValidation
     if ($path === null) {
       return;
     }
+    $startedAt = $output !== null ? hrtime(true) : null;
     $signature = $this->signature($path);
     $status = 'valid';
     $digest = null;
@@ -86,6 +87,9 @@ class BackupArchiveValidation
       ]);
       } catch (Throwable) {
         // Optional reporting provenance cannot discard an otherwise valid backup.
+      }
+      if ($startedAt !== null) {
+        BackupTiming::record($output, 'Final archive validation', $startedAt);
       }
     }
   }

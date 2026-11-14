@@ -2349,6 +2349,13 @@ prevent same-second safety backups from overwriting restore sources. Archive
 resolution supports a configured symlinked disk root while rejecting relative
 traversal, internal symlink escapes and absolute paths outside the disk.
 
+The operational log on Backup Details records elapsed milliseconds for MySQL or
+MariaDB dump execution, raw SQL validation, file scanning and ZIP entry
+registration, ZIP writing, and final archive validation when that check runs.
+SQLite records its SQL export time. The log includes measured stages reached
+during a failed backup. The backup record's duration still ends after ZIP
+creation and before final archive validation. Existing archives retain their
+original logs and remain restorable.
 
 ### Backup lifecycle and Cleanup workspace
 

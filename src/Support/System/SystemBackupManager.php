@@ -117,7 +117,16 @@ class SystemBackupManager
         $output,
       );
 
-      app(BackupArchiveValidation::class)->validate($backup);
+      app(BackupArchiveValidation::class)->validate($backup, output: $output);
+      $backup->output = implode(PHP_EOL, $output);
+      if ($backup->isDirty('output')) {
+        try {
+          $backup->save();
+        } catch (Throwable) {
+          // The validated archive remains usable if its extra timing cannot be saved.
+          Log::warning('Final backup timing could not be saved.', ['backup_id' => $backup->id]);
+        }
+      }
 
       return $backup->fresh();
     } catch (Throwable $throwable) {
