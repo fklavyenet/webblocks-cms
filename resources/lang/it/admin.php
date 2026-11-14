@@ -2037,6 +2037,12 @@ $translations = [
     'save_changes' => 'Salva modifiche',
   ],
   'backups' => [
+    'worker_running' => 'Il backup è in corso sul server. Puoi lasciare questa pagina.',
+    'worker_completed' => 'Il backup è completato e l’archivio è stato verificato.',
+    'worker_failed' => 'Il backup non è riuscito. Aggiorna i dettagli per vedere l’errore registrato.',
+    'worker_progress_unavailable' => 'Lo stato in tempo reale non è disponibile. Aggiorna i dettagli per consultare il risultato registrato.',
+    'refresh_details' => 'Aggiorna i dettagli',
+    'worker_interrupted_status' => 'interrotto',
     'title' => 'Backup',
     'description' => 'Crea un backup locale prima di aggiornamenti o altre operazioni di manutenzione rischiose, poi esamina la cronologia, carica un archivio di backup scaricato e ripristina attraverso il normale flusso di backup.',
     'backup_number' => 'Backup #:id',

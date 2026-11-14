@@ -57,12 +57,9 @@ class BackupArchiveValidation
 
   public function validate(SystemBackup $backup, bool $alreadyInspected = false, ?array &$output = null): void
   {
-    if (! Schema::hasTable(self::TABLE)) {
-      return; // An incomplete upgrade cannot make an unverified archive trusted by reports.
-    }
     $path = app(SystemBackupArchiveResolver::class)->resolveForRetention($backup)->absolutePath;
     if ($path === null) {
-      return;
+      throw new RuntimeException('Backup archive is unavailable.');
     }
     $startedAt = $output !== null ? hrtime(true) : null;
     $signature = $this->signature($path);
@@ -81,10 +78,12 @@ class BackupArchiveValidation
       throw $exception;
     } finally {
       try {
-        DB::table(self::TABLE)->updateOrInsert(['backup_id' => $backup->id], [
-        'signature' => $signature, 'sha256' => $status === 'valid' ? $digest : null,
-        'validator_version' => self::VERSION, 'status' => $status, 'checked_at' => now(),
-      ]);
+        if (Schema::hasTable(self::TABLE)) {
+          DB::table(self::TABLE)->updateOrInsert(['backup_id' => $backup->id], [
+            'signature' => $signature, 'sha256' => $status === 'valid' ? $digest : null,
+            'validator_version' => self::VERSION, 'status' => $status, 'checked_at' => now(),
+          ]);
+        }
       } catch (Throwable) {
         // Optional reporting provenance cannot discard an otherwise valid backup.
       }

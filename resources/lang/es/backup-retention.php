@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'worker_unavailable' => 'No se pudo iniciar el proceso de copia de seguridad. Comprueba que el servidor permita un proceso PHP CLI independiente.',
+  'worker_interrupted' => 'La copia de seguridad se interrumpió antes de que se pudiera verificar el archivo.',
+  'restored_source' => 'El archivo de origen se verificó durante la restauración.',
   'reason_validation_pending' => 'Validación del archivo pendiente',
   'cleanup_help' => 'Se respetan protección, plazo y cantidad mínima de copias correctas. Las copias manuales requieren activación independiente; los archivos cargados se conservan sin caducidad explícita.',
   'tabs' => 'Secciones de limpieza',

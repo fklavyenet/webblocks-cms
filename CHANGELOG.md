@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.133.6
+
+- Run manual backups started in Webadmin in a separate PHP process so long backups can finish after the request ends or the browser tab closes. Backup Details shows the saved status.
+- Mark backups as completed only after the ZIP passes final validation and include that check in the recorded duration. Maintenance report refresh corrects earlier interrupted backup records whose archives are missing. Existing archives and restore workflows remain supported.
+- Show only the globe in the navbar for one available site. When multiple sites are available, show the globe and chevron and keep the site names inside the menu.
+
 ## 1.133.5
 
 - Show separate timings in the backup operational log for the database dump, raw SQL validation, file scanning, ZIP writing, and final archive validation. Backup contents and restore behavior stay the same.

@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'worker_unavailable' => 'Impossible de lancer le processus de sauvegarde. Vérifiez que le serveur autorise un processus PHP CLI distinct.',
+  'worker_interrupted' => 'La sauvegarde a été interrompue avant la vérification de son archive.',
+  'restored_source' => 'L’archive source a été vérifiée pendant la restauration.',
   'reason_validation_pending' => 'Validation de l’archive en attente',
   'cleanup_help' => 'Protection, durée de conservation et nombre minimal de sauvegardes réussies restent applicables. Les sauvegardes manuelles nécessitent une activation distincte ; les archives téléversées sont conservées sans expiration explicite.',
   'tabs' => 'Sections de nettoyage',

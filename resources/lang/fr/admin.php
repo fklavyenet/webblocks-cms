@@ -2038,6 +2038,12 @@ $translations = [
     'save_changes' => 'Enregistrer les modifications',
   ],
   'backups' => [
+    'worker_running' => 'La sauvegarde est en cours sur le serveur. Vous pouvez quitter cette page.',
+    'worker_completed' => 'La sauvegarde est terminée et son archive a été vérifiée.',
+    'worker_failed' => 'La sauvegarde a échoué. Actualisez les détails pour afficher l’erreur enregistrée.',
+    'worker_progress_unavailable' => 'Le suivi en direct est indisponible. Actualisez les détails pour consulter le résultat enregistré.',
+    'refresh_details' => 'Actualiser les détails',
+    'worker_interrupted_status' => 'interrompue',
     'title' => 'Sauvegardes',
     'description' => 'Créez une sauvegarde locale avant une mise à jour ou toute autre maintenance à risque, puis consultez l\'historique, téléversez une archive de sauvegarde téléchargée et restaurez via le flux de sauvegarde habituel.',
     'backup_number' => 'Sauvegarde n° :id',

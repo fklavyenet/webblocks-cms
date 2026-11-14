@@ -396,7 +396,7 @@
 
 @push('overlays')
     <div class="wb-modal" id="create-backup-retention-modal" role="dialog" aria-modal="true" aria-labelledby="create-backup-retention-title">
-        <div class="wb-modal-dialog"><form method="POST" action="{{ route('admin.system.backups.store') }}" data-wb-modal-submit-progress="backing_up">
+        <div class="wb-modal-dialog"><form method="POST" action="{{ route('admin.system.backups.store') }}">
             @csrf
             <div class="wb-modal-header"><h2 class="wb-modal-title" id="create-backup-retention-title">{{ $retentionText('create') }}</h2><button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ $adminText('common.cancel') }}"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button></div>
             <div class="wb-modal-body">@include('webblocks-cms::admin.system.backups.retention-fields', ['retentionBackup' => null])</div>

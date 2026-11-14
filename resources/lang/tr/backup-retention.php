@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'worker_unavailable' => 'Yedekleme işlemi başlatılamadı. Sunucunun ayrı bir PHP CLI işlemine izin verdiğini kontrol edin.',
+  'worker_interrupted' => 'Yedekleme, arşiv doğrulanamadan durdu.',
+  'restored_source' => 'Kaynak arşiv geri yükleme sırasında doğrulandı.',
   'reason_validation_pending' => 'Arşiv doğrulaması bekliyor',
   'cleanup_help' => 'Koruma, saklama süresi ve asgari başarılı yedek adedi her zaman geçerlidir. Manuel yedekler ayrı etkinleştirme ayarına bağlıdır; yüklenen arşivler açıkça sona erme tarihi seçilmedikçe saklanır.',
   'tabs' => 'Temizlik bölümleri',

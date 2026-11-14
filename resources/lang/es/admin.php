@@ -2038,6 +2038,12 @@ $translations = [
     'save_changes' => 'Guardar cambios',
   ],
   'backups' => [
+    'worker_running' => 'La copia de seguridad se está ejecutando en el servidor. Puedes salir de esta página.',
+    'worker_completed' => 'La copia de seguridad ha finalizado y el archivo se ha verificado.',
+    'worker_failed' => 'La copia de seguridad ha fallado. Actualiza los detalles para ver el error guardado.',
+    'worker_progress_unavailable' => 'El estado en directo no está disponible. Actualiza los detalles para consultar el resultado guardado.',
+    'refresh_details' => 'Actualizar detalles',
+    'worker_interrupted_status' => 'interrumpida',
     'title' => 'Copias de seguridad',
     'description' => 'Crea una copia de seguridad local antes de actualizaciones u otro mantenimiento arriesgado; luego revisa el historial, sube un archivo de copia de seguridad descargado y restaura mediante el flujo normal de copias de seguridad.',
     'backup_number' => 'Copia de seguridad n.º :id',

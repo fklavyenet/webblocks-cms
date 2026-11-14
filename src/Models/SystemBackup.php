@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use WebBlocks\Cms\Support\System\BackupOperations;
 
 class SystemBackup extends CmsModel
 {
@@ -25,6 +26,8 @@ class SystemBackup extends CmsModel
   public const STATUS_COMPLETED = 'completed';
 
   public const STATUS_FAILED = 'failed';
+
+  public const WORKER_START_TIMEOUT_SECONDS = 60;
 
   protected $fillable = [
     'is_protected',
@@ -92,10 +95,17 @@ class SystemBackup extends CmsModel
       return false;
     }
 
-    $threshold = (int) config('cms.backup.stale_after_minutes', 10);
+    return $this->hasExceededStartOrRunWindow() && ! app(BackupOperations::class)->isBusy();
+  }
 
-    return $this->created_at !== null
-      && $this->created_at->lt(now()->subMinutes($threshold));
+  /** Call under the operations lease when deciding whether to claim or reconcile a row. */
+  public function hasExceededStartOrRunWindow(): bool
+  {
+    if ($this->started_at === null && $this->type === self::TYPE_MANUAL) {
+      return $this->created_at?->lt(now()->subSeconds(self::WORKER_START_TIMEOUT_SECONDS)) ?? false;
+    }
+
+    return ($this->started_at ?? $this->created_at)?->lt(now()->subMinutes((int) config('cms.backup.stale_after_minutes', 10))) ?? false;
   }
 
   public function archiveRelativePath(): ?string

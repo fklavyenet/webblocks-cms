@@ -75,6 +75,7 @@ use WebBlocks\Cms\Console\VisitorReportCleanupCommand;
 use WebBlocks\Cms\Console\WorkAdminSystemUpdateCommand;
 use WebBlocks\Cms\Console\WorkJobsCommand;
 use WebBlocks\Cms\Console\WorkSeoAuditsCommand;
+use WebBlocks\Cms\Console\WorkSystemBackupCommand;
 use WebBlocks\Cms\Http\Middleware\AuthorizePluginPermission;
 use WebBlocks\Cms\Http\Middleware\PreventAdministrativeIndexing;
 use WebBlocks\Cms\Http\Middleware\RedirectIfInstalled;
@@ -935,6 +936,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     StarterContentCommand::class,
     SystemBackupRestoreCommand::class,
     SystemBackupCleanupCommand::class,
+    WorkSystemBackupCommand::class,
     SystemUpdateRunsCommand::class,
     RunSystemUpdateCommand::class,
     FinalizeSystemUpdateCommand::class,

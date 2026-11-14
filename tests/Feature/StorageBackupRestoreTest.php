@@ -8,11 +8,16 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Actions\SystemBackups\CreateManagedBackup;
+use WebBlocks\Cms\Actions\SystemBackups\StartAdminBackup;
+use WebBlocks\Cms\Http\Controllers\Admin\SystemBackupController;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Support\Media\MediaTransformService;
+use WebBlocks\Cms\Support\System\AdminBackupLauncher;
+use WebBlocks\Cms\Support\System\BackupArchiveValidation;
+use WebBlocks\Cms\Support\System\BackupOperations;
 use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
 use WebBlocks\Cms\Support\System\BackupRetentionSchema;
 use WebBlocks\Cms\Support\System\MaintenanceCleanupState;
@@ -149,6 +154,9 @@ class StorageBackupRestoreTest extends TestCase
     $this->assertSame($variantBytes, Storage::disk('public')->get($variantFiles[0]));
     $this->assertSame('reused', app(MediaTransformService::class)->result($media->fresh(), 'content')->status);
     $this->assertSame(SystemBackupRestore::STATUS_COMPLETED, $result->restoreRecord->status);
+    $this->assertSame($backup->id, $result->restoreRecord->source_backup_id);
+    $this->assertSame(SystemBackup::STATUS_COMPLETED, $backup->fresh()->status);
+    $this->assertSame($backup->output, $backup->fresh()->output);
     $this->assertSame(['database', 'uploads', 'site_public'], $result->inspection->restoredParts());
     $this->assertSame([], File::directories(storage_path('app/temp/system-backup-restores')));
     $this->assertTrue(is_link(public_path('storage')));
@@ -168,7 +176,16 @@ class StorageBackupRestoreTest extends TestCase
   public function a_failed_final_inspection_keeps_the_timings_in_the_failed_backup_log(): void
   {
     $this->mock(BackupRestoreArchiveInspector::class)->shouldReceive('inspect')->once()
-      ->andThrow(new \RuntimeException('Synthetic validation failure.'));
+      ->andReturnUsing(function (string $archivePath): never {
+        $backup = SystemBackup::query()->sole();
+        $this->assertSame(SystemBackup::STATUS_RUNNING, $backup->status);
+        $this->assertNull($backup->finished_at);
+        $this->assertFileExists($archivePath);
+        $this->assertFalse(app(SystemBackupManager::class)->archiveResolution($backup)->isAvailable());
+
+        throw new \RuntimeException('Synthetic validation failure.');
+      });
+    Schema::dropIfExists(BackupArchiveValidation::TABLE);
 
     try {
       app(SystemBackupManager::class)->createPreUpdateBackup();
@@ -183,6 +200,63 @@ class StorageBackupRestoreTest extends TestCase
     $this->assertMatchesRegularExpression('/^Final archive validation: [0-9]+ ms$/m', $backup->output);
     $this->assertStringContainsString('Backup failed: Synthetic validation failure.', $backup->output);
     Storage::disk('backups')->assertMissing($backup->archive_path);
+  }
+
+  #[Test]
+  public function a_panel_backup_is_admitted_before_the_worker_and_progress_only_reads_the_record(): void
+  {
+    $actorId = DB::table('users')->insertGetId([
+      'name' => 'Backup operator', 'email' => 'backup@example.test', 'password' => 'fixture',
+    ]);
+    $this->mock(AdminBackupLauncher::class)->shouldReceive('launch')->once()
+      ->andReturnUsing(function (int $id, string $filename): void {
+        $pending = SystemBackup::findOrFail($id);
+        $this->assertEquals($filename, $pending->archive_filename);
+        $this->assertTrue($pending->isRunning());
+        $this->assertNull($pending->started_at);
+        $this->assertFalse(app(BackupOperations::class)->isBusy());
+        Storage::disk('backups')->assertMissing($filename);
+      });
+
+    $backup = app(StartAdminBackup::class)->execute(['is_protected' => true, 'retention_mode' => 'never'], $actorId);
+    $controller = app(SystemBackupController::class);
+    $this->assertSame('running', $controller->progress($backup)->getData()->state);
+    $this->assertNull($backup->fresh()->started_at);
+    $this->assertTrue($backup->is_protected);
+    $this->assertSame($actorId, $backup->triggered_by_user_id);
+
+    $this->artisan('system:backups:work', ['backup' => $backup->id, 'filename' => $backup->archive_filename])->assertSuccessful();
+    $this->assertSame('completed', $controller->progress($backup->fresh())->getData()->state);
+    $this->assertSame('valid', app(BackupArchiveValidation::class)->records([$backup->id])->first()->status);
+    $this->artisan('system:backups:work', ['backup' => $backup->id, 'filename' => $backup->archive_filename])->assertFailed();
+    $this->assertSame(1, SystemBackup::count());
+  }
+
+  #[Test]
+  public function abandoned_backups_are_reconciled_under_the_lease_and_valid_legacy_records_are_kept(): void
+  {
+    $manager = app(SystemBackupManager::class);
+    $valid = $manager->createManualBackup();
+    $marker = 'Backup record marked as completed before database snapshot.';
+    $valid->update(['output' => $marker, 'archive_size_bytes' => null]);
+    $legacy = SystemBackup::create([
+      'type' => SystemBackup::TYPE_MANUAL, 'status' => SystemBackup::STATUS_COMPLETED,
+      'archive_disk' => 'backups', 'archive_path' => 'missing.zip', 'archive_filename' => 'missing.zip',
+      'output' => $marker, 'finished_at' => now(),
+    ]);
+    $pending = SystemBackup::create(['type' => SystemBackup::TYPE_MANUAL, 'status' => SystemBackup::STATUS_RUNNING]);
+    $this->travel(2)->minutes();
+
+    app(BackupOperations::class)->run(function () use ($manager, $pending): void {
+      $manager->markStaleBackupsAsFailed();
+      $this->assertTrue($pending->fresh()->isRunning());
+    });
+    $this->assertSame('interrupted', app(SystemBackupController::class)->progress($pending)->getData()->state);
+    $this->assertTrue($pending->fresh()->isRunning());
+    $manager->markStaleBackupsAsFailed();
+    $this->assertTrue($valid->fresh()->isSuccessful());
+    $this->assertTrue($legacy->fresh()->isFailed());
+    $this->assertTrue($pending->fresh()->isFailed());
   }
 
   #[Test]

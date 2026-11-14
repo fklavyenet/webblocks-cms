@@ -2039,6 +2039,12 @@ $translations = [
     'save_changes' => 'Änderungen speichern',
   ],
   'backups' => [
+    'worker_running' => 'Die Sicherung läuft auf dem Server. Sie können diese Seite verlassen.',
+    'worker_completed' => 'Die Sicherung ist abgeschlossen und das Archiv wurde geprüft.',
+    'worker_failed' => 'Die Sicherung ist fehlgeschlagen. Aktualisieren Sie die Details, um die gespeicherte Fehlermeldung zu sehen.',
+    'worker_progress_unavailable' => 'Der Live-Status ist nicht verfügbar. Aktualisieren Sie die Details, um das gespeicherte Ergebnis zu prüfen.',
+    'refresh_details' => 'Details aktualisieren',
+    'worker_interrupted_status' => 'unterbrochen',
     'title' => 'Backups',
     'description' => 'Erstellen Sie ein lokales Backup vor Updates oder riskanter Wartung, prüfen Sie den Verlauf, laden Sie ein heruntergeladenes Backup-Archiv hoch und stellen Sie es über den normalen Backup-Ablauf wieder her.',
     'backup_number' => 'Backup #:id',

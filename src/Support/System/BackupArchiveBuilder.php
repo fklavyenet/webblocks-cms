@@ -27,7 +27,9 @@ class BackupArchiveBuilder
     [$uploadsCount, $sitePublicCount] = BackupTiming::measure($output, 'File scan and ZIP entry registration',
       fn () => [$this->addUploads($archive), $this->addSitePublicFiles($archive)]);
     // libzip reads and compresses the registered files when the archive closes.
-    BackupTiming::measure($output, 'ZIP writing', fn () => $archive->close());
+    if (! BackupTiming::measure($output, 'ZIP writing', fn () => $archive->close())) {
+      throw new RuntimeException('Could not write backup archive.');
+    }
 
     $output[] = 'Archive created as '.basename($archivePath).'.';
     $output[] = 'Added '.$uploadsCount.' upload file(s) from storage/app/public.';

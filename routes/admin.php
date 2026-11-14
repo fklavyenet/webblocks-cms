@@ -582,6 +582,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::put('system/backups/{backup}/retention', [SystemBackupController::class, 'retention'])->name('system.backups.retention.update');
       Route::delete('system/backups/{backup}', [SystemBackupController::class, 'destroy'])->name('system.backups.destroy');
       Route::get('system/backups/{backup}', [SystemBackupController::class, 'show'])->name('system.backups.show');
+      Route::get('system/backups/{backup}/progress', [SystemBackupController::class, 'progress'])->name('system.backups.progress');
       Route::get('system/backups/{backup}/download', [SystemBackupController::class, 'download'])->name('system.backups.download');
       Route::post('system/backups/{backup}/restore', [SystemBackupController::class, 'restore'])->name('system.backups.restore');
       Route::delete('system/backups/{backup}/restores/{restore}', [SystemBackupController::class, 'destroyRestore'])->name('system.backups.restores.destroy');

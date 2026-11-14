@@ -1319,10 +1319,11 @@ Missing results remain unverified; stale snapshots retain their recorded time.
 Opening the dashboard does not start maintenance scans or external release checks.
 Installation health remains restricted to system operators.
 
-The administrator navbar's **View site** control lists all sites available to the
-signed-in account on every admin screen. With one available site, its name links
-directly to its public home. With multiple sites, the globe and chevron open a
-menu of named public home links. Each link opens in a new tab.
+The administrator navbar's globe gives the signed-in account access to public
+site homes on every admin screen. The globe links directly to the public home
+when only one site is available. With multiple sites, the globe and chevron
+open a menu of named public home links. The control retains an accessible
+label and each public home opens in a new tab.
 
 Trusted plugin PHP definitions may register `PluginQuickSetting` entries through
 `PluginDefinition::quickSettings()`. The navbar exposes a native WebBlocks UI
@@ -2353,9 +2354,21 @@ The operational log on Backup Details records elapsed milliseconds for MySQL or
 MariaDB dump execution, raw SQL validation, file scanning and ZIP entry
 registration, ZIP writing, and final archive validation when that check runs.
 SQLite records its SQL export time. The log includes measured stages reached
-during a failed backup. The backup record's duration still ends after ZIP
-creation and before final archive validation. Existing archives retain their
-original logs and remain restorable.
+during a failed backup. A new backup stays running until the ZIP has passed
+final validation. Its saved duration includes validation. Restoring such an
+archive completes its matching source record in the restored database after
+inspection. Existing archives retain their original logs and remain restorable.
+Uploaded archives are registered as completed after inspection and checksum
+validation also finish.
+
+The panel starts a manual backup with an authorized POST and redirects to the
+saved record. On hosts that allow a separate PHP CLI process, the worker
+finishes even when the browser leaves. The details page only reads progress.
+The worker shares the backup operations lease with restore, cleanup and the
+other backup entry points. Panel launch failures and interrupted runs never
+publish an unverified archive as completed. An explicit maintenance report
+refresh reconciles interrupted records, including older prematurely completed
+rows whose archives are missing.
 
 ### Backup lifecycle and Cleanup workspace
 

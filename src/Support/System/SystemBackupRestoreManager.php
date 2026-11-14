@@ -119,6 +119,7 @@ class SystemBackupRestoreManager
       $output[] = 'Archive extracted to temporary restore workspace.';
 
       $this->databaseRestoreRunner->restoreFrom($extractedDirectory.DIRECTORY_SEPARATOR.$inspection->databaseSqlPath, $output);
+      $sourceBackup = $this->completeRestoredSourceRecord($inspection, $archivePath, $sourceBackup);
 
       if ($inspection->includesUploads && $inspection->uploadsRootPath !== null) {
         $this->restoreUploads(
@@ -232,6 +233,44 @@ class SystemBackupRestoreManager
         ? 'backup #'.$backup->id.' ('.$backup->archive_filename.')'
         : 'archive '.$reference,
     ];
+  }
+
+  /**
+   * New dumps contain their own in-progress row. Only the matching row in the
+   * restored database can inherit completion from the archive just inspected.
+   */
+  private function completeRestoredSourceRecord(BackupRestoreInspection $inspection, string $archivePath, ?SystemBackup $source): ?SystemBackup
+  {
+    $id = $inspection->manifest['backup_id'] ?? null;
+    $filename = $inspection->manifest['archive_filename'] ?? null;
+    if (! is_int($id) || ! is_string($filename) || ! preg_match(SystemBackupManager::GENERATED_ARCHIVE_PATTERN, $filename)
+      || ! Schema::hasTable('wbcms_system_backups')) {
+      return $source;
+    }
+
+    $restored = SystemBackup::query()->whereKey($id)
+      ->where('status', SystemBackup::STATUS_RUNNING)->whereNotNull('started_at')->whereNull('finished_at')
+      ->where('archive_disk', SystemBackupManager::ARCHIVE_DISK)->where('archive_path', $filename)
+      ->where('archive_filename', $filename)->first();
+    if ($restored === null) {
+      return $source;
+    }
+
+    $sameSource = $source && $source->id === $id && $source->archive_filename === $filename && $source->isSuccessful();
+    $message = __('webblocks-cms::backup-retention.restored_source');
+    $restored->update([
+      'status' => SystemBackup::STATUS_COMPLETED,
+      'archive_path' => $archivePath,
+      'archive_filename' => basename($archivePath),
+      'archive_size_bytes' => $this->systemBackupManager->archiveDisk()->size($archivePath),
+      'finished_at' => $sameSource ? ($source->finished_at ?? $restored->started_at) : $restored->started_at,
+      'duration_ms' => $sameSource ? $source->duration_ms : null,
+      'summary' => $sameSource ? ($source->summary ?? $message) : $message,
+      'output' => $sameSource ? ($source->output ?? $message) : $message,
+      'error_message' => null,
+    ]);
+
+    return $restored;
   }
 
   private function restoreUploads(string $sourceDirectory, string $temporaryDirectory, array &$output): void

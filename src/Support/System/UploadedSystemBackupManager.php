@@ -34,11 +34,11 @@ class UploadedSystemBackupManager
       throw new RuntimeException('Backup archive could not be stored on the backups disk.');
     }
 
+    $backup = null;
     try {
       $inspection = $this->archiveInspector->inspect($disk->path($storedPath));
       $archiveSize = $disk->size($storedPath);
       $manifest = $inspection->manifest;
-      $finishedAt = now();
       $output = [
         'Backup archive uploaded and validated successfully.',
         'Source filename: '.$sourceFilename,
@@ -47,7 +47,7 @@ class UploadedSystemBackupManager
 
       $backup = SystemBackup::query()->create([
         'type' => SystemBackup::TYPE_UPLOADED,
-        'status' => SystemBackup::STATUS_COMPLETED,
+        'status' => SystemBackup::STATUS_RUNNING,
         'label' => $sourceFilename,
         'includes_database' => $inspection->includesDatabase,
         'includes_uploads' => $inspection->includesUploads,
@@ -56,17 +56,23 @@ class UploadedSystemBackupManager
         'archive_filename' => basename($storedPath),
         'archive_size_bytes' => is_int($archiveSize) ? $archiveSize : null,
         'started_at' => $startedAt,
-        'finished_at' => $finishedAt,
-        'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
-        'summary' => 'Uploaded backup archive validated and registered for restore.',
-        'output' => implode(PHP_EOL, array_merge($output, $this->manifestSummaryLines($manifest, $inspection))),
         'triggered_by_user_id' => $triggeredByUserId,
       ]);
       app(BackupArchiveValidation::class)->validate($backup, alreadyInspected: true);
 
+      $finishedAt = now();
+      $backup->update([
+        'status' => SystemBackup::STATUS_COMPLETED,
+        'finished_at' => $finishedAt,
+        'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
+        'summary' => 'Uploaded backup archive validated and registered for restore.',
+        'output' => implode(PHP_EOL, array_merge($output, $this->manifestSummaryLines($manifest, $inspection))),
+      ]);
+
       return $backup;
     } catch (Throwable $throwable) {
       $disk->delete($storedPath);
+      $backup?->delete();
 
       throw new RuntimeException($throwable->getMessage(), previous: $throwable);
     }

@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'worker_unavailable' => 'Impossibile avviare il processo di backup. Verifica che il server consenta un processo PHP CLI separato.',
+  'worker_interrupted' => 'Il backup si è interrotto prima della verifica dell’archivio.',
+  'restored_source' => 'L’archivio di origine è stato verificato durante il ripristino.',
   'reason_validation_pending' => 'Verifica dell’archivio in attesa',
   'cleanup_help' => 'Protezione, durata e numero minimo di backup riusciti restano sempre validi. I backup manuali richiedono un’attivazione separata; gli archivi caricati vengono conservati senza scadenza esplicita.',
   'tabs' => 'Sezioni di pulizia',

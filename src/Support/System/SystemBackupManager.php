@@ -14,6 +14,8 @@ use WebBlocks\Cms\Models\SystemBackup;
 
 class SystemBackupManager
 {
+  public const GENERATED_ARCHIVE_PATTERN = '/\Awebblocks-cms-backup-\d{4}-\d{2}-\d{2}-\d{6}-[a-z0-9]{24}\.zip\z/';
+
   public const ARCHIVE_DISK = 'backups';
 
   public const RECENT_BACKUP_HOURS = 24;
@@ -56,6 +58,18 @@ class SystemBackupManager
     return $this->createBackup(SystemBackup::TYPE_CONTENT_APPLY, $triggeredByUserId, $label);
   }
 
+  public function reserveManualBackup(array $retention, int $actorId): SystemBackup
+  {
+    return app(BackupOperations::class)->run(function () use ($retention, $actorId): SystemBackup {
+      if (SystemBackup::query()->where('status', SystemBackup::STATUS_RUNNING)->where('type', SystemBackup::TYPE_MANUAL)
+        ->whereNull('started_at')->where('created_at', '>=', now()->subSeconds(SystemBackup::WORKER_START_TIMEOUT_SECONDS))->exists()) {
+        throw new BackupOperationException(__('webblocks-cms::backup-retention.busy'));
+      }
+
+      return $this->reserveBackup(SystemBackup::TYPE_MANUAL, $actorId, null, $retention);
+    });
+  }
+
   public function assertValidArchiveRelativePath(string $path): void
   {
     $this->backupArchiveResolver()->assertValidArchivePath($path);
@@ -63,14 +77,16 @@ class SystemBackupManager
 
   private function createBackup(string $type, ?int $triggeredByUserId = null, ?string $label = null, array $retention = []): SystemBackup
   {
-    return app(BackupOperations::class)->run(fn () => $this->createBackupUnderLease($type, $triggeredByUserId, $label, $retention));
+    return app(BackupOperations::class)->run(fn () => $this->buildArchive(
+      $this->reserveBackup($type, $triggeredByUserId, $label, $retention)
+    ));
   }
 
-  private function createBackupUnderLease(string $type, ?int $triggeredByUserId, ?string $label, array $retention): SystemBackup
+  private function reserveBackup(string $type, ?int $actorId, ?string $label, array $retention): SystemBackup
   {
-    $startedAt = now();
-    $output = [];
-    $backup = SystemBackup::query()->create([
+    $filename = 'webblocks-cms-backup-'.now()->format('Y-m-d-His').'-'.Str::lower(Str::random(24)).'.zip';
+
+    return SystemBackup::query()->create([
       ...$retention,
       'type' => $type,
       'status' => SystemBackup::STATUS_RUNNING,
@@ -78,14 +94,43 @@ class SystemBackupManager
       'includes_database' => true,
       'includes_uploads' => true,
       'archive_disk' => self::ARCHIVE_DISK,
-      'started_at' => $startedAt,
-      'triggered_by_user_id' => $triggeredByUserId,
+      'archive_path' => $filename,
+      'archive_filename' => $filename,
+      'triggered_by_user_id' => $actorId,
     ]);
+  }
 
+  public function runReservedManualBackup(int $id, string $filename): bool
+  {
+    if (! preg_match(self::GENERATED_ARCHIVE_PATTERN, $filename)) {
+      return false;
+    }
+
+    return app(BackupOperations::class)->run(function () use ($id, $filename): bool {
+      $backup = SystemBackup::query()->whereKey($id)->where('type', SystemBackup::TYPE_MANUAL)
+        ->where('archive_filename', $filename)->where('archive_path', $filename)
+        ->where('status', SystemBackup::STATUS_RUNNING)->whereNull('started_at')->first();
+
+      if ($backup === null || $backup->hasExceededStartOrRunWindow()) {
+        return false;
+      }
+
+      $startedAt = now();
+      $claimed = SystemBackup::query()->whereKey($id)->where('archive_filename', $filename)
+        ->where('status', SystemBackup::STATUS_RUNNING)->whereNull('started_at')
+        ->update(['started_at' => $startedAt]);
+
+      return $claimed === 1 && $this->buildArchive($backup->refresh())->isSuccessful();
+    });
+  }
+
+  private function buildArchive(SystemBackup $backup): SystemBackup
+  {
+    $startedAt = $backup->started_at ?? now();
+    $output = [];
+    $archiveRelativePath = $backup->archive_path;
     $temporaryDirectory = storage_path('app/temp/system-backups/'.$startedAt->format('YmdHis').'-'.Str::lower(Str::random(8)));
     $databaseDumpPath = $temporaryDirectory.'/database.sql';
-    $archiveFilename = 'webblocks-cms-backup-'.$startedAt->format('Y-m-d-His').'-'.$backup->id.'-'.Str::lower(Str::random(8)).'.zip';
-    $archiveRelativePath = $archiveFilename;
 
     try {
       $archiveDisk = $this->archiveDisk();
@@ -94,39 +139,16 @@ class SystemBackupManager
       File::ensureDirectoryExists($temporaryDirectory);
       File::ensureDirectoryExists((string) config('filesystems.disks.public.root'));
 
-      $this->markBackupCompletedForSnapshot(
-        $backup,
-        $archiveRelativePath,
-        $archiveFilename,
-        $startedAt,
-        $output,
-      );
+      if ($backup->started_at === null) {
+        $backup->update(['started_at' => $startedAt]);
+      }
 
       $databaseMeta = $this->databaseDumpWriter->dumpTo($databaseDumpPath, $output);
-      $manifest = $this->backupManifestBuilder->build($backup, $databaseMeta, $archiveFilename);
+      $manifest = $this->backupManifestBuilder->build($backup, $databaseMeta, $backup->archive_filename);
       $archiveMeta = $this->backupArchiveBuilder->build($archivePath, $databaseDumpPath, $manifest, $output);
-      $fileSize = filesize($archivePath);
-
-      $this->finalizeCompletedBackup(
-        $backup,
-        $archiveRelativePath,
-        $archiveFilename,
-        $startedAt,
-        $fileSize === false ? null : $fileSize,
-        $archiveMeta,
-        $output,
-      );
 
       app(BackupArchiveValidation::class)->validate($backup, output: $output);
-      $backup->output = implode(PHP_EOL, $output);
-      if ($backup->isDirty('output')) {
-        try {
-          $backup->save();
-        } catch (Throwable) {
-          // The validated archive remains usable if its extra timing cannot be saved.
-          Log::warning('Final backup timing could not be saved.', ['backup_id' => $backup->id]);
-        }
-      }
+      $this->finalizeCompletedBackup($backup, $startedAt, $archiveDisk->size($archiveRelativePath), $archiveMeta, $output);
 
       return $backup->fresh();
     } catch (Throwable $throwable) {
@@ -161,51 +183,19 @@ class SystemBackupManager
     return $this->backupArchiveResolver()->archiveDisk();
   }
 
-  private function markBackupCompletedForSnapshot(
-    SystemBackup $backup,
-    string $archiveRelativePath,
-    string $archiveFilename,
-    $startedAt,
-    array &$output,
-  ): void {
-    $finishedAt = now();
-    $output[] = 'Backup record marked as completed before database snapshot.';
-
-    $backup->forceFill([
-      'status' => SystemBackup::STATUS_COMPLETED,
-      'archive_path' => $archiveRelativePath,
-      'archive_filename' => $archiveFilename,
-      'archive_size_bytes' => null,
-      'finished_at' => $finishedAt,
-      'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
-      'summary' => 'Backup completed.',
-      'output' => implode(PHP_EOL, $output),
-      'error_message' => null,
-    ])->save();
-  }
-
-  private function finalizeCompletedBackup(
-    SystemBackup $backup,
-    string $archiveRelativePath,
-    string $archiveFilename,
-    $startedAt,
-    ?int $archiveSizeBytes,
-    array $archiveMeta,
-    array $output,
-  ): void {
+  private function finalizeCompletedBackup(SystemBackup $backup, $startedAt, int $size, array $archiveMeta, array $output): void
+  {
     $finishedAt = now();
 
-    $backup->forceFill([
+    $backup->update([
       'status' => SystemBackup::STATUS_COMPLETED,
-      'archive_path' => $archiveRelativePath,
-      'archive_filename' => $archiveFilename,
-      'archive_size_bytes' => $archiveSizeBytes,
+      'archive_size_bytes' => $size,
       'finished_at' => $finishedAt,
       'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
       'summary' => 'Backup completed with database dump and '.number_format($archiveMeta['uploads_file_count']).' upload file(s).',
       'output' => implode(PHP_EOL, $output),
       'error_message' => null,
-    ])->save();
+    ]);
   }
 
   public function latest(): ?SystemBackup
@@ -251,29 +241,43 @@ class SystemBackupManager
       return;
     }
 
-    $backups = SystemBackup::query()
-      ->where('status', SystemBackup::STATUS_RUNNING)
-      ->whereNull('finished_at')
-      ->get();
-
-    foreach ($backups as $backup) {
-      if (! $backup->isStaleRunning()) {
-        continue;
-      }
-
-      $output = trim(implode(PHP_EOL.PHP_EOL, array_filter([
-        $backup->output,
-        'This backup did not finish in time and was marked as failed.',
-      ])));
-
-      $backup->update([
-        'status' => SystemBackup::STATUS_FAILED,
-        'summary' => 'This backup did not finish in time and was marked as failed.',
-        'finished_at' => now(),
-        'output' => $output,
-        'error_message' => $backup->error_message ?: 'This backup did not finish in time and was marked as failed. You can delete this failed backup record or create a fresh backup.',
-      ]);
+    if (app(BackupOperations::class)->isBusy()) {
+      return;
     }
+
+    try {
+      app(BackupOperations::class)->run(function (): void {
+        SystemBackup::query()->where('status', SystemBackup::STATUS_RUNNING)->whereNull('finished_at')
+          ->eachById(function (SystemBackup $backup): void {
+            if ($backup->hasExceededStartOrRunWindow()) {
+              $this->recordInterruption($backup);
+            }
+          });
+
+        // Earlier versions wrote this marker before starting the database dump.
+        SystemBackup::query()->where('status', SystemBackup::STATUS_COMPLETED)->whereNull('archive_size_bytes')
+          ->where('output', 'Backup record marked as completed before database snapshot.')
+          ->eachById(function (SystemBackup $backup): void {
+            if ($this->archiveResolution($backup)->isMissing()) {
+              $this->recordInterruption($backup);
+            }
+          });
+      });
+    } catch (BackupOperationException) {
+      // A backup or restore took the lease after the idle check.
+    }
+  }
+
+  private function recordInterruption(SystemBackup $backup): void
+  {
+    $message = __('webblocks-cms::backup-retention.worker_interrupted');
+    $backup->update([
+      'status' => SystemBackup::STATUS_FAILED,
+      'summary' => $message,
+      'finished_at' => now(),
+      'output' => trim($backup->output.PHP_EOL.$message),
+      'error_message' => $message,
+    ]);
   }
 
   public function downloadResponse(SystemBackup $backup): BinaryFileResponse
@@ -307,7 +311,7 @@ class SystemBackupManager
 
   private function deleteBackupUnderLease(SystemBackup $backup, bool $allowRunning): void
   {
-    if ($backup->isRunning() && ! $backup->isStaleRunning() && ! $allowRunning) {
+    if ($backup->isRunning() && ! $backup->hasExceededStartOrRunWindow() && ! $allowRunning) {
       throw new RuntimeException('Running backup cannot be deleted unless you explicitly confirm it is stuck.');
     }
 

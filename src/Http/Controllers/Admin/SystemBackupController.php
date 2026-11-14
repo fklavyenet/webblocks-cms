@@ -2,16 +2,18 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
-use WebBlocks\Cms\Actions\SystemBackups\CreateManagedBackup;
+use WebBlocks\Cms\Actions\SystemBackups\StartAdminBackup;
 use WebBlocks\Cms\Actions\SystemBackups\UpdateBackupRetention;
 use WebBlocks\Cms\Http\Requests\Admin\BulkDeleteSystemBackupsRequest;
 use WebBlocks\Cms\Http\Requests\Admin\CreateSystemBackupRequest;
@@ -134,16 +136,32 @@ class SystemBackupController extends Controller
   public function store(CreateSystemBackupRequest $request): RedirectResponse
   {
     try {
-      $backup = app(CreateManagedBackup::class)->execute($request->validated(), $request->user()?->id);
+      $backup = app(StartAdminBackup::class)->execute($request->validated(), (int) $request->user()->id);
 
+      return redirect()->route('admin.system.backups.show', $backup, 303);
+    } catch (BackupOperationException $exception) {
       return redirect()
         ->route('admin.system.backups.index')
-        ->with('status', $backup->summary ?? 'Backup completed successfully.');
-    } catch (Throwable $throwable) {
-      return redirect()
-        ->route('admin.system.backups.index')
-        ->withErrors(['system_backup' => $throwable->getMessage()]);
+        ->withErrors(['system_backup' => $exception->getMessage()]);
+    } catch (Throwable $exception) {
+      Log::warning('Panel backup could not be admitted.', ['exception' => $exception::class]);
+
+      return redirect()->route('admin.system.backups.index')
+        ->withErrors(['system_backup' => __('webblocks-cms::backup-retention.worker_unavailable')]);
     }
+  }
+
+  public function progress(SystemBackup $backup): JsonResponse
+  {
+    $state = $backup->status;
+    if ($backup->isStaleRunning()) {
+      // The worker can finish between route binding and the lease probe.
+      $state = $backup->refresh()->isRunning() ? 'interrupted' : $backup->status;
+    }
+
+    return response()->json([
+      'state' => $state,
+    ])->header('Cache-Control', 'no-store');
   }
 
   public function retention(SystemBackupRetentionRequest $request, SystemBackup $backup, UpdateBackupRetention $action): RedirectResponse

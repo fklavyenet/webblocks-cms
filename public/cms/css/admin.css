@@ -739,10 +739,6 @@ input.wb-admin-table-grid-input:focus {
     line-height: 1.2;
 }
 
-.wb-admin-public-site-label {
-    max-width: clamp(4rem, 18vw, 10rem);
-}
-
 @media (max-width: 720px) {
     .wb-admin-navbar {
         padding-inline: var(--wb-s2);

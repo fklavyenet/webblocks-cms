@@ -2052,6 +2052,12 @@ $translations = [
     'save_changes' => 'Değişiklikleri kaydet',
   ],
   'backups' => [
+    'worker_running' => 'Yedekleme sunucuda devam ediyor. Bu sayfadan ayrılabilirsiniz.',
+    'worker_completed' => 'Yedekleme tamamlandı ve arşiv doğrulandı.',
+    'worker_failed' => 'Yedekleme başarısız oldu. Kaydedilen hatayı görmek için ayrıntıları yenileyin.',
+    'worker_progress_unavailable' => 'Canlı durum alınamadı. Kaydedilen sonucu görmek için ayrıntıları yenileyin.',
+    'refresh_details' => 'Ayrıntıları yenile',
+    'worker_interrupted_status' => 'kesintiye uğradı',
     'title' => 'Yedekler',
     'description' => 'Update veya riskli bakımdan önce local yedek oluşturun; geçmişi inceleyin, indirilen yedek arşivini yükleyin ve normal yedek akışından geri yükleyin.',
     'backup_number' => 'Yedek #:id',

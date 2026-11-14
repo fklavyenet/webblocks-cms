@@ -19,6 +19,7 @@ use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Queries\SystemHealthQuery;
 use WebBlocks\Cms\Queries\SystemHealthSiteQuery;
 use WebBlocks\Cms\Support\Jobs\JobRegistry;
+use WebBlocks\Cms\Support\System\AdminBackupLauncher;
 use WebBlocks\Cms\Support\System\BackupArchiveValidation;
 use WebBlocks\Cms\Support\System\BackupRestoreArchiveInspector;
 use WebBlocks\Cms\Support\System\BackupRetentionPlan;
@@ -537,6 +538,25 @@ class SystemMaintenanceReportsTest extends TestCase
     $health = app(SystemHealthQuery::class);
     $health->refreshSnapshot();
     $this->assertSame('stale', $health->dashboardSummary()['status']);
+  }
+
+  #[Test]
+  public function starting_a_panel_backup_redirects_to_the_saved_record_and_its_status_is_read_only(): void
+  {
+    $launcher = $this->mock(AdminBackupLauncher::class);
+    $launcher->shouldReceive('launch')->once();
+
+    $response = $this->post(route('admin.system.backups.store'), [
+      'retention_mode' => 'never',
+      'is_protected' => '1',
+    ]);
+    $backup = SystemBackup::query()->sole();
+    $response->assertStatus(303)->assertRedirect(route('admin.system.backups.show', $backup));
+    $this->get(route('admin.system.backups.show', $backup))->assertOk()->assertSee('data-wb-backup-progress', false);
+    $this->getJson(route('admin.system.backups.progress', $backup))->assertOk()->assertExactJson(['state' => 'running']);
+    $this->assertNull($backup->fresh()->started_at);
+    $this->assertTrue($backup->is_protected);
+    Storage::disk('backups')->assertMissing($backup->archive_path);
   }
 
   #[Test]

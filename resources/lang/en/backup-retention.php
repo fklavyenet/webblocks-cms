@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'worker_unavailable' => 'The backup worker could not start. Check that this host allows a separate PHP CLI process.',
+  'worker_interrupted' => 'The backup stopped before its archive could be verified.',
+  'restored_source' => 'Source archive validated during restore.',
   'reason_validation_pending' => 'Archive validation pending',
   'cleanup_help' => 'Protection, retention periods and minimum successful counts always apply. Manual backups follow their separate opt-in setting; uploaded archives are kept unless an expiration is explicitly selected.',
   'tabs' => 'Cleanup sections',

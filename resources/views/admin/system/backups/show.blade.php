@@ -24,6 +24,7 @@
     @php($archiveResolution = $archiveResolution ?? null)
     @php($canDownload = $archiveResolution?->isAvailable() ?? false)
     @php($canRestore = $canDownload)
+    @php($backupInterrupted = $backup->isStaleRunning())
     @php($archivePathValue = (string) $backup->archive_path)
     @php($isAbsoluteArchivePath = str_starts_with($archivePathValue, '/') || preg_match('/^[A-Za-z]:[\/\\\\]/', $archivePathValue) === 1)
     @php($displayArchivePath = $isAbsoluteArchivePath ? $adminText('backups.absolute_path_hidden') : ($backup->archive_path ?? '-'))
@@ -37,20 +38,48 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
+    @if ($backup->isRunning())
+        <div class="wb-alert {{ $backupInterrupted ? 'wb-alert-danger' : 'wb-alert-info' }}" role="status"
+            @unless ($backupInterrupted)
+                data-wb-backup-progress="{{ route('admin.system.backups.progress', $backup) }}"
+                data-completed="{{ $adminText('backups.worker_completed') }}"
+                data-failed="{{ $adminText('backups.worker_failed') }}"
+                data-interrupted="{{ __('webblocks-cms::backup-retention.worker_interrupted') }}"
+                data-unavailable="{{ $adminText('backups.worker_progress_unavailable') }}"
+            @endunless
+        >
+            <div>
+                <span data-wb-backup-message>{{ $backupInterrupted ? __('webblocks-cms::backup-retention.worker_interrupted') : $adminText('backups.worker_running') }}</span>
+                <a class="wb-link" href="{{ route('admin.system.backups.show', $backup) }}">{{ $adminText('backups.refresh_details') }}</a>
+            </div>
+            @unless ($backupInterrupted)
+                <div class="wb-progress-bar wb-progress-bar-indeterminate" role="progressbar" aria-label="{{ $adminText('backups.run_status') }}" data-wb-backup-bar>
+                    <div class="wb-progress-bar-fill"></div>
+                </div>
+            @endunless
+        </div>
+    @endif
+
     <div class="wb-stack wb-stack-4">
         <div class="wb-grid wb-grid-2">
             <div class="wb-card">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
                     <strong>{{ $adminText('backups.run_status') }}</strong>
-                    <span class="wb-status-pill {{ $backup->statusBadgeClass() }}">{{ $backupStatusLabel($backup->status) }}</span>
+                    <span class="wb-status-pill {{ $backupInterrupted ? 'wb-status-danger' : $backup->statusBadgeClass() }}" data-wb-backup-badge
+                        data-completed="{{ $backupStatusLabel('completed') }}" data-failed="{{ $backupStatusLabel('failed') }}"
+                        data-interrupted="{{ $adminText('backups.worker_interrupted_status') }}">{{ $backupInterrupted ? $adminText('backups.worker_interrupted_status') : $backupStatusLabel($backup->status) }}</span>
                 </div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>{{ $backup->summary ?? $adminText('backups.no_summary_available') }}</strong></div>
-                    <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.started') }} {{ $backup->started_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
-                    <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.finished') }} {{ $backup->finished_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
-                    <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.duration') }} {{ $backup->durationLabel() }}</div>
-                    <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.triggered_by') }} {{ $backup->triggeredBy?->name ?? '-' }}</div>
+                    @if ($backup->summary)
+                        <div><strong>{{ $backup->summary }}</strong></div>
+                    @endif
+                    <div class="wb-table-wrap"><table class="wb-table"><tbody>
+                        <tr><th scope="row">{{ $adminText('backups.started') }}</th><td>{{ $backup->started_at?->format('Y-m-d H:i:s') ?? '-' }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('backups.finished') }}</th><td>{{ $backup->finished_at?->format('Y-m-d H:i:s') ?? '-' }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('backups.duration') }}</th><td>{{ $backup->durationLabel() }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('backups.triggered_by') }}</th><td>{{ $backup->triggeredBy?->name ?? '-' }}</td></tr>
+                    </tbody></table></div>
 
                     @if ($backup->error_message)
                         <div class="wb-alert wb-alert-danger">
@@ -275,4 +304,7 @@
 
 @push('admin-scripts')
     @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/backup-restore.js'])
+    @if ($backup->isRunning() && ! $backupInterrupted)
+        @include('webblocks-cms::admin.partials.admin-script', ['path' => 'cms/js/admin/backup-progress.js'])
+    @endif
 @endpush

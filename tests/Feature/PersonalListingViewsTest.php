@@ -174,6 +174,8 @@ class PersonalListingViewsTest extends TestCase
       $xpath = new \DOMXPath($dom);
       $this->assertSame(0, $xpath->query('//a[@data-admin-public-site]')->length);
       $trigger = $xpath->query('//button[@data-wb-toggle="dropdown" and @aria-controls="admin-public-sites"]')->item(0);
+      $this->assertSame('', trim($trigger->textContent));
+      $this->assertNotSame('', $trigger->getAttribute('aria-label'));
       $this->assertSame(1, $xpath->query('./i[contains(@class, "wb-icon-globe")]', $trigger)->length);
       $this->assertSame(1, $xpath->query('./i[contains(@class, "wb-icon-chevron-down")]', $trigger)->length);
 
@@ -198,7 +200,9 @@ class PersonalListingViewsTest extends TestCase
     $xpath = new \DOMXPath($dom);
     $this->assertSame(0, $xpath->query('//*[@id="admin-public-sites"]')->length);
     $link = $xpath->query('//a[@data-admin-public-site and @target="_blank"]')->item(0);
-    $this->assertSame($this->site->name, trim($link->textContent));
+    $this->assertSame('', trim($link->textContent));
+    $this->assertStringContainsString($this->site->name, $link->getAttribute('aria-label'));
+    $this->assertSame(1, $xpath->query('./i[contains(@class, "wb-icon-globe")]', $link)->length);
     $this->assertSame($this->site->publicHomeUrl(), $link->getAttribute('href'));
     $this->assertSame(0, $xpath->query('./i[contains(@class, "wb-icon-chevron-down")]', $link)->length);
   }

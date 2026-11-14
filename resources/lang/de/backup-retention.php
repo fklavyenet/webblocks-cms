@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'worker_unavailable' => 'Der Sicherungsprozess konnte nicht gestartet werden. Prüfen Sie, ob der Server einen separaten PHP-CLI-Prozess zulässt.',
+  'worker_interrupted' => 'Die Sicherung wurde unterbrochen, bevor das Archiv geprüft werden konnte.',
+  'restored_source' => 'Das Quellarchiv wurde bei der Wiederherstellung geprüft.',
   'reason_validation_pending' => 'Archivprüfung ausstehend',
   'cleanup_help' => 'Schutz, Aufbewahrungsfristen und Mindestanzahl erfolgreicher Backups gelten immer. Manuelle Backups benötigen eine gesonderte Aktivierung; hochgeladene Archive bleiben ohne explizites Ablaufdatum erhalten.',
   'tabs' => 'Bereinigungsbereiche',

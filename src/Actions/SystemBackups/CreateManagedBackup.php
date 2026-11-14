@@ -11,18 +11,22 @@ final class CreateManagedBackup
 {
   public function execute(array $values, ?int $actorId = null): SystemBackup
   {
-    $manager = app(SystemBackupManager::class);
+    return app(SystemBackupManager::class)->createManagedManualBackup($this->retention($values), $actorId);
+  }
+
+  public function retention(array $values): array
+  {
     if (! isset($values['retention_mode'])) {
-      return $manager->createManualBackup($actorId);
+      return [];
     }
     if (! BackupRetentionSchema::ready()) {
       throw new BackupOperationException(__('webblocks-cms::backup-retention.schema_missing'));
     }
 
-    return $manager->createManagedManualBackup([
+    return [
       'is_protected' => (bool) $values['is_protected'],
       'retention_mode' => $values['retention_mode'],
       'expires_at' => $values['retention_mode'] === 'expires' ? $values['expires_at'] : null,
-    ], $actorId);
+    ];
   }
 }

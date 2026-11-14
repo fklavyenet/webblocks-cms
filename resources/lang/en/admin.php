@@ -2262,6 +2262,12 @@ return [
     'save_changes' => 'Save changes',
   ],
   'backups' => [
+    'worker_running' => 'The backup is running on the server. You can leave this page.',
+    'worker_completed' => 'The backup is complete and its archive has been verified.',
+    'worker_failed' => 'The backup failed. Refresh the details to see the saved error.',
+    'worker_progress_unavailable' => 'Live status is unavailable. Refresh the details to check the saved result.',
+    'refresh_details' => 'Refresh details',
+    'worker_interrupted_status' => 'interrupted',
     'title' => 'Backups',
     'description' => 'Create a local backup before updates or other risky maintenance, then review history, upload a downloaded backup archive, and restore through the normal backup flow.',
     'cleanup_status' => 'Automatic cleanup is :status',
