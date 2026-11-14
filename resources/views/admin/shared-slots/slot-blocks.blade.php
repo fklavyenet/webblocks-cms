@@ -102,9 +102,9 @@
                     <table class="wb-table wb-table-sm wb-table-striped wb-table-hover wb-admin-slot-blocks-table" data-wb-slot-block-table data-admin-sortable-list data-admin-sortable-mode="slot-blocks" data-admin-sortable-reorder-url="{{ route('admin.shared-slots.blocks.reorder', $sharedSlot) }}">
                         <thead>
                             <tr>
-                                <th class="wb-admin-slot-block-id-cell">{{ $adminText('block_id') }}</th>
                                 <th class="wb-admin-slot-block-type-cell">{{ $adminText('block_type') }}</th>
                                 <th class="wb-admin-slot-block-summary-cell">{{ $adminText('summary') }}</th>
+                                <th class="wb-admin-slot-block-id-cell">{{ $adminText('block_id') }}</th>
                                 <th class="wb-cms-block-children-cell">{{ $adminText('children') }}</th>
                                 <th class="wb-admin-slot-block-status-cell">{{ $adminText('status') }}</th>
                                 <th class="wb-admin-slot-block-actions-cell">{{ $adminText('actions') }}</th>

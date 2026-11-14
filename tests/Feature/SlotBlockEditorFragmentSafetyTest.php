@@ -208,6 +208,48 @@ namespace WebBlocks\Cms\Tests\Feature {
 
     #[Test]
     #[DataProvider('imageSummaryEditors')]
+    public function slot_block_summary_precedes_the_id_and_opens_the_editor_without_summary_content(bool $shared): void
+    {
+      if ($shared) {
+        [$sharedSlot, $page, $slot, $block] = $this->seedSharedSlotBlockContext();
+        $routeName = 'admin.shared-slots.blocks.edit';
+        $parameters = ['shared_slot' => $sharedSlot];
+      } else {
+        [$page, $slot, $block] = $this->seedPageBlockContext();
+        $routeName = 'admin.pages.slots.blocks';
+        $parameters = ['page' => $page, 'slot' => $slot];
+      }
+
+      $type = BlockType::query()->firstOrCreate(['slug' => 'section'], [
+        'name' => 'Section', 'category' => 'layout', 'source_type' => 'static',
+        'is_system' => false, 'is_container' => true, 'sort_order' => 0, 'status' => 'published',
+      ]);
+      $block->update(['block_type_id' => $type->id]);
+
+      $response = $this->get(route($routeName, $parameters))->assertOk();
+      $xpath = $this->formXPath($response);
+      $table = '//table[@data-wb-slot-block-table]';
+      $row = $table.'//tr[@id="slot-block-row-'.$block->id.'"]';
+      $columns = ['wb-admin-slot-block-type-cell', 'wb-admin-slot-block-summary-cell', 'wb-admin-slot-block-id-cell', 'wb-cms-block-children-cell'];
+
+      foreach ($columns as $index => $column) {
+        $position = $index + 1;
+        $this->assertSame(1, $xpath->query($table.'/thead/tr/th['.$position.'][contains(@class, "'.$column.'")]')->length);
+        $this->assertSame(1, $xpath->query($row.'/td['.$position.'][contains(@class, "'.$column.'")]')->length);
+      }
+
+      $summary = $xpath->query($row.'/td[2]/a[@data-wb-slot-block-link]')->item(0);
+      $edit = $xpath->query($row.'//a[contains(@class, "wb-action-btn-edit")]')->item(0);
+      $this->assertInstanceOf(DOMElement::class, $summary);
+      $this->assertInstanceOf(DOMElement::class, $edit);
+      $this->assertSame($type->name, trim($summary->textContent));
+      $this->assertSame($edit->getAttribute('href'), $summary->getAttribute('href'));
+      $this->assertSame($edit->getAttribute('data-base-url'), $summary->getAttribute('data-base-url'));
+      $this->getFragment($summary->getAttribute('data-base-url'))->assertOk()->assertSee('id="slot-block-editor-form"', false);
+    }
+
+    #[Test]
+    #[DataProvider('imageSummaryEditors')]
     public function image_rows_keep_media_summaries_and_localized_copy_without_loading_picker_images(bool $shared): void
     {
       if ($shared) {

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.133.10
+
+- Bring Summary forward in page and Shared Slot block lists by moving ID directly before Children. When a block has no summary, select its block type in the Summary column to open Edit Block.
+
 ## 1.133.9
 
 - Fit the Add Block and Edit Block dialogs to phone and tablet screens in page slots and Shared Slots. Tabs wrap on narrow screens, and the form scrolls while Close, Save, and Cancel stay in view.
