@@ -2155,6 +2155,14 @@ delete guards remain authoritative. Media list usage is resolved in batches
 for visible media, preserving source order, branding precedence and existing
 site-read visibility. No new persistence or public content field is introduced.
 
+## Slot block editor
+
+Page slots and Shared Slots use the same Add Block and Edit Block form
+dialog. Its height follows the visible viewport. On narrow screens the main
+editor tabs and action labels wrap, with less padding on phones to leave more
+room for fields. For long forms, the dialog body scrolls while the close, save
+and cancel controls remain visible.
+
 ## Private editing preview (1.105.7)
 
 Existing editable draft and staged pages offer an optional adjacent preview on

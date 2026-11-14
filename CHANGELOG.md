@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.133.9
+
+- Fit the Add Block and Edit Block dialogs to phone and tablet screens in page slots and Shared Slots. Tabs wrap on narrow screens, and the form scrolls while Close, Save, and Cancel stay in view.
+
 ## 1.133.8
 
 - Open secondary actions from a compact three-dot button with a down chevron in the Sites list and contact message details. In Sites, the menu sits alongside Details and Edit.

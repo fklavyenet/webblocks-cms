@@ -1241,6 +1241,65 @@ input.wb-admin-table-grid-input:focus {
     overflow: auto;
 }
 
+/* This dialog is moved to the overlay root after opening. */
+#slot-block-editor-modal {
+    --wb-slot-editor-gutter: var(--wb-s4);
+    padding: var(--wb-slot-editor-gutter);
+}
+
+#slot-block-editor-modal > .wb-modal-dialog {
+    min-inline-size: 0;
+    max-block-size: calc(100vh - 2 * var(--wb-slot-editor-gutter));
+    max-block-size: calc(100dvh - 2 * var(--wb-slot-editor-gutter));
+    overflow-wrap: anywhere;
+}
+
+#slot-block-editor-modal .wb-modal-header > .wb-stack {
+    min-inline-size: 0;
+}
+
+#slot-block-editor-modal .wb-modal-close {
+    flex-shrink: 0;
+}
+
+#slot-block-editor-form {
+    min-block-size: 0;
+    overscroll-behavior: contain;
+}
+
+#slot-block-editor-form > * {
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    #slot-block-editor-form [data-wb-slot-block-tabs] > .wb-tabs-nav {
+        flex-wrap: wrap;
+        align-items: stretch;
+    }
+
+    #slot-block-editor-form [data-wb-slot-block-tabs] > .wb-tabs-nav > .wb-tabs-btn,
+    #slot-block-editor-modal :is(.wb-modal-body, .wb-modal-footer) .wb-btn {
+        max-inline-size: 100%;
+        white-space: normal;
+    }
+}
+
+@media (max-width: 600px) {
+    #slot-block-editor-modal {
+        --wb-slot-editor-gutter: var(--wb-s2);
+    }
+
+    #slot-block-editor-modal :is(.wb-modal-header, .wb-modal-footer),
+    #slot-block-editor-form,
+    #slot-block-editor-form :is(.wb-card-header, .wb-card-body) {
+        padding: var(--wb-s3);
+    }
+
+    #slot-block-editor-form [data-wb-slot-block-tabs] > .wb-tabs-nav > .wb-tabs-btn {
+        padding-inline: var(--wb-s2);
+    }
+}
+
 .wb-api-token-modal-body {
     max-block-size: calc(100dvh - 14rem);
     overflow: auto;
