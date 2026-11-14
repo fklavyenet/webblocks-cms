@@ -9,6 +9,10 @@ use ZipArchive;
 
 class BackupArchiveBuilder
 {
+  private const DATABASE_ENTRY = 'database/database.sql';
+
+  private const DATABASE_COMPRESSION_LEVEL = 6;
+
   public function build(string $archivePath, string $databaseDumpPath, array $manifest, array &$output = []): array
   {
     File::ensureDirectoryExists(dirname($archivePath));
@@ -21,7 +25,10 @@ class BackupArchiveBuilder
     }
 
     $archive->addEmptyDir('database');
-    $archive->addFile($databaseDumpPath, 'database/database.sql');
+    if (! $archive->addFile($databaseDumpPath, self::DATABASE_ENTRY)
+      || ! $archive->setCompressionName(self::DATABASE_ENTRY, ZipArchive::CM_DEFLATE, self::DATABASE_COMPRESSION_LEVEL)) {
+      throw new RuntimeException('Could not add the database dump to the backup archive.');
+    }
     $archive->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
 
     [$uploadsCount, $sitePublicCount] = BackupTiming::measure($output, 'File scan and ZIP entry registration',

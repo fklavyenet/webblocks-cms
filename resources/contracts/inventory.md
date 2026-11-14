@@ -2350,6 +2350,10 @@ prevent same-second safety backups from overwriting restore sources. Archive
 resolution supports a configured symlinked disk root while rejecting relative
 traversal, internal symlink escapes and absolute paths outside the disk.
 
+New backup ZIPs write `database/database.sql` with DEFLATE level 6. The SQL
+entry, original uploads, site files and version-one manifest retain the same
+paths and restore contract.
+
 The operational log on Backup Details records elapsed milliseconds for MySQL or
 MariaDB dump execution, raw SQL validation, file scanning and ZIP entry
 registration, ZIP writing, and final archive validation when that check runs.

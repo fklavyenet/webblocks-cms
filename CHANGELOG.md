@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.133.7
+
+- Write backup ZIPs faster by using DEFLATE level 6 for the SQL dump. Media compression, archive layout, and restore compatibility stay the same.
+
 ## 1.133.6
 
 - Run manual backups started in Webadmin in a separate PHP process so long backups can finish after the request ends or the browser tab closes. Backup Details shows the saved status.
