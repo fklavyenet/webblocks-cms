@@ -77,6 +77,12 @@ Admin lists use the shared `admin.partials.pagination` in the list card footer.
 Use `wb-border-0` on the `wb-pagination` navigation to remove its outer frame.
 Keep the individual controls and their visible keyboard focus styles.
 
+Use `admin.more-actions-trigger` for overflow menus in an Actions column or
+alongside a record's primary actions. The WebBlocks UI button pairs horizontal
+three dots with a down chevron. Pass a localized accessible label and include
+the record name when the trigger repeats in a list. Keep primary actions
+directly available and menu entries visibly labeled.
+
 Admin modal forms that submit in the current tab show a busy submit button
 after validation. Longer requests also show an indeterminate progress bar and
 guidance to keep the tab open. Keep the dialog visible while awaiting the

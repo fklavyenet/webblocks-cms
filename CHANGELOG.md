@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.133.8
+
+- Open secondary actions from a compact three-dot button with a down chevron in the Sites list and contact message details. In Sites, the menu sits alongside Details and Edit.
+
 ## 1.133.7
 
 - Write backup ZIPs faster by using DEFLATE level 6 for the SQL dump. Media compression, archive layout, and restore compatibility stay the same.

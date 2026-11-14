@@ -142,6 +142,9 @@ class ContactMessageDetailTest extends TestCase
         $this->assertTrue(app('translator')->hasForLocale('webblocks-cms::admin.contact_messages_show.'.$key, $locale));
         $this->assertStringContainsString(e(app(CmsTranslator::class)->admin('contact_messages_show.'.$key, $locale, ['name' => $message->name])), $html);
       }
+      $trigger = $this->dom($html)->query('//button[@aria-controls="contact-message-actions" and @data-wb-toggle="dropdown"]')->item(0);
+      $this->assertInstanceOf(\DOMElement::class, $trigger);
+      $this->assertSame(app(CmsTranslator::class)->admin('contact_messages_show.more_actions', $locale), $trigger->getAttribute('aria-label'));
     }
   }
 

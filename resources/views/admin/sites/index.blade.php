@@ -52,7 +52,7 @@
                             <th>{{ $adminText('sites.columns.locales') }}</th>
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'pages_count', 'label' => $adminText('sites.columns.pages')])
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_primary', 'label' => $adminText('sites.columns.status')])
-                            <th>{{ $adminText('sites.columns.actions') }}</th>
+                            <th class="wb-table-actions">{{ $adminText('sites.columns.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -102,7 +102,7 @@
                                 <td>
                                     <span class="wb-status-pill {{ $site->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $site->is_primary ? $adminText('sites.primary') : $adminText('sites.standard') }}</span>
                                 </td>
-                                <td>
+                                <td class="wb-table-actions">
                                     <div class="wb-action-group">
                                         <a
                                             href="{{ route('admin.sites.index', ['modal' => 'site-details', 'details_site' => $site->id]) }}"
@@ -126,18 +126,10 @@
 
                                         @if ($canManageSites)
                                         <div class="wb-dropdown wb-dropdown-end">
-                                            <button
-                                                class="wb-btn wb-btn-secondary"
-                                                type="button"
-                                                data-wb-toggle="dropdown"
-                                                data-wb-target="#site-actions-{{ $site->id }}"
-                                                aria-expanded="false"
-                                                title="{{ $adminText('sites.manage_named', ['name' => $site->name]) }}"
-                                                aria-label="{{ $adminText('sites.manage_named', ['name' => $site->name]) }}"
-                                            >
-                                                {{ $adminText('common.manage') }}
-                                                <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
-                                            </button>
+                                            <x-webblocks-cms::admin.more-actions-trigger
+                                                :menu-id="'site-actions-'.$site->id"
+                                                :label="$adminText('sites.manage_named', ['name' => $site->name])"
+                                            />
 
                                             <div class="wb-dropdown-menu" id="site-actions-{{ $site->id }}">
                                                 <a href="{{ route('admin.sites.domains.index', $site) }}" class="wb-dropdown-item">{{ $adminText('sites.manage_domains') }}</a>

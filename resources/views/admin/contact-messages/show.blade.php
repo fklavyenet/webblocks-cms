@@ -62,10 +62,7 @@
                 @endforeach
             </div>
             <div class="wb-dropdown wb-dropdown-end">
-                <button type="button" class="wb-btn wb-btn-secondary" data-wb-toggle="dropdown" data-wb-target="#contact-message-actions" aria-expanded="false" aria-controls="contact-message-actions">
-                    {{ $adminText('more_actions') }}
-                    <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
-                </button>
+                <x-webblocks-cms::admin.more-actions-trigger menu-id="contact-message-actions" :label="$adminText('more_actions')" />
                 <div class="wb-dropdown-menu" id="contact-message-actions">
                     @foreach ($statuses as $status)
                         @if ($message->status !== $status && ! in_array($status, $primaryStatuses, true))

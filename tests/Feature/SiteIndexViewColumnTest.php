@@ -95,7 +95,7 @@ class SiteIndexViewColumnTest extends TestCase
 
     $html = $this->renderIndex();
 
-    // Both reachable in one click, ahead of the Manage button.
+    // Both reachable in one click, ahead of the overflow menu.
     $this->assertStringContainsString('wb-icon-panel-right', $html);
     $this->assertStringContainsString('wb-action-btn wb-action-btn-edit', $html);
     $this->assertStringContainsString(route('admin.sites.edit', $site), $html);
@@ -103,10 +103,10 @@ class SiteIndexViewColumnTest extends TestCase
     $this->assertLessThan(
       strpos($html, 'data-wb-target="#site-actions-'.$site->id.'"'),
       strpos($html, 'wb-icon-panel-right'),
-      'The two icons lead the Actions cell, with Manage last.'
+      'The two icons lead the Actions cell, with the overflow menu last.'
     );
 
-    // ...and gone from the Manage dropdown, which keeps the rest.
+    // The overflow menu holds the secondary actions.
     $this->assertStringNotContainsString('class="wb-dropdown-item">View details</a>', $html);
     $this->assertStringNotContainsString('class="wb-dropdown-item">Edit site</a>', $html);
     $this->assertStringContainsString('class="wb-dropdown-item">Manage domains</a>', $html);
@@ -114,17 +114,23 @@ class SiteIndexViewColumnTest extends TestCase
   }
 
   #[Test]
-  public function the_manage_button_says_it_opens_a_menu(): void
+  public function the_overflow_button_uses_icons_and_names_its_site(): void
   {
-    $this->makeSite('shop.example.test');
+    $site = $this->makeSite('shop.example.test');
+    $menuId = 'site-actions-'.$site->id;
 
-    $html = $this->renderIndex();
+    $document = new \DOMDocument;
+    @$document->loadHTML('<?xml encoding="UTF-8">'.$this->renderIndex());
+    $xpath = new \DOMXPath($document);
+    $trigger = $xpath->query('//td[@class="wb-table-actions"]//button[@data-wb-toggle="dropdown" and @data-wb-target="#'.$menuId.'"]')->item(0);
 
-    $this->assertMatchesRegularExpression(
-      '/Manage\s*\n?\s*<i class="wb-icon wb-icon-chevron-down"/',
-      $html,
-      'The Manage button carries a chevron.'
-    );
+    $this->assertInstanceOf(\DOMElement::class, $trigger);
+    $this->assertSame('Manage Shop', $trigger->getAttribute('aria-label'));
+    $this->assertSame($menuId, $trigger->getAttribute('aria-controls'));
+    $this->assertSame('false', $trigger->getAttribute('aria-expanded'));
+    $this->assertSame('⋯', trim($trigger->textContent));
+    $this->assertSame(1, $xpath->query('./i[@class="wb-icon wb-icon-chevron-down" and @aria-hidden="true"]', $trigger)->length);
+    $this->assertSame(1, $xpath->query('//*[@id="'.$menuId.'"]')->length);
   }
 
   private function cellAfter(string $html, string $needle): string
