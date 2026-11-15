@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.134.0
+
+- Compare Default, Docs, and Columns in a visual layout picker when creating or editing a page.
+- Place optional left and right sidebars beside the main content in Columns. Each side can have its own blocks or Shared Slot.
+- See page slots in their public order in the editor. Docs groups its Sidebar separately, and Main must be present and enabled before publication.
+- New Default pages start with Header, Main, and Footer. Existing Default Sidebars and Article layouts keep their placements. Article is no longer available for new pages.
+
 ## 1.133.12
 
 - See available updates for installed plugins in the Webadmin notification bell as a Super admin. Open System → Plugins to review them. Catalog checks reuse the result for one hour.
