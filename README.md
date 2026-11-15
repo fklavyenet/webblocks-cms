@@ -125,6 +125,7 @@ Existing full-repository clones must preserve host-owned `.env`, database, stora
 ## Documentation
 
 - Use the canonical product name, slogan, and package description from [Brand identity](https://cms.webblocksui.com/docs/brand-identity).
+- The packaged browser tab icon uses WebBlocks blue on light and dark tabs, with SVG, 16 px and 32 px assets. A site’s custom favicon still takes precedence on its public pages.
 - Start with [Hosting Requirements](https://cms.webblocksui.com/docs/hosting-requirements), [Hosting Capacity Validation](https://cms.webblocksui.com/docs/hosting-capacity-validation), the provisional [Hosting Capacity Results](https://cms.webblocksui.com/docs/hosting-capacity-results), [Installation](https://cms.webblocksui.com/docs/installation), [Getting Started](https://cms.webblocksui.com/docs/getting-started), and [Core Concepts](https://cms.webblocksui.com/docs/core-concepts).
 - Build content with [Page Layouts](https://cms.webblocksui.com/docs/page-layouts), [Block Type Contracts](https://cms.webblocksui.com/docs/block-type-contracts), [Editorial Workflow](https://cms.webblocksui.com/docs/editorial-workflow), and [Revisions](https://cms.webblocksui.com/docs/revisions).
 - Operate sites with [Multisite](https://cms.webblocksui.com/docs/multisite), [Localization](https://cms.webblocksui.com/docs/localization), [Users and Permissions](https://cms.webblocksui.com/docs/users-and-permissions), [Media Image Variants](https://cms.webblocksui.com/docs/media-image-variants), and [Operations](https://cms.webblocksui.com/docs/operations).

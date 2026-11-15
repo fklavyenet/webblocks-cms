@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.135.4
+
+- The default WebBlocks CMS tab icon uses a simplified block outline in WebBlocks blue on light and dark browser tabs. Sites with a custom favicon keep their configured icon.
+
 ## 1.135.3
 
 - Show the localized preset selector, workflow actions, token permissions, and other audited Webadmin labels in the six bundled panel languages.
