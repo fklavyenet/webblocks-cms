@@ -80,6 +80,8 @@
                 <div class="wb-text-sm wb-text-muted">{{ $adminText('presentation_help') }}</div>
             </div>
 
+            @include('webblocks-cms::admin.blocks.settings.mobile-order')
+
             <div class="wb-stack wb-gap-1">
                 <label for="title_tag">{{ $adminText('title_tag_label') }}</label>
                 <select id="title_tag" name="title_tag" class="wb-select" @disabled($isNonDefaultLocale)>

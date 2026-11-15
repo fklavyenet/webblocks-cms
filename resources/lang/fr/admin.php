@@ -4232,6 +4232,13 @@ $translations = [
       'default' => 'Par défaut',
       'gap_help' => 'Contrôle l\'espace entre le premier enfant extensible et le second ajusté au contenu avec les classes `wb-gap-*`.',
     ],
+    'mobile_order_settings' => [
+      'label' => 'Ordre sur mobile',
+      'default' => 'Conserver l’ordre de la mise en page',
+      'media_first' => 'Média en premier',
+      'text_first' => 'Texte en premier',
+      'help' => 'S’applique au média et au texte lorsqu’une grille à deux colonnes, un Split empilable ou un Hero divisé s’empile sur un écran étroit.',
+    ],
     'grid_settings' => [
       'ratio_label' => 'Proportion des colonnes',
       'ratio_equal' => 'Égales',

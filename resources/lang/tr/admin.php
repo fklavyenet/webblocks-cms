@@ -4247,6 +4247,13 @@ $translations = [
       'default' => 'Varsayılan',
       'gap_help' => 'Esneyen ilk alt blok ile içerik genişliğindeki ikinci alt blok arasındaki boşluğu, gelen `wb-gap-*` sınıflarıyla yönetir.',
     ],
+    'mobile_order_settings' => [
+      'label' => 'Mobil sıra',
+      'default' => 'Mevcut yerleşim sırasını koru',
+      'media_first' => 'Önce görsel',
+      'text_first' => 'Önce metin',
+      'help' => 'İki sütunlu Grid, alt alta dizilen Split veya iki parçalı Hero dar ekranda tek sütuna geçtiğinde görsel ve metnin sırasını belirler.',
+    ],
     'grid_settings' => [
       'ratio_label' => 'Sütun oranı',
       'ratio_equal' => 'Eşit',

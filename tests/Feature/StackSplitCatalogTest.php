@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
@@ -248,6 +249,80 @@ class StackSplitCatalogTest extends TestCase
     $this->assertSame('block.settings.flow', $errors[0]['path']);
     $this->assertSame('overlap-previous', $overlap['settings']['flow']);
     $this->assertNull($unknown);
+  }
+
+  #[Test]
+  public function mobile_order_reorders_only_opted_in_stacking_media_pairs(): void
+  {
+    $copy = $this->layoutBlock('container', [], collect());
+    $slider = $this->layoutBlock('slider', [], collect());
+    $children = collect([$copy, $slider]);
+
+    foreach ([
+      ['grid', ['columns' => '2'], 'wb-public-mobile-content-pair', true],
+      ['grid', ['columns' => '3'], 'wb-public-mobile-content-pair', false],
+      ['split', ['responsive' => 'stack'], 'wb-public-split--reverse-mobile', true],
+      ['split', ['responsive' => 'preserve'], 'wb-public-split--reverse-mobile', false],
+    ] as [$type, $settings, $class, $stacks]) {
+      $view = 'webblocks-cms::pages.partials.blocks.'.$type;
+      $default = view($view, ['block' => $this->layoutBlock($type, $settings, $children)])->render();
+      $this->assertStringNotContainsString($class, $default);
+      $selected = view($view, ['block' => $this->layoutBlock($type, $settings + ['mobile_order' => 'media_first'], $children)])->render();
+
+      $this->assertSame($stacks, str_contains($selected, $class));
+      $this->assertLessThan(
+        strpos($selected, 'data-wb-public-block-type="slider"'),
+        strpos($selected, 'data-wb-public-block-type="container"'),
+      );
+
+      $textFirst = view($view, ['block' => $this->layoutBlock($type, $settings + ['mobile_order' => 'text_first'], collect([$slider, $copy]))])->render();
+      $this->assertSame($stacks, str_contains($textFirst, $class));
+      $twoTextCells = view($view, ['block' => $this->layoutBlock($type, $settings + ['mobile_order' => 'media_first'], collect([$copy, $copy]))])->render();
+      $this->assertStringNotContainsString($class, $twoTextCells);
+    }
+  }
+
+  #[Test]
+  public function hero_mobile_order_applies_only_to_foreground_media(): void
+  {
+    $media = new Media(['kind' => Media::KIND_IMAGE, 'visibility' => 'public', 'disk' => 'public', 'path' => 'synthetic.jpg']);
+    $view = 'webblocks-cms::pages.partials.blocks.hero';
+
+    foreach ([
+      ['split', 'media_first', $media, true],
+      ['split', 'text_first', $media, false],
+      ['split', 'media_first', null, false],
+      ['full-bleed', 'media_first', $media, false],
+    ] as [$layout, $order, $image, $reorders]) {
+      $hero = $this->layoutBlock('hero', ['layout' => $layout, 'mobile_order' => $order], collect());
+      $hero->setRelation('media', $image);
+      $html = view($view, ['block' => $hero])->render();
+
+      $this->assertSame($reorders, str_contains($html, 'wb-public-hero--media-first-mobile'));
+    }
+  }
+
+  #[Test]
+  public function content_api_validates_mobile_order_for_supported_blocks(): void
+  {
+    app(CoreBlockTypeCatalogSyncer::class)->sync();
+    $operations = app(InternalContentApiOperations::class);
+
+    foreach ([
+      ['type' => 'grid', 'children' => [['type' => 'plain_text']]],
+      ['type' => 'split', 'children' => [['type' => 'plain_text'], ['type' => 'plain_text']]],
+      ['type' => 'hero'],
+    ] as $block) {
+      $errors = [];
+      $warnings = [];
+      $normalized = $operations->normalizeBlock($block + ['settings' => ['mobile_order' => 'media_first']], 'block', null, $errors, $warnings);
+      $this->assertSame([], $errors);
+      $this->assertSame('media_first', $normalized['settings']['mobile_order']);
+
+      $invalid = $operations->normalizeBlock($block + ['settings' => ['mobile_order' => 'reverse']], 'block', null, $errors, $warnings);
+      $this->assertNull($invalid);
+      $this->assertSame('block.settings.mobile_order', $errors[0]['path']);
+    }
   }
 
   private function layoutBlock(string $slug, array $settings, $children): Block

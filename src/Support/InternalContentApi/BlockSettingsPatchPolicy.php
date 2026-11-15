@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
+use WebBlocks\Cms\Support\Blocks\MobileContentOrder;
+
 /**
  * Stable PATCH field rules and deliberate exclusions shared by the authoring
  * schema. BlockSettingsSchema adds the remaining creation/admin presentation
@@ -120,6 +122,7 @@ final class BlockSettingsPatchPolicy
     ],
     'content_header' => ['alignment' => ['enum', ['left', 'center', 'right']]],
     'grid' => [
+      'mobile_order' => ['enum', MobileContentOrder::OPTIONS],
       'layout_name' => ['text', 255],
       'columns' => ['enum', ['2', '3', '4']],
       'ratio' => ['enum', ['equal', 'lead-left', 'lead-right']],
@@ -134,6 +137,7 @@ final class BlockSettingsPatchPolicy
     ],
     'toc' => ['toc_position' => ['enum', ['left', 'right']]],
     'hero' => [
+      'mobile_order' => ['enum', MobileContentOrder::OPTIONS],
       'layout' => ['enum', ['left', 'centered', 'split', 'full-bleed']],
       'title_tag' => ['enum', ['h1', 'h2', 'h3']],
     ],
@@ -178,6 +182,7 @@ final class BlockSettingsPatchPolicy
       'flow' => ['enum', ['normal', 'offset-up', 'overlap-previous']],
     ],
     'split' => [
+      'mobile_order' => ['enum', MobileContentOrder::OPTIONS],
       'layout_name' => ['text', 255],
       'gap' => ['enum', ['0', '1', '2', '3', '4', '6', '8']],
       'items_alignment' => ['enum', ['start', 'center', 'end', 'stretch']],

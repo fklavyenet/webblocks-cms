@@ -44,4 +44,5 @@
     </select>
     <div class="wb-text-sm wb-text-muted">{{ $adminText('gap_help') }}</div>
   </div>
+  @include('webblocks-cms::admin.blocks.settings.mobile-order')
 </div>

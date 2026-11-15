@@ -4234,6 +4234,13 @@ $translations = [
       'default' => 'Standard',
       'gap_help' => 'Steuert den Abstand zwischen dem wachsenden ersten und dem inhaltsbreiten zweiten Kind mit `wb-gap-*` Klassen.',
     ],
+    'mobile_order_settings' => [
+      'label' => 'Mobile Reihenfolge',
+      'default' => 'Layout-Reihenfolge beibehalten',
+      'media_first' => 'Medien zuerst',
+      'text_first' => 'Text zuerst',
+      'help' => 'Gilt für Medien und Text, wenn ein zweispaltiges Raster, ein stapelbarer Split oder ein geteilter Hero auf schmalen Bildschirmen gestapelt wird.',
+    ],
     'grid_settings' => [
       'ratio_label' => 'Spaltenverhältnis',
       'ratio_equal' => 'Gleich',

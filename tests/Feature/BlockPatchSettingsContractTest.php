@@ -38,6 +38,19 @@ class BlockPatchSettingsContractTest extends TestCase
   }
 
   #[Test]
+  public function patching_a_grid_changes_mobile_order_without_changing_desktop_settings(): void
+  {
+    $block = $this->seedBlock('grid', ['columns' => '2', 'ratio' => 'lead-right', 'alternate_start' => 'text_left']);
+
+    $settings = $this->mergeSettings($block, ['mobile_order' => 'media_first']);
+
+    $this->assertSame('media_first', $settings['mobile_order']);
+    $this->assertSame('2', $settings['columns']);
+    $this->assertSame('lead-right', $settings['ratio']);
+    $this->assertSame('text_left', $settings['alternate_start']);
+  }
+
+  #[Test]
   public function patching_a_link_list_stores_the_style_settings(): void
   {
     $block = $this->seedBlock('link-list');

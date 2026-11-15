@@ -4231,6 +4231,13 @@ $translations = [
       'default' => 'Predefinito',
       'gap_help' => 'Controlla lo spazio tra il primo figlio flessibile e il secondo largo quanto il contenuto con le classi `wb-gap-*`.',
     ],
+    'mobile_order_settings' => [
+      'label' => 'Ordine su mobile',
+      'default' => 'Mantieni l’ordine del layout',
+      'media_first' => 'Prima il contenuto multimediale',
+      'text_first' => 'Prima il testo',
+      'help' => 'Si applica a contenuti multimediali e testo quando una Grid a due colonne, uno Split impilabile o un Hero diviso si dispone in verticale su uno schermo stretto.',
+    ],
     'grid_settings' => [
       'ratio_label' => 'Proporzione delle colonne',
       'ratio_equal' => 'Uguali',

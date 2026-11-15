@@ -24,6 +24,7 @@ use WebBlocks\Cms\Support\Blocks\BlockMediaCompatibility;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationRegistry;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
+use WebBlocks\Cms\Support\Blocks\MobileContentOrder;
 use WebBlocks\Cms\Support\Blocks\PageBlockStructure;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
@@ -199,6 +200,7 @@ class BlockRequest extends FormRequest
       'cluster_width' => [$supportsClusterAlignment ? 'nullable' : 'prohibited', Rule::in(['', 'auto', 'full'])],
       'grid_columns' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4'])],
       'grid_ratio' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['equal', 'lead-left', 'lead-right'])],
+      'mobile_order' => [($supportsGridColumns || $isSplit || $isHero) ? 'nullable' : 'prohibited', Rule::in(MobileContentOrder::OPTIONS)],
       'grid_gap' => [$supportsGridGap ? 'nullable' : 'prohibited', Rule::in(['', '3', '4', '6'])],
       'grid_alternate_media_text_sections' => [$supportsGridColumns ? 'nullable' : 'prohibited', 'boolean'],
       'grid_alternate_start' => [$supportsGridColumns ? 'nullable' : 'prohibited', Rule::in(['', 'media_left', 'text_left'])],
@@ -1172,6 +1174,7 @@ class BlockRequest extends FormRequest
 
         if (! $isTranslatedHeroEdit) {
           $settings['layout'] = $layout !== '' ? $layout : null;
+          $settings['mobile_order'] = $data['mobile_order'] ?? $settings['mobile_order'] ?? null;
           $settings['title_tag'] = in_array($titleTag, ['h1', 'h2', 'h3'], true) ? $titleTag : null;
           $settings = $this->applyBackgroundMediaSettings($settings, $data);
         }
@@ -2345,6 +2348,14 @@ class BlockRequest extends FormRequest
           unset($settings['width'], $settings['gap'], $settings['items_alignment']);
         }
 
+        if (in_array($blockType->slug, ['grid', 'split'], true) && array_key_exists('mobile_order', $data)) {
+          if ($data['mobile_order'] === null) {
+            unset($settings['mobile_order']);
+          } else {
+            $settings['mobile_order'] = $data['mobile_order'];
+          }
+        }
+
         if ($blockType->slug === 'split') {
           if (in_array($splitGap, ['0', '1', '2', '3', '4', '6', '8'], true)) {
             $settings['gap'] = $splitGap;
@@ -2584,7 +2595,7 @@ class BlockRequest extends FormRequest
     unset($data['heading'], $data['intro_text'], $data['recipient_email'], $data['send_email_notification'], $data['store_submissions'], $data['consent_required'], $data['privacy_notice_url']);
     unset($data['contact_show_name'], $data['contact_show_subject']);
     unset($data['layout']);
-    unset($data['title_tag']);
+    unset($data['title_tag'], $data['mobile_order']);
     unset($data['language']);
     unset($data['navigation_menu_key']);
     unset($data['text'], $data['level'], $data['anchor']);

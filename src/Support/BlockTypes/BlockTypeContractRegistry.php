@@ -563,9 +563,9 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'split' => [
-        'admin_form_fields' => ['Admin label', 'Responsive behavior', 'Gap', 'Align', 'Width'],
+        'admin_form_fields' => ['Admin label', 'Responsive behavior', 'Gap', 'Align', 'Width', 'Mobile order'],
         'translatable_fields' => [],
-        'shared_settings_fields' => ['settings.layout_name', 'settings.gap', 'settings.items_alignment', 'settings.width', 'settings.responsive'],
+        'shared_settings_fields' => ['settings.layout_name', 'settings.gap', 'settings.items_alignment', 'settings.width', 'settings.responsive', 'settings.mobile_order'],
         'storage_fields' => ['Shared two-sided layout settings stay in block settings.'],
         'media_relationship_fields' => ['Exactly two direct child blocks form the growing and content-sized sides.'],
         'child_container_behavior' => ['Container-capable. Accepts any renderable child type, with exactly two direct children required for the intended layout.'],
@@ -587,9 +587,9 @@ class BlockTypeContractRegistry
       ],
       'grid' => [
         'content_collection' => ['enabled' => true, 'child_types' => null],
-        'admin_form_fields' => ['Admin label', 'Columns', 'Column ratio', 'Gap', 'Alternate media/text sections', 'First section layout'],
+        'admin_form_fields' => ['Admin label', 'Columns', 'Column ratio', 'Gap', 'Alternate media/text sections', 'First section layout', 'Mobile order'],
         'translatable_fields' => [],
-        'shared_settings_fields' => ['settings.layout_name', 'settings.columns', 'settings.ratio', 'settings.gap', 'settings.alternate_media_text_sections', 'settings.alternate_start'],
+        'shared_settings_fields' => ['settings.layout_name', 'settings.columns', 'settings.ratio', 'settings.gap', 'settings.alternate_media_text_sections', 'settings.alternate_start', 'settings.mobile_order'],
         'storage_fields' => ['Shared grid layout settings stay in block settings.'],
         'media_relationship_fields' => ['Child blocks are the primary relationship.'],
         'child_container_behavior' => ['Container-capable. Child types are not explicitly restricted in the current helper.'],
@@ -648,9 +648,9 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'hero' => [
-        'admin_form_fields' => ['Eyebrow / Label', 'Title', 'Subtitle / Intro', 'Background media', 'Background position', 'Background overlay', 'Variant', 'Layout', 'Title tag'],
+        'admin_form_fields' => ['Eyebrow / Label', 'Title', 'Subtitle / Intro', 'Background media', 'Background position', 'Background overlay', 'Variant', 'Layout', 'Title tag', 'Mobile order'],
         'translatable_fields' => ['title', 'subtitle', 'content'],
-        'shared_settings_fields' => ['media_id', 'variant', 'settings.layout', 'settings.title_tag', 'settings.background_position', 'settings.background_overlay'],
+        'shared_settings_fields' => ['media_id', 'variant', 'settings.layout', 'settings.title_tag', 'settings.background_position', 'settings.background_overlay', 'settings.mobile_order'],
         'storage_fields' => [
           'Translated eyebrow, title, and intro copy live in block text translation rows using subtitle as the visible eyebrow field.',
           'Shared variant plus layout and title-tag settings stay on shared block fields or settings.',

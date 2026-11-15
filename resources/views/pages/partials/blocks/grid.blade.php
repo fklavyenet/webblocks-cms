@@ -48,10 +48,21 @@
 
         $flushChildPair();
     }
+    $mobileOrder = $block->appearanceSetting('columns') === '2' ? $block->appearanceSetting('mobile_order') : null;
+    $pairs = $children->values()->chunk(2);
 @endphp
 <div class="{{ $class }}" data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
-    @foreach ($children as $child)
-        @include('webblocks-cms::pages.partials.block', ['block' => $child])
+    @foreach ($pairs as $pair)
+        @php($reverseOnMobile = $pair->count() === 2 && \WebBlocks\Cms\Support\Blocks\MobileContentOrder::reversesPair($mobileOrder, $pair->first(), $pair->last()))
+        @if ($reverseOnMobile)
+            <div class="wb-public-mobile-content-pair">
+        @endif
+        @foreach ($pair as $child)
+            @include('webblocks-cms::pages.partials.block', ['block' => $child])
+        @endforeach
+        @if ($reverseOnMobile)
+            </div>
+        @endif
     @endforeach
 </div>
 @include('webblocks-cms::pages.partials.blocks.content-collection-pagination', ['block' => $block])

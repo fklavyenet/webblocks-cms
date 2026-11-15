@@ -4232,6 +4232,13 @@ $translations = [
       'default' => 'Predeterminado',
       'gap_help' => 'Controla el espacio entre el primer hijo flexible y el segundo ajustado al contenido con clases `wb-gap-*`.',
     ],
+    'mobile_order_settings' => [
+      'label' => 'Orden en móvil',
+      'default' => 'Mantener el orden del diseño',
+      'media_first' => 'Medios primero',
+      'text_first' => 'Texto primero',
+      'help' => 'Se aplica a los medios y al texto cuando una cuadrícula de dos columnas, un Split apilable o un Hero dividido se apila en una pantalla estrecha.',
+    ],
     'grid_settings' => [
       'ratio_label' => 'Proporción de columnas',
       'ratio_equal' => 'Iguales',

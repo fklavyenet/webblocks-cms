@@ -444,7 +444,7 @@ The current published core catalog contains 57 rows:
 | --- | --- |
 | Purpose | Two-sided composition where the first child grows and the second stays content-sized. |
 | Admin-editable content | No visible copy; optional editor-only `layout_name`. |
-| Settings | `gap`: empty/default, 0, 1, 2, 3, 4, 6, 8; `items_alignment`: center/default, start, end, stretch; `width`: auto/default or full; `responsive`: stack or preserve. New admin/API blocks default to stack while existing empty settings preserve the legacy row. |
+| Settings | `gap`: empty/default, 0, 1, 2, 3, 4, 6, 8; `items_alignment`: center/default, start, end, stretch; `width`: auto/default or full; `responsive`: stack or preserve. New admin/API blocks default to stack while existing empty settings preserve the legacy row. The shared `mobile_order` setting accepts `default`, `media_first`, or `text_first`. It applies to a stacking Split with exactly one media side. |
 | Children | The panel, Content API, and MCP use the same two-child limit for direct placement. Authors can add the two children separately and the panel can retype an existing child in place. A move out of a full Split in the panel or MCP exchanges positions with a block from the destination sibling group in the same slot. Staged API promotion validates that a retained full Split still has two direct children. Nested API payloads for a new Split require exactly two direct children. Put a Stack inside either side when that side needs multiple blocks. |
 | HTML | Root-owning `<div class="wb-split …" data-wb-public-block-type="split">…</div>` with allowlisted `wb-*` classes. Responsive stack adds package-owned `.wb-public-split--stack-mobile` and changes to a full-width column at 48rem and below. |
 | Example appearance | Product identity on the left and a price plus buy action on the right. |
@@ -470,7 +470,7 @@ The current published core catalog contains 57 rows:
 | Admin-editable content | No visible copy; optional editor-only `layout_name`. |
 | Settings | `columns`: 2, 3, 4; `ratio`: equal, lead-left, lead-right (asymmetric ratios apply only to two columns); `gap`: empty, 3, 4, 6; `alternate_media_text_sections`: boolean; `alternate_start`: media_left or text_left. |
 | Children | Any supported published child type; at least one child required by API plans. |
-| HTML | Root-owning `<div class="wb-grid wb-grid-{n} [wb-gap-{n}] [wb-public-grid--lead-*]" data-wb-public-block-type="grid">…</div>`. Lead ratios render as 2:1 or 1:2 above the normal one-column mobile breakpoint. Alternating mode may change direct-child order without changing the root. |
+| HTML | Root-owning `<div class="wb-grid wb-grid-{n} [wb-gap-{n}] [wb-public-grid--lead-*]" data-wb-public-block-type="grid">…</div>`. Lead ratios render as 2:1 or 1:2 above the normal one-column mobile breakpoint. Alternating mode may change direct-child order without changing the root. The shared `mobile_order` setting accepts `default`, `media_first`, or `text_first`. In a two-column Grid, it changes the stacked order of each pair with exactly one media cell at 600px and below. Desktop positions are preserved. |
 | Example appearance | Three Card blocks in a feature row, or paired Image/content groups alternating left and right. |
 | Avoid | Semantic tables or a compact action row. |
 
@@ -597,7 +597,7 @@ The current published core catalog contains 57 rows:
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | `translations.title`, `translations.subtitle` as eyebrow, `translations.content`. Action buttons are separate child `button_link` blocks with their own admin form. |
-| Settings and variants | `variant`: default, muted, soft, accent; `layout`: left, centered, split, or full-bleed; `title_tag`: h1, h2, h3; optional background image and overlay settings. |
+| Settings and variants | `variant`: default, muted, soft, accent; `layout`: left, centered, split, or full-bleed; `title_tag`: h1, h2, h3; optional background image and overlay settings. The shared `mobile_order` setting accepts `default`, `media_first`, or `text_first`. For split Hero with foreground media, `media_first` places it above the copy at 900px and below. The other options preserve the existing copy-first arrangement. |
 | Children/media | Actions are child `button_link` blocks or a `cookie-settings` system action, with no fixed count. In left/centered/full-bleed layouts `media_id` is background media; in split it renders as a foreground image beside the copy. |
 | HTML | Legacy layouts own `<section class="wb-card wb-promo [wb-card-*]">`; split adds `.wb-promo--split` and `.wb-promo-media`. Full-bleed deliberately drops the card class and uses `.wb-public-hero--full-bleed` with an aligned `.wb-public-hero__copy`. |
 | Example appearance | A contained promo, foreground image/copy split, or unframed viewport-wide photographic hero, plus actions. |

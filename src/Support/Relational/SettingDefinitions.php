@@ -22,7 +22,7 @@ final class SettingDefinitions
 
     return $tables ??= [
       'block_appearance_settings' => self::fields(
-        'layout layout_name title title_tag alignment anchor flow spacing width wrap columns gap ratio responsive items_alignment alternate_start variant visual_variant icon icon_slug icon_tone icon_size badge_tone text_color',
+        'layout layout_name title title_tag alignment anchor flow spacing width wrap columns gap ratio responsive items_alignment alternate_start mobile_order variant visual_variant icon icon_slug icon_tone icon_size badge_tone text_color',
         '', 'alternate_media_text_sections'
       ),
       'block_media_settings' => self::fields(

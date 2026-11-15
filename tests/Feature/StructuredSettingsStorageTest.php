@@ -50,10 +50,10 @@ class StructuredSettingsStorageTest extends TestCase
   public function typed_core_fields_and_content_references_are_sql_authority_for_api_and_snapshots(): void
   {
     $template = $this->block(null);
-    $settings = ['columns' => '3', 'autoplay' => false, 'interval_ms' => 6000, 'menu_key' => 'primary', 'content_bindings' => ['title' => ['source' => 'synthetic::catalog', 'record' => 'opaque:key', 'field' => 'name']], 'content_collection' => ['source' => 'synthetic::items', 'template_block_id' => $template->id, 'limit' => 12, 'paginate' => false, 'source_settings' => ['nested' => ['keep' => true]]], 'application_settings' => ['duration' => 30, 'dark' => false]];
+    $settings = ['columns' => '3', 'mobile_order' => 'media_first', 'autoplay' => false, 'interval_ms' => 6000, 'menu_key' => 'primary', 'content_bindings' => ['title' => ['source' => 'synthetic::catalog', 'record' => 'opaque:key', 'field' => 'name']], 'content_collection' => ['source' => 'synthetic::items', 'template_block_id' => $template->id, 'limit' => 12, 'paginate' => false, 'source_settings' => ['nested' => ['keep' => true]]], 'application_settings' => ['duration' => 30, 'dark' => false]];
     $block = $this->block($settings);
     $document = $this->document($block);
-    $this->assertDatabaseHas('wbcms_block_appearance_settings', ['document_id' => $document, 'columns' => '3']);
+    $this->assertDatabaseHas('wbcms_block_appearance_settings', ['document_id' => $document, 'columns' => '3', 'mobile_order' => 'media_first']);
     $this->assertDatabaseHas('wbcms_block_media_settings', ['document_id' => $document, 'autoplay' => 0, 'interval_ms' => 6000]);
     $this->assertDatabaseHas('wbcms_block_content_bindings', ['document_id' => $document, 'source' => 'synthetic::catalog', 'record' => 'opaque:key', 'field' => 'name']);
     $this->assertDatabaseHas('wbcms_block_content_collections', ['document_id' => $document, 'resolved_template_id' => $template->id]);
@@ -67,6 +67,7 @@ class StructuredSettingsStorageTest extends TestCase
     $snapshot = app(PageRevisionManager::class)->snapshotForInspection($block->page->fresh());
     $snapshotBlock = collect($snapshot['blocks'])->firstWhere('snapshot_id', $block->id);
     $this->assertSame('4', json_decode($snapshotBlock['settings'], true)['columns']);
+    $this->assertSame('media_first', json_decode($snapshotBlock['settings'], true)['mobile_order']);
     $block->update(['title' => 'Unrelated']);
     $this->assertSame('4', json_decode(DB::table('wbcms_blocks')->where('id', $block->id)->value('settings'), true)['columns']);
   }

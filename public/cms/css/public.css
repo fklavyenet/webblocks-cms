@@ -504,6 +504,48 @@ body.wb-gallery.wb-gallery-document-scope {
   padding: clamp(2rem, 7vw, 6rem) clamp(1.25rem, 5vw, 4rem);
 }
 
+/* These pairs remain independent grid cells until the two-column grid stacks. */
+.wb-public-mobile-content-pair {
+  display: contents;
+}
+
+.wb-public-mobile-content-pair > .wb-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.wb-public-mobile-content-pair > .wb-card > .wb-card-body {
+  flex: 1 1 auto;
+}
+
+.wb-public-mobile-content-pair > .wb-card > .wb-card-footer {
+  margin-top: auto;
+}
+
+@media (max-width: 600px) {
+  .wb-public-mobile-content-pair {
+    display: flex;
+    flex-direction: column-reverse;
+    row-gap: inherit;
+    reading-flow: flex-visual;
+  }
+
+  .wb-public-mobile-content-pair > .wb-card {
+    height: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .wb-public-hero--media-first-mobile {
+    reading-flow: grid-rows;
+  }
+
+  .wb-public-hero--media-first-mobile > .wb-promo-media {
+    grid-row: 1;
+  }
+}
+
 @media (min-width: 37.5625rem) {
   .wb-grid-2.wb-public-grid--lead-left {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
@@ -524,6 +566,11 @@ body.wb-gallery.wb-gallery-document-scope {
   .wb-public-split--stack-mobile {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .wb-public-split--stack-mobile.wb-public-split--reverse-mobile {
+    flex-direction: column-reverse;
+    reading-flow: flex-visual;
   }
 
   .wb-public-split--stack-mobile > :first-child,

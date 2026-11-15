@@ -4475,6 +4475,13 @@ return [
       'default' => 'Default',
       'gap_help' => 'Controls the space between the growing first child and content-sized second child using shipped `wb-gap-*` classes.',
     ],
+    'mobile_order_settings' => [
+      'label' => 'Mobile order',
+      'default' => 'Keep layout order',
+      'media_first' => 'Media first',
+      'text_first' => 'Text first',
+      'help' => 'Applies to media and text when a two-column Grid, a stacking Split, or a split Hero stacks on a narrow screen.',
+    ],
     'grid_settings' => [
       'ratio_label' => 'Column proportion',
       'ratio_equal' => 'Equal',
