@@ -3871,6 +3871,7 @@ $translations = [
       'asset_help' => 'Wähle ein internes Bild-Asset für diesen Block.',
       'alt_label' => 'Alt-Text',
       'url_label' => 'Link-URL',
+      'caption_label' => 'Bildunterschrift',
       'viewer_enabled_label' => 'Im Gallery Viewer öffnen',
       'viewer_enabled_help' => 'Macht ein unverlinktes Bild anklickbar und öffnet alle Bilder derselben Viewer-Gruppe gemeinsam.',
       'viewer_group_label' => 'Viewer-Gruppe',

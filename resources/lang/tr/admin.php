@@ -3884,6 +3884,7 @@ $translations = [
       'asset_help' => 'Bu blok için dahili bir görsel varlığı seç.',
       'alt_label' => 'Alt metin',
       'url_label' => 'Link URL',
+      'caption_label' => 'Açıklama',
       'viewer_enabled_label' => 'Gallery viewer’da aç',
       'viewer_enabled_help' => 'Linksiz görseli tıklanabilir yapar ve aynı viewer grubundaki tüm görselleri tek görüntüleyicide açar.',
       'viewer_group_label' => 'Viewer grubu',

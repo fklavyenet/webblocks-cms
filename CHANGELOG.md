@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.1
+
+- Show the translated Caption label in the Image block editor in all six bundled admin languages.
+- Restore horizontal padding inside the Dashboard's Recent pages and Recent media links.
+
 ## 1.135.0
 
 - Choose whether media or text appears first on narrow screens in two-column Grid, stacking Split, and split Hero blocks. The default keeps the existing order.

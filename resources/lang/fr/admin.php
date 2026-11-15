@@ -3869,6 +3869,7 @@ $translations = [
       'asset_help' => 'Choisissez une ressource image interne pour ce bloc.',
       'alt_label' => 'Texte alternatif',
       'url_label' => 'URL du lien',
+      'caption_label' => 'Légende',
       'viewer_enabled_label' => 'Ouvrir dans la visionneuse de galerie',
       'viewer_enabled_help' => 'Rend cliquable une image sans lien et ouvre ensemble toutes les images du même groupe.',
       'viewer_group_label' => 'Groupe du viewer',

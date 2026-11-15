@@ -3869,6 +3869,7 @@ $translations = [
       'asset_help' => 'Elige un recurso de imagen interno para este bloque.',
       'alt_label' => 'Texto alternativo',
       'url_label' => 'URL del enlace',
+      'caption_label' => 'Leyenda',
       'viewer_enabled_label' => 'Abrir en el visor de galería',
       'viewer_enabled_help' => 'Hace clicable una imagen sin enlace y abre juntas todas las imágenes del mismo grupo.',
       'viewer_group_label' => 'Grupo del visor',

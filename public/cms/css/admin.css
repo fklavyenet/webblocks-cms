@@ -113,7 +113,7 @@ html[data-mode="dark"] .wb-cms-dashboard {
 }
 
 .wb-cms-dashboard .wb-link-list-item {
-    padding: var(--wb-s2) 0;
+    padding: var(--wb-s2) var(--wb-s3);
     gap: var(--wb-s2);
 }
 

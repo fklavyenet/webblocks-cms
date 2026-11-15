@@ -4112,6 +4112,7 @@ return [
       'asset_help' => 'Choose an internal image asset for this block.',
       'alt_label' => 'Alt text',
       'url_label' => 'Link URL',
+      'caption_label' => 'Caption',
       'viewer_enabled_label' => 'Open in gallery viewer',
       'viewer_enabled_help' => 'Makes an unlinked image clickable and opens every image with the same viewer group in one viewer.',
       'viewer_group_label' => 'Viewer group',

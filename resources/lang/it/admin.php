@@ -3868,6 +3868,7 @@ $translations = [
       'asset_help' => 'Scegli un asset immagine interno per questo blocco.',
       'alt_label' => 'Testo alternativo',
       'url_label' => 'URL del link',
+      'caption_label' => 'Didascalia',
       'viewer_enabled_label' => 'Apri nel visualizzatore della galleria',
       'viewer_enabled_help' => 'Rende cliccabile un’immagine senza link e apre insieme tutte le immagini dello stesso gruppo.',
       'viewer_group_label' => 'Gruppo del viewer',
