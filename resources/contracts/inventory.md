@@ -2535,8 +2535,11 @@ languages. Missing or future phase translations never expose a translation key
 in the phase heading. Operation identity, elapsed time, terminal-state and
 installed-version verification remain unchanged.
 
-The product-owned dialog uses a neutral versioned title. Its activity group
-contains the current phase, native indeterminate progressbar and waiting advice;
+The product-owned dialog uses a neutral title with the final target version.
+A plan with multiple version transitions displays the current step number,
+total steps, and the source and destination versions for that step. The
+progress payload returns no display label for a single transition. The activity
+group contains the current phase, native indeterminate progressbar and waiting advice;
 the existing Client visibility contract hides the whole group on unconfirmed,
 interrupted or terminal results. Elapsed time and the recorded result remain
 outside that group. Successful verified updates retain the existing automatic

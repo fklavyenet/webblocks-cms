@@ -68,12 +68,15 @@ class AutomaticUpdateChainTest extends TestCase
     return ($major + 1).'.1.0';
   }
 
-  private function admit(): AdminUpdateOperation
+  private function admit(bool $withBridge = true): AdminUpdateOperation
   {
     $from = WebBlocks::version();
+    $steps = $withBridge
+      ? [$this->step($from, $this->bridgeVersion()), $this->step($this->bridgeVersion(), $this->targetVersion())]
+      : [$this->step($from, $this->targetVersion())];
     Http::fake(['*/api/updates/plan*' => Http::response(['data' => ['protocol_version' => 1,
       'product' => 'webblocks-cms', 'channel' => 'stable', 'installed_version' => $from, 'target_version' => $this->targetVersion(),
-      'steps' => [$this->step($from, $this->bridgeVersion()), $this->step($this->bridgeVersion(), $this->targetVersion())]]])]);
+      'steps' => $steps]])]);
 
     return app(StartCmsUpdateChain::class)->execute(null, false);
   }
@@ -114,7 +117,33 @@ class AutomaticUpdateChainTest extends TestCase
     $this->assertSame('running', $operation->fresh()->status);
     $this->assertGreaterThanOrEqual(90000, $payload['elapsed_ms']);
     $this->assertCount(2, $payload['chain_steps']);
-    $this->assertStringContainsString($this->targetVersion(), $payload['chain_label']);
+    $this->assertSame('Step 1/2: '.WebBlocks::version().' → '.$this->bridgeVersion(), $payload['chain_label']);
+
+    $operation->update(['last_verified_version' => $this->bridgeVersion()]);
+    $steps = UpdateChainStep::where('operation_id', $operation->id);
+    (clone $steps)->where('position', 1)->update(['status' => 'success']);
+    (clone $steps)->where('position', 2)->update(['status' => 'running']);
+    $this->assertSame('Step 2/2: '.$this->bridgeVersion().' → '.$this->targetVersion(), $progress->payload()['chain_label']);
+  }
+
+  public function test_single_transition_keeps_the_current_phase_without_a_chain_label(): void
+  {
+    $operation = $this->admit(withBridge: false);
+    $this->assertNull(app(CmsUpdateProgress::class)->payload($operation->id)['chain_label']);
+
+    $operation->update(['status' => 'running', 'heartbeat_at' => now()]);
+    $run = SystemUpdateRun::create(['from_version' => WebBlocks::version(), 'to_version' => $this->targetVersion(),
+      'status' => 'running', 'started_at' => now()]);
+    $progress = app(CmsUpdateProgress::class);
+    $progress->operation($operation->id);
+    $progress->start($run);
+    $progress->stage('backup');
+
+    $payload = $progress->payload();
+    $this->assertSame($operation->id, $payload['operation_id']);
+    $this->assertCount(1, $payload['chain_steps']);
+    $this->assertNull($payload['chain_label']);
+    $this->assertSame('Backup', $payload['stage_label']);
   }
 
   public function test_database_rollback_preserves_the_parent_and_every_chain_receipt(): void

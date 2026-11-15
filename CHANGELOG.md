@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.134.4
+
+- Show the step number and current version transition in the update dialog only when the plan includes multiple version transitions.
+
 ## 1.134.3
 
 - Use sentence case for Webadmin headings, navigation and controls in each panel language.

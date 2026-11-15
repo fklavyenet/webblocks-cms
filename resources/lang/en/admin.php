@@ -4964,6 +4964,6 @@ return [
     'interrupted' => 'The update chain is interrupted. Review recovery before another update.',
     'complete' => 'Updated to :version successfully.',
     'stopped' => 'The update stopped at the verified version :version. Review the failed step before retrying.',
-    'progress' => 'Step :step/:total: :from → :to. Target: :target.',
+    'progress' => 'Step :step/:total: :from → :to',
   ],
 ];

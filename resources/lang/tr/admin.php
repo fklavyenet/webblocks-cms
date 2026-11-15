@@ -4732,7 +4732,7 @@ $translations = [
     'interrupted' => 'Güncelleme zinciri kesintiye uğradı. Yeni güncellemeden önce kurtarma durumunu inceleyin.',
     'complete' => ':version sürümüne başarıyla güncellendi.',
     'stopped' => 'Güncelleme doğrulanmış :version sürümünde durdu. Yeniden denemeden önce başarısız adımı inceleyin.',
-    'progress' => 'Adım :step/:total: :from → :to. Hedef: :target.',
+    'progress' => 'Adım :step/:total: :from → :to',
   ],
 ];
 

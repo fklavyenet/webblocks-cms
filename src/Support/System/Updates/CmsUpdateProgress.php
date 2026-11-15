@@ -152,10 +152,11 @@ class CmsUpdateProgress
     $chain = $operation?->chain_protocol === 1;
     $chainSteps = $chain ? UpdateChainStep::where('operation_id', $operation->id)->orderBy('position')->get() : collect();
     $currentStep = $chainSteps->firstWhere('status', 'running') ?? $chainSteps->firstWhere('status', 'queued') ?? $chainSteps->last();
+    $totalSteps = $chainSteps->count();
 
     return [
-      'chain_label' => $chain && $currentStep ? __('webblocks-cms::admin.update_chain.progress', ['step' => $currentStep->position,
-        'total' => $chainSteps->count(), 'from' => $currentStep->from_version, 'to' => $currentStep->version, 'target' => $operation->target_version]) : null,
+      'chain_label' => $totalSteps > 1 && $currentStep ? __('webblocks-cms::admin.update_chain.progress', ['step' => $currentStep->position,
+        'total' => $totalSteps, 'from' => $currentStep->from_version, 'to' => $currentStep->version]) : null,
       'chain_steps' => $chainSteps->map(fn ($item) => ['position' => $item->position, 'from_version' => $item->from_version,
         'version' => $item->version, 'status' => $item->status])->all(),
       'checkpoint_version' => $chain ? $operation->last_verified_version : null,

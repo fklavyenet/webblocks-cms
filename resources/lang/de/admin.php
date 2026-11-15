@@ -4696,7 +4696,7 @@ $translations = [
     'interrupted' => 'Die Aktualisierungskette wurde unterbrochen. Prüfen Sie die Wiederherstellung vor einer weiteren Aktualisierung.',
     'complete' => 'Erfolgreich auf :version aktualisiert.',
     'stopped' => 'Die Aktualisierung wurde bei der geprüften Version :version angehalten. Prüfen Sie den fehlgeschlagenen Schritt vor einem erneuten Versuch.',
-    'progress' => 'Schritt :step/:total: :from → :to. Ziel: :target.',
+    'progress' => 'Schritt :step/:total: :from → :to',
   ],
 ];
 

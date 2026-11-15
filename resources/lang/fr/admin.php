@@ -4694,7 +4694,7 @@ $translations = [
     'interrupted' => 'La chaîne de mise à jour a été interrompue. Vérifiez la récupération avant une nouvelle mise à jour.',
     'complete' => 'Mise à jour vers :version réussie.',
     'stopped' => 'La mise à jour s’est arrêtée à la version vérifiée :version. Vérifiez l’étape en échec avant de réessayer.',
-    'progress' => 'Étape :step/:total : :from → :to. Cible : :target.',
+    'progress' => 'Étape :step/:total : :from → :to',
   ],
 ];
 

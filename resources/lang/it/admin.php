@@ -4693,7 +4693,7 @@ $translations = [
     'interrupted' => 'La catena di aggiornamento è stata interrotta. Verifica il ripristino prima di un altro aggiornamento.',
     'complete' => 'Aggiornato correttamente a :version.',
     'stopped' => 'L’aggiornamento si è fermato alla versione verificata :version. Controlla il passaggio non riuscito prima di riprovare.',
-    'progress' => 'Passaggio :step/:total: :from → :to. Destinazione: :target.',
+    'progress' => 'Passaggio :step/:total: :from → :to',
   ],
 ];
 
