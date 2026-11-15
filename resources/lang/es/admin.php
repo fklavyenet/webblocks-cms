@@ -361,6 +361,9 @@ $translations = [
     'config_cached_help' => 'Estado actual de la caché de configuración de Laravel.',
   ],
   'common' => [
+    'filter' => 'Filtrar',
+    'reset' => 'Restablecer',
+    'block_language_help' => 'Ayuda sobre el idioma de los bloques',
     'actions' => 'Acciones',
     'close_named' => 'Cerrar :name',
     'save' => 'Guardar',

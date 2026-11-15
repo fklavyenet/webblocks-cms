@@ -66,7 +66,7 @@
             <div><label for="seo-filter-link">{{ $workspaceText('link_state') }}</label><select class="wb-select" id="seo-filter-link" name="link_state"><option value="">{{ $workspaceText('all') }}</option>@foreach (['ok','external','outside_scope','automatic_not_checked','missing_page','unpublished_target','protected_target','wrong_locale','old_url','missing_target_translation'] as $linkState)<option value="{{ $linkState }}" @selected(($filters['link_state'] ?? '') === $linkState)>{{ $seoText('link_states.'.$linkState) }}</option>@endforeach</select></div>
           </div>
           <input type="hidden" name="tab" value="{{ $seoTab }}" data-wb-seo-tab>
-          <div><button class="wb-btn wb-btn-secondary" type="submit">{{ $workspaceText('filter') }}</button></div>
+          <div><button class="wb-btn wb-btn-secondary" type="submit">{{ $adminTranslator->admin('common.filter', $adminLocale) }}</button></div>
           @if ($errors->any())<div class="wb-alert wb-alert-danger">{{ $errors->first() }}</div>@endif
         </div>
       </form>

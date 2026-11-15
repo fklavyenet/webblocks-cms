@@ -24,7 +24,7 @@
                      'options' => ['allowed' => __('webblocks-cms::acl.granted_filter'), 'denied' => __('webblocks-cms::acl.denied_filter')]],
                 ],
                 'showReset' => $filters['q'] !== '' || $filters['status'] !== '', 'resetUrl' => $resetUrl,
-                'applyLabel' => __('webblocks-cms::acl.show'), 'resetLabel' => __('webblocks-cms::acl.reset'),
+                'applyLabel' => __('webblocks-cms::acl.show'),
             ])
         </div>
     </div>
@@ -53,7 +53,7 @@
                 <div class="wb-empty wb-empty-sm">
                     <div class="wb-empty-title">{{ __('webblocks-cms::acl.inspect_empty') }}</div>
                     <div class="wb-empty-text">{{ __('webblocks-cms::acl.inspect_empty_help') }}</div>
-                    <div class="wb-empty-action"><a class="wb-btn wb-btn-secondary" href="{{ $resetUrl }}">{{ __('webblocks-cms::acl.reset') }}</a></div>
+                    <div class="wb-empty-action"><a class="wb-btn wb-btn-secondary" href="{{ $resetUrl }}">{{ __('webblocks-cms::admin.common.reset') }}</a></div>
                 </div>
             @else
                 <div class="wb-api-token-capability-groups wb-items-start">

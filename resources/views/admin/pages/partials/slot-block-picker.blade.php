@@ -259,8 +259,6 @@
             ],
             'showReset' => $showPickerReset,
             'resetUrl' => $resetUrl,
-            'applyLabel' => $slotBlockPickerText('apply'),
-            'resetLabel' => $slotBlockPickerText('clear_filters'),
           ])
 
           <input type="hidden" name="block_type_tab" value="{{ $pickerClientTab !== 'common' ? $pickerClientTab : 'common' }}" data-wb-slot-block-picker-tab-input>

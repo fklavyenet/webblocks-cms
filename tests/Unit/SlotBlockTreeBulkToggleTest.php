@@ -24,7 +24,7 @@ class SlotBlockTreeBulkToggleTest extends TestCase
 
     $filters = (string) file_get_contents($root.'/resources/views/admin/partials/listing-filters.blade.php');
     $this->assertStringContainsString('data-wb-slot-block-search', $filters);
-    $this->assertStringContainsString('data-wb-slot-block-search-clear', $filters);
+    $this->assertStringNotContainsString('data-wb-slot-block-search-clear', $filters);
   }
 
   public function test_tree_runtime_toggles_every_parent_and_persists_the_result(): void

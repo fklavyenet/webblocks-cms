@@ -23,8 +23,8 @@
     $resetUrl = $resetUrl ?? null;
     $listingFiltersLocale = app(AdminLocaleResolver::class)->locale();
     $listingFiltersTranslator = app(CmsTranslator::class);
-    $applyLabel = $applyLabel ?? $listingFiltersTranslator->admin('common.apply', $listingFiltersLocale);
-    $resetLabel = $resetLabel ?? $listingFiltersTranslator->admin('common.clear_filters', $listingFiltersLocale);
+    $applyLabel = $applyLabel ?? $listingFiltersTranslator->admin('common.filter', $listingFiltersLocale);
+    $resetLabel = $resetLabel ?? $listingFiltersTranslator->admin('common.reset', $listingFiltersLocale);
     $resetFirst = $resetFirst ?? false;
 @endphp
 
@@ -115,25 +115,16 @@
             </label>
         @endforeach
 
-        @if ($showActions || $liveSearch)
+        @if ($showActions && ! $liveSearch)
             <div class="wb-filter-bar-actions" data-admin-listing-filters-actions>
                 <div class="wb-action-group">
-                    @if ($liveSearch)
-                        <button type="button" class="wb-btn wb-btn-secondary" data-wb-slot-block-search-clear hidden>
-                            <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
-                            <span>{{ $liveSearch['clearLabel'] }}</span>
-                        </button>
-                    @endif
-
-                    @if ($showActions && $showReset && $resetUrl && $resetFirst)
+                    @if ($showReset && $resetUrl && $resetFirst)
                         <a href="{{ $resetUrl }}" class="wb-btn wb-btn-secondary">{{ $resetLabel }}</a>
                     @endif
 
-                    @if ($showActions)
-                        <button type="submit" class="wb-btn wb-btn-primary">{{ $applyLabel }}</button>
-                    @endif
+                    <button type="submit" class="wb-btn wb-btn-primary">{{ $applyLabel }}</button>
 
-                    @if ($showActions && $showReset && $resetUrl && ! $resetFirst)
+                    @if ($showReset && $resetUrl && ! $resetFirst)
                         <a href="{{ $resetUrl }}" class="wb-btn wb-btn-secondary">{{ $resetLabel }}</a>
                     @endif
                 </div>

@@ -60,4 +60,17 @@ class ListingFiltersDatesTest extends TestCase
     $this->assertStringNotContainsString('type="date"', $html);
     $this->assertStringContainsString('class="wb-filter-select"', $html);
   }
+
+  #[Test]
+  public function filter_and_reset_are_the_default_action_labels(): void
+  {
+    $html = view('webblocks-cms::admin.partials.listing-filters', [
+      'action' => '/webadmin/example',
+      'showReset' => true,
+      'resetUrl' => '/webadmin/example',
+    ])->render();
+
+    $this->assertStringContainsString('>Filter</button>', $html);
+    $this->assertStringContainsString('>Reset</a>', $html);
+  }
 }

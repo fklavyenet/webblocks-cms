@@ -76,8 +76,6 @@
                 ],
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.block-types.index'),
-                'applyLabel' => $blockTypesIndexText('apply_filters'),
-                'resetLabel' => $blockTypesIndexText('clear_filters'),
             ])
         </div>
     </div>
@@ -99,7 +97,7 @@
                     <div class="wb-empty-text">{{ $blockTypesIndexText('empty_text') }}</div>
                     @if ($hasActiveFilters)
                         <div class="wb-empty-action">
-                            <a href="{{ route('admin.block-types.index') }}" class="wb-btn wb-btn-secondary">{{ $blockTypesIndexText('clear_filters') }}</a>
+                            <a href="{{ route('admin.block-types.index') }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a>
                         </div>
                     @endif
                 </div>

@@ -48,7 +48,7 @@ class SlotBlockListLayoutTest extends TestCase
     );
 
     foreach ($views as $view) {
-      foreach (['id', 'type', 'summary', 'status', 'actions'] as $column) {
+      foreach (['type', 'summary', 'status', 'actions'] as $column) {
         $this->assertStringContainsString('<th class="wb-admin-slot-block-'.$column.'-cell">', $view);
       }
 

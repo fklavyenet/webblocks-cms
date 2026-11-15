@@ -99,8 +99,6 @@
                     ],
                     'showReset' => $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'updated_at' || $filters['direction'] !== 'desc',
                     'resetUrl' => $clearUrl,
-                    'applyLabel' => $adminText('apply'),
-                    'resetLabel' => $adminText('clear_filters'),
                 ])
             </div>
         </div>
@@ -128,7 +126,7 @@
                     </div>
                     @if ($hasActiveFilters)
                         <div class="wb-empty-action">
-                            <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear_filters') }}</a>
+                            <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a>
                         </div>
                     @endif
                     @if ($canCreateSharedSlots)

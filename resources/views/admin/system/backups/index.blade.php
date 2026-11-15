@@ -170,8 +170,6 @@
                     ],
                     'showReset' => $hasActiveFilters,
                     'resetUrl' => route('admin.system.backups.index'),
-                    'applyLabel' => $adminText('common.apply'),
-                    'resetLabel' => $adminText('backups.clear_filters'),
                 ])
             </div>
         </div>
@@ -200,7 +198,7 @@
                         </div>
                         @if ($hasActiveFilters)
                             <div class="wb-empty-action">
-                                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('backups.clear_filters') }}</a>
+                                <a href="{{ route('admin.system.backups.index') }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a>
                             </div>
                         @endif
                     </div>

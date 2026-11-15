@@ -112,8 +112,6 @@
                 ],
                 'showReset' => $filters['type'] !== '' || $filters['search'] !== '' || $filters['status'] !== '' || $filters['sort'] !== 'created_at' || $filters['direction'] !== 'desc',
                 'resetUrl' => $clearUrl,
-                'applyLabel' => $adminText('common.apply'),
-                'resetLabel' => $adminText('pages.clear_filters'),
             ])
         </div>
     </div>
@@ -138,7 +136,7 @@
                     </div>
                     <div class="wb-empty-action">
                         @if ($hasActiveFilters)
-                            <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.clear_filters') }}</a>
+                            <a href="{{ $clearUrl }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a>
                         @endif
                         @if ($canCreatePage)
                             <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.create_page') }}</a>

@@ -33,8 +33,6 @@
                 ],
                 'showReset' => !empty(array_filter($filters)),
                 'resetUrl' => route('admin.notes.index'),
-                'applyLabel' => $text('apply'),
-                'resetLabel' => $text('clear'),
             ])
         </div>
     </div>

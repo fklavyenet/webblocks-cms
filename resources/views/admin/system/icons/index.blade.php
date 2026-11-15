@@ -63,8 +63,6 @@
                 ],
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.system.icons.index'),
-                'applyLabel' => $adminText('apply_filters'),
-                'resetLabel' => $adminText('clear_filters'),
             ])
         </div>
     </div>
@@ -85,7 +83,7 @@
                     </div>
                     @if ($hasActiveFilters)
                         <div class="wb-empty-action">
-                            <a href="{{ route('admin.system.icons.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear_filters') }}</a>
+                            <a href="{{ route('admin.system.icons.index') }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a>
                         </div>
                     @endif
                 </div>

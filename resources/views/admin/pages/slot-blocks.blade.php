@@ -69,9 +69,7 @@
                     'value' => '',
                     'placeholder' => $adminText('search_placeholder'),
                 ],
-                'showActions' => false,
                 'liveSearch' => [
-                    'clearLabel' => $adminText('clear_search'),
                     'emptyLabel' => $adminText('no_search_results'),
                 ],
             ])
@@ -88,7 +86,11 @@
                     @endphp
                     <a href="{{ $slotBlockRoute(['locale' => $locale->code, 'edit' => request('edit'), 'picker' => request()->boolean('picker') ? 1 : null, 'block_type_id' => request('block_type_id'), 'block_type_tab' => request('block_type_tab'), 'block_type_search' => request('block_type_search'), 'block_type_category' => request('block_type_category'), 'block_type_sort' => request('block_type_sort')]) }}" class="wb-btn wb-btn-sm {{ $isActiveLocale ? 'wb-btn-primary' : 'wb-btn-secondary' }}">{{ strtoupper($locale->code) }}</a>
                 @endforeach
-                <span class="wb-action-btn" role="img" tabindex="0" aria-label="{{ $adminText('editing_locale_help', ['locale' => strtoupper($activeLocale->code)]) }} {{ $adminText('translations_help') }}" title="{{ $adminText('editing_locale_help', ['locale' => strtoupper($activeLocale->code)]) }} {{ $adminText('translations_help') }}"><i class="wb-icon wb-icon-info" aria-hidden="true"></i></span>
+                @include('webblocks-cms::admin.pages.partials.slot-block-locale-help', [
+                    'helpLabel' => $adminTranslator->admin('common.block_language_help', $adminLocale),
+                    'editingHelp' => $adminText('editing_locale_help', ['locale' => strtoupper($activeLocale->code)]),
+                    'translationsHelp' => $adminText('translations_help'),
+                ])
             </div>
             <div class="wb-cluster wb-cluster-2">
                 @if ($hasExpandableBlocks)
@@ -119,7 +121,6 @@
                             <tr>
                                 <th class="wb-admin-slot-block-type-cell">{{ $adminText('block_type') }}</th>
                                 <th class="wb-admin-slot-block-summary-cell">{{ $adminText('summary') }}</th>
-                                <th class="wb-admin-slot-block-id-cell">{{ $adminText('block_id') }}</th>
                                 <th class="wb-cms-block-children-cell">{{ $adminText('children') }}</th>
                                 <th class="wb-admin-slot-block-status-cell">{{ $adminText('status') }}</th>
                                 <th class="wb-admin-slot-block-actions-cell">{{ $adminText('actions') }}</th>

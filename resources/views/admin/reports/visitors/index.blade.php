@@ -137,9 +137,9 @@
                 </div>
                 <div class="wb-filter-bar-actions" data-admin-listing-filters-actions>
                     <div class="wb-action-group">
-                        <button type="submit" class="wb-btn wb-btn-primary">{{ $adminText('apply') }}</button>
+                        <button type="submit" class="wb-btn wb-btn-primary">{{ $adminTranslator->admin('common.filter', $adminLocale) }}</button>
                         @if ($hasFilters)
-                            <a href="{{ route('admin.reports.visitors.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear') }}</a>
+                            <a href="{{ route('admin.reports.visitors.index') }}" class="wb-btn wb-btn-secondary">{{ $adminTranslator->admin('common.reset', $adminLocale) }}</a>
                         @endif
                     </div>
                 </div>

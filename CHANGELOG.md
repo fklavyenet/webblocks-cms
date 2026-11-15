@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.133.11
+
+- Use Filter and Reset for Webadmin list filters.
+- Remove the ID column and separate clear button from page and Shared Slot block lists. Search by block ID, type, or summary and clear the search with the field's own control.
+- Open the Blocks language help by tapping or pressing its info button, or view the tooltip on hover and keyboard focus.
+
 ## 1.133.10
 
 - Bring Summary forward in page and Shared Slot block lists by moving ID directly before Children. When a block has no summary, select its block type in the Summary column to open Edit Block.

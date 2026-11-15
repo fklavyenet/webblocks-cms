@@ -32,7 +32,7 @@
                     <tr><td colspan="6"><div class="wb-empty">
                         <div class="wb-empty-title">{{ $adminText('no_ratings') }}</div>
                         <div class="wb-empty-text">{{ $hasActiveFilters ? $adminText('no_ratings_filtered_help') : $adminText('no_ratings_help') }}</div>
-                        @if ($hasActiveFilters)<div class="wb-empty-action"><a class="wb-btn wb-btn-secondary" href="{{ route('admin.engagement.ratings.index') }}">{{ $adminText('clear_filters') }}</a></div>@endif
+                        @if ($hasActiveFilters)<div class="wb-empty-action"><a class="wb-btn wb-btn-secondary" href="{{ route('admin.engagement.ratings.index') }}">{{ __('webblocks-cms::admin.common.reset') }}</a></div>@endif
                     </div></td></tr>
                 @endforelse</tbody>
             </table></div>

@@ -2157,9 +2157,13 @@ site-read visibility. No new persistence or public content field is introduced.
 
 ## Slot block editor
 
-In page slots and Shared Slots, the block table starts with Block Type and
-Summary, followed by ID and Children. Select the summary to open Edit Block.
-Rows without a summary show the block type as the edit link in that column.
+In page slots and Shared Slots, the block table starts with Block Type, Summary
+and Children. Select the summary to open Edit Block. Rows without a summary
+show the block type as the edit link in that column. The search field filters
+by block ID, type or summary as the editor types. Use the field's clear control
+to restore the previous block tree display. The Blocks information button
+explains the active content language on hover or focus and opens the same help
+on click, tap or keyboard activation.
 
 Page slots and Shared Slots use the same Add Block and Edit Block form
 dialog. Its height follows the visible viewport. On narrow screens the main

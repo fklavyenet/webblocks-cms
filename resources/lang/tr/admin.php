@@ -363,6 +363,9 @@ $translations = [
     'config_cached_help' => 'Güncel Laravel yapılandırma cache durumu.',
   ],
   'common' => [
+    'filter' => 'Filtrele',
+    'reset' => 'Sıfırla',
+    'block_language_help' => 'Blok dili yardımı',
     'actions' => 'Aksiyonlar',
     'close_named' => ':name penceresini kapat',
     'save' => 'Kaydet',

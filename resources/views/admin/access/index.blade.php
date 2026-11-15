@@ -33,7 +33,6 @@
                 'showReset' => $filters['q'] !== '' || $filters['type'] !== '',
                 'hidden' => $historyContext,
                 'resetUrl' => route('admin.access.roles.index', $historyContext),
-                'applyLabel' => __('webblocks-cms::acl.apply'), 'resetLabel' => __('webblocks-cms::acl.reset'),
             ])
         </div>
     </div>
@@ -54,7 +53,7 @@
                 <div class="wb-empty">
                     <div class="wb-empty-title">{{ __('webblocks-cms::acl.roles_empty') }}</div>
                     <div class="wb-empty-text">{{ __('webblocks-cms::acl.roles_empty_help') }}</div>
-                    <div class="wb-empty-action"><a class="wb-btn wb-btn-secondary" href="{{ route('admin.access.roles.index', $historyContext) }}">{{ __('webblocks-cms::acl.reset') }}</a></div>
+                    <div class="wb-empty-action"><a class="wb-btn wb-btn-secondary" href="{{ route('admin.access.roles.index', $historyContext) }}">{{ __('webblocks-cms::admin.common.reset') }}</a></div>
                 </div>
             @else
                 <div class="wb-table-wrap">
@@ -129,7 +128,6 @@
                 'hidden' => $roleContext,
                 'showReset' => $historyFiltered,
                 'resetUrl' => route('admin.access.roles.index', $roleContext),
-                'applyLabel' => __('webblocks-cms::acl.apply'), 'resetLabel' => __('webblocks-cms::acl.reset'),
             ])
             <p class="wb-text-sm wb-text-muted">{{ __('webblocks-cms::acl.history_filters_help') }}</p>
             @if ($history->isEmpty())

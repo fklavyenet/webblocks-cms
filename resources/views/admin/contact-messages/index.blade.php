@@ -84,8 +84,6 @@
                 ],
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.contact-messages.index'),
-                'applyLabel' => $adminText('apply'),
-                'resetLabel' => $adminText('clear_filters'),
             ])
         </div>
     </div>
@@ -102,7 +100,7 @@
                     </div>
                     @if ($hasActiveFilters)
                         <div class="wb-empty-action">
-                            <a href="{{ route('admin.contact-messages.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear_filters') }}</a>
+                            <a href="{{ route('admin.contact-messages.index') }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a>
                         </div>
                     @endif
                 </div>

@@ -70,7 +70,6 @@
             @include('webblocks-cms::admin.blocks.partials.dynamic-indicators', ['indicatorBlock' => $block, 'indicatorLabels' => $dynamicLabels])
             <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}" aria-haspopup="dialog"><strong class="wb-cms-block-row-title">{{ $rowSummary ?? $block->typeName() }}</strong></a>
         </td>
-        <td class="wb-admin-slot-block-id-cell wb-text-sm wb-text-muted">{{ $block->id }}</td>
         <td class="wb-cms-block-children-cell">
             @if ($canAddChildren || $hasChildren)
                 <span class="wb-cms-block-children-badge" aria-label="{{ $childCount }} {{ $childCount === 1 ? $inlineBlocksText('child_block') : $inlineBlocksText('child_blocks') }}">{{ $childCount }}</span>

@@ -222,12 +222,7 @@
 
         var query = normalizedSearchValue(input.value);
         var rows = rootRows(root);
-        var clearButton = root.querySelector('[data-wb-slot-block-search-clear]');
         var emptyMessage = root.querySelector('[data-wb-slot-block-search-empty]');
-
-        if (clearButton) {
-            clearButton.hidden = query === '';
-        }
 
         if (query === '') {
             if (Array.isArray(root._wbSlotBlockSearchExpanded)) {
@@ -277,7 +272,7 @@
         }
     }
 
-    function clearSlotBlockSearch(root, focus) {
+    function clearSlotBlockSearch(root) {
         var input = root.querySelector('[data-wb-slot-block-search]');
 
         if (!input) {
@@ -286,10 +281,6 @@
 
         input.value = '';
         searchSlotBlocks(root);
-
-        if (focus) {
-            input.focus();
-        }
     }
 
     function syncSlotBlockExpandedState(root) {
@@ -316,6 +307,25 @@
         syncSlotBlockExpandedState(root);
     }
 
+    function initializeLocaleHelp(root) {
+        var help = root.querySelector('[data-wb-slot-block-locale-help]');
+
+        if (!help || !window.WBTooltip) {
+            return;
+        }
+
+        var trigger = help.querySelector('[data-wb-tooltip]');
+        var text = trigger.getAttribute('data-wb-tooltip');
+
+        help.addEventListener('wb:popover:open', function () {
+            window.WBTooltip.hide(trigger);
+            trigger.removeAttribute('data-wb-tooltip');
+        });
+        help.addEventListener('wb:popover:close', function () {
+            trigger.setAttribute('data-wb-tooltip', text);
+        });
+    }
+
     function initializeTree(root) {
         if (root.getAttribute('data-wb-cms-slot-block-tree-ready') === 'true') {
             hydrateExpandedState(root);
@@ -324,6 +334,7 @@
         }
 
         root.setAttribute('data-wb-cms-slot-block-tree-ready', 'true');
+        initializeLocaleHelp(root);
         root.addEventListener('input', function (event) {
             if (event.target.matches('[data-wb-slot-block-search]')) {
                 searchSlotBlocks(root);
@@ -335,18 +346,10 @@
             }
         });
         root.addEventListener('click', function (event) {
-            var clearSearchButton = event.target.closest('[data-wb-slot-block-search-clear]');
-
-            if (clearSearchButton && root.contains(clearSearchButton)) {
-                clearSlotBlockSearch(root, true);
-
-                return;
-            }
-
             var expandAllButton = event.target.closest('[data-wb-slot-block-expand-all]');
 
             if (expandAllButton && root.contains(expandAllButton)) {
-                clearSlotBlockSearch(root, false);
+                clearSlotBlockSearch(root);
                 var expand = expandAllButton.getAttribute('aria-pressed') !== 'true';
 
                 rootToggles(root).forEach(function (button) {

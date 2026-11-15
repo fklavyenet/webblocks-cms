@@ -60,8 +60,6 @@
                 ],
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.users.index'),
-                'applyLabel' => $adminText('apply'),
-                'resetLabel' => $adminText('clear_filters'),
             ])
         </div>
     </div>
@@ -85,7 +83,7 @@
                     </div>
                     <div class="wb-empty-action">
                         @if ($hasActiveFilters)
-                            <a href="{{ route('admin.users.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear_filters') }}</a>
+                            <a href="{{ route('admin.users.index') }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a>
                         @endif
                         <a href="{{ route('admin.users.create') }}" class="wb-btn wb-btn-primary">{{ $adminText('add_user') }}</a>
                     </div>

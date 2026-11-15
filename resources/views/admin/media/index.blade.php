@@ -125,8 +125,6 @@
                 ],
                 'showReset' => $hasActiveFilters || $searchMode === MediaSearchMode::Pattern || $sort !== 'updated_at' || $direction !== 'desc' || $viewMode !== 'list',
                 'resetUrl' => route('admin.media.index'),
-                'applyLabel' => $adminText('apply'),
-                'resetLabel' => $adminText('clear_filters'),
             ])
         </div>
     </div>
@@ -190,7 +188,7 @@
                         <a href="{{ route('admin.media.index', ['modal' => 'upload-asset']) }}" class="wb-btn wb-btn-primary">{{ $adminText('upload_media') }}</a>
                         <a href="{{ route('admin.media.index', ['modal' => 'fetch-media']) }}" class="wb-btn wb-btn-secondary">{{ $adminText('fetch_url') }}</a>
                         @if ($hasActiveFilters)
-                            <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('clear_filters') }}</a>
+                            <a href="{{ route('admin.media.index') }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a>
                         @endif
                     </div>
                 </div>

@@ -483,6 +483,9 @@ return [
     'config_cached_help' => 'Current Laravel configuration cache state.',
   ],
   'common' => [
+    'filter' => 'Filter',
+    'reset' => 'Reset',
+    'block_language_help' => 'Block language help',
     'actions' => 'Actions',
     'close_named' => 'Close :name',
     'close' => 'Close',

@@ -83,6 +83,17 @@ three dots with a down chevron. Pass a localized accessible label and include
 the record name when the trigger repeats in a list. Keep primary actions
 directly available and menu entries visibly labeled.
 
+Use the native WebBlocks UI tooltip for brief contextual help on hover and
+keyboard focus. Add `data-wb-tooltip` to the focusable trigger and
+`data-wb-tooltip-wrap` for help that needs to wrap. Give icon-only controls a
+localized accessible name. Omit `title` on these triggers to avoid a second
+browser tooltip. Use a WebBlocks UI popover with a button when users need to
+open the help by pressing a key or tapping the icon.
+
+Use the shared **Filter** and **Reset** labels for submitted list filters.
+Reset returns the list to its default filters. Live search uses the search
+input's built-in clear control.
+
 Admin modal forms that submit in the current tab show a busy submit button
 after validation. Longer requests also show an indeterminate progress bar and
 guidance to keep the tab open. Keep the dialog visible while awaiting the

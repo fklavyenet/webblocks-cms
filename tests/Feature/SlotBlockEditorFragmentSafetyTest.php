@@ -208,7 +208,7 @@ namespace WebBlocks\Cms\Tests\Feature {
 
     #[Test]
     #[DataProvider('imageSummaryEditors')]
-    public function slot_block_summary_precedes_the_id_and_opens_the_editor_without_summary_content(bool $shared): void
+    public function slot_block_summary_opens_the_editor_without_an_id_column(bool $shared): void
     {
       if ($shared) {
         [$sharedSlot, $page, $slot, $block] = $this->seedSharedSlotBlockContext();
@@ -230,13 +230,27 @@ namespace WebBlocks\Cms\Tests\Feature {
       $xpath = $this->formXPath($response);
       $table = '//table[@data-wb-slot-block-table]';
       $row = $table.'//tr[@id="slot-block-row-'.$block->id.'"]';
-      $columns = ['wb-admin-slot-block-type-cell', 'wb-admin-slot-block-summary-cell', 'wb-admin-slot-block-id-cell', 'wb-cms-block-children-cell'];
+      $columns = ['wb-admin-slot-block-type-cell', 'wb-admin-slot-block-summary-cell', 'wb-cms-block-children-cell', 'wb-admin-slot-block-status-cell', 'wb-admin-slot-block-actions-cell'];
 
       foreach ($columns as $index => $column) {
         $position = $index + 1;
         $this->assertSame(1, $xpath->query($table.'/thead/tr/th['.$position.'][contains(@class, "'.$column.'")]')->length);
         $this->assertSame(1, $xpath->query($row.'/td['.$position.'][contains(@class, "'.$column.'")]')->length);
       }
+
+      $this->assertSame(count($columns), $xpath->query($table.'/thead/tr/th')->length);
+      $this->assertSame(count($columns), $xpath->query($row.'/td')->length);
+      $this->assertSame(1, $xpath->query($row.'[starts-with(@data-wb-slot-block-search-text, "'.$block->id.' ")]')->length);
+
+      $searchForm = '//form[@data-wb-slot-block-search-form]';
+      $this->assertSame(1, $xpath->query($searchForm.'//input[@type="search"]')->length);
+      $this->assertSame(0, $xpath->query($searchForm.'//button')->length);
+
+      $help = $xpath->query('//*[@data-wb-slot-block-locale-help]/button[@data-wb-toggle="popover"][@data-wb-tooltip][not(@title)]')->item(0);
+      $this->assertInstanceOf(DOMElement::class, $help);
+      $panel = $xpath->query('//*[@id="'.$help->getAttribute('popovertarget').'" and @popover]')->item(0);
+      $this->assertInstanceOf(DOMElement::class, $panel);
+      $this->assertSame($help->getAttribute('data-wb-tooltip'), trim($panel->textContent));
 
       $summary = $xpath->query($row.'/td[2]/a[@data-wb-slot-block-link]')->item(0);
       $edit = $xpath->query($row.'//a[contains(@class, "wb-action-btn-edit")]')->item(0);

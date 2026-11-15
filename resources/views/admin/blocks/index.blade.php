@@ -89,8 +89,6 @@
                 ],
                 'showReset' => $hasActiveFilters,
                 'resetUrl' => route('admin.blocks.index'),
-                'applyLabel' => $blocksIndexText('apply'),
-                'resetLabel' => $blocksIndexText('clear_filters'),
             ])
         </div>
         @if (isset($pageOptionsPaginator))
@@ -99,7 +97,7 @@
     </div>
 
     @if ($blocks->isEmpty())
-        <div class="wb-card"><div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap"><div class="wb-cluster wb-cluster-2 wb-flex-wrap"><strong>{{ $blocksIndexTitle }}</strong><span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span></div></div><div class="wb-card-body"><div class="wb-empty"><div class="wb-empty-title">{{ $blocksIndexText('empty_title') }}</div><div class="wb-empty-text">{{ $hasActiveFilters ? $blocksIndexText('empty_filtered_text') : $blocksIndexText('empty_text') }}</div>@if ($hasActiveFilters)<div class="wb-empty-action"><a href="{{ route('admin.blocks.index') }}" class="wb-btn wb-btn-secondary">{{ $blocksIndexText('clear_filters') }}</a></div>@endif</div></div></div>
+        <div class="wb-card"><div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap"><div class="wb-cluster wb-cluster-2 wb-flex-wrap"><strong>{{ $blocksIndexTitle }}</strong><span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span></div></div><div class="wb-card-body"><div class="wb-empty"><div class="wb-empty-title">{{ $blocksIndexText('empty_title') }}</div><div class="wb-empty-text">{{ $hasActiveFilters ? $blocksIndexText('empty_filtered_text') : $blocksIndexText('empty_text') }}</div>@if ($hasActiveFilters)<div class="wb-empty-action"><a href="{{ route('admin.blocks.index') }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a></div>@endif</div></div></div>
     @else
         <div class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
