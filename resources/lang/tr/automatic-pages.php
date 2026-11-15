@@ -1,7 +1,7 @@
 <?php
 
 return [
-  'title' => 'Otomatik Sayfalar',
+  'title' => 'Otomatik sayfalar',
   'intro' => 'Dinamik içerik kaynağının kayıtları için detay tasarımlarını yapılandırın.',
   'draft_notice' => 'Yalnızca taslak yapılandırma. Kaydetmek veya önizlemek sayfa yayınlamaz ve mevcut adresleri değiştirmez.',
   'create' => 'Yeni taslak kural',

@@ -85,7 +85,7 @@ return [
     'unpublished_target' => 'Hedef yayımlanmamış',
     'protected_target' => 'Hedef erişim izni gerektiriyor',
     'wrong_locale' => 'Hedefin dili kaynaktan farklı — amacı inceleyin',
-    'old_url' => 'Yerel takma ad veya kanonik olmayan adres — güncel URL’yi kullanın',
+    'old_url' => 'Yerel takma ad veya kanonik olmayan adres — güncel uRL’yi kullanın',
     'missing_target_translation' => 'Hedefin bu dilde çevirisi yok',
   ],
   'freshness_unavailable' => 'Güncellik doğrulanamadı. Sonuçları kullanmadan önce yeniden kontrol edin.',

@@ -80,7 +80,7 @@ return [
     'ok' => 'Native published target found',
     'external' => 'External target — not checked',
     'outside_scope' => 'Outside native page scope',
-    'automatic_not_checked' => 'Automatic Page target — record not checked',
+    'automatic_not_checked' => 'Automatic page target — record not checked',
     'missing_page' => 'No native target found — review redirects and other routes',
     'unpublished_target' => 'Target is not published',
     'protected_target' => 'Target requires access',

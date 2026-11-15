@@ -1,7 +1,7 @@
 <?php
 
 return [
-  'title' => 'Sistem Sağlığı',
+  'title' => 'Sistem sağlığı',
   'navigation' => 'Bakım',
   'description' => 'Sitelerinizde dikkat gerektiren konuları görün ve ilgili işlemlere ulaşın.',
   'checked_at' => 'Son kontrol: :time',

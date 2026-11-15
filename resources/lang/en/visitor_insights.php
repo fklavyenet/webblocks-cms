@@ -47,7 +47,7 @@ return [
   'tablet' => 'Tablet',
   'bot' => 'Bot',
   'unknown' => 'Unknown',
-  'direct' => 'Direct / Unknown',
+  'direct' => 'Direct / unknown',
   'internal' => 'Internal',
   'privacy' => 'These reports summarize existing page-view records. No additional cookies or visitor identifiers are created by the charts. Consent-based visitor and session figures are estimates, not verified counts of people.',
   'aggregate' => 'Page-view total',

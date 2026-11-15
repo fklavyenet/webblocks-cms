@@ -1,7 +1,7 @@
 <?php
 
 return [
-  'title' => 'Dynamic Content',
+  'title' => 'Dynamic content',
   'intro' => 'Explore sources, repeated templates and field connections.',
   'source_translation_help' => 'Sources own translations in every CMS language. Existing content and media are preserved.',
   'views' => 'Inventory views',

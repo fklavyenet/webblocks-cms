@@ -14,7 +14,7 @@ return [
   'status' => 'Measurement',
   'eligible_bytes' => 'Eligible bytes',
   'backups' => 'System backups',
-  'transfer_packages' => 'Export / Import packages',
+  'transfer_packages' => 'Export / import packages',
   'public_uploads' => 'Public uploads excluding variants',
   'media_variants' => 'Generated media variants',
   'temporary_workspaces' => 'Temporary workspaces',

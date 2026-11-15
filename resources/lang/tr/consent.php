@@ -1,10 +1,10 @@
 <?php
 
 return [
-  'menu' => 'Çerez ve Gizlilik',
-  'general' => 'Genel Ayarlar',
+  'menu' => 'Çerez ve gizlilik',
+  'general' => 'Genel ayarlar',
   'services' => 'Hizmetler',
-  'texts' => 'Dil ve Metinler',
+  'texts' => 'Dil ve metinler',
   'site' => 'Site',
   'enabled' => 'Etkin',
   'lifetime_days' => 'Tercihleri hatırlama süresi (gün)',
@@ -74,7 +74,7 @@ return [
   'service_google-maps' => 'İzninizden sonra Google etkileşimli haritalarını yükler.',
   'service_vimeo' => 'İzninizden sonra Vimeo videolarını yükler.',
   'open_video' => 'Videoyu aç',
-  'external_content' => 'Harici İçerik',
+  'external_content' => 'Harici içerik',
   'embed_url' => 'Video adresi veya Google Haritalar yerleştirme kodu',
   'embed_help' => 'YouTube/Vimeo adresini veya Google Haritalar “Harita yerleştir” kodunu yapıştırın. Sağlayıcı otomatik algılanır.',
   'read_permission' => 'Çerez ve gizlilik ayarlarını görüntüleme',

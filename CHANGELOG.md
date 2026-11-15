@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.134.3
+
+- Use sentence case for Webadmin headings, navigation and controls in each panel language.
+- Display the official slogan, “A modern block-based CMS”, without a trailing period.
+
 ## 1.134.2
 
 - Open Webadmin navigation on mobile with the shared 24 px WebBlocks menu icon. Close it with the × beside the product name.

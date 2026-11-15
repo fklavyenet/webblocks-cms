@@ -45,7 +45,7 @@ return [
   'width' => 'Ekran boyutu',
   'desktop' => 'Masaüstü',
   'phone' => 'Telefon',
-  'omit_css' => 'Önizlemede site CSS’ini gizle',
+  'omit_css' => 'Önizlemede site cSS’ini gizle',
   'activate' => 'Bu sitede etkinleştir',
   'activate_help' => 'Bu tema ve ayarlar sitenin yayındaki sayfalarına uygulanacak. Sitenin CSS dosyası etkin kalacak.',
   'restore' => 'Görünümü geri yükle',

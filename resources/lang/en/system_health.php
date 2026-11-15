@@ -1,7 +1,7 @@
 <?php
 
 return [
-  'title' => 'System Health',
+  'title' => 'System health',
   'navigation' => 'Maintenance',
   'description' => 'See what needs attention across your sites and find the next step.',
   'checked_at' => 'Last checked: :time',

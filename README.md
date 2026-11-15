@@ -1,6 +1,6 @@
 # WebBlocks CMS
 
-**A modern block-based CMS.**
+**A modern block-based CMS**
 
 An open-source Laravel-native CMS for structured, multi-site publishing and automation.
 

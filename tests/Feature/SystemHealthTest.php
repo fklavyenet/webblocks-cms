@@ -110,7 +110,7 @@ class SystemHealthTest extends TestCase
   {
     $this->site();
     $this->actingAs($this->user());
-    $this->get('/test-health')->assertOk()->assertSee('System Health')->assertSee('Maintenance')->assertDontSee('Maintenance & Health')->assertSee('What needs attention')->assertSee('System details')->assertSee('https://cms.webblocksui.com/docs')->assertDontSee(route('admin.system.information'))->assertSee(route('admin.system.backups.index'))->assertDontSee('data-wb-nav-group-open="help"');
+    $this->get('/test-health')->assertOk()->assertSee('System health')->assertSee('Maintenance')->assertDontSee('Maintenance & Health')->assertSee('What needs attention')->assertSee('System details')->assertSee('https://cms.webblocksui.com/docs')->assertDontSee(route('admin.system.information'))->assertSee(route('admin.system.backups.index'))->assertDontSee('data-wb-nav-group-open="help"');
   }
 
   #[Test]

@@ -50,7 +50,7 @@ return [
     'policy_managed' => 'Gestito dalla policy',
     'page_revisions' => 'Revisione delle pagine',
     'shared_slot_revisions' => 'revisioni di Fessura condivise',
-    'transfer_packages' => 'Esporta / Importa pacchetti',
+    'transfer_packages' => 'Esporta / importa pacchetti',
     'manage' => 'Gestione',
     'retained_history_help' => 'Le revisioni editoriali e i pacchetti di trasferimento creati dall\'operatore sono riportati qui ma non vengono mai rimossi dalla pulizia automatica della manutenzione.',
     'block_growth' => 'Crescita dei blocchi',

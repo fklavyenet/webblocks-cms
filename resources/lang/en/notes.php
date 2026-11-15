@@ -4,7 +4,7 @@ return [
   'title' => 'Notes',
   'description' => 'Share plain-text notes with everyone who can access this CMS panel, one recipient, or yourself. The author and recipient can read private notes. Super admins can open private notes for editing. Only the author can delete a note.',
   'token_description' => 'Installation-wide notes permissions for your own account. Note visibility and ownership still apply.',
-  'add' => 'Add Note',
+  'add' => 'Add note',
   'edit' => 'Edit note',
   'read_note' => 'Read note',
   'delete' => 'Delete note',

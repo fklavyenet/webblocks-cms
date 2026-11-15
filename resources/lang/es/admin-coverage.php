@@ -50,7 +50,7 @@ return [
     'policy_managed' => 'Gestionado por política',
     'page_revisions' => 'Revisión de páginas',
     'shared_slot_revisions' => 'Revisiones de Ranura Compartida',
-    'transfer_packages' => 'Exportar / Importar paquetes',
+    'transfer_packages' => 'Exportar / importar paquetes',
     'manage' => 'Gestionaje',
     'retained_history_help' => 'Las revisiones editoriales y los paquetes de transferencia creados por el operador se reportan aquí pero nunca se eliminan mediante la limpieza automática del mantenimiento.',
     'block_growth' => 'Crecimiento de bloques',

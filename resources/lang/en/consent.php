@@ -1,10 +1,10 @@
 <?php
 
 return [
-  'menu' => 'Cookies and Privacy',
-  'general' => 'General Settings',
+  'menu' => 'Cookies and privacy',
+  'general' => 'General settings',
   'services' => 'Services',
-  'texts' => 'Languages and Texts',
+  'texts' => 'Languages and texts',
   'site' => 'Site',
   'enabled' => 'Enabled',
   'lifetime_days' => 'Remember choices for (days)',
@@ -74,7 +74,7 @@ return [
   'service_google-maps' => 'Loads interactive maps from Google after your permission.',
   'service_vimeo' => 'Loads videos from Vimeo after your permission.',
   'open_video' => 'Open video',
-  'external_content' => 'External Content',
+  'external_content' => 'External content',
   'embed_url' => 'Video URL or Google Maps embed code',
   'embed_help' => 'Paste a YouTube/Vimeo URL or the Google Maps “Embed a map” code. The provider is detected automatically.',
   'read_permission' => 'View cookie and privacy settings',

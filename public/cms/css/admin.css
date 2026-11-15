@@ -1367,7 +1367,6 @@ input.wb-admin-table-grid-input:focus {
 
 .wb-api-token-activity-method {
     font-weight: 700;
-    text-transform: uppercase;
 }
 
 .wb-api-token-activity-route {
@@ -1404,7 +1403,6 @@ input.wb-admin-table-grid-input:focus {
     color: var(--wb-muted);
     font-size: var(--wb-font-size-xs, 0.75rem);
     font-weight: 700;
-    text-transform: uppercase;
 }
 
 .wb-api-token-activity-meta dd {

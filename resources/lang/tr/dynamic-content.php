@@ -1,7 +1,7 @@
 <?php
 
 return [
-  'title' => 'Dinamik İçerik',
+  'title' => 'Dinamik içerik',
   'intro' => 'Kaynakları, tekrarlanan şablonları ve alan bağlantılarını inceleyin.',
   'source_translation_help' => 'Kaynaklar tüm CMS dillerindeki çevirileri sağlar. Mevcut içerik ve görseller korunur.',
   'views' => 'Envanter görünümleri',

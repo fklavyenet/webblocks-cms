@@ -35,6 +35,26 @@ Set `WEBBLOCKS_CMS_TEST_PROFILE` to a local output filename to append JSONL timi
 
 The standalone PHP Node/npm guard runs before the long tests in pre-push and CI, without Composer dependencies. It checks Git-tracked and non-ignored untracked files for package manifests/lockfiles, Node configuration, CommonJS tools, literal Node/npm commands, declared CI/container runtimes and Node/bare-package JavaScript imports. It ignores installed Git-ignored dependencies and prose/comments; native browser JavaScript, relative/URL module imports and package exclusion lists remain valid. Findings name files and lines without printing command arguments. This is a static dependency guard, not an interpreter for dynamically constructed commands.
 
+## Interface copy
+
+Use sentence case for CMS and first-party plugin admin page, card and dialog
+headings, menus, tabs, form labels, table headings, buttons and breadcrumb
+labels. Capitalize the first word and follow each locale's spelling rules.
+Preserve product names, acronyms and case-sensitive identifiers. Write
+**Page layouts** and **Save changes** in English and **Sayfa yerleşimleri**
+and **Değişiklikleri kaydet** in Turkish. Preserve authored page and record
+titles verbatim. Omit trailing periods on headings and short labels. Use
+normal punctuation for complete sentences in feedback and help.
+
+Write the intended letter case in source text or translations. Do not use
+CSS `text-transform: uppercase`, `text-transform: capitalize` or equivalent
+utilities.
+
+Write the official short slogan **A modern block-based CMS** without a
+trailing period. Use the shared `wb-breadcrumb` component with equal CSS
+spacing on both sides of the decorative slash. Keep separators and spacing
+characters out of translated breadcrumb labels.
+
 ## Admin form composition
 
 Admin templates must not use HTML `fieldset` or `legend`. Use WebBlocks UI cards

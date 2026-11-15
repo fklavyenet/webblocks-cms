@@ -47,7 +47,7 @@ return [
   'tablet' => 'Tablet',
   'bot' => 'Bot',
   'unknown' => 'Bilinmiyor',
-  'direct' => 'Doğrudan / Bilinmiyor',
+  'direct' => 'Doğrudan / bilinmiyor',
   'internal' => 'Site içi',
   'privacy' => 'Bu raporlar mevcut sayfa görüntüleme kayıtlarını özetler. Grafikler ek çerez veya ziyaretçi tanımlayıcısı oluşturmaz. İzinli ölçüme dayalı ziyaretçi ve oturum değerleri tahmindir; doğrulanmış kişi sayısı değildir.',
   'aggregate' => 'Sayfa görüntüleme toplamı',

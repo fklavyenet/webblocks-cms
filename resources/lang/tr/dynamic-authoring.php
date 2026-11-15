@@ -17,7 +17,7 @@ return [
   'provider_help' => 'Kaynakları sağlayıcı entegrasyonlar tanımlar. API erişimini sağlayıcı entegrasyonda ayarlayın; kullanılabilir alanları burada bağlayın.',
   'published_help' => 'Bu sayfa taslak değil. Değişiklikleri önizleyebilirsiniz; kaydetmeden önce güncelleme taslağı hazırlayın. Public sayfa değişmez.',
   'prepare_draft' => 'Güncelleme taslağı hazırla',
-  'starter' => 'Başlangıç Grid ve Card oluştur',
+  'starter' => 'Başlangıç grid ve card oluştur',
   'starter_help' => 'Bu taslağın sayfaya ait alanına henüz bağlanmamış kart şablonu ekler. Mevcut bloklar korunur. Alanları sonraki adımda seçin.',
   'create_starter' => 'Başlangıç şablonu ekle',
   'starter_title' => 'Kayıt başlığı',

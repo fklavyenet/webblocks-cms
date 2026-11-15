@@ -3,7 +3,7 @@
 return [
   'site_heading' => 'Site theme: :site',
   'preview_heading' => 'Preview: :name :version',
-  'back_to_themes' => 'Back to Site theme',
+  'back_to_themes' => 'Back to site theme',
   'upload_new' => 'Upload new theme',
   'search_placeholder' => 'Name or version',
   'no_matches' => 'No theme versions match your search.',
@@ -24,7 +24,7 @@ return [
   'retained' => 'Kept for site history',
   'delete' => 'Delete version',
   'delete_help' => 'Delete this unused theme version from the installation?',
-  'back' => 'Back to Appearance',
+  'back' => 'Back to appearance',
   'builtin' => 'Built-in appearance',
   'current' => 'Current appearance',
   'candidate' => 'Candidate appearance',

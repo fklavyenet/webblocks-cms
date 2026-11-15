@@ -24,7 +24,7 @@ return [
   'retained' => 'Conservée dans l’historique du site',
   'delete' => 'Supprimer la version',
   'delete_help' => 'Supprimer cette version de thème inutilisée ?',
-  'back' => 'Retour à Apparence',
+  'back' => 'Retour à l\'apparence',
   'builtin' => 'Apparence intégrée',
   'current' => 'Apparence actuelle',
   'candidate' => 'Apparence proposée',

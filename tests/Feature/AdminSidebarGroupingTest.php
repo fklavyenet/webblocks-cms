@@ -89,11 +89,11 @@ class AdminSidebarGroupingTest extends TestCase
   {
     $xpath = $this->sidebar($this->user());
     $groups = $this->sidebarGroups($xpath);
-    $this->assertSame(['Content', 'Contact & analytics', 'Users & access', 'Cookies and Privacy', 'Structure and design', 'System', 'Maintenance'], array_keys($groups));
+    $this->assertSame(['Content', 'Contact & analytics', 'Users & access', 'Cookies and privacy', 'Structure and design', 'System', 'Maintenance'], array_keys($groups));
     $this->assertSame(['/webadmin/blocks', '/webadmin/dynamic-content', '/webadmin/shared-slots', '/webadmin/navigation'], $this->paths($xpath, $groups['Content']));
     $this->assertSame(['/webadmin/contact-messages', '/webadmin/engagement', '/webadmin/reports/visitors', '/webadmin/seo-audits'], $this->paths($xpath, $groups['Contact & analytics']));
     $this->assertSame(['/webadmin/users', '/webadmin/access/roles', '/webadmin/system/api-tokens'], $this->paths($xpath, $groups['Users & access']));
-    $this->assertSame(['/webadmin/privacy', '/webadmin/privacy/services', '/webadmin/privacy/texts'], $this->paths($xpath, $groups['Cookies and Privacy']));
+    $this->assertSame(['/webadmin/privacy', '/webadmin/privacy/services', '/webadmin/privacy/texts'], $this->paths($xpath, $groups['Cookies and privacy']));
     $this->assertNotContains('/webadmin/users', $this->paths($xpath, $groups['System']));
     $this->assertNotContains('/webadmin/system/api-tokens', $this->paths($xpath, $groups['System']));
     $pluginsLink = $xpath->query('.//a[@href="'.route('admin.system.plugins.index').'"]', $groups['System']);
@@ -187,7 +187,7 @@ class AdminSidebarGroupingTest extends TestCase
     $xpath = $this->sidebar($root, 'plugins.chat.inbox.index');
     $groups = $this->sidebarGroups($xpath);
     $this->assertArrayHasKey('İçerik', $groups);
-    $this->assertArrayHasKey('Kullanıcılar ve Erişim', $groups);
+    $this->assertArrayHasKey('Kullanıcılar ve erişim', $groups);
     $this->assertContains('/synthetic-chat/setup', $this->paths($xpath, $groups['Sistem']));
     $this->assertContains('/synthetic-chat/health', $this->paths($xpath, $groups['Bakım']));
     $this->assertSame(['/synthetic-chat/inbox'], $this->paths($xpath, $groups['Live Chat']));

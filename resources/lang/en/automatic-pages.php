@@ -67,7 +67,7 @@ return [
   'search_discovery' => 'After activation, site search includes current public source titles and descriptions in the visitor’s language. Withdrawn records disappear on the next search. No manual index rebuild is needed; the source must be available.',
   'transition_notice' => 'Preview only: existing pages and routes have not changed.',
   'retained_pages' => 'Retain :count existing pages',
-  'detail_urls' => ':count detail URLs',
+  'detail_urls' => ':count detail uRLs',
   'retained_design' => 'Retained design',
   'shared_design' => 'Shared detail design',
   'activate' => 'Activate automatic routes',

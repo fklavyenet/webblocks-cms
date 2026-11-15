@@ -46,7 +46,7 @@ return [
   'tablet' => 'Tablet',
   'bot' => 'Bot',
   'unknown' => 'Sconosciuto',
-  'direct' => 'Diretto / Sconosciuto',
+  'direct' => 'Diretto / sconosciuto',
   'internal' => 'Interno',
   'privacy' => 'Questi rapporti riepilogano i record esistenti delle visualizzazioni di pagina. I grafici non creano cookie o identificatori dei visitatori aggiuntivi. I dati su visitatori e sessioni basati sul consenso sono stime, non conteggi verificati di persone.',
   'aggregate' => 'Totale visualizzazioni di pagina',

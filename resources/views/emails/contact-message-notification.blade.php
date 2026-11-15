@@ -19,7 +19,7 @@
             </tr>
             <tr>
                 <td style="background:#ffffff; border:1px solid #dbe3ef; border-radius:8px; padding:20px;">
-                    <div style="font-size:12px; font-weight:bold; letter-spacing:.04em; margin-bottom:14px; text-transform:uppercase; color:#475569;">Visitor message</div>
+                    <div style="font-size:12px; font-weight:bold; letter-spacing:.04em; margin-bottom:14px; color:#475569;">Visitor message</div>
 
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                         <tr>
@@ -46,7 +46,7 @@
             </tr>
             <tr>
                 <td style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:18px;">
-                    <div style="font-size:12px; font-weight:bold; letter-spacing:.04em; margin-bottom:12px; text-transform:uppercase; color:#64748b;">Submission details</div>
+                    <div style="font-size:12px; font-weight:bold; letter-spacing:.04em; margin-bottom:12px; color:#64748b;">Submission details</div>
 
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                         <tr>
@@ -77,7 +77,7 @@
             </tr>
             <tr>
                 <td style="background:#f1f5f9; border:1px solid #e2e8f0; border-radius:8px; color:#475569; padding:16px;">
-                    <div style="font-size:12px; font-weight:bold; letter-spacing:.04em; margin-bottom:10px; text-transform:uppercase; color:#64748b;">Technical details</div>
+                    <div style="font-size:12px; font-weight:bold; letter-spacing:.04em; margin-bottom:10px; color:#64748b;">Technical details</div>
 
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse; font-size:13px;">
                         <tr>

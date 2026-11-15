@@ -89,7 +89,7 @@ class SystemUpdatesScreenTest extends TestCase
     $this->assertStringContainsString('Update to 1.41.0', $html);
     $this->assertStringContainsString('data-pc-update-form', $html);
     $this->assertStringContainsString('Backed up first · restored automatically on failure', $html);
-    $this->assertStringContainsString('open the Backups screen', $html);
+    $this->assertStringContainsString('open the backups screen', $html);
     $this->assertStringContainsString(route('admin.system.backups.index'), $html);
 
     // Cumulative per-version changelog accordion, version-only rows as wb-list-item.

@@ -46,7 +46,7 @@ return [
   'tablet' => 'Tableta',
   'bot' => 'Bot',
   'unknown' => 'Desconocido',
-  'direct' => 'Directo / Desconocido',
+  'direct' => 'Directo / desconocido',
   'internal' => 'Interno',
   'privacy' => 'Estos informes resumen los registros existentes de vistas de página. Los gráficos no crean cookies ni identificadores de visitantes adicionales. Las cifras de visitantes y sesiones basadas en consentimiento son estimaciones, no recuentos verificados de personas.',
   'aggregate' => 'Total de vistas de página',

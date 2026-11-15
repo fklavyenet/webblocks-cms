@@ -6,11 +6,11 @@ final class WebBlocks
 {
   public const NAME = 'WebBlocks CMS';
 
-  public const SLOGAN = 'A modern block-based CMS.';
+  public const SLOGAN = 'A modern block-based CMS';
 
   public const HANDLE = 'webblocks-cms';
 
-  public const VERSION = '1.134.2';
+  public const VERSION = '1.134.3';
 
   public const UI_VERSION = 'v2.35.1';
 

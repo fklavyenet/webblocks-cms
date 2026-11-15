@@ -69,7 +69,7 @@ return [
   'invalid' => 'Verification failed or setup expired. Use a fresh code or a valid recovery code and try again.',
   'policy' => 'Mandatory two-factor authentication',
   'policy_help' => 'Selected roles must enroll before accessing the CMS. An assignment on any site is sufficient. Existing users are directed to setup after sign-in. Other users can enable 2FA voluntarily.',
-  'super_admin' => 'Require for Super admins',
+  'super_admin' => 'Require for super admins',
   'roles' => 'Require for site roles',
   'policy_confirm' => 'Confirm the change',
   'policy_confirm_help' => 'Verify your own account to save changes to this policy.',

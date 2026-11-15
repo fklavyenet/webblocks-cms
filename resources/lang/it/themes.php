@@ -24,7 +24,7 @@ return [
   'retained' => 'Conservata nella cronologia del sito',
   'delete' => 'Elimina versione',
   'delete_help' => 'Eliminare questa versione inutilizzata del tema?',
-  'back' => 'Torna ad Aspetto',
+  'back' => 'Torna all\'aspetto',
   'builtin' => 'Aspetto integrato',
   'current' => 'Aspetto attuale',
   'candidate' => 'Aspetto proposto',

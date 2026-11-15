@@ -161,7 +161,7 @@ return [
     'assets_label' => 'Seitenaktiva',
     'category_page' => 'Seitendetails und Workflow',
     'category_translations' => 'Übersetzungen, Routing und SEO',
-    'category_slots' => 'Layout Slots und Shared Slot Zuweisungen',
+    'category_slots' => 'Layout-Slots und Zuweisungen gemeinsamer Slots',
     'category_blocks' => 'Seiteneigene Blöcke und Medienreferenzen',
     'category_assets' => 'Seite CSS und JavaScript Assets',
     'unsupported_schema' => 'Diese Version verwendet ein nicht unterstütztes Snapshot-Schema.',

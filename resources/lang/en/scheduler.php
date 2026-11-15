@@ -19,7 +19,7 @@ return [
   'limits' => 'Updates register CMS jobs but do not silently change operating-system configuration. If crontab access is restricted, use your host’s cron facility or an external scheduler service that can execute the application command.',
   'policy_help' => 'Each installation keeps its saved cleanup policy. Updates do not shorten retention or enable destructive categories. Review and save your settings separately.',
   'cleanup' => 'Cleanup settings',
-  'health' => 'System Health',
+  'health' => 'System health',
   'schedule' => 'Cron schedule',
   'command' => 'Hosting cron command',
   'setup_command' => 'Inspect without changes',
