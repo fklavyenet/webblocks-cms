@@ -128,13 +128,20 @@
             <div class="wb-sidebar-backdrop" data-wb-sidebar-backdrop></div>
 
             <aside class="wb-sidebar" id="admin-sidebar">
-                <a href="{{ route('admin.dashboard') }}" class="wb-sidebar-brand" aria-label="{{ WebBlocks::name() }}">
-                    <x-webblocks-cms::brand-mark surface="sidebar" class="wb-sidebar-brand-logo wb-sidebar-brand-logo-inline" decorative="true" />
-                    <span class="wb-sidebar-brand-copy">
-                        <span>{{ WebBlocks::name() }}</span>
-                        <span class="wb-sidebar-brand-note">{{ WebBlocks::slogan() }}</span>
-                    </span>
-                </a>
+                <div class="wb-flex wb-items-center wb-flex-shrink-0 wb-border-bottom wb-px-4">
+                    <a href="{{ route('admin.dashboard') }}" class="wb-sidebar-brand wb-flex-1 wb-min-w-0 wb-border-0 wb-p-0" aria-label="{{ WebBlocks::name() }}">
+                        <x-webblocks-cms::brand-mark surface="sidebar" class="wb-sidebar-brand-logo" decorative="true" />
+                        <span class="wb-sidebar-brand-copy">
+                            <span class="wb-truncate">{{ WebBlocks::name() }}</span>
+                            <span class="wb-sidebar-brand-note wb-truncate">{{ WebBlocks::slogan() }}</span>
+                        </span>
+                    </a>
+                    <button class="wb-btn wb-btn-ghost wb-btn-icon wb-btn-sm wb-visible-mobile wb-flex-shrink-0" type="button"
+                            data-wb-toggle="sidebar" data-wb-target="#admin-sidebar" aria-controls="admin-sidebar"
+                            aria-expanded="false" aria-label="{{ $adminText('navigation.close') }}">
+                        <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+                    </button>
+                </div>
 
                 <nav class="wb-sidebar-nav" aria-label="{{ $adminText('navigation.aria') }}">
                     <div class="wb-stack wb-stack-1">
@@ -203,7 +210,7 @@
                         aria-controls="admin-sidebar"
                         aria-label="{{ $adminText('navigation.toggle') }}"
                     >
-                        <span></span><span></span><span></span>
+                        <i class="wb-icon wb-icon-menu wb-icon-lg" aria-hidden="true"></i>
                     </button>
 
                     <div class="wb-navbar-identity">

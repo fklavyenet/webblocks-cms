@@ -59,6 +59,7 @@ $translations = [
     'users_access' => 'Utenti e accesso',
     'aria' => 'Navigazione admin',
     'toggle' => 'Mostra/nascondi navigazione',
+    'close' => 'Chiudi la navigazione',
     'dashboard' => 'Dashboard',
     'sites' => 'Siti',
     'pages' => 'Pagine',

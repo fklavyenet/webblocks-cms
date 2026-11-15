@@ -203,11 +203,7 @@ body.wb-admin-dashboard-page {
 }
 
 svg.wb-sidebar-brand-logo {
-    block-size: 3rem;
     color: var(--wb-accent);
-    display: block;
-    flex: 0 0 auto;
-    inline-size: 3rem;
 }
 
 /* Keep the fixed brand/footer chrome in place while only navigation scrolls. */

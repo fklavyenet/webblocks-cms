@@ -105,6 +105,7 @@ return [
     'users_access' => 'Users & access',
     'aria' => 'Admin navigation',
     'toggle' => 'Toggle navigation',
+    'close' => 'Close navigation',
     'dashboard' => 'Dashboard',
     'sites' => 'Sites',
     'pages' => 'Pages',

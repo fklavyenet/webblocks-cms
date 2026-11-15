@@ -59,6 +59,7 @@ $translations = [
     'users_access' => 'Kullanıcılar ve Erişim',
     'aria' => 'Yönetim gezinmesi',
     'toggle' => 'Gezinmeyi aç/kapat',
+    'close' => 'Gezinme menüsünü kapat',
     'dashboard' => 'Pano',
     'sites' => 'Siteler',
     'pages' => 'Sayfalar',

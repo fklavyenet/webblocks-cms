@@ -398,6 +398,21 @@ class CmsSqlRbacTest extends TestCase
   }
 
   #[Test]
+  public function mobile_sidebar_places_its_close_button_beside_the_shared_brand_mark(): void
+  {
+    $this->withoutMiddleware([RedirectIfNotInstalled::class]);
+
+    $response = $this->actingAs($this->user('super_admin'))->get('/webadmin')->assertOk();
+    $document = new \DOMDocument;
+    $document->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+    $xpath = new \DOMXPath($document);
+
+    $this->assertSame(1.0, $xpath->evaluate('count(//header//button[@class="wb-navbar-toggle"][@data-wb-target="#admin-sidebar"]/i[@class="wb-icon wb-icon-menu wb-icon-lg"])'));
+    $this->assertSame(1.0, $xpath->evaluate('count(//aside[@id="admin-sidebar"]//a[starts-with(@class, "wb-sidebar-brand ")]/*[local-name()="svg"][@class="wb-sidebar-brand-logo"][@viewbox="-22 -22 172 172"])'));
+    $this->assertSame(1.0, $xpath->evaluate('count(//aside[@id="admin-sidebar"]//a[starts-with(@class, "wb-sidebar-brand ")]/following-sibling::button[@data-wb-target="#admin-sidebar"][@aria-label="Close navigation"]/i[@class="wb-icon wb-icon-x"])'));
+  }
+
+  #[Test]
   public function reader_panel_controls_follow_the_same_operation_grants(): void
   {
     $this->withoutMiddleware([RedirectIfNotInstalled::class]);

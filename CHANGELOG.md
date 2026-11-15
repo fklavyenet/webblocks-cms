@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.134.2
+
+- Open Webadmin navigation on mobile with the shared 24 px WebBlocks menu icon. Close it with the × beside the product name.
+- Use the shared 48 px sidebar brand slot with about 30 px of visible logo artwork.
+
 ## 1.134.1
 
 - Choose a layout in its own Page Layout card when creating or editing a page. The layout choice and page settings share one save action.

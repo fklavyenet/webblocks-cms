@@ -28,7 +28,6 @@ wb-public-contact-meta
 wb-public-search-results
 wb-public-showcase-item
 wb-section-muted
-wb-sidebar-brand-logo-inline
 wb-slider-next
 wb-slider-prev
 wb-slot-block-picker-body
