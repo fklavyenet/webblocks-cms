@@ -169,14 +169,16 @@
           </div>
 
           <div class="wb-tabs-panel {{ $settingsTab === 'settings' ? 'is-active' : '' }}" id="page-management-settings-panel">
-            <div class="wb-card">
-              <form method="POST" action="{{ route('admin.pages.update', $page) }}" class="wb-stack wb-gap-0">
-                @csrf
-                @method('PUT')
+            <form method="POST" action="{{ route('admin.pages.update', $page) }}" class="wb-stack wb-gap-3">
+              @csrf
+              @method('PUT')
 
-                <input type="hidden" name="_page_settings_tab" value="{{ $settingsTab }}" data-wb-page-settings-tab-input>
-                <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
+              <input type="hidden" name="_page_settings_tab" value="{{ $settingsTab }}" data-wb-page-settings-tab-input>
+              <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
 
+              @include('webblocks-cms::admin.pages.partials.page-layout-picker', ['canEditContent' => $canEditContent])
+
+              <div class="wb-card">
                 <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
                   <strong>{{ $adminText('settings') }}</strong>
                   <span class="wb-text-sm wb-text-muted">{{ $adminText('settings_help') }}</span>
@@ -191,8 +193,8 @@
                 <div class="wb-card-footer">
                   <x-webblocks-cms::admin.form-actions :cancel-url="$pageReturnUrl" :show-submit="$canEditContent" :submit-label="$adminText('save_changes')" />
                 </div>
-              </form>
-            </div>
+              </div>
+            </form>
           </div>
 
           @if ($canManagePageAssets || $page->pageAssets->isNotEmpty())

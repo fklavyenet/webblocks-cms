@@ -14,10 +14,11 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
-    <div class="wb-card">
-        <form method="POST" action="{{ route('admin.pages.store') }}" class="wb-stack wb-gap-0">
-            @csrf
+    <form method="POST" action="{{ route('admin.pages.store') }}" class="wb-stack wb-gap-3">
+        @csrf
+        @include('webblocks-cms::admin.pages.partials.page-layout-picker')
 
+        <div class="wb-card">
             <div class="wb-card-body">
                 @include('webblocks-cms::admin.partials.editor-recovery', ['editorRecovery' => app(\WebBlocks\Cms\Support\EditorRecovery\EditorFormRecovery::class)->form(request()->user(), ['form_kind' => 'new-page', 'site_id' => old('site_id', $selectedSiteId), 'locale' => \WebBlocks\Cms\Models\Locale::query()->where('is_default', true)->value('code')]), 'recoveryPage' => null])
                 @include('webblocks-cms::admin.pages._form')
@@ -26,6 +27,6 @@
             <div class="wb-card-footer">
                 <x-webblocks-cms::admin.form-actions :cancel-url="route('admin.pages.index')" :submit-label="$pageFormText('create')" />
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 @endsection

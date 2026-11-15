@@ -1787,6 +1787,26 @@ input.wb-admin-table-grid-input:focus {
     min-width: 0;
 }
 
+.wb-page-layout-choices .wb-radio-card:hover .wb-radio-card-body,
+.wb-page-layout-choices .wb-radio-card input:checked + .wb-radio-card-body {
+    background: var(--wb-surface);
+}
+
+.wb-page-layout-choices .wb-radio-card input:checked + .wb-radio-card-body {
+    border-color: var(--wb-accent);
+    box-shadow: none;
+    color: var(--wb-text);
+}
+
+.wb-page-layout-selected {
+    color: var(--wb-accent);
+    visibility: hidden;
+}
+
+.wb-page-layout-choices input:checked + .wb-radio-card-body .wb-page-layout-selected {
+    visibility: visible;
+}
+
 .wb-page-layout-diagram {
     display: grid;
     grid-template: 1fr 2fr 1fr / repeat(4, minmax(0, 1fr));
