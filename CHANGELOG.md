@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.134.1
+
+- Choose a layout in its own Page Layout card when creating or editing a page. The layout choice and page settings share one save action.
+- Identify the selected layout by its outline and checkmark. The Main region keeps its blue fill and stays distinct from the card background.
+
 ## 1.134.0
 
 - Compare Default, Docs, and Columns in a visual layout picker when creating or editing a page.

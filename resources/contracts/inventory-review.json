@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
     "document": "resources/contracts/inventory.md",
-    "product_version": "1.134.0",
+    "product_version": "1.134.1",
     "inventory_sha256": "7381096455cd66595a9a1c2ab2957f1850cd5b9f22b7f8ae6b39a7753b868743",
-    "source_sha256": "61b0d9b522423a4d5501fdb8e961d42b9024099452c325147315d82249b7472c",
+    "source_sha256": "b6da9ee92596638e6ab6270b7a4837aca8f832767d2621a7316817fd68973dda",
     "review_outcome": "no-authoring-impact",
-    "review_note": "Presentation only. Layout options, slot behavior, validation and submitted fields are unchanged.",
+    "review_note": "This release commit updates the product version, changelog and review record. The visual card fix does not change the layout choices, slot behavior or authoring fields.",
     "sources": {
         "composer.json": "f465433a91a9459ef43a2331d9adf8602207930e9e8afc7c262bf9f68461bdeb",
         "config/cms.php": "7e1f0ec1bc1df3054603e7394ca684c1a250d3a9d731bcd1ab3cdeba3fbc3c1e",
@@ -2172,7 +2172,7 @@
         "src/Support/Visitors/VisitorEventLogger.php": "d3604bb2b8a10de4912a866aaabb6d5c92be231f719c9b5433cb3aa4d22047b5",
         "src/Support/Visitors/VisitorReportRetention.php": "5b76a7790e610ebfe2016b13c494d5ba86ff6e854e2a02cff4b06ac11ad240bb",
         "src/Support/Visitors/VisitorReportsQuery.php": "950f0a24d7aa722d6e171b3f57821fcb31af1811972071abf618e377d65619a9",
-        "src/Support/WebBlocks.php": "7dd297b55e14c858c98ec26a19da06f21b7b779988ee2bdbe6efc8b8d09359f4",
+        "src/Support/WebBlocks.php": "6a9a458483615c646d29decbbff9b92510329fefcbe9c23931cce69ce7480a78",
         "src/Support/helpers.php": "d972cb707734997050f09ac1b65af9f8fd5a1029f18d98b9e1b4819f25fd043b",
         "src/WebBlocksCmsServiceProvider.php": "38c25f0e1447fa07daa3a35c9eb7cab8da91f1abdf82589bc177e4a15d247ff1",
         "stubs/README.md": "3100275ae8eb8973105ddd8e288e2fc5dcfe0c459867838058efaead6dc2d926",
