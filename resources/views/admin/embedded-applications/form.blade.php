@@ -1,6 +1,12 @@
 @php
     $locale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $text = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('embedded_applications.'.$key, $locale);
+    $settingTypeLabels = [
+        'string' => $text('setting_type_string'),
+        'boolean' => $text('setting_type_boolean'),
+        'integer' => $text('setting_type_integer'),
+        'enum' => $text('setting_type_enum'),
+    ];
     $editing = $application->exists;
     $jsAssets = old('js_assets', $application->js_assets ?? []);
     $settings = old('settings', collect($application->settings_schema ?? [])->map(fn ($value, $key) => ['key' => $key, ...$value, 'values' => isset($value['values']) ? implode(', ', $value['values']) : ''])->values()->all());
@@ -31,7 +37,7 @@
                     <div class="wb-stack wb-gap-1"><label for="name">{{ $text('name') }}</label><input class="wb-input" id="name" name="name" required value="{{ old('name', $application->name) }}"></div>
                     <div class="wb-stack wb-gap-1"><label for="handle">{{ $text('handle') }}</label><input class="wb-input" id="handle" name="handle" required value="{{ old('handle', $application->handle) }}"></div>
                     <div class="wb-stack wb-gap-1"><label for="version">{{ $text('version') }}</label><input class="wb-input" id="version" name="version" required value="{{ old('version', $application->version ?: '1.0.0') }}"></div>
-                    <div class="wb-stack wb-gap-1"><label for="render_mode">{{ $text('mode') }}</label><select class="wb-select" id="render_mode" name="render_mode"><option value="iframe" @selected(old('render_mode', $application->render_mode ?: 'iframe') === 'iframe')>iframe</option><option value="inline" @selected(old('render_mode', $application->render_mode) === 'inline')>inline</option></select></div>
+                    <div class="wb-stack wb-gap-1"><label for="render_mode">{{ $text('mode') }}</label><select class="wb-select" id="render_mode" name="render_mode"><option value="iframe" @selected(old('render_mode', $application->render_mode ?: 'iframe') === 'iframe')> {{ $text('render_mode_iframe') }}</option><option value="inline" @selected(old('render_mode', $application->render_mode) === 'inline')> {{ $text('render_mode_inline') }}</option></select></div>
                 </div>
                 <div class="wb-stack wb-gap-1"><label for="description">{{ $text('application_description') }}</label><textarea class="wb-textarea" id="description" name="description" rows="3">{{ old('description', $application->description) }}</textarea></div>
                 <div class="wb-grid wb-grid-3">
@@ -40,8 +46,8 @@
                     <div class="wb-stack wb-gap-1"><label for="mount_classes">{{ $text('mount_classes') }}</label><input class="wb-input" id="mount_classes" name="mount_classes" value="{{ old('mount_classes', $application->mount_classes) }}"></div>
                 </div>
                 <div class="wb-stack wb-gap-1"><label for="css_urls">{{ $text('css_urls') }}</label><textarea class="wb-textarea" id="css_urls" name="css_urls" rows="3" placeholder="/applications/example/app.css">{{ old('css_urls', implode("\n", $application->css_assets ?? [])) }}</textarea><span class="wb-text-sm wb-text-muted">{{ $text('one_url_per_line') }}</span></div>
-                <div class="wb-stack wb-gap-2"><strong>{{ $text('js_assets') }}</strong>@foreach($jsAssets as $index => $asset)<div class="wb-grid wb-grid-3"><input class="wb-input" name="js_assets[{{ $index }}][path]" placeholder="/applications/example/app.js" value="{{ $asset['path'] ?? '' }}"><select class="wb-select" name="js_assets[{{ $index }}][type]"><option value="classic" @selected(($asset['type'] ?? 'classic') === 'classic')>classic</option><option value="module" @selected(($asset['type'] ?? '') === 'module')>module</option></select><select class="wb-select" name="js_assets[{{ $index }}][load_position]"><option value="body_end" @selected(($asset['load_position'] ?? 'body_end') === 'body_end')>body_end</option><option value="head" @selected(($asset['load_position'] ?? '') === 'head')>head</option></select></div>@endforeach</div>
-                <div class="wb-stack wb-gap-2"><strong>{{ $text('supports') }}</strong><div class="wb-cluster wb-cluster-4"><label><input type="checkbox" name="supports_locale" value="1" @checked(old('supports_locale', $application->supports['locale'] ?? false))> locale</label><label><input type="checkbox" name="supports_theme" value="1" @checked(old('supports_theme', $application->supports['theme'] ?? false))> theme</label><label><input type="checkbox" name="supports_fullscreen" value="1" @checked(old('supports_fullscreen', $application->supports['fullscreen'] ?? false))> fullscreen</label></div></div>
+                <div class="wb-stack wb-gap-2"><strong>{{ $text('js_assets') }}</strong>@foreach($jsAssets as $index => $asset)<div class="wb-grid wb-grid-3"><input class="wb-input" name="js_assets[{{ $index }}][path]" placeholder="/applications/example/app.js" value="{{ $asset['path'] ?? '' }}"><select class="wb-select" name="js_assets[{{ $index }}][type]"><option value="classic" @selected(($asset['type'] ?? 'classic') === 'classic')> {{ $text('script_type_classic') }}</option><option value="module" @selected(($asset['type'] ?? '') === 'module')> {{ $text('script_type_module') }}</option></select><select class="wb-select" name="js_assets[{{ $index }}][load_position]"><option value="body_end" @selected(($asset['load_position'] ?? 'body_end') === 'body_end')> {{ $text('script_position_body_end') }}</option><option value="head" @selected(($asset['load_position'] ?? '') === 'head')> {{ $text('script_position_head') }}</option></select></div>@endforeach</div>
+                <div class="wb-stack wb-gap-2"><strong>{{ $text('supports') }}</strong><div class="wb-cluster wb-cluster-4"><label><input type="checkbox" name="supports_locale" value="1" @checked(old('supports_locale', $application->supports['locale'] ?? false))> {{ $text('supports_locale') }}</label><label><input type="checkbox" name="supports_theme" value="1" @checked(old('supports_theme', $application->supports['theme'] ?? false))> {{ $text('supports_theme') }}</label><label><input type="checkbox" name="supports_fullscreen" value="1" @checked(old('supports_fullscreen', $application->supports['fullscreen'] ?? false))> {{ $text('supports_fullscreen') }}</label></div></div>
                 <div class="wb-card" data-wb-application-settings
                     data-edit-label="{{ $text('edit_setting') }}"
                     data-delete-label="{{ $text('delete_setting') }}"
@@ -81,7 +87,7 @@
                                         @endphp
                                         <tr data-wb-setting-row>
                                             <td><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#embedded-application-setting-modal" aria-haspopup="dialog" data-wb-setting-edit data-wb-setting-summary="key">{{ $setting['key'] ?? '' }}</button></td>
-                                            <td><code data-wb-setting-summary="type">{{ $setting['type'] ?? 'string' }}</code></td>
+                                            <td><span data-wb-setting-summary="type">{{ $settingTypeLabels[$setting['type'] ?? 'string'] ?? $settingTypeLabels['string'] }}</span></td>
                                             <td data-wb-setting-summary="default">{{ $default !== '' ? $default : $text('no_default') }}</td>
                                             <td data-wb-setting-summary="constraints">{{ $constraints ?: $text('no_constraints') }}</td>
                                             <td class="wb-table-actions">
@@ -116,7 +122,7 @@
             <div class="wb-modal-body wb-stack wb-gap-4">
                 <div class="wb-grid wb-grid-2">
                     <div class="wb-stack wb-gap-1"><label for="setting-modal-key">{{ $text('setting_key') }}</label><input class="wb-input" id="setting-modal-key" data-wb-setting-input="key" required maxlength="64" pattern="[a-z][a-z0-9_]{0,63}"></div>
-                    <div class="wb-stack wb-gap-1"><label for="setting-modal-type">{{ $text('setting_type') }}</label><select class="wb-select" id="setting-modal-type" data-wb-setting-input="type">@foreach(['string','boolean','integer','enum'] as $type)<option value="{{ $type }}">{{ $type }}</option>@endforeach</select></div>
+                    <div class="wb-stack wb-gap-1"><label for="setting-modal-type">{{ $text('setting_type') }}</label><select class="wb-select" id="setting-modal-type" data-wb-setting-input="type">@foreach($settingTypeLabels as $type => $settingTypeLabel)<option value="{{ $type }}">{{ $settingTypeLabel }}</option>@endforeach</select></div>
                 </div>
                 <div class="wb-stack wb-gap-1"><label for="setting-modal-default">{{ $text('setting_default') }}</label><input class="wb-input" id="setting-modal-default" data-wb-setting-input="default"></div>
                 <div class="wb-stack wb-gap-1" data-wb-setting-group="enum"><label for="setting-modal-values">{{ $text('enum_values') }}</label><input class="wb-input" id="setting-modal-values" data-wb-setting-input="values" placeholder="{{ $text('setting_values_example') }}"></div>

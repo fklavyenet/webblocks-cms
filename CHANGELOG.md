@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.6
+
+- Translate Webadmin authoring validation, navigation target choices, and embedded application options and file feedback in all six bundled languages.
+- Translate Page Converter suggestions, warnings, validation messages, and draft creation feedback.
+
 ## 1.135.5
 
 - Translate audited Webadmin validation errors and use the selected panel language for Webadmin 404 pages.

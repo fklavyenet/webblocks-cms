@@ -33,7 +33,7 @@ class PageConversionReviewRequest extends FormRequest
       $signature = (string) $this->input('plan_signature', '');
 
       if (! app(PageConversionPlanSigner::class)->verify($payload, $signature)) {
-        $validator->errors()->add('plan_payload', 'The submitted conversion plan could not be verified. Analyze the source HTML again.');
+        $validator->errors()->add('plan_payload', __('webblocks-cms::admin-feedback.validation.converter_plan_unverified'));
 
         return;
       }
@@ -41,7 +41,7 @@ class PageConversionReviewRequest extends FormRequest
       try {
         $plan = app(PageConversionPlanSerializer::class)->deserialize($payload);
       } catch (InvalidArgumentException) {
-        $validator->errors()->add('plan_payload', 'The submitted conversion plan could not be read. Analyze the source HTML again.');
+        $validator->errors()->add('plan_payload', __('webblocks-cms::admin-feedback.validation.converter_plan_unreadable'));
 
         return;
       }

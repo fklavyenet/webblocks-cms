@@ -36,7 +36,7 @@ class PageBlockSuggestionMapper
 
     $suggestions = [];
     $cardKey = 'block_'.($startIndex + 1);
-    $suggestions[] = $this->suggestion('card', 'Card', $card, 94, [], $parentKey);
+    $suggestions[] = $this->suggestion('card', $card, 94, [], $parentKey);
 
     foreach ($regions as $region) {
       $regionSlug = $this->cardRegionSlug($region);
@@ -48,7 +48,6 @@ class PageBlockSuggestionMapper
       $regionKey = 'block_'.($startIndex + count($suggestions) + 1);
       $suggestions[] = $this->suggestion(
         $regionSlug,
-        str($regionSlug)->replace('_', ' ')->title()->toString(),
         $region,
         94,
         [],
@@ -95,13 +94,13 @@ class PageBlockSuggestionMapper
     $warnings = [];
 
     if (collect($details)->contains(fn (DOMElement $element): bool => $this->containsTag($element, 'img'))) {
-      $warnings[] = 'Accordion details contain image media. Media import is not implemented in this phase.';
+      $warnings[] = __('webblocks-cms::admin-feedback.converter.accordion_media');
     }
 
     $suggestions = [
       new PageBlockSuggestion(
         blockSlug: 'accordion',
-        label: 'Accordion',
+        label: __('webblocks-cms::admin-feedback.converter.label_accordion'),
         previewText: $this->detailsGroupPreviewText($details),
         confidence: 90,
         sourceSummary: count($details) === 1 ? '<details>' : '<details> group',
@@ -124,12 +123,12 @@ class PageBlockSuggestionMapper
       $itemWarnings = [];
 
       if ($this->containsTag($detail, 'img')) {
-        $itemWarnings[] = 'Accordion item contains image media. Media import is not implemented in this phase.';
+        $itemWarnings[] = __('webblocks-cms::admin-feedback.converter.accordion_item_media');
       }
 
       $suggestions[] = new PageBlockSuggestion(
         blockSlug: 'accordion_item',
-        label: 'Accordion Item',
+        label: __('webblocks-cms::admin-feedback.converter.label_accordion_item'),
         previewText: trim($summary.' '.$bodyText),
         confidence: $summary !== '' && $bodyText !== '' ? 90 : 72,
         sourceSummary: '<details>',
@@ -154,12 +153,12 @@ class PageBlockSuggestionMapper
   {
     $sectionKey = 'block_'.($startIndex + 1);
     $suggestions = [
-      $this->suggestion('section', 'Section', $section, 93, [], $parentKey),
+      $this->suggestion('section', $section, 93, [], $parentKey),
     ];
 
     if ($this->isPromoLike($section)) {
       $promoSlug = $startIndex <= 1 || $this->containsTag($section, 'h1') ? 'hero' : 'cta';
-      $suggestions[] = $this->suggestion($promoSlug, $promoSlug === 'hero' ? 'Hero' : 'CTA', $section, 90, [], $sectionKey);
+      $suggestions[] = $this->suggestion($promoSlug, $section, 90, [], $sectionKey);
 
       return $suggestions;
     }
@@ -232,85 +231,84 @@ class PageBlockSuggestionMapper
     $classes = $this->classes($element);
 
     if (in_array('wb-content-header', $classes, true)) {
-      return $this->suggestion('content_header', 'Content Header', $element, 96);
+      return $this->suggestion('content_header', $element, 96);
     }
 
     if (in_array('wb-promo', $classes, true)) {
       $hasH1 = $this->containsTag($element, 'h1');
       $slug = $index <= 1 || $hasH1 ? 'hero' : 'cta';
 
-      return $this->suggestion($slug, $slug === 'hero' ? 'Hero' : 'CTA', $element, $hasH1 ? 92 : 86);
+      return $this->suggestion($slug, $element, $hasH1 ? 92 : 86);
     }
 
     if (in_array('wb-section', $classes, true)) {
-      return $this->suggestion('section', 'Section', $element, 93);
+      return $this->suggestion('section', $element, 93);
     }
 
     if (in_array('wb-card', $classes, true)) {
-      return $this->suggestion('card', 'Card', $element, 94);
+      return $this->suggestion('card', $element, 94);
     }
 
     if (in_array('wb-alert', $classes, true)) {
-      return $this->suggestion('callout', 'Callout', $element, 90);
+      return $this->suggestion('callout', $element, 90);
     }
 
     if (in_array('wb-gallery', $classes, true)) {
-      return $this->suggestion('gallery', 'Gallery', $element, 88, ['Media references were detected. Media import is not implemented in this phase.']);
+      return $this->suggestion('gallery', $element, 88, [__('webblocks-cms::admin-feedback.converter.gallery_media')]);
     }
 
     if ($tag === 'a' && $element->getAttribute('href') !== '') {
-      return $this->suggestion('button_link', 'Button Link', $element, in_array('wb-btn', $classes, true) ? 94 : 82);
+      return $this->suggestion('button_link', $element, in_array('wb-btn', $classes, true) ? 94 : 82);
     }
 
     if (preg_match('/^h[1-6]$/', $tag) === 1) {
-      return $this->suggestion('header', 'Header', $element, 98);
+      return $this->suggestion('header', $element, 98);
     }
 
     if ($tag === 'p') {
       return $this->suggestion(
         $this->hasInlineRichMarkup($element) ? 'rich-text' : 'plain_text',
-        $this->hasInlineRichMarkup($element) ? 'Rich Text' : 'Plain Text',
         $element,
         $this->hasInlineRichMarkup($element) ? 88 : 96,
       );
     }
 
     if ($tag === 'pre' || $this->containsDirectCodePre($element)) {
-      return $this->suggestion('code', 'Code', $element, 98);
+      return $this->suggestion('code', $element, 98);
     }
 
     if ($tag === 'table') {
-      return $this->suggestion('table', 'Table', $element, 96);
+      return $this->suggestion('table', $element, 96);
     }
 
     if ($tag === 'blockquote') {
-      return $this->suggestion('quote', 'Quote', $element, 96);
+      return $this->suggestion('quote', $element, 96);
     }
 
     if (in_array($tag, ['ul', 'ol'], true)) {
-      return $this->suggestion('list', 'List', $element, $this->listLooksSimple($element) ? 88 : 76, $this->listLooksSimple($element) ? [] : ['Complex list content may need Rich Text review.']);
+      return $this->suggestion('list', $element, $this->listLooksSimple($element) ? 88 : 76, $this->listLooksSimple($element) ? [] : [__('webblocks-cms::admin-feedback.converter.complex_list')]);
     }
 
     if ($tag === 'details') {
-      return $this->suggestion('accordion', 'Accordion', $element, $this->containsTag($element, 'summary') ? 86 : 70, $this->containsTag($element, 'summary') ? [] : ['Details block has no summary element.']);
+      return $this->suggestion('accordion', $element, $this->containsTag($element, 'summary') ? 86 : 70, $this->containsTag($element, 'summary') ? [] : [__('webblocks-cms::admin-feedback.converter.details_no_summary')]);
     }
 
     if ($this->isImageElement($element)) {
-      return $this->suggestion('image', 'Image', $element, 86, ['Image media was detected. Media import is not implemented in this phase.']);
+      return $this->suggestion('image', $element, 86, [__('webblocks-cms::admin-feedback.converter.image_media')]);
     }
 
     if ($this->containsMultipleParagraphs($element) || $this->containsTag($element, 'strong') || $this->containsTag($element, 'em')) {
-      return $this->suggestion('rich-text', 'Rich Text', $element, 76, ['Grouped content should be reviewed before draft creation.']);
+      return $this->suggestion('rich-text', $element, 76, [__('webblocks-cms::admin-feedback.converter.grouped_review')]);
     }
 
-    return $this->suggestion('html', 'HTML Fallback', $element, 45, ['No high-confidence structured block mapping exists for this fragment yet.']);
+    return $this->suggestion('html', $element, 45, [__('webblocks-cms::admin-feedback.converter.html_fallback_warning')]);
   }
 
-  private function suggestion(string $blockSlug, string $label, DOMElement $element, int $confidence, array $warnings = [], ?string $parentKey = null): PageBlockSuggestion
+  private function suggestion(string $blockSlug, DOMElement $element, int $confidence, array $warnings = [], ?string $parentKey = null): PageBlockSuggestion
   {
     return new PageBlockSuggestion(
       blockSlug: $blockSlug,
-      label: $label,
+      label: __('webblocks-cms::admin-feedback.converter.label_'.str_replace('-', '_', $blockSlug)),
       previewText: $this->previewText($element),
       confidence: $confidence,
       sourceSummary: $this->sourceSummary($element),
@@ -415,7 +413,7 @@ class PageBlockSuggestionMapper
 
     return new PageBlockSuggestion(
       blockSlug: 'plain_text',
-      label: 'Plain Text',
+      label: __('webblocks-cms::admin-feedback.converter.label_plain_text'),
       previewText: $text,
       confidence: 88,
       sourceSummary: '<'.strtolower($element->tagName).' text>',

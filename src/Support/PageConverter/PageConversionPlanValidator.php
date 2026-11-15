@@ -28,11 +28,11 @@ class PageConversionPlanValidator
     $blocks = $plan['blocks'] ?? null;
 
     if (($plan['version'] ?? null) !== PageConversionPlanSerializer::VERSION) {
-      $errors['plan_payload'] = 'The submitted conversion plan version is not supported.';
+      $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.plan_version');
     }
 
     if (! is_array($target)) {
-      $errors['plan_payload'] = 'The submitted conversion plan is missing target details.';
+      $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.target_missing');
 
       return $errors;
     }
@@ -46,39 +46,39 @@ class PageConversionPlanValidator
     $site = $siteId > 0 ? Site::query()->find($siteId) : null;
 
     if (! $site) {
-      $errors['plan_payload'] = 'The selected target site is no longer available.';
+      $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.target_site_missing');
     } else {
       try {
         $this->authorization->abortUnlessSiteAccess($user, $site);
       } catch (HttpException) {
-        $errors['plan_payload'] = 'You do not have permission to create drafts for the selected site.';
+        $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.target_site_denied');
       }
 
       if ($localeId < 1 || ! $site->hasEnabledLocale($localeId)) {
-        $errors['plan_payload'] = 'Choose an enabled locale for the selected site before creating a draft.';
+        $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.target_locale_disabled');
       }
     }
 
     if ($pageLayout === '' || ! in_array($pageLayout, $this->pageLayouts->activeHandles(), true)) {
-      $errors['plan_payload'] = 'The selected page layout is no longer active or usable.';
+      $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.target_layout_disabled');
     }
 
     if ($pageTitle === '' || mb_strlen($pageTitle) > 255) {
-      $errors['plan_payload'] = 'The submitted conversion plan has an invalid page title.';
+      $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.title_invalid');
     }
 
     if (! $this->validPath($pagePath)) {
-      $errors['plan_payload'] = 'The submitted conversion plan has an invalid page path.';
+      $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.path_invalid');
     } elseif ($site && $localeId > 0 && $this->pathExists($siteId, $localeId, $pagePath)) {
       $errors['plan_payload'] = 'A page already exists at the selected path for this site and locale.';
     }
 
     if (! in_array($conversionProfile, PageConverterProfile::values(), true)) {
-      $errors['plan_payload'] = 'The submitted conversion plan has an invalid conversion profile.';
+      $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.profile_invalid');
     }
 
     if (! is_array($blocks)) {
-      $errors['plan_payload'] = 'The submitted conversion plan is missing block suggestions.';
+      $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.suggestions_missing');
     } else {
       $this->validateBlocks($blocks, $errors);
     }
@@ -112,7 +112,7 @@ class PageConversionPlanValidator
 
     foreach (array_values($blocks) as $index => $block) {
       if (! is_array($block)) {
-        $errors['plan_payload'] = 'The submitted conversion plan has an invalid block suggestion.';
+        $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.suggestion_invalid');
 
         return;
       }
@@ -123,7 +123,7 @@ class PageConversionPlanValidator
       $confidence = (int) ($block['confidence'] ?? -1);
 
       if ($key === '' || isset($keys[$key])) {
-        $errors['plan_payload'] = 'The submitted conversion plan has duplicate or missing block keys.';
+        $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.block_keys_invalid');
 
         return;
       }
@@ -131,27 +131,27 @@ class PageConversionPlanValidator
       $keys[$key] = true;
 
       if ($order !== $index + 1 || $slug === '' || $confidence < 0 || $confidence > 100) {
-        $errors['plan_payload'] = 'The submitted conversion plan has an invalid block suggestion.';
+        $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.suggestion_invalid');
 
         return;
       }
 
       if (! $this->blockSlugIsUsable($slug)) {
-        $errors['plan_payload'] = 'The submitted conversion plan references an unavailable block type ['.$slug.'].';
+        $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.block_type_unavailable', ['slug' => $slug]);
 
         return;
       }
 
       foreach (['translated_fields', 'shared_fields', 'warnings', 'fallback_flags', 'source_fragment'] as $field) {
         if (! array_key_exists($field, $block) || ! is_array($block[$field])) {
-          $errors['plan_payload'] = 'The submitted conversion plan has incomplete block suggestion data.';
+          $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.suggestion_incomplete');
 
           return;
         }
       }
 
       if ($slug === 'accordion_item' && ! $this->validAccordionItemPayload($block)) {
-        $errors['plan_payload'] = 'The submitted conversion plan has invalid accordion item data.';
+        $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.accordion_item_invalid');
 
         return;
       }
@@ -165,7 +165,7 @@ class PageConversionPlanValidator
       $parentKey = $block['parent_key'] ?? null;
 
       if ($parentKey !== null && ! isset($keys[(string) $parentKey])) {
-        $errors['plan_payload'] = 'The submitted conversion plan references a missing parent block.';
+        $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.parent_missing');
 
         return;
       }
@@ -174,7 +174,7 @@ class PageConversionPlanValidator
         $parent = $blocksByKey->get((string) $parentKey);
 
         if (! is_array($parent) || (string) ($parent['block_slug'] ?? $parent['block_type'] ?? '') !== 'accordion') {
-          $errors['plan_payload'] = 'The submitted conversion plan has invalid accordion item parent data.';
+          $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.accordion_parent_invalid');
 
           return;
         }
@@ -184,7 +184,7 @@ class PageConversionPlanValidator
         $parent = $blocksByKey->get((string) $parentKey);
 
         if (! is_array($parent) || (string) ($parent['block_slug'] ?? $parent['block_type'] ?? '') !== 'card') {
-          $errors['plan_payload'] = 'The submitted conversion plan has invalid card region parent data.';
+          $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.card_parent_invalid');
 
           return;
         }
@@ -195,7 +195,7 @@ class PageConversionPlanValidator
         $parentSlug = is_array($parent) ? (string) ($parent['block_slug'] ?? $parent['block_type'] ?? '') : '';
 
         if (! in_array($parentSlug, ['hero', 'cta'], true)) {
-          $errors['plan_payload'] = 'The submitted conversion plan has invalid button parent data.';
+          $errors['plan_payload'] = __('webblocks-cms::admin-feedback.converter.button_parent_invalid');
 
           return;
         }

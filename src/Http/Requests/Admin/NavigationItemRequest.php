@@ -76,16 +76,16 @@ class NavigationItemRequest extends FormRequest
         $site = Site::query()->with('locales')->find($siteId);
 
         if (! $site || ! $site->hasEnabledLocale($localeCode)) {
-          $validator->errors()->add('locale', 'Selected locale must be enabled for the site.');
+          $validator->errors()->add('locale', __('webblocks-cms::admin-feedback.validation.navigation_locale_enabled'));
         }
       }
 
       if ($linkType === NavigationItem::LINK_PAGE && ! $pageId) {
-        $validator->errors()->add('page_id', 'Select a page for page links.');
+        $validator->errors()->add('page_id', __('webblocks-cms::admin-feedback.validation.navigation_page_required'));
       }
 
       if ($pageId && Page::query()->whereKey($pageId)->value('site_id') !== $siteId) {
-        $validator->errors()->add('page_id', 'Selected page does not belong to this site.');
+        $validator->errors()->add('page_id', __('webblocks-cms::admin-feedback.validation.navigation_page_site'));
       }
 
       if ($linkType === NavigationItem::LINK_CUSTOM_URL && $url === '') {
@@ -93,15 +93,15 @@ class NavigationItemRequest extends FormRequest
       }
 
       if ($linkType === NavigationItem::LINK_GROUP && $title === '') {
-        $validator->errors()->add('title', 'A title is required for groups.');
+        $validator->errors()->add('title', __('webblocks-cms::admin-feedback.validation.navigation_group_title'));
       }
 
       if (! in_array($linkType, [NavigationItem::LINK_PAGE, NavigationItem::LINK_COOKIE_SETTINGS], true) && $title === '') {
-        $validator->errors()->add('title', 'A title is required for this link type.');
+        $validator->errors()->add('title', __('webblocks-cms::admin-feedback.validation.navigation_link_title'));
       }
 
       if (! app(IconCatalog::class)->isActiveSelection($icon)) {
-        $validator->errors()->add('icon', 'Select an active icon from the catalog.');
+        $validator->errors()->add('icon', __('webblocks-cms::admin-feedback.validation.icon_active'));
       }
 
       if ($linkType === NavigationItem::LINK_COOKIE_SETTINGS && NavigationItem::overridesCookieDestination($url, $pageId, $this->input('target') ?: null)) {

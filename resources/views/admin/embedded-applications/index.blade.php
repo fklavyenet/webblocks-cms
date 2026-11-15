@@ -27,7 +27,7 @@
                     <tr>
                         <td><strong><a href="{{ $editUrl }}" class="wb-link">{{ $application->name }}</a></strong><div class="wb-text-sm wb-text-muted">{{ $application->version }}</div></td>
                         <td><code>{{ $application->handle }}</code></td>
-                        <td>{{ $application->render_mode }}</td>
+                        <td>{{ $text('render_mode_'.$application->render_mode) }}</td>
                         <td><span class="wb-status-pill {{ $application->is_enabled ? 'wb-status-success' : 'wb-status-muted' }}">{{ $application->is_enabled ? $text('enabled') : $text('disabled') }}</span></td>
                         <td><a class="wb-btn wb-btn-secondary" href="{{ $editUrl }}">{{ $text('edit') }}</a></td>
                     </tr>

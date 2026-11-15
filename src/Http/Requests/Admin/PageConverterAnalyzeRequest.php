@@ -65,7 +65,7 @@ class PageConverterAnalyzeRequest extends FormRequest
       }
 
       if (str_contains($path, '..') || str_contains($path, '//') || str_contains($path, '\\') || str_contains($path, ':')) {
-        $validator->errors()->add('page_path', 'Enter a safe page path or slug without traversal, duplicate slashes, protocols, or backslashes.');
+        $validator->errors()->add('page_path', __('webblocks-cms::admin-feedback.validation.converter_page_path'));
       }
 
       $site = $siteId > 0 ? Site::query()->find($siteId) : null;
@@ -80,17 +80,17 @@ class PageConverterAnalyzeRequest extends FormRequest
       try {
         $authorization->abortUnlessSiteAccess($this->user(), $site);
       } catch (HttpException) {
-        $validator->errors()->add('site_id', 'You do not have permission to convert pages for the selected site.');
+        $validator->errors()->add('site_id', __('webblocks-cms::admin-feedback.validation.converter_site_scope'));
 
         return;
       }
 
       if ($localeId > 0 && ! $site->hasEnabledLocale($localeId)) {
-        $validator->errors()->add('locale_id', 'Choose an enabled locale for the selected site.');
+        $validator->errors()->add('locale_id', __('webblocks-cms::admin-feedback.validation.converter_locale_enabled'));
       }
 
       if ($localeId > 0 && $this->pathExists($site->id, $localeId, $path)) {
-        $validator->errors()->add('page_path', 'A page already exists at the selected path for this site and locale.');
+        $validator->errors()->add('page_path', __('webblocks-cms::admin-feedback.validation.converter_path_taken'));
       }
     }];
   }

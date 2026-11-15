@@ -302,7 +302,7 @@ class BlockController extends Controller
 
     if ($previewUrl) {
       $redirect->with('status_action', [
-        'label' => 'View page',
+        'label' => __('webblocks-cms::admin.flash.view_page'),
         'url' => $previewUrl,
       ]);
     }
@@ -450,7 +450,7 @@ class BlockController extends Controller
 
     if ($previewUrl) {
       $redirect->with('status_action', [
-        'label' => 'View page',
+        'label' => __('webblocks-cms::admin.flash.view_page'),
         'url' => $previewUrl,
       ]);
     }

@@ -32,7 +32,7 @@
 
         <div class="wb-stack wb-gap-1">
             <label for="slider_min_height">{{ $adminText('custom_min_height') }}</label>
-            <input id="slider_min_height" name="slider_min_height" class="wb-input" type="text" placeholder="640px or 80vh" value="{{ old('slider_min_height', $block->setting('min_height')) }}">
+            <input id="slider_min_height" name="slider_min_height" class="wb-input" type="text" placeholder="{{ __('webblocks-cms::admin-feedback.labels.slider_min_height_example') }}" value="{{ old('slider_min_height', $block->setting('min_height')) }}">
         </div>
 
         <div class="wb-stack wb-gap-1">

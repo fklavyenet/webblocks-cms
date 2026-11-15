@@ -379,13 +379,13 @@ class PageRequest extends FormRequest
         $definition = app(ApplicationRegistry::class)->find($handle);
 
         if (! $definition) {
-          $validator->errors()->add("blocks.{$index}.application_handle", 'Select a registered Embedded Application.');
+          $validator->errors()->add("blocks.{$index}.application_handle", __('webblocks-cms::admin-feedback.validation.application_select'));
 
           continue;
         }
 
         if (! $definition->isReady()) {
-          $validator->errors()->add("blocks.{$index}.application_handle", 'Selected Embedded Application is not ready.');
+          $validator->errors()->add("blocks.{$index}.application_handle", __('webblocks-cms::admin-feedback.validation.application_not_ready'));
 
           continue;
         }
@@ -408,7 +408,7 @@ class PageRequest extends FormRequest
       }
 
       if ($page->site_id !== $siteId) {
-        $validator->errors()->add('site_id', 'Existing pages cannot be moved between sites from the Edit Page screen.');
+        $validator->errors()->add('site_id', __('webblocks-cms::admin-feedback.validation.page_edit_site_change'));
 
         return;
       }

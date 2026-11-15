@@ -55,7 +55,7 @@ class PageImportRequest extends FormRequest
       try {
         $authorization->abortUnlessSiteAccess($this->user(), $site);
       } catch (HttpException) {
-        $validator->errors()->add('site_id', 'You do not have permission to import pages into the selected site.');
+        $validator->errors()->add('site_id', __('webblocks-cms::admin-feedback.validation.page_import_scope'));
       }
     }];
   }

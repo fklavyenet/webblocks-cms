@@ -70,7 +70,7 @@ class PageConverterAnalyzer
 
     return new PageConverterPlan(
       status: 'preview',
-      message: 'Analysis preview only. Review these suggested structured blocks; no draft page has been created yet.',
+      message: __('webblocks-cms::admin-feedback.converter.analysis_preview'),
       input: $input,
       sourceBytes: strlen($input->sourceHtml),
       contentRootSummary: $this->contentExtractor->summary($contentRoot),

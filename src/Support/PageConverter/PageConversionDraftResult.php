@@ -19,9 +19,10 @@ readonly class PageConversionDraftResult
 
   public function message(): string
   {
-    return 'Created draft page from Page Converter plan. '
-      .$this->createdBlockCount.' block(s) created, '
-      .$this->skippedSuggestionCount.' suggestion(s) skipped, '
-      .$this->warningCount.' warning(s) reported. The page remains draft.';
+    return __('webblocks-cms::admin-feedback.converter.draft_created', [
+      'created' => $this->createdBlockCount,
+      'skipped' => $this->skippedSuggestionCount,
+      'warnings' => $this->warningCount,
+    ]);
   }
 }

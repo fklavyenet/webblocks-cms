@@ -476,7 +476,7 @@ class BlockRequest extends FormRequest
       $localeCode = Locale::normalizeCode($this->input('locale'));
 
       if ($localeCode !== null && (! $page || ! $page->site || ! $page->site->hasEnabledLocale($localeCode))) {
-        $validator->errors()->add('locale', 'Selected locale must be enabled for the page site.');
+        $validator->errors()->add('locale', __('webblocks-cms::admin-feedback.validation.block_locale_enabled'));
       }
 
       $parentId = $this->has('parent_id')
@@ -514,9 +514,9 @@ class BlockRequest extends FormRequest
         $definition = app(ApplicationRegistry::class)->find($handle);
 
         if (! $definition) {
-          $validator->errors()->add('application_handle', 'Select a registered Embedded Application.');
+          $validator->errors()->add('application_handle', __('webblocks-cms::admin-feedback.validation.application_select'));
         } elseif (! $definition->isReady()) {
-          $validator->errors()->add('application_handle', 'Selected Embedded Application is not ready.');
+          $validator->errors()->add('application_handle', __('webblocks-cms::admin-feedback.validation.application_not_ready'));
         } else {
           $applicationErrors = [];
           app(ApplicationSettingsValidator::class)->normalize(
@@ -536,7 +536,7 @@ class BlockRequest extends FormRequest
         $url = trim((string) $this->input('url', ''));
 
         if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
-          $validator->errors()->add('url', 'Button link URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+          $validator->errors()->add('url', __('webblocks-cms::admin-feedback.validation.block_button_url'));
         }
       }
 
@@ -544,13 +544,13 @@ class BlockRequest extends FormRequest
         $url = trim((string) $this->input('url', ''));
 
         if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
-          $validator->errors()->add('url', 'Stat card URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+          $validator->errors()->add('url', __('webblocks-cms::admin-feedback.validation.block_stat_card_url'));
         }
       }
 
       if ($selectedBlockType?->slug === 'search-form') {
         if (blank($this->input('content'))) {
-          $validator->errors()->add('content', 'Search placeholder is required.');
+          $validator->errors()->add('content', __('webblocks-cms::admin-feedback.validation.block_search_placeholder'));
         }
       }
 
@@ -558,7 +558,7 @@ class BlockRequest extends FormRequest
         $anchor = trim((string) $this->input('anchor', ''));
 
         if ($anchor !== '' && ! preg_match('/^[A-Za-z0-9][A-Za-z0-9\-_:.]*$/', $anchor)) {
-          $validator->errors()->add('anchor', 'Anchor ID must start with a letter or number and may contain letters, numbers, dashes, underscores, colons, or periods.');
+          $validator->errors()->add('anchor', __('webblocks-cms::admin-feedback.validation.block_anchor_id'));
         }
       }
 
@@ -566,7 +566,7 @@ class BlockRequest extends FormRequest
         $url = trim((string) $this->input('url', ''));
 
         if ($url !== '' && ! $this->isAllowedLinkListItemUrl($url)) {
-          $validator->errors()->add('url', 'Link list item URL must be a full URL, site path, relative docs path, anchor, mailto link, or telephone link.');
+          $validator->errors()->add('url', __('webblocks-cms::admin-feedback.validation.block_link_list_url'));
         }
       }
 
@@ -574,7 +574,7 @@ class BlockRequest extends FormRequest
         $url = trim((string) $this->input('url', ''));
 
         if ($url !== '' && ! $this->isAllowedLinkListItemUrl($url)) {
-          $validator->errors()->add('url', 'URL must be a full URL, site path, relative docs path, anchor, mailto link, or telephone link.');
+          $validator->errors()->add('url', __('webblocks-cms::admin-feedback.validation.block_url'));
         }
       }
 
@@ -582,7 +582,7 @@ class BlockRequest extends FormRequest
         $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
 
         if (! $asset?->isImage()) {
-          $validator->errors()->add('media_id', 'Brand logo must be an image from Media.');
+          $validator->errors()->add('media_id', __('webblocks-cms::admin-feedback.validation.block_brand_logo'));
         }
       }
 
@@ -591,7 +591,7 @@ class BlockRequest extends FormRequest
         $hasLogo = (int) ($this->input('media_id') ?: $this->input('asset_id') ?: 0) > 0;
 
         if (! $hasTitle && ! $hasLogo) {
-          $validator->errors()->add('title', 'Navbar Brand requires visible title text or a logo image.');
+          $validator->errors()->add('title', __('webblocks-cms::admin-feedback.validation.block_navbar_brand'));
         }
       }
 
@@ -600,25 +600,25 @@ class BlockRequest extends FormRequest
         $hasLogo = (int) ($this->input('media_id') ?: $this->input('asset_id') ?: 0) > 0;
 
         if (! $hasTitle && ! $hasLogo) {
-          $validator->errors()->add('title', 'Sidebar Brand requires visible title text or a logo image.');
+          $validator->errors()->add('title', __('webblocks-cms::admin-feedback.validation.block_sidebar_brand'));
         }
       }
 
       if ($selectedBlockType?->slug === 'navbar-navigation' && $page && $page->site && ! NavigationItem::query()->forSite($page->site_id)->forMenu((string) $this->input('navbar_navigation_menu_key'))->visible()->exists()) {
-        $validator->errors()->add('navbar_navigation_menu_key', 'Selected navigation menu has no visible items for this site yet. Create navigation items first.');
+        $validator->errors()->add('navbar_navigation_menu_key', __('webblocks-cms::admin-feedback.validation.block_navigation_empty'));
       }
 
       if ($selectedBlockType?->slug === 'sidebar-nav-item') {
         $icon = app(IconCatalog::class)->normalizeSlug($this->input('sidebar_nav_item_icon'));
         if (! app(IconCatalog::class)->isActiveSelection($icon)) {
-          $validator->errors()->add('sidebar_nav_item_icon', 'Select an active icon from the catalog.');
+          $validator->errors()->add('sidebar_nav_item_icon', __('webblocks-cms::admin-feedback.validation.icon_active'));
         }
       }
 
       if ($selectedBlockType?->slug === 'sidebar-nav-group') {
         $icon = app(IconCatalog::class)->normalizeSlug($this->input('sidebar_nav_group_icon'));
         if (! app(IconCatalog::class)->isActiveSelection($icon)) {
-          $validator->errors()->add('sidebar_nav_group_icon', 'Select an active icon from the catalog.');
+          $validator->errors()->add('sidebar_nav_group_icon', __('webblocks-cms::admin-feedback.validation.icon_active'));
         }
       }
 
@@ -626,7 +626,7 @@ class BlockRequest extends FormRequest
         $icon = app(IconCatalog::class)->normalizeSlug($this->input('icon_slug'));
 
         if (! app(IconCatalog::class)->isActiveSelection($icon)) {
-          $validator->errors()->add('icon_slug', 'Select an active icon from the catalog.');
+          $validator->errors()->add('icon_slug', __('webblocks-cms::admin-feedback.validation.icon_active'));
         }
       }
 
@@ -641,7 +641,7 @@ class BlockRequest extends FormRequest
           $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
 
           if (! $asset?->isImage()) {
-            $validator->errors()->add('media_id', 'Image block media must be an image from Media.');
+            $validator->errors()->add('media_id', __('webblocks-cms::admin-feedback.validation.block_image_media'));
           }
         }
       }
@@ -650,7 +650,7 @@ class BlockRequest extends FormRequest
         $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
 
         if (! $asset?->isImage()) {
-          $validator->errors()->add('media_id', 'Background media must be an image from Media.');
+          $validator->errors()->add('media_id', __('webblocks-cms::admin-feedback.validation.block_background_media'));
         }
       }
 
@@ -658,7 +658,7 @@ class BlockRequest extends FormRequest
         $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
 
         if (! $asset?->isImage()) {
-          $validator->errors()->add('media_id', 'Link list item thumbnail must be an image from Media.');
+          $validator->errors()->add('media_id', __('webblocks-cms::admin-feedback.validation.block_link_thumbnail'));
         }
       }
 
@@ -677,7 +677,7 @@ class BlockRequest extends FormRequest
             ->exists();
 
           if ($invalidGalleryMediaExists) {
-            $validator->errors()->add('gallery_media_ids', 'Gallery items must be images from Media.');
+            $validator->errors()->add('gallery_media_ids', __('webblocks-cms::admin-feedback.validation.block_gallery_media'));
           }
         }
       }
@@ -686,7 +686,7 @@ class BlockRequest extends FormRequest
         $url = trim((string) $this->input('url', ''));
 
         if ($url !== '' && ! preg_match('/^https?:\/\//i', $url)) {
-          $validator->errors()->add('url', 'External media URL must be a full HTTP or HTTPS URL.');
+          $validator->errors()->add('url', __('webblocks-cms::admin-feedback.validation.block_external_media_url'));
         }
       }
 
@@ -694,7 +694,7 @@ class BlockRequest extends FormRequest
         $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
 
         if (! $asset || ! BlockMediaCompatibility::accepts($selectedBlockType->slug, $asset)) {
-          $validator->errors()->add('media_id', 'File and download media must be a document or file from Media.');
+          $validator->errors()->add('media_id', __('webblocks-cms::admin-feedback.validation.block_file_media'));
         }
       }
 
@@ -702,13 +702,13 @@ class BlockRequest extends FormRequest
         $asset = Media::query()->find((int) ($this->input('media_id') ?: $this->input('asset_id')));
 
         if (! $asset || ! BlockMediaCompatibility::accepts($selectedBlockType->slug, $asset)) {
-          $validator->errors()->add('media_id', 'Video block media must be a video from Media.');
+          $validator->errors()->add('media_id', __('webblocks-cms::admin-feedback.validation.block_video_media'));
         }
       }
 
       if (! $parentId) {
         if (in_array($selectedBlockType?->slug, ['navbar-brand', 'navbar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'card_header', 'card_body', 'card_footer', 'slide'], true)) {
-          $validator->errors()->add('parent_id', 'This block type requires a supported parent block.');
+          $validator->errors()->add('parent_id', __('webblocks-cms::admin-feedback.validation.block_parent_required'));
 
           return;
         }
@@ -729,23 +729,23 @@ class BlockRequest extends FormRequest
           // it empty, and every row is then unusable -- say so instead of
           // saving a parent whose children could not be written.
           if (blank($columnItem['block_type_id'] ?? null)) {
-            $validator->errors()->add("column_items.{$index}.block_type_id", 'The Column Item block type is not available in the block catalog. Run "php artisan webblocks:catalog-repair --all" and try again.');
+            $validator->errors()->add("column_items.{$index}.block_type_id", __('webblocks-cms::admin-feedback.validation.block_column_type_missing'));
 
             continue;
           }
 
           if (blank($columnItem['title'] ?? null)) {
-            $validator->errors()->add("column_items.{$index}.title", 'Column item title is required.');
+            $validator->errors()->add("column_items.{$index}.title", __('webblocks-cms::admin-feedback.validation.block_column_title'));
           }
 
           if (blank($columnItem['content'] ?? null)) {
-            $validator->errors()->add("column_items.{$index}.content", 'Column item text is required.');
+            $validator->errors()->add("column_items.{$index}.content", __('webblocks-cms::admin-feedback.validation.block_column_text'));
           }
 
           $icon = app(IconCatalog::class)->normalizeSlug($columnItem['icon_slug'] ?? null);
 
           if (! app(IconCatalog::class)->isActiveSelection($icon)) {
-            $validator->errors()->add("column_items.{$index}.icon_slug", 'Select an active icon from the catalog.');
+            $validator->errors()->add("column_items.{$index}.icon_slug", __('webblocks-cms::admin-feedback.validation.icon_active'));
           }
         }
       }
@@ -761,23 +761,23 @@ class BlockRequest extends FormRequest
           // it empty, and every row is then unusable -- say so instead of
           // saving a parent whose children could not be written.
           if (blank($featureItem['block_type_id'] ?? null)) {
-            $validator->errors()->add("feature_items.{$index}.block_type_id", 'The Feature Item block type is not available in the block catalog. Run "php artisan webblocks:catalog-repair --all" and try again.');
+            $validator->errors()->add("feature_items.{$index}.block_type_id", __('webblocks-cms::admin-feedback.validation.block_feature_type_missing'));
 
             continue;
           }
 
           if (blank($featureItem['title'] ?? null)) {
-            $validator->errors()->add("feature_items.{$index}.title", 'Feature item title is required.');
+            $validator->errors()->add("feature_items.{$index}.title", __('webblocks-cms::admin-feedback.validation.block_feature_title'));
           }
 
           if (blank($featureItem['content'] ?? null)) {
-            $validator->errors()->add("feature_items.{$index}.content", 'Feature item text is required.');
+            $validator->errors()->add("feature_items.{$index}.content", __('webblocks-cms::admin-feedback.validation.block_feature_text'));
           }
 
           $icon = app(IconCatalog::class)->normalizeSlug($featureItem['icon_slug'] ?? null);
 
           if (! app(IconCatalog::class)->isActiveSelection($icon)) {
-            $validator->errors()->add("feature_items.{$index}.icon_slug", 'Select an active icon from the catalog.');
+            $validator->errors()->add("feature_items.{$index}.icon_slug", __('webblocks-cms::admin-feedback.validation.icon_active'));
           }
         }
       }
@@ -793,23 +793,23 @@ class BlockRequest extends FormRequest
           // it empty, and every row is then unusable -- say so instead of
           // saving a parent whose children could not be written.
           if (blank($item['block_type_id'] ?? null)) {
-            $validator->errors()->add("link_list_items.{$index}.block_type_id", 'The Link List Item block type is not available in the block catalog. Run "php artisan webblocks:catalog-repair --all" and try again.');
+            $validator->errors()->add("link_list_items.{$index}.block_type_id", __('webblocks-cms::admin-feedback.validation.block_link_item_type_missing'));
 
             continue;
           }
 
           if (blank($item['title'] ?? null)) {
-            $validator->errors()->add("link_list_items.{$index}.title", 'Link list item title is required.');
+            $validator->errors()->add("link_list_items.{$index}.title", __('webblocks-cms::admin-feedback.validation.block_link_item_title'));
           }
 
           if (blank($item['url'] ?? null)) {
-            $validator->errors()->add("link_list_items.{$index}.url", 'Link list item URL is required.');
+            $validator->errors()->add("link_list_items.{$index}.url", __('webblocks-cms::admin-feedback.validation.block_link_item_url'));
           }
 
           $icon = app(IconCatalog::class)->normalizeSlug($item['icon_slug'] ?? null);
 
           if (! app(IconCatalog::class)->isActiveSelection($icon)) {
-            $validator->errors()->add("link_list_items.{$index}.icon_slug", 'Select an active icon from the catalog.');
+            $validator->errors()->add("link_list_items.{$index}.icon_slug", __('webblocks-cms::admin-feedback.validation.icon_active'));
           }
         }
       }
@@ -824,13 +824,13 @@ class BlockRequest extends FormRequest
       $slotTypeId = $this->integer('slot_type_id');
 
       if (! $parent || $parent->page_id !== $pageId) {
-        $validator->errors()->add('parent_id', 'Parent block must belong to the same page.');
+        $validator->errors()->add('parent_id', __('webblocks-cms::admin-feedback.validation.block_parent_same_page'));
 
         return;
       }
 
       if (! $parent->canAcceptChildren()) {
-        $validator->errors()->add('parent_id', 'Selected parent block cannot accept child blocks.');
+        $validator->errors()->add('parent_id', __('webblocks-cms::admin-feedback.validation.block_parent_rejects_children'));
 
         return;
       }
@@ -859,7 +859,7 @@ class BlockRequest extends FormRequest
 
       if (! $parent->canAcceptMoreChildren($block instanceof Block ? $block->id : null)
         && ! ($parent->typeSlug() === 'split' && $this->filled('replacement_block_id'))) {
-        $validator->errors()->add('parent_id', 'Split accepts exactly two direct child blocks. Put a Stack inside either side when it needs multiple blocks.');
+        $validator->errors()->add('parent_id', __('webblocks-cms::admin-feedback.validation.block_split_children'));
 
         return;
       }
@@ -871,25 +871,25 @@ class BlockRequest extends FormRequest
       }
 
       if ($selectedBlockType?->slug === 'link-list-item' && ! $parent->isLinkList()) {
-        $validator->errors()->add('parent_id', 'Link list items can only be placed under a link-list block.');
+        $validator->errors()->add('parent_id', __('webblocks-cms::admin-feedback.validation.block_link_item_parent'));
 
         return;
       }
 
       if (in_array($selectedBlockType?->slug, ['navbar-brand', 'navbar-navigation'], true) && ! $parent->hasNavbarAncestorOrSelf()) {
-        $validator->errors()->add('parent_id', 'Navbar Brand and Navbar Navigation blocks can only be placed under Navbar blocks.');
+        $validator->errors()->add('parent_id', __('webblocks-cms::admin-feedback.validation.block_navbar_parent'));
 
         return;
       }
 
       if ($selectedBlockType?->slug === 'sidebar-nav-item' && ! ($parent->isSidebarNavigation() || $parent->isSidebarNavGroup())) {
-        $validator->errors()->add('parent_id', 'Sidebar nav items can only be placed under Sidebar Navigation or Sidebar Nav Group blocks.');
+        $validator->errors()->add('parent_id', __('webblocks-cms::admin-feedback.validation.block_sidebar_item_parent'));
 
         return;
       }
 
       if ($selectedBlockType?->slug === 'sidebar-nav-group' && ! $parent->isSidebarNavigation()) {
-        $validator->errors()->add('parent_id', 'Sidebar nav groups can only be placed under Sidebar Navigation blocks.');
+        $validator->errors()->add('parent_id', __('webblocks-cms::admin-feedback.validation.block_sidebar_group_parent'));
 
         return;
       }
@@ -899,13 +899,13 @@ class BlockRequest extends FormRequest
       }
 
       if ($parent->id === $block->id) {
-        $validator->errors()->add('parent_id', 'A block cannot be its own parent.');
+        $validator->errors()->add('parent_id', __('webblocks-cms::admin-feedback.validation.block_parent_self'));
 
         return;
       }
 
       if (app(PageBlockStructure::class)->wouldCreateCycle($block, $parent)) {
-        $validator->errors()->add('parent_id', 'A block cannot be moved under its own child tree.');
+        $validator->errors()->add('parent_id', __('webblocks-cms::admin-feedback.validation.block_parent_descendant'));
       }
     }];
   }

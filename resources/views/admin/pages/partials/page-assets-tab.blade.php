@@ -71,13 +71,13 @@
                                     <div class="wb-cluster wb-cluster-2 wb-text-sm">
                                         <span>{{ $pageAsset->type === 'js' ? $pageAssetsText('head_legacy') : $pageAssetsText('head') }}</span>
                                         @if ($pageAsset->type === 'js' && $pageAsset->is_defer)
-                                            <span class="wb-status-pill wb-status-info">defer</span>
+                                            <span class="wb-status-pill wb-status-info">{{ $pageAssetsText('defer') }}</span>
                                         @endif
                                         @if ($pageAsset->type === 'js' && $pageAsset->is_async)
-                                            <span class="wb-status-pill wb-status-pending">async</span>
+                                            <span class="wb-status-pill wb-status-pending">{{ $pageAssetsText('async') }}</span>
                                         @endif
                                         @if ($pageAsset->type === 'js' && $pageAsset->is_module)
-                                            <span class="wb-status-pill wb-status-active">module</span>
+                                            <span class="wb-status-pill wb-status-active">{{ $pageAssetsText('module') }}</span>
                                         @endif
                                     </div>
                                 </td>

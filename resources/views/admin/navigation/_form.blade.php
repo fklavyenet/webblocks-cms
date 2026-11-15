@@ -101,8 +101,8 @@
         <div class="wb-stack wb-gap-1" data-navigation-target-field @if (! $isUrl) hidden @endif>
             <label for="target">{{ $navigationFormText('target') }}</label>
             <select id="target" name="target" class="wb-select" @disabled(! $isUrl)>
-                <option value="_self" @selected(old('target', $item->target ?: '_self') === '_self')>_self</option>
-                <option value="_blank" @selected(old('target', $item->target) === '_blank')>_blank</option>
+                <option value="_self" @selected(old('target', $item->target ?: '_self') === '_self')>{{ __('webblocks-cms::admin-feedback.labels.same_tab') }}</option>
+                <option value="_blank" @selected(old('target', $item->target) === '_blank')>{{ __('webblocks-cms::admin-feedback.labels.new_tab') }}</option>
             </select>
             <div class="wb-text-sm wb-text-muted">{{ $navigationFormText('target_help') }}</div>
         </div>

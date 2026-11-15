@@ -54,7 +54,7 @@ class UpdatePageSlotSourceRequest extends FormRequest
       }
 
       if (! $this->sharedSlotsSchemaAvailable()) {
-        $validator->errors()->add('shared_slot_id', 'Shared Slots are not available until the Shared Slots migration has been run.');
+        $validator->errors()->add('shared_slot_id', __('webblocks-cms::admin-feedback.validation.shared_slots_migration'));
 
         return;
       }

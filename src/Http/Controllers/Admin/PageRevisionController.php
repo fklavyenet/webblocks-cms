@@ -112,7 +112,7 @@ class PageRevisionController extends Controller
       ->route('admin.pages.revisions.show', [$page, $revision, 'restore_scope' => $request->restoreScope(), 'locale_id' => $request->restoreLocaleId()])
       ->with('status', __('webblocks-cms::admin-feedback.revisions.candidate_ready'))
       ->with('status_action', [
-        'label' => 'Preview candidate',
+        'label' => __('webblocks-cms::admin.page_revisions.preview_candidate'),
         'url' => $candidate->previewUrl(),
       ]);
   }

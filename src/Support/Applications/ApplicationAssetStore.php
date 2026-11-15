@@ -73,7 +73,7 @@ class ApplicationAssetStore
     $current = $this->read($site, $application, $type, $filename);
 
     if ($expectedChecksum !== $current['checksum']) {
-      throw new RuntimeException('The application asset changed after it was opened. Reload it before saving again.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.asset_changed_save'));
     }
 
     if ($current['exists'] && $current['contents'] !== $contents) {
@@ -85,7 +85,7 @@ class ApplicationAssetStore
       File::put($this->absolutePath($site, $application, $type, $filename), $contents);
       $this->pruneRevisions();
     } catch (Throwable $exception) {
-      throw new RuntimeException('CMS could not write the application asset. Check public/site permissions.', previous: $exception);
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.asset_write_failed'), previous: $exception);
     }
 
     return $this->read($site, $application, $type, $filename);
@@ -96,11 +96,11 @@ class ApplicationAssetStore
     $current = $this->read($site, $application, $type, $filename);
 
     if (! $current['exists']) {
-      throw new RuntimeException('Application asset does not exist.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.asset_missing'));
     }
 
     if ($expectedChecksum !== $current['checksum']) {
-      throw new RuntimeException('The application asset changed after it was opened. Reload it before deleting.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.asset_changed_delete'));
     }
 
     $this->writeRevision($site, $application, $current);
@@ -117,7 +117,7 @@ class ApplicationAssetStore
     $applicationHandle = trim((string) $application->handle);
 
     if ($siteHandle === '' || preg_match('/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/', $applicationHandle) !== 1) {
-      throw new RuntimeException('Valid site and application handles are required.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.handles_required'));
     }
 
     return 'site/'.$siteHandle.'/applications/'.$applicationHandle.'/'.($type === 'html' ? $filename : $type.'/'.$filename);
@@ -142,7 +142,7 @@ class ApplicationAssetStore
     $root = public_path('site').DIRECTORY_SEPARATOR;
 
     if (! str_starts_with($path, $root)) {
-      throw new RuntimeException('Application assets must stay under public/site.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.asset_outside_site'));
     }
 
     return $path;
@@ -159,15 +159,15 @@ class ApplicationAssetStore
     $filename = trim($filename);
 
     if (! in_array($type, self::TYPES, true)) {
-      throw new RuntimeException('Application asset type must be css, js, or html.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.asset_type'));
     }
 
     if ($type === 'html' && $filename !== 'index.html') {
-      throw new RuntimeException('The managed HTML entry filename must be index.html.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.asset_entry_filename'));
     }
 
     if (preg_match('/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/', $filename) !== 1 || strtolower(pathinfo($filename, PATHINFO_EXTENSION)) !== $type) {
-      throw new RuntimeException('Application asset filename must be a safe basename ending in .'.$type.'.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.asset_filename', ['type' => $type]));
     }
 
     return [$type, $filename];

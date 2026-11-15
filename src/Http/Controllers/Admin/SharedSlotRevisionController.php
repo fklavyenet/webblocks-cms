@@ -80,7 +80,7 @@ class SharedSlotRevisionController extends Controller
       ->route('admin.shared-slots.edit', $sharedSlot)
       ->with('status', __('webblocks-cms::admin-feedback.shared_revisions.restored'))
       ->with('status_action', [
-        'label' => 'Edit blocks',
+        'label' => __('webblocks-cms::admin.shared_slots.edit_blocks'),
         'url' => route('admin.shared-slots.blocks.edit', $sharedSlot),
       ]);
   }

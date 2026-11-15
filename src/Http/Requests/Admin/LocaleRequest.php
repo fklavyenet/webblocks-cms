@@ -66,7 +66,7 @@ class LocaleRequest extends FormRequest
 
     $validator->after(function (Validator $validator): void {
       if (! app(LocaleOptionCatalog::class)->find($this->input('locale_option'))) {
-        $validator->errors()->add('locale_option', 'Select a locale from the standard locale list or use custom locale details.');
+        $validator->errors()->add('locale_option', __('webblocks-cms::admin-feedback.validation.locale_option_required'));
       }
     });
   }

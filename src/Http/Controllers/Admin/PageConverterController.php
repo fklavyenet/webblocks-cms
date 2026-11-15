@@ -47,7 +47,7 @@ class PageConverterController extends Controller
       ->route('admin.pages.edit', $result->page)
       ->with('status', $result->message())
       ->with('status_action', [
-        'label' => 'Edit draft page',
+        'label' => __('webblocks-cms::admin-feedback.converter.edit_draft'),
         'url' => route('admin.pages.edit', $result->page),
       ]);
   }

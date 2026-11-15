@@ -101,11 +101,11 @@ class SharedSlotRequest extends FormRequest
       }
 
       if ($siteId > 0 && ! $this->user()?->isSuperAdmin() && ! $authorization->scopeSitesForUser(Site::query(), $this->user())->whereKey($siteId)->exists()) {
-        $validator->errors()->add('site_id', 'Selected site is outside your allowed site scope.');
+        $validator->errors()->add('site_id', __('webblocks-cms::admin-feedback.validation.shared_slot_site_scope'));
       }
 
       if ($sharedSlot && $this->user()?->isEditor() && $siteId !== (int) $sharedSlot->site_id) {
-        $validator->errors()->add('site_id', 'Editors cannot move Shared Slots to a different site.');
+        $validator->errors()->add('site_id', __('webblocks-cms::admin-feedback.validation.shared_slot_editor_site_change'));
       }
     }];
   }

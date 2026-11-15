@@ -91,11 +91,11 @@ class PageLayoutSlotRequest extends FormRequest
   {
     return [function (Validator $validator): void {
       if (! LayoutMarkup::hasValidHtmlId($this->input('html_id'))) {
-        $validator->errors()->add('html_id', 'HTML ID must be a safe HTML id token.');
+        $validator->errors()->add('html_id', __('webblocks-cms::admin-feedback.validation.layout_slot_html_id'));
       }
 
       if (! LayoutMarkup::hasValidTokenList($this->input('css_classes'))) {
-        $validator->errors()->add('css_classes', 'CSS classes must be a safe whitespace-separated class token list.');
+        $validator->errors()->add('css_classes', __('webblocks-cms::admin-feedback.validation.layout_slot_css_classes'));
       }
 
       foreach (['before_html', 'start_html', 'end_html', 'after_html'] as $field) {

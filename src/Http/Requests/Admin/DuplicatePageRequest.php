@@ -96,7 +96,7 @@ class DuplicatePageRequest extends FormRequest
           $authorization->abortUnlessSiteAccess($this->user(), $page);
           $authorization->abortUnlessSiteAccess($this->user(), $targetSite);
         } catch (HttpException) {
-          $validator->errors()->add('target_site_id', 'You must have access to both the current site and the target site to duplicate this page.');
+          $validator->errors()->add('target_site_id', __('webblocks-cms::admin-feedback.validation.page_duplicate_scope'));
 
           return;
         }
@@ -116,7 +116,7 @@ class DuplicatePageRequest extends FormRequest
         ->all();
 
       if ($sourceSecondaryLocaleIds !== $submittedSecondaryLocaleIds) {
-        $validator->errors()->add('translations', 'Provide title and slug values for each non-default source translation.');
+        $validator->errors()->add('translations', __('webblocks-cms::admin-feedback.validation.page_duplicate_translations'));
       }
     }];
   }

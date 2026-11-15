@@ -153,21 +153,17 @@ class CmsApiTokenController extends Controller
   }
 
   /**
-   * @return array<int, array{key: string, label: string, description: string, capabilities: array<int, string>}>
+   * @return array<int, array{key: string, label?: string, description?: string, capabilities: array<int, string>}>
    */
   private function capabilityGroups(): array
   {
     return [
       [
         'key' => 'page-building',
-        'label' => 'Page building',
-        'description' => 'Default draft content, navigation, Shared Slots, media discovery, and site presentation permissions.',
         'capabilities' => CmsApiTokenCapabilities::DEFAULT,
       ],
       [
         'key' => 'system-updates',
-        'label' => 'System updates',
-        'description' => 'Installation-wide update checks and explicitly approved execution.',
         'capabilities' => [CmsApiTokenCapabilities::SYSTEM_UPDATES_READ, CmsApiTokenCapabilities::SYSTEM_UPDATES_RUN],
       ],
       ...(app(PanelLanguagePolicy::class)->manage(request()->user()) ? [[
@@ -185,8 +181,6 @@ class CmsApiTokenController extends Controller
       // Enabled plugins (e.g. WebBlocks Commerce) contribute their own groups below.
       [
         'key' => 'site-feedback',
-        'label' => 'Site assets and feedback',
-        'description' => 'Physical site CSS/JS edits, per-page asset attachment, and public engagement review permissions.',
         'capabilities' => [
           CmsApiTokenCapabilities::SITE_ASSETS_READ,
           CmsApiTokenCapabilities::SITE_ASSETS_WRITE,
@@ -197,8 +191,6 @@ class CmsApiTokenController extends Controller
       ],
       [
         'key' => 'plugins',
-        'label' => 'Plugin lifecycle',
-        'description' => 'Install, enable, setup, disable, or uninstall manually uploaded plugins.',
         'capabilities' => [
           CmsApiTokenCapabilities::PLUGINS_READ,
           CmsApiTokenCapabilities::PLUGINS_INSTALL,
@@ -209,8 +201,6 @@ class CmsApiTokenController extends Controller
       ],
       [
         'key' => 'applications',
-        'label' => 'Embedded Applications',
-        'description' => 'Discover, register, update, or delete trusted browser application definitions.',
         'capabilities' => [
           CmsApiTokenCapabilities::APPLICATIONS_READ,
           CmsApiTokenCapabilities::APPLICATIONS_WRITE,
@@ -219,8 +209,6 @@ class CmsApiTokenController extends Controller
       ],
       [
         'key' => 'media',
-        'label' => 'Media management',
-        'description' => 'Upload, edit metadata, replace, move, and delete Media Library records.',
         'capabilities' => [
           CmsApiTokenCapabilities::MEDIA_WRITE,
           CmsApiTokenCapabilities::MEDIA_UPLOAD,
@@ -231,8 +219,6 @@ class CmsApiTokenController extends Controller
       ],
       [
         'key' => 'destructive',
-        'label' => 'Publishing and destructive actions',
-        'description' => 'Publish content or delete pages/navigation items. Grant only when explicitly needed.',
         'capabilities' => [
           CmsApiTokenCapabilities::NAVIGATION_DELETE,
           CmsApiTokenCapabilities::CONTENT_PUBLISH,
@@ -242,8 +228,6 @@ class CmsApiTokenController extends Controller
       ],
       [
         'key' => 'system-safety',
-        'label' => 'System safety',
-        'description' => 'Create a full system backup restore point before a large or destructive content apply. Grant only when explicitly needed.',
         'capabilities' => [
           CmsApiTokenCapabilities::BACKUPS_CREATE,
           CmsApiTokenCapabilities::BACKUPS_READ,

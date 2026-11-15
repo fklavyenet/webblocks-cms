@@ -102,7 +102,7 @@
         var keyCell = document.createElement('td');
         var keyButton = document.createElement('button');
         var typeCell = document.createElement('td');
-        var typeCode = document.createElement('code');
+        var typeLabel = document.createElement('span');
         var defaultCell = document.createElement('td');
         var constraintsCell = document.createElement('td');
         var actionsCell = document.createElement('td');
@@ -117,7 +117,7 @@
         keyButton.setAttribute('data-wb-target', '#embedded-application-setting-modal');
         keyButton.setAttribute('aria-haspopup', 'dialog');
         keyCell.appendChild(keyButton);
-        typeCode.setAttribute('data-wb-setting-summary', 'type');
+        typeLabel.setAttribute('data-wb-setting-summary', 'type');
         defaultCell.setAttribute('data-wb-setting-summary', 'default');
         constraintsCell.setAttribute('data-wb-setting-summary', 'constraints');
         actionsCell.className = 'wb-table-actions';
@@ -125,7 +125,7 @@
         actions.appendChild(actionButton('edit', 'pencil', label('edit-label')));
         actions.appendChild(actionButton('delete', 'trash', label('delete-label')));
         actionsCell.appendChild(actions);
-        typeCell.appendChild(typeCode);
+        typeCell.appendChild(typeLabel);
         row.appendChild(keyCell);
         row.appendChild(typeCell);
         row.appendChild(defaultCell);
@@ -145,11 +145,15 @@
     }
 
     function updateRow(row, setting) {
+        var typeOption = Array.from(input('type').options).find(function (option) {
+            return option.value === setting.type;
+        });
+
         fields.forEach(function (field) {
             row.querySelector('[data-wb-setting-field="' + field + '"]').value = setting[field] || '';
         });
         row.querySelector('[data-wb-setting-summary="key"]').textContent = setting.key;
-        row.querySelector('[data-wb-setting-summary="type"]').textContent = setting.type;
+        row.querySelector('[data-wb-setting-summary="type"]').textContent = typeOption ? typeOption.textContent : '';
         row.querySelector('[data-wb-setting-summary="default"]').textContent = setting.default || label('no-default');
         row.querySelector('[data-wb-setting-summary="constraints"]').textContent = constraintSummary(setting);
     }

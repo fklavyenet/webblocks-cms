@@ -731,7 +731,7 @@ class PageController extends Controller
 
     if ($page->isPublished() && $page->publicUrl()) {
       $redirect->with('status_action', [
-        'label' => 'View page',
+        'label' => __('webblocks-cms::admin.flash.view_page'),
         'url' => $page->publicUrl(),
       ]);
     }

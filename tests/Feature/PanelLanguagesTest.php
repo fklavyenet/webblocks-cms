@@ -8,8 +8,14 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
+use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageLayout;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -127,6 +133,65 @@ class PanelLanguagesTest extends TestCase
     $application = EmbeddedApplication::query()->where('handle', 'fixture')->firstOrFail();
     $this->assertSame(['/fixture.css'], $application->css_assets);
     $this->assertSame(['0', '1'], $application->settings_schema['choice']['values']);
+  }
+
+  public function test_panel_localizes_application_options_and_authoring_feedback(): void
+  {
+    $this->actingAs($actor = $this->actor());
+    $site = Site::query()->create(['name' => 'Fixture', 'handle' => 'fixture', 'domain' => 'fixture.example.test', 'is_primary' => true]);
+    $contentLocale = Locale::query()->where('code', 'en')->firstOrFail();
+    $site->locales()->syncWithoutDetaching([$contentLocale->id => ['is_enabled' => true]]);
+    $layout = PageLayout::query()->firstOrCreate(['handle' => 'default'], ['name' => 'Default', 'is_active' => true, 'is_system' => true]);
+    $page = Page::query()->create(['site_id' => $site->id, 'title' => 'Fixture', 'slug' => 'fixture', 'status' => 'draft', 'public_shell' => 'default']);
+    $slotType = SlotType::query()->firstOrCreate(['slug' => 'main'], ['name' => 'Main', 'status' => 'published', 'is_system' => true]);
+    $slot = PageSlot::query()->firstOrCreate(['page_id' => $page->id, 'slot_type_id' => $slotType->id], ['source_type' => 'page', 'sort_order' => 1]);
+    $search = BlockType::query()->firstOrCreate(['slug' => 'search-form'], ['name' => 'Search Form', 'category' => 'content', 'status' => 'published', 'is_system' => true]);
+    foreach (['header' => 'Header', 'plain_text' => 'Plain Text'] as $slug => $name) {
+      BlockType::query()->firstOrCreate(['slug' => $slug], ['name' => $name, 'category' => 'content', 'status' => 'published', 'is_system' => true]);
+    }
+
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $actor->forceFill(['admin_locale' => $locale])->save();
+      $admin = fn (string $key) => __('webblocks-cms::admin.embedded_applications.'.$key, [], $locale);
+      $feedback = fn (string $key, array $replace = []) => __('webblocks-cms::admin-feedback.'.$key, $replace, $locale);
+      $form = $this->get(route('admin.embedded-applications.create'))->assertOk();
+      $form->assertSee($admin('supports_locale'))
+        ->assertSee($admin('supports_theme'))
+        ->assertSee($admin('supports_fullscreen'))
+        ->assertSee($admin('setting_type_enum'))
+        ->assertDontSee('> fullscreen</label>', false);
+
+      $this->from(route('admin.navigation.index', ['site' => $site->id]))
+        ->post(route('admin.navigation.store'), ['site_id' => $site->id, 'menu_key' => 'primary', 'link_type' => 'page', 'title' => 'Fixture', 'visibility' => 'visible'])
+        ->assertSessionHasErrors(['page_id' => $feedback('validation.navigation_page_required')]);
+
+      $this->from(route('admin.pages.slots.blocks', [$page, $slot]))
+        ->post(route('admin.blocks.store'), [
+          'page_id' => $page->id, 'block_type_id' => $search->id, 'type' => 'search-form', 'status' => 'draft',
+          'slot_type_id' => $slotType->id, 'sort_order' => 1,
+        ])->assertSessionHasErrors(['content' => $feedback('validation.block_search_placeholder')]);
+
+      $converter = route('admin.pages.converter.index');
+      $this->from($converter)->post(route('admin.pages.converter.create-draft'), [
+        'plan_payload' => '{}', 'plan_signature' => str_repeat('0', 64),
+      ])->assertRedirect($converter)->assertSessionHasErrors(['plan_payload' => $feedback('validation.converter_plan_unverified')]);
+
+      $preview = $this->post(route('admin.pages.converter.analyze'), [
+        'site_id' => $site->id, 'locale_id' => $contentLocale->id, 'page_layout' => $layout->handle,
+        'page_title' => 'Fixture conversion', 'page_path' => 'fixture-conversion-'.$locale,
+        'source_html' => '<main><h1>Fixture heading</h1><p>Fixture paragraph.</p></main>',
+      ])->assertOk()
+        ->assertSee($feedback('converter.analysis_preview'))
+        ->assertSee($feedback('converter.label_plain_text'))
+        ->assertDontSee('admin-feedback.converter');
+
+      $this->post(route('admin.pages.converter.create-draft'), [
+        'plan_payload' => $preview->viewData('planPayload'),
+        'plan_signature' => $preview->viewData('planSignature'),
+      ])->assertRedirect()
+        ->assertSessionHas('status', $feedback('converter.draft_created', ['created' => 2, 'skipped' => 0, 'warnings' => 0]))
+        ->assertSessionHas('status_action.label', $feedback('converter.edit_draft'));
+    }
   }
 
   public function test_super_admin_can_preview_activate_and_select_russian_without_changing_content_languages(): void

@@ -42,7 +42,7 @@ class MovePageSiteRequest extends FormRequest
       $authorization = app(AdminAuthorization::class);
 
       if ($this->user()?->isEditor()) {
-        $validator->errors()->add('target_site_id', 'Editors cannot move pages between sites.');
+        $validator->errors()->add('target_site_id', __('webblocks-cms::admin-feedback.validation.page_move_editor'));
 
         return;
       }
@@ -58,7 +58,7 @@ class MovePageSiteRequest extends FormRequest
           $authorization->abortUnlessSiteAccess($this->user(), $page);
           $authorization->abortUnlessSiteAccess($this->user(), $targetSite);
         } catch (HttpException) {
-          $validator->errors()->add('target_site_id', 'You must have access to both the current site and the target site to move this page.');
+          $validator->errors()->add('target_site_id', __('webblocks-cms::admin-feedback.validation.page_move_scope'));
         }
       }
     }];

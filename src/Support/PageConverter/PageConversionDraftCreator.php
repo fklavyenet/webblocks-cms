@@ -117,14 +117,14 @@ class PageConversionDraftCreator
 
         if (! in_array($converterSlug, self::SUPPORTED_BLOCK_SLUGS, true)) {
           $skippedSuggestionCount++;
-          $warnings[] = 'Skipped unsupported Page Converter suggestion ['.$converterSlug.'].';
+          $warnings[] = __('webblocks-cms::admin-feedback.converter.skipped_unsupported', ['slug' => $converterSlug]);
 
           continue;
         }
 
         if ($parentKey === '' && in_array($converterSlug, self::CHILD_ONLY_BLOCK_SLUGS, true)) {
           $skippedSuggestionCount++;
-          $warnings[] = 'Skipped child-only Page Converter suggestion ['.$converterSlug.'] because it had no created parent.';
+          $warnings[] = __('webblocks-cms::admin-feedback.converter.skipped_child_only', ['slug' => $converterSlug]);
 
           continue;
         }
@@ -132,14 +132,14 @@ class PageConversionDraftCreator
         if ($parentKey !== '') {
           if (! $parentBlock) {
             $skippedSuggestionCount++;
-            $warnings[] = 'Skipped Page Converter suggestion ['.$converterSlug.'] because its parent suggestion was not created.';
+            $warnings[] = __('webblocks-cms::admin-feedback.converter.skipped_parent_missing', ['slug' => $converterSlug]);
 
             continue;
           }
 
           if (! $this->parentAcceptsChild($parentBlock, $converterSlug)) {
             $skippedSuggestionCount++;
-            $warnings[] = 'Skipped Page Converter suggestion ['.$converterSlug.'] because parent ['.$parentBlock->typeSlug().'] cannot accept it.';
+            $warnings[] = __('webblocks-cms::admin-feedback.converter.skipped_parent_incompatible', ['slug' => $converterSlug, 'parent' => $parentBlock->typeSlug()]);
 
             continue;
           }
@@ -147,24 +147,24 @@ class PageConversionDraftCreator
 
         if ($converterSlug === 'card' && ! $this->hasCreatableCardChildren($blockKey, $childrenByParentKey)) {
           $skippedSuggestionCount++;
-          $warnings[] = 'Skipped Page Converter suggestion [card] because no explicit usable card child region was present.';
+          $warnings[] = __('webblocks-cms::admin-feedback.converter.skipped_card');
 
           continue;
         }
 
         if ($converterSlug === 'accordion' && ! $this->hasCreatableAccordionChildren($blockKey, $childrenByParentKey)) {
           $skippedSuggestionCount++;
-          $warnings[] = 'Skipped Page Converter suggestion [accordion] because no explicit usable accordion item children were present.';
+          $warnings[] = __('webblocks-cms::admin-feedback.converter.skipped_accordion');
 
           continue;
         }
 
         if ($converterSlug === 'section' && ! isset($childrenByParentKey[$blockKey])) {
-          $warnings[] = 'Created Page Converter section shell without child blocks because the signed plan did not include explicit section children.';
+          $warnings[] = __('webblocks-cms::admin-feedback.converter.section_shell');
         }
 
         if (in_array($converterSlug, ['hero', 'cta'], true) && $this->hasActionLikeFields($block) && ! isset($childrenByParentKey[$blockKey])) {
-          $warnings[] = 'Created Page Converter suggestion ['.$converterSlug.'] without CTA child buttons because the signed plan did not include explicit button children.';
+          $warnings[] = __('webblocks-cms::admin-feedback.converter.cta_without_buttons', ['slug' => $converterSlug]);
         }
 
         $siblingKey = $parentBlock ? 'parent:'.$parentBlock->id : 'root';
@@ -173,7 +173,7 @@ class PageConversionDraftCreator
 
         if ($payload === null) {
           $skippedSuggestionCount++;
-          $warnings[] = 'Skipped Page Converter suggestion ['.$converterSlug.'] because it could not be converted safely.';
+          $warnings[] = __('webblocks-cms::admin-feedback.converter.skipped_unsafe', ['slug' => $converterSlug]);
 
           continue;
         }
@@ -234,7 +234,7 @@ class PageConversionDraftCreator
 
     if (! $mainSlotType) {
       throw ValidationException::withMessages([
-        'plan_payload' => 'The CMS main slot type is not available.',
+        'plan_payload' => __('webblocks-cms::admin-feedback.converter.main_slot_missing'),
       ]);
     }
 

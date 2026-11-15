@@ -23,19 +23,19 @@ class ApplicationPackageStore
   public function install(Site $site, EmbeddedApplication $application, UploadedFile $upload): array
   {
     if (! class_exists(ZipArchive::class)) {
-      throw new RuntimeException('ZIP support is required to install an application package.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.zip_required'));
     }
 
     $version = $this->normalizeVersion((string) $application->version);
     $target = $this->releaseDirectory($site, $application, $version);
 
     if (is_dir($target)) {
-      throw new RuntimeException('This application version is already installed. Increase the application version before uploading a new package.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.version_installed'));
     }
 
     $archive = new ZipArchive;
     if ($archive->open($upload->getRealPath()) !== true) {
-      throw new RuntimeException('The uploaded application package is not a readable ZIP archive.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.zip_unreadable'));
     }
 
     $files = [];
@@ -43,7 +43,7 @@ class ApplicationPackageStore
 
     try {
       if ($archive->numFiles > self::MAX_FILES) {
-        throw new RuntimeException('The application package contains too many files.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.too_many_files'));
       }
 
       for ($index = 0; $index < $archive->numFiles; $index++) {
@@ -56,24 +56,24 @@ class ApplicationPackageStore
 
         $bytes = (int) ($stat['size'] ?? 0);
         if ($bytes > self::MAX_FILE_BYTES) {
-          throw new RuntimeException('An application package file exceeds the 25 MB limit.');
+          throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.file_too_large'));
         }
 
         $totalBytes += $bytes;
         if ($totalBytes > self::MAX_TOTAL_BYTES) {
-          throw new RuntimeException('The expanded application package exceeds the 200 MB limit.');
+          throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.package_too_large'));
         }
 
         $comparisonKey = strtolower($path);
         if (array_key_exists($comparisonKey, $files)) {
-          throw new RuntimeException('The application package contains duplicate file paths.');
+          throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.duplicate_paths'));
         }
 
         $files[$comparisonKey] = ['path' => $path, 'index' => $index];
       }
 
       if (! array_key_exists('index.html', $files)) {
-        throw new RuntimeException('The application package must contain index.html at its root.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.entry_missing'));
       }
 
       $staging = $target.'.installing-'.bin2hex(random_bytes(6));
@@ -85,7 +85,7 @@ class ApplicationPackageStore
           $index = $file['index'];
           $stream = $archive->getStream((string) $archive->getNameIndex($index));
           if (! is_resource($stream)) {
-            throw new RuntimeException('CMS could not read '.$path.' from the application package.');
+            throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.read_failed', ['path' => $path]));
           }
 
           $destination = $staging.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $path);
@@ -93,7 +93,7 @@ class ApplicationPackageStore
           $output = fopen($destination, 'wb');
           if (! is_resource($output)) {
             fclose($stream);
-            throw new RuntimeException('CMS could not write '.$path.' from the application package.');
+            throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.write_failed', ['path' => $path]));
           }
 
           stream_copy_to_stream($stream, $output);
@@ -103,7 +103,7 @@ class ApplicationPackageStore
 
         File::ensureDirectoryExists(dirname($target));
         if (! rename($staging, $target)) {
-          throw new RuntimeException('CMS could not activate the application package.');
+          throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.activate_failed'));
         }
       } catch (\Throwable $exception) {
         File::deleteDirectory($staging);
@@ -127,7 +127,7 @@ class ApplicationPackageStore
     $root = $this->releaseDirectory($site, $application, $version).DIRECTORY_SEPARATOR;
 
     if (! str_starts_with($absolute, $root) || ! is_file($absolute)) {
-      throw new RuntimeException('Application package asset was not found.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.package_asset_missing'));
     }
 
     return ['path' => $path, 'absolute_path' => $absolute, 'size' => (int) filesize($absolute), 'checksum' => hash_file('sha256', $absolute)];
@@ -143,7 +143,7 @@ class ApplicationPackageStore
     $siteHandle = SiteHandle::normalize((string) $site->handle);
     $applicationHandle = trim((string) $application->handle);
     if ($siteHandle === '' || preg_match('/^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/', $applicationHandle) !== 1) {
-      throw new RuntimeException('Valid site and application handles are required.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.handles_required'));
     }
 
     return public_path('site/'.$siteHandle.'/applications/'.$applicationHandle.'/releases/'.$version);
@@ -153,7 +153,7 @@ class ApplicationPackageStore
   {
     $version = trim($version);
     if (preg_match('/^[0-9A-Za-z](?:[0-9A-Za-z._-]{0,62}[0-9A-Za-z])?$/', $version) !== 1) {
-      throw new RuntimeException('Application version must be safe for a public package URL.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.version_invalid'));
     }
 
     return $version;
@@ -163,19 +163,19 @@ class ApplicationPackageStore
   {
     $path = str_replace('\\', '/', trim($path));
     if ($path === '' || str_starts_with($path, '/') || str_contains($path, "\0")) {
-      throw new RuntimeException('Application package contains an invalid path.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.package_path_invalid'));
     }
 
     $segments = explode('/', $path);
     foreach ($segments as $segment) {
       if ($segment === '' || $segment === '.' || $segment === '..' || preg_match('/^[A-Za-z0-9][A-Za-z0-9._@+ -]{0,127}$/', $segment) !== 1) {
-        throw new RuntimeException('Application package contains an unsafe path.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.package_path_unsafe'));
       }
     }
 
     $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
     if ($extension !== '' && in_array($extension, self::BLOCKED_EXTENSIONS, true)) {
-      throw new RuntimeException('Application package contains a server-executable file type.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.application_assets.server_file'));
     }
 
     return implode('/', $segments);
