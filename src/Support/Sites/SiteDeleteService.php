@@ -142,15 +142,15 @@ class SiteDeleteService
     $blockers = [];
 
     if ($site->is_primary) {
-      $blockers[] = 'Primary site cannot be deleted.';
+      $blockers[] = __('webblocks-cms::admin-feedback.sites.primary_delete');
     }
 
     if (Site::query()->count() <= 1) {
-      $blockers[] = 'The last remaining site cannot be deleted.';
+      $blockers[] = __('webblocks-cms::admin-feedback.sites.last_delete');
     }
 
     if (($counts['contact_messages'] ?? 0) > 0) {
-      $blockers[] = 'This site has contact messages linked to its pages or blocks and cannot be deleted safely.';
+      $blockers[] = __('webblocks-cms::admin-feedback.sites.contact_delete');
     }
 
     return $blockers;

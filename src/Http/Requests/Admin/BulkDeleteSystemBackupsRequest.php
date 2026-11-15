@@ -21,11 +21,13 @@ class BulkDeleteSystemBackupsRequest extends FormRequest
 
   public function messages(): array
   {
+    $selectionRequired = __('webblocks-cms::admin-feedback.bulk.select_required', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.backup')]);
+
     return [
-      'backup_ids.required' => 'Select at least one backup to delete.',
-      'backup_ids.array' => 'Select at least one backup to delete.',
-      'backup_ids.min' => 'Select at least one backup to delete.',
-      'backup_ids.*.exists' => 'One or more selected backups no longer exists.',
+      'backup_ids.required' => $selectionRequired,
+      'backup_ids.array' => $selectionRequired,
+      'backup_ids.min' => $selectionRequired,
+      'backup_ids.*.exists' => __('webblocks-cms::admin-feedback.bulk.selection_missing', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.backups')]),
     ];
   }
 }

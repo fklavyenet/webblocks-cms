@@ -317,7 +317,11 @@
             </div>
         </div>
 
-        <div id="wb-overlay-root" class="wb-overlay-root">
+        <div id="wb-overlay-root" class="wb-overlay-root"
+             data-wb-dirty-title="{{ $adminTranslator->admin('dirty_close.title', $adminLocale) }}"
+             data-wb-dirty-description="{{ $adminTranslator->admin('dirty_close.description', $adminLocale) }}"
+             data-wb-dirty-keep-editing="{{ $adminTranslator->admin('dirty_close.keep_editing', $adminLocale) }}"
+             data-wb-dirty-close="{{ $adminTranslator->admin('dirty_close.close_without_saving', $adminLocale) }}">
             @stack('overlays')
         </div>
 

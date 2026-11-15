@@ -11,11 +11,11 @@ class UserLifecycleGuard
   public function deletionBlocker(User $target, ?User $actingUser = null): ?string
   {
     if ($actingUser && $actingUser->is($target)) {
-      return 'You cannot delete your own account from the Users screen.';
+      return __('webblocks-cms::admin-feedback.users.own_delete');
     }
 
     if ($this->wouldRemoveLastActiveSuperAdmin($target, User::ROLE_EDITOR, false)) {
-      return 'The last active super admin cannot be deleted.';
+      return __('webblocks-cms::admin-feedback.users.last_admin_delete');
     }
 
     return null;
@@ -24,7 +24,7 @@ class UserLifecycleGuard
   public function updateBlocker(User $target, string $nextRole, bool $nextIsActive): ?string
   {
     if ($this->wouldRemoveLastActiveSuperAdmin($target, $nextRole, $nextIsActive)) {
-      return 'The last active super admin cannot be deactivated or demoted.';
+      return __('webblocks-cms::admin-feedback.users.last_admin_update');
     }
 
     return null;
@@ -33,7 +33,7 @@ class UserLifecycleGuard
   public function selfDeletionBlocker(User $user): ?string
   {
     if ($this->wouldRemoveLastActiveSuperAdmin($user, User::ROLE_EDITOR, false)) {
-      return 'The last active super admin cannot delete their own account.';
+      return __('webblocks-cms::admin-feedback.users.last_admin_self_delete');
     }
 
     return null;

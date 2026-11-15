@@ -38,7 +38,7 @@ class ContactMessageBulkDeleter
       if (! $message instanceof ContactMessage) {
     $failed[] = [
           'id' => $id,
-          'message' => 'The message is no longer available to this user.',
+          'message' => __('webblocks-cms::admin-feedback.bulk.message_unavailable'),
     ];
 
     continue;
@@ -56,7 +56,7 @@ class ContactMessageBulkDeleter
 
     $failed[] = [
           'id' => $id,
-          'message' => 'Review the logs for details.',
+          'message' => __('webblocks-cms::admin-feedback.bulk.check_logs'),
     ];
       }
   }

@@ -91,7 +91,7 @@ class IconCatalogController extends Controller
 
     return redirect()
       ->to($request->input('_icon_index_url', route('admin.system.icons.index')))
-      ->with('status', 'Icon updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.icons.updated'));
   }
 
   public function sync(Request $request): RedirectResponse
@@ -103,18 +103,12 @@ class IconCatalogController extends Controller
     } catch (Throwable $exception) {
       return redirect()
         ->route('admin.system.icons.index')
-        ->withErrors(['icons' => 'Icon manifest sync failed: '.$exception->getMessage()]);
+        ->withErrors(['icons' => __('webblocks-cms::admin-feedback.icons.sync_failed', ['reason' => $exception->getMessage()])]);
     }
 
     return redirect()
       ->route('admin.system.icons.index')
-      ->with('status', sprintf(
-        'Icon manifest synchronized. Created: %d. Updated: %d. Unchanged: %d. Deactivated: %d.',
-        $summary['created'],
-        $summary['updated'],
-        $summary['unchanged'],
-        $summary['deactivated'],
-      ));
+      ->with('status', __('webblocks-cms::admin-feedback.icons.synced', $summary));
   }
 
   private function tagOptions(): array

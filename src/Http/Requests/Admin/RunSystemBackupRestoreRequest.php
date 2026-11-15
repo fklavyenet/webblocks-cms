@@ -21,7 +21,7 @@ class RunSystemBackupRestoreRequest extends FormRequest
   public function messages(): array
   {
     return [
-      'acknowledge_restore_risk.accepted' => 'Confirm that this restore will replace the current database and uploads, and that a pre-restore safety backup should be created first.',
+      'acknowledge_restore_risk.accepted' => __('webblocks-cms::admin-feedback.backups.restore_acknowledgement'),
     ];
   }
 }

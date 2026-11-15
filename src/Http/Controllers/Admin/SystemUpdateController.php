@@ -173,14 +173,14 @@ class SystemUpdateController extends Controller
 
     return match ($state) {
       'update_available' => is_string($latestVersion) && $latestVersion !== ''
-        ? 'Update '.$latestVersion.' is available.'
-        : 'A new update is available.',
-      'up_to_date' => 'System is already up to date.',
+        ? __('webblocks-cms::admin-feedback.updates.available_version', ['version' => $latestVersion])
+        : __('webblocks-cms::admin-feedback.updates.available'),
+      'up_to_date' => __('webblocks-cms::admin-feedback.updates.current'),
       'incompatible' => is_string($latestVersion) && $latestVersion !== ''
-        ? 'Update '.$latestVersion.' is available, but this install is not compatible yet.'
-        : 'An update is available, but this install is not compatible yet.',
-      'no_releases' => 'No published releases are available for this channel.',
-      default => 'Update check failed. Review the details below.',
+        ? __('webblocks-cms::admin-feedback.updates.incompatible_version', ['version' => $latestVersion])
+        : __('webblocks-cms::admin-feedback.updates.incompatible'),
+      'no_releases' => __('webblocks-cms::admin-feedback.updates.no_releases'),
+      default => __('webblocks-cms::admin-feedback.updates.check_failed'),
     };
   }
 }

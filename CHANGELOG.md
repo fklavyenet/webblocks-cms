@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.3
+
+- Show the localized preset selector, workflow actions, token permissions, and other audited Webadmin labels in the six bundled panel languages.
+- Localize operation results, validation feedback, and the confirmation for closing forms with unsaved changes.
+
 ## 1.135.2
 
 - Show translated ownership labels in Page layouts and the plugin handle label in plugin details.

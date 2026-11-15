@@ -74,7 +74,7 @@ class PluginCatalogController extends Controller
 
     return redirect()
       ->route('admin.system.plugins.index')
-      ->with('status', 'Plugin '.$installed['handle'].' '.$installed['version'].' was installed disabled from the Plugin Catalog. Review it before enabling.');
+      ->with('status', __('webblocks-cms::admin-feedback.plugins.installed_catalog', ['handle' => $installed['handle'], 'version' => $installed['version']]));
   }
 
   /**

@@ -160,7 +160,7 @@
                         <div class="wb-stack-2 wb-field">
                             <label for="site_domain_domain">{{ $adminText('domain') }}</label>
                             <input id="site_domain_domain" name="domain" class="wb-input" type="text" value="{{ old('domain') }}" required>
-                            <div class="wb-text-sm wb-text-muted">{{ $adminText('domain_help_example') }} <code>www.example.com</code> or <code>docs.example.com</code>.</div>
+                            <div class="wb-text-sm wb-text-muted">{{ $adminText('domain_help_example') }} <code>www.example.com</code> {{ __('webblocks-cms::admin.common.or') }} <code>docs.example.com</code>.</div>
                         </div>
 
                         <div class="wb-grid wb-grid-2">

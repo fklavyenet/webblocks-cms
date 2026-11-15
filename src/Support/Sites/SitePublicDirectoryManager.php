@@ -60,7 +60,7 @@ class SitePublicDirectoryManager
       try {
         File::ensureDirectoryExists($path);
       } catch (Throwable $exception) {
-        $warnings[] = 'CMS could not create ['.$this->siteRelativePath($site).'/'.$directory.']. Make sure public/site/'.$this->handle($site).' is writable by the web server user or group.';
+        $warnings[] = __('webblocks-cms::admin-feedback.sites.asset_directory_failed', ['directory' => $this->siteRelativePath($site).'/'.$directory, 'root' => 'public/site/'.$this->handle($site)]);
       }
     }
 

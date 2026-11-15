@@ -23,7 +23,7 @@ class SiteVariableController extends Controller
 
     return redirect()
       ->to($request->input('_site_variable_close_url', route('admin.sites.edit', ['site' => $site, 'tab' => 'variables'])))
-      ->with('status', 'Site variable added.');
+      ->with('status', __('webblocks-cms::admin-feedback.variables.added'));
   }
 
   public function update(SiteVariableRequest $request, Site $site, SiteVariable $siteVariable): RedirectResponse
@@ -35,7 +35,7 @@ class SiteVariableController extends Controller
 
     return redirect()
       ->to($request->input('_site_variable_close_url', route('admin.sites.edit', ['site' => $site, 'tab' => 'variables'])))
-      ->with('status', 'Site variable updated.');
+      ->with('status', __('webblocks-cms::admin-feedback.variables.updated'));
   }
 
   public function destroy(Site $site, SiteVariable $siteVariable): RedirectResponse
@@ -47,6 +47,6 @@ class SiteVariableController extends Controller
 
     return redirect()
       ->route('admin.sites.edit', ['site' => $site, 'tab' => 'variables'])
-      ->with('status', 'Site variable deleted.');
+      ->with('status', __('webblocks-cms::admin-feedback.variables.deleted'));
   }
 }

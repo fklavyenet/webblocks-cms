@@ -45,6 +45,32 @@ class PanelLanguagesTest extends TestCase
     Locale::query()->firstOrCreate(['code' => 'en'], ['name' => 'English', 'is_enabled' => true, 'is_default' => true]);
   }
 
+  public function test_bundled_languages_render_panel_appearance_and_operation_feedback_in_the_selected_language(): void
+  {
+    $this->actingAs($actor = $this->actor());
+
+    foreach ([
+      'en' => ['Select', 'Page Layout created successfully.', 'Keep editing'],
+      'de' => ['Auswählen', 'Seitenlayout erstellt.', 'Weiter bearbeiten'],
+      'tr' => ['Seçin', 'Sayfa yerleşimi oluşturuldu.', 'Düzenlemeye devam et'],
+      'es' => ['Seleccionar', 'Diseño de página creado.', 'Seguir editando'],
+      'it' => ['Seleziona', 'Layout di pagina creato.', 'Continua a modificare'],
+      'fr' => ['Sélectionner', 'Gabarit de page créé.', 'Continuer la modification'],
+    ] as $locale => [$select, $status, $keepEditing]) {
+      $actor->forceFill(['admin_locale' => $locale])->save();
+      $this->get(route('admin.system.settings.edit', ['tab' => 'appearance']))
+        ->assertOk()
+        ->assertSee('lang="'.$locale.'"', false)
+        ->assertSee('<option value="" disabled>'.e($select).'</option>', false)
+        ->assertSee('data-wb-dirty-keep-editing="'.e($keepEditing).'"', false)
+        ->assertDontSee('admin.common.select');
+
+      $this->followRedirects($this->post(route('admin.page-layouts.store'), ['name' => 'Fixture '.$locale]))
+        ->assertOk()
+        ->assertSee($status);
+    }
+  }
+
   public function test_super_admin_can_preview_activate_and_select_russian_without_changing_content_languages(): void
   {
     $this->actingAs($actor = $this->actor());

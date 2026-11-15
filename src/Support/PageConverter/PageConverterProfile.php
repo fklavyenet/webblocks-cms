@@ -14,21 +14,20 @@ class PageConverterProfile
 
   public static function options(): array
   {
-    return [
-      self::CONSERVATIVE => 'Conservative',
-      self::GENERIC_DOCS => 'Generic Docs Page',
-      self::GENERIC_MARKETING => 'Generic Marketing Page',
-      self::WEBBLOCKS_UI => 'WebBlocks UI-flavored HTML',
-    ];
+    $profiles = self::values();
+
+    return array_combine($profiles, array_map(self::label(...), $profiles));
   }
 
   public static function values(): array
   {
-    return array_keys(self::options());
+    return [self::CONSERVATIVE, self::GENERIC_DOCS, self::GENERIC_MARKETING, self::WEBBLOCKS_UI];
   }
 
   public static function label(string $profile): string
   {
-    return self::options()[$profile] ?? self::options()[self::CONSERVATIVE];
+    $profile = in_array($profile, self::values(), true) ? $profile : self::CONSERVATIVE;
+
+    return __('webblocks-cms::admin.converter_profiles.'.$profile);
   }
 }

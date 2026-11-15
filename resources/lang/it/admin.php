@@ -1,6 +1,39 @@
 <?php
 
 $translations = [
+  'page_workflow' => [
+    'submit_review' => 'Invia per la revisione',
+    'publish' => 'Pubblica',
+    'restore_draft' => 'Riporta a bozza',
+    'archive' => 'Archivia',
+    'review_submitted' => 'Pagina inviata per la revisione.',
+    'published' => 'Pagina pubblicata.',
+    'draft_restored' => 'Pagina riportata a bozza.',
+    'archived' => 'Pagina archiviata.',
+    'invalid_action' => 'Azione del flusso di lavoro non valida.',
+    'action_forbidden' => 'Non hai il permesso di eseguire questa azione.',
+    'invalid_transition' => 'Lo stato attuale della pagina non consente questa transizione.',
+  ],
+  'converter_profiles' => [
+    'conservative' => 'Conservativo',
+    'generic_docs' => 'Pagina di documentazione generica',
+    'generic_marketing' => 'Pagina di marketing generica',
+    'webblocks_ui' => 'HTML in stile WebBlocks UI',
+    'source_size' => ':size byte',
+  ],
+  'dirty_close' => [
+    'title' => 'Scartare le modifiche non salvate?',
+    'description' => 'Le modifiche non salvate andranno perse.',
+    'keep_editing' => 'Continua a modificare',
+    'close_without_saving' => 'Chiudi senza salvare',
+  ],
+  'block_type_support' => [
+    'system' => 'Di sistema',
+    'user' => 'Specifico dell’utente o dell’installazione',
+    'container' => 'Utilizzabile come contenitore',
+    'admin' => 'Supporta il pannello di amministrazione',
+    'render' => 'Supporta il rendering',
+  ],
   'page_layout_picker' => [
     'default' => 'Predefinito',
     'docs' => 'Documentazione',
@@ -385,6 +418,8 @@ $translations = [
     'config_cached_help' => 'Stato corrente della cache di configurazione Laravel.',
   ],
   'common' => [
+    'select' => 'Seleziona',
+    'or' => 'o',
     'filter' => 'Filtra',
     'reset' => 'Reimposta',
     'block_language_help' => 'Guida alla lingua dei blocchi',
@@ -1610,6 +1645,14 @@ $translations = [
       'advanced_description' => 'Concedile solo a strumenti operatore attendibili.',
       'selected_count' => ':selected/:total selezionate',
       'groups' => [
+        'personal_site_feedback' => [
+          'label' => 'Feedback del sito',
+          'description' => 'Leggi e modera commenti e valutazioni pubblici dei siti consentiti.',
+        ],
+        'system_safety' => [
+          'label' => 'Protezione del sistema',
+          'description' => 'Crea un punto di ripristino con un backup completo del sistema prima di applicare modifiche ai contenuti estese o distruttive. Concedi il permesso solo quando serve esplicitamente.',
+        ],
         'system_updates' => [
           'label' => 'Aggiornamenti del sistema',
           'description' => 'Verifiche degli aggiornamenti per tutta l’installazione ed esecuzione esplicitamente approvata.',
@@ -1648,6 +1691,25 @@ $translations = [
         ],
       ],
       'labels' => [
+        'notes_read' => 'Elencare e leggere le note e modificare il proprio stato di lettura',
+        'notes_write' => 'Creare e modificare note ed elencare i destinatari idonei',
+        'notes_delete' => 'Eliminare le note che hai scritto',
+        'consent_read' => 'Leggere le impostazioni e i servizi di consenso del sito',
+        'consent_write' => 'Gestire impostazioni, servizi e traduzioni di consenso del sito',
+        'consent_code_write' => 'Gestire le sorgenti eseguibili dei servizi di consenso',
+        'themes_manage' => 'Installare e rimuovere pacchetti di temi pubblici',
+        'panel_languages_manage' => 'Gestire i cataloghi e la lingua predefinita del pannello',
+        'shared_slots_delete' => 'Eliminare le aree condivise senza riferimenti',
+        'domains_write' => 'Aggiungere e modificare i domini del sito',
+        'domains_delete' => 'Rimuovere i domini del sito',
+        'backups_create' => 'Creare un punto di ripristino con un backup di sistema prima di applicare contenuti',
+        'backups_read' => 'Consultare la politica di pulizia dei backup e l’anteprima',
+        'backups_settings_write' => 'Modificare la politica di pulizia automatica dei backup',
+        'backups_delete' => 'Eseguire la pulizia automatica che elimina i backup',
+        'maintenance_read' => 'Consultare la politica di pulizia di manutenzione e le anteprime',
+        'maintenance_settings_write' => 'Modificare la politica di conservazione della pulizia di manutenzione',
+        'maintenance_delete' => 'Eseguire le categorie di pulizia di manutenzione che eliminano dati',
+        'page_assets_write' => 'Collegare alle pagine risorse CSS e JS specifiche da /site',
         'system_health_read' => 'Leggi lo stato generale dell’installazione',
         'system_updates_read' => 'Leggere lo stato e i risultati degli aggiornamenti del sistema',
         'system_updates_run' => 'Eseguire un aggiornamento approvato per tutta l’installazione',
@@ -2545,7 +2607,7 @@ $translations = [
     'seo_defaults_help' => 'Questi sono fallback di metadati pubblici a livello di sito. Gli override SEO a livello di pagina sono intenzionalmente esclusi da questa fase.',
     'default_meta_title' => 'Meta title predefinito',
     'default_meta_description' => 'Meta description predefinita',
-    'meta_keywords' => 'Meta keywords',
+    'meta_keywords' => 'Parole chiave meta',
     'contact_forms' => 'Moduli di contatto',
     'contact_forms_help' => 'Destinatario predefinito per i blocchi Modulo di contatto di questo sito. I singoli blocchi Modulo di contatto possono comunque sostituire questo indirizzo.',
     'default_recipient_email' => 'Email destinatario predefinita',
@@ -3461,6 +3523,7 @@ $translations = [
     'bulk_delete_help' => 'Questa azione in blocco si applica solo ai messaggi visibili in questa pagina. Il server ricontrolla l\'accesso per ogni messaggio selezionato prima dell\'eliminazione.',
   ],
   'users' => [
+    'no_login' => 'Nessun accesso finora',
     'title' => 'Utenti',
     'description' => 'Gestisci utenti del CMS, accesso admin e stato di attività degli account senza lasciare lo spazio di lavoro admin.',
     'form_description' => 'Gli utenti restano account a livello di installazione. Il ruolo e i siti assegnati determinano ora quali aree del CMS può raggiungere ciascuna persona.',

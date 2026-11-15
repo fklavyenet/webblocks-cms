@@ -2,6 +2,9 @@
 
 namespace WebBlocks\Cms\Support\Admin;
 
+use Illuminate\Support\Str;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
+
 class SelectedBulkDeleteResult
 {
   public function __construct(
@@ -29,26 +32,33 @@ class SelectedBulkDeleteResult
   public function message(): string
   {
   if ($this->deletedCount() === 0 && $this->hasFailures()) {
-      return 'No selected '.$this->pluralLabel.' were deleted.';
+      return __('webblocks-cms::admin-feedback.bulk.none_deleted', ['entity' => $this->entity($this->pluralLabel)]);
   }
 
-  if ($this->hasFailures()) {
-      return $this->deletedCount().' selected '.$this->labelFor($this->deletedCount()).' deleted. '.$this->failedCount().' could not be deleted.';
-  }
+  $message = __('webblocks-cms::admin-feedback.bulk.deleted', [
+      'count' => $this->deletedCount(),
+      'entity' => $this->entity($this->deletedCount() === 1 ? $this->singularLabel : $this->pluralLabel),
+  ]);
 
-  return $this->deletedCount().' selected '.$this->labelFor($this->deletedCount()).' deleted.';
+  return $this->hasFailures()
+      ? $message.' '.__('webblocks-cms::admin-feedback.bulk.failed_count', ['count' => $this->failedCount()])
+      : $message;
   }
 
   public function failureMessages(): array
   {
   return array_values(array_map(
-      fn (array $failure): string => ucfirst($this->singularLabel).' #'.$failure['id'].' could not be deleted: '.$failure['message'],
+      fn (array $failure): string => __('webblocks-cms::admin-feedback.bulk.failure', [
+          'entity' => Str::ucfirst($this->entity($this->singularLabel)),
+          'id' => $failure['id'],
+          'reason' => $failure['message'],
+      ]),
       $this->failed,
   ));
   }
 
-  private function labelFor(int $count): string
+  private function entity(string $label): string
   {
-  return $count === 1 ? $this->singularLabel : $this->pluralLabel;
+  return app(CmsTranslator::class)->getOrDefault('admin-feedback.bulk_entities.'.str_replace(' ', '_', $label), $label, app()->getLocale());
   }
 }

@@ -43,11 +43,11 @@ class LocaleLifecycleReport
   public function disableBlockedReason(): ?string
   {
     if ($this->locale->is_default) {
-      return 'Default locale cannot be disabled.';
+      return __('webblocks-cms::admin-feedback.locales.default_disable');
     }
 
     if (! $this->locale->is_enabled) {
-      return 'Locale is already disabled.';
+      return __('webblocks-cms::admin-feedback.locales.already_disabled');
     }
 
     return null;
@@ -56,15 +56,15 @@ class LocaleLifecycleReport
   public function deleteBlockedReason(): ?string
   {
     if ($this->locale->is_default) {
-      return 'Default locale cannot be deleted.';
+      return __('webblocks-cms::admin-feedback.locales.default_delete');
     }
 
     if ($this->locale->is_enabled) {
-      return 'Disable locale before deleting it.';
+      return __('webblocks-cms::admin-feedback.locales.disable_before_delete');
     }
 
     if ($this->inUse()) {
-      return 'Cannot delete because this locale is in use.';
+      return __('webblocks-cms::admin-feedback.locales.delete_in_use');
     }
 
     return null;

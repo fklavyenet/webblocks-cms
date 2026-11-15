@@ -57,7 +57,7 @@ class SitePromotionController extends Controller
 
       return redirect()
         ->route('admin.sites.promote', ['plan' => $plan->token])
-        ->with('status', 'Site Promotion dry run completed. Review the plan before apply.');
+        ->with('status', __('webblocks-cms::admin-feedback.promotion.previewed'));
     } catch (RuntimeException $exception) {
       return back()->withInput()->withErrors(['site_promotion' => $exception->getMessage()]);
     }
@@ -70,7 +70,7 @@ class SitePromotionController extends Controller
 
       return redirect()
         ->route('admin.sites.promote', ['plan' => $result->plan->token])
-        ->with('status', 'Site Promotion applied successfully. Safety backup #'.($result->safetyBackup?->id ?? '-').' created and search rebuilt for '.$result->targetSite->handle.'.');
+        ->with('status', __('webblocks-cms::admin-feedback.promotion.applied', ['backup' => $result->safetyBackup?->id ?? '-', 'site' => $result->targetSite->handle]));
     } catch (RuntimeException $exception) {
       return back()->withErrors(['site_promotion' => $exception->getMessage()]);
     }

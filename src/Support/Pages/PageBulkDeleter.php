@@ -36,7 +36,7 @@ class PageBulkDeleter
       $page = $pages->get($id);
 
       if (! $page) {
-    $failed[] = ['id' => $id, 'message' => 'not accessible in your assigned site scope'];
+    $failed[] = ['id' => $id, 'message' => __('webblocks-cms::admin-feedback.bulk.scope_denied')];
 
     continue;
       }
@@ -51,7 +51,7 @@ class PageBulkDeleter
           'message' => $throwable->getMessage(),
     ]);
 
-    $failed[] = ['id' => $id, 'message' => 'delete failed; check system logs'];
+    $failed[] = ['id' => $id, 'message' => __('webblocks-cms::admin-feedback.bulk.delete_failed')];
       }
   }
 

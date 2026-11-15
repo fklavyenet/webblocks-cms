@@ -313,7 +313,7 @@ class PageController extends Controller
 
     return app(EditorRecovery::class)->savedResponse($request, redirect()
       ->route('admin.pages.edit', $page)
-      ->with('status', 'Page saved as draft.'));
+      ->with('status', __('webblocks-cms::admin-feedback.pages.saved_draft')));
   }
 
   public function edit(Page $page): View
@@ -478,11 +478,11 @@ class PageController extends Controller
         },
         'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
       ], fn (mixed $value) => $value !== null && $value !== ''))
-      ->with('status', 'Page updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.pages.updated'));
 
     if ($page->isPublished() && $page->publicUrl()) {
       $redirect->with('status_action', [
-        'label' => 'View page',
+        'label' => __('webblocks-cms::admin.flash.view_page'),
         'url' => $page->publicUrl(),
       ]);
     }
@@ -677,7 +677,7 @@ class PageController extends Controller
         'locale' => $validated['locale'] ?? null,
         'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
       ])
-      ->with('status', 'Deleted all blocks from '.($slot->slotType?->name ?? 'slot').'.');
+      ->with('status', __('webblocks-cms::admin-feedback.blocks.cleared_slot', ['slot' => $slot->slotType?->name ?? __('webblocks-cms::admin.page_slots_card.fallback_slot')]));
   }
 
   public function updateWorkflow(Request $request, Page $page): RedirectResponse
@@ -750,8 +750,8 @@ class PageController extends Controller
         'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
       ], fn (mixed $value) => $value !== null && $value !== ''))
       ->with('status', $result['published_count'] > 0
-        ? $result['published_count'].' page-owned blocks published.'
-        : 'No unpublished page-owned blocks were available to publish.');
+        ? __('webblocks-cms::admin-feedback.pages.blocks_published', ['count' => $result['published_count']])
+        : __('webblocks-cms::admin-feedback.pages.no_blocks_to_publish'));
   }
 
   public function reorderSlotBlocks(Request $request, Page $page, PageSlot $slot): JsonResponse
@@ -889,7 +889,7 @@ class PageController extends Controller
 
     return redirect()
       ->to($this->pageIndexState->storedUrl($request, $siteId))
-      ->with('status', 'Page deleted successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.pages.deleted'));
   }
 
   public function bulkDestroy(BulkDeletePagesRequest $request): RedirectResponse

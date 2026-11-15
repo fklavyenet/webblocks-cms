@@ -36,7 +36,7 @@ class PageRevisionController extends Controller
     if (! $this->revisionManager->revisionsTableExists()) {
       return redirect()
         ->route('admin.pages.edit', $page)
-        ->withErrors(['revisions' => 'Page revisions are not ready yet. Run the latest migrations before opening revision history.'])
+        ->withErrors(['revisions' => __('webblocks-cms::admin-feedback.revisions.history_not_ready')])
         ->throwResponse();
     }
 
@@ -93,13 +93,13 @@ class PageRevisionController extends Controller
     if (! $this->revisionManager->revisionsTableExists() || ! $this->candidateManager->tableExists()) {
       return redirect()
         ->route('admin.pages.revisions.show', [$page, $revision])
-        ->withErrors(['revision' => 'Page version candidates are not ready yet. Run the latest migrations.']);
+        ->withErrors(['revision' => __('webblocks-cms::admin-feedback.revisions.candidates_not_ready')]);
     }
 
     if ($request->restoreScope() === 'full_page' && $this->revisionInspector->inspect($page, $revision)['health']['status'] === 'blocked') {
       return redirect()
         ->route('admin.pages.revisions.show', [$page, $revision])
-        ->withErrors(['revision' => 'This version cannot be restored because required referenced records are missing.']);
+        ->withErrors(['revision' => __('webblocks-cms::admin-feedback.revisions.missing_references')]);
     }
 
     try {
@@ -110,7 +110,7 @@ class PageRevisionController extends Controller
 
     return redirect()
       ->route('admin.pages.revisions.show', [$page, $revision, 'restore_scope' => $request->restoreScope(), 'locale_id' => $request->restoreLocaleId()])
-      ->with('status', 'Restore candidate prepared. Preview it before applying it to the current page.')
+      ->with('status', __('webblocks-cms::admin-feedback.revisions.candidate_ready'))
       ->with('status_action', [
         'label' => 'Preview candidate',
         'url' => $candidate->previewUrl(),
@@ -133,7 +133,7 @@ class PageRevisionController extends Controller
 
     return redirect()
       ->route('admin.pages.edit', $page)
-      ->with('status', 'The reviewed page version was applied successfully. A safety version of the previous state was retained.');
+      ->with('status', __('webblocks-cms::admin-feedback.revisions.applied'));
   }
 
   public function discardCandidate(Page $page, PageRevisionCandidate $candidate): RedirectResponse
@@ -146,6 +146,6 @@ class PageRevisionController extends Controller
 
     return redirect()
       ->route('admin.pages.revisions.show', [$page, $revisionId, 'restore_scope' => $candidate->restore_scope, 'locale_id' => $candidate->restore_locale_id])
-      ->with('status', 'Restore candidate discarded. The current page was not changed.');
+      ->with('status', __('webblocks-cms::admin-feedback.revisions.discarded'));
   }
 }

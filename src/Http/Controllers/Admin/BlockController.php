@@ -289,7 +289,7 @@ class BlockController extends Controller
       return redirect()
         ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $localeCode, 'return_url' => $request->input('return_url')])
         ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
-        ->with('status', 'Block created successfully.');
+        ->with('status', __('webblocks-cms::admin-feedback.blocks.created'));
     }
 
     $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
@@ -298,7 +298,7 @@ class BlockController extends Controller
     $redirect = redirect()
       ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode, 'return_url' => $request->input('return_url')])
       ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
-      ->with('status', 'Block created successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.blocks.created'));
 
     if ($previewUrl) {
       $redirect->with('status_action', [
@@ -437,7 +437,7 @@ class BlockController extends Controller
       return redirect()
         ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $localeCode, 'return_url' => $request->input('return_url')])
         ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
-        ->with('status', 'Block updated successfully.');
+        ->with('status', __('webblocks-cms::admin-feedback.blocks.updated'));
     }
 
     $pageSlotId = $this->pageSlotRouteId($block->page_id, $block->slot_type_id);
@@ -446,7 +446,7 @@ class BlockController extends Controller
     $redirect = redirect()
       ->route('admin.pages.slots.blocks', ['page' => $block->page_id, 'slot' => $pageSlotId ?: $block->slot_type_id, 'locale' => $localeCode, 'return_url' => $request->input('return_url')])
       ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
-      ->with('status', 'Block updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.blocks.updated'));
 
     if ($previewUrl) {
       $redirect->with('status_action', [
@@ -544,13 +544,13 @@ class BlockController extends Controller
       return redirect()
         ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request()), 'return_url' => request('return_url')])
         ->with('slot_block_expanded', $this->slotExpandedBlockIds($block, false))
-        ->with('status', $deleteDescendants ? 'Block and nested child blocks deleted.' : 'Block deleted.');
+        ->with('status', $deleteDescendants ? __('webblocks-cms::admin-feedback.blocks.deleted_with_children') : __('webblocks-cms::admin-feedback.blocks.deleted'));
     }
 
     return redirect()
       ->route('admin.pages.slots.blocks', ['page' => $pageId, 'slot' => $pageSlotId ?: $slotTypeId, 'locale' => $this->requestedLocaleCode(request()), 'return_url' => request('return_url')])
       ->with('slot_block_expanded', $this->slotExpandedBlockIds($block, false))
-      ->with('status', $deleteDescendants ? 'Block and nested child blocks deleted.' : 'Block deleted.');
+      ->with('status', $deleteDescendants ? __('webblocks-cms::admin-feedback.blocks.deleted_with_children') : __('webblocks-cms::admin-feedback.blocks.deleted'));
   }
 
   private function move(Block $block, string $direction): RedirectResponse
@@ -615,26 +615,26 @@ class BlockController extends Controller
         return redirect()
           ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request()), 'return_url' => request('return_url')])
           ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
-          ->with('status', 'Block is already at the edge of its group.');
+          ->with('status', __('webblocks-cms::admin-feedback.blocks.edge'));
       }
 
       return redirect()
         ->route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot, 'locale' => $this->requestedLocaleCode(request()), 'return_url' => request('return_url')])
         ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
-        ->with('status', 'Block order updated successfully.');
+        ->with('status', __('webblocks-cms::admin-feedback.blocks.reordered'));
     }
 
     if (! $moved) {
       return redirect()
         ->route('admin.pages.slots.blocks', $this->slotRedirectParameters($block))
         ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
-        ->with('status', 'Block is already at the edge of its group.');
+        ->with('status', __('webblocks-cms::admin-feedback.blocks.edge'));
     }
 
     return redirect()
       ->route('admin.pages.slots.blocks', $this->slotRedirectParameters($block))
       ->with('slot_block_expanded', $this->slotExpandedBlockIds($block))
-      ->with('status', 'Block order updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.blocks.reordered'));
   }
 
   private function sharedSlotFromRequest(Request $request): ?SharedSlot

@@ -490,7 +490,7 @@ class SystemSettings
         ->orderBy('name')
         ->get()
         ->mapWithKeys(fn (Locale $locale) => [
-          $locale->code => strtoupper($locale->code).' - '.$locale->name.($locale->is_default ? ' (Default)' : ''),
+          $locale->code => strtoupper($locale->code).' - '.$locale->name.($locale->is_default ? ' ('.__('webblocks-cms::admin.common.default').')' : ''),
         ])
         ->all();
     } catch (Throwable) {

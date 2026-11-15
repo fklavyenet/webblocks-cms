@@ -244,6 +244,7 @@ return [
     ],
   ],
   'embedded_applications' => [
+    'setting_values_example' => 'petit, moyen, grand',
     'title' => 'Applications▁intégrées',
     'description' => 'Enregistrez les applications HTML, CSS et JavaScript de▁confiance dans la base de▁données CMS et placez-les avec les▁blocs d\'applications.',
     'create' => 'Nouvelle▁demande',

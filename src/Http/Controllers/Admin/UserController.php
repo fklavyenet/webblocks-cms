@@ -77,7 +77,7 @@ class UserController extends Controller
     $validated = $request->validated();
     $user = app(WriteCmsAccess::class)->user($request->user(), new User, $validated);
 
-    return redirect()->route('admin.users.edit', $user)->with('status', 'User created successfully.');
+    return redirect()->route('admin.users.edit', $user)->with('status', __('webblocks-cms::admin-feedback.users.created'));
   }
 
   public function edit(User $user): View
@@ -121,7 +121,7 @@ class UserController extends Controller
 
     $user = app(WriteCmsAccess::class)->user($request->user(), $user, $validated);
 
-    return redirect()->route('admin.users.edit', $user)->with('status', 'User updated successfully.');
+    return redirect()->route('admin.users.edit', $user)->with('status', __('webblocks-cms::admin-feedback.users.updated'));
   }
 
   public function destroy(User $user): RedirectResponse
@@ -135,7 +135,7 @@ class UserController extends Controller
 
     app(WriteCmsAccess::class)->deleteUser(request()->user(), $user);
 
-    return redirect()->route('admin.users.index')->with('status', 'User deleted successfully.');
+    return redirect()->route('admin.users.index')->with('status', __('webblocks-cms::admin-feedback.users.deleted'));
   }
 
   public function bulkDestroy(BulkDeleteUsersRequest $request): RedirectResponse
@@ -173,7 +173,7 @@ class UserController extends Controller
       ->with($deleted > 0 ? 'status' : 'bulk_status', $message);
 
     if ($failed > 0) {
-      $redirect->withErrors(['users' => 'Some selected users could not be deleted because they are protected or no longer managed by CMS.']);
+      $redirect->withErrors(['users' => __('webblocks-cms::admin-feedback.users.bulk_delete_blocked')]);
     }
 
     return $redirect;
@@ -217,12 +217,13 @@ class UserController extends Controller
 
   private function bulkDeleteMessage(int $deleted, int $failed): string
   {
-    $message = $deleted === 1
-      ? '1 selected user deleted.'
-      : $deleted.' selected users deleted.';
+    $message = __('webblocks-cms::admin-feedback.bulk.deleted', [
+      'count' => $deleted,
+      'entity' => __($deleted === 1 ? 'webblocks-cms::admin-feedback.bulk_entities.user' : 'webblocks-cms::admin-feedback.bulk_entities.users'),
+    ]);
 
     if ($failed > 0) {
-      $message .= ' '.$failed.' could not be deleted.';
+      $message .= ' '.__('webblocks-cms::admin-feedback.bulk.failed_count', ['count' => $failed]);
     }
 
     return $message;

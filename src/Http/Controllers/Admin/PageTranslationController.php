@@ -87,7 +87,7 @@ class PageTranslationController extends Controller
         'page' => $page,
         'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
       ], fn (mixed $value) => $value !== null && $value !== ''))
-      ->with('status', 'Translation added successfully.'));
+      ->with('status', __('webblocks-cms::admin-feedback.translations.added')));
   }
 
   public function edit(Page $page, PageTranslation $translation): View
@@ -139,7 +139,7 @@ class PageTranslationController extends Controller
         'page' => $page,
         'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
       ], fn (mixed $value) => $value !== null && $value !== ''))
-      ->with('status', 'Translation updated successfully.'));
+      ->with('status', __('webblocks-cms::admin-feedback.translations.updated')));
   }
 
   private function assetPickerAssets()

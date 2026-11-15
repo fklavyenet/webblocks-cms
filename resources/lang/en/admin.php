@@ -1,6 +1,39 @@
 <?php
 
 return [
+  'page_workflow' => [
+    'submit_review' => 'Submit for Review',
+    'publish' => 'Publish',
+    'restore_draft' => 'Move Back to Draft',
+    'archive' => 'Archive',
+    'review_submitted' => 'Page submitted for review.',
+    'published' => 'Page published.',
+    'draft_restored' => 'Page moved back to draft.',
+    'archived' => 'Page archived.',
+    'invalid_action' => 'Invalid workflow action.',
+    'action_forbidden' => 'You do not have permission to perform this workflow action.',
+    'invalid_transition' => 'This workflow transition is not allowed for the current page status.',
+  ],
+  'converter_profiles' => [
+    'conservative' => 'Conservative',
+    'generic_docs' => 'Generic Docs Page',
+    'generic_marketing' => 'Generic Marketing Page',
+    'webblocks_ui' => 'WebBlocks UI-flavored HTML',
+    'source_size' => ':size bytes',
+  ],
+  'dirty_close' => [
+    'title' => 'Discard unsaved changes?',
+    'description' => 'Unsaved changes will be lost.',
+    'keep_editing' => 'Keep editing',
+    'close_without_saving' => 'Close without saving',
+  ],
+  'block_type_support' => [
+    'system' => 'System',
+    'user' => 'User / install-specific',
+    'container' => 'Container-capable',
+    'admin' => 'Has admin support',
+    'render' => 'Has render support',
+  ],
   'page_layout_picker' => [
     'default' => 'Default',
     'docs' => 'Docs',
@@ -507,6 +540,8 @@ return [
     'config_cached_help' => 'Current Laravel configuration cache state.',
   ],
   'common' => [
+    'select' => 'Select',
+    'or' => 'or',
     'filter' => 'Filter',
     'reset' => 'Reset',
     'block_language_help' => 'Block language help',
@@ -1828,6 +1863,14 @@ return [
       'advanced_description' => 'Grant only to trusted operator tools.',
       'selected_count' => ':selected/:total selected',
       'groups' => [
+        'personal_site_feedback' => [
+          'label' => 'Site feedback',
+          'description' => 'Read and moderate public comments and ratings for allowed sites.',
+        ],
+        'system_safety' => [
+          'label' => 'System safety',
+          'description' => 'Create a full system backup restore point before a large or destructive content apply. Grant only when explicitly needed.',
+        ],
         'system_updates' => [
           'label' => 'System updates',
           'description' => 'Installation-wide update checks and explicitly approved execution.',
@@ -1870,6 +1913,25 @@ return [
         ],
       ],
       'labels' => [
+        'notes_read' => 'List and read notes and change your own read state',
+        'notes_write' => 'Create and edit notes and list eligible recipients',
+        'notes_delete' => 'Delete notes you wrote',
+        'consent_read' => 'Read site consent settings and services',
+        'consent_write' => 'Manage site consent settings, services and translations',
+        'consent_code_write' => 'Manage executable consent service sources',
+        'themes_manage' => 'Install and remove public theme packages',
+        'panel_languages_manage' => 'Manage panel language catalogs and the default panel language',
+        'shared_slots_delete' => 'Delete unreferenced Shared Slots',
+        'domains_write' => 'Add and change site domains',
+        'domains_delete' => 'Remove site domains',
+        'backups_create' => 'Create a system backup restore point before content apply',
+        'backups_read' => 'Read backup cleanup policy and preview',
+        'backups_settings_write' => 'Change the automatic backup cleanup policy',
+        'backups_delete' => 'Run destructive automatic backup cleanup',
+        'maintenance_read' => 'Read maintenance cleanup policy and previews',
+        'maintenance_settings_write' => 'Change maintenance cleanup retention policy',
+        'maintenance_delete' => 'Run destructive maintenance cleanup categories',
+        'page_assets_write' => 'Attach page-specific /site CSS and JS assets to pages',
         'system_health_read' => 'Read installation-wide system health',
         'system_updates_read' => 'Read system update status and results',
         'system_updates_run' => 'Run an approved installation-wide system update',
@@ -3705,6 +3767,7 @@ return [
     'bulk_delete_help' => 'This bulk action applies only to messages visible on this page. The server re-checks access for every selected message before deletion.',
   ],
   'users' => [
+    'no_login' => 'No login yet',
     'title' => 'Users',
     'description' => 'Manage CMS users, admin access, and active account state without leaving the admin workspace.',
     'form_description' => 'Users stay install-level accounts. Role and assigned sites now determine which CMS areas each person can access.',
@@ -4928,6 +4991,7 @@ return [
   ],
 
   'embedded_applications' => [
+    'setting_values_example' => 'small, medium, large',
     'title' => 'Embedded applications',
     'description' => 'Register trusted HTML, CSS, and JavaScript applications in the CMS database and place them with Application Blocks.',
     'create' => 'New application', 'create_title' => 'New Embedded Application', 'edit_title' => 'Edit Embedded Application',

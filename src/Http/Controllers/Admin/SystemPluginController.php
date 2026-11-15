@@ -108,7 +108,7 @@ class SystemPluginController extends Controller
 
     return redirect()
       ->route('admin.system.plugins.index')
-      ->with('status', 'Plugin '.$installed['handle'].' '.$installed['version'].' was installed disabled. Review it before enabling.');
+      ->with('status', __('webblocks-cms::admin-feedback.plugins.installed', ['handle' => $installed['handle'], 'version' => $installed['version']]));
   }
 
   public function enable(string $plugin): RedirectResponse
@@ -120,7 +120,7 @@ class SystemPluginController extends Controller
     abort_if($definition === null || $definition->installPathValue() === null, 404);
 
     if (! is_dir($definition->installPathValue())) {
-      return back()->withErrors(['plugin' => 'Plugin files are missing. Reinstall the plugin package before enabling it.']);
+      return back()->withErrors(['plugin' => __('webblocks-cms::admin-feedback.plugins.files_missing')]);
     }
 
     if ($error = $this->cmsCompatibilityError($definition)) {
@@ -140,7 +140,7 @@ class SystemPluginController extends Controller
 
     return redirect()
       ->route('admin.system.plugins.show', $plugin)
-      ->with('status', 'Plugin enabled. Its routes, commands, permissions, and menus will be active on the next request.');
+      ->with('status', __('webblocks-cms::admin-feedback.plugins.enabled'));
   }
 
   public function disable(string $plugin): RedirectResponse
@@ -160,7 +160,7 @@ class SystemPluginController extends Controller
 
     return redirect()
       ->route('admin.system.plugins.show', $plugin)
-      ->with('status', 'Plugin disabled. Routes, commands, menus, settings, health checks, and contributions are inactive.');
+      ->with('status', __('webblocks-cms::admin-feedback.plugins.disabled'));
   }
 
   public function updateAppearance(PluginAppearanceRequest $request, string $plugin, UpdatePluginAppearance $action, PluginAppearance $appearance): RedirectResponse
@@ -191,7 +191,7 @@ class SystemPluginController extends Controller
     }
 
     if (! $this->plugins->isConfiguredEnabled($plugin)) {
-      return back()->withErrors(['plugin' => 'Enable this plugin before running setup.']);
+      return back()->withErrors(['plugin' => __('webblocks-cms::admin-feedback.plugins.enable_before_setup')]);
     }
 
     $version = $definition->versionText();
@@ -220,7 +220,7 @@ class SystemPluginController extends Controller
     abort_unless($definition?->isManuallyInstalled(), 404);
 
     if ($this->plugins->isConfiguredEnabled($plugin)) {
-      return back()->withErrors(['plugin' => 'Disable this plugin before uninstalling it. Plugin-owned database tables are preserved.']);
+      return back()->withErrors(['plugin' => __('webblocks-cms::admin-feedback.plugins.disable_before_uninstall')]);
     }
 
     $version = $definition->versionText();
@@ -237,7 +237,7 @@ class SystemPluginController extends Controller
 
     return redirect()
       ->route('admin.system.plugins.index')
-      ->with('status', 'Plugin uninstalled. Plugin-owned database tables were preserved.');
+      ->with('status', __('webblocks-cms::admin-feedback.plugins.uninstalled'));
   }
 
   public function updateFromCatalog(string $plugin): RedirectResponse
@@ -255,11 +255,11 @@ class SystemPluginController extends Controller
     $result = $this->catalog->show($plugin);
 
     if (! $result->available || $result->plugin === null) {
-      return back()->withErrors(['plugin' => 'No catalog update is available right now.']);
+      return back()->withErrors(['plugin' => __('webblocks-cms::admin-feedback.plugins.no_update')]);
     }
 
     if (! $this->catalogPluginIsUpdateFor($result->plugin, $installedVersion)) {
-      return back()->withErrors(['plugin' => 'No compatible catalog update is available for this plugin.']);
+      return back()->withErrors(['plugin' => __('webblocks-cms::admin-feedback.plugins.no_compatible_update')]);
     }
 
     try {
@@ -287,7 +287,7 @@ class SystemPluginController extends Controller
 
     return redirect()
       ->route('admin.system.plugins.index')
-      ->with('status', $definition->labelText().' updated to '.$installed['version'].' from Plugin Catalog.');
+      ->with('status', __('webblocks-cms::admin-feedback.plugins.updated_catalog', ['plugin' => $definition->labelText(), 'version' => $installed['version']]));
   }
 
   /**

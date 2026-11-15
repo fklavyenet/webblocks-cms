@@ -119,7 +119,7 @@
                     <div class="wb-stack wb-gap-1"><label for="setting-modal-type">{{ $text('setting_type') }}</label><select class="wb-select" id="setting-modal-type" data-wb-setting-input="type">@foreach(['string','boolean','integer','enum'] as $type)<option value="{{ $type }}">{{ $type }}</option>@endforeach</select></div>
                 </div>
                 <div class="wb-stack wb-gap-1"><label for="setting-modal-default">{{ $text('setting_default') }}</label><input class="wb-input" id="setting-modal-default" data-wb-setting-input="default"></div>
-                <div class="wb-stack wb-gap-1" data-wb-setting-group="enum"><label for="setting-modal-values">{{ $text('enum_values') }}</label><input class="wb-input" id="setting-modal-values" data-wb-setting-input="values" placeholder="small, medium, large"></div>
+                <div class="wb-stack wb-gap-1" data-wb-setting-group="enum"><label for="setting-modal-values">{{ $text('enum_values') }}</label><input class="wb-input" id="setting-modal-values" data-wb-setting-input="values" placeholder="{{ $text('setting_values_example') }}"></div>
                 <div class="wb-grid wb-grid-2" data-wb-setting-group="integer">
                     <div class="wb-stack wb-gap-1"><label for="setting-modal-min">{{ $text('integer_min') }}</label><input class="wb-input" type="number" id="setting-modal-min" data-wb-setting-input="min"></div>
                     <div class="wb-stack wb-gap-1"><label for="setting-modal-max">{{ $text('integer_max') }}</label><input class="wb-input" type="number" id="setting-modal-max" data-wb-setting-input="max"></div>

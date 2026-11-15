@@ -55,7 +55,7 @@
                             </tr>
                             <tr>
                                 <th>{{ $adminText('source') }}</th>
-                                <td>{{ $conversionPlan->input->sourceName }} ({{ number_format($conversionPlan->sourceBytes) }} bytes)</td>
+                                <td>{{ $conversionPlan->input->sourceName }} ({{ __('webblocks-cms::admin.converter_profiles.source_size', ['size' => number_format($conversionPlan->sourceBytes)]) }})</td>
                             </tr>
                             <tr>
                                 <th>{{ $adminText('extracted_content_root') }}</th>

@@ -21,10 +21,12 @@ class BulkDeleteSiteImportsRequest extends FormRequest
 
   public function messages(): array
   {
+    $selectionRequired = __('webblocks-cms::admin-feedback.bulk.select_required', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.site_import')]);
+
     return [
-      'site_import_ids.required' => 'Select at least one site import to delete.',
-      'site_import_ids.min' => 'Select at least one site import to delete.',
-      'site_import_ids.*.exists' => 'One or more selected site imports no longer exists.',
+      'site_import_ids.required' => $selectionRequired,
+      'site_import_ids.min' => $selectionRequired,
+      'site_import_ids.*.exists' => __('webblocks-cms::admin-feedback.bulk.selection_missing', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.site_imports')]),
     ];
   }
 }

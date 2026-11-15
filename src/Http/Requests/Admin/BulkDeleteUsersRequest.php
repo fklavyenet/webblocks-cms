@@ -21,10 +21,12 @@ class BulkDeleteUsersRequest extends FormRequest
 
   public function messages(): array
   {
+    $selectionRequired = __('webblocks-cms::admin-feedback.bulk.select_required', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.user')]);
+
     return [
-      'user_ids.required' => 'Select at least one user to delete.',
-      'user_ids.min' => 'Select at least one user to delete.',
-      'user_ids.*.exists' => 'One or more selected users no longer exists.',
+      'user_ids.required' => $selectionRequired,
+      'user_ids.min' => $selectionRequired,
+      'user_ids.*.exists' => __('webblocks-cms::admin-feedback.bulk.selection_missing', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.users')]),
     ];
   }
 }

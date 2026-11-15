@@ -27,7 +27,7 @@ class SharedSlotRevisionController extends Controller
     if (! $this->revisionManager->revisionsTableExists()) {
       return redirect()
         ->route('admin.shared-slots.edit', $sharedSlot)
-        ->withErrors(['revisions' => 'Shared Slot revisions are not ready yet. Run the latest migrations before opening revision history.'])
+        ->withErrors(['revisions' => __('webblocks-cms::admin-feedback.shared_revisions.history_not_ready')])
         ->throwResponse();
     }
 
@@ -47,7 +47,7 @@ class SharedSlotRevisionController extends Controller
     if (! $this->revisionManager->revisionsTableExists()) {
       return redirect()
         ->route('admin.shared-slots.edit', $sharedSlot)
-        ->withErrors(['revisions' => 'Shared Slot revisions are not ready yet. Run the latest migrations before opening revision details.'])
+        ->withErrors(['revisions' => __('webblocks-cms::admin-feedback.shared_revisions.details_not_ready')])
         ->throwResponse();
     }
 
@@ -71,14 +71,14 @@ class SharedSlotRevisionController extends Controller
     if (! $this->revisionManager->revisionsTableExists()) {
       return redirect()
         ->route('admin.shared-slots.edit', $sharedSlot)
-        ->withErrors(['revisions' => 'Shared Slot revisions are not ready yet. Run the latest migrations before restoring revisions.']);
+        ->withErrors(['revisions' => __('webblocks-cms::admin-feedback.shared_revisions.restore_not_ready')]);
     }
 
     $this->revisionManager->restore($sharedSlot, $revision, request()->user());
 
     return redirect()
       ->route('admin.shared-slots.edit', $sharedSlot)
-      ->with('status', 'Shared Slot revision restored successfully.')
+      ->with('status', __('webblocks-cms::admin-feedback.shared_revisions.restored'))
       ->with('status_action', [
         'label' => 'Edit blocks',
         'url' => route('admin.shared-slots.blocks.edit', $sharedSlot),

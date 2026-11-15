@@ -199,7 +199,7 @@ class MediaController extends Controller
 
     return redirect()
       ->to($request->safeReturnUrl() ?: route('admin.media.index'))
-      ->with('status', 'Media updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.media.updated'));
   }
 
   public function regenerateTransforms(Media $media): RedirectResponse
@@ -207,7 +207,7 @@ class MediaController extends Controller
     $this->authorization->abortUnlessMediaAccess(request()->user(), $media);
 
     if (! $media->isImage()) {
-      return redirect()->route('admin.media.edit', $media)->withErrors(['asset' => 'Only image media has variants.']);
+      return redirect()->route('admin.media.edit', $media)->withErrors(['asset' => __('webblocks-cms::admin-feedback.media.variants_images_only')]);
     }
 
     $counts = $this->mediaTransformService->regenerate($media);
@@ -216,12 +216,12 @@ class MediaController extends Controller
     if ($successful === 0) {
       return redirect()
         ->route('admin.media.edit', ['media' => $media, 'return_url' => $this->mediaIndexState->safeReturnUrlFromRequest(request())])
-        ->withErrors(['asset' => 'Image variants could not be generated; original-image fallbacks remain active.']);
+        ->withErrors(['asset' => __('webblocks-cms::admin-feedback.media.variants_failed')]);
     }
 
     return redirect()
       ->route('admin.media.edit', ['media' => $media, 'return_url' => $this->mediaIndexState->safeReturnUrlFromRequest(request())])
-      ->with('status', 'Image variants regenerated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.media.variants_created'));
   }
 
   public function destroy(Media $media): RedirectResponse
@@ -237,12 +237,12 @@ class MediaController extends Controller
           'media' => $media,
           'return_url' => $returnUrl,
         ]))
-        ->withErrors(['asset' => 'Media cannot be deleted because it is in use. '.$exception->summary()]);
+        ->withErrors(['asset' => __('webblocks-cms::admin-feedback.media.in_use', ['usage' => $exception->summary()])]);
     }
 
     return redirect()
       ->to($returnUrl ?: route('admin.media.index'))
-      ->with('status', 'Media deleted successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.media.deleted'));
   }
 
   public function bulkDestroy(BulkDeleteMediaRequest $request): RedirectResponse
@@ -271,7 +271,7 @@ class MediaController extends Controller
 
     return redirect()
       ->route('admin.media.index', array_filter(['folder_id' => $request->validated('folder_id')]))
-      ->with('status', 'Media uploaded successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.media.uploaded'));
   }
 
   public function fetchRemote(MediaRemoteFetchRequest $request): RedirectResponse
@@ -290,7 +290,7 @@ class MediaController extends Controller
 
     return redirect()
       ->route('admin.media.index', array_filter(['folder_id' => $request->validated('folder_id')]))
-      ->with('status', 'Remote media fetched successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.media.fetched'));
   }
 
   public function storeFolder(MediaFolderRequest $request): RedirectResponse
@@ -305,7 +305,7 @@ class MediaController extends Controller
 
     return redirect()
       ->route('admin.media.index', ['folder_id' => $folder->id])
-      ->with('status', 'Folder created successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.media.folder_created'));
   }
 
   private function folderOptions()

@@ -92,14 +92,14 @@ class CmsApiTokenController extends Controller
     if (! $this->apiTokenSchemaReady()) {
       return redirect()
         ->route('admin.system.api-tokens.index')
-        ->withErrors(['name' => 'CMS API token storage is not ready. Run System Update again or contact your CMS operator.']);
+        ->withErrors(['name' => __('webblocks-cms::admin-feedback.tokens.not_ready')]);
     }
 
     $issuedToken = $this->issuer->issue($request->tokenName(), $request->user(), $request->tokenCapabilities());
 
     return redirect()
       ->route('admin.system.api-tokens.index')
-      ->with('status', 'CMS API token created. Copy it now; it will not be shown again.')
+      ->with('status', __('webblocks-cms::admin-feedback.tokens.created'))
       ->with('created_cms_api_token', $issuedToken->plainToken)
       ->with('created_cms_api_token_name', $issuedToken->record->name);
   }
@@ -112,7 +112,7 @@ class CmsApiTokenController extends Controller
 
     return redirect()
       ->route('admin.system.api-tokens.index')
-      ->with('status', 'CMS API token revoked.');
+      ->with('status', __('webblocks-cms::admin-feedback.tokens.revoked'));
   }
 
   public function update(CmsApiTokenRequest $request, CmsApiToken $token): RedirectResponse
@@ -125,7 +125,7 @@ class CmsApiTokenController extends Controller
 
     return redirect()
       ->route('admin.system.api-tokens.index')
-      ->with('status', 'CMS API token updated.');
+      ->with('status', __('webblocks-cms::admin-feedback.tokens.updated'));
   }
 
   public function destroy(CmsApiToken $token): RedirectResponse
@@ -134,7 +134,7 @@ class CmsApiTokenController extends Controller
 
     return redirect()
       ->route('admin.system.api-tokens.index')
-      ->with('status', 'CMS API token deleted.');
+      ->with('status', __('webblocks-cms::admin-feedback.tokens.deleted'));
   }
 
   private function apiTokenSchemaReady(): bool

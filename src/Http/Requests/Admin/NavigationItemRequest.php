@@ -116,9 +116,9 @@ class NavigationItemRequest extends FormRequest
 
       $issue = app(NavigationTree::class)->parentPlacementIssue($parent, (int) $siteId, $menuKey, $navigation);
       $message = match ($issue) {
-        'scope' => 'Parent item must belong to the same menu.',
-        'group' => 'Only navigation groups can be selected as a parent.',
-        'depth' => 'Navigation depth cannot exceed 3 levels.',
+        'scope' => __('webblocks-cms::admin-feedback.navigation.parent_scope'),
+        'group' => __('webblocks-cms::admin-feedback.navigation.parent_group'),
+        'depth' => __('webblocks-cms::admin-feedback.navigation.parent_depth'),
         'cycle' => 'A navigation item cannot be moved under its own child tree.',
         default => null,
       };

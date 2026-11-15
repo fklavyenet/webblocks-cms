@@ -95,7 +95,7 @@ class SharedSlotRequest extends FormRequest
       $siteId = (int) $this->input('site_id');
 
       if (! $schema->sharedSlotsTableExists()) {
-        $validator->errors()->add('shared_slots', 'Shared Slots are not ready yet. Run the latest migrations before using Shared Slots.');
+        $validator->errors()->add('shared_slots', __('webblocks-cms::admin-feedback.shared_slots.not_ready'));
 
         return;
       }

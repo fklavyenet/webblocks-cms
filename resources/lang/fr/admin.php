@@ -1,6 +1,39 @@
 <?php
 
 $translations = [
+  'page_workflow' => [
+    'submit_review' => 'Soumettre à la révision',
+    'publish' => 'Publier',
+    'restore_draft' => 'Remettre en brouillon',
+    'archive' => 'Archiver',
+    'review_submitted' => 'Page soumise à la révision.',
+    'published' => 'Page publiée.',
+    'draft_restored' => 'Page remise en brouillon.',
+    'archived' => 'Page archivée.',
+    'invalid_action' => 'Action du flux de publication invalide.',
+    'action_forbidden' => 'Vous n’êtes pas autorisé à effectuer cette action.',
+    'invalid_transition' => 'Cette transition n’est pas autorisée pour l’état actuel de la page.',
+  ],
+  'converter_profiles' => [
+    'conservative' => 'Conservateur',
+    'generic_docs' => 'Page de documentation générique',
+    'generic_marketing' => 'Page marketing générique',
+    'webblocks_ui' => 'HTML dans le style de WebBlocks UI',
+    'source_size' => ':size octets',
+  ],
+  'dirty_close' => [
+    'title' => 'Ignorer les modifications non enregistrées ?',
+    'description' => 'Les modifications non enregistrées seront perdues.',
+    'keep_editing' => 'Continuer la modification',
+    'close_without_saving' => 'Fermer sans enregistrer',
+  ],
+  'block_type_support' => [
+    'system' => 'Système',
+    'user' => 'Propre à l’utilisateur ou à l’installation',
+    'container' => 'Peut servir de conteneur',
+    'admin' => 'Pris en charge dans le panneau',
+    'render' => 'Peut être rendu',
+  ],
   'page_layout_picker' => [
     'default' => 'Par défaut',
     'docs' => 'Documentation',
@@ -385,6 +418,8 @@ $translations = [
     'config_cached_help' => 'État actuel du cache de configuration de Laravel.',
   ],
   'common' => [
+    'select' => 'Sélectionner',
+    'or' => 'ou',
     'filter' => 'Filtrer',
     'reset' => 'Réinitialiser',
     'block_language_help' => 'Aide sur la langue des blocs',
@@ -1611,6 +1646,14 @@ $translations = [
       'advanced_description' => 'À n\'accorder qu\'à des outils d\'exploitation de confiance.',
       'selected_count' => ':selected/:total sélectionnée(s)',
       'groups' => [
+        'personal_site_feedback' => [
+          'label' => 'Retours sur le site',
+          'description' => 'Consultez et modérez les commentaires et évaluations publics des sites autorisés.',
+        ],
+        'system_safety' => [
+          'label' => 'Protection du système',
+          'description' => 'Créez un point de restauration avec une sauvegarde système complète avant d’appliquer des modifications de contenu importantes ou destructrices. Accordez cette autorisation uniquement en cas de besoin explicite.',
+        ],
         'system_updates' => [
           'label' => 'Mises à jour du système',
           'description' => 'Vérifications des mises à jour pour toute l’installation et exécution expressément approuvée.',
@@ -1649,6 +1692,25 @@ $translations = [
         ],
       ],
       'labels' => [
+        'notes_read' => 'Lister et lire les notes et modifier son état de lecture',
+        'notes_write' => 'Créer et modifier des notes et lister les destinataires autorisés',
+        'notes_delete' => 'Supprimer les notes que vous avez écrites',
+        'consent_read' => 'Lire les paramètres et services de consentement du site',
+        'consent_write' => 'Gérer les paramètres, services et traductions de consentement du site',
+        'consent_code_write' => 'Gérer le code exécutable des services de consentement',
+        'themes_manage' => 'Installer et retirer des paquets de thèmes publics',
+        'panel_languages_manage' => 'Gérer les catalogues et la langue par défaut du panneau',
+        'shared_slots_delete' => 'Supprimer les zones partagées sans référence',
+        'domains_write' => 'Ajouter et modifier les domaines du site',
+        'domains_delete' => 'Retirer les domaines du site',
+        'backups_create' => 'Créer un point de restauration avec une sauvegarde système avant d’appliquer le contenu',
+        'backups_read' => 'Consulter la politique de nettoyage des sauvegardes et son aperçu',
+        'backups_settings_write' => 'Modifier la politique de nettoyage automatique des sauvegardes',
+        'backups_delete' => 'Exécuter le nettoyage automatique qui supprime des sauvegardes',
+        'maintenance_read' => 'Consulter la politique de nettoyage de maintenance et ses aperçus',
+        'maintenance_settings_write' => 'Modifier la politique de conservation du nettoyage de maintenance',
+        'maintenance_delete' => 'Exécuter les catégories de nettoyage de maintenance qui suppriment des données',
+        'page_assets_write' => 'Associer aux pages des ressources CSS et JS spécifiques de /site',
         'system_health_read' => 'Lire l’état général de l’installation',
         'system_updates_read' => 'Lire l’état et les résultats des mises à jour du système',
         'system_updates_run' => 'Exécuter une mise à jour approuvée pour toute l’installation',
@@ -3462,6 +3524,7 @@ $translations = [
     'bulk_delete_help' => 'Cette action groupée ne s\'applique qu\'aux messages visibles sur cette page. Le serveur revérifie les accès de chaque message sélectionné avant suppression.',
   ],
   'users' => [
+    'no_login' => 'Aucune connexion à ce jour',
     'title' => 'Utilisateurs',
     'description' => 'Gérez les utilisateurs du CMS, les accès à l\'administration et l\'état actif des comptes sans quitter l\'espace d\'administration.',
     'form_description' => 'Les utilisateurs restent des comptes au niveau de l\'installation. Le rôle et les sites affectés déterminent désormais les zones du CMS accessibles à chaque personne.',

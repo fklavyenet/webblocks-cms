@@ -54,7 +54,7 @@ class PageLayoutController extends Controller
 
     return redirect()
       ->route('admin.page-layouts.edit', $pageLayout)
-      ->with('status', 'Page Layout created successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.layouts.created'));
   }
 
   public function edit(Request $request, PageLayout $pageLayout): View
@@ -73,6 +73,6 @@ class PageLayoutController extends Controller
 
     return redirect()
       ->route('admin.page-layouts.edit', $pageLayout)
-      ->with('status', 'Page Layout updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.layouts.updated'));
   }
 }

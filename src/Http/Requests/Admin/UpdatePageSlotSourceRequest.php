@@ -60,7 +60,7 @@ class UpdatePageSlotSourceRequest extends FormRequest
       }
 
       if (! is_int($sharedSlotId) || $sharedSlotId < 1) {
-        $validator->errors()->add('shared_slot_id', 'Select a compatible Shared Slot.');
+        $validator->errors()->add('shared_slot_id', __('webblocks-cms::admin-feedback.shared_slots.select_compatible'));
 
         return;
       }
@@ -68,7 +68,7 @@ class UpdatePageSlotSourceRequest extends FormRequest
       $sharedSlot = SharedSlot::query()->find($sharedSlotId);
 
       if (! $sharedSlot instanceof SharedSlot) {
-        $validator->errors()->add('shared_slot_id', 'Select a compatible Shared Slot.');
+        $validator->errors()->add('shared_slot_id', __('webblocks-cms::admin-feedback.shared_slots.select_compatible'));
 
         return;
       }
@@ -85,7 +85,7 @@ class UpdatePageSlotSourceRequest extends FormRequest
           'inactive' => 'Inactive Shared Slots cannot be assigned to page slots.',
           'public_shell' => 'Shared Slot Page Layout must match the page Page Layout.',
           'slot_name' => 'Shared Slot slot name must match the page slot name.',
-          default => 'Select a compatible Shared Slot.',
+          default => __('webblocks-cms::admin-feedback.shared_slots.select_compatible'),
         });
       }
     });

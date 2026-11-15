@@ -244,6 +244,7 @@ return [
     ],
   ],
   'embedded_applications' => [
+    'setting_values_example' => 'piccolo, medio, grande',
     'title' => 'Applicazioni integrate',
     'description' => 'Registra le applicazioni HTML, CSS e JavaScript di fiducia nel database CMS e posizionale con i blocchi di applicazione.',
     'create' => 'Nuova applicazione',
@@ -282,7 +283,7 @@ return [
     'integer_max' => 'Massimo',
     'string_max_length' => 'Lunghezza massima',
     'settings_empty' => 'Non sono state aggiunte le impostazioni del Blocco di Applicazione.',
-    'no_default' => 'No default',
+    'no_default' => 'Nessun valore predefinito',
     'no_constraints' => 'Nessuno',
     'duplicate_setting_key' => 'Impostare le chiavi deve essere unico.',
     'save_setting' => 'Salvare l\'impostazione',

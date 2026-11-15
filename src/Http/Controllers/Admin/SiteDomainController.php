@@ -70,7 +70,7 @@ class SiteDomainController extends Controller
 
     return redirect()
       ->route('admin.sites.domains.index', $site)
-      ->with('status', 'Domain added successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.domains.added'));
   }
 
   public function update(SiteDomainUpdateRequest $request, Site $site, SiteDomain $domain): RedirectResponse
@@ -81,7 +81,7 @@ class SiteDomainController extends Controller
 
     return redirect()
       ->route('admin.sites.domains.index', $site)
-      ->with('status', 'Domain updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.domains.updated'));
   }
 
   public function destroy(Site $site, SiteDomain $domain): RedirectResponse
@@ -92,7 +92,7 @@ class SiteDomainController extends Controller
 
     return redirect()
       ->route('admin.sites.domains.index', $site)
-      ->with('status', 'Domain removed successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.domains.removed'));
   }
 
   public function setPrimary(Site $site, SiteDomain $domain): RedirectResponse
@@ -103,7 +103,7 @@ class SiteDomainController extends Controller
 
     return redirect()
       ->route('admin.sites.domains.index', $site)
-      ->with('status', 'Primary domain updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.domains.primary_updated'));
   }
 
   private function resolveSiteContext(Request $request, Collection $sites): array

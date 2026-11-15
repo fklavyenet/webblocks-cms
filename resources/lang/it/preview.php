@@ -9,7 +9,7 @@ return [
   'scope' => 'Anteprima privata: valori non salvati supportati di questo modulo e bozza salvata. Link e script interattivi sono disabilitati; la paginazione delle raccolte è disponibile.',
   'locale' => 'Lingua del contenuto',
   'width' => 'Larghezza anteprima',
-  'desktop' => 'Desktop (1024 px)',
+  'desktop' => 'Computer (1024 px)',
   'phone' => 'Telefono (390 px)',
   'refresh' => 'Aggiorna anteprima',
   'ready' => 'Pronto. Aggiorna per visualizzare questo modulo.',

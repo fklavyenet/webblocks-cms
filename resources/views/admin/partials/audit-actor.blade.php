@@ -5,5 +5,5 @@
 @if ($actor)
     {{ $actor->name }}@if ($actor->email) <span class="wb-text-muted">({{ $actor->email }})</span>@endif
 @else
-    Not recorded
+    {{ __('webblocks-cms::admin.common.not_recorded') }}
 @endif

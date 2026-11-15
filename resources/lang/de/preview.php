@@ -9,7 +9,7 @@ return [
   'scope' => 'Private Vorschau: unterstützte ungespeicherte Formularwerte und gespeicherter Entwurf. Links und interaktive Skripte sind deaktiviert; Sammlungspaginierung ist verfügbar.',
   'locale' => 'Inhaltssprache',
   'width' => 'Vorschaubreite',
-  'desktop' => 'Desktop (1024 px)',
+  'desktop' => 'Desktopansicht (1024 px)',
   'phone' => 'Telefon (390 px)',
   'refresh' => 'Vorschau aktualisieren',
   'ready' => 'Bereit. Zum Anzeigen dieses Formulars aktualisieren.',

@@ -71,25 +71,25 @@ class PageWorkflowManager
 
     if (! in_array($normalizedAction, array_column($this->actionDefinitions(), 'value'), true)) {
       throw ValidationException::withMessages([
-        'action' => 'Invalid workflow action.',
+        'action' => __('webblocks-cms::admin.page_workflow.invalid_action'),
       ]);
     }
 
     if (! $this->roleAllowsAction($user, $normalizedAction, $page)) {
-      abort(403, 'You do not have permission to perform this workflow action.');
+      abort(403, __('webblocks-cms::admin.page_workflow.action_forbidden'));
     }
 
     if (! $this->transitionAuthorizedPage($page, $normalizedAction, $user, includePageOwnedBlocks: $includePageOwnedBlocks)) {
       throw ValidationException::withMessages([
-        'action' => 'This workflow transition is not allowed for the current page status.',
+        'action' => __('webblocks-cms::admin.page_workflow.invalid_transition'),
       ]);
     }
 
     return match ($normalizedAction) {
-      self::ACTION_SUBMIT_REVIEW => 'Page submitted for review.',
-      self::ACTION_PUBLISH => 'Page published.',
-      self::ACTION_RESTORE_DRAFT => 'Page moved back to draft.',
-      self::ACTION_ARCHIVE => 'Page archived.',
+      self::ACTION_SUBMIT_REVIEW => __('webblocks-cms::admin.page_workflow.review_submitted'),
+      self::ACTION_PUBLISH => __('webblocks-cms::admin.page_workflow.published'),
+      self::ACTION_RESTORE_DRAFT => __('webblocks-cms::admin.page_workflow.draft_restored'),
+      self::ACTION_ARCHIVE => __('webblocks-cms::admin.page_workflow.archived'),
     };
   }
 
@@ -193,22 +193,22 @@ class PageWorkflowManager
     return [
       [
         'value' => self::ACTION_SUBMIT_REVIEW,
-        'label' => 'Submit for Review',
+        'label' => __('webblocks-cms::admin.page_workflow.submit_review'),
         'class' => 'wb-btn wb-btn-secondary',
       ],
       [
         'value' => self::ACTION_PUBLISH,
-        'label' => 'Publish',
+        'label' => __('webblocks-cms::admin.page_workflow.publish'),
         'class' => 'wb-btn wb-btn-primary',
       ],
       [
         'value' => self::ACTION_RESTORE_DRAFT,
-        'label' => 'Move Back to Draft',
+        'label' => __('webblocks-cms::admin.page_workflow.restore_draft'),
         'class' => 'wb-btn wb-btn-secondary',
       ],
       [
         'value' => self::ACTION_ARCHIVE,
-        'label' => 'Archive',
+        'label' => __('webblocks-cms::admin.page_workflow.archive'),
         'class' => 'wb-btn wb-btn-secondary',
       ],
     ];

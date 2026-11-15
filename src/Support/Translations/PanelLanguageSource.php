@@ -12,7 +12,7 @@ class PanelLanguageSource
   ];
 
   private const GROUPS = [
-    'admin', 'acl', 'automatic-pages', 'backup-retention', 'block-settings', 'diagnostics',
+    'admin', 'admin-feedback', 'acl', 'automatic-pages', 'backup-retention', 'block-settings', 'diagnostics',
     'dynamic-authoring', 'jobs', 'listing_views', 'maintenance_reports', 'modal-submit', 'notes',
     'notifications', 'page-locale-restore', 'recovery', 'retention-table', 'scheduler', 'seo_workspace',
     'storage', 'system_health', 'table_sort', 'two-factor', 'update_recovery', 'visitor_insights', 'panel-languages', 'themes',

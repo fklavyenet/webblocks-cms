@@ -179,7 +179,7 @@ class ContactMessageController extends Controller
 
     return redirect()
       ->back()
-      ->with('status', 'Message status updated.');
+      ->with('status', __('webblocks-cms::admin-feedback.contact.status_updated'));
   }
 
   public function destroy(Request $request, ContactMessage $contactMessage): RedirectResponse
@@ -191,7 +191,7 @@ class ContactMessageController extends Controller
 
     return redirect()
       ->to($returnUrl ?: route('admin.contact-messages.index'))
-      ->with('status', 'Message deleted.');
+      ->with('status', __('webblocks-cms::admin-feedback.contact.deleted'));
   }
 
   public function bulkDestroy(BulkDeleteContactMessagesRequest $request): RedirectResponse

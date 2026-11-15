@@ -185,7 +185,7 @@ class SharedSlotController extends Controller
 
     return redirect()
       ->route('admin.shared-slots.edit', $sharedSlot)
-      ->with('status', 'Shared Slot created successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.shared_slots.created'));
   }
 
   public function edit(SharedSlot $sharedSlot): View|RedirectResponse
@@ -249,7 +249,7 @@ class SharedSlotController extends Controller
 
     return redirect()
       ->route('admin.shared-slots.edit', $sharedSlot)
-      ->with('status', 'Shared Slot updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.shared_slots.updated'));
   }
 
   public function destroy(SharedSlot $sharedSlot): RedirectResponse
@@ -264,21 +264,21 @@ class SharedSlotController extends Controller
     if (! $this->schema->pageSlotSourceColumnsExist()) {
       return $this->sharedSlotsNotReadyRedirect(
         route('admin.shared-slots.edit', $sharedSlot),
-        'Shared Slot references are not ready yet. Run the latest migrations before deleting Shared Slots.'
+        __('webblocks-cms::admin-feedback.shared_slots.references_not_ready')
       );
     }
 
     if ($this->sourcePages->deleteIfUnused($sharedSlot)->isNotEmpty()) {
       return redirect()
         ->route('admin.shared-slots.edit', $sharedSlot)
-        ->withErrors(['shared_slot' => 'Shared Slot cannot be deleted while it is referenced by one or more page slots.']);
+        ->withErrors(['shared_slot' => __('webblocks-cms::admin-feedback.shared_slots.delete_blocked')]);
     }
 
     $siteId = $sharedSlot->site_id;
 
     return redirect()
       ->route('admin.shared-slots.index', ['site' => $siteId])
-      ->with('status', 'Shared Slot deleted successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.shared_slots.deleted'));
   }
 
   public function editBlocks(SharedSlot $sharedSlot): View|RedirectResponse
@@ -286,7 +286,7 @@ class SharedSlotController extends Controller
     if (! $this->schema->sharedSlotsTableExists() || ! $this->schema->sharedSlotBlocksTableExists()) {
       return $this->sharedSlotsNotReadyRedirect(
         route('admin.shared-slots.index'),
-        'Shared Slot block editing is not ready yet. Run the latest migrations before editing Shared Slot blocks.'
+        __('webblocks-cms::admin-feedback.shared_slots.block_editor_not_ready')
       );
     }
 
@@ -420,7 +420,7 @@ class SharedSlotController extends Controller
     if (! $this->schema->sharedSlotsTableExists() || ! $this->schema->sharedSlotBlocksTableExists()) {
       return $this->sharedSlotsNotReadyRedirect(
         route('admin.shared-slots.index'),
-        'Shared Slot block editing is not ready yet. Run the latest migrations before editing Shared Slot blocks.'
+        __('webblocks-cms::admin-feedback.shared_slots.block_editor_not_ready')
       );
     }
 
@@ -466,15 +466,15 @@ class SharedSlotController extends Controller
         'locale' => $validated['locale'] ?? null,
         'return_url' => $request->input('return_url'),
       ])
-      ->with('status', 'Deleted all blocks from '.($slot->slotType?->name ?? 'slot').'.');
+      ->with('status', __('webblocks-cms::admin-feedback.blocks.cleared_slot', ['slot' => $slot->slotType?->name ?? __('webblocks-cms::admin.page_slots_card.fallback_slot')]));
   }
 
   public function reorderBlocks(Request $request, SharedSlot $sharedSlot): JsonResponse
   {
     if (! $this->schema->sharedSlotsTableExists() || ! $this->schema->sharedSlotBlocksTableExists()) {
       return response()->json([
-        'message' => 'Shared Slot block editing is not ready yet. Run the latest migrations before editing Shared Slot blocks.',
-        'errors' => ['shared_slots' => ['Shared Slot block editing is not ready yet. Run the latest migrations before editing Shared Slot blocks.']],
+        'message' => __('webblocks-cms::admin-feedback.shared_slots.block_editor_not_ready'),
+        'errors' => ['shared_slots' => [__('webblocks-cms::admin-feedback.shared_slots.block_editor_not_ready')]],
       ], 409);
     }
 
@@ -996,6 +996,6 @@ class SharedSlotController extends Controller
   {
     return redirect()
       ->to($url ?? route('admin.shared-slots.index'))
-      ->withErrors(['shared_slots' => $message ?? 'Shared Slots are not ready yet. Run the latest migrations before using Shared Slots.']);
+      ->withErrors(['shared_slots' => $message ?? __('webblocks-cms::admin-feedback.shared_slots.not_ready')]);
   }
 }

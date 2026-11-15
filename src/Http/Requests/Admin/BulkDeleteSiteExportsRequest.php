@@ -21,10 +21,12 @@ class BulkDeleteSiteExportsRequest extends FormRequest
 
   public function messages(): array
   {
+    $selectionRequired = __('webblocks-cms::admin-feedback.bulk.select_required', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.site_export')]);
+
     return [
-      'site_export_ids.required' => 'Select at least one site export to delete.',
-      'site_export_ids.min' => 'Select at least one site export to delete.',
-      'site_export_ids.*.exists' => 'One or more selected site exports no longer exists.',
+      'site_export_ids.required' => $selectionRequired,
+      'site_export_ids.min' => $selectionRequired,
+      'site_export_ids.*.exists' => __('webblocks-cms::admin-feedback.bulk.selection_missing', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.site_exports')]),
     ];
   }
 }

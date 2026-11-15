@@ -65,7 +65,7 @@ class SiteImportController extends Controller
 
       return redirect()
         ->route('admin.site-transfers.imports.show', $siteImport)
-        ->with('status', 'Site import completed successfully.');
+        ->with('status', __('webblocks-cms::admin-feedback.imports.completed'));
     } catch (Throwable $throwable) {
       return redirect()
         ->route('admin.site-transfers.imports.show', $siteImport)
@@ -130,12 +130,12 @@ class SiteImportController extends Controller
     if ($result instanceof SiteDeleteResult && ! $result->deleted) {
       return redirect()
         ->route('admin.site-transfers.imports.show', $siteImport)
-        ->withErrors(['site_import' => $result->firstBlocker() ?? 'The partially imported site could not be removed.']);
+        ->withErrors(['site_import' => $result->firstBlocker() ?? __('webblocks-cms::admin-feedback.imports.partial_remove_failed')]);
     }
 
     return redirect()
       ->route('admin.site-transfers.imports.show', $siteImport)
-      ->with('status', 'Removed the partially imported site. The package is ready to import again.');
+      ->with('status', __('webblocks-cms::admin-feedback.imports.partial_removed'));
   }
 
   public function destroy(SiteImport $siteImport): RedirectResponse
@@ -144,7 +144,7 @@ class SiteImportController extends Controller
 
     return redirect()
       ->route('admin.site-transfers.exports.index')
-      ->with('status', 'Site import record deleted. Imported site content remains intact.');
+      ->with('status', __('webblocks-cms::admin-feedback.imports.deleted'));
   }
 
   public function bulkDestroy(BulkDeleteSiteImportsRequest $request): RedirectResponse

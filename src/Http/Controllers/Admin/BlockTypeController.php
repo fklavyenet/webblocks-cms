@@ -121,13 +121,13 @@ class BlockTypeController extends Controller
   {
     BlockType::create($request->validated() + ['is_system' => false]);
 
-    return redirect()->route('admin.block-types.index')->with('status', 'Block type created successfully.');
+    return redirect()->route('admin.block-types.index')->with('status', __('webblocks-cms::admin-feedback.block_types.created'));
   }
 
   public function edit(BlockType $blockType): View|RedirectResponse
   {
     if ($blockType->is_system) {
-      return redirect()->route('admin.block-types.index')->with('status', 'Core block types are product-owned and read-only.');
+      return redirect()->route('admin.block-types.index')->with('status', __('webblocks-cms::admin-feedback.block_types.read_only'));
     }
 
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.block-types.edit', [
@@ -139,25 +139,25 @@ class BlockTypeController extends Controller
   public function update(BlockTypeRequest $request, BlockType $blockType): RedirectResponse
   {
     if ($blockType->is_system) {
-      return redirect()->route('admin.block-types.index')->with('status', 'Core block types are product-owned and read-only.');
+      return redirect()->route('admin.block-types.index')->with('status', __('webblocks-cms::admin-feedback.block_types.read_only'));
     }
 
     $blockType->update($request->validated() + ['is_system' => false]);
 
     return redirect()
       ->to($request->safeReturnUrl() ?: route('admin.block-types.index'))
-      ->with('status', 'Block type updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.block_types.updated'));
   }
 
   public function destroy(BlockType $blockType): RedirectResponse
   {
     if ($blockType->is_system) {
-      return redirect()->route('admin.block-types.index')->with('status', 'Core block types are product-owned and cannot be deleted from the admin.');
+      return redirect()->route('admin.block-types.index')->with('status', __('webblocks-cms::admin-feedback.block_types.delete_blocked'));
     }
 
     $blockType->delete();
 
-    return redirect()->route('admin.block-types.index')->with('status', 'Block type deleted successfully.');
+    return redirect()->route('admin.block-types.index')->with('status', __('webblocks-cms::admin-feedback.block_types.deleted'));
   }
 
   private function filteredBlockTypesQuery(array $filters, array $adminSupportedSlugs, array $renderSupportedSlugs): Builder
@@ -235,11 +235,11 @@ class BlockTypeController extends Controller
   private function supportOptions(): array
   {
     return [
-      'system' => 'System',
-      'user' => 'User / install-specific',
-      'container' => 'Container-capable',
-      'admin' => 'Has admin support',
-      'render' => 'Has render support',
+      'system' => __('webblocks-cms::admin.block_type_support.system'),
+      'user' => __('webblocks-cms::admin.block_type_support.user'),
+      'container' => __('webblocks-cms::admin.block_type_support.container'),
+      'admin' => __('webblocks-cms::admin.block_type_support.admin'),
+      'render' => __('webblocks-cms::admin.block_type_support.render'),
     ];
   }
 

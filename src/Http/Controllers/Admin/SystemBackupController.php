@@ -201,7 +201,7 @@ class SystemBackupController extends Controller
 
       return redirect()
         ->route('admin.system.backups.show', $backup)
-        ->with('status', 'Backup archive uploaded and validated successfully.');
+        ->with('status', __('webblocks-cms::admin-feedback.backups.uploaded'));
     } catch (Throwable $throwable) {
       return redirect()
         ->route('admin.system.backups.upload')
@@ -241,7 +241,7 @@ class SystemBackupController extends Controller
 
       return redirect()
         ->route('admin.system.backups.index')
-        ->with('status', 'System restore completed successfully.');
+        ->with('status', __('webblocks-cms::admin-feedback.backups.restored'));
     } catch (Throwable $throwable) {
       return redirect()
         ->route('admin.system.backups.show', $backup)
@@ -255,7 +255,7 @@ class SystemBackupController extends Controller
 
     if ($backup->isRunning() && ! $backup->isStaleRunning() && ! $forceRunning) {
       return back()->withErrors([
-        'system_backup' => 'Running backup cannot be deleted unless you explicitly confirm it is stuck.',
+        'system_backup' => __('webblocks-cms::admin-feedback.backups.running_delete_blocked'),
       ]);
     }
 
@@ -265,8 +265,8 @@ class SystemBackupController extends Controller
       return redirect()
         ->route('admin.system.backups.index')
         ->with('status', $backup->isRunning() && ! $backup->isStaleRunning() && $forceRunning
-          ? 'Stuck running backup record deleted.'
-          : 'Backup deleted.');
+          ? __('webblocks-cms::admin-feedback.backups.stuck_deleted')
+          : __('webblocks-cms::admin-feedback.backups.deleted'));
     } catch (Throwable $throwable) {
       return redirect()
         ->route('admin.system.backups.index')
@@ -316,7 +316,7 @@ class SystemBackupController extends Controller
 
     return redirect()
       ->route('admin.system.backups.show', $backup)
-      ->with('status', 'Restore history entry deleted.');
+      ->with('status', __('webblocks-cms::admin-feedback.backups.history_deleted'));
   }
 
   private function resolveCompatibilityBackup(SystemBackup $backup): SystemBackup

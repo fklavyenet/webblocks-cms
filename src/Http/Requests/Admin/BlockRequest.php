@@ -913,8 +913,8 @@ class BlockRequest extends FormRequest
   public function messages(): array
   {
     return [
-      'locale.regex' => 'Use a valid locale code.',
-      'locale.exists' => 'Selected locale is invalid.',
+      'locale.regex' => __('webblocks-cms::admin-feedback.blocks.invalid_locale_code'),
+      'locale.exists' => __('webblocks-cms::admin-feedback.blocks.invalid_locale'),
     ];
   }
 

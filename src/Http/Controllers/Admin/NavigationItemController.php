@@ -87,7 +87,7 @@ class NavigationItemController extends Controller
 
     return redirect()
       ->route('admin.navigation.index', ['site_id' => $request->integer('site_id'), 'menu_key' => $request->string('menu_key')->toString()])
-      ->with('status', 'Navigation item created successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.navigation.created'));
   }
 
   public function edit(NavigationItem $navigation): RedirectResponse
@@ -123,7 +123,7 @@ class NavigationItemController extends Controller
 
     return redirect()
       ->route('admin.navigation.index', ['site_id' => $navigation->fresh()->site_id, 'menu_key' => $navigation->fresh()->menu_key])
-      ->with('status', 'Navigation item updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.navigation.updated'));
   }
 
   public function destroy(NavigationItem $navigation): RedirectResponse
@@ -134,7 +134,7 @@ class NavigationItemController extends Controller
 
     return redirect()
       ->route('admin.navigation.index', ['site_id' => $navigation->site_id, 'menu_key' => $menuKey])
-      ->with('status', 'Navigation item deleted successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.navigation.deleted'));
   }
 
   public function reorder(NavigationItemReorderRequest $request): JsonResponse
@@ -163,7 +163,7 @@ class NavigationItemController extends Controller
 
     return redirect()
       ->route('admin.navigation.index', ['site_id' => $navigation->site_id, 'menu_key' => $navigation->menu_key])
-      ->with('status', 'Navigation item updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.navigation.updated'));
   }
 
   private function translationLocale(?string $localeCode): ?Locale

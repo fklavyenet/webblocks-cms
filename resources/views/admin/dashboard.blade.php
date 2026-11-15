@@ -97,7 +97,7 @@
                     @else
                         <div class="wb-link-list">
                             @foreach ($recentAssets as $asset)
-                                <a href="{{ route('admin.media.edit', $asset) }}" class="wb-link-list-item"><div class="wb-link-list-main"><div class="wb-link-list-title" title="{{ $asset->title ?: $asset->original_name }}">{{ $asset->title ?: $asset->original_name }}</div><div class="wb-link-list-meta">{{ $asset->kind }} · {{ $asset->humanSize() }}</div></div></a>
+                                <a href="{{ route('admin.media.edit', $asset) }}" class="wb-link-list-item"><div class="wb-link-list-main"><div class="wb-link-list-title" title="{{ $asset->title ?: $asset->original_name }}">{{ $asset->title ?: $asset->original_name }}</div><div class="wb-link-list-meta">{{ $adminTranslator->getOrDefault('admin.media_index.kind_names.'.$asset->kind, $asset->kind, $adminLocaleCode) }} · {{ $asset->humanSize() }}</div></div></a>
                             @endforeach
                         </div>
                     @endif

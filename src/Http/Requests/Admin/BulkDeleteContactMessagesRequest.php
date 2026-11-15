@@ -21,11 +21,13 @@ class BulkDeleteContactMessagesRequest extends FormRequest
 
   public function messages(): array
   {
+    $selectionRequired = __('webblocks-cms::admin-feedback.bulk.select_required', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.message')]);
+
     return [
-      'contact_message_ids.required' => 'Select at least one message to delete.',
-      'contact_message_ids.array' => 'Select at least one message to delete.',
-      'contact_message_ids.min' => 'Select at least one message to delete.',
-      'contact_message_ids.*.exists' => 'One or more selected messages no longer exists.',
+      'contact_message_ids.required' => $selectionRequired,
+      'contact_message_ids.array' => $selectionRequired,
+      'contact_message_ids.min' => $selectionRequired,
+      'contact_message_ids.*.exists' => __('webblocks-cms::admin-feedback.bulk.selection_missing', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.messages')]),
     ];
   }
 }

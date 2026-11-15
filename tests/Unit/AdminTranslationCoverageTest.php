@@ -3,7 +3,9 @@
 namespace WebBlocks\Cms\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\PanelLanguageSource;
 
 class AdminTranslationCoverageTest extends TestCase
 {
@@ -53,6 +55,31 @@ class AdminTranslationCoverageTest extends TestCase
         sort($expected[0]);
         sort($actual[0]);
         $this->assertSame($expected[0], $actual[0], $locale.'.storage.'.$key);
+      }
+    }
+  }
+
+  public function test_panel_feedback_has_all_placeholders_and_core_token_permissions_have_localized_labels(): void
+  {
+    $root = dirname(__DIR__, 2).'/resources/lang';
+    $feedback = $this->flatten(require $root.'/en/admin-feedback.php');
+    $source = new PanelLanguageSource;
+
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $translations = $this->flatten(require $root.'/'.$locale.'/admin-feedback.php');
+      $this->assertSame(array_keys($feedback), array_keys($translations), $locale);
+      foreach ($feedback as $key => $english) {
+        $this->assertNotSame('', trim($translations[$key]), $locale.'.'.$key);
+        $this->assertSame($source->placeholders($english), $source->placeholders($translations[$key]), $locale.'.'.$key);
+      }
+
+      $admin = require $root.'/'.$locale.'/admin.php';
+      foreach (CmsApiTokenCapabilities::LABELS as $capability => $english) {
+        $key = str_replace(['.', '-'], '_', $capability);
+        $this->assertArrayHasKey($key, $admin['api_tokens']['capabilities']['labels'], $locale.'.'.$key);
+        if ($locale !== 'en') {
+          $this->assertNotSame($english, $admin['api_tokens']['capabilities']['labels'][$key], $locale.'.'.$key);
+        }
       }
     }
   }

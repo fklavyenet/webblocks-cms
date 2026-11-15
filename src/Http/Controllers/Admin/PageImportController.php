@@ -33,6 +33,6 @@ class PageImportController extends Controller
         'page' => $page,
         'return_url' => $this->pageIndexState->safeReturnUrlFromRequest($request),
       ])
-      ->with('status', 'Page imported as draft. Review the imported page before publishing.');
+      ->with('status', __('webblocks-cms::admin-feedback.pages.imported'));
   }
 }

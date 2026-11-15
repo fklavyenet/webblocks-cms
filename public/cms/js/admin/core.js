@@ -454,7 +454,7 @@
     function dirtyCloseMessage(form) {
         return form && form.dataset && form.dataset.wbAdminDirtyCloseConfirm
             ? form.dataset.wbAdminDirtyCloseConfirm
-            : 'Discard unsaved changes?';
+            : '';
     }
 
     function dirtyConfirmModalId() {
@@ -496,17 +496,17 @@
             '<div class="wb-modal wb-modal-sm wb-admin-dirty-close-modal" id="' + dirtyConfirmModalId() + '" role="dialog" aria-modal="true" aria-labelledby="' + dirtyConfirmModalId() + '-title" data-wb-admin-dirty-close-modal>',
             '<div class="wb-modal-dialog">',
             '<div class="wb-modal-header">',
-            '<h2 class="wb-modal-title" id="' + dirtyConfirmModalId() + '-title">Discard unsaved changes?</h2>',
-            '<button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="Keep editing">',
+            '<h2 class="wb-modal-title" id="' + dirtyConfirmModalId() + '-title" data-wb-admin-dirty-title></h2>',
+            '<button type="button" class="wb-modal-close" data-wb-dismiss="modal">',
             '<i class="wb-icon wb-icon-x" aria-hidden="true"></i>',
             '</button>',
             '</div>',
             '<div class="wb-modal-body wb-stack wb-gap-2">',
-            '<p data-wb-admin-dirty-close-message>Unsaved changes will be lost if you close this overlay.</p>',
+            '<p data-wb-admin-dirty-close-message></p>',
             '</div>',
             '<div class="wb-modal-footer wb-flex wb-justify-end wb-gap-2">',
-            '<button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">Keep editing</button>',
-            '<button type="button" class="wb-btn wb-btn-danger" data-wb-admin-dirty-close-confirm-action>Close without saving</button>',
+            '<button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal" data-wb-admin-dirty-keep-editing></button>',
+            '<button type="button" class="wb-btn wb-btn-danger" data-wb-admin-dirty-close-confirm-action></button>',
             '</div>',
             '</div>',
             '</div>'
@@ -528,7 +528,14 @@
 
         overlayRoot.insertAdjacentHTML('beforeend', dirtyConfirmModalBody());
 
-        return dirtyConfirmModal();
+        modal = dirtyConfirmModal();
+        var copy = overlayRoot.dataset;
+        modal.querySelector('[data-wb-admin-dirty-title]').textContent = copy.wbDirtyTitle || '';
+        modal.querySelector('.wb-modal-close').setAttribute('aria-label', copy.wbDirtyKeepEditing || '');
+        modal.querySelector('[data-wb-admin-dirty-keep-editing]').textContent = copy.wbDirtyKeepEditing || '';
+        modal.querySelector('[data-wb-admin-dirty-close-confirm-action]').textContent = copy.wbDirtyClose || '';
+
+        return modal;
     }
 
     function openDirtyCloseConfirmation(overlay, form) {
@@ -540,7 +547,8 @@
         }
 
         if (message) {
-            message.textContent = dirtyCloseMessage(form) + ' Unsaved changes will be lost.';
+            var description = document.getElementById('wb-overlay-root').dataset.wbDirtyDescription;
+            message.textContent = [dirtyCloseMessage(form), description].filter(Boolean).join(' ');
         }
 
         modal.dataset.wbAdminDirtyOverlayId = ensureOverlayId(overlay);

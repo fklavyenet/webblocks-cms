@@ -1,6 +1,39 @@
 <?php
 
 $translations = [
+  'page_workflow' => [
+    'submit_review' => 'Enviar a revisión',
+    'publish' => 'Publicar',
+    'restore_draft' => 'Volver a borrador',
+    'archive' => 'Archivar',
+    'review_submitted' => 'Página enviada a revisión.',
+    'published' => 'Página publicada.',
+    'draft_restored' => 'Página devuelta a borrador.',
+    'archived' => 'Página archivada.',
+    'invalid_action' => 'Acción de flujo de trabajo no válida.',
+    'action_forbidden' => 'No tienes permiso para realizar esta acción.',
+    'invalid_transition' => 'Esta transición no está permitida para el estado actual de la página.',
+  ],
+  'converter_profiles' => [
+    'conservative' => 'Conservador',
+    'generic_docs' => 'Página de documentación genérica',
+    'generic_marketing' => 'Página de marketing genérica',
+    'webblocks_ui' => 'HTML al estilo de WebBlocks UI',
+    'source_size' => ':size bytes',
+  ],
+  'dirty_close' => [
+    'title' => '¿Descartar los cambios sin guardar?',
+    'description' => 'Se perderán los cambios sin guardar.',
+    'keep_editing' => 'Seguir editando',
+    'close_without_saving' => 'Cerrar sin guardar',
+  ],
+  'block_type_support' => [
+    'system' => 'Del sistema',
+    'user' => 'Específico del usuario o de la instalación',
+    'container' => 'Admite uso como contenedor',
+    'admin' => 'Compatible con el panel',
+    'render' => 'Admite renderizado',
+  ],
   'page_layout_picker' => [
     'default' => 'Predeterminado',
     'docs' => 'Documentación',
@@ -385,6 +418,8 @@ $translations = [
     'config_cached_help' => 'Estado actual de la caché de configuración de Laravel.',
   ],
   'common' => [
+    'select' => 'Seleccionar',
+    'or' => 'o',
     'filter' => 'Filtrar',
     'reset' => 'Restablecer',
     'block_language_help' => 'Ayuda sobre el idioma de los bloques',
@@ -1611,6 +1646,14 @@ $translations = [
       'advanced_description' => 'Concédelas solo a herramientas de operador de confianza.',
       'selected_count' => ':selected/:total seleccionadas',
       'groups' => [
+        'personal_site_feedback' => [
+          'label' => 'Interacciones del sitio',
+          'description' => 'Lee y modera los comentarios y valoraciones públicas de los sitios permitidos.',
+        ],
+        'system_safety' => [
+          'label' => 'Protección del sistema',
+          'description' => 'Crea un punto de restauración con una copia completa del sistema antes de aplicar cambios de contenido grandes o destructivos. Concede este permiso solo cuando sea necesario.',
+        ],
         'system_updates' => [
           'label' => 'Actualizaciones del sistema',
           'description' => 'Comprobaciones de actualización para toda la instalación y ejecución expresamente aprobada.',
@@ -1649,6 +1692,25 @@ $translations = [
         ],
       ],
       'labels' => [
+        'notes_read' => 'Listar y leer notas y cambiar tu estado de lectura',
+        'notes_write' => 'Crear y editar notas y listar los destinatarios disponibles',
+        'notes_delete' => 'Eliminar las notas que has escrito',
+        'consent_read' => 'Leer los ajustes y servicios de consentimiento del sitio',
+        'consent_write' => 'Gestionar los ajustes, servicios y traducciones de consentimiento del sitio',
+        'consent_code_write' => 'Gestionar el código ejecutable de los servicios de consentimiento',
+        'themes_manage' => 'Instalar y eliminar paquetes de temas públicos',
+        'panel_languages_manage' => 'Gestionar los catálogos de idiomas y el idioma predeterminado del panel',
+        'shared_slots_delete' => 'Eliminar espacios compartidos sin referencias',
+        'domains_write' => 'Añadir y cambiar dominios del sitio',
+        'domains_delete' => 'Quitar dominios del sitio',
+        'backups_create' => 'Crear un punto de restauración mediante una copia del sistema antes de aplicar contenido',
+        'backups_read' => 'Consultar la política de limpieza de copias de seguridad y su vista previa',
+        'backups_settings_write' => 'Cambiar la política de limpieza automática de copias de seguridad',
+        'backups_delete' => 'Ejecutar la limpieza automática que elimina copias de seguridad',
+        'maintenance_read' => 'Consultar la política de limpieza de mantenimiento y las vistas previas',
+        'maintenance_settings_write' => 'Cambiar la política de conservación de la limpieza de mantenimiento',
+        'maintenance_delete' => 'Ejecutar las categorías de limpieza de mantenimiento que eliminan datos',
+        'page_assets_write' => 'Adjuntar a las páginas archivos CSS y JS específicos desde /site',
         'system_health_read' => 'Leer el estado general de la instalación',
         'system_updates_read' => 'Leer el estado y los resultados de las actualizaciones del sistema',
         'system_updates_run' => 'Ejecutar una actualización aprobada para toda la instalación',
@@ -3462,6 +3524,7 @@ $translations = [
     'bulk_delete_help' => 'Esta acción masiva solo se aplica a los mensajes visibles en esta página. El servidor vuelve a comprobar el acceso de cada mensaje seleccionado antes de eliminarlo.',
   ],
   'users' => [
+    'no_login' => 'Aún no ha iniciado sesión',
     'title' => 'Usuarios',
     'description' => 'Gestiona los usuarios del CMS, el acceso de administración y el estado activo de las cuentas sin salir del espacio de administración.',
     'form_description' => 'Los usuarios siguen siendo cuentas a nivel de instalación. El rol y los sitios asignados determinan ahora a qué áreas del CMS puede acceder cada persona.',

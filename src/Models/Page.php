@@ -471,12 +471,9 @@ class Page extends CmsModel
 
   public function workflowLabel(): string
   {
-    return match ($this->status) {
-      self::STATUS_IN_REVIEW => 'In Review',
-      self::STATUS_PUBLISHED => 'Published',
-      self::STATUS_ARCHIVED => 'Archived',
-      default => 'Draft',
-    };
+    $status = in_array($this->status, self::workflowStatuses(), true) ? $this->status : self::STATUS_DRAFT;
+
+    return __('webblocks-cms::admin.pages.statuses.'.$status);
   }
 
   public function workflowBadgeClass(): string

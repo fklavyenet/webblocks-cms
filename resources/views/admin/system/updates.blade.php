@@ -199,7 +199,7 @@
           <div class="wb-callout wb-callout-warning">
             <div class="wb-stack wb-stack-1">
               <strong class="wb-callout-title">{{ $adminText('updates.server_detail') }}</strong>
-              <span class="wb-text-sm">{{ $check['error_message'] }}</span>
+              <span class="wb-text-sm">{{ $state === 'client_disabled' ? $stateMessage : $check['error_message'] }}</span>
             </div>
           </div>
         @endif

@@ -252,6 +252,6 @@ trait HasCmsAdminAccess
 
   public function lastLoginLabel(): string
   {
-    return $this->last_login_at?->format('Y-m-d H:i') ?? 'No login yet';
+    return $this->last_login_at?->format('Y-m-d H:i') ?? __('webblocks-cms::admin.users.no_login');
   }
 }

@@ -139,7 +139,7 @@ class SiteController extends Controller
 
     return redirect()
       ->route('admin.sites.edit', $site)
-      ->with('status', 'Site created successfully.'.($warnings ? ' '.implode(' ', $warnings) : ''));
+      ->with('status', __('webblocks-cms::admin-feedback.sites.created').($warnings ? ' '.implode(' ', $warnings) : ''));
   }
 
   public function edit(Site $site): View
@@ -204,16 +204,15 @@ class SiteController extends Controller
     if (! $report->deleted) {
       return redirect()
         ->route('admin.sites.delete', $site)
-        ->withErrors(['site_delete' => $report->firstBlocker() ?? 'Site could not be deleted safely.']);
+        ->withErrors(['site_delete' => $report->firstBlocker() ?? __('webblocks-cms::admin-feedback.sites.delete_failed')]);
     }
 
-    $summary = sprintf(
-      'Site deleted. Pages: %d, blocks: %d, navigation: %d, locale assignments: %d.',
-      $report->count('pages'),
-      $report->count('blocks'),
-      $report->count('navigation_items'),
-      $report->count('site_locales'),
-    );
+    $summary = __('webblocks-cms::admin-feedback.sites.deleted', [
+      'pages' => $report->count('pages'),
+      'blocks' => $report->count('blocks'),
+      'navigation' => $report->count('navigation_items'),
+      'locales' => $report->count('site_locales'),
+    ]);
 
     return redirect()->route('admin.sites.index')->with('status', $summary);
   }
@@ -238,14 +237,12 @@ class SiteController extends Controller
       return back()->withInput()->withErrors(['clone' => $exception->getMessage()]);
     }
 
-    $summary = sprintf(
-      'Clone %s. Pages: %d, translations: %d, blocks: %d, navigation: %d.',
-      $result->dryRun ? 'validated successfully' : 'completed successfully',
-      $result->count('pages_cloned'),
-      $result->count('page_translations_cloned') + $result->count('block_translation_rows_cloned'),
-      $result->count('blocks_cloned'),
-      $result->count('navigation_items_cloned'),
-    );
+    $summary = __($result->dryRun ? 'webblocks-cms::admin-feedback.sites.clone_validated' : 'webblocks-cms::admin-feedback.sites.clone_completed', [
+      'pages' => $result->count('pages_cloned'),
+      'translations' => $result->count('page_translations_cloned') + $result->count('block_translation_rows_cloned'),
+      'blocks' => $result->count('blocks_cloned'),
+      'navigation' => $result->count('navigation_items_cloned'),
+    ]);
 
     if ($result->dryRun) {
       return back()->with('status', $summary);
@@ -285,7 +282,7 @@ class SiteController extends Controller
 
     return redirect()
       ->route('admin.sites.edit', ['site' => $site, 'tab' => $request->input('_site_tab', 'site')])
-      ->with('status', 'Site updated successfully.'.($warnings ? ' '.implode(' ', $warnings) : ''));
+      ->with('status', __('webblocks-cms::admin-feedback.sites.updated').($warnings ? ' '.implode(' ', $warnings) : ''));
   }
 
   private function syncLocales(Site $site, array $localeIds): void

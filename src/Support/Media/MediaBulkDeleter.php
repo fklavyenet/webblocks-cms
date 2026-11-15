@@ -39,7 +39,7 @@ class MediaBulkDeleter
       if (! $media instanceof Media) {
     $failed[] = [
           'id' => $id,
-          'message' => 'The media item is no longer available to this user.',
+          'message' => __('webblocks-cms::admin-feedback.bulk.media_unavailable'),
     ];
 
     continue;
@@ -51,7 +51,7 @@ class MediaBulkDeleter
       } catch (MediaInUseException) {
     $failed[] = [
           'id' => $id,
-          'message' => 'Media is in use.',
+          'message' => __('webblocks-cms::admin-feedback.bulk.media_in_use'),
     ];
       } catch (Throwable $throwable) {
     Log::warning('Media could not be deleted during bulk delete.', [
@@ -64,7 +64,7 @@ class MediaBulkDeleter
 
     $failed[] = [
           'id' => $id,
-          'message' => 'Review the logs for details.',
+          'message' => __('webblocks-cms::admin-feedback.bulk.check_logs'),
     ];
       }
   }

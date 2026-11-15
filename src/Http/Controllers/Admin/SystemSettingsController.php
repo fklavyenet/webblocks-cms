@@ -129,11 +129,11 @@ class SystemSettingsController extends Controller
       return redirect()
         ->route('admin.system.settings.edit', ['tab' => 'mail'])
         ->withInput($request->only('recipient_email'))
-        ->withErrors(['recipient_email' => 'The test email could not be sent. Please check CMS Mail settings.']);
+        ->withErrors(['recipient_email' => __('webblocks-cms::admin-feedback.mail.test_failed')]);
     }
 
     return redirect()
       ->route('admin.system.settings.edit', ['tab' => 'mail'])
-      ->with('status', 'Test email sent to '.$request->recipientEmail().'.');
+      ->with('status', __('webblocks-cms::admin-feedback.mail.test_sent', ['email' => $request->recipientEmail()]));
   }
 }

@@ -34,7 +34,7 @@ class SystemBackupBulkDeleter
       if (! $backup instanceof SystemBackup) {
     $failed[] = [
           'id' => $id,
-          'message' => 'The backup no longer exists.',
+          'message' => __('webblocks-cms::admin-feedback.bulk.backup_missing'),
     ];
 
     continue;
@@ -69,10 +69,10 @@ class SystemBackupBulkDeleter
     }
 
   return match ($throwable->getMessage()) {
-      'Running backup cannot be deleted unless you explicitly confirm it is stuck.',
-      'Backup archive path is invalid.',
-      'Backup archive file could not be deleted.' => $throwable->getMessage(),
-      default => 'Review the logs for details.',
+      'Running backup cannot be deleted unless you explicitly confirm it is stuck.' => __('webblocks-cms::admin-feedback.backups.running_delete_blocked'),
+      'Backup archive path is invalid.' => __('webblocks-cms::admin.backups.archive_feedback.unsafe'),
+      'Backup archive file could not be deleted.' => __('webblocks-cms::admin-feedback.backups.archive_delete_failed'),
+      default => __('webblocks-cms::admin-feedback.bulk.check_logs'),
   };
   }
 }

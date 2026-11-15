@@ -64,7 +64,7 @@ class SiteExportController extends Controller
 
       return redirect()
         ->route('admin.site-transfers.exports.show', $siteExport)
-        ->with('status', 'Site export completed successfully.');
+        ->with('status', __('webblocks-cms::admin-feedback.exports.completed'));
     } catch (Throwable $throwable) {
       return redirect()
         ->route('admin.site-transfers.exports.index')
@@ -79,7 +79,7 @@ class SiteExportController extends Controller
 
       return redirect()
         ->route('admin.sites.index')
-        ->with('status', 'Export package created for "'.$site->name.'".');
+        ->with('status', __('webblocks-cms::admin-feedback.exports.package_created', ['site' => $site->name]));
     } catch (Throwable $throwable) {
       return redirect()
         ->route('admin.sites.index', [
@@ -109,7 +109,7 @@ class SiteExportController extends Controller
 
     return redirect()
       ->route('admin.site-transfers.exports.index')
-      ->with('status', 'Site export record deleted.');
+      ->with('status', __('webblocks-cms::admin-feedback.exports.deleted'));
   }
 
   public function bulkDestroy(BulkDeleteSiteExportsRequest $request): RedirectResponse

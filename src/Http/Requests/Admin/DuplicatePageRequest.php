@@ -67,8 +67,8 @@ class DuplicatePageRequest extends FormRequest
   public function messages(): array
   {
     return [
-      'slug.regex' => 'Use only lowercase letters, numbers, and hyphens.',
-      'translations.*.slug.regex' => 'Use only lowercase letters, numbers, and hyphens.',
+      'slug.regex' => __('webblocks-cms::admin-feedback.pages.slug_format'),
+      'translations.*.slug.regex' => __('webblocks-cms::admin-feedback.pages.slug_format'),
     ];
   }
 

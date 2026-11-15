@@ -21,10 +21,12 @@ class BulkDeletePagesRequest extends FormRequest
 
   public function messages(): array
   {
+    $selectionRequired = __('webblocks-cms::admin-feedback.bulk.select_required', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.page')]);
+
     return [
-      'page_ids.required' => 'Select at least one page to delete.',
-      'page_ids.min' => 'Select at least one page to delete.',
-      'page_ids.*.exists' => 'One or more selected pages no longer exists.',
+      'page_ids.required' => $selectionRequired,
+      'page_ids.min' => $selectionRequired,
+      'page_ids.*.exists' => __('webblocks-cms::admin-feedback.bulk.selection_missing', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.pages')]),
     ];
   }
 }

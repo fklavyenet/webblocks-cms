@@ -33,7 +33,7 @@ class SiteExportBulkDeleter
       $siteExport = $exports->get($id);
 
       if (! $siteExport) {
-    $failed[] = ['id' => $id, 'message' => 'not found'];
+    $failed[] = ['id' => $id, 'message' => __('webblocks-cms::admin-feedback.bulk.not_found')];
 
     continue;
       }
@@ -48,7 +48,7 @@ class SiteExportBulkDeleter
           'message' => $throwable->getMessage(),
     ]);
 
-    $failed[] = ['id' => $id, 'message' => 'delete failed; check system logs'];
+    $failed[] = ['id' => $id, 'message' => __('webblocks-cms::admin-feedback.bulk.delete_failed')];
       }
   }
 

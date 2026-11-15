@@ -21,11 +21,13 @@ class BulkDeleteMediaRequest extends FormRequest
 
   public function messages(): array
   {
+    $selectionRequired = __('webblocks-cms::admin-feedback.bulk.select_required', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.media_item')]);
+
     return [
-      'media_ids.required' => 'Select at least one media item to delete.',
-      'media_ids.array' => 'Select at least one media item to delete.',
-      'media_ids.min' => 'Select at least one media item to delete.',
-      'media_ids.*.exists' => 'One or more selected media items no longer exists.',
+      'media_ids.required' => $selectionRequired,
+      'media_ids.array' => $selectionRequired,
+      'media_ids.min' => $selectionRequired,
+      'media_ids.*.exists' => __('webblocks-cms::admin-feedback.bulk.selection_missing', ['entity' => __('webblocks-cms::admin-feedback.bulk_entities.media_items')]),
     ];
   }
 }

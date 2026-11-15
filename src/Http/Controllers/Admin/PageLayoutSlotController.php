@@ -38,7 +38,7 @@ class PageLayoutSlotController extends Controller
 
     return redirect()
       ->route('admin.page-layouts.edit', $pageLayout)
-      ->with('status', 'Page Layout Slot created successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.layout_slots.created'));
   }
 
   public function edit(Request $request, PageLayout $pageLayout, PageLayoutSlot $pageLayoutSlot): View
@@ -63,7 +63,7 @@ class PageLayoutSlotController extends Controller
 
     return redirect()
       ->route('admin.page-layouts.edit', $pageLayout)
-      ->with('status', 'Page Layout Slot updated successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.layout_slots.updated'));
   }
 
   public function destroy(Request $request, PageLayout $pageLayout, PageLayoutSlot $pageLayoutSlot): RedirectResponse
@@ -74,13 +74,13 @@ class PageLayoutSlotController extends Controller
     if ($pageLayoutSlot->is_system || $pageLayoutSlot->is_required) {
       return redirect()
         ->route('admin.page-layouts.edit', $pageLayout)
-        ->withErrors(['page_layout_slot' => 'This Page Layout Slot cannot be deleted.']);
+        ->withErrors(['page_layout_slot' => __('webblocks-cms::admin-feedback.layout_slots.delete_blocked')]);
     }
 
     $pageLayoutSlot->delete();
 
     return redirect()
       ->route('admin.page-layouts.edit', $pageLayout)
-      ->with('status', 'Page Layout Slot deleted successfully.');
+      ->with('status', __('webblocks-cms::admin-feedback.layout_slots.deleted'));
   }
 }

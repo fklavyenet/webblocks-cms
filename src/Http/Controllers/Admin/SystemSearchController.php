@@ -55,6 +55,6 @@ class SystemSearchController extends Controller
 
     return redirect()
       ->route('admin.system.search.index')
-      ->with('status', 'Search index rebuilt successfully. Indexed '.$result->indexed.' row(s) and skipped '.$result->skipped.' page or locale scope(s).');
+      ->with('status', __('webblocks-cms::admin-feedback.search.rebuilt', ['indexed' => $result->indexed, 'skipped' => $result->skipped]));
   }
 }
