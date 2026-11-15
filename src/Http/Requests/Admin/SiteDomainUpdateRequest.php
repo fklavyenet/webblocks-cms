@@ -24,6 +24,11 @@ class SiteDomainUpdateRequest extends FormRequest
     ]);
   }
 
+  public function messages(): array
+  {
+    return ['domain.unique' => __('webblocks-cms::admin-feedback.validation.domain_duplicate')];
+  }
+
   public function rules(): array
   {
     /** @var SiteDomain|null $siteDomain */

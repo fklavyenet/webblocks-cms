@@ -19,4 +19,9 @@ class ProfilePasswordUpdateRequest extends FormRequest
       'new_password' => ['required', 'confirmed', Password::defaults()],
     ];
   }
+
+  public function messages(): array
+  {
+    return ['current_password.current_password' => __('webblocks-cms::admin-feedback.validation.current_password')];
+  }
 }

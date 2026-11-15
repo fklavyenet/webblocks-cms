@@ -22,4 +22,12 @@ class CmsMailTestEmailRequest extends FormRequest
   {
     return (string) $this->validated('recipient_email');
   }
+
+  public function messages(): array
+  {
+    return [
+      'recipient_email.required' => __('webblocks-cms::admin-feedback.validation.test_mail_required'),
+      'recipient_email.email' => __('webblocks-cms::admin-feedback.validation.test_mail_email'),
+    ];
+  }
 }

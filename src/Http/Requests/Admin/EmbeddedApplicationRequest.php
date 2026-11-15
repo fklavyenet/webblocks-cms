@@ -30,6 +30,7 @@ class EmbeddedApplicationRequest extends FormRequest
       'mount_classes' => ['nullable', 'string', 'max:512', 'regex:/^[A-Za-z0-9_-]+(?:\s+[A-Za-z0-9_-]+)*$/'],
       'css_urls' => ['nullable', 'string', 'max:20000'],
       'js_assets' => ['nullable', 'array', 'max:20'],
+      'js_assets.*' => ['array'],
       'js_assets.*.path' => ['nullable', 'string', 'max:2048', 'regex:'.ApplicationAuthoringFields::ASSET_PATH_PATTERN],
       'js_assets.*.type' => ['nullable', Rule::in(['classic', 'module'])],
       'js_assets.*.load_position' => ['nullable', Rule::in(['head', 'body_end'])],
@@ -37,6 +38,7 @@ class EmbeddedApplicationRequest extends FormRequest
       'supports_theme' => ['nullable', 'boolean'],
       'supports_fullscreen' => ['nullable', 'boolean'],
       'settings' => ['nullable', 'array', 'max:20'],
+      'settings.*' => ['array'],
       'settings.*.key' => ['nullable', 'string', 'max:64', 'regex:'.ApplicationAuthoringFields::SETTINGS_KEY_PATTERN],
       'settings.*.type' => ['nullable', Rule::in(['boolean', 'enum', 'integer', 'string'])],
       'settings.*.default' => ['nullable', 'string', 'max:2000'],
@@ -63,7 +65,7 @@ class EmbeddedApplicationRequest extends FormRequest
       ->mapWithKeys(function (array $setting): array {
         $definition = ['type' => $setting['type'] ?? 'string'];
         if ($definition['type'] === 'enum') {
-          $definition['values'] = collect(explode(',', (string) ($setting['values'] ?? '')))->map->trim()->filter()->values()->all();
+          $definition['values'] = $this->enumValues($setting['values'] ?? null);
         }
         foreach (['min', 'max', 'max_length'] as $key) {
           if (($setting[$key] ?? '') !== '') {
@@ -96,22 +98,45 @@ class EmbeddedApplicationRequest extends FormRequest
   public function withValidator(Validator $validator): void
   {
     $validator->after(function (Validator $validator): void {
-      $cssUrls = collect(preg_split('/\R/', (string) $this->input('css_urls', '')))->map->trim()->filter();
+      $cssInput = $this->input('css_urls');
+      $cssUrls = is_string($cssInput) ? preg_split('/\R/', $cssInput) : [];
       foreach ($cssUrls as $index => $url) {
-        if (preg_match(ApplicationAuthoringFields::ASSET_PATH_PATTERN, $url) !== 1) {
-          $validator->errors()->add('css_urls', 'Every CSS URL must be a same-origin absolute path (invalid line '.($index + 1).').');
+        $url = trim($url);
+        if ($url !== '' && preg_match(ApplicationAuthoringFields::ASSET_PATH_PATTERN, $url) !== 1) {
+          $validator->errors()->add('css_urls', __('webblocks-cms::admin-feedback.validation.application_css_url', ['line' => $index + 1]));
         }
       }
 
-      $settings = collect($this->input('settings', []))->filter(fn (array $setting): bool => trim((string) ($setting['key'] ?? '')) !== '');
+      $settings = collect($this->input('settings', []))->filter(
+        fn (mixed $setting): bool => is_array($setting) && is_string($setting['key'] ?? null) && trim($setting['key']) !== ''
+      );
       if ($settings->pluck('key')->duplicates()->isNotEmpty()) {
-        $validator->errors()->add('settings', 'Application setting keys must be unique.');
+        $validator->errors()->add('settings', __('webblocks-cms::admin-feedback.validation.application_setting_unique'));
       }
       foreach ($settings as $index => $setting) {
-        if (($setting['type'] ?? 'string') === 'enum' && collect(explode(',', (string) ($setting['values'] ?? '')))->map->trim()->filter()->isEmpty()) {
-          $validator->errors()->add("settings.{$index}.values", 'Enum settings require at least one value.');
+        if (($setting['type'] ?? 'string') === 'enum' && $this->enumValues($setting['values'] ?? null) === []) {
+          $validator->errors()->add("settings.{$index}.values", __('webblocks-cms::admin-feedback.validation.application_enum_values'));
         }
       }
     });
+  }
+
+  public function messages(): array
+  {
+    return [
+      'handle.required' => __('webblocks-cms::admin-feedback.validation.application_handle_required'),
+      'name.required' => __('webblocks-cms::admin-feedback.validation.application_name_required'),
+      'version.required' => __('webblocks-cms::admin-feedback.validation.application_version_required'),
+      'render_mode.required' => __('webblocks-cms::admin-feedback.validation.application_mode_required'),
+    ];
+  }
+
+  private function enumValues(mixed $input): array
+  {
+    if (! is_string($input)) {
+      return [];
+    }
+
+    return array_values(array_filter(array_map(trim(...), explode(',', $input)), fn (string $value): bool => $value !== ''));
   }
 }

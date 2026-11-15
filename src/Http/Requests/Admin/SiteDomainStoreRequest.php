@@ -33,4 +33,9 @@ class SiteDomainStoreRequest extends FormRequest
       'status' => ['required', Rule::in([SiteDomain::STATUS_ACTIVE, SiteDomain::STATUS_INACTIVE])],
     ];
   }
+
+  public function messages(): array
+  {
+    return ['domain.unique' => __('webblocks-cms::admin-feedback.validation.domain_duplicate')];
+  }
 }

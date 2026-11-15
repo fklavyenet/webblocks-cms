@@ -57,11 +57,11 @@ class PageConverterAnalyzeRequest extends FormRequest
       $sourceHtml = trim((string) $this->input('source_html'));
 
       if ($sourceHtml === '' && ! $this->hasFile('source_file')) {
-        $validator->errors()->add('source_html', 'Paste source HTML or upload an .html/.htm file.');
+        $validator->errors()->add('source_html', __('webblocks-cms::admin-feedback.validation.converter_source_required'));
       }
 
       if (preg_match('/^https?:\/\//i', $sourceHtml) === 1) {
-        $validator->errors()->add('source_html', 'Remote URL fetching is not supported in this Page Converter phase. Paste HTML or upload an HTML file instead.');
+        $validator->errors()->add('source_html', __('webblocks-cms::admin-feedback.validation.converter_remote_source'));
       }
 
       if (str_contains($path, '..') || str_contains($path, '//') || str_contains($path, '\\') || str_contains($path, ':')) {

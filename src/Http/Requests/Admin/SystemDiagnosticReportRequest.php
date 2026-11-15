@@ -30,4 +30,9 @@ class SystemDiagnosticReportRequest extends FormRequest
       'prepare_consent' => ['accepted'],
     ];
   }
+
+  public function messages(): array
+  {
+    return ['prepare_consent.accepted' => __('webblocks-cms::admin-feedback.validation.diagnostics_consent')];
+  }
 }

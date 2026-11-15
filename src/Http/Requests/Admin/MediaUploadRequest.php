@@ -19,4 +19,12 @@ class MediaUploadRequest extends FormRequest
       'file' => MediaUploadRules::file(),
     ] + MediaUploadRules::metadata();
   }
+
+  public function messages(): array
+  {
+    return [
+      'file.required' => __('webblocks-cms::admin-feedback.validation.media_file_required'),
+      'file.mimetypes' => __('webblocks-cms::admin-feedback.validation.media_file_type'),
+    ];
+  }
 }

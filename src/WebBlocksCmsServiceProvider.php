@@ -85,6 +85,7 @@ use WebBlocks\Cms\Http\Middleware\RequireCmsTwoFactor;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiCapability;
 use WebBlocks\Cms\Http\Middleware\RequireInternalApiToken;
 use WebBlocks\Cms\Http\Middleware\RevokeResetCmsSessions;
+use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
 use WebBlocks\Cms\Http\Middleware\UseCmsAuthenticationRedirect;
 use WebBlocks\Cms\Http\Requests\PublicSearchRequest;
 use WebBlocks\Cms\Models\AutomaticPageRule;
@@ -1652,7 +1653,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   }
 
   /**
-   * Renders the package's branded 404 for public HTML requests. The host
+   * Renders the package's branded 404 for HTML requests. The host
    * app's own resources/views/errors/404.blade.php keeps winning — Laravel's
    * error-view flow resolves it before this renderable's fallback matters,
    * and the file check below keeps this renderable from shadowing it. JSON
@@ -1668,6 +1669,13 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       $handler->renderable(function (NotFoundHttpException $exception, Request $request) {
         if ($request->expectsJson() || is_file(resource_path('views/errors/404.blade.php'))) {
           return null;
+        }
+
+        if ($request->is('webadmin', 'webadmin/*') && ! $request->is('webadmin/api', 'webadmin/api/*') && Route::has('admin.dashboard')) {
+          return app(UseAdminLocale::class)->handle($request, fn () => response()
+            ->view('webblocks-cms::errors.admin-404', ['title' => __('webblocks-cms::admin-feedback.not_found.title')], 404)
+            ->header('X-Robots-Tag', 'noindex, nofollow')
+            ->header('Cache-Control', 'private, no-store'));
         }
 
         $systemHtml = app(SystemPageRenderer::class)->notFound($request);

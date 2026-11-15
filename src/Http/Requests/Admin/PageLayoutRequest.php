@@ -60,9 +60,17 @@ class PageLayoutRequest extends FormRequest
   {
     $validator->after(function (Validator $validator): void {
       if (! LayoutMarkup::hasValidTokenList($this->input('body_class'))) {
-        $validator->errors()->add('body_class', 'Body Class must be a safe whitespace-separated class token list.');
+        $validator->errors()->add('body_class', __('webblocks-cms::admin-feedback.validation.layout_body_class'));
       }
     });
+  }
+
+  public function messages(): array
+  {
+    return [
+      'handle.required' => __('webblocks-cms::admin-feedback.validation.layout_handle_required'),
+      'name.required' => __('webblocks-cms::admin-feedback.validation.layout_name_required'),
+    ];
   }
 
   public function validatedData(): array

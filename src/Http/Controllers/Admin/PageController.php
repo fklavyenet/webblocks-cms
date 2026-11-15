@@ -95,6 +95,8 @@ class PageController extends Controller
     $storedQuery = $this->pageIndexState->storedQuery($request);
 
     if (! $this->hasMeaningfulPageIndexQuery($request) && $storedQuery !== []) {
+      $request->session()->keep(['errors', 'status', 'bulk_status']);
+
       return redirect()->route('admin.pages.index', array_filter([
         ...$storedQuery,
         'details' => $request->integer('details') ?: null,
@@ -201,6 +203,7 @@ class PageController extends Controller
     if ($outOfRangePage !== null) {
       $lastPageQuery = $indexQuery($outOfRangePage);
       $this->pageIndexState->remember($request, $lastPageQuery);
+      $request->session()->keep(['errors', 'status', 'bulk_status']);
 
       redirect()->route('admin.pages.index', array_filter([
         ...$lastPageQuery,

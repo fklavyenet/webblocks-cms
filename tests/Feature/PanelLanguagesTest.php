@@ -8,6 +8,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
+use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
@@ -69,6 +70,63 @@ class PanelLanguagesTest extends TestCase
         ->assertOk()
         ->assertSee($status);
     }
+  }
+
+  public function test_panel_not_found_and_bulk_selection_feedback_use_the_selected_language(): void
+  {
+    $this->actingAs($actor = $this->actor());
+    $index = route('admin.pages.index');
+    $filteredIndex = route('admin.pages.index', ['site' => 'all', 'search' => 'fixture']);
+
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $actor->forceFill(['admin_locale' => $locale])->save();
+      $feedback = fn (string $key, array $replace = []) => __('webblocks-cms::admin-feedback.'.$key, $replace, $locale);
+
+      $this->get(route('admin.pages.edit', 900000000))
+        ->assertNotFound()
+        ->assertSee('lang="'.$locale.'"', false)
+        ->assertSee($feedback('not_found.title'))
+        ->assertSee($feedback('not_found.back'))
+        ->assertDontSee('admin-feedback.not_found');
+
+      $this->get('/webadmin/missing-panel-route-fixture')
+        ->assertNotFound()
+        ->assertSee('lang="'.$locale.'"', false)
+        ->assertSee($feedback('not_found.title'));
+
+      $this->get($filteredIndex)->assertOk();
+      $response = $this->from($index)->delete(route('admin.pages.bulk-destroy'), ['page_ids' => [900000000]]);
+      $response->assertRedirect($index);
+      $this->get($index)->assertRedirect($filteredIndex);
+      $this->get($filteredIndex)->assertOk()
+        ->assertSee($feedback('bulk.selection_missing', ['entity' => $feedback('bulk_entities.pages')]));
+    }
+  }
+
+  public function test_embedded_application_validation_handles_css_and_enum_values(): void
+  {
+    $this->actingAs($actor = $this->actor());
+    $actor->forceFill(['admin_locale' => 'tr'])->save();
+    $store = route('admin.embedded-applications.store');
+    $create = route('admin.embedded-applications.create');
+    $payload = ['handle' => 'fixture', 'name' => 'Fixture', 'version' => '1.0.0', 'render_mode' => 'inline', 'mount_element' => 'div'];
+
+    $this->from($create)->post($store, $payload + [
+      'css_urls' => "/fixture.css\n\nhttps://example.test/fixture.css",
+      'settings' => [['key' => 'choice', 'type' => 'enum']],
+    ])->assertRedirect($create)->assertSessionHasErrors([
+      'css_urls' => 'Her CSS URL’si aynı kaynağa ait mutlak bir yol olmalıdır (geçersiz satır: 3).',
+      'settings.0.values' => 'Seçenekli ayarlar için en az bir değer girin.',
+    ]);
+
+    $this->post($store, $payload + [
+      'css_urls' => '/fixture.css',
+      'settings' => [['key' => 'choice', 'type' => 'enum', 'values' => '0, 1, ']],
+    ])->assertRedirect();
+
+    $application = EmbeddedApplication::query()->where('handle', 'fixture')->firstOrFail();
+    $this->assertSame(['/fixture.css'], $application->css_assets);
+    $this->assertSame(['0', '1'], $application->settings_schema['choice']['values']);
   }
 
   public function test_super_admin_can_preview_activate_and_select_russian_without_changing_content_languages(): void

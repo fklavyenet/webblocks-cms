@@ -634,7 +634,7 @@ class BlockRequest extends FormRequest
         $url = trim((string) $this->input('url', ''));
 
         if ($url !== '' && ! preg_match('/^(https?:\/\/|\/|#|mailto:|tel:)/i', $url)) {
-          $validator->errors()->add('url', 'Image link URL must be a full URL, site path, anchor, mailto link, or telephone link.');
+          $validator->errors()->add('url', __('webblocks-cms::admin-feedback.validation.image_link_url'));
         }
 
         if ($this->filled('media_id') || $this->filled('asset_id')) {

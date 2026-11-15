@@ -97,6 +97,13 @@ final class NoteRequest extends FormRequest
     ];
   }
 
+  public function messages(): array
+  {
+    return $this->routeIs('admin.notes.*')
+      ? ['body.required' => __('webblocks-cms::admin-feedback.validation.note_body_required')]
+      : [];
+  }
+
   public static function writeRules(bool $create): array
   {
     $presence = $create ? ['required'] : ['sometimes', 'required'];

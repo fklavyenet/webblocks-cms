@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.5
+
+- Translate audited Webadmin validation errors and use the selected panel language for Webadmin 404 pages.
+- Fix CSS path and enum validation for embedded applications and keep page bulk deletion warnings visible after list redirects.
+
 ## 1.135.4
 
 - The default WebBlocks CMS tab icon uses a simplified block outline in WebBlocks blue on light and dark browser tabs. Sites with a custom favicon keep their configured icon.

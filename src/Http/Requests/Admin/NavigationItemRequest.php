@@ -89,7 +89,7 @@ class NavigationItemRequest extends FormRequest
       }
 
       if ($linkType === NavigationItem::LINK_CUSTOM_URL && $url === '') {
-        $validator->errors()->add('url', 'Enter a URL for custom links.');
+        $validator->errors()->add('url', __('webblocks-cms::admin-feedback.validation.navigation_url_required'));
       }
 
       if ($linkType === NavigationItem::LINK_GROUP && $title === '') {
