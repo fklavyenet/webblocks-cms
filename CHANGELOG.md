@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.135.0
+
+- Choose whether media or text appears first on narrow screens in two-column Grid, stacking Split, and split Hero blocks. The default keeps the existing order.
+
 ## 1.134.4
 
 - Show the step number and current version transition in the update dialog only when the plan includes multiple version transitions.
