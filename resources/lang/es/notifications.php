@@ -56,6 +56,7 @@ return [
   'health_install_help' => 'Los sitios nuevos usan avisos inmediatos sin resumen diario. El correo requiere transporte operativo y APP_URL correcta. Los avisos agrupados o resúmenes diarios necesitan además despacho periódico; siga la guía opcional de alojamiento. Los avisos del panel no necesitan programador.',
   'health_dispatch_failed' => 'Error al procesar notificaciones. Revisa el programador y los resultados de envío.',
   'health_notifications_optional' => 'Las notificaciones inmediatas sin resumen diario no requieren envío programado. El estado sigue visible para el mantenimiento en segundo plano.',
+  'panel_plugin_updates' => '{1} :count actualización de plugins disponible|[2,*] :count actualizaciones de plugins disponibles',
   'panel_title' => 'Notificaciones del panel',
   'panel_pending_items' => '{1} Notificaciones del panel: :count elemento pendiente|[2,*] Notificaciones del panel: :count elementos pendientes',
   'panel_new_messages' => '{1} :count mensaje de contacto sin leer|[2,*] :count mensajes de contacto sin leer',

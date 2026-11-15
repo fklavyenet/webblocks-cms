@@ -56,6 +56,7 @@ return [
   'health_install_help' => 'Neue Websites verwenden sofortige Hinweise ohne Tagesübersicht. E-Mail benötigt funktionierenden Mailtransport und die korrekte APP_URL. Gebündelte Hinweise oder Tagesübersichten benötigen zusätzlich regelmäßigen Versand; folgen Sie der optionalen Hosting-Anleitung. Panelhinweise benötigen keinen Scheduler.',
   'health_dispatch_failed' => 'Benachrichtigungsverarbeitung fehlgeschlagen. Prüfen Sie Zeitplaner und Versandresultate.',
   'health_notifications_optional' => 'Sofortige Benachrichtigungen ohne tägliche Zusammenfassungen benötigen keinen geplanten Versand. Der Zeitplanerstatus bleibt für Hintergrundwartung sichtbar.',
+  'panel_plugin_updates' => '{1} :count Plugin-Update verfügbar|[2,*] :count Plugin-Updates verfügbar',
   'panel_title' => 'Panel-Benachrichtigungen',
   'panel_pending_items' => '{1} Panel-Benachrichtigungen: :count offener Eintrag|[2,*] Panel-Benachrichtigungen: :count offene Einträge',
   'panel_new_messages' => '{1} :count ungelesene Kontaktnachricht|[2,*] :count ungelesene Kontaktnachrichten',

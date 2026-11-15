@@ -38,4 +38,21 @@ class AdminMediaUploadFeedbackTest extends TestCase
       ->assertRedirectToRoute('admin.media.index')->assertSessionHas('status');
     $disk->assertExists(Media::query()->where('original_name', 'library.png')->sole()->path);
   }
+
+  public function test_webvtt_is_stored_as_a_public_document(): void
+  {
+    $this->actingAs($this->cmsActor(new MaintenanceTestUser(['role' => 'super_admin'])));
+    $disk = Storage::fake('public');
+    $file = UploadedFile::fake()->createWithContent('lesson.en.vtt', "WEBVTT\n\n00:00:00.000 --> 00:00:02.000\nHello.\n")
+      ->mimeType('text/vtt');
+
+    $this->post(route('admin.media.store'), ['file' => $file], ['Accept' => 'application/json'])->assertCreated();
+
+    $media = Media::query()->where('original_name', 'lesson.en.vtt')->sole();
+    $this->assertSame(Media::KIND_DOCUMENT, $media->kind);
+    $this->assertSame('text/vtt', $media->mime_type);
+    $this->assertStringStartsWith('media/documents/', $media->path);
+    $this->assertStringEndsWith('.vtt', $media->path);
+    $disk->assertExists($media->path);
+  }
 }

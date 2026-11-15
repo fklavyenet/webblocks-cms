@@ -56,6 +56,7 @@ return [
   'health_install_help' => 'Les nouveaux sites utilisent les alertes immédiates sans résumé quotidien. Les e-mails nécessitent un transport opérationnel et une APP_URL correcte. Les alertes groupées et résumés nécessitent aussi un envoi périodique ; suivez le guide facultatif d’hébergement. Les notifications du panneau ne nécessitent pas de planificateur.',
   'health_dispatch_failed' => 'Échec du traitement des notifications. Vérifiez le planificateur et les résultats d’envoi.',
   'health_notifications_optional' => 'Les notifications immédiates sans résumé quotidien ne nécessitent pas d’envoi planifié. Le statut reste visible pour la maintenance en arrière-plan.',
+  'panel_plugin_updates' => '{1} :count mise à jour de plugin disponible|[2,*] :count mises à jour de plugins disponibles',
   'panel_title' => 'Notifications du panneau',
   'panel_pending_items' => '{1} Notifications du panneau : :count élément en attente|[2,*] Notifications du panneau : :count éléments en attente',
   'panel_new_messages' => '{1} :count message de contact non lu|[2,*] :count messages de contact non lus',

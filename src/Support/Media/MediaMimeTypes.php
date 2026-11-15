@@ -29,6 +29,7 @@ class MediaMimeTypes
     'video/quicktime',
     'application/pdf',
     'text/plain',
+    'text/vtt',
     'text/csv',
     'application/msword',
     'application/vnd.ms-excel',

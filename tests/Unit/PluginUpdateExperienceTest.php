@@ -9,16 +9,16 @@ class PluginUpdateExperienceTest extends TestCase
   public function test_update_modal_receives_and_renders_safe_release_information(): void
   {
     $root = dirname(__DIR__, 2);
-    $controller = (string) file_get_contents($root.'/src/Http/Controllers/Admin/SystemPluginController.php');
+    $updates = (string) file_get_contents($root.'/src/Support/Plugins/Catalog/PluginCatalogUpdates.php');
     $view = (string) file_get_contents($root.'/resources/views/admin/system/plugins/index.blade.php');
     $notes = (string) file_get_contents($root.'/resources/views/admin/system/plugins/partials/update-release-notes.blade.php');
 
     foreach (['summary', 'notes', 'highlights'] as $field) {
-      $this->assertStringContainsString("'{$field}' => \$plugin->latestCompatibleRelease->{$field}", $controller);
+      $this->assertStringContainsString("'{$field}' => \$release->{$field}", $updates);
     }
 
-    $this->assertStringContainsString("'note_items' => \$plugin->latestCompatibleRelease->noteItems()", $controller);
-    $this->assertStringContainsString("'details_url' => \$plugin->latestCompatibleRelease->detailsUrl", $controller);
+    $this->assertStringContainsString("'note_items' => \$release->noteItems()", $updates);
+    $this->assertStringContainsString("'details_url' => \$release->detailsUrl", $updates);
     $this->assertStringContainsString("\$plugin['catalog_update']['details_url']", $notes);
 
     $this->assertStringContainsString("systemPluginsIndexText('update_release_notes')", $notes);

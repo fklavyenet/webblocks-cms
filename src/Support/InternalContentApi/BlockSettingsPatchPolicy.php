@@ -73,6 +73,7 @@ final class BlockSettingsPatchPolicy
    * @var array<string, array<string, array{0: string, 1?: mixed}>>
    */
   public const PATCHABLE = [
+    'video' => ['caption_tracks' => ['video_captions']],
     'application' => [
       'application_handle' => ['text', 64],
       'application_settings' => ['application_settings'],

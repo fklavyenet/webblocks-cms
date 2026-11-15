@@ -37,6 +37,7 @@ use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Media\VideoCaptions;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
@@ -185,6 +186,7 @@ class BlockRequest extends FormRequest
       'section_flow' => [$supportsSectionSpacing ? 'nullable' : 'prohibited', Rule::in(['normal', 'offset-up', 'overlap-previous'])],
       'width' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'sm', 'md', 'lg', 'xl', 'full'])],
       'container_flow' => [$supportsContainerWidth ? 'nullable' : 'prohibited', Rule::in(['', 'none', 'stack'])],
+      'caption_path' => [$isVideo ? 'nullable' : 'prohibited', 'regex:'.VideoCaptions::PATH],
       'stack_spacing' => [$isStack ? 'nullable' : 'prohibited', Rule::in(['', '1', '2', '3', '4', '6', '8'])],
       'split_gap' => [$isSplit ? 'nullable' : 'prohibited', Rule::in(['', '0', '1', '2', '3', '4', '6', '8'])],
       'split_align' => [$isSplit ? 'nullable' : 'prohibited', Rule::in(['', 'start', 'center', 'end', 'stretch'])],
@@ -1796,7 +1798,23 @@ class BlockRequest extends FormRequest
           : (trim((string) ($data['url'] ?? '')) ?: null);
         $data['variant'] = null;
         $data['meta'] = null;
-        $data['settings'] = null;
+        $captionSettings = [];
+        if ($blockType?->slug === 'video') {
+          $incomingSettings = json_decode((string) ($data['settings'] ?? ''), true) ?? [];
+          $tracks = $incomingSettings['caption_tracks'] ?? $existingBlock?->setting('caption_tracks', []) ?? [];
+          if (array_key_exists('caption_path', $data)) {
+            $captionLocale = $data['locale'] ?? app(LocaleResolver::class)->default()->code;
+            if (trim((string) $data['caption_path']) === '') {
+              unset($tracks[$captionLocale]);
+            } else {
+              $tracks[$captionLocale] = $data['caption_path'];
+            }
+          }
+          if ($tracks !== []) {
+            $captionSettings['caption_tracks'] = $tracks;
+          }
+        }
+        $data['settings'] = $captionSettings === [] ? null : json_encode($captionSettings, JSON_UNESCAPED_SLASHES);
       }
 
       if ($blockType?->slug === 'breadcrumb') {
@@ -2584,6 +2602,7 @@ class BlockRequest extends FormRequest
     unset($data['icon_slug'], $data['icon_tone'], $data['icon_size'], $data['badge_label'], $data['badge_tone']);
     unset($data['background_position'], $data['background_overlay']);
     unset($data['name'], $data['alignment'], $data['spacing'], $data['section_flow'], $data['width'], $data['container_flow'], $data['stack_spacing'], $data['split_gap'], $data['split_align'], $data['split_width'], $data['split_responsive'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_ratio'], $data['grid_gap'], $data['grid_alternate_media_text_sections'], $data['grid_alternate_start'], $data['intro_text'], $data['meta_items'], $data['title_level']);
+    unset($data['caption_path']);
     unset($data['slider_height'], $data['slider_min_height'], $data['slider_aspect_ratio'], $data['slider_transition'], $data['slider_interval_ms']);
     unset($data['slider_overlay'], $data['slider_content_position'], $data['slider_content_width'], $data['slider_text_color'], $data['slider_background_fit']);
     unset($data['slider_autoplay'], $data['slider_pause_on_hover'], $data['slider_show_arrows'], $data['slider_show_dots'], $data['slider_loop'], $data['slider_swipe'], $data['slider_keyboard']);

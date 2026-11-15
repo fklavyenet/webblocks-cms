@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Media;
+use WebBlocks\Cms\Support\BlockTypes\BlockSettingsValidator;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -82,12 +83,49 @@ class VideoBlockRenderTest extends TestCase
     $this->assertStringNotContainsString('example.com', $html);
   }
 
-  private function renderVideo(array $attributes): string
+  #[Test]
+  public function a_hosted_video_renders_only_the_track_for_the_requested_language(): void
+  {
+    $media = Media::query()->create([
+      'disk' => 'public', 'path' => 'media/clip.mp4', 'filename' => 'clip.mp4',
+      'mime_type' => 'video/mp4', 'kind' => Media::KIND_VIDEO, 'visibility' => 'public',
+    ]);
+    $attributes = [
+      'media_id' => $media->id,
+      'settings' => ['caption_tracks' => [
+        'en' => '/storage/media/documents/clip-en.vtt',
+        'tr' => '/storage/media/documents/clip-tr.vtt',
+      ]],
+    ];
+
+    foreach (['en', 'tr'] as $locale) {
+      $html = $this->renderVideo($attributes, $locale);
+      $this->assertStringContainsString('media/clip.mp4', $html);
+      $this->assertSame(1, substr_count($html, '<track '));
+      $this->assertStringContainsString('<track kind="captions" src="/storage/media/documents/clip-'.$locale.'.vtt" srclang="'.$locale.'">', $html);
+      $this->assertStringNotContainsString(' default', $html);
+    }
+    $this->assertStringNotContainsString('<track ', $this->renderVideo($attributes, 'de'));
+  }
+
+  #[Test]
+  public function caption_tracks_must_use_locale_codes_and_same_origin_paths(): void
+  {
+    $schema = app(BlockSettingsValidator::class);
+    foreach ([['en' => '//example.com/clip.vtt'], ['_' => '/storage/media/documents/clip.vtt']] as $tracks) {
+      $errors = [];
+      $schema->normalize('video', ['caption_tracks' => $tracks], 'settings', $errors, 'patch');
+      $this->assertSame('settings.caption_tracks', $errors[0]['path']);
+    }
+  }
+
+  private function renderVideo(array $attributes, ?string $locale = null): string
   {
     $block = Block::query()->make($attributes + [
       'type' => 'video', 'source_type' => 'static', 'slot' => 'main',
       'sort_order' => 0, 'status' => 'published',
     ]);
+    $block->setAttribute('requested_locale_code', $locale);
 
     return view('webblocks-cms::pages.partials.blocks.video', [
       'block' => $block,

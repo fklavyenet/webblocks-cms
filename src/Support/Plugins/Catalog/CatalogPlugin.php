@@ -155,11 +155,7 @@ class CatalogPlugin
   public function hasInstallableArtifact(): bool
   {
     return $this->isCompatible()
-      && $this->latestCompatibleRelease !== null
-      && $this->latestCompatibleRelease->status === 'published'
-      && $this->latestCompatibleRelease->downloadUrl !== null
-      && $this->latestCompatibleRelease->checksumSha256 !== null
-      && $this->latestCompatibleRelease->artifactFilename !== null;
+      && $this->latestCompatibleRelease?->hasInstallableArtifact() === true;
   }
 
   private static function stringOrNull(mixed $value): ?string

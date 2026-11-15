@@ -4,6 +4,10 @@ namespace WebBlocks\Cms\Support\Plugins\Catalog;
 
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Promises\LazyPromise;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -12,6 +16,35 @@ use WebBlocks\Cms\Support\WebBlocks;
 class PluginCatalogClient
 {
   private const DEFAULT_BASE_URL = 'https://plugins.webblocksui.com';
+
+  /**
+   * @param  list<string>  $handles
+   * @return array<string, CatalogRelease>|null
+   */
+  public function installedReleases(array $handles): ?array
+  {
+    $baseUrl = $this->baseUrl();
+    $cmsVersion = $this->cmsVersion();
+    $responses = Http::pool(function (Pool $pool) use ($handles, $baseUrl, $cmsVersion): void {
+      foreach ($handles as $handle) {
+        $this->requestLatestRelease($pool->as($handle), $baseUrl, $handle, $cmsVersion);
+      }
+    }, concurrency: 5);
+
+    $releases = [];
+    foreach ($responses as $handle => $response) {
+      if ($response instanceof Response && $response->notFound()) {
+        continue;
+      }
+      $release = $response instanceof Response ? $this->parseLatestRelease($response) : null;
+      if ($release === null || $release->version === null) {
+        return null;
+      }
+      $releases[$handle] = $release;
+    }
+
+    return $releases;
+  }
 
   public function browse(): PluginCatalogResult
   {
@@ -190,19 +223,7 @@ class PluginCatalogClient
   private function latestCompatibleRelease(string $baseUrl, string $handle, string $cmsVersion): ?CatalogRelease
   {
     try {
-      $response = Http::acceptJson()
-        ->timeout((int) config('webblocks-plugins.catalog.timeout_seconds', 5))
-        ->connectTimeout((int) config('webblocks-plugins.catalog.connect_timeout_seconds', 3))
-        ->withHeaders([
-          'User-Agent' => 'WebBlocks-CMS-Plugin-Catalog/'.$cmsVersion,
-        ])
-        ->get($baseUrl.'/api/plugins/'.rawurlencode($handle).'/latest', [
-          'host_product' => 'webblocks-cms',
-          'version' => $cmsVersion,
-          'cms_version' => $cmsVersion,
-          'php_version' => PHP_VERSION,
-          'laravel_version' => Application::VERSION,
-        ]);
+      $response = $this->requestLatestRelease(Http::acceptJson(), $baseUrl, $handle, $cmsVersion);
     } catch (ConnectionException $exception) {
       Log::info('Plugin Catalog latest compatible release lookup failed.', [
         'base_url' => $baseUrl,
@@ -215,6 +236,26 @@ class PluginCatalogClient
       return null;
     }
 
+    return $this->parseLatestRelease($response);
+  }
+
+  private function requestLatestRelease(PendingRequest $request, string $baseUrl, string $handle, string $cmsVersion): Response|LazyPromise
+  {
+    return $request->acceptJson()
+      ->timeout((int) config('webblocks-plugins.catalog.timeout_seconds', 5))
+      ->connectTimeout((int) config('webblocks-plugins.catalog.connect_timeout_seconds', 3))
+      ->withUserAgent('WebBlocks-CMS-Plugin-Catalog/'.$cmsVersion)
+      ->get($baseUrl.'/api/plugins/'.rawurlencode($handle).'/latest', [
+        'host_product' => 'webblocks-cms',
+        'version' => $cmsVersion,
+        'cms_version' => $cmsVersion,
+        'php_version' => PHP_VERSION,
+        'laravel_version' => Application::VERSION,
+      ]);
+  }
+
+  private function parseLatestRelease(Response $response): ?CatalogRelease
+  {
     if (! $response->successful()) {
       return null;
     }

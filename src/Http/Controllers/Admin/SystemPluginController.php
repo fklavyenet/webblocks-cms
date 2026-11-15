@@ -2,19 +2,20 @@
 
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 use RuntimeException;
-use Throwable;
 use WebBlocks\Cms\Actions\Plugins\EnablePlugin;
 use WebBlocks\Cms\Actions\Plugins\UpdatePluginAppearance;
 use WebBlocks\Cms\Http\Requests\Admin\PluginAppearanceRequest;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
+use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogUpdates;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAppearance;
 use WebBlocks\Cms\Support\Plugins\PluginCompatibility;
@@ -27,6 +28,7 @@ use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 use WebBlocks\Cms\Support\Plugins\PluginZipInstaller;
 use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
 class SystemPluginController extends Controller
@@ -40,19 +42,36 @@ class SystemPluginController extends Controller
     private readonly InstalledPluginRepository $installedPlugins,
     private readonly PluginMigrationRunner $migrationRunner,
     private readonly PluginCatalogClient $catalog,
+    private readonly PluginCatalogUpdates $catalogUpdates,
     private readonly CatalogPluginInstallBridge $catalogInstallBridge,
     private readonly PluginRuntimeRefresher $runtimeRefresher,
   ) {}
 
   public function index(): View
   {
+    $canInstallPlugins = (bool) request()->user()?->isSuperAdmin();
+    $updateStatus = $canInstallPlugins ? $this->catalogUpdates->refreshIfDue() : null;
+
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.index', [
       'title' => 'Plugins',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Plugins'),
-      'plugins' => $this->pluginSummaries($this->catalogUpdatesByHandle()),
-      'canInstallPlugins' => (bool) request()->user()?->isSuperAdmin(),
+      'plugins' => $this->pluginSummaries($updateStatus['updates'] ?? []),
+      'canInstallPlugins' => $canInstallPlugins,
+      'pluginCatalogUpdateStatus' => $updateStatus,
     ]);
+  }
+
+  public function updateIndicator(Request $request, AdminLocaleResolver $locales): JsonResponse
+  {
+    abort_unless($request->user()?->isSuperAdmin(), 403);
+
+    $count = count($this->catalogUpdates->refreshIfDue()['updates']);
+
+    return response()->json([
+      'count' => $count,
+      'label' => trans_choice('webblocks-cms::notifications.panel_plugin_updates', $count, [], $locales->locale()),
+    ])->header('Cache-Control', 'no-store');
   }
 
   public function show(string $plugin): View
@@ -381,51 +400,6 @@ class SystemPluginController extends Controller
       'catalog_update' => $catalogUpdate,
       'can_update_from_catalog' => $catalogUpdate !== null,
     ]);
-  }
-
-  /**
-   * @return array<string, array{version: string}>
-   */
-  private function catalogUpdatesByHandle(): array
-  {
-    if (! request()->user()?->isSuperAdmin()) {
-      return [];
-    }
-
-    try {
-      $catalog = $this->catalog->browse();
-    } catch (Throwable) {
-      return [];
-    }
-
-    if (! $catalog->available) {
-      return [];
-    }
-
-    $installedVersions = collect($this->plugins->summaries())
-      ->mapWithKeys(fn (array $plugin): array => [
-        (string) $plugin['handle'] => is_string($plugin['version'] ?? null) ? $plugin['version'] : null,
-      ]);
-    $updates = [];
-
-    foreach ($catalog->plugins as $plugin) {
-      $installedVersion = $installedVersions->get($plugin->handle);
-
-      if (! is_string($installedVersion) || ! $this->catalogPluginIsUpdateFor($plugin, $installedVersion)) {
-        continue;
-      }
-
-      $updates[$plugin->handle] = [
-        'version' => $plugin->latestCompatibleRelease->version,
-        'summary' => $plugin->latestCompatibleRelease->summary,
-        'notes' => $plugin->latestCompatibleRelease->notes,
-        'highlights' => $plugin->latestCompatibleRelease->highlights,
-        'note_items' => $plugin->latestCompatibleRelease->noteItems(),
-        'details_url' => $plugin->latestCompatibleRelease->detailsUrl,
-      ];
-    }
-
-    return $updates;
   }
 
   private function catalogPluginIsUpdateFor(CatalogPlugin $plugin, string $installedVersion): bool

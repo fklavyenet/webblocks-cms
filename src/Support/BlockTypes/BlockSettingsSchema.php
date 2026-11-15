@@ -8,6 +8,7 @@ use WebBlocks\Cms\Support\Consent\ConsentPresets;
 use WebBlocks\Cms\Support\Contact\ContactPrivacyNotice;
 use WebBlocks\Cms\Support\InternalContentApi\BlockSettingsPatchPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
+use WebBlocks\Cms\Support\Media\VideoCaptions;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 
@@ -118,7 +119,7 @@ final class BlockSettingsSchema
         $closed = 'use_translations';
       }
       $typeName = match ($rule[0]) {
-      'bool' => 'boolean', 'int' => 'integer', 'object', 'application_settings' => 'object', 'array' => 'array', default => 'string'
+      'bool' => 'boolean', 'int' => 'integer', 'object', 'application_settings', 'video_captions' => 'object', 'array' => 'array', default => 'string'
       };
       $constraints = match ($rule[0]) {
         'enum' => ['enum' => $rule[1]], 'int' => ['minimum' => $rule[1], 'maximum' => $rule[2]], 'text' => ['max_length' => $rule[1]], 'web_url', 'provider_embed' => ['max_length' => 2048], default => [],
@@ -164,6 +165,7 @@ final class BlockSettingsSchema
       'pattern' => is_string($value) && preg_match($rule[1], $text) === 1,
       'object', 'application_settings' => is_array($value) && ($value === [] || ! array_is_list($value)),
       'array' => is_array($value),
+      'video_captions' => VideoCaptions::validTracks($value),
       default => false,
     };
 

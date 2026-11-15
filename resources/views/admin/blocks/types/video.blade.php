@@ -2,6 +2,7 @@
     $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = fn (string $key) => $adminTranslator->get('admin.blocks.video.'.$key, $adminLocale);
+    $captionLocale = $activeLocale->code ?? app(\WebBlocks\Cms\Support\Locales\LocaleResolver::class)->default()->code;
 @endphp
 
 <div class="wb-stack wb-gap-4">
@@ -40,6 +41,12 @@
             <label for="url">{{ $adminText('url_label') }}</label>
             <input id="url" name="url" class="wb-input" type="text" value="{{ old('url', $block->url) }}" placeholder="https://www.youtube.com/watch?v=...">
         </div>
+    </div>
+
+    <div class="wb-stack wb-gap-1">
+        <label for="caption_path">{{ $adminText('caption_path') }} ({{ strtoupper($captionLocale) }})</label>
+        <input id="caption_path" name="caption_path" class="wb-input" type="text" value="{{ old('caption_path', $block->setting('caption_tracks.'.$captionLocale)) }}" placeholder="/storage/media/documents/example-en.vtt" aria-describedby="caption-path-help">
+        <p id="caption-path-help" class="wb-text-sm wb-text-muted">{{ $adminText('captions_help') }}</p>
     </div>
 
     <div class="wb-stack wb-gap-1">

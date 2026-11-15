@@ -7,6 +7,8 @@
   $embedUrl = $embed['url'] ?? null;
 
   $videoSource = $assetUrl;
+  $captionLocale = $block->renderLocaleCode();
+  $captionPath = \WebBlocks\Cms\Support\Media\VideoCaptions::pathForLocale($block->setting('caption_tracks'), $captionLocale);
 @endphp
 
 @if ($assetUrl || $embedUrl || $safeUrl || $block->title || $block->content)
@@ -26,6 +28,9 @@
       @if ($videoSource)
         <video controls preload="metadata">
           <source src="{{ $videoSource }}">
+          @if ($captionPath)
+            <track kind="captions" src="{{ $captionPath }}" srclang="{{ $captionLocale }}">
+          @endif
         </video>
       @elseif ($embedUrl)
         @include('webblocks-cms::partials.consent-embed', ['embed' => $embed])

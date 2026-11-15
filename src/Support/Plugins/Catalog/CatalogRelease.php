@@ -104,6 +104,14 @@ class CatalogRelease
     return $this->summary ?? $this->notes;
   }
 
+  public function hasInstallableArtifact(): bool
+  {
+    return $this->status === 'published'
+      && $this->downloadUrl !== null
+      && $this->checksumSha256 !== null
+      && $this->artifactFilename !== null;
+  }
+
   private static function stringOrNull(mixed $value): ?string
   {
     return is_string($value) && trim($value) !== '' ? trim($value) : null;

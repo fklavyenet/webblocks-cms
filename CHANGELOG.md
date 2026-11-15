@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.133.12
+
+- See available updates for installed plugins in the Webadmin notification bell as a Super admin. Open System → Plugins to review them. Catalog checks reuse the result for one hour.
+- Upload WebVTT subtitles for hosted Video blocks and select a caption file for each content language. The player offers the file for the current page language.
+
 ## 1.133.11
 
 - Use Filter and Reset for Webadmin list filters.

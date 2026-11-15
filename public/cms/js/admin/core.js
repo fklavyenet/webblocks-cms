@@ -699,6 +699,42 @@
         });
     }
 
+    function checkPanelPluginUpdates() {
+        var bell = document.querySelector('[data-wb-plugin-update-check]');
+        var csrf = document.querySelector('meta[name="csrf-token"]');
+        if (!bell || !csrf || typeof window.fetch !== 'function') {
+            return;
+        }
+
+        window.fetch(bell.getAttribute('data-wb-plugin-update-check'), {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrf.content
+            },
+            credentials: 'same-origin'
+        }).then(function (response) {
+            return response.ok ? response.json() : null;
+        }).then(function (data) {
+            if (!data || !Number.isInteger(data.count) || data.count < 0 || typeof data.label !== 'string') {
+                return;
+            }
+
+            var total = Number(bell.getAttribute('data-pending-items')) + data.count;
+            var button = bell.querySelector('[data-wb-panel-notifications]');
+            var link = bell.querySelector('[data-wb-plugin-update-link]');
+            var label = total === 1 ? bell.getAttribute('data-single-label')
+                : bell.getAttribute('data-total-label').replace('__count__', String(total));
+
+            link.hidden = data.count === 0;
+            link.textContent = data.label;
+            button.setAttribute('aria-label', label);
+            button.setAttribute('title', label);
+            button.querySelector('.wb-btn-badge').textContent = total > 99 ? '99+' : String(total);
+            bell.hidden = total === 0;
+        }).catch(function () {});
+    }
+
     function bindBusySubmitButtons() {
         // The busy-submit behavior ships in WebBlocks UI (WBBusySubmit,
         // data-wb-busy). This wrapper only rebinds after dynamic DOM injection.
@@ -929,6 +965,7 @@
     bindDirtyCloseConfirmationActions();
     bindDirtyOverlayGuards();
     bindUpdateIndicator();
+    checkPanelPluginUpdates();
     bindBusySubmitButtons();
     bindModalSubmitFeedback();
     bindSubmitOnChange();

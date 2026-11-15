@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -29,6 +30,7 @@ use WebBlocks\Cms\Support\Admin\PanelNotificationsComposer;
 use WebBlocks\Cms\Support\Admin\PanelNotificationSource;
 use WebBlocks\Cms\Support\Admin\PanelNotificationSources;
 use WebBlocks\Cms\Support\ContactMessages\ContactMessageIndexState;
+use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogUpdates;
 use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginPermission;
@@ -212,7 +214,63 @@ class PanelNotificationsTest extends TestCase
     $query->shouldNotReceive('forUser');
     $query->shouldReceive('pendingCommentsForUser')->once()->andReturn(0);
     $query->shouldReceive('pluginItemsForUser')->once()->andReturn([]);
-    (new PanelNotificationsComposer($query))->compose($view);
+    (new PanelNotificationsComposer($query, app(PluginCatalogUpdates::class)))->compose($view);
+  }
+
+  #[Test]
+  public function plugin_update_checks_are_super_admin_only_and_share_the_hourly_catalog_snapshot(): void
+  {
+    $this->withoutMiddleware(RedirectIfNotInstalled::class);
+    $site = $this->site('plugin-updates');
+    $registry = app(PluginRegistry::class);
+    $installed = PluginDefinition::make('installed-plugin')->label('Installed plugin')->version('1.0.0')->installPath(__DIR__);
+    $registry->register($installed);
+    $registry->register(PluginDefinition::make('source-plugin')->label('Source plugin')->version('1.0.0'));
+    $registry->register(PluginDefinition::make('private-plugin')->label('Private plugin')->version('1.0.0')->installPath(__DIR__));
+    config(['webblocks-plugins.catalog.base_url' => 'https://catalog.example.test']);
+    Http::preventStrayRequests();
+    $releaseUrl = 'https://catalog.example.test/api/plugins/installed-plugin/latest*';
+    Http::fake([
+      $releaseUrl => Http::sequence()
+        ->push(['data' => [
+          'release' => ['version' => '1.1.0', 'status' => 'published', 'summary' => 'A catalog update'],
+          'artifact' => ['download_url' => 'https://catalog.example.test/update.zip', 'checksum_sha256' => str_repeat('a', 64), 'file_name' => 'update.zip'],
+        ]])
+        ->pushStatus(503),
+      'https://catalog.example.test/api/plugins/private-plugin/latest*' => Http::response(status: 404),
+    ]);
+
+    $check = route('admin.system.plugins.update-indicator');
+    $dashboard = route('admin.dashboard');
+    $plugins = route('admin.system.plugins.index');
+    $this->actingAs($this->user([$site->id]));
+    $this->get($dashboard)->assertOk()->assertDontSee('data-wb-plugin-update-check');
+    $this->postJson($check)->assertForbidden();
+    Http::assertNothingSent();
+
+    $this->actingAs($this->user([$site->id], super: true));
+    $this->get($dashboard)->assertOk()->assertSee('data-wb-plugin-update-check', false);
+    Http::assertNothingSent();
+    $this->postJson($check)->assertOk()->assertJsonPath('count', 1);
+    Http::assertSentCount(2);
+    $this->get($dashboard)->assertOk()
+      ->assertSee('1 plugin update available')->assertSee($plugins)
+      ->assertDontSee('data-wb-plugin-update-check');
+    $this->get($plugins)->assertOk()->assertSee('Last successful catalog check')->assertSee('A catalog update');
+
+    $checkedAt = now();
+    $this->travelTo($checkedAt->copy()->addMinutes(59));
+    $this->postJson($check)->assertOk()->assertJsonPath('count', 1);
+    Http::assertSentCount(2);
+    $this->travelTo($checkedAt->copy()->addMinutes(61));
+    $this->postJson($check)->assertOk()->assertJsonPath('count', 1);
+    Http::assertSentCount(4);
+    $this->get($plugins)->assertOk()->assertSee('The Plugin Catalog could not be checked')->assertSee('A catalog update');
+
+    $this->app->instance(PluginRegistry::class, (new PluginRegistry)->register($installed->version('1.1.0')));
+    Route::getRoutes()->getByName('admin.system.plugins.update-indicator')->flushController();
+    $this->postJson($check)->assertOk()->assertJsonPath('count', 0);
+    Http::assertSentCount(4);
   }
 
   #[Test]

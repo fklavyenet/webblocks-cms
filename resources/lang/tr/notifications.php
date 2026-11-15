@@ -56,6 +56,7 @@ return [
   'health_install_help' => 'Yeni siteler anlık bildirim ve kapalı günlük özetle başlar. E-posta için çalışan posta aktarımı ve doğru APP_URL gerekir. Toplu bildirim veya günlük özet ayrıca düzenli gönderim gerektirir; isteğe bağlı hosting kurulum kılavuzunu izleyin. Panel bildirimleri zamanlayıcı gerektirmez.',
   'health_dispatch_failed' => 'Bildirim işleme başarısız. Zamanlayıcı sağlığını ve gönderim sonuçlarını kontrol edin.',
   'health_notifications_optional' => 'Günlük özet kapalıyken yalnızca anlık bildirimler zamanlanmış gönderim gerektirmez. Arka plan bakım işleri için zamanlayıcı durumu görünür kalır.',
+  'panel_plugin_updates' => ':count eklenti güncellemesi var',
   'panel_title' => 'Panel bildirimleri',
   'panel_pending_items' => 'Panel bildirimleri: :count bekleyen öğe',
   'panel_new_messages' => ':count okunmamış iletişim mesajı',

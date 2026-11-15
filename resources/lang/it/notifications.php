@@ -56,6 +56,7 @@ return [
   'health_install_help' => 'I nuovi siti usano avvisi immediati senza riepilogo giornaliero. Le email richiedono trasporto funzionante e APP_URL corretta. Avvisi raggruppati e riepiloghi richiedono anche invio periodico; segui la guida facoltativa di hosting. Gli avvisi nel pannello non richiedono scheduler.',
   'health_dispatch_failed' => 'Elaborazione delle notifiche non riuscita. Verifica il pianificatore e i risultati di invio.',
   'health_notifications_optional' => 'Le notifiche immediate senza riepilogo giornaliero non richiedono invii pianificati. Lo stato resta visibile per la manutenzione in background.',
+  'panel_plugin_updates' => '{1} :count aggiornamento dei plugin disponibile|[2,*] :count aggiornamenti dei plugin disponibili',
   'panel_title' => 'Notifiche del pannello',
   'panel_pending_items' => '{1} Notifiche del pannello: :count elemento in sospeso|[2,*] Notifiche del pannello: :count elementi in sospeso',
   'panel_new_messages' => '{1} :count messaggio di contatto non letto|[2,*] :count messaggi di contatto non letti',

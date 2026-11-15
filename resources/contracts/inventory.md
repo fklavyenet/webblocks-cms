@@ -716,9 +716,9 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | `translations.title`, `translations.content`; shared safe URL fallback. |
-| Settings and variants | Source determines native video, YouTube/Vimeo iframe, or open-video button. |
+| Settings and variants | Source determines native video, YouTube/Vimeo iframe, or open-video button. For hosted video, set `caption_tracks` to a map from content language code to the same-origin path of an uploaded WebVTT document. The editor changes the file for its selected language. The API replaces the map when it is provided. |
 | Children/media | Direct video `media_id`; no children. |
-| HTML | Root-owning muted Card containing `<video>`, an allowlisted provider `<iframe>`, or a safe link. |
+| HTML | Root-owning muted Card containing `<video>`, an allowlisted provider `<iframe>`, or a safe link. Native video emits only the `<track kind="captions">` for the current page language, when configured. The browser controls toggle it. |
 | Example appearance | Uploaded demo video with editable title and description. |
 | Avoid | Arbitrary iframe HTML. |
 
@@ -1369,6 +1369,13 @@ provider startup, commands, and routes in a fresh PHP process through `cms:plugi
 Validation is required even when no migration is pending. A failed or timed-out probe
 leaves the current package active; subprocess diagnostics are not exposed in responses.
 The default startup timeout is 30 seconds (`webblocks-plugins.install.boot_timeout_seconds`).
+
+Super admins see the number of installed plugins with a newer installable catalog
+release in the Webadmin notification bell. The entry opens System → Plugins.
+The panel checks installed plugins in a background request. The bell and Plugins
+list share the last successful result for one hour. On a catalog failure they
+retain the last result, and the Plugins screen shows the check status. Updating or
+uninstalling a plugin clears its pending entry on the next panel load.
 
 Enabled CMS-managed Laravel service providers are registered and booted once per
 application after the host boot completes, including when routes are cached.

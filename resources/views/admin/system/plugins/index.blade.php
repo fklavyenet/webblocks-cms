@@ -18,6 +18,15 @@
 
     @include('webblocks-cms::admin.partials.flash')
 
+    @if ($pluginCatalogUpdateStatus['retry_pending'] ?? false)
+        <div class="wb-alert wb-alert-warning" role="status">{{ $systemPluginsIndexText('catalog_check_unavailable') }}</div>
+    @endif
+    @if ($pluginCatalogUpdateStatus['checked_at'] ?? null)
+        <p class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('catalog_checked_at', [
+            'time' => \Illuminate\Support\Carbon::createFromTimestamp($pluginCatalogUpdateStatus['checked_at'], config('app.timezone'))->format('Y-m-d H:i'),
+        ]) }}</p>
+    @endif
+
     @if ($canInstallPlugins)
         <div class="wb-card wb-mb-4">
             <div class="wb-card-header">

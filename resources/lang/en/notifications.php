@@ -56,6 +56,7 @@ return [
   'health_install_help' => 'New sites use immediate notifications with daily summaries off. Outbound email needs a working mail transport and correct APP_URL. Batched notifications or daily summaries additionally need periodic dispatch; follow the optional hosting setup guide. Manual panel notifications need no scheduler.',
   'health_dispatch_failed' => 'Notification processing failed. Check recorded scheduler health and delivery outcomes.',
   'health_notifications_optional' => 'Immediate-only notifications with daily summaries disabled do not require scheduled delivery. Scheduler status remains visible for background maintenance.',
+  'panel_plugin_updates' => '{1} :count plugin update available|[2,*] :count plugin updates available',
   'panel_title' => 'Panel notifications',
   'panel_pending_items' => '{1} Panel notifications: :count pending item|[2,*] Panel notifications: :count pending items',
   'panel_new_messages' => '{1} :count unread contact message|[2,*] :count unread contact messages',

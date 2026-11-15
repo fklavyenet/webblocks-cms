@@ -17,6 +17,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
 use WebBlocks\Cms\Support\InternalContentApi\BlockSettingsPatchPolicy;
+use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -449,6 +450,30 @@ class BlockPatchSettingsContractTest extends TestCase
       'contexts' => ['content'],
       'is_active' => true,
     ]);
+  }
+
+  #[Test]
+  public function video_caption_settings_survive_the_relational_round_trip(): void
+  {
+    $block = $this->seedBlock('video');
+    $tracks = [
+      'en' => '/storage/media/documents/demo-en.vtt',
+      'tr' => '/storage/media/documents/demo-tr.vtt',
+    ];
+
+    $block->update(['settings' => $this->mergeSettings($block, ['caption_tracks' => $tracks])]);
+
+    $stored = $block->fresh();
+    $this->assertSame($tracks, $stored->setting('caption_tracks'));
+    $this->assertDatabaseCount('wbcms_block_video_caption_tracks', 2);
+
+    $revision = app(PageRevisionManager::class)->capture($stored->page);
+    $snapshotSettings = json_decode($revision->fresh()->snapshot['blocks'][0]['settings'], true);
+    $this->assertSame($tracks, $snapshotSettings['caption_tracks']);
+    $this->assertDatabaseCount('wbcms_snapshot_block_video_caption_tracks', 2);
+
+    $cleared = $this->mergeSettings($stored, ['caption_tracks' => null]);
+    $this->assertArrayNotHasKey('caption_tracks', $cleared);
   }
 
   private function mergeSettings(Block $block, array $incoming): array
