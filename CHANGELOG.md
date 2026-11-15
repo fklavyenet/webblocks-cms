@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.2
+
+- Show translated ownership labels in Page layouts and the plugin handle label in plugin details.
+- Fill missing admin translations for Diagnostic report, MCP settings and consent, Notes, and Panel languages.
+
 ## 1.135.1
 
 - Show the translated Caption label in the Image block editor in all six bundled admin languages.
