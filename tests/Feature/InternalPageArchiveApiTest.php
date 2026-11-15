@@ -13,6 +13,7 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageRevision;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
@@ -72,6 +73,8 @@ class InternalPageArchiveApiTest extends TestCase
     $this->freezeSecond();
     $page = $this->seedPage(Page::STATUS_PUBLISHED);
     $firstPublication = $page->published_at;
+    $main = SlotType::firstOrCreate(['slug' => 'main'], ['name' => 'Main', 'status' => 'published']);
+    $page->slots()->create(['slot_type_id' => $main->id]);
     $actor = $this->cmsActor((new User)->forceFill(['role' => 'super_admin']));
     $workflow = route('admin.pages.workflow', $page);
     $api = '/webadmin/api/pages/'.$page->id;

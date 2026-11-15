@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
@@ -91,6 +92,34 @@ class EditorFormRecoveryTest extends TestCase
     $this->putJson($this->url($session, $identity), $payload)->assertOk();
 
     return ['_editor_form_kind' => $identity['form_kind'], '_editor_recovery_session' => $session, '_editor_recovery_base' => $base];
+  }
+
+  #[Test]
+  public function the_visual_picker_creates_and_updates_columns_without_adding_unselected_slots(): void
+  {
+    app(CoreLayoutCatalogSyncer::class)->sync();
+    $this->get(route('admin.pages.create', ['site' => $this->site->id]))->assertOk()
+      ->assertSee('wb-page-layout-picker', false)
+      ->assertSee('value="columns"', false)
+      ->assertDontSee('value="article"', false);
+
+    $input = ['site_id' => $this->site->id, 'title' => 'Columns article', 'slug' => 'columns-article',
+      'public_shell' => 'columns', 'column_sidebars_submitted' => '1', 'column_sidebars' => ['sidebar-left']];
+    $this->post(route('admin.pages.store'), $input)->assertRedirect()->assertSessionHasNoErrors();
+    $page = Page::query()->where('site_id', $this->site->id)->get()->first(fn (Page $page) => $page->publicShellPreset() === 'columns');
+    $this->assertNotNull($page);
+    $this->assertSame(['header', 'sidebar-left', 'main', 'footer'], $page->slots()->with('slotType')->get()->map->slotSlug()->all());
+    $this->get(route('admin.pages.edit', ['page' => $page, 'tab' => 'settings']))->assertOk()
+      ->assertSee('wb-page-layout-picker', false)
+      ->assertDontSee('/move-up', false);
+
+    $input['column_sidebars'] = ['sidebar-right'];
+    $this->put(route('admin.pages.update', $page), $input)->assertRedirect()->assertSessionHasNoErrors();
+    $this->assertSame(['header', 'main', 'footer', 'sidebar-right'], $page->slots()->with('slotType')->get()->map->slotSlug()->all());
+    $main = $page->slots()->where('slot_type_id', $this->slot->id)->firstOrFail();
+    $this->delete(route('admin.pages.slots.destroy', [$page, $main]), ['confirm_delete_slot' => 1])
+      ->assertRedirect()->assertSessionHasErrors('slot');
+    $this->assertModelExists($main);
   }
 
   #[Test]

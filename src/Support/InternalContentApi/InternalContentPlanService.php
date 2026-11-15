@@ -41,6 +41,7 @@ use WebBlocks\Cms\Support\Database\ContentVersionUpdates;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
+use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
@@ -403,6 +404,7 @@ class InternalContentPlanService
           throw new \InvalidArgumentException('Source or staged page no longer resolves.');
         }
 
+        PageSlot::assertMainForPublication($sourcePage);
         $expectedTranslations = $plan['staged_update']['translation_changes'];
         if ($expectedTranslations !== []) {
           PageTranslation::query()->whereIn('page_id', [$sourcePage->id, $stagedPage->id])
@@ -504,7 +506,10 @@ class InternalContentPlanService
           'name' => $plan['page']['title'],
           'slug' => $plan['page']['slug'],
           'path' => $plan['page']['path'],
-        ], $plan['layout']['handle']);
+        ], $plan['layout']['handle'], [
+          ...array_keys($plan['slots']),
+          ...collect($plan['page_slot_shared_slots'])->where('page_id', '__created_page__')->pluck('slot')->all(),
+        ]);
 
         $slotTypes = SlotType::query()->whereIn('slug', array_keys($plan['slots']))->get()->keyBy('slug');
 
@@ -615,6 +620,8 @@ class InternalContentPlanService
       );
     } catch (ContactConsentValidationException $exception) {
       return new InternalContentPlanResult(false, $plan, $validated->warnings, collect($exception->errors())->map(fn ($messages, $path) => ['path' => $path, 'message' => implode(' ', $messages), 'code' => ContactConsentRequirements::CODE])->values()->all());
+    } catch (ValidationException $exception) {
+      return new InternalContentPlanResult(false, $plan, $validated->warnings, collect($exception->errors())->map(fn ($messages, $path) => $this->error('plan.page.'.$path, implode(' ', $messages)))->values()->all());
     } catch (\Throwable $exception) {
       report($exception);
 
@@ -1345,6 +1352,11 @@ class InternalContentPlanService
     $translationChanges = $stagedPage ? $this->stagedTranslations->changes($stagedPage) : [];
     if ($sourcePage && $stagedPage) {
       try {
+        PageSlot::assertMainForPublication($sourcePage);
+      } catch (ValidationException $exception) {
+        $errors[] = $this->error('plan.page.main_slot', $exception->validator->errors()->first('main_slot'));
+      }
+      try {
         $this->stagedTranslations->assertPromotable($sourcePage, $stagedPage, $translationChanges);
       } catch (ValidationException $exception) {
         foreach ($exception->errors() as $field => $messages) {
@@ -1847,7 +1859,7 @@ class InternalContentPlanService
     }
 
     $handle = trim((string) $value);
-    $layout = PageLayout::query()->with(['layoutSlots.slotType'])->where('handle', $handle)->where('is_active', true)->first();
+    $layout = PageLayout::query()->with(['layoutSlots.slotType'])->where('handle', $handle)->where('handle', '!=', 'article')->where('is_active', true)->first();
 
     if (! $layout) {
       $errors[] = $this->error('plan.layout', 'Page layout must exist and be active.');
@@ -1880,7 +1892,8 @@ class InternalContentPlanService
         continue;
       }
 
-      if ($layoutSlotNames !== [] && ! in_array($slotSlug, $layoutSlotNames, true)) {
+      if (($layout && ! PageLayoutCatalog::allowsSlot($layout->handle, $slotSlug))
+        || ($layoutSlotNames !== [] && ! in_array($slotSlug, $layoutSlotNames, true))) {
         $errors[] = $this->error('plan.slots.'.$slotName, 'Slot must belong to the selected page layout.');
 
         continue;

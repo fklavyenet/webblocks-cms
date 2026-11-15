@@ -24,7 +24,7 @@ use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
  */
 class DefaultHomepageProvisioner
 {
-  private const SLOT_SLUGS = ['header', 'main', 'sidebar', 'footer'];
+  private const SLOT_SLUGS = ['header', 'main', 'footer'];
 
   public function provision(Site $site): Page
   {

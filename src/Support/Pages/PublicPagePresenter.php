@@ -120,7 +120,7 @@ class PublicPagePresenter
   {
     // Only the leading content branch is a plausible above-the-fold carousel.
     // A later slider, or one following another content block, gets no high hint.
-    $slot = $slots->first(fn (array $slot) => ! in_array($slot['slug'], ['header', 'sidebar', 'footer'], true)
+    $slot = $slots->first(fn (array $slot) => ! in_array($slot['slug'], ['header', 'sidebar', 'sidebar-left', 'sidebar-right', 'footer'], true)
       && $slot['blocks']->isNotEmpty());
     $block = $slot === null ? null : $slot['blocks']->first();
     while ($block instanceof Block) {
@@ -375,17 +375,7 @@ class PublicPagePresenter
 
   private function orderSlotsForLayout(Page $page, Collection $slots): Collection
   {
-    $orderedSlugs = app(PageLayoutManager::class)->orderedSlotSlugsForHandle($page->publicShellPreset());
-
-    if ($orderedSlugs === []) {
-      return $slots->values();
-    }
-
-    $positions = array_flip($orderedSlugs);
-
-    return $slots
-      ->sortBy(fn (array $slot) => sprintf('%010d-%s', $positions[$slot['slug'] ?? ''] ?? 9999, $slot['slug'] ?? ''))
-      ->values();
+    return app(PageLayoutManager::class)->slotsInPublicOrder($page, $slots, fn (array $slot) => $slot['slug'] ?? '');
   }
 
   private function resolveSlotBlocks(PageSlot $slot, Collection $topLevelBlocks, Locale|string|null $locale = null): Collection

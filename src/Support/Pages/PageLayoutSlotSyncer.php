@@ -5,9 +5,11 @@ namespace WebBlocks\Cms\Support\Pages;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 
 class PageLayoutSlotSyncer
@@ -19,9 +21,14 @@ class PageLayoutSlotSyncer
     private readonly CurrentActorResolver $currentActorResolver,
   ) {}
 
-  public function seedInitialSlots(Page $page, string $layoutHandle, bool $requirePersistence = false): int
+  public function seedInitialSlots(Page $page, string $layoutHandle, bool $requirePersistence = false, array $requested = []): int
   {
-    $layoutSlots = $this->pageLayouts->managedSlotsForHandle($layoutHandle)->values();
+    $layoutSlots = $this->pageLayouts->managedSlotsForHandle($layoutHandle)->filter(function ($slot) use ($layoutHandle, $requested) {
+      $slug = $slot->slotType?->slug ?? $slot->slot_name;
+
+      return PageLayoutCatalog::allowsSlot($layoutHandle, $slug)
+        && (PageLayoutCatalog::autoAddsSlot($layoutHandle, $slug) || in_array($slug, $requested, true));
+    })->values();
 
     if ($layoutSlots->isEmpty()) {
       return 0;
@@ -56,10 +63,86 @@ class PageLayoutSlotSyncer
     return $created;
   }
 
+  public function changeLayout(Page $page, string $target): void
+  {
+    $removed = $this->slotsRemovedForLayoutChange($page, $target);
+    if ($removed !== []) {
+      $page->slots()->whereKey($removed)->delete();
+      $page->unsetRelation('slots');
+    }
+  }
+
+  public function slotsRemovedForLayoutChange(Page $page, string $target): array
+  {
+    if ($page->publicShellPreset() === $target) {
+      return [];
+    }
+
+    $remove = [];
+    foreach ($page->slots()->with(['slotType', 'sharedSlot'])->get() as $slot) {
+      $slug = $slot->slotSlug();
+      $losesPlacement = ! PageLayoutCatalog::allowsSlot($target, $slug);
+      $shared = $slot->sharedSlot;
+      $sharedLayout = trim((string) $shared?->public_shell);
+      $losesSharedSlot = $sharedLayout !== '' && Page::normalizePublicShellHandle($sharedLayout) !== $target
+        && $shared->isCompatibleWithPageSlot($page, $slug);
+
+      if ($losesSharedSlot || ($losesPlacement && $this->hasContentOrBinding($page, $slot))) {
+        throw ValidationException::withMessages([
+          'public_shell' => __('webblocks-cms::admin.page_layout_picker.incompatible_slot', ['slot' => $slot->slotType?->name ?? $slug]),
+        ]);
+      }
+
+      if ($losesPlacement) {
+        $remove[] = $slot->id;
+      }
+    }
+
+    return $remove;
+  }
+
+  public function applyColumnSidebars(Page $page, array $selected): void
+  {
+    $types = SlotType::query()->whereIn('slug', PageLayoutCatalog::COLUMN_SIDEBARS)->where('status', 'published')->pluck('slug', 'id');
+    foreach ($page->slots()->whereIn('slot_type_id', $types->keys())->get() as $slot) {
+      if (in_array($types[$slot->slot_type_id], $selected, true)) {
+        continue;
+      }
+
+      $this->assertSidebarRemovable($page, $slot);
+      $slot->delete();
+    }
+
+    $existing = $page->slots()->pluck('slot_type_id');
+    $order = (int) $page->slots()->max('sort_order') + 1;
+    foreach ($types as $typeId => $slug) {
+      if (in_array($slug, $selected, true) && ! $existing->contains($typeId)) {
+        $page->slots()->create($this->newPageSlotAttributes($typeId, $order++));
+      }
+    }
+
+    $page->unsetRelation('slots');
+  }
+
+  public function assertSidebarRemovable(Page $page, PageSlot $slot): void
+  {
+    if ($this->hasContentOrBinding($page, $slot)) {
+      throw ValidationException::withMessages([
+        'column_sidebars' => __('webblocks-cms::admin.page_layout_picker.incompatible_slot', ['slot' => $slot->slotType?->name]),
+      ]);
+    }
+  }
+
+  private function hasContentOrBinding(Page $page, PageSlot $slot): bool
+  {
+    return $slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_SHARED_SLOT
+      || $page->blocks()->where('slot_type_id', $slot->slot_type_id)->exists();
+  }
+
   public function syncMissingSlots(Page $page, User $user): array
   {
     return DB::transaction(function () use ($page, $user): array {
-      $page->loadMissing('slots.slotType');
+      $page = Page::query()->lockForUpdate()->findOrFail($page->id);
 
       $lockedSlots = $page->slots()
         ->orderBy('sort_order')

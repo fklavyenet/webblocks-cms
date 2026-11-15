@@ -47,6 +47,7 @@ use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotComparison;
+use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PageOwnedBlockPublisher;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
@@ -293,7 +294,8 @@ class PageController extends Controller
       $data['created_by_user_id'] = $actor['user_id'];
       $data['updated_by_user_id'] = $actor['user_id'];
 
-      $page = $this->drafts->create($data, ['locale_id' => $locale->id] + $translation, $selectedLayoutHandle);
+      $sidebars = $selectedLayoutHandle === 'columns' ? $request->validated('column_sidebars', []) : [];
+      $page = $this->drafts->create($data, ['locale_id' => $locale->id] + $translation, $selectedLayoutHandle, $sidebars);
       $this->syncBlocks($page, $blocks);
 
       $this->revisionManager->capture(
@@ -437,6 +439,7 @@ class PageController extends Controller
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
     DB::transaction(function () use ($request, $page): void {
+      $page = Page::query()->lockForUpdate()->findOrFail($page->id);
       app(EditorRecovery::class)->guardSave($request, $page);
       app(EditorRecovery::class)->completeSave($request, $page);
       $data = $request->validatedData();
@@ -444,6 +447,13 @@ class PageController extends Controller
       unset($data['title'], $data['slug'], $data['blocks'], $data['translation']);
 
       $data['updated_by_user_id'] = $this->currentActorResolver->resolve($request->user())['user_id'];
+
+      $layout = Page::normalizePublicShellHandle(data_get($data, 'settings.public_shell', $page->publicShellPreset()));
+      $slots = app(PageLayoutSlotSyncer::class);
+      $slots->changeLayout($page, $layout);
+      if ($layout === 'columns' && $request->boolean('column_sidebars_submitted')) {
+        $slots->applyColumnSidebars($page, $request->validated('column_sidebars', []));
+      }
 
       $page->update($data);
       $this->syncDefaultTranslation($page, $translation);

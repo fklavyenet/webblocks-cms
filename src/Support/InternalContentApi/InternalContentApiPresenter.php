@@ -19,6 +19,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeApiAuthoringPolicy;
 use WebBlocks\Cms\Support\BlockTypes\BlockTypeContractRegistry;
+use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\SiteNotifications\SiteNotificationPolicy;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
 
@@ -117,6 +118,7 @@ class InternalContentApiPresenter
           'label' => $slot->label,
           'is_required' => (bool) $slot->is_required,
           'is_active' => (bool) $slot->is_active,
+          'auto_add' => (bool) $slot->is_active && PageLayoutCatalog::autoAddsSlot($layout->handle, $slot->slotType?->slug ?? $slot->slot_name),
           'sort_order' => (int) $slot->sort_order,
         ])->values()->all()
         : [],

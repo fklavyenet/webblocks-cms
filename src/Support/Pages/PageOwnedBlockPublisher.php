@@ -52,6 +52,9 @@ class PageOwnedBlockPublisher
   {
     return DB::transaction(function () use ($page, $actor, $source, $captureRevision): array {
       $lockedPage = Page::query()->lockForUpdate()->findOrFail($page->id);
+      if ($lockedPage->isPublished()) {
+        PageSlot::assertMainForPublication($lockedPage);
+      }
       app(ContactConsentRequirements::class)->assertPage($lockedPage, true);
       $before = $this->summary($lockedPage);
       $slotTypeIds = collect($before['by_slot'])->pluck('slot_type_id')->filter()->values();

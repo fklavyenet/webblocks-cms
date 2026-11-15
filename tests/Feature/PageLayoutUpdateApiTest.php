@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalApiDiscoveryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
+use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
@@ -32,12 +33,30 @@ class PageLayoutUpdateApiTest extends TestCase
   {
     $page = $this->seedPage(['existing_key' => 'kept']);
 
-    $response = $this->invokeUpdate($page, 'article');
+    $response = $this->invokeUpdate($page, 'columns');
 
     $this->assertTrue($response->getData(true)['ok']);
     $page->refresh();
-    $this->assertSame('article', $page->settings['public_shell']);
+    $this->assertSame('columns', $page->settings['public_shell']);
     $this->assertSame('kept', $page->settings['existing_key']);
+  }
+
+  #[Test]
+  public function columns_sidebars_are_independent_and_a_populated_side_cannot_be_removed(): void
+  {
+    $page = $this->seedPage();
+    $response = $this->invokeUpdate($page, 'columns', ['column_sidebars' => ['sidebar-left', 'sidebar-right']]);
+    $this->assertSame(200, $response->getStatusCode());
+    $slots = $page->slots()->with('slotType')->get()->keyBy(fn ($slot) => $slot->slotSlug());
+    $this->assertEqualsCanonicalizing(['sidebar-left', 'sidebar-right'], $slots->keys()->all());
+    Block::create(['page_id' => $page->id, 'slot_type_id' => $slots['sidebar-right']->slot_type_id, 'type' => 'plain_text', 'status' => 'draft']);
+
+    $this->assertSame(200, $this->invokeUpdate($page->fresh(), 'columns')->getStatusCode());
+    $this->assertSame(2, $page->slots()->count());
+    $response = $this->invokeUpdate($page->fresh(), 'columns', ['column_sidebars' => []]);
+    $this->assertSame(422, $response->getStatusCode());
+    $this->assertSame('layout_slot_in_use', $response->getData(true)['code']);
+    $this->assertSame(2, $page->slots()->count(), 'All changes are rolled back when one side is still in use.');
   }
 
   #[Test]
@@ -78,12 +97,12 @@ class PageLayoutUpdateApiTest extends TestCase
     $this->assertSame('docs', $page->fresh()->publicShellPreset());
     $this->assertSame(0, $page->revisions()->count());
 
-    $this->assertSame(200, $this->invokeUpdate($page->fresh(), 'article')->getStatusCode());
+    $this->assertSame(200, $this->invokeUpdate($page->fresh(), 'columns')->getStatusCode());
     $response = $this->invokeUpdate($page->fresh(), 'docs');
 
     $this->assertSame(422, $response->getStatusCode());
     $this->assertSame('invalid_page_layout', $response->getData(true)['code']);
-    $this->assertSame('article', $page->fresh()->publicShellPreset());
+    $this->assertSame('columns', $page->fresh()->publicShellPreset());
   }
 
   #[Test]
@@ -120,9 +139,9 @@ class PageLayoutUpdateApiTest extends TestCase
     ]);
   }
 
-  private function invokeUpdate(Page $page, string $layout)
+  private function invokeUpdate(Page $page, string $layout, array $options = [])
   {
-    $request = Request::create('/webadmin/api/pages/'.$page->id.'/layout', 'PATCH', ['layout' => $layout]);
+    $request = Request::create('/webadmin/api/pages/'.$page->id.'/layout', 'PATCH', ['layout' => $layout] + $options);
 
     return $this->app->make(InternalContentResourceController::class)->updatePageLayout($request, $page);
   }

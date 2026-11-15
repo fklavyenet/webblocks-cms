@@ -6,13 +6,16 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Actions\Pages\WritePageSlotSource;
 use WebBlocks\Cms\Http\Requests\Admin\StorePageSlotRequest;
 use WebBlocks\Cms\Http\Requests\Admin\SyncPageLayoutSlotsRequest;
 use WebBlocks\Cms\Http\Requests\Admin\UpdatePageSlotSourceRequest;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
+use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
@@ -57,10 +60,15 @@ class PageSlotController extends Controller
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
 
     DB::transaction(function () use ($request, $page): void {
+      $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+      $type = SlotType::query()->findOrFail($request->validated('slot_type_id'));
+      if (! PageLayoutCatalog::allowsSlot($page->publicShellPreset(), $type->slug) || $page->slots()->where('slot_type_id', $type->id)->exists()) {
+        throw ValidationException::withMessages(['slot_type_id' => __('validation.unique', ['attribute' => __('webblocks-cms::admin.page_slots_card.slot')])]);
+      }
       $nextSortOrder = (int) $page->slots()->max('sort_order') + 1;
 
       $page->slots()->create([
-        'slot_type_id' => (int) $request->validated('slot_type_id'),
+        'slot_type_id' => $type->id,
         'sort_order' => $nextSortOrder,
       ]);
 
@@ -86,15 +94,23 @@ class PageSlotController extends Controller
     abort_unless($this->workflowManager->canEditContent($request->user(), $page), 403);
     abort_unless($slot->page_id === $page->id, 404);
 
+    if ($slot->isProtectedMain($page)) {
+      return $this->redirectToEditWithErrors($page, ['slot' => __('webblocks-cms::admin.page_layout_picker.main_protected')], $request->input('return_url'));
+    }
+
     if (! $request->boolean('confirm_delete_slot')) {
       return $this->redirectToEditWithErrors($page, ['slot' => 'Confirm slot deletion before deleting the slot.'], $request->input('return_url'));
     }
 
-    if ($page->blocks()->where('slot_type_id', $slot->slot_type_id)->exists()) {
-      return $this->redirectToEditWithErrors($page, ['slot' => 'Slot cannot be deleted while it still contains blocks.'], $request->input('return_url'));
-    }
-
-    DB::transaction(function () use ($request, $page, $slot): void {
+    $error = DB::transaction(function () use ($request, $page, $slot): ?string {
+      $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+      $slot = $page->slots()->with('slotType')->findOrFail($slot->id);
+      if ($page->blocks()->where('slot_type_id', $slot->slot_type_id)->exists()) {
+        return 'Slot cannot be deleted while it still contains blocks.';
+      }
+      if (in_array($slot->slotSlug(), PageLayoutCatalog::COLUMN_SIDEBARS, true) && $slot->runtimeSourceType() === PageSlot::SOURCE_TYPE_SHARED_SLOT) {
+        return __('webblocks-cms::admin.page_layout_picker.incompatible_slot', ['slot' => $slot->slotType?->name]);
+      }
       $slot->delete();
       $this->normalizeSortOrder($page);
       $page->forceFill(['updated_by_user_id' => $request->user()?->id])->save();
@@ -106,19 +122,15 @@ class PageSlotController extends Controller
         'Page slot structure was updated by removing a slot.',
         event: 'slot_changed',
       );
+
+      return null;
     });
 
+    if ($error !== null) {
+      return $this->redirectToEditWithErrors($page, ['slot' => $error], $request->input('return_url'));
+    }
+
     return $this->redirectToEdit($page, 'Slot deleted successfully.');
-  }
-
-  public function moveUp(Page $page, PageSlot $slot): RedirectResponse
-  {
-    return $this->move($page, $slot, 'up');
-  }
-
-  public function moveDown(Page $page, PageSlot $slot): RedirectResponse
-  {
-    return $this->move($page, $slot, 'down');
   }
 
   public function updateSource(UpdatePageSlotSourceRequest $request, Page $page, PageSlot $slot): RedirectResponse
@@ -142,67 +154,6 @@ class PageSlotController extends Controller
     });
 
     return $this->redirectToEdit($page, 'Slot source updated successfully.');
-  }
-
-  private function move(Page $page, PageSlot $slot, string $direction): RedirectResponse
-  {
-    $this->authorization->abortUnlessSiteAccess(request()->user(), $page);
-    abort_unless($this->workflowManager->canEditContent(request()->user(), $page), 403);
-    abort_unless($slot->page_id === $page->id, 404);
-
-    $moved = DB::transaction(function () use ($page, $slot, $direction): bool {
-      $slots = $page->slots()
-        ->orderBy('sort_order')
-        ->orderBy('id')
-        ->lockForUpdate()
-        ->get()
-        ->values();
-
-      $currentIndex = $slots->search(fn (PageSlot $candidate) => $candidate->id === $slot->id);
-
-      if (! is_int($currentIndex)) {
-        return false;
-      }
-
-      $swapIndex = $direction === 'up'
-        ? $currentIndex - 1
-        : $currentIndex + 1;
-
-      if ($swapIndex < 0 || $swapIndex >= $slots->count()) {
-        return false;
-      }
-
-      $orderedSlots = $slots->all();
-      $currentSlot = $orderedSlots[$currentIndex];
-      $orderedSlots[$currentIndex] = $orderedSlots[$swapIndex];
-      $orderedSlots[$swapIndex] = $currentSlot;
-
-      foreach ($orderedSlots as $index => $orderedSlot) {
-        if ($orderedSlot->sort_order === $index) {
-          continue;
-        }
-
-        $orderedSlot->update(['sort_order' => $index]);
-      }
-
-      $page->forceFill(['updated_by_user_id' => request()->user()?->id])->save();
-
-      $this->revisionManager->capture(
-        $page->fresh(),
-        request()->user(),
-        'Slot order updated',
-        'Page slot order was changed.',
-        event: 'slot_changed',
-      );
-
-      return true;
-    });
-
-    if (! $moved) {
-      return $this->redirectToEdit($page, 'Slot is already at the edge of the page.');
-    }
-
-    return $this->redirectToEdit($page, 'Slot order updated successfully.');
   }
 
   private function normalizeSortOrder(Page $page): void

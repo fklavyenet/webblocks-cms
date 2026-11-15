@@ -1,6 +1,29 @@
 <?php
 
 $translations = [
+  'page_layout_picker' => [
+    'default' => 'Standard',
+    'docs' => 'Dokumentation',
+    'columns' => 'Spalten',
+    'article' => 'Artikel',
+    'default_help' => 'Eine Inhaltsspalte.',
+    'docs_help' => 'Separate Navigation über die gesamte Höhe.',
+    'columns_help' => 'Optionale Seitenleisten zwischen Kopf- und Fußbereich.',
+    'article_help' => 'Eine Spalte für vorhandene Artikel.',
+    'header' => 'Kopfbereich',
+    'main' => 'Hauptinhalt',
+    'footer' => 'Fußbereich',
+    'sidebar' => 'Seitenleiste',
+    'sidebar-left' => 'Linke Seitenleiste',
+    'sidebar-right' => 'Rechte Seitenleiste',
+    'sidebar_options' => 'Seitenleisten',
+    'content_column' => 'Inhaltsspalte',
+    'optional' => 'Optional',
+    'add_main' => 'Hauptbereich hinzufügen',
+    'main_required' => 'Fügen Sie den Hauptbereich vor der Veröffentlichung hinzu oder aktivieren Sie ihn.',
+    'main_protected' => 'Der Hauptbereich kann weder entfernt noch deaktiviert werden.',
+    'incompatible_slot' => 'Klären Sie den Inhalt oder die Verknüpfung mit einem geteilten Bereich in :slot, bevor Sie fortfahren.',
+  ],
   'plugin_dependencies' => [
     'invalid' => 'Abhängigkeiten müssen gültige erforderliche oder optionale Plugin-Versionen angeben.',
     'unavailable' => 'Plugin :plugin :version muss installiert, kompatibel und aktiviert sein.',

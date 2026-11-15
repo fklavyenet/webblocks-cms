@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Actions\Blocks\SetBlockMobileMedia;
 use WebBlocks\Cms\Actions\Media\CreateMediaFolder;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\BlockMobileMediaRequest;
@@ -56,7 +58,9 @@ use WebBlocks\Cms\Support\Media\MediaUploadRules;
 use WebBlocks\Cms\Support\Media\MediaUsageResolver;
 use WebBlocks\Cms\Support\Media\RemoteMediaFetcher;
 use WebBlocks\Cms\Support\Pages\PageDeleter;
+use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
+use WebBlocks\Cms\Support\Pages\PageLayoutSlotSyncer;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\StagedPageTranslations;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
@@ -753,16 +757,22 @@ class InternalContentResourceController extends Controller
    * The admin edit form could always change this; the Internal Content API
    * could only set it at page creation. Changing an existing page's layout
    * requires this exact write once the layout itself needs no other content
-   * change, matching PageController::update()'s own contract: it does not
-   * mutate Page Slots on a plain layout change, so this doesn't either --
-   * call POST /pages/{page}/sync-layout-slots separately if the new layout
-   * defines slots the page does not have yet.
+   * change. Existing content and Shared Slot bindings must remain compatible.
+   * Columns sidebars can be selected explicitly. Use sync-layout-slots to
+   * add other missing layout slots.
    */
   public function updatePageLayout(Request $request, Page $page): JsonResponse
   {
     $layouts = app(PageLayoutManager::class);
     $allowedHandles = $layouts->activeHandles();
     $layout = $layouts->layoutSettings($request->input('layout', $request->input('handle')));
+    $sidebars = $request->validate([
+      'column_sidebars' => ['sometimes', 'array', 'list', 'max:2'],
+      'column_sidebars.*' => ['distinct', Rule::in(PageLayoutCatalog::COLUMN_SIDEBARS)],
+    ]);
+    if (array_key_exists('column_sidebars', $sidebars) && $layout['public_shell'] !== 'columns') {
+      return $this->validationError('page.column_sidebars', 'Sidebars can only be selected for Columns.', 'invalid_page_layout');
+    }
 
     if (! in_array($layout['public_shell'], $allowedHandles, true)) {
       if ($layout['public_shell'] === $page->publicShellPreset()) {
@@ -776,20 +786,32 @@ class InternalContentResourceController extends Controller
       );
     }
 
-    $settings = $layout + (is_array($page->settings) ? $page->settings : []);
+    try {
+      DB::transaction(function () use ($page, $layout, $sidebars): void {
+        $page = Page::query()->lockForUpdate()->findOrFail($page->id);
+        $slots = app(PageLayoutSlotSyncer::class);
+        $slots->changeLayout($page, $layout['public_shell']);
+        if (array_key_exists('column_sidebars', $sidebars)) {
+          $slots->applyColumnSidebars($page, $sidebars['column_sidebars']);
+        }
 
-    DB::transaction(function () use ($page, $settings): void {
-      $page->forceFill(['settings' => $settings, 'updated_by_user_id' => null])->save();
+        $settings = $layout + (is_array($page->settings) ? $page->settings : []);
+        $page->forceFill(['settings' => $settings, 'updated_by_user_id' => null])->save();
 
-      $this->revisionManager->capture(
-        $page->fresh(),
-        null,
-        'Layout changed',
-        'The page Page Layout was updated through the Internal Content API.',
-        event: 'layout_changed',
-        source: 'internal-content-api',
-      );
-    });
+        $this->revisionManager->capture(
+          $page->fresh(),
+          null,
+          'Layout changed',
+          'The page Page Layout was updated through the Internal Content API.',
+          event: 'layout_changed',
+          source: 'internal-content-api',
+        );
+      });
+    } catch (ValidationException $exception) {
+      $path = array_key_exists('column_sidebars', $exception->errors()) ? 'page.column_sidebars' : 'page.layout';
+
+      return $this->validationError($path, $exception->validator->errors()->first(), 'layout_slot_in_use');
+    }
 
     return response()->json([
       'ok' => true,

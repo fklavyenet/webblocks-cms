@@ -1,13 +1,24 @@
 @php
     use WebBlocks\Cms\Models\PageSlot;
+    use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
+    use WebBlocks\Cms\Support\Pages\PageLayoutManager;
     use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
     use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
     $adminLocale = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('page_slots_card.'.$key, $adminLocale, $replace);
-    $pageSlots = $page->slots->sortBy('sort_order')->values();
-    $availableSlotTypes = $slotTypes->reject(fn ($slotType) => $pageSlots->pluck('slot_type_id')->contains($slotType->id));
+    $layoutText = static fn (string $key) => $adminTranslator->admin('page_layout_picker.'.$key, $adminLocale);
+    $pageSlots = app(PageLayoutManager::class)->slotsInPublicOrder($page, $page->slots, fn (PageSlot $slot) => $slot->slotSlug());
+    $slotGroups = $page->resolvedPublicShellType() === 'docs'
+        ? ['sidebar' => $pageSlots->filter(fn ($slot) => $slot->slotSlug() === 'sidebar'),
+            'content_column' => $pageSlots->reject(fn ($slot) => $slot->slotSlug() === 'sidebar')]
+        : ['' => $pageSlots];
+    $availableSlotTypes = $slotTypes
+        ->filter(fn ($slotType) => PageLayoutCatalog::allowsSlot($page->publicShellPreset(), $slotType->slug))
+        ->reject(fn ($slotType) => $pageSlots->pluck('slot_type_id')->contains($slotType->id));
+    $missingMain = $page->isSharedSlotSourcePage() ? null : $availableSlotTypes->firstWhere('slug', 'main');
+    $availableSlotTypes = $availableSlotTypes->reject(fn ($type) => $type->id === $missingMain?->id);
     $addSlotMenuId = 'page-slot-add-menu-'.$page->id;
     $slotSharedSlotOptions = $slotSharedSlotOptions ?? collect();
     $canCreateSharedSlots = $canCreateSharedSlots ?? false;
@@ -59,6 +70,19 @@
     </div>
 
     <div class="wb-card-body wb-stack wb-gap-3">
+        @if ($canEditContent && $missingMain)
+            <div class="wb-alert wb-alert-warning wb-cluster wb-cluster-between wb-flex-wrap">
+                <span>{{ $layoutText('main_required') }}</span>
+                <form method="POST" action="{{ route('admin.pages.slots.store', $page) }}">
+                    @csrf
+                    <input type="hidden" name="slot_type_id" value="{{ $missingMain->id }}">
+                    <button type="submit" class="wb-btn wb-btn-primary wb-btn-sm">{{ $layoutText('add_main') }}</button>
+                </form>
+            </div>
+        @endif
+        @error('main_slot')
+            <div class="wb-alert wb-alert-danger">{{ $message }}</div>
+        @enderror
         @error('slot_type_id')
             <div class="wb-alert wb-alert-danger">{{ $message }}</div>
         @enderror
@@ -83,8 +107,13 @@
                             <th>{{ $adminText('actions') }}</th>
                         </tr>
                     </thead>
+                    @foreach ($slotGroups as $group => $groupSlots)
+                    @if ($groupSlots->isNotEmpty())
                     <tbody>
-                        @foreach ($pageSlots as $pageSlot)
+                        @if ($group !== '')
+                            <tr><th colspan="4" scope="rowgroup">{{ $layoutText($group) }}</th></tr>
+                        @endif
+                        @foreach ($groupSlots as $pageSlot)
                             @php
                                 $sourceType = $pageSlot->runtimeSourceType();
                                 $sharedSlot = $pageSlot->sharedSlot;
@@ -184,17 +213,8 @@
                                                 </a>
                                             @endif
 
+                                            @if (! $pageSlot->isProtectedMain($page))
                                             <div class="wb-action-group">
-                                                <form method="POST" action="{{ route('admin.pages.slots.move-up', [$page, $pageSlot]) }}">
-                                                    @csrf
-                                                    <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
-                                                    <button type="submit" class="wb-action-btn" title="{{ $adminText('move_slot_up') }}" aria-label="{{ $adminText('move_slot_up') }}" @disabled($loop->first)><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
-                                                </form>
-                                                <form method="POST" action="{{ route('admin.pages.slots.move-down', [$page, $pageSlot]) }}">
-                                                    @csrf
-                                                    <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
-                                                    <button type="submit" class="wb-action-btn" title="{{ $adminText('move_slot_down') }}" aria-label="{{ $adminText('move_slot_down') }}" @disabled($loop->last)><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-                                                </form>
                                                 <a
                                                     href="{{ route('admin.pages.edit', ['page' => $page, 'modal' => 'delete-page-slot', 'slot' => $pageSlot->id, 'return_url' => $pageReturnUrl]) }}"
                                                     class="wb-action-btn wb-action-btn-delete"
@@ -205,6 +225,7 @@
                                                     <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                 </a>
                                             </div>
+                                            @endif
                                         </div>
                                     @else
                                         <span class="wb-text-sm wb-text-muted">{{ $adminText('workflow_locks_slot_editing') }}</span>
@@ -213,6 +234,8 @@
                             </tr>
                         @endforeach
                     </tbody>
+                    @endif
+                    @endforeach
                 </table>
             </div>
         @endif
@@ -307,6 +330,7 @@
                                             <span>{{ $adminText('shared_slot') }}</span>
                                         </label>
 
+                                        @if (! $pageSlot->isProtectedMain($page))
                                         <label class="wb-btn-check" for="slot-source-type-disabled-{{ $pageSlot->id }}">
                                             <input
                                                 id="slot-source-type-disabled-{{ $pageSlot->id }}"
@@ -318,6 +342,7 @@
                                             >
                                             <span>{{ $adminText('disabled') }}</span>
                                         </label>
+                                        @endif
                                     </div>
 
                                     <div class="wb-text-sm wb-text-muted" data-wb-slot-source-helper>{{ $selectedSourceHelper }}</div>
@@ -374,7 +399,7 @@
     @endpush
 @endif
 
-@if ($canEditContent && $selectedDeleteSlot)
+@if ($canEditContent && $selectedDeleteSlot && ! $selectedDeleteSlot->isProtectedMain($page))
     @push('overlays')
         @php
             $deleteSlotName = $selectedDeleteSlot->slotType?->name ?? $adminText('fallback_slot');

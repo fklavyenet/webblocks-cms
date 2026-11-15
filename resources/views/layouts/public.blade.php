@@ -244,6 +244,20 @@
                     @endforeach
                 </div>
             </div>
+        @elseif ($publicShell === 'columns')
+            @foreach ($slotCollection->where('slug', 'header') as $slot)
+                {!! $renderSlot($slot) !!}
+            @endforeach
+
+            <div class="wb-public-columns">
+                @foreach ($slotCollection->whereIn('slug', ['sidebar-left', 'main', 'sidebar-right']) as $slot)
+                    {!! $renderSlot($slot) !!}
+                @endforeach
+            </div>
+
+            @foreach ($slotCollection->reject(fn ($slot) => in_array($slot['slug'] ?? null, ['header', 'sidebar-left', 'main', 'sidebar-right'], true)) as $slot)
+                {!! $renderSlot($slot) !!}
+            @endforeach
         @else
             @foreach ($slotCollection as $slot)
                 {!! $renderSlot($slot) !!}

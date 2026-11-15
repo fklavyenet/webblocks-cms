@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Requests\Admin\PageLayoutSlotRequest;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageLayoutSlot;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 
 class PageLayoutSlotController extends Controller
 {
@@ -25,7 +26,7 @@ class PageLayoutSlotController extends Controller
         'html_element' => 'div',
         'sort_order' => (int) $pageLayout->layoutSlots()->max('sort_order') + 10,
       ]),
-      'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get(),
+      'slotTypes' => SlotType::query()->where('status', 'published')->whereNotIn('slug', PageLayoutCatalog::unavailableSlots($pageLayout->handle))->orderBy('sort_order')->orderBy('name')->get(),
     ]);
   }
 
@@ -48,7 +49,7 @@ class PageLayoutSlotController extends Controller
     return view('webblocks-cms::admin.page-layout-slots.edit', [
       'pageLayout' => $pageLayout,
       'pageLayoutSlot' => $pageLayoutSlot,
-      'slotTypes' => SlotType::query()->where('status', 'published')->orderBy('sort_order')->orderBy('name')->get(),
+      'slotTypes' => SlotType::query()->where('status', 'published')->whereNotIn('slug', PageLayoutCatalog::unavailableSlots($pageLayout->handle))->orderBy('sort_order')->orderBy('name')->get(),
     ]);
   }
 

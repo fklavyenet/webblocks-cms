@@ -16,6 +16,9 @@ class SlotTypeSeeder extends Seeder
       ['name' => 'Footer', 'slug' => 'footer', 'description' => 'Footer slot', 'axis' => 'horizontal', 'is_system' => true, 'sort_order' => 4, 'status' => 'published'],
     ];
 
+    $items[] = ['name' => 'Left Sidebar', 'slug' => 'sidebar-left', 'axis' => 'vertical', 'is_system' => true, 'sort_order' => 5, 'status' => 'published'];
+    $items[] = ['name' => 'Right Sidebar', 'slug' => 'sidebar-right', 'axis' => 'vertical', 'is_system' => true, 'sort_order' => 6, 'status' => 'published'];
+
     collect($items)->each(fn (array $item) => SlotType::query()->updateOrCreate(['slug' => $item['slug']], $item));
 
     SlotType::query()->whereNotIn('slug', collect($items)->pluck('slug'))->delete();

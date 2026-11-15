@@ -11,6 +11,8 @@ use WebBlocks\Cms\Http\Requests\Admin\EditorPreviewRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PageRequest;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Policies\CmsResourcePolicy;
 use WebBlocks\Cms\Policies\EditorRecoveryPolicy;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
@@ -84,6 +86,28 @@ final class EditorPreview
     } else {
       $data = $this->validateForm(PageRequest::class, $request, $input)->validatedData();
       $page->fill(Arr::only($data, ['title', 'slug']));
+      $layout = Page::normalizePublicShellHandle(data_get($data, 'settings.public_shell', $page->publicShellPreset()));
+      $syncer = app(PageLayoutSlotSyncer::class);
+      $removed = $syncer->slotsRemovedForLayoutChange($page, $layout);
+      $page->setRelation('slots', $page->slots->reject(fn (PageSlot $slot) => in_array($slot->id, $removed, true))->values());
+      if ($layout === 'columns' && ! empty($input['column_sidebars_submitted'])) {
+        $selected = $input['column_sidebars'] ?? [];
+        $slots = $page->slots->reject(function (PageSlot $slot) use ($page, $selected, $syncer) {
+          $slug = $slot->slotSlug();
+          if (! in_array($slug, PageLayoutCatalog::COLUMN_SIDEBARS, true) || in_array($slug, $selected, true)) {
+            return false;
+          }
+
+          $syncer->assertSidebarRemovable($page, $slot);
+
+          return true;
+        })->values();
+        $missing = array_diff($selected, $slots->map->slotSlug()->all());
+        foreach (SlotType::query()->whereIn('slug', $missing)->where('status', 'published')->get() as $type) {
+          $slots->push((new PageSlot(['page_id' => $page->id, 'slot_type_id' => $type->id]))->setRelation('slotType', $type));
+        }
+        $page->setRelation('slots', $slots);
+      }
       // Retain staged/workflow metadata while replacing only the native shell field.
       $page->settings = array_replace((array) $page->settings, Arr::only((array) ($data['settings'] ?? []), ['public_shell']));
       $default = $page->availableSiteLocales()->firstWhere('is_default', true);

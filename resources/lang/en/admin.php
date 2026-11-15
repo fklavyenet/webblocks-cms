@@ -1,6 +1,29 @@
 <?php
 
 return [
+  'page_layout_picker' => [
+    'default' => 'Default',
+    'docs' => 'Docs',
+    'columns' => 'Columns',
+    'article' => 'Article',
+    'default_help' => 'One content column.',
+    'docs_help' => 'Separate full-height navigation.',
+    'columns_help' => 'Optional sidebars between header and footer.',
+    'article_help' => 'Single column for existing articles.',
+    'header' => 'Header',
+    'main' => 'Main',
+    'footer' => 'Footer',
+    'sidebar' => 'Sidebar',
+    'sidebar-left' => 'Left Sidebar',
+    'sidebar-right' => 'Right Sidebar',
+    'sidebar_options' => 'Columns sidebars',
+    'content_column' => 'Content column',
+    'optional' => 'Optional',
+    'add_main' => 'Add Main',
+    'main_required' => 'Add or enable the Main slot before publishing.',
+    'main_protected' => 'The Main slot cannot be removed or disabled.',
+    'incompatible_slot' => 'Resolve the content or Shared Slot binding in :slot before continuing.',
+  ],
     'plugin_dependencies' => [
         'invalid_access' => 'The imported page access rule requires the current CMS schema and valid policy data.',
         'optional_unavailable' => 'Optional integration with :plugin :version is unavailable.',

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Pages;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Policies\CmsResourcePolicy;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
@@ -119,6 +120,7 @@ class PageWorkflowManager
     }
 
     if ($status === Page::STATUS_PUBLISHED) {
+      PageSlot::assertMainForPublication($page);
       app(ContactConsentRequirements::class)->assertPage($page, $includePageOwnedBlocks);
     }
     if ($status === $page->status) {

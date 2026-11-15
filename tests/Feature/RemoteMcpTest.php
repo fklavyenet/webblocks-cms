@@ -23,6 +23,7 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -182,6 +183,20 @@ class RemoteMcpTest extends TestCase
     $this->get($result['preview_url'])->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')->assertSee('MCP taslağı');
     app('auth')->forgetGuards();
     $this->get($result['preview_url'])->assertRedirect();
+  }
+
+  public function test_mcp_columns_draft_enables_the_requested_sides_and_replays_independent_of_input_order(): void
+  {
+    [$source] = $this->pageFixture();
+    app(CoreLayoutCatalogSyncer::class)->sync();
+    $token = $this->connect($this->operator(), $source->site_id, scope: 'pages:read pages:create-draft');
+    $input = ['locale' => 'en', 'title' => 'MCP columns', 'path' => '/guides/columns', 'layout' => 'columns'];
+    $result = $this->tool('create_page_draft', $input + ['column_sidebars' => ['sidebar-right', 'sidebar-left']], $token)
+      ->json('result.structuredContent');
+    $this->tool('create_page_draft', $input + ['column_sidebars' => ['sidebar-left', 'sidebar-right']], $token)
+      ->assertJsonPath('result.structuredContent', $result);
+    $page = Page::findOrFail($result['draft_id']);
+    $this->assertSame(['header', 'sidebar-left', 'main', 'sidebar-right', 'footer'], $page->slots()->with('slotType')->get()->map->slotSlug()->all());
   }
 
   public function test_page_draft_creation_distinguishes_path_conflicts_from_retries(): void

@@ -273,6 +273,8 @@ class CatalogRepairer
       ['name' => 'Main', 'slug' => 'main', 'description' => 'Main slot', 'axis' => 'vertical', 'is_system' => true, 'sort_order' => 2, 'status' => 'published'],
       ['name' => 'Sidebar', 'slug' => 'sidebar', 'description' => 'Sidebar slot', 'axis' => 'vertical', 'is_system' => true, 'sort_order' => 3, 'status' => 'published'],
       ['name' => 'Footer', 'slug' => 'footer', 'description' => 'Footer slot', 'axis' => 'horizontal', 'is_system' => true, 'sort_order' => 4, 'status' => 'published'],
+      ['name' => 'Left Sidebar', 'slug' => 'sidebar-left', 'axis' => 'vertical', 'is_system' => true, 'sort_order' => 5, 'status' => 'published'],
+      ['name' => 'Right Sidebar', 'slug' => 'sidebar-right', 'axis' => 'vertical', 'is_system' => true, 'sort_order' => 6, 'status' => 'published'],
     ];
   }
 

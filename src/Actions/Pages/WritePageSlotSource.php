@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Actions\Pages;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
@@ -14,6 +15,10 @@ final class WritePageSlotSource
   /** The caller validates slot compatibility and write authority. */
   public function execute(Page $page, PageSlot $slot, string $sourceType, ?int $sharedSlotId): void
   {
+    if ($sourceType === PageSlot::SOURCE_TYPE_DISABLED && $slot->isProtectedMain($page)) {
+      throw ValidationException::withMessages(['source_type' => __('webblocks-cms::admin.page_layout_picker.main_protected')]);
+    }
+
     DB::transaction(function () use ($page, $slot, $sourceType, $sharedSlotId): void {
       $slot->update([
         'source_type' => $sourceType,

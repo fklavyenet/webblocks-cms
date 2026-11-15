@@ -11,7 +11,7 @@ final class RecoveryFields
   public const MAX_BYTES = 262144;
 
   // Native authoring controls; identity, navigation and operational controls never enter recovery.
-  public const PAGE_FIELDS = 'title slug public_shell';
+  public const PAGE_FIELDS = 'title slug public_shell column_sidebars_submitted column_sidebars';
 
   public const TRANSLATION_FIELDS = 'name slug path list_excerpt seo_title seo_description seo_keywords og_title og_description og_image_media_id og_image_asset_id';
 

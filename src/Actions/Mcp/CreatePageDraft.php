@@ -50,9 +50,15 @@ final class CreatePageDraft
     }
 
     $layout = $input['layout'] ?? 'default';
-    $hash = SnapshotContent::hash(['title' => $input['title'], 'path' => $path, 'locale' => $input['locale'], 'layout' => $layout]);
+    $sidebars = $input['column_sidebars'] ?? [];
+    if ($sidebars !== [] && $layout !== 'columns') {
+      throw new McpToolException('layout_unavailable');
+    }
+    sort($sidebars);
+    $hash = SnapshotContent::hash(['title' => $input['title'], 'path' => $path, 'locale' => $input['locale'], 'layout' => $layout]
+      + ($sidebars === [] ? [] : ['column_sidebars' => $sidebars]));
 
-    return DB::transaction(function () use ($user, $siteId, $input, $path, $layout, $hash, $grant): array {
+    return DB::transaction(function () use ($user, $siteId, $input, $path, $layout, $sidebars, $hash, $grant): array {
       // Serialize MCP creation and receipt lookup within a site. The translation
       // unique constraints also cover concurrent panel and Content API writers.
       $site = Site::query()->lockForUpdate()->find($siteId) ?? throw new McpToolException('page_missing');
@@ -79,7 +85,7 @@ final class CreatePageDraft
         return $this->result($page, $locale, $translation->path);
       }
 
-      if ($this->layouts->findByHandle($layout, includeInactive: false)?->handle !== $layout) {
+      if ($layout === 'article' || $this->layouts->findByHandle($layout, includeInactive: false)?->handle !== $layout) {
         throw new McpToolException('layout_unavailable');
       }
 
@@ -94,7 +100,7 @@ final class CreatePageDraft
           'settings' => ['public_shell' => $layout],
           'created_by_user_id' => $user->getAuthIdentifier(),
           'updated_by_user_id' => $user->getAuthIdentifier(),
-        ], ['locale_id' => $locale->id] + $identity, $layout);
+        ], ['locale_id' => $locale->id] + $identity, $layout, $sidebars);
       } catch (UniqueConstraintViolationException) {
         throw new McpToolException('page_path_conflict');
       }

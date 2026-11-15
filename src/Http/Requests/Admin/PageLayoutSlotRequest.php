@@ -9,6 +9,7 @@ use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageLayoutSlot;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Pages\LayoutMarkup;
+use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 
 class PageLayoutSlotRequest extends FormRequest
 {
@@ -59,7 +60,8 @@ class PageLayoutSlotRequest extends FormRequest
       'slot_type_id' => [
         'required',
         'integer',
-        Rule::exists(SlotType::class, 'id')->where(fn ($query) => $query->where('status', 'published')),
+        Rule::exists(SlotType::class, 'id')->where(fn ($query) => $query->where('status', 'published')
+          ->whereNotIn('slug', PageLayoutCatalog::unavailableSlots($pageLayout?->handle ?? 'default'))),
       ],
       'slot_name' => [
         'required',

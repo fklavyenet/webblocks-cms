@@ -6,6 +6,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -477,9 +478,13 @@ class InternalSiteController extends Controller
 
   public function syncPageLayoutSlots(Page $page): JsonResponse
   {
-    $before = $page->slots()->count();
-    $added = $this->slotSyncer->seedInitialSlots($page, $page->publicShellPreset());
-    $page = $page->fresh(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot']);
+    [$page, $before, $added] = DB::transaction(function () use ($page): array {
+      $locked = Page::query()->lockForUpdate()->findOrFail($page->id);
+      $before = $locked->slots()->count();
+      $added = $this->slotSyncer->seedInitialSlots($locked, $locked->publicShellPreset(), requirePersistence: true);
+
+      return [$locked->fresh(['site.locales', 'translations.locale', 'slots.slotType', 'slots.sharedSlot']), $before, $added];
+    });
 
     return response()->json([
       'ok' => true,

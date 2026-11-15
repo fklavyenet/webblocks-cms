@@ -101,7 +101,7 @@
                                 </td>
                                 <td>
                                     <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                                        <span class="wb-status-pill {{ $row['status'] === 'missing' ? 'wb-status-pending' : 'wb-status-active' }}">{{ $row['status'] === 'missing' ? $layoutSlotSummaryText('missing') : $layoutSlotSummaryText('present') }}</span>
+                                        <span class="wb-status-pill {{ match ($row['status']) { 'missing' => 'wb-status-pending', 'optional' => 'wb-status-info', default => 'wb-status-active' } }}">{{ $row['status'] === 'optional' ? $layoutSlotSummaryTranslator->admin('page_layout_picker.optional', $layoutSlotSummaryLocale) : $layoutSlotSummaryText($row['status']) }}</span>
                                         @if ($row['is_disabled'])
                                             <span class="wb-status-pill wb-status-pending">{{ $layoutSlotSummaryText('disabled') }}</span>
                                         @endif

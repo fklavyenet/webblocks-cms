@@ -30,7 +30,7 @@ class PageLayoutSlotComparison
       ->filter()
       ->values();
 
-    $layoutRows = $layoutSlots->map(function (PageLayoutSlot $layoutSlot) use ($pageSlotsByKey): array {
+    $layoutRows = $layoutSlots->map(function (PageLayoutSlot $layoutSlot) use ($pageSlotsByKey, $page): array {
       $key = $this->layoutSlotKey($layoutSlot);
       $pageSlot = $key ? $pageSlotsByKey->get($key) : null;
 
@@ -43,7 +43,7 @@ class PageLayoutSlotComparison
         'layout_label' => $this->layoutSlotLabel($layoutSlot),
         'page_slot_name' => $pageSlot?->slotSlug(),
         'page_slot_label' => $pageSlot?->slotType?->name,
-        'status' => $pageSlot ? 'present' : 'missing',
+        'status' => $pageSlot ? 'present' : (PageLayoutCatalog::autoAddsSlot($page->publicShellPreset(), $key) ? 'missing' : 'optional'),
         'is_missing' => $pageSlot === null,
         'is_disabled' => $pageSlot?->runtimeSourceType() === PageSlot::SOURCE_TYPE_DISABLED,
         'is_shared_slot' => $pageSlot?->runtimeSourceType() === PageSlot::SOURCE_TYPE_SHARED_SLOT,
@@ -83,7 +83,8 @@ class PageLayoutSlotComparison
       ->values();
 
     $missingSlots = $layoutRows
-      ->filter(fn (array $row) => $row['is_missing'] && $row['slot_type_id'] > 0)
+      ->filter(fn (array $row) => $row['is_missing'] && $row['slot_type_id'] > 0
+        && PageLayoutCatalog::autoAddsSlot($page->publicShellPreset(), $row['layout_slot_name']))
       ->values();
 
     return [

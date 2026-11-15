@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
+use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
@@ -60,6 +61,9 @@ class PageRequest extends FormRequest
       'slug' => $identityRules['slug'],
       'path' => $pathIsUnchanged ? ['required', 'string'] : $identityRules['path'],
       'public_shell' => ['nullable', Rule::in($allowedLayoutHandles)],
+      'column_sidebars_submitted' => ['sometimes', 'boolean'],
+      'column_sidebars' => ['sometimes', 'array', 'list', 'max:2'],
+      'column_sidebars.*' => ['distinct', Rule::in(PageLayoutCatalog::COLUMN_SIDEBARS)],
       'blocks' => ['nullable', 'array'],
       'blocks.*.id' => ['nullable', 'integer', 'exists:wbcms_blocks,id'],
       'blocks.*.block_type_id' => ['required', 'integer', 'exists:wbcms_block_types,id'],
@@ -352,7 +356,7 @@ class PageRequest extends FormRequest
       ->values()
       ->all();
 
-    unset($data['public_shell'], $data['path']);
+    unset($data['public_shell'], $data['path'], $data['column_sidebars'], $data['column_sidebars_submitted']);
 
     return $data;
   }

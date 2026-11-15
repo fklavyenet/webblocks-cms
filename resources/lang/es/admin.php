@@ -1,6 +1,29 @@
 <?php
 
 $translations = [
+  'page_layout_picker' => [
+    'default' => 'Predeterminado',
+    'docs' => 'Documentación',
+    'columns' => 'Columnas',
+    'article' => 'Artículo',
+    'default_help' => 'Una sola columna de contenido.',
+    'docs_help' => 'Navegación separada de altura completa.',
+    'columns_help' => 'Barras laterales opcionales entre la cabecera y el pie.',
+    'article_help' => 'Una columna para artículos existentes.',
+    'header' => 'Cabecera',
+    'main' => 'Principal',
+    'footer' => 'Pie',
+    'sidebar' => 'Barra lateral',
+    'sidebar-left' => 'Barra izquierda',
+    'sidebar-right' => 'Barra derecha',
+    'sidebar_options' => 'Barras laterales',
+    'content_column' => 'Columna de contenido',
+    'optional' => 'Opcional',
+    'add_main' => 'Añadir sección principal',
+    'main_required' => 'Añade o activa la sección principal antes de publicar.',
+    'main_protected' => 'La sección principal no se puede eliminar ni desactivar.',
+    'incompatible_slot' => 'Resuelve el contenido o el vínculo con la sección compartida en :slot antes de continuar.',
+  ],
   'plugin_dependencies' => [
     'invalid' => 'Las dependencias deben indicar versiones válidas de plugins obligatorios u opcionales.',
     'unavailable' => 'El plugin :plugin :version debe estar instalado, ser compatible y estar activado.',

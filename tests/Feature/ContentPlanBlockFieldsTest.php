@@ -10,6 +10,7 @@ use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
+use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -75,6 +76,18 @@ class ContentPlanBlockFieldsTest extends TestCase
     $this->assertSame($desktop->id, $replacedImage->media_id);
     $this->assertNull($replacedImage->mobileMedia());
     $this->assertSame('primary', $page->blocks()->where('type', 'cookie-settings')->sole()->variant);
+  }
+
+  #[Test]
+  public function a_columns_plan_adds_only_the_sidebar_explicitly_requested(): void
+  {
+    app(CoreLayoutCatalogSyncer::class)->sync();
+    $plan = $this->draftPlan([['type' => 'cookie-settings']]);
+    $plan['plan']['layout'] = 'columns';
+    $plan['plan']['slots']['sidebar-right'] = [['type' => 'cookie-settings', 'variant' => 'secondary']];
+    $response = $this->postJson('/webadmin/api/content/apply', $plan)->assertCreated();
+    $this->assertSame(['header', 'main', 'sidebar-right', 'footer'], array_column($response->json('data.page.slots'), 'slot'));
+    $this->assertSame(['main', 'sidebar-right'], array_column($response->json('data.page.blocks'), 'slot'));
   }
 
   #[Test]

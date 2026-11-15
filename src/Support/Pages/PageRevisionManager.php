@@ -163,9 +163,15 @@ class PageRevisionManager
         force: true,
       );
 
+      $hadMain = PageSlot::hasEnabledMain($page);
+      $wasPublished = $page->isPublished();
       $this->applySnapshot($page->fresh(), $revision->snapshot ?? []);
-      if ($page->fresh()->status === Page::STATUS_PUBLISHED) {
-        app(ContactConsentRequirements::class)->assertPage($page->fresh());
+      $restored = $page->fresh();
+      if ($hadMain || (! $wasPublished && $restored->isPublished())) {
+        PageSlot::assertMainForPublication($restored);
+      }
+      if ($restored->isPublished()) {
+        app(ContactConsentRequirements::class)->assertPage($restored);
       }
 
       $this->capture(

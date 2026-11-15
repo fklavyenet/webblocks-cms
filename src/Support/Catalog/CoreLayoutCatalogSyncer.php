@@ -11,7 +11,7 @@ use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 
 class CoreLayoutCatalogSyncer
 {
-  public function sync(): array
+  public function sync(?array $handles = null): array
   {
     $summary = [
       'layouts' => 0,
@@ -19,8 +19,10 @@ class CoreLayoutCatalogSyncer
       'layout_slots' => 0,
     ];
 
-    DB::transaction(function (): void {
-      foreach (PageLayoutCatalog::definitions() as $layout) {
+    $definitions = collect(PageLayoutCatalog::definitions())->filter(fn (array $layout) => $handles === null || in_array($layout['handle'], $handles, true));
+
+    DB::transaction(function () use ($definitions): void {
+      foreach ($definitions as $layout) {
         PageLayout::query()->updateOrCreate(['handle' => $layout['handle']], [
           'name' => $layout['name'],
           'description' => $layout['description'] ?? null,
@@ -35,7 +37,7 @@ class CoreLayoutCatalogSyncer
       }
     });
 
-    $summary['layouts'] = count(PageLayoutCatalog::definitions());
+    $summary['layouts'] = $definitions->count();
 
     if (! Schema::hasTable('wbcms_page_layout_slots')) {
       return $summary;
@@ -43,7 +45,7 @@ class CoreLayoutCatalogSyncer
 
     $layouts = PageLayout::query()->get()->keyBy('handle');
 
-    foreach (PageLayoutCatalog::definitions() as $definition) {
+    foreach ($definitions as $definition) {
       $pageLayout = $layouts->get($definition['handle']);
 
       if (! $pageLayout) {
@@ -51,7 +53,7 @@ class CoreLayoutCatalogSyncer
       }
 
       foreach ($definition['managed_slots'] ?? [] as $slotDefinition) {
-        $slotType = SlotType::query()->updateOrCreate(
+        $slotType = SlotType::query()->{$handles === null ? 'updateOrCreate' : 'firstOrCreate'}(
           ['slug' => $slotDefinition['slot_type_slug']],
           [
             'name' => $slotDefinition['label'] ?? str($slotDefinition['slot_type_slug'])->headline()->toString(),

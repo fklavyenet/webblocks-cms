@@ -7,6 +7,7 @@ use Illuminate\Validation\Rule;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 
 class StorePageSlotRequest extends FormRequest
 {
@@ -24,7 +25,8 @@ class StorePageSlotRequest extends FormRequest
       'slot_type_id' => [
         'required',
         'integer',
-        Rule::exists(SlotType::class, 'id')->where(fn ($query) => $query->where('status', 'published')),
+        Rule::exists(SlotType::class, 'id')->where(fn ($query) => $query->where('status', 'published')
+          ->whereNotIn('slug', PageLayoutCatalog::unavailableSlots($page?->publicShellPreset() ?? 'default'))),
         Rule::unique(PageSlot::class, 'slot_type_id')->where(fn ($query) => $query->where('page_id', $pageId)),
       ],
     ];

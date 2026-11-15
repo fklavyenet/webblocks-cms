@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
 
@@ -133,6 +134,29 @@ class PageSlot extends CmsModel
   public function slotSlug(): string
   {
     return trim((string) ($this->slotType?->slug ?? $this->slotType()->value('slug') ?? ''));
+  }
+
+  public function isProtectedMain(Page $page): bool
+  {
+    return ! $page->isSharedSlotSourcePage() && $this->slotSlug() === 'main';
+  }
+
+  public static function assertMainForPublication(Page $page): void
+  {
+    if (! self::hasEnabledMain($page)) {
+      throw ValidationException::withMessages(['main_slot' => __('webblocks-cms::admin.page_layout_picker.main_required')]);
+    }
+  }
+
+  public static function hasEnabledMain(Page $page): bool
+  {
+    if ($page->isSharedSlotSourcePage()) {
+      return true;
+    }
+
+    $main = $page->slots()->whereHas('slotType', fn ($query) => $query->where('slug', 'main'))->first();
+
+    return $main && $main->runtimeSourceType() !== self::SOURCE_TYPE_DISABLED;
   }
 
   public function sharedSlotCompatibilityIssues(?SharedSlot $sharedSlot = null): array

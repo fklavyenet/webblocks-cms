@@ -14,6 +14,7 @@ use WebBlocks\Cms\Actions\Mcp\UploadMedia;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Media\MediaSearchMode;
 use WebBlocks\Cms\Support\Media\MediaUploadRules;
+use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
 
 final class McpTools
@@ -117,6 +118,7 @@ final class McpTools
         'title' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 255],
         'path' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 255],
         'layout' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 100, 'default' => 'default'],
+        'column_sidebars' => ['type' => 'array', 'items' => ['type' => 'string', 'enum' => PageLayoutCatalog::COLUMN_SIDEBARS], 'maxItems' => 2, 'uniqueItems' => true],
       ], ['locale', 'title', 'path']),
       $this->descriptor(self::STRUCTURE, 'structure_description', [
         'locale' => $locale, 'page_id' => $id, 'page' => $page,
@@ -226,6 +228,8 @@ final class McpTools
       self::CREATE => [
         'title' => ['required', 'string', 'max:255', 'not_regex:/[\x00-\x1F\x7F]/'],
         'path' => ['required', 'string', 'max:255'],
+        'column_sidebars' => ['sometimes', 'array', 'list', 'max:2'],
+        'column_sidebars.*' => ['distinct', Rule::in(PageLayoutCatalog::COLUMN_SIDEBARS)],
         'layout' => ['sometimes', 'required', 'string', 'max:100', 'regex:/\A[a-z0-9]+(?:[-_][a-z0-9]+)*\z/'],
       ],
       self::SEARCH => ['q' => ['required', 'string', 'max:120', 'not_regex:/[\x00-\x1F\x7F]/'], 'page' => $page],

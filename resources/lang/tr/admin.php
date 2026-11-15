@@ -1,6 +1,29 @@
 <?php
 
 $translations = [
+  'page_layout_picker' => [
+    'default' => 'Varsayılan',
+    'docs' => 'Dokümantasyon',
+    'columns' => 'Sütunlu',
+    'article' => 'Makale',
+    'default_help' => 'Tek içerik sütunu.',
+    'docs_help' => 'Sayfa boyunca ayrı gezinme alanı.',
+    'columns_help' => 'Üst ve alt bilgi arasında seçimlik yan sütunlar.',
+    'article_help' => 'Mevcut makaleler için tek sütun.',
+    'header' => 'Üst bilgi',
+    'main' => 'Ana içerik',
+    'footer' => 'Alt bilgi',
+    'sidebar' => 'Kenar çubuğu',
+    'sidebar-left' => 'Sol Sidebar',
+    'sidebar-right' => 'Sağ Sidebar',
+    'sidebar_options' => 'Yan sütunlar',
+    'content_column' => 'İçerik sütunu',
+    'optional' => 'Seçimlik',
+    'add_main' => 'Main ekle',
+    'main_required' => 'Yayınlamadan önce Main slotunu ekleyin veya etkinleştirin.',
+    'main_protected' => 'Main slotu silinemez veya devre dışı bırakılamaz.',
+    'incompatible_slot' => 'Devam etmeden önce :slot alanındaki içeriği veya Shared Slot bağlantısını düzenleyin.',
+  ],
   'plugin_dependencies' => [
     'invalid' => 'Bağımlılıklar geçerli zorunlu veya isteğe bağlı eklenti sürümlerini belirtmelidir.',
     'unavailable' => ':plugin :version eklentisi kurulu, uyumlu ve etkin olmalıdır.',

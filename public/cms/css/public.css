@@ -715,3 +715,28 @@ body.wb-gallery.wb-gallery-document-scope {
         overflow: visible;
     }
 }
+
+.wb-public-columns {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--wb-s6);
+}
+
+.wb-public-columns > [data-wb-slot="main"] {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.wb-public-columns > :is([data-wb-slot="sidebar-left"], [data-wb-slot="sidebar-right"]) {
+    flex: 0 1 clamp(10rem, 22%, 18rem);
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 48rem) {
+    .wb-public-columns {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--wb-s4);
+    }
+}

@@ -19,11 +19,12 @@ class PageLayoutManager
   public function activeHandles(): array
   {
     if (! $this->tableExists()) {
-      return PageLayoutCatalog::handles();
+      return collect(PageLayoutCatalog::definitions())->where('is_active', true)->pluck('handle')->all();
     }
 
     return PageLayout::query()
       ->where('is_active', true)
+      ->where('handle', '!=', 'article')
       ->orderBy('sort_order')
       ->orderBy('name')
       ->pluck('handle')
@@ -115,6 +116,10 @@ class PageLayoutManager
   public function resolveShellType(?string $handle): string
   {
     $normalized = Page::normalizePublicShellHandle($handle);
+    if ($normalized === 'columns') {
+      return 'columns';
+    }
+
     $layout = $this->findByHandle($normalized);
 
     if ($layout) {
@@ -159,6 +164,29 @@ class PageLayoutManager
     });
 
     return ($hasDocsSidebar || $hasDocsMain) ? 'docs' : 'default';
+  }
+
+  public function slotsInPublicOrder(Page $page, Collection $slots, callable $slug): Collection
+  {
+    $positions = array_flip($this->orderedSlotSlugsForHandle($page->publicShellPreset()));
+    $shell = $page->resolvedPublicShellType();
+
+    return $slots->sortBy(function ($slot) use ($slug, $positions, $shell) {
+      $name = $slug($slot);
+      $fixed = match ($shell) {
+        'docs' => ['sidebar', 'header', 'main', 'footer'],
+        'columns' => ['header', 'sidebar-left', 'main', 'sidebar-right', 'footer'],
+        default => [],
+      };
+
+      if ($fixed !== []) {
+        $order = array_search($name, $fixed, true);
+
+        return sprintf('%010d-%010d-%s', $order === false ? 9999 : $order, $positions[$name] ?? 9999, $name);
+      }
+
+      return $positions === [] ? '' : sprintf('%010d-%s', $positions[$name] ?? 9999, $name);
+    })->values();
   }
 
   public function bodyClassForHandle(?string $handle): ?string
@@ -347,7 +375,7 @@ class PageLayoutManager
   public function pageSelectionOptions(?string $currentHandle = null): array
   {
     $currentHandle = Page::normalizePublicShellHandle($currentHandle);
-    $layouts = $this->ordered(activeOnly: true)->map(fn (array $layout) => [
+    $layouts = $this->ordered(activeOnly: true)->reject(fn (array $layout) => $layout['handle'] === 'article')->map(fn (array $layout) => [
       'value' => $layout['handle'],
       'label' => $layout['name'],
       'description' => $layout['description'],

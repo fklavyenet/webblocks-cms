@@ -1776,3 +1776,67 @@ input.wb-admin-table-grid-input:focus {
     width: 42%;
     overflow-wrap: anywhere;
 }
+
+.wb-page-layout-choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+
+.wb-page-layout-choices .wb-radio-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.wb-page-layout-diagram {
+    display: grid;
+    grid-template: 1fr 2fr 1fr / repeat(4, minmax(0, 1fr));
+    min-height: 6rem;
+    gap: var(--wb-s1);
+}
+
+.wb-page-layout-diagram > span {
+    display: grid;
+    place-items: center;
+    grid-column: 1 / -1;
+    padding: var(--wb-s1);
+    border-radius: var(--wb-r-sm);
+    background: var(--wb-bg);
+    font-size: .75rem;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+.wb-page-layout-diagram > [data-region="main"] {
+    background: var(--wb-accent-soft);
+}
+
+.wb-page-layout-diagram[data-layout="docs"] {
+    grid-template-areas: "side header header header" "side main main main" "side footer footer footer";
+}
+
+.wb-page-layout-diagram[data-layout="columns"] {
+    grid-template-areas: "header header header header" "left main main right" "footer footer footer footer";
+}
+
+.wb-page-layout-diagram:is([data-layout="docs"], [data-layout="columns"]) > [data-region="header"] { grid-area: header; }
+.wb-page-layout-diagram:is([data-layout="docs"], [data-layout="columns"]) > [data-region="main"] { grid-area: main; }
+.wb-page-layout-diagram:is([data-layout="docs"], [data-layout="columns"]) > [data-region="footer"] { grid-area: footer; }
+.wb-page-layout-diagram[data-layout="docs"] > [data-region="sidebar"] { grid-area: side; }
+.wb-page-layout-diagram[data-layout="columns"] > [data-region="sidebar-left"] { grid-area: left; }
+.wb-page-layout-diagram[data-layout="columns"] > [data-region="sidebar-right"] { grid-area: right; }
+
+.wb-page-layout-diagram > :is([data-region="sidebar-left"], [data-region="sidebar-right"]) {
+    background: transparent;
+    outline: 1px dashed var(--wb-border);
+    outline-offset: -1px;
+}
+
+.wb-page-layout-picker:has([name="column_sidebars[]"][value="sidebar-left"]:checked) [data-region="sidebar-left"],
+.wb-page-layout-picker:has([name="column_sidebars[]"][value="sidebar-right"]:checked) [data-region="sidebar-right"] {
+    background: var(--wb-bg);
+    outline: none;
+}
+
+.wb-page-layout-picker:not(:has([name="public_shell"][value="columns"]:checked)) .wb-page-layout-sidebars {
+    display: none;
+}

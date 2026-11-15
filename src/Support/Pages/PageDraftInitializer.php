@@ -10,7 +10,7 @@ final class PageDraftInitializer
   public function __construct(private readonly PageLayoutSlotSyncer $slots) {}
 
   /** Initialize the page within the caller's draft creation transaction. */
-  public function create(array $attributes, array $translation, string $layout): Page
+  public function create(array $attributes, array $translation, string $layout, array $requestedSlots = []): Page
   {
     $page = Page::query()->create([
       'page_type' => Page::TYPE_DEFAULT,
@@ -25,7 +25,7 @@ final class PageDraftInitializer
       throw new RuntimeException('A translation model event cancelled draft creation.');
     }
 
-    $this->slots->seedInitialSlots($page, $layout, requirePersistence: true);
+    $this->slots->seedInitialSlots($page, $layout, requirePersistence: true, requested: $requestedSlots);
 
     return $page;
   }
