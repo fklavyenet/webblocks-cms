@@ -82,7 +82,7 @@
         var unit = settings.querySelector('[data-cms-gallery-unit]').selectedOptions[0];
         var factor = Number(unit.dataset.factor);
         rows.forEach(function (row, index) {
-            var title = row.querySelector('img[data-wb-gallery-preview-image]')?.alt.trim() || String(index + 1);
+            var title = row.querySelector('[data-wb-gallery-item-title]')?.textContent.trim() || String(index + 1);
             var line = body.insertRow();
             var heading = document.createElement('th');
             heading.scope = 'row';
@@ -403,6 +403,7 @@
             ? '<img src="' + escapeHtml(asset.url) + '" alt="' + escapeHtml(asset.title || asset.filename || i18n('selected-image')) + '" width="72" height="48" data-wb-gallery-preview-image data-gallery-preview-url="' + escapeHtml(asset.gallery_preview_url) + '" data-width="' + (Number(asset.width) || '') + '" data-height="' + (Number(asset.height) || '') + '">'
             : '<span class="wb-text-sm wb-text-muted">No preview</span>';
         var modalId = 'gallery-item-modal-' + escapeHtml(prefix.replace(/[^A-Za-z0-9_-]+/g, '-')) + '-' + escapeHtml(asset.id);
+        var itemLabel = String(asset.title ?? '').trim() || asset.filename || i18n('selected-image');
 
         return template.innerHTML
             .replaceAll('__MEDIA_ID__', escapeHtml(asset.id))
@@ -417,7 +418,7 @@
             .replaceAll('__OVERLAY_TITLE_NAME__', escapeHtml(itemFieldName(prefix, index, 'overlay_title')))
             .replaceAll('__OVERLAY_TEXT_NAME__', escapeHtml(itemFieldName(prefix, index, 'overlay_text')))
             .replaceAll('__PREVIEW_HTML__', previewHtml)
-            .replaceAll('__ITEM_LABEL__', escapeHtml(asset.title || asset.filename || i18n('selected-image')))
+            .replaceAll('__ITEM_LABEL__', escapeHtml(itemLabel))
             .replaceAll('__ITEM_META__', escapeHtml([asset.kind, asset.original_name].filter(Boolean).join(' | ')))
             .replaceAll('__MODAL_ID__', modalId);
     }

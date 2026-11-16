@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.137.1
+
+- Show the Media Library title in the Gallery Artwork column. Use the filename when the title is blank.
+
 ## 1.137.0
 
 - Choose Physical scale in the Gallery editor and enter each artwork's width and height in millimeters, centimeters, or inches.

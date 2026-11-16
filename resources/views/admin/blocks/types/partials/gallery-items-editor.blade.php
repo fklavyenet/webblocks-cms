@@ -127,7 +127,7 @@
                 @foreach ($galleryItemRows as $galleryIndex => $item)
                   @php
                     $asset = $item['asset'];
-                    $itemLabel = $asset->title ?: $asset->filename;
+                    $itemLabel = filled($asset->title) ? $asset->title : $asset->filename;
                     $altSummary = $item['alt_text'] !== '' ? $item['alt_text'] : ($asset->alt_text ?: $adminText('no_alt_text'));
                     $captionSummary = $item['caption'] !== '' ? $item['caption'] : $adminText('no_caption');
                     $overlaySummary = $item['overlay_title'] !== ''
@@ -160,7 +160,7 @@
                       @endif
                     </td>
                     <td>
-                      <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" aria-haspopup="dialog">{{ $itemLabel }}</button></strong>
+                      <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" aria-haspopup="dialog" data-wb-gallery-item-title>{{ $itemLabel }}</button></strong>
                       <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                     </td>
                     <td>
@@ -285,7 +285,7 @@
             @foreach ($galleryItemRows as $galleryIndex => $item)
               @php
                 $asset = $item['asset'];
-                $itemLabel = $asset->title ?: $asset->filename;
+                $itemLabel = filled($asset->title) ? $asset->title : $asset->filename;
                 $altSummary = $item['alt_text'] !== '' ? $item['alt_text'] : ($asset->alt_text ?: $adminText('no_alt_text'));
                 $captionSummary = $item['caption'] !== '' ? $item['caption'] : $adminText('no_caption');
                 $overlaySummary = $item['overlay_title'] !== ''
@@ -318,7 +318,7 @@
                   @endif
                 </td>
                 <td>
-                  <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" aria-haspopup="dialog">{{ $itemLabel }}</button></strong>
+                  <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" aria-haspopup="dialog" data-wb-gallery-item-title>{{ $itemLabel }}</button></strong>
                   <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                 </td>
                 <td>
@@ -415,7 +415,7 @@
         __PREVIEW_HTML__
       </td>
       <td>
-        <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#__MODAL_ID__" aria-haspopup="dialog">__ITEM_LABEL__</button></strong>
+        <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#__MODAL_ID__" aria-haspopup="dialog" data-wb-gallery-item-title>__ITEM_LABEL__</button></strong>
         <div class="wb-text-sm wb-text-muted">__ITEM_META__</div>
       </td>
       <td>
