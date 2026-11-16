@@ -71,8 +71,8 @@
                 </div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    @if ($backup->summary)
-                        <div><strong>{{ $backup->summary }}</strong></div>
+                    @if ($summary = $backup->panelSummary($adminLocale))
+                        <div><strong>{{ $summary }}</strong></div>
                     @endif
                     <div class="wb-table-wrap"><table class="wb-table"><tbody>
                         <tr><th scope="row">{{ $adminText('backups.started') }}</th><td>{{ $backup->started_at?->format('Y-m-d H:i:s') ?? '-' }}</td></tr>

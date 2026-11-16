@@ -88,6 +88,7 @@ return [
     'deleted' => 'Sayfa yerleşimi alanı silindi.',
   ],
   'backups' => [
+    'uploaded_summary' => 'Yüklenen yedek arşivi doğrulandı ve geri yükleme için kaydedildi.',
     'uploaded' => 'Yedek arşivi yüklendi ve doğrulandı.',
     'restored' => 'Sistem geri yükleme tamamlandı.',
     'history_deleted' => 'Geri yükleme geçmişi kaydı silindi.',
@@ -121,6 +122,7 @@ return [
     'parent_depth' => 'Gezinme en fazla üç düzey içerebilir.',
   ],
   'media' => [
+    'remote_local_host' => 'Uzak medya URL’si yerel bir ana makineyi hedefleyemez.',
     'updated' => 'Medya güncellendi.',
     'variants_images_only' => 'Yalnızca görsellerin varyantları vardır.',
     'variants_failed' => 'Görsel varyantları oluşturulamadı. Özgün görseller kullanılmaya devam ediyor.',
@@ -180,6 +182,8 @@ return [
     'partial_remove_failed' => 'Kısmen içe aktarılan site kaldırılamadı.',
   ],
   'locales' => [
+    'default_enable' => 'Varsayılan dil otomatik olarak etkin kalır.',
+    'already_enabled' => 'Dil zaten etkin.',
     'default_disable' => 'Varsayılan dil devre dışı bırakılamaz.',
     'already_disabled' => 'Dil zaten devre dışı.',
     'default_delete' => 'Varsayılan dil silinemez.',
@@ -418,6 +422,16 @@ return [
     'asset_filename' => 'Dizin yolu içermeyen ve .:type ile biten geçerli bir dosya adı girin.',
   ],
   'page_assets' => [
+    'invalid_type' => 'Varlık türü CSS ya da JS olmalıdır.',
+    'path_required' => 'Varlık yolunu girin.',
+    'path_characters' => 'Varlık yolu geçersiz karakterler içeriyor.',
+    'path_local' => 'Varlık için /site/... altında yerel bir yol kullanın.',
+    'path_prefix' => 'Varlık yolu /site/ ile başlamalıdır.',
+    'path_traversal' => 'Varlık yolu üst dizine çıkış veya ters eğik çizgi içeremez.',
+    'path_query' => 'V1’de varlık yolu sorgu parametresi veya parça tanımlayıcısı içeremez.',
+    'path_extension' => 'Dosya uzantısı seçilen varlık türüyle eşleşmelidir.',
+    'path_root' => 'Varlık yolu /site/ altında kalmalıdır.',
+    'path_segments' => 'Varlık yolunda geçersiz bölümler var.',
     'added' => ':type varlığı eklendi.',
     'updated' => ':type varlığı güncellendi.',
     'deleted' => ':type varlığı silindi.',
@@ -465,5 +479,8 @@ return [
     'sql_empty' => ':label boş.',
     'sql_invalid' => ':label geçerli bir SQL dökümü gibi görünmüyor.',
     'sql_command_output' => ':label SQL yerine komut çıktısı içeriyor.',
+  ],
+  'site_assets' => [
+    'saved' => 'Sitenin :type varlığı kaydedildi.',
   ],
 ];

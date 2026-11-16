@@ -88,6 +88,7 @@ return [
     'deleted' => 'Page Layout Slot deleted successfully.',
   ],
   'backups' => [
+    'uploaded_summary' => 'Uploaded backup archive validated and registered for restore.',
     'uploaded' => 'Backup archive uploaded and validated successfully.',
     'restored' => 'System restore completed successfully.',
     'history_deleted' => 'Restore history entry deleted.',
@@ -121,6 +122,7 @@ return [
     'parent_depth' => 'Navigation depth cannot exceed 3 levels.',
   ],
   'media' => [
+    'remote_local_host' => 'Remote media URL must not target a local host.',
     'updated' => 'Media updated successfully.',
     'variants_images_only' => 'Only image media has variants.',
     'variants_failed' => 'Image variants could not be generated; original-image fallbacks remain active.',
@@ -180,6 +182,8 @@ return [
     'partial_remove_failed' => 'The partially imported site could not be removed.',
   ],
   'locales' => [
+    'default_enable' => 'Default locale remains enabled automatically.',
+    'already_enabled' => 'Locale is already enabled.',
     'default_disable' => 'Default locale cannot be disabled.',
     'already_disabled' => 'Locale is already disabled.',
     'default_delete' => 'Default locale cannot be deleted.',
@@ -418,6 +422,16 @@ return [
     'asset_filename' => 'Application asset filename must be a safe basename ending in .:type.',
   ],
   'page_assets' => [
+    'invalid_type' => 'Asset type must be css or js.',
+    'path_required' => 'Asset path is required.',
+    'path_characters' => 'Asset path contains invalid characters.',
+    'path_local' => 'Asset path must use a local /site/... path.',
+    'path_prefix' => 'Asset path must start with /site/.',
+    'path_traversal' => 'Asset path cannot contain directory traversal or backslashes.',
+    'path_query' => 'Asset path cannot include query strings or fragments in V1.',
+    'path_extension' => 'Asset path extension must match the selected asset type.',
+    'path_root' => 'Asset path must stay under /site/.',
+    'path_segments' => 'Asset path contains invalid path segments.',
     'added' => ':type asset added.',
     'updated' => ':type asset updated.',
     'deleted' => ':type asset deleted.',
@@ -465,5 +479,8 @@ return [
     'sql_empty' => ':label is empty.',
     'sql_invalid' => ':label does not look like a valid SQL dump.',
     'sql_command_output' => ':label contains command output instead of SQL.',
+  ],
+  'site_assets' => [
+    'saved' => ':type site asset saved.',
   ],
 ];

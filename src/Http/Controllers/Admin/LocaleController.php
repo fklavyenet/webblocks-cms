@@ -91,8 +91,8 @@ class LocaleController extends Controller
     if (! $report->canEnable()) {
       return redirect()->route('admin.locales.index')
         ->withErrors(['locale_lifecycle' => $locale->is_default
-                  ? 'Default locale remains enabled automatically.'
-                  : 'Locale is already enabled.']);
+                  ? __('webblocks-cms::admin-feedback.locales.default_enable')
+                  : __('webblocks-cms::admin-feedback.locales.already_enabled')]);
     }
 
     $locale->forceFill(['is_enabled' => true])->save();

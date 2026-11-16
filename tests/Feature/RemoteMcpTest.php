@@ -27,6 +27,7 @@ use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -104,6 +105,35 @@ class RemoteMcpTest extends TestCase
     $this->postJson('http://cms.example.test/webadmin/mcp', [])->assertNotFound();
     $this->setMcp(false);
     $this->postJson(self::MCP, [])->assertNotFound();
+  }
+
+  public function test_mcp_tool_descriptions_and_errors_use_the_client_language(): void
+  {
+    [$page] = $this->pageFixture(path: '/fixture');
+    $token = $this->connect($this->operator(), $page->site_id, scope: 'pages:read');
+    $translator = app('translator');
+    $default = $translator->getLocale();
+    $english = require dirname(__DIR__, 2).'/resources/lang/en/mcp.php';
+
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      foreach (array_keys($english) as $key) {
+        $this->assertTrue($translator->hasForLocale('webblocks-cms::mcp.'.$key, $locale), $locale.': '.$key);
+      }
+      $this->withHeader('Accept-Language', $locale);
+      $this->rpc('tools/list')->assertOk()
+        ->assertHeader('Vary', 'Accept-Language')
+        ->assertJsonCount(22, 'result.tools')
+        ->assertJsonPath('result.tools.0.description', __('webblocks-cms::mcp.read_description', [], $locale))
+        ->assertJsonPath('result.tools.12.description', __('webblocks-cms::mcp.upload_description', [], $locale));
+      $this->tool('find_page', ['path' => '/missing', 'locale' => 'en'], status: 401)
+        ->assertJsonPath('result.content.0.text', __('webblocks-cms::mcp.auth_required', [], $locale));
+      $this->tool('find_page', ['path' => '/missing', 'locale' => 'en'], $token)
+        ->assertJsonPath('result.structuredContent.code', 'page_missing')
+        ->assertJsonPath('result.content.0.text', __('webblocks-cms::mcp.page_missing', [], $locale));
+      $this->tool('find_page', ['path' => '/fixture', 'locale' => 'en'], $token)
+        ->assertJsonPath('result.structuredContent.page_id', $page->id);
+      $this->assertSame($default, $translator->getLocale());
+    }
   }
 
   public function test_search_pages_paginates_only_the_authorized_sites_published_editorial_translations(): void

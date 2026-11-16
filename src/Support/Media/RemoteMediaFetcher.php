@@ -115,7 +115,7 @@ class RemoteMediaFetcher
     }
 
     if ($this->isLocalHostName($host)) {
-      throw new RuntimeException('Remote media URL must not target a local host.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.media.remote_local_host'));
     }
 
     $addresses = $this->resolveHostIps($host);

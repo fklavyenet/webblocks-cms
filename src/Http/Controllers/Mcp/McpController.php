@@ -13,6 +13,7 @@ use WebBlocks\Cms\Support\Mcp\McpGrants;
 use WebBlocks\Cms\Support\Mcp\McpNotes;
 use WebBlocks\Cms\Support\Mcp\McpToolException;
 use WebBlocks\Cms\Support\Mcp\McpTools;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 
 final class McpController
 {
@@ -30,6 +31,28 @@ final class McpController
   ) {}
 
   public function __invoke(Request $request): Response
+  {
+    $app = app();
+    $previous = $app->getLocale();
+    $preferred = $request->getPreferredLanguage(array_values(array_unique([$previous, ...AdminLocaleResolver::SUPPORTED_LOCALES])));
+
+    if ($preferred === $previous) {
+      $response = $this->handle($request);
+    } else {
+      $app->setLocale($preferred);
+      try {
+        $response = $this->handle($request);
+      } finally {
+        $app->setLocale($previous);
+      }
+    }
+
+    $response->setVary('Accept-Language', false);
+
+    return $response;
+  }
+
+  private function handle(Request $request): Response
   {
     $origin = $request->header('Origin');
     if ($origin !== null && $origin !== $this->config->origin()) {

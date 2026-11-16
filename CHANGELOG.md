@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.8
+
+- Localize page asset path validation, site asset save feedback, local media URL rejection, content language feedback, and uploaded backup summaries.
+- Complete the six bundled MCP catalogs. MCP tool descriptions and errors respect the client’s Accept-Language header.
+
 ## 1.135.7
 
 - Translate Page Assets add, update, and delete notifications in all six bundled panel languages.

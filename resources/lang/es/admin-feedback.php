@@ -88,6 +88,7 @@ return [
     'deleted' => 'Zona del diseño de página eliminada.',
   ],
   'backups' => [
+    'uploaded_summary' => 'El archivo de copia de seguridad subido se validó y se registró para su restauración.',
     'uploaded' => 'Archivo de copia de seguridad subido y validado.',
     'restored' => 'Restauración del sistema completada.',
     'history_deleted' => 'Entrada del historial de restauración eliminada.',
@@ -121,6 +122,7 @@ return [
     'parent_depth' => 'La navegación no puede superar los tres niveles.',
   ],
   'media' => [
+    'remote_local_host' => 'La URL del medio remoto no puede apuntar a un host local.',
     'updated' => 'Archivo multimedia actualizado.',
     'variants_images_only' => 'Solo las imágenes tienen variantes.',
     'variants_failed' => 'No se pudieron generar variantes. Se seguirán usando las imágenes originales.',
@@ -180,6 +182,8 @@ return [
     'partial_remove_failed' => 'No se pudo eliminar el sitio importado parcialmente.',
   ],
   'locales' => [
+    'default_enable' => 'El idioma predeterminado permanece activado automáticamente.',
+    'already_enabled' => 'El idioma ya está habilitado.',
     'default_disable' => 'No se puede desactivar el idioma predeterminado.',
     'already_disabled' => 'El idioma ya está desactivado.',
     'default_delete' => 'No se puede eliminar el idioma predeterminado.',
@@ -418,6 +422,16 @@ return [
     'asset_filename' => 'Introduce un nombre de archivo válido, sin ruta, que termine en .:type.',
   ],
   'page_assets' => [
+    'invalid_type' => 'El tipo de recurso debe ser CSS o JS.',
+    'path_required' => 'Introduce la ruta del recurso.',
+    'path_characters' => 'La ruta del recurso contiene caracteres no válidos.',
+    'path_local' => 'Usa una ruta local /site/... para el recurso.',
+    'path_prefix' => 'La ruta del recurso debe empezar por /site/.',
+    'path_traversal' => 'La ruta del recurso no puede contener saltos de directorio ni barras inversas.',
+    'path_query' => 'En V1, la ruta del recurso no puede contener parámetros de consulta ni fragmentos.',
+    'path_extension' => 'La extensión debe coincidir con el tipo de recurso seleccionado.',
+    'path_root' => 'La ruta del recurso debe permanecer dentro de /site/.',
+    'path_segments' => 'La ruta del recurso contiene segmentos no válidos.',
     'added' => 'Se añadió el recurso :type.',
     'updated' => 'Se actualizó el recurso :type.',
     'deleted' => 'Se eliminó el recurso :type.',
@@ -465,5 +479,8 @@ return [
     'sql_empty' => 'El archivo está vacío: :label.',
     'sql_invalid' => 'El archivo no parece contener un volcado SQL válido: :label.',
     'sql_command_output' => 'El archivo contiene la salida de un comando en lugar de SQL: :label.',
+  ],
+  'site_assets' => [
+    'saved' => 'Se guardó el recurso :type del sitio.',
   ],
 ];

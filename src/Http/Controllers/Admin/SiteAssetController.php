@@ -72,6 +72,6 @@ class SiteAssetController extends Controller
 
     return redirect()
       ->route('admin.site-assets.index', ['site' => $site])
-      ->with('status', $asset['label'].' site asset saved.');
+      ->with('status', __('webblocks-cms::admin-feedback.site_assets.saved', ['type' => $asset['label']]));
   }
 }

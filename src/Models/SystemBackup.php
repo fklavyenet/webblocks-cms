@@ -70,6 +70,13 @@ class SystemBackup extends CmsModel
     return $this->status === self::STATUS_COMPLETED;
   }
 
+  public function panelSummary(string $locale): ?string
+  {
+    return $this->type === self::TYPE_UPLOADED && $this->isSuccessful()
+      ? __('webblocks-cms::admin-feedback.backups.uploaded_summary', [], $locale)
+      : $this->summary;
+  }
+
   public function isFailed(): bool
   {
     return $this->status === self::STATUS_FAILED;

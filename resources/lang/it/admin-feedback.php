@@ -88,6 +88,7 @@ return [
     'deleted' => 'Area del layout di pagina eliminata.',
   ],
   'backups' => [
+    'uploaded_summary' => 'L’archivio di backup caricato è stato convalidato e registrato per il ripristino.',
     'uploaded' => 'Archivio di backup caricato e verificato.',
     'restored' => 'Ripristino del sistema completato.',
     'history_deleted' => 'Voce della cronologia di ripristino eliminata.',
@@ -121,6 +122,7 @@ return [
     'parent_depth' => 'La navigazione non può superare tre livelli.',
   ],
   'media' => [
+    'remote_local_host' => 'L’URL del contenuto multimediale remoto non può puntare a un host locale.',
     'updated' => 'File multimediale aggiornato.',
     'variants_images_only' => 'Solo le immagini hanno varianti.',
     'variants_failed' => 'Impossibile generare le varianti. Le immagini originali restano in uso.',
@@ -180,6 +182,8 @@ return [
     'partial_remove_failed' => 'Non è stato possibile rimuovere il sito importato parzialmente.',
   ],
   'locales' => [
+    'default_enable' => 'La lingua predefinita rimane attiva automaticamente.',
+    'already_enabled' => 'La lingua è già attiva.',
     'default_disable' => 'Non puoi disattivare la lingua predefinita.',
     'already_disabled' => 'La lingua è già disattivata.',
     'default_delete' => 'Non puoi eliminare la lingua predefinita.',
@@ -418,6 +422,16 @@ return [
     'asset_filename' => 'Inserisci un nome di file valido, senza percorso, che termini con .:type.',
   ],
   'page_assets' => [
+    'invalid_type' => 'Il tipo di risorsa deve essere CSS o JS.',
+    'path_required' => 'Inserisci il percorso della risorsa.',
+    'path_characters' => 'Il percorso della risorsa contiene caratteri non validi.',
+    'path_local' => 'Usa un percorso locale /site/... per la risorsa.',
+    'path_prefix' => 'Il percorso della risorsa deve iniziare con /site/.',
+    'path_traversal' => 'Il percorso della risorsa non può risalire le directory né contenere barre inverse.',
+    'path_query' => 'In V1 il percorso della risorsa non può contenere parametri di query o frammenti.',
+    'path_extension' => 'L’estensione deve corrispondere al tipo di risorsa selezionato.',
+    'path_root' => 'Il percorso della risorsa deve rimanere sotto /site/.',
+    'path_segments' => 'Il percorso della risorsa contiene segmenti non validi.',
     'added' => 'Risorsa :type aggiunta.',
     'updated' => 'Risorsa :type aggiornata.',
     'deleted' => 'Risorsa :type eliminata.',
@@ -465,5 +479,8 @@ return [
     'sql_empty' => 'Il file è vuoto: :label.',
     'sql_invalid' => 'Il file non sembra contenere un dump SQL valido: :label.',
     'sql_command_output' => 'Il file contiene l’output di un comando al posto del codice SQL: :label.',
+  ],
+  'site_assets' => [
+    'saved' => 'Risorsa :type del sito salvata.',
   ],
 ];

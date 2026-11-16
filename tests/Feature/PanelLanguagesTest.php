@@ -272,6 +272,46 @@ class PanelLanguagesTest extends TestCase
     }
   }
 
+  public function test_panel_asset_media_locale_and_backup_feedback_use_the_selected_language(): void
+  {
+    $this->actingAs($actor = $this->actor());
+    $this->app->usePublicPath(Storage::fake('public')->path(''));
+    $backups = Storage::fake('backups');
+    $archive = $backups->path('fixture.zip');
+    $zip = new ZipArchive;
+    $this->assertTrue($zip->open($archive, ZipArchive::CREATE | ZipArchive::OVERWRITE));
+    $zip->addFromString('manifest.json', '{"backup_id":1}');
+    $zip->addFromString('database/database.sql', 'SELECT 1;');
+    $zip->close();
+    $contentLocale = Locale::query()->where('code', 'en')->firstOrFail();
+    $site = Site::query()->create(['name' => 'Fixture', 'handle' => 'fixture', 'domain' => 'fixture.example.test']);
+    $page = Page::query()->create(['site_id' => $site->id, 'title' => 'Fixture', 'slug' => 'fixture', 'status' => 'draft', 'public_shell' => 'default']);
+    $checksum = null;
+
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $actor->forceFill(['admin_locale' => $locale])->save();
+      $text = fn (string $key, array $replace = []) => __('webblocks-cms::admin-feedback.'.$key, $replace, $locale);
+      $this->post(route('admin.pages.assets.store', [$page, 'css']), ['path' => '/site/fixture/script.js'])
+        ->assertSessionHasErrors(['path' => $text('page_assets.path_extension')]);
+
+      $contents = '/* fixture '.$locale.' */';
+      $this->put(route('admin.sites.assets.update', [$site, 'css']), ['contents' => $contents, 'expected_checksum' => $checksum])
+        ->assertSessionHas('status', $text('site_assets.saved', ['type' => 'CSS']));
+      $checksum = hash('sha256', $contents);
+
+      $this->post(route('admin.media.fetch'), ['source_url' => 'https://localhost/fixture.png'])
+        ->assertSessionHasErrors(['source_url' => $text('media.remote_local_host')]);
+      $this->post(route('admin.locales.enable', $contentLocale))
+        ->assertSessionHasErrors(['locale_lifecycle' => $text('locales.default_enable')]);
+
+      $this->post(route('admin.system.backups.upload.store'), ['archive' => new UploadedFile($archive, 'fixture.zip', test: true)])
+        ->assertSessionHas('status', $text('backups.uploaded'));
+      $backup = SystemBackup::query()->latest('id')->firstOrFail();
+      $this->get(route('admin.system.backups.show', $backup))->assertOk()
+        ->assertSee($text('backups.uploaded_summary'));
+    }
+  }
+
   public function test_super_admin_can_preview_activate_and_select_russian_without_changing_content_languages(): void
   {
     $this->actingAs($actor = $this->actor());

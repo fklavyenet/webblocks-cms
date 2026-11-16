@@ -88,6 +88,7 @@ return [
     'deleted' => 'Zone du gabarit de page supprimée.',
   ],
   'backups' => [
+    'uploaded_summary' => 'L’archive de sauvegarde téléversée a été vérifiée et enregistrée pour la restauration.',
     'uploaded' => 'Archive de sauvegarde téléversée et validée.',
     'restored' => 'Restauration du système terminée.',
     'history_deleted' => 'Entrée de l’historique de restauration supprimée.',
@@ -121,6 +122,7 @@ return [
     'parent_depth' => 'La navigation ne peut pas dépasser trois niveaux.',
   ],
   'media' => [
+    'remote_local_host' => 'L’URL du média distant ne peut pas cibler un hôte local.',
     'updated' => 'Média mis à jour.',
     'variants_images_only' => 'Seules les images disposent de variantes.',
     'variants_failed' => 'Les variantes n’ont pas pu être générées. Les images d’origine restent utilisées.',
@@ -180,6 +182,8 @@ return [
     'partial_remove_failed' => 'Le site partiellement importé n’a pas pu être retiré.',
   ],
   'locales' => [
+    'default_enable' => 'La langue par défaut reste activée automatiquement.',
+    'already_enabled' => 'La langue est déjà activée.',
     'default_disable' => 'La langue par défaut ne peut pas être désactivée.',
     'already_disabled' => 'La langue est déjà désactivée.',
     'default_delete' => 'La langue par défaut ne peut pas être supprimée.',
@@ -418,6 +422,16 @@ return [
     'asset_filename' => 'Saisissez un nom de fichier valide, sans chemin, se terminant par .:type.',
   ],
   'page_assets' => [
+    'invalid_type' => 'Le type de ressource doit être CSS ou JS.',
+    'path_required' => 'Saisissez le chemin de la ressource.',
+    'path_characters' => 'Le chemin de la ressource contient des caractères invalides.',
+    'path_local' => 'Utilisez un chemin local /site/... pour la ressource.',
+    'path_prefix' => 'Le chemin de la ressource doit commencer par /site/.',
+    'path_traversal' => 'Le chemin de la ressource ne peut pas contenir de remontée de répertoire ni de barre oblique inversée.',
+    'path_query' => 'En V1, le chemin de la ressource ne peut contenir ni paramètres de requête ni fragments.',
+    'path_extension' => 'L’extension doit correspondre au type de ressource sélectionné.',
+    'path_root' => 'Le chemin de la ressource doit rester sous /site/.',
+    'path_segments' => 'Le chemin de la ressource contient des segments invalides.',
     'added' => 'Ressource :type ajoutée.',
     'updated' => 'Ressource :type mise à jour.',
     'deleted' => 'Ressource :type supprimée.',
@@ -465,5 +479,8 @@ return [
     'sql_empty' => 'Le fichier est vide : :label.',
     'sql_invalid' => 'Le fichier ne semble pas contenir un export SQL valide : :label.',
     'sql_command_output' => 'Le fichier contient une sortie de commande à la place de SQL : :label.',
+  ],
+  'site_assets' => [
+    'saved' => 'Ressource :type du site enregistrée.',
   ],
 ];

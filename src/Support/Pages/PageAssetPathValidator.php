@@ -13,56 +13,56 @@ class PageAssetPathValidator
     $normalizedPath = $this->normalizePath((string) $path);
 
     if (! in_array($normalizedType, PageAsset::allowedTypes(), true)) {
-      return 'Asset type must be css or js.';
+      return __('webblocks-cms::admin-feedback.page_assets.invalid_type');
     }
 
     if ($normalizedPath === '') {
-      return 'Asset path is required.';
+      return __('webblocks-cms::admin-feedback.page_assets.path_required');
     }
 
     if (preg_match('/[[:cntrl:]<>"\']/', $normalizedPath) === 1) {
-      return 'Asset path contains invalid characters.';
+      return __('webblocks-cms::admin-feedback.page_assets.path_characters');
     }
 
     if (str_starts_with($normalizedPath, '//')) {
-      return 'Asset path must use a local /site/... path.';
+      return __('webblocks-cms::admin-feedback.page_assets.path_local');
     }
 
     $lowerPath = strtolower($normalizedPath);
 
     foreach (['http://', 'https://', 'javascript:', 'data:'] as $disallowedPrefix) {
       if (str_starts_with($lowerPath, $disallowedPrefix)) {
-        return 'Asset path must use a local /site/... path.';
+        return __('webblocks-cms::admin-feedback.page_assets.path_local');
       }
     }
 
     if (! str_starts_with($normalizedPath, '/site/')) {
-      return 'Asset path must start with /site/.';
+      return __('webblocks-cms::admin-feedback.page_assets.path_prefix');
     }
 
     if (str_contains($normalizedPath, '\\') || str_contains($normalizedPath, '..')) {
-      return 'Asset path cannot contain directory traversal or backslashes.';
+      return __('webblocks-cms::admin-feedback.page_assets.path_traversal');
     }
 
     if (str_contains($normalizedPath, '?') || str_contains($normalizedPath, '#')) {
-      return 'Asset path cannot include query strings or fragments in V1.';
+      return __('webblocks-cms::admin-feedback.page_assets.path_query');
     }
 
     $requiredExtension = $normalizedType === PageAsset::TYPE_JS ? '.js' : '.css';
 
     if (! str_ends_with(strtolower($normalizedPath), $requiredExtension)) {
-      return 'Asset path extension must match the selected asset type.';
+      return __('webblocks-cms::admin-feedback.page_assets.path_extension');
     }
 
     $relativePath = ltrim($normalizedPath, '/');
 
     if ($relativePath === 'site' || ! str_starts_with($relativePath, 'site/')) {
-      return 'Asset path must stay under /site/.';
+      return __('webblocks-cms::admin-feedback.page_assets.path_root');
     }
 
     foreach (explode('/', $relativePath) as $segment) {
       if ($segment === '' || $segment === '.' || $segment === '..') {
-        return 'Asset path contains invalid path segments.';
+        return __('webblocks-cms::admin-feedback.page_assets.path_segments');
       }
     }
 
@@ -110,12 +110,12 @@ class PageAssetPathValidator
     $normalized = $this->normalizePath($path);
 
     if (! str_starts_with($normalized, '/site/')) {
-      throw new InvalidArgumentException('Asset path must stay under /site/.');
+      throw new InvalidArgumentException(__('webblocks-cms::admin-feedback.page_assets.path_root'));
     }
 
     foreach (explode('/', ltrim($normalized, '/')) as $segment) {
       if ($segment === '' || $segment === '.' || $segment === '..') {
-        throw new InvalidArgumentException('Asset path contains invalid path segments.');
+        throw new InvalidArgumentException(__('webblocks-cms::admin-feedback.page_assets.path_segments'));
       }
     }
 

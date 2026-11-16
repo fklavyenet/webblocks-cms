@@ -65,7 +65,7 @@ class UploadedSystemBackupManager
         'status' => SystemBackup::STATUS_COMPLETED,
         'finished_at' => $finishedAt,
         'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
-        'summary' => 'Uploaded backup archive validated and registered for restore.',
+        'summary' => __('webblocks-cms::admin-feedback.backups.uploaded_summary', [], 'en'),
         'output' => implode(PHP_EOL, array_merge($output, $this->manifestSummaryLines($manifest, $inspection))),
       ]);
 

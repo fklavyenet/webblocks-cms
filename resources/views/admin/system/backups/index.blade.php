@@ -79,7 +79,7 @@
 
                 <div class="wb-card-body wb-stack wb-gap-2">
                     @if ($latestBackup)
-                        <div><strong>{{ $latestBackup->summary ?? $adminText('backups.record_available') }}</strong></div>
+                        <div><strong>{{ $latestBackup->panelSummary($adminLocale) ?? $adminText('backups.record_available') }}</strong></div>
                         <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.started') }} {{ $latestBackup->started_at?->format('Y-m-d H:i:s') ?? '-' }} | {{ $adminText('backups.finished') }} {{ $latestBackup->finished_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
                         <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.contents_label') }} {{ $backupContentsLabel($latestBackup) }} | {{ $adminText('backups.size') }} {{ $latestBackup->humanArchiveSize() }} | {{ $adminText('backups.duration') }} {{ $latestBackup->durationLabel() }}</div>
 

@@ -88,6 +88,7 @@ return [
     'deleted' => 'Bereich des Seitenlayouts gelöscht.',
   ],
   'backups' => [
+    'uploaded_summary' => 'Das hochgeladene Sicherungsarchiv wurde geprüft und zur Wiederherstellung registriert.',
     'uploaded' => 'Sicherungsarchiv hochgeladen und geprüft.',
     'restored' => 'Systemwiederherstellung abgeschlossen.',
     'history_deleted' => 'Eintrag im Wiederherstellungsverlauf gelöscht.',
@@ -121,6 +122,7 @@ return [
     'parent_depth' => 'Die Navigation darf höchstens drei Ebenen haben.',
   ],
   'media' => [
+    'remote_local_host' => 'Die URL für externe Medien darf nicht auf einen lokalen Host verweisen.',
     'updated' => 'Medium aktualisiert.',
     'variants_images_only' => 'Nur Bilder haben Varianten.',
     'variants_failed' => 'Bildvarianten konnten nicht erstellt werden. Die Originalbilder werden weiterhin verwendet.',
@@ -180,6 +182,8 @@ return [
     'partial_remove_failed' => 'Die teilweise importierte Website konnte nicht entfernt werden.',
   ],
   'locales' => [
+    'default_enable' => 'Die Standardsprache bleibt automatisch aktiviert.',
+    'already_enabled' => 'Die Sprache ist bereits aktiviert.',
     'default_disable' => 'Die Standardsprache kann nicht deaktiviert werden.',
     'already_disabled' => 'Die Sprache ist bereits deaktiviert.',
     'default_delete' => 'Die Standardsprache kann nicht gelöscht werden.',
@@ -418,6 +422,16 @@ return [
     'asset_filename' => 'Geben Sie einen gültigen Dateinamen ohne Verzeichnispfad mit der Endung .:type ein.',
   ],
   'page_assets' => [
+    'invalid_type' => 'Der Dateityp muss CSS oder JS sein.',
+    'path_required' => 'Geben Sie einen Dateipfad ein.',
+    'path_characters' => 'Der Dateipfad enthält ungültige Zeichen.',
+    'path_local' => 'Verwenden Sie einen lokalen Pfad unter /site/... für die Datei.',
+    'path_prefix' => 'Der Dateipfad muss mit /site/ beginnen.',
+    'path_traversal' => 'Der Dateipfad darf keine Verzeichniswechsel oder umgekehrten Schrägstriche enthalten.',
+    'path_query' => 'Der Dateipfad darf in V1 keine Abfrageparameter oder Fragmente enthalten.',
+    'path_extension' => 'Die Dateiendung muss zum ausgewählten Dateityp passen.',
+    'path_root' => 'Der Dateipfad muss unter /site/ bleiben.',
+    'path_segments' => 'Der Dateipfad enthält ungültige Pfadabschnitte.',
     'added' => ':type-Ressource hinzugefügt.',
     'updated' => ':type-Ressource aktualisiert.',
     'deleted' => ':type-Ressource gelöscht.',
@@ -465,5 +479,8 @@ return [
     'sql_empty' => 'Datei ist leer: :label.',
     'sql_invalid' => 'Die Datei enthält offenbar keinen gültigen SQL-Dump: :label.',
     'sql_command_output' => 'Die Datei enthält Befehlsausgaben anstelle von SQL: :label.',
+  ],
+  'site_assets' => [
+    'saved' => ':type-Datei der Website gespeichert.',
   ],
 ];
