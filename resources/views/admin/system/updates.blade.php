@@ -355,6 +355,7 @@
             data-active-operation="{{ $trackedOperation }}"
             data-pc-admission="server" data-pc-max-wait-seconds="21600" data-pc-health-url="{{ $healthRoute ?? '' }}"
             data-pc-active-url="{{ route('admin.system.updates.indicator', ['active' => 1]) }}"
+            data-pc-close-on-success
             data-progress-unknown="{{ __('publisher-client::updates.progress.unknown') }}"
             data-progress-interrupted="{{ __('publisher-client::updates.progress.interrupted') }}"
             data-progress-auth="{{ __('publisher-client::updates.progress.auth') }}"
@@ -375,6 +376,6 @@
 
 @if ($canTrackUpdate)
 @push('admin-scripts')
-  <script src="{{ \WebBlocks\Cms\Support\Updates\Client\Updates\ProgressAssets::url() }}" defer></script>
+  <script src="{{ \WebBlocks\Cms\Support\Updates\Client\Updates\ProgressAssets::url() }}?v={{ \WebBlocks\Cms\Support\WebBlocks::VERSION }}" defer></script>
 @endpush
 @endif

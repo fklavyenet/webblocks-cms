@@ -1,11 +1,11 @@
 {
     "schema": 1,
     "source_package": "fklavyenet/webblocks-publisher-client",
-    "source_commit": "a02f62cb7a83c23f3f23a7b143f78811f6380234",
+    "source_commit": "641d5b25279e4a1ea1f74e100fa2887974f51d71",
     "source_dirty": false,
     "target_namespace": "WebBlocks\\Cms\\Support\\Updates\\Client",
     "output_path": "src/Support/Updates/Client",
-    "aggregate_sha256": "b51616a558cbb29ca477584f4996f25da50504cc3d32f4ee72b147a40f97d185",
+    "aggregate_sha256": "8dedd5f9b8d203920b5c8b2aca6a41ccaff62f6fbcdf881bbe4bf993c1f36475",
     "files": {
         "Apply/AbstractApplyStrategy.php": "34b4bad5c10c8c607328e7d01b2f4d348037fa6481c5a115d903f612c9f9a7d7",
         "Apply/ComposerPackageApplyStrategy.php": "49e64084e4ea6f89ca670ed62e928e78aeefe5751ed3625b81eaf72ce2a2f74d",
@@ -46,7 +46,7 @@
         "Publishing/SigningKeyGenerator.php": "9ae0f72f00fb20332334721004188752c64494b6a1523e52838e170b6ab94fe0",
         "Publishing/UpdatePublishResult.php": "ab54f22c243ba0e883d3b766819265be362eff1d06b02e4cfbf223815223968c",
         "Publishing/UpdatePublisher.php": "31355651f077e07ab74e993296c995e14baf9e540d841bff8a24c2a143222063",
-        "Resources/js/update-progress.js": "c88581c6c63b38a91072fd077e846192f1429e9b9c62ec1352d7708e7335deed",
+        "Resources/js/update-progress.js": "cd7531b4d0001d1ecb224639e82c7ac58e94bd880b8c97b1ae05812557f460bd",
         "Resources/lang/de/updates.php": "6294b54fb99e9e8d0bf98a99064c90a18b0346402583569836c4f5f10de4ec36",
         "Resources/lang/en/updates.php": "6cb5eb984e1f8a5db45bf0ce325230bd941abdfb3dde9ede96991d00c7a0dd9a",
         "Resources/lang/es/updates.php": "4094df4de7430f5fa4d06865e8d2452da4788d30f941db27dee5cd4eabd41e3c",

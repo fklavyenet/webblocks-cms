@@ -2546,9 +2546,8 @@ progress payload returns no display label for a single transition. The activity
 group contains the current phase, native indeterminate progressbar and waiting advice;
 the existing Client visibility contract hides the whole group on unconfirmed,
 interrupted or terminal results. Elapsed time and the recorded result remain
-outside that group. Successful verified updates retain the existing automatic
-return; failed/restored results stay available with the update-history link.
-The embedded Client runtime is unchanged.
+outside that group. Failed and restored results stay available with the
+update-history link.
 
 The System updates screen can hide the progress dialog while the detached
 worker continues. A backdrop click keeps the dialog open. Hide and Escape
@@ -2557,9 +2556,12 @@ operation UUID and offers Show status in place of the update form. Returning
 to the screen first uses the active SQL receipt, then a remembered UUID
 from the tab for an exact read. If admission is unconfirmed, a read-only
 lookup can find the active receipt. Status requests never submit the update
-again. Confirmed results stay in the page, including when the dialog is
-hidden. Success requires matching installed and target versions on the same
-operation. The worker and update recovery rules are unchanged.
+again. Confirmed results stay on the page. When the tracked operation reports
+success without warnings and its installed and target versions match, the
+CMS closes the open dialog and returns focus to Show status. The screen stays
+in place and Show status can reopen the result. Warnings and failures leave
+an open dialog available for review. If the operator has hidden the dialog,
+completion does not reopen it.
 
 ### Large staged content-plan writes (1.105.28)
 

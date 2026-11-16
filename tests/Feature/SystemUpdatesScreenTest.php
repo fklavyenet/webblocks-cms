@@ -16,6 +16,7 @@ use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\Updates\Client\Updates\ProgressAssets;
+use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -133,7 +134,7 @@ class SystemUpdatesScreenTest extends TestCase
     @$document->loadHTML($html);
     $xpath = new DOMXPath($document);
 
-    $scripts = $xpath->query('//script[@src="'.ProgressAssets::url().'"]');
+    $scripts = $xpath->query('//script[@src="'.ProgressAssets::url().'?v='.WebBlocks::VERSION.'"]');
     $this->assertCount(1, $scripts);
     $script = $scripts->item(0);
     $this->assertInstanceOf(DOMElement::class, $script);
@@ -152,6 +153,7 @@ class SystemUpdatesScreenTest extends TestCase
     $opener = $xpath->query('//*[@id="pc-update-progress-open"]')->item(0);
     $this->assertInstanceOf(DOMElement::class, $opener);
     $this->assertSame('server', $opener->getAttribute('data-pc-admission'));
+    $this->assertTrue($opener->hasAttribute('data-pc-close-on-success'));
     $this->assertSame(route('admin.system.updates.indicator', ['active' => 1]), $opener->getAttribute('data-pc-active-url'));
     $this->assertStringContainsString('checking again', $opener->getAttribute('data-progress-reconnecting'));
     $this->assertSame(route('admin.system.updates.indicator'), $opener->getAttribute('data-pc-health-url'));

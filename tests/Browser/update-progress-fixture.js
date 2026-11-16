@@ -16,7 +16,7 @@
     var hide = modal.querySelector('[data-pc-update-hide]');
     var status = document.querySelector('[data-pc-update-status]');
     var result = document.querySelector('[data-pc-update-result]');
-    var dismissible = ['hide', 'return-page', 'server-active', 'lost-admission', 'lost-unknown', 'conflict', 'status-auth'].indexOf(scenario) !== -1;
+    var dismissible = ['hide', 'return-page', 'server-active', 'lost-admission', 'lost-unknown', 'conflict', 'status-auth', 'complete-open'].indexOf(scenario) !== -1;
     var requests = [];
     var posts = 0;
     var opens = 0;
@@ -232,7 +232,7 @@
         await poll(progress(70000, 'Apply'));
         status.click();
         assert(modal.classList.contains('is-open') && stage.textContent === 'Apply' && seconds() >= 70, 'Reopening shows progress received while hidden');
-        hide.click();
+        if (scenario !== 'complete-open') { hide.click(); }
         if (scenario === 'status-auth') {
             await poll(null, 403);
             assert(!result.hidden && result.textContent.trim() === opener.getAttribute('data-progress-auth'), 'Authorization loss is shown on the page');
@@ -248,15 +248,23 @@
         await poll(progress(73000, 'Verify', { state: 'success', terminal: true,
             installed_version: '1.0.0', target_version: '2.0.0' }));
         assert(result.hidden, 'An installed version mismatch cannot report success');
+        if (scenario === 'complete-open') {
+            assert(modal.classList.contains('is-open'), 'Unconfirmed success keeps the modal open');
+        }
         var state = query.get('result') || 'success';
         var finalMessage = 'Saved result: ' + state;
         await poll(progress(74000, 'Finish', { state: state, terminal: true, message: finalMessage,
             installed_version: '2.0.0', target_version: '2.0.0' }));
-        assert(!result.hidden && result.textContent.trim() === finalMessage && !modal.classList.contains('is-open'), 'The saved result is visible while the modal stays hidden');
+        assert(!result.hidden && result.textContent.trim() === finalMessage, 'The saved result stays visible on the page');
+        var staysOpen = scenario === 'complete-open' && state !== 'success';
+        assert(modal.classList.contains('is-open') === staysOpen, 'An open modal dismisses itself only for verified success without warnings');
+        if (scenario === 'complete-open' && state === 'success') {
+            assert(document.activeElement === status, 'Automatic dismissal returns focus to Show status');
+        }
         var finished = seconds();
         await wait(1700);
         assert(window.location.hash === '' && seconds() === finished && requests.length === 0, 'Completion stays on the page and stops polling and the timer');
-        status.click();
+        if (!staysOpen) { status.click(); }
         assert(!message.hidden && message.textContent === finalMessage && posts === (resumed ? 0 : 1), 'The same result reopens without another POST');
     }
     document.addEventListener('DOMContentLoaded', function () {

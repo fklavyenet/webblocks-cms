@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.138.2
+
+- Close the System updates dialog automatically after a verified update succeeds without warnings. Keep the result on the page and available through Show status.
+
 ## 1.138.1
 
 - Preserve each gallery item's physical measurements when creating or publishing an update draft.
