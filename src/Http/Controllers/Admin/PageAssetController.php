@@ -35,7 +35,7 @@ class PageAssetController extends Controller
 
     return redirect()
       ->to($request->input('_page_asset_close_url', route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets'])))
-      ->with('status', strtoupper($request->assetType()).' asset added.');
+      ->with('status', __('webblocks-cms::admin-feedback.page_assets.added', ['type' => strtoupper($request->assetType())]));
   }
 
   public function update(PageAssetRequest $request, Page $page, PageAsset $pageAsset): RedirectResponse
@@ -50,7 +50,7 @@ class PageAssetController extends Controller
 
     return redirect()
       ->to($request->input('_page_asset_close_url', route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets'])))
-      ->with('status', strtoupper($pageAsset->type).' asset updated.');
+      ->with('status', __('webblocks-cms::admin-feedback.page_assets.updated', ['type' => strtoupper($pageAsset->type)]));
   }
 
   public function destroy(Request $request, Page $page, PageAsset $pageAsset): RedirectResponse
@@ -65,7 +65,7 @@ class PageAssetController extends Controller
 
     return redirect()
       ->to((string) ($request->input('_page_asset_close_url') ?: route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets'])))
-      ->with('status', strtoupper($pageAsset->type).' asset deleted.');
+      ->with('status', __('webblocks-cms::admin-feedback.page_assets.deleted', ['type' => strtoupper($pageAsset->type)]));
   }
 
   private function guardMutation(Request $request, Page $page, ?PageAsset $pageAsset = null): void

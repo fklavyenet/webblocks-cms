@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.7
+
+- Translate Page Assets add, update, and delete notifications in all six bundled panel languages.
+- Show localized archive errors when uploading, validating, downloading, or restoring a backup.
+
 ## 1.135.6
 
 - Translate Webadmin authoring validation, navigation target choices, and embedded application options and file feedback in all six bundled languages.

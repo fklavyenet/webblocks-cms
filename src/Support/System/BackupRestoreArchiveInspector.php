@@ -18,7 +18,7 @@ class BackupRestoreArchiveInspector
     $result = $archive->open($archivePath);
 
     if ($result !== true) {
-      throw new RuntimeException('Backup archive could not be opened for restore validation.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.validation_open'));
     }
 
     try {
@@ -39,30 +39,30 @@ class BackupRestoreArchiveInspector
       }
 
       if ($archive->locateName('manifest.json') === false) {
-        throw new RuntimeException('Backup archive is missing manifest.json.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.manifest_missing'));
       }
 
       $manifestContents = $archive->getFromName('manifest.json');
 
       if (! is_string($manifestContents) || trim($manifestContents) === '') {
-        throw new RuntimeException('Backup archive manifest.json is empty.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.manifest_empty'));
       }
 
       $manifest = json_decode($manifestContents, true);
 
       if (! is_array($manifest)) {
-        throw new RuntimeException('Backup archive manifest.json is not valid JSON.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.manifest_invalid'));
       }
 
       if (($manifest['product'] ?? null) === SiteTransferPackage::PRODUCT
         && ($manifest['package_type'] ?? null) === SiteTransferPackage::PACKAGE_TYPE) {
-        throw new RuntimeException('This archive is a site export/import package, not a WebBlocks CMS backup archive.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.site_package'));
       }
 
       $this->assertValidBackupManifest($manifest);
 
       if ($archive->locateName('database/database.sql') === false) {
-        throw new RuntimeException('Backup archive is missing database/database.sql.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.entry_missing', ['entry' => 'database/database.sql']));
       }
 
       $this->sqlDumpContentValidator->assertValidArchiveEntry($archive, 'database/database.sql');
@@ -73,11 +73,11 @@ class BackupRestoreArchiveInspector
       $archiveHasSitePublic = $this->archiveHasPath($archive, 'site-public/');
 
       if ($manifestIncludesUploads && ! $archiveHasUploads) {
-        throw new RuntimeException('Backup archive manifest says uploads are included, but uploads/public is missing.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.uploads_missing'));
       }
 
       if ($manifestIncludesSitePublic && ! $archiveHasSitePublic) {
-        throw new RuntimeException('Backup archive manifest says site public files are included, but site-public is missing.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.site_files_missing'));
       }
 
       return new BackupRestoreInspection(
@@ -116,18 +116,18 @@ class BackupRestoreArchiveInspector
   private function assertSafeArchiveEntryPath(string $path): void
   {
     if (str_contains($path, "\0")) {
-      throw new RuntimeException('Backup archive contains an invalid entry path.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.entry_invalid'));
     }
 
     $normalized = str_replace('\\', '/', trim($path));
 
     if ($normalized === '' || str_starts_with($normalized, '/') || preg_match('/^[A-Za-z]:\//', $normalized) === 1) {
-      throw new RuntimeException('Backup archive contains an invalid entry path.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.entry_invalid'));
     }
 
     foreach (explode('/', $normalized) as $segment) {
       if ($segment === '' || $segment === '.' || $segment === '..') {
-        throw new RuntimeException('Backup archive contains an invalid entry path.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.entry_invalid'));
       }
     }
   }
@@ -145,26 +145,26 @@ class BackupRestoreArchiveInspector
 
     if ($packageType === null && $formatVersion === null && $featureVersion === null && $product === null) {
       if (! $isLegacyBackupManifest) {
-        throw new RuntimeException('Backup archive manifest metadata is not supported.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.manifest_unsupported'));
       }
 
       return;
     }
 
     if ($product !== SystemBackupArchivePackage::PRODUCT) {
-      throw new RuntimeException('Backup archive product is not supported.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.product_unsupported'));
     }
 
     if ($packageType !== SystemBackupArchivePackage::PACKAGE_TYPE) {
-      throw new RuntimeException('Backup archive package type is not supported.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.package_type_unsupported'));
     }
 
     if ((int) $formatVersion !== SystemBackupArchivePackage::FORMAT_VERSION) {
-      throw new RuntimeException('Backup archive format version is not supported.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.format_unsupported'));
     }
 
     if ((int) $featureVersion !== SystemBackupArchivePackage::FEATURE_VERSION) {
-      throw new RuntimeException('Backup archive feature version is not supported.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.feature_unsupported'));
     }
   }
 }

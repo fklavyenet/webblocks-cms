@@ -31,7 +31,7 @@ class UploadedSystemBackupManager
     $storedPath = $disk->putFileAs('', $file, $archivePath);
 
     if (! is_string($storedPath)) {
-      throw new RuntimeException('Backup archive could not be stored on the backups disk.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.archive_store'));
     }
 
     $backup = null;

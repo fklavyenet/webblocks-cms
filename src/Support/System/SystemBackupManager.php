@@ -351,7 +351,7 @@ class SystemBackupManager
         'archive_status' => $resolution->status,
       ]);
 
-      throw new RuntimeException('Backup archive file could not be deleted.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.archive_delete'));
     }
   }
 

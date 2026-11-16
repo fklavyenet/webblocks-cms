@@ -8,16 +8,18 @@ use ZipArchive;
 
 class SqlDumpContentValidator
 {
-  public function assertValidFile(string $path, string $label = 'SQL dump file'): void
+  public function assertValidFile(string $path, ?string $label = null): void
   {
+    $label ??= __('webblocks-cms::admin-feedback.backup_archive.sql_file');
+
     if (! File::isFile($path)) {
-      throw new RuntimeException($label.' is missing.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.sql_missing', ['label' => $label]));
     }
 
     $stream = fopen($path, 'rb');
 
     if ($stream === false) {
-      throw new RuntimeException($label.' could not be opened for validation.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.sql_open', ['label' => $label]));
     }
 
     try {
@@ -32,11 +34,11 @@ class SqlDumpContentValidator
     $stream = $archive->getStream($entryPath);
 
     if ($stream === false) {
-      throw new RuntimeException('Backup archive is missing '.$entryPath.'.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.entry_missing', ['entry' => $entryPath]));
     }
 
     try {
-      $this->assertValidStream($stream, 'Backup archive '.$entryPath);
+      $this->assertValidStream($stream, __('webblocks-cms::admin-feedback.backup_archive.sql_archive_entry', ['entry' => $entryPath]));
     } finally {
       fclose($stream);
     }
@@ -65,11 +67,11 @@ class SqlDumpContentValidator
     }
 
     if (! $sawContent) {
-      throw new RuntimeException($label.' is empty.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.sql_empty', ['label' => $label]));
     }
 
     if (! $sawSqlStatement) {
-      throw new RuntimeException($label.' does not look like a valid SQL dump.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.sql_invalid', ['label' => $label]));
     }
   }
 
@@ -123,10 +125,10 @@ class SqlDumpContentValidator
     }
 
     if ($this->containsCommandOutput($trimmed)) {
-      throw new RuntimeException($label.' contains command output instead of SQL.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.sql_command_output', ['label' => $label]));
     }
 
-    throw new RuntimeException($label.' does not look like a valid SQL dump.');
+    throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.sql_invalid', ['label' => $label]));
   }
 
   private function containsCommandOutput(string $line): bool

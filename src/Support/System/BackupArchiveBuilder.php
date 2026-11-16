@@ -21,13 +21,13 @@ class BackupArchiveBuilder
     $result = $archive->open($archivePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
     if ($result !== true) {
-      throw new RuntimeException('Could not create backup archive.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.archive_create'));
     }
 
     $archive->addEmptyDir('database');
     if (! $archive->addFile($databaseDumpPath, self::DATABASE_ENTRY)
       || ! $archive->setCompressionName(self::DATABASE_ENTRY, ZipArchive::CM_DEFLATE, self::DATABASE_COMPRESSION_LEVEL)) {
-      throw new RuntimeException('Could not add the database dump to the backup archive.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.archive_add_database'));
     }
     $archive->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
 
@@ -35,7 +35,7 @@ class BackupArchiveBuilder
       fn () => [$this->addUploads($archive), $this->addSitePublicFiles($archive)]);
     // libzip reads and compresses the registered files when the archive closes.
     if (! BackupTiming::measure($output, 'ZIP writing', fn () => $archive->close())) {
-      throw new RuntimeException('Could not write backup archive.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.archive_write'));
     }
 
     $output[] = 'Archive created as '.basename($archivePath).'.';

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
 use WebBlocks\Cms\Models\BlockType;
@@ -16,6 +17,7 @@ use WebBlocks\Cms\Models\PageLayout;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -25,6 +27,7 @@ use WebBlocks\Cms\Support\Translations\PanelLanguageSource;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
+use ZipArchive;
 
 class PanelLanguagesTest extends TestCase
 {
@@ -191,6 +194,81 @@ class PanelLanguagesTest extends TestCase
       ])->assertRedirect()
         ->assertSessionHas('status', $feedback('converter.draft_created', ['created' => 2, 'skipped' => 0, 'warnings' => 0]))
         ->assertSessionHas('status_action.label', $feedback('converter.edit_draft'));
+    }
+  }
+
+  public function test_page_asset_operation_notifications_follow_the_panel_language(): void
+  {
+    $this->actingAs($actor = $this->actor());
+    $site = Site::query()->create(['name' => 'Fixture', 'handle' => 'fixture', 'domain' => 'fixture.example.test']);
+    $page = Page::query()->create(['site_id' => $site->id, 'title' => 'Fixture', 'slug' => 'fixture', 'status' => 'draft', 'public_shell' => 'default']);
+    $tab = route('admin.pages.edit', ['page' => $page, 'tab' => 'page-assets']);
+
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $actor->forceFill(['admin_locale' => $locale])->save();
+      $message = fn (string $action) => __('webblocks-cms::admin-feedback.page_assets.'.$action, ['type' => 'CSS'], $locale);
+
+      $this->post(route('admin.pages.assets.store', [$page, 'css']), ['path' => '/site/fixture/add.css'])
+        ->assertRedirect($tab)->assertSessionHas('status', $message('added'));
+      $this->get($tab)->assertOk()->assertSee($message('added'));
+      $asset = $page->pageAssets()->sole();
+
+      $this->put(route('admin.pages.assets.update', [$page, $asset]), ['path' => '/site/fixture/edit.css'])
+        ->assertRedirect($tab)->assertSessionHas('status', $message('updated'));
+      $this->get($tab)->assertOk()->assertSee($message('updated'));
+
+      $this->delete(route('admin.pages.assets.destroy', [$page, $asset]))
+        ->assertRedirect($tab)->assertSessionHas('status', $message('deleted'));
+      $this->get($tab)->assertOk()->assertSee($message('deleted'));
+    }
+  }
+
+  public function test_backup_archive_errors_follow_the_panel_language(): void
+  {
+    $this->actingAs($actor = $this->actor());
+    $disk = Storage::fake('backups');
+    $upload = route('admin.system.backups.upload');
+    $archive = $disk->path('fixture.zip');
+    $zip = new ZipArchive;
+    $this->assertTrue($zip->open($archive, ZipArchive::CREATE | ZipArchive::OVERWRITE));
+    $zip->addFromString('database/database.sql', 'SELECT 1;');
+    $zip->close();
+    $sqlArchive = $disk->path('invalid-sql.zip');
+    $this->assertTrue($zip->open($sqlArchive, ZipArchive::CREATE | ZipArchive::OVERWRITE));
+    $zip->addFromString('manifest.json', '{"backup_id":1}');
+    $zip->addFromString('database/database.sql', 'invalid SQL fixture');
+    $zip->close();
+
+    $backup = SystemBackup::query()->create([
+      'type' => SystemBackup::TYPE_MANUAL, 'status' => SystemBackup::STATUS_COMPLETED,
+      'archive_disk' => 'backups', 'archive_path' => 'fixture.zip', 'archive_filename' => 'fixture.zip', 'started_at' => now(),
+    ]);
+    $missing = $backup->replicate()->fill(['archive_path' => 'missing.zip', 'archive_filename' => 'missing.zip']);
+    $missing->save();
+
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $actor->forceFill(['admin_locale' => $locale])->save();
+      $message = fn (string $key, array $replace = []) => __('webblocks-cms::admin-feedback.backup_archive.'.$key, $replace, $locale);
+      $manifestError = $message('manifest_missing');
+      $restore = route('admin.system.backups.show', $backup);
+
+      $this->post(route('admin.system.backups.upload.store'), ['archive' => new UploadedFile($archive, 'fixture.zip', test: true)])
+        ->assertRedirect($upload)->assertSessionHasErrors(['system_backup' => $manifestError]);
+      $this->get($upload)->assertOk()->assertSee($manifestError);
+
+      $sqlError = $message('sql_invalid', ['label' => $message('sql_archive_entry', ['entry' => 'database/database.sql'])]);
+      $this->post(route('admin.system.backups.upload.store'), ['archive' => new UploadedFile($sqlArchive, 'invalid-sql.zip', test: true)])
+        ->assertRedirect($upload)->assertSessionHasErrors(['system_backup' => $sqlError]);
+      $this->get($upload)->assertOk()->assertSee($sqlError);
+
+      $this->post(route('admin.system.backups.restore', $backup), ['acknowledge_restore_risk' => true])
+        ->assertRedirect($restore)->assertSessionHasErrors(['system_restore' => $manifestError]);
+      $this->get($restore)->assertOk()->assertSee($manifestError);
+
+      $notFound = __('webblocks-cms::admin.backups.archive_feedback.missing', [], $locale);
+      $this->get(route('admin.system.backups.download', $missing))
+        ->assertRedirect(route('admin.system.backups.index'))->assertSessionHasErrors(['system_backup' => $notFound]);
+      $this->get(route('admin.system.backups.index'))->assertOk()->assertSee($notFound);
     }
   }
 

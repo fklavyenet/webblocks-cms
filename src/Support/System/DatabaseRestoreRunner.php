@@ -22,7 +22,7 @@ class DatabaseRestoreRunner
 
   public function restoreFrom(string $sqlPath, array &$output = []): array
   {
-    $this->sqlDumpContentValidator->assertValidFile($sqlPath, 'Backup database SQL file');
+    $this->sqlDumpContentValidator->assertValidFile($sqlPath, __('webblocks-cms::admin-feedback.backup_archive.sql_restore_file'));
 
     $connection = DB::connection();
     $driver = $connection->getDriverName();

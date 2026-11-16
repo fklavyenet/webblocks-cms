@@ -50,7 +50,7 @@ class SystemBackupRestoreManager
   public function restoreFromBackup(SystemBackup $backup, ?int $triggeredByUserId = null): BackupRestoreResult
   {
     if (! $backup->isSuccessful() || $backup->archive_path === null) {
-      throw new RuntimeException('Only completed backups with an archive can be restored.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.restore_incomplete'));
     }
 
     $this->systemBackupManager->assertValidArchiveRelativePath($backup->archive_path);
@@ -200,7 +200,7 @@ class SystemBackupRestoreManager
 
       if ($backup instanceof SystemBackup) {
         if (! $backup->isSuccessful() || $backup->archive_path === null || $backup->archive_filename === null) {
-          throw new RuntimeException('Backup #'.$backup->id.' is not a completed archive that can be restored.');
+          throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.restore_record_incomplete', ['id' => $backup->id]));
         }
 
         return [
@@ -216,7 +216,7 @@ class SystemBackupRestoreManager
     $this->systemBackupManager->assertValidArchiveRelativePath($reference);
 
     if (! $this->systemBackupManager->archiveDisk()->exists($reference)) {
-      throw new RuntimeException('Backup archive ['.$reference.'] does not exist on the backups disk.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.restore_reference_missing', ['reference' => $reference]));
     }
 
     $backup = SystemBackup::query()
@@ -276,7 +276,7 @@ class SystemBackupRestoreManager
   private function restoreUploads(string $sourceDirectory, string $temporaryDirectory, array &$output): void
   {
     if (! File::isDirectory($sourceDirectory)) {
-      throw new RuntimeException('Restore archive is missing uploads/public after extraction.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.restore_extracted_uploads_missing'));
     }
 
     $targetDirectory = (string) config('filesystems.disks.public.root');
@@ -310,7 +310,7 @@ class SystemBackupRestoreManager
   private function restoreDirectory(string $sourceDirectory, string $targetDirectory, string $rollbackDirectory, string $successMessage, array &$output): void
   {
     if (! File::isDirectory($sourceDirectory)) {
-      throw new RuntimeException('Restore archive is missing an expected directory after extraction.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.restore_extracted_directory_missing'));
     }
 
     $hadExistingTarget = File::isDirectory($targetDirectory);

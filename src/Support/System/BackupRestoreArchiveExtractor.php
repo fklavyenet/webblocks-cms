@@ -16,7 +16,7 @@ class BackupRestoreArchiveExtractor
     $result = $archive->open($archivePath);
 
     if ($result !== true) {
-      throw new RuntimeException('Backup archive could not be opened for extraction.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.extraction_open'));
     }
 
     try {
@@ -30,7 +30,7 @@ class BackupRestoreArchiveExtractor
         $entryName = str_replace('\\', '/', $rawName);
 
         if ($this->isInvalidArchiveEntryPath($entryName)) {
-          throw new RuntimeException('Backup archive contains an unsafe entry path: '.$entryName);
+          throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.extraction_unsafe_entry', ['entry' => $entryName]));
         }
 
         $targetPath = $destinationPath.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, rtrim($entryName, '/'));
@@ -46,7 +46,7 @@ class BackupRestoreArchiveExtractor
         $stream = $archive->getStream($rawName);
 
         if (! is_resource($stream)) {
-          throw new RuntimeException('Backup archive entry could not be read: '.$entryName);
+          throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.extraction_read', ['entry' => $entryName]));
         }
 
         $handle = fopen($targetPath, 'wb');
@@ -54,7 +54,7 @@ class BackupRestoreArchiveExtractor
         if ($handle === false) {
           fclose($stream);
 
-          throw new RuntimeException('Restore destination could not be opened for writing: '.$entryName);
+          throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.extraction_write', ['entry' => $entryName]));
         }
 
         try {

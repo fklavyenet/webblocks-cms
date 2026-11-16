@@ -43,23 +43,22 @@ final class SystemBackupArchiveResolution
 
   public function feedbackMessage(): string
   {
-    return $this->message ?? match ($this->status) {
-      self::STATUS_MISSING => 'Backup file not found.',
-      self::STATUS_UNREADABLE => 'Backup file is not readable.',
-      self::STATUS_UNSAFE => 'Backup archive path is invalid.',
-      default => 'Backup archive is unavailable.',
+    $status = match ($this->status) {
+      self::STATUS_MISSING, self::STATUS_UNREADABLE, self::STATUS_UNSAFE => $this->status,
+      default => self::STATUS_UNAVAILABLE,
     };
+
+    return $this->message ?? __('webblocks-cms::admin.backups.archive_feedback.'.$status);
   }
 
   public function uiLabel(): string
   {
-    return match ($this->status) {
-      self::STATUS_AVAILABLE => 'Archive ready',
-      self::STATUS_MISSING => 'File missing',
-      self::STATUS_UNREADABLE => 'File unreadable',
-      self::STATUS_UNSAFE => 'Unsafe path',
-      default => 'Archive unavailable',
+    $status = match ($this->status) {
+      self::STATUS_AVAILABLE, self::STATUS_MISSING, self::STATUS_UNREADABLE, self::STATUS_UNSAFE => $this->status,
+      default => self::STATUS_UNAVAILABLE,
     };
+
+    return __('webblocks-cms::admin.backups.archive_statuses.'.$status);
   }
 
   public function uiBadgeClass(): string

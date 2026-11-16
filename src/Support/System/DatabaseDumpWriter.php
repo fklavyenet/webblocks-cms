@@ -218,7 +218,7 @@ class DatabaseDumpWriter
   private function assertValidDumpFile(string $destinationPath): void
   {
     try {
-      $this->sqlDumpContentValidator->assertValidFile($destinationPath, 'Generated backup SQL dump');
+      $this->sqlDumpContentValidator->assertValidFile($destinationPath, __('webblocks-cms::admin-feedback.backup_archive.sql_generated_file'));
     } catch (RuntimeException $exception) {
       File::delete($destinationPath);
 

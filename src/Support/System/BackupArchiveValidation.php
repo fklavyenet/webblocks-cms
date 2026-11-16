@@ -49,7 +49,7 @@ class BackupArchiveValidation
     clearstatcache(true, $path);
     $stat = @stat($path);
     if ($stat === false || ! is_file($path)) {
-      throw new RuntimeException('Backup archive is unavailable.');
+      throw new RuntimeException(__('webblocks-cms::admin.backups.archive_feedback.unavailable'));
     }
 
     return hash('sha256', implode(':', [realpath($path), $stat['dev'], $stat['ino'], $stat['size'], $stat['mtime'], $stat['ctime']]));
@@ -59,7 +59,7 @@ class BackupArchiveValidation
   {
     $path = app(SystemBackupArchiveResolver::class)->resolveForRetention($backup)->absolutePath;
     if ($path === null) {
-      throw new RuntimeException('Backup archive is unavailable.');
+      throw new RuntimeException(__('webblocks-cms::admin.backups.archive_feedback.unavailable'));
     }
     $startedAt = $output !== null ? hrtime(true) : null;
     $signature = $this->signature($path);
@@ -71,7 +71,7 @@ class BackupArchiveValidation
       }
       $digest = hash_file('sha256', $path);
       if ($digest === false || $signature !== $this->signature($path)) {
-        throw new RuntimeException('Backup archive changed during validation.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.archive_changed'));
       }
     } catch (Throwable $exception) {
       $status = 'invalid';

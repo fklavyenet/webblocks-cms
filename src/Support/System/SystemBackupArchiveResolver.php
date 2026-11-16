@@ -45,7 +45,7 @@ class SystemBackupArchiveResolver
     if (! $backup->isSuccessful() || $backup->archive_path === null || $backup->archive_filename === null) {
       return new SystemBackupArchiveResolution(
         SystemBackupArchiveResolution::STATUS_UNAVAILABLE,
-        message: 'Backup archive is unavailable.',
+        message: __('webblocks-cms::admin.backups.archive_feedback.unavailable'),
       );
     }
 
@@ -56,7 +56,7 @@ class SystemBackupArchiveResolver
   {
     // A report must not create a missing disk root through the filesystem adapter.
     if (! is_dir((string) config('filesystems.disks.backups.root', storage_path('app/backups')))) {
-      return new SystemBackupArchiveResolution(SystemBackupArchiveResolution::STATUS_MISSING, message: 'Backup archive storage is missing.');
+      return new SystemBackupArchiveResolution(SystemBackupArchiveResolution::STATUS_MISSING, message: __('webblocks-cms::admin-feedback.backup_archive.storage_missing'));
     }
 
     // Running archives may occupy disk space but are never cleanup candidates.
@@ -76,7 +76,7 @@ class SystemBackupArchiveResolver
       || (! $this->isAbsolutePath($storedPath) && $this->hasInvalidRelativePath($storedPath))) {
       return new SystemBackupArchiveResolution(
         SystemBackupArchiveResolution::STATUS_UNSAFE,
-        message: 'Backup archive path is invalid.',
+        message: __('webblocks-cms::admin.backups.archive_feedback.unsafe'),
       );
     }
 
@@ -86,7 +86,7 @@ class SystemBackupArchiveResolver
     if ($root === false) {
       return new SystemBackupArchiveResolution(
         SystemBackupArchiveResolution::STATUS_UNAVAILABLE,
-        message: 'Backup archive storage is unavailable.',
+        message: __('webblocks-cms::admin-feedback.backup_archive.storage_unavailable'),
       );
     }
 
@@ -104,7 +104,7 @@ class SystemBackupArchiveResolver
     if ($relativePath === null || $this->hasInvalidRelativePath($relativePath)) {
       return new SystemBackupArchiveResolution(
         SystemBackupArchiveResolution::STATUS_UNSAFE,
-        message: 'Backup archive path is invalid.',
+        message: __('webblocks-cms::admin.backups.archive_feedback.unsafe'),
       );
     }
 
@@ -113,7 +113,7 @@ class SystemBackupArchiveResolver
         ? new SystemBackupArchiveResolution(
           SystemBackupArchiveResolution::STATUS_MISSING,
           relativePath: $relativePath,
-          message: 'Backup file not found.',
+          message: __('webblocks-cms::admin.backups.archive_feedback.missing'),
         )
         : new SystemBackupArchiveResolution(
           SystemBackupArchiveResolution::STATUS_AVAILABLE,
@@ -127,7 +127,7 @@ class SystemBackupArchiveResolver
     if ($resolvedPath === false || ! $this->isInsideRoot($resolvedPath, $root)) {
       return new SystemBackupArchiveResolution(
         SystemBackupArchiveResolution::STATUS_UNSAFE,
-        message: 'Backup archive path is invalid.',
+        message: __('webblocks-cms::admin.backups.archive_feedback.unsafe'),
       );
     }
 
@@ -135,7 +135,7 @@ class SystemBackupArchiveResolver
       return new SystemBackupArchiveResolution(
         SystemBackupArchiveResolution::STATUS_UNSAFE,
         relativePath: $relativePath,
-        message: 'Backup archive path is invalid.',
+        message: __('webblocks-cms::admin.backups.archive_feedback.unsafe'),
       );
     }
 
@@ -144,7 +144,7 @@ class SystemBackupArchiveResolver
         SystemBackupArchiveResolution::STATUS_UNREADABLE,
         absolutePath: $resolvedPath,
         relativePath: $relativePath,
-        message: 'Backup file is not readable.',
+        message: __('webblocks-cms::admin.backups.archive_feedback.unreadable'),
       );
     }
 

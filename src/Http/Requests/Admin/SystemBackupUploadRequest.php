@@ -22,7 +22,9 @@ class SystemBackupUploadRequest extends FormRequest
   {
     return [
       'archive.required' => __('webblocks-cms::admin-feedback.validation.backup_archive_required'),
+      'archive.file' => __('webblocks-cms::admin-feedback.backup_archive.upload_file'),
       'archive.mimes' => __('webblocks-cms::admin-feedback.validation.backup_archive_type'),
+      'archive.max' => __('webblocks-cms::admin-feedback.backup_archive.upload_size'),
     ];
   }
 }
