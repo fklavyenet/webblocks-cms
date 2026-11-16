@@ -40,9 +40,9 @@ class UploadedSystemBackupManager
       $archiveSize = $disk->size($storedPath);
       $manifest = $inspection->manifest;
       $output = [
-        'Backup archive uploaded and validated successfully.',
+        __('webblocks-cms::admin-feedback.backups.uploaded', [], 'en'),
         'Source filename: '.$sourceFilename,
-        'Archive validation passed.',
+        __('webblocks-cms::admin-feedback.panel_copy.backup_validation_passed', [], 'en'),
       ];
 
       $backup = SystemBackup::query()->create([

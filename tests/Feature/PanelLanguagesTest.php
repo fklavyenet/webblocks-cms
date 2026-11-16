@@ -75,6 +75,10 @@ class PanelLanguagesTest extends TestCase
         ->assertSee('data-wb-dirty-keep-editing="'.e($keepEditing).'"', false)
         ->assertDontSee('admin.common.select');
 
+      $this->get(route('admin.sites.create'))->assertOk()
+        ->assertSee(__('webblocks-cms::admin-feedback.panel_copy.font_sans', [], $locale))
+        ->assertSee(__('webblocks-cms::admin-feedback.panel_copy.font_monospace', [], $locale));
+
       $this->followRedirects($this->post(route('admin.page-layouts.store'), ['name' => 'Fixture '.$locale]))
         ->assertOk()
         ->assertSee($status);
@@ -308,7 +312,9 @@ class PanelLanguagesTest extends TestCase
         ->assertSessionHas('status', $text('backups.uploaded'));
       $backup = SystemBackup::query()->latest('id')->firstOrFail();
       $this->get(route('admin.system.backups.show', $backup))->assertOk()
-        ->assertSee($text('backups.uploaded_summary'));
+        ->assertSee($text('backups.uploaded_summary'))
+        ->assertSee($text('backups.uploaded'))
+        ->assertSee($text('panel_copy.backup_validation_passed'));
     }
   }
 

@@ -224,13 +224,13 @@ trait HasCmsAdminAccess
   public function siteAccessSummary(): string
   {
     if ($this->isSuperAdmin()) {
-      return 'All sites';
+      return __('webblocks-cms::admin-feedback.panel_copy.all_sites');
     }
 
     $sites = $this->accessibleSites();
 
     if ($sites->isEmpty()) {
-      return 'No assigned sites';
+      return __('webblocks-cms::admin-feedback.panel_copy.no_assigned_sites');
     }
 
     if ($sites->count() <= 2) {

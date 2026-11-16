@@ -118,7 +118,7 @@ specific note. Recipient discovery returns only eligible account IDs and names.
 
 A Super admin enables the Streamable HTTP endpoint from **System Settings → MCP**. Copy the displayed server URL into a compatible MCP client. The canonical HTTPS origin comes from `APP_URL`. The host serves the two OAuth discovery URLs under `/.well-known/` on that origin. MCP is off by default.
 
-MCP tool descriptions and user-facing tool errors honor a supported language requested through the Accept-Language header. The request language controls message text. Use the tool’s locale argument to select the enabled site language for content.
+MCP tool descriptions, tool errors, JSON-RPC error messages, and the Bearer authorization description honor a supported language requested through the Accept-Language header. The Bearer description uses ASCII text as required by RFC 6750. Use the tool’s locale argument to select the enabled site language for content.
 
 Compatible clients discover the registration endpoint and register independently using OAuth Dynamic Client Registration. The token endpoint supports public clients and confidential clients using `client_secret_post`. Registration returns the supported authorization-code grant even when a client also requests a refresh grant. Clients use PKCE S256 and exact registered HTTPS or local loopback callbacks. Registration grants no CMS access. CMS sign-in and any required two-factor verification precede explicit consent for one site. Access tokens expire after one hour, after which the client needs a new authorization.
 

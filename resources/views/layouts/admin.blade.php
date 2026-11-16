@@ -9,6 +9,7 @@
     $adminLocale = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocale, $replace);
+    $adminSlogan = $adminTranslator->get('admin-feedback.panel_copy.brand_slogan', $adminLocale);
 @endphp
 <html lang="{{ str_replace('_', '-', $adminLocale) }}">
     @php
@@ -29,7 +30,7 @@
 
         @include('webblocks-cms::partials.head-meta', [
             'title' => $resolvedAdminBrowserTitle,
-            'metaDescription' => $metaDescription ?? WebBlocks::slogan(),
+            'metaDescription' => $metaDescription ?? $adminSlogan,
         ])
 
         <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
@@ -133,7 +134,7 @@
                         <x-webblocks-cms::brand-mark surface="sidebar" class="wb-sidebar-brand-logo" decorative="true" />
                         <span class="wb-sidebar-brand-copy">
                             <span class="wb-truncate">{{ WebBlocks::name() }}</span>
-                            <span class="wb-sidebar-brand-note wb-truncate">{{ WebBlocks::slogan() }}</span>
+                            <span class="wb-sidebar-brand-note wb-truncate">{{ $adminSlogan }}</span>
                         </span>
                     </a>
                     <button class="wb-btn wb-btn-ghost wb-btn-icon wb-btn-sm wb-visible-mobile wb-flex-shrink-0" type="button"

@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Http\Controllers\Mcp;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use JsonException;
 use stdClass;
 use Symfony\Component\HttpFoundation\Response;
@@ -56,7 +57,7 @@ final class McpController
   {
     $origin = $request->header('Origin');
     if ($origin !== null && $origin !== $this->config->origin()) {
-      return $this->error(null, -32600, 'Invalid Origin.', 403);
+      return $this->error(null, -32600, 'rpc_invalid_origin', 403);
     }
     if (! $request->isMethod('POST')) {
       return response()->noContent(405, ['Allow' => 'POST']);
@@ -64,21 +65,21 @@ final class McpController
     $body = $request->getContent();
     $size = strlen($body);
     if (! $request->isJson() || $size > self::UPLOAD_REQUEST_LIMIT) {
-      return $this->error(null, -32600, 'Invalid request.', 400);
+      return $this->error(null, -32600, 'rpc_invalid_request', 400);
     }
     $version = $request->header('MCP-Protocol-Version');
     if ($version !== null && ! in_array($version, self::VERSIONS, true)) {
-      return $this->error(null, -32600, 'Unsupported protocol version.', 400);
+      return $this->error(null, -32600, 'rpc_unsupported_protocol', 400);
     }
 
     try {
       $message = json_decode($body, false, 20, JSON_THROW_ON_ERROR);
     } catch (JsonException) {
       if ($size > self::REQUEST_LIMIT) {
-        return $this->error(null, -32600, 'Invalid request.', 400);
+        return $this->error(null, -32600, 'rpc_invalid_request', 400);
       }
 
-      return $this->error(null, -32700, 'Parse error.', 400);
+      return $this->error(null, -32700, 'rpc_parse_error', 400);
     }
 
     $tool = ($message->method ?? null) === 'tools/call' ? ($message->params->name ?? null) : null;
@@ -88,19 +89,19 @@ final class McpController
       default => self::REQUEST_LIMIT,
     };
     if ($size > $limit) {
-      return $this->error(null, -32600, 'Invalid request.', 400);
+      return $this->error(null, -32600, 'rpc_invalid_request', 400);
     }
 
     if (! $message instanceof stdClass || ($message->jsonrpc ?? null) !== '2.0'
       || ! is_string($message->method ?? null)
       || (isset($message->params) && ! $message->params instanceof stdClass)) {
-      return $this->error(null, -32600, 'Invalid request.', 400);
+      return $this->error(null, -32600, 'rpc_invalid_request', 400);
     }
     if (! property_exists($message, 'id')) {
       return response()->noContent(202);
     }
     if (! is_string($message->id) && ! is_int($message->id)) {
-      return $this->error(null, -32600, 'Invalid request ID.', 400);
+      return $this->error(null, -32600, 'rpc_invalid_id', 400);
     }
     $id = $message->id;
 
@@ -109,14 +110,14 @@ final class McpController
       'ping' => $this->result($id, new stdClass),
       'tools/list' => $this->result($id, ['tools' => $this->tools->descriptors($this->config->availableScopes())]),
       'tools/call' => $this->callTool($id, $message->params ?? new stdClass, $request),
-      default => $this->error($id, -32601, 'Method not found.'),
+      default => $this->error($id, -32601, 'rpc_method_not_found'),
     };
   }
 
   private function initialize(string|int $id, stdClass $params): JsonResponse
   {
     if (! is_string($params->protocolVersion ?? null)) {
-      return $this->error($id, -32602, 'A protocol version is required.');
+      return $this->error($id, -32602, 'rpc_version_required');
     }
 
     return $this->result($id, [
@@ -131,7 +132,7 @@ final class McpController
     $name = $params->name ?? null;
     $scope = is_string($name) ? $this->tools->scope($name) : null;
     if ($scope === null || (isset($params->arguments) && ! $params->arguments instanceof stdClass)) {
-      return $this->error($id, -32602, 'Invalid tool name or arguments.');
+      return $this->error($id, -32602, 'rpc_invalid_tool');
     }
 
     $grant = $this->grants->authenticate($request->bearerToken());
@@ -142,8 +143,10 @@ final class McpController
     if (! $grant || ! in_array($scope, $grant['scopes'], true)) {
       $error = $grant ? 'insufficient_scope' : 'invalid_token';
       $required = $scope === McpConfiguration::READ ? $scope : McpConfiguration::READ.' '.$scope;
+      // RFC 6750 limits the quoted error description to this ASCII subset.
+      $description = preg_replace('/[^\x20-\x21\x23-\x5B\x5D-\x7E]+/', ' ', Str::ascii(__('webblocks-cms::mcp.authorization_description'), app()->getLocale()));
       $challenge = 'Bearer resource_metadata="'.$this->config->origin().McpConfiguration::RESOURCE_METADATA
-        .'", scope="'.$required.'", error="'.$error.'", error_description="WebBlocks CMS authorization is required"';
+        .'", scope="'.$required.'", error="'.$error.'", error_description="'.$description.'"';
 
       return $this->toolError($id, new McpToolException('auth_required'), ['mcp/www_authenticate' => [$challenge]])
         ->setStatusCode($grant ? 403 : 401)->header('WWW-Authenticate', $challenge);
@@ -183,8 +186,11 @@ final class McpController
     return response()->json(['jsonrpc' => '2.0', 'id' => $id, 'result' => $result]);
   }
 
-  private function error(string|int|null $id, int $code, string $message, int $status = 200): JsonResponse
+  private function error(string|int|null $id, int $code, string $messageKey, int $status = 200): JsonResponse
   {
-    return response()->json(['jsonrpc' => '2.0', 'id' => $id, 'error' => compact('code', 'message')], $status);
+    return response()->json(['jsonrpc' => '2.0', 'id' => $id, 'error' => [
+      'code' => $code,
+      'message' => __('webblocks-cms::mcp.'.$messageKey),
+    ]], $status);
   }
 }

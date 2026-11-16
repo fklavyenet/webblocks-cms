@@ -178,7 +178,7 @@ class PluginZipInstaller
       }
     }
 
-    throw new RuntimeException('The plugin package must contain webblocks-plugin.json or manifest.json.');
+    throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.plugin_manifest_missing'));
   }
 
   /**

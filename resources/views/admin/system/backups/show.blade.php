@@ -235,8 +235,8 @@
             <div class="wb-card-header"><strong>{{ $adminText('backups.operational_log') }}</strong></div>
 
             <div class="wb-card-body">
-                @if ($backup->output)
-                    <pre class="wb-code-block">{{ $backup->output }}</pre>
+                @if ($output = $backup->panelOutput($adminLocale))
+                    <pre class="wb-code-block">{{ $output }}</pre>
                 @else
                     <div class="wb-empty wb-empty-sm">
                         <div class="wb-empty-title">{{ $adminText('backups.no_log_output') }}</div>

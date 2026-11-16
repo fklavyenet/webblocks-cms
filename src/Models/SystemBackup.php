@@ -77,6 +77,24 @@ class SystemBackup extends CmsModel
       : $this->summary;
   }
 
+  public function panelOutput(string $locale): ?string
+  {
+    if ($this->output === null || $this->type !== self::TYPE_UPLOADED) {
+      return $this->output;
+    }
+
+    $messages = [];
+    foreach (['backups.uploaded', 'panel_copy.backup_validation_passed'] as $key) {
+      $key = 'webblocks-cms::admin-feedback.'.$key;
+      $messages[__($key, [], 'en')] = __($key, [], $locale);
+    }
+
+    return implode('', array_map(
+      fn (string $line): string => $messages[$line] ?? $line,
+      preg_split('/(\R)/', $this->output, -1, PREG_SPLIT_DELIM_CAPTURE),
+    ));
+  }
+
   public function isFailed(): bool
   {
     return $this->status === self::STATUS_FAILED;

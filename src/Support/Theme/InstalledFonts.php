@@ -12,6 +12,12 @@ namespace WebBlocks\Cms\Support\Theme;
  */
 class InstalledFonts
 {
+  public const SYSTEM_SANS = 'system-ui, sans-serif';
+
+  public const SYSTEM_SERIF = 'Georgia, "Times New Roman", serif';
+
+  public const SYSTEM_MONOSPACE = 'ui-monospace, SFMono-Regular, Menlo, monospace';
+
   /**
    * Stacks that need no webfont because every target platform already has a
    * face for them.
@@ -19,9 +25,9 @@ class InstalledFonts
    * @var array<string, string>
    */
   public const SYSTEM_STACKS = [
-    'system-ui, sans-serif' => 'System sans',
-    'Georgia, "Times New Roman", serif' => 'System serif',
-    'ui-monospace, SFMono-Regular, Menlo, monospace' => 'System monospace',
+    self::SYSTEM_SANS => 'System sans',
+    self::SYSTEM_SERIF => 'System serif',
+    self::SYSTEM_MONOSPACE => 'System monospace',
   ];
 
   /**
@@ -67,7 +73,7 @@ class InstalledFonts
    *
    * @return array<string, string>
    */
-  public static function options(?string $css, string $generic = 'sans-serif'): array
+  public static function options(?string $css, string $generic = 'sans-serif', array $systemLabels = []): array
   {
     $options = [];
 
@@ -79,6 +85,6 @@ class InstalledFonts
       $options[$stack] = $family;
     }
 
-    return $options + self::SYSTEM_STACKS;
+    return $options + array_replace(self::SYSTEM_STACKS, array_intersect_key($systemLabels, self::SYSTEM_STACKS));
   }
 }

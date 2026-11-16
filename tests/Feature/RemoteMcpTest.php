@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use WebBlocks\Cms\Models\Block;
@@ -125,8 +126,19 @@ class RemoteMcpTest extends TestCase
         ->assertJsonCount(22, 'result.tools')
         ->assertJsonPath('result.tools.0.description', __('webblocks-cms::mcp.read_description', [], $locale))
         ->assertJsonPath('result.tools.12.description', __('webblocks-cms::mcp.upload_description', [], $locale));
-      $this->tool('find_page', ['path' => '/missing', 'locale' => 'en'], status: 401)
+      $challenge = $this->tool('find_page', ['path' => '/missing', 'locale' => 'en'], status: 401)
         ->assertJsonPath('result.content.0.text', __('webblocks-cms::mcp.auth_required', [], $locale));
+      $header = $challenge->headers->get('WWW-Authenticate');
+      $this->assertStringContainsString(
+        'error_description="'.Str::ascii(__('webblocks-cms::mcp.authorization_description', [], $locale), $locale).'"',
+        $header,
+      );
+      $challenge->assertJsonPath('result._meta.mcp/www_authenticate.0', $header);
+
+      $this->rpc('unknown_method')->assertJsonPath('error.code', -32601)
+        ->assertJsonPath('error.message', __('webblocks-cms::mcp.rpc_method_not_found', [], $locale));
+      $this->rpc('initialize')->assertJsonPath('error.code', -32602)
+        ->assertJsonPath('error.message', __('webblocks-cms::mcp.rpc_version_required', [], $locale));
       $this->tool('find_page', ['path' => '/missing', 'locale' => 'en'], $token)
         ->assertJsonPath('result.structuredContent.code', 'page_missing')
         ->assertJsonPath('result.content.0.text', __('webblocks-cms::mcp.page_missing', [], $locale));

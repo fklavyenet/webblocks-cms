@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.9
+
+- Localize the panel slogan, user screen labels, mail diagnostics, system font choices, backup upload log messages, and audited asset, media, plugin, and site import feedback.
+- Localize MCP JSON-RPC error messages and the Bearer authorization description in all six bundled languages.
+
 ## 1.135.8
 
 - Localize page asset path validation, site asset save feedback, local media URL rejection, content language feedback, and uploaded backup summaries.

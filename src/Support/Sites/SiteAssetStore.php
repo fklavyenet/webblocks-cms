@@ -54,7 +54,7 @@ class SiteAssetStore
     $currentChecksum = $current['checksum'];
 
     if ($expectedChecksum !== $currentChecksum) {
-      throw new RuntimeException('The asset changed after it was opened. Reload the page before saving again.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.site_asset_stale'));
     }
 
     if ($current['exists'] && $current['contents'] !== $contents) {

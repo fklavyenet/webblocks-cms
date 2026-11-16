@@ -114,4 +114,13 @@ return [
   'invalid_note_arguments' => 'Check the note fields and recipient.',
   'note_unavailable' => 'This note is unavailable for the requested operation.',
   'notes_forbidden' => 'Your CMS account lacks permission for this Notes operation.',
+  'rpc_invalid_origin' => 'Invalid Origin.',
+  'rpc_invalid_request' => 'Invalid request.',
+  'rpc_unsupported_protocol' => 'Unsupported protocol version.',
+  'rpc_parse_error' => 'Parse error.',
+  'rpc_invalid_id' => 'Invalid request ID.',
+  'rpc_method_not_found' => 'Method not found.',
+  'rpc_version_required' => 'A protocol version is required.',
+  'rpc_invalid_tool' => 'Invalid tool name or arguments.',
+  'authorization_description' => 'WebBlocks CMS authorization is required',
 ];

@@ -114,4 +114,13 @@ return [
   'unverified_base' => 'La version source d’origine n’a pas pu être vérifiée ou la page publiée a changé depuis la création du brouillon. Vérifiez le brouillon dans le CMS avant de poursuivre.',
   'upload_description' => 'Téléverse un fichier dans la médiathèque publique et renvoie son ID. Envoyez le nom avec extension et les octets d’origine en base64 standard avec remplissage, dans la limite de 512 Kio avant encodage. Les fichiers SVG sont exclus. Pour les images, rédigez le texte alternatif séparément de la légende.',
   'write_description' => 'Modifie le titre localisé d’un bloc Titre, Bannière principale ou En-tête de contenu dans le brouillon de mise à jour d’une page publiée. Lisez d’abord la page et utilisez la version renvoyée et l’ID du titre source sélectionné. Vérifiez les titres existants dans le brouillon avant de les modifier. Renvoie un lien d’aperçu privé.',
+  'rpc_invalid_origin' => 'En-tête Origin invalide.',
+  'rpc_invalid_request' => 'Requête invalide.',
+  'rpc_unsupported_protocol' => 'Version du protocole non prise en charge.',
+  'rpc_parse_error' => 'Erreur d’analyse JSON.',
+  'rpc_invalid_id' => 'Identifiant de requête invalide.',
+  'rpc_method_not_found' => 'Méthode introuvable.',
+  'rpc_version_required' => 'Une version du protocole est requise.',
+  'rpc_invalid_tool' => 'Nom d’outil ou arguments invalides.',
+  'authorization_description' => 'Une autorisation WebBlocks CMS est requise',
 ];

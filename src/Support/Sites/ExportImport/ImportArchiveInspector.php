@@ -71,7 +71,7 @@ class ImportArchiveInspector
     $resolvedPath = $this->resolveJsonPath($archive, $path);
 
     if ($resolvedPath === null) {
-      throw new RuntimeException('Import package is missing '.$path.'.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.site_import_entry_missing', ['path' => $path]));
     }
 
     $contents = $archive->getFromName($resolvedPath);

@@ -1,4 +1,5 @@
 @php
+    use WebBlocks\Cms\Support\System\SystemSettings;
     use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
     use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
@@ -181,7 +182,9 @@
 
             @php
                 $mailDiagnosticItems = [
-                    ['label' => $systemText('mode'), 'value' => $mailDiagnostics['active_mode']],
+                    ['label' => $systemText('mode'), 'value' => __($mailDiagnostics['mode'] === SystemSettings::CMS_MAIL_MODE_CUSTOM
+                        ? 'webblocks-cms::admin-feedback.panel_copy.mail_mode_custom'
+                        : 'webblocks-cms::admin-feedback.panel_copy.mail_mode_environment')],
                     ['label' => $systemText('mailer'), 'value' => $mailDiagnostics['mailer']],
                     ['label' => $systemText('host'), 'value' => $mailDiagnostics['host'] ?: $systemText('not_configured')],
                     ['label' => $systemText('port'), 'value' => $mailDiagnostics['port'] ?: $systemText('not_configured')],
@@ -192,7 +195,9 @@
                     ['label' => $systemText('from_name'), 'value' => $mailDiagnostics['from_name'] ?: $systemText('not_configured')],
                     ['label' => $systemText('config_cached'), 'value' => $mailDiagnostics['config_cached'] ? $systemText('yes') : $systemText('no')],
                     ['label' => $systemText('environment'), 'value' => $mailDiagnostics['environment']],
-                    ['label' => $systemText('status'), 'value' => $mailDiagnostics['status']],
+                    ['label' => $systemText('status'), 'value' => __($mailDiagnostics['ready']
+                        ? 'webblocks-cms::admin-feedback.panel_copy.mail_status_ready'
+                        : 'webblocks-cms::admin-feedback.panel_copy.mail_status_incomplete')],
                 ];
             @endphp
 

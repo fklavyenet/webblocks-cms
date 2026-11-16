@@ -114,4 +114,13 @@ return [
   'invalid_note_arguments' => 'Not alanlarını ve alıcıyı kontrol edin.',
   'note_unavailable' => 'Bu not istenen işlem için kullanılamıyor.',
   'notes_forbidden' => 'CMS hesabınızın bu not işlemi için izni yok.',
+  'rpc_invalid_origin' => 'Geçersiz Origin başlığı.',
+  'rpc_invalid_request' => 'Geçersiz istek.',
+  'rpc_unsupported_protocol' => 'Desteklenmeyen protokol sürümü.',
+  'rpc_parse_error' => 'JSON ayrıştırma hatası.',
+  'rpc_invalid_id' => 'Geçersiz istek kimliği.',
+  'rpc_method_not_found' => 'Yöntem bulunamadı.',
+  'rpc_version_required' => 'Protokol sürümü gerekli.',
+  'rpc_invalid_tool' => 'Araç adı ya da argümanları geçersiz.',
+  'authorization_description' => 'WebBlocks CMS yetkilendirmesi gerekli',
 ];

@@ -114,4 +114,13 @@ return [
   'unverified_base' => 'No se pudo verificar la versión original o la página publicada cambió desde que se creó el borrador. Revisa el borrador en el CMS antes de seguir.',
   'upload_description' => 'Sube un archivo a la biblioteca multimedia pública y devuelve su ID. Envía el nombre con extensión y los bytes originales en base64 estándar con relleno, hasta 512 KiB antes de codificar. Se excluyen los SVG. Para las imágenes, escribe el texto alternativo independientemente del pie de imagen.',
   'write_description' => 'Cambia el título localizado de un bloque Encabezado, Hero o Encabezado de contenido en el borrador de actualización de una página publicada. Lee primero la página y usa la versión devuelta y el ID del encabezado fuente seleccionado. Revisa el encabezado que ya exista en el borrador antes de editar. Devuelve un enlace de vista previa privada.',
+  'rpc_invalid_origin' => 'Encabezado Origin no válido.',
+  'rpc_invalid_request' => 'Solicitud no válida.',
+  'rpc_unsupported_protocol' => 'Versión de protocolo no compatible.',
+  'rpc_parse_error' => 'Error de análisis de JSON.',
+  'rpc_invalid_id' => 'Identificador de solicitud no válido.',
+  'rpc_method_not_found' => 'Método no encontrado.',
+  'rpc_version_required' => 'Se requiere una versión del protocolo.',
+  'rpc_invalid_tool' => 'Nombre de herramienta o argumentos no válidos.',
+  'authorization_description' => 'Se requiere autorización de WebBlocks CMS',
 ];

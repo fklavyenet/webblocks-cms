@@ -62,7 +62,7 @@ class UserController extends Controller
 
     return view('webblocks-cms::admin.users.form', [
       'managedUser' => new User(['is_active' => true, 'role' => User::ROLE_EDITOR]),
-      'pageTitle' => 'Add User',
+      'pageTitle' => __('webblocks-cms::admin-feedback.panel_copy.add_user'),
       'formAction' => route('admin.users.store'),
       'formMethod' => 'POST',
       'sites' => Site::query()->primaryFirst()->orderBy('name')->get(),
@@ -87,7 +87,7 @@ class UserController extends Controller
 
     return view('webblocks-cms::admin.users.form', [
       'managedUser' => $user,
-      'pageTitle' => 'Edit User: '.$user->name,
+      'pageTitle' => __('webblocks-cms::admin-feedback.panel_copy.edit_user', ['name' => $user->name]),
       'twoFactorResetTargetAllowed' => app(TwoFactorPolicy::class)->resetTarget(request()->user('web'), $user),
       'twoFactorResetReady' => app(TwoFactorPolicy::class)->reset(request()->user('web'), $user),
       'formAction' => route('admin.users.update', $user),

@@ -114,4 +114,13 @@ return [
   'unverified_base' => 'Die ursprüngliche Quellversion konnte nicht geprüft werden oder die veröffentlichte Seite wurde seit Erstellung des Entwurfs geändert. Prüfen Sie den Entwurf im CMS, bevor Sie fortfahren.',
   'upload_description' => 'Lädt eine Datei in die öffentliche Mediathek hoch und liefert ihre Medien-ID. Senden Sie den Dateinamen mit Erweiterung und die Originalbytes als standardkonformes Base64 mit Auffüllzeichen. Vor der Kodierung sind bis zu 512 KiB erlaubt. SVG-Dateien sind ausgeschlossen. Formulieren Sie bei Bildern Alternativtext und Bildunterschrift getrennt.',
   'write_description' => 'Ändert den lokalisierten Titel eines Überschriften-, Hero- oder Inhaltskopfblocks im Aktualisierungsentwurf einer veröffentlichten Seite. Lesen Sie zuerst die Seite und verwenden Sie die gelieferte Version und die ID der ausgewählten Quellüberschrift. Prüfen Sie vorhandene Entwurfsüberschriften vor der Bearbeitung. Liefert einen privaten Vorschau-Link.',
+  'rpc_invalid_origin' => 'Ungültiger Origin-Header.',
+  'rpc_invalid_request' => 'Ungültige Anfrage.',
+  'rpc_unsupported_protocol' => 'Nicht unterstützte Protokollversion.',
+  'rpc_parse_error' => 'Fehler beim Parsen.',
+  'rpc_invalid_id' => 'Ungültige Anfrage-ID.',
+  'rpc_method_not_found' => 'Methode nicht gefunden.',
+  'rpc_version_required' => 'Eine Protokollversion ist erforderlich.',
+  'rpc_invalid_tool' => 'Ungültiger Werkzeugname oder ungültige Argumente.',
+  'authorization_description' => 'Eine Autorisierung für WebBlocks CMS ist erforderlich',
 ];

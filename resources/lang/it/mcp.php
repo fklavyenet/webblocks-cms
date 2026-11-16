@@ -114,4 +114,13 @@ return [
   'unverified_base' => 'Impossibile verificare la versione sorgente originale oppure la pagina pubblicata è cambiata dalla creazione della bozza. Controlla la bozza nel CMS prima di proseguire.',
   'upload_description' => 'Carica un file nella Libreria multimediale pubblica e restituisce il suo ID. Invia il nome con estensione e i byte originali in base64 standard con padding, fino a 512 KiB prima della codifica. I file SVG sono esclusi. Per le immagini, scrivi il testo alternativo separatamente dalla didascalia.',
   'write_description' => 'Modifica il titolo localizzato di un blocco Titolo, Hero o Intestazione del contenuto nella bozza di aggiornamento di una pagina pubblicata. Leggi prima la pagina e usa la versione restituita e l’ID dell’intestazione sorgente scelta. Controlla eventuali intestazioni già in bozza prima di modificarle. Restituisce un link di anteprima privata.',
+  'rpc_invalid_origin' => 'Intestazione Origin non valida.',
+  'rpc_invalid_request' => 'Richiesta non valida.',
+  'rpc_unsupported_protocol' => 'Versione del protocollo non supportata.',
+  'rpc_parse_error' => 'Errore di analisi JSON.',
+  'rpc_invalid_id' => 'ID della richiesta non valido.',
+  'rpc_method_not_found' => 'Metodo non trovato.',
+  'rpc_version_required' => 'È necessaria una versione del protocollo.',
+  'rpc_invalid_tool' => 'Nome dello strumento o argomenti non validi.',
+  'authorization_description' => 'È necessaria l’autorizzazione di WebBlocks CMS',
 ];

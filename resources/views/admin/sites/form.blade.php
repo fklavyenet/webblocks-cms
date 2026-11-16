@@ -1,10 +1,17 @@
 @php
+  use WebBlocks\Cms\Support\Theme\InstalledFonts;
   use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
   use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
   $adminLocale = app(AdminLocaleResolver::class)->locale();
   $adminTranslator = app(CmsTranslator::class);
   $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('site_form.'.$key, $adminLocale, $replace);
+  $siteCssContents = collect($siteAssets ?? [])->firstWhere('type', 'css')['contents'] ?? null;
+  $fontOptions = InstalledFonts::options($siteCssContents, systemLabels: [
+      InstalledFonts::SYSTEM_SANS => __('webblocks-cms::admin-feedback.panel_copy.font_sans'),
+      InstalledFonts::SYSTEM_SERIF => __('webblocks-cms::admin-feedback.panel_copy.font_serif'),
+      InstalledFonts::SYSTEM_MONOSPACE => __('webblocks-cms::admin-feedback.panel_copy.font_monospace'),
+  ]);
   $localizedPageTitle = $site->exists ? $adminText('edit_title', ['name' => $site->name]) : $adminText('create_title');
   $canManageSiteSettings = $canManageSiteSettings ?? true;
   $canManageDomains = $canManageDomains ?? false;
@@ -382,9 +389,7 @@
                         {{ $adminText('brand_contrast_warning', ['ratio' => number_format($brandContrast, 2)]) }}
                       </div>
                     @endif
-                    @php($siteCssContents = collect($siteAssets ?? [])->firstWhere('type', 'css')['contents'] ?? null)
-                    @php($fontOptions = \WebBlocks\Cms\Support\Theme\InstalledFonts::options($siteCssContents))
-                    @php($installedFontCount = count(\WebBlocks\Cms\Support\Theme\InstalledFonts::fromCss($siteCssContents)))
+                    @php($installedFontCount = count(InstalledFonts::fromCss($siteCssContents)))
                     @if ($installedFontCount === 0)
                       <div class="wb-alert wb-alert-info">{{ $adminText('brand_fonts_none') }}</div>
                     @endif

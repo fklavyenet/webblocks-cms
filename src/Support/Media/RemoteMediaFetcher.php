@@ -95,7 +95,7 @@ class RemoteMediaFetcher
       }
 
       if (! $response->successful()) {
-        throw new RuntimeException('Remote media could not be fetched. The server responded with HTTP '.$response->status().'.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.media_remote_http', ['status' => $response->status()]));
       }
 
       return [$response, $currentUrl];
@@ -122,7 +122,7 @@ class RemoteMediaFetcher
 
     foreach ($addresses as $ip) {
       if (! $this->isPublicIp($ip)) {
-        throw new RuntimeException('Remote media URL resolves to a private or reserved network address.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.media_remote_private'));
       }
     }
 

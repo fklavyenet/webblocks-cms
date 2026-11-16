@@ -17,4 +17,9 @@ class SiteImportUploadRequest extends FormRequest
       'archive' => ['required', 'file', 'mimes:zip', 'max:51200'],
     ];
   }
+
+  public function messages(): array
+  {
+    return ['archive.required' => __('webblocks-cms::admin-feedback.panel_copy.site_import_archive_required')];
+  }
 }
