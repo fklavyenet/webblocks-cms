@@ -40,7 +40,7 @@ class ImportArchiveInspector
       $manifest = $this->decodeJsonFile($archive, 'manifest.json');
 
       if (($manifest['product'] ?? null) !== SiteTransferPackage::PRODUCT) {
-        throw new RuntimeException('Import package product is not supported.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.site_import_product_unsupported'));
       }
 
       if (($manifest['package_type'] ?? null) !== SiteTransferPackage::PACKAGE_TYPE) {
@@ -48,7 +48,7 @@ class ImportArchiveInspector
       }
 
       if ((int) ($manifest['format_version'] ?? 0) !== SiteTransferPackage::FORMAT_VERSION) {
-        throw new RuntimeException('Import package format version is not supported.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.site_import_format_unsupported'));
       }
 
       foreach (SiteTransferPackage::REQUIRED_DATA_FILES as $file) {

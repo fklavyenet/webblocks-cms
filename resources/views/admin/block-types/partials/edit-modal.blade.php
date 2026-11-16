@@ -11,7 +11,7 @@
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
                 <div class="wb-stack wb-gap-1">
-                    <h2 class="wb-modal-title" id="{{ $modalTitleId }}">{{ $blockTypeFormText('edit_title', ['name' => $blockType->name]) }}</h2>
+                    <h2 class="wb-modal-title" id="{{ $modalTitleId }}">{{ $blockTypeFormText('edit_title', ['name' => $blockType->displayName()]) }}</h2>
                     <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">{{ $blockTypeFormText('edit_modal_description') }}</span>
                 </div>
 

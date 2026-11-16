@@ -1,7 +1,7 @@
 @php
     $blockTypeFormLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $blockTypeFormText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('block_type_form.'.$key, $blockTypeFormLocale, $replace);
-    $pageTitle = $blockTypeFormText('edit_title', ['name' => $blockType->name]);
+    $pageTitle = $blockTypeFormText('edit_title', ['name' => $blockType->displayName()]);
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $pageTitle, 'heading' => $pageTitle])

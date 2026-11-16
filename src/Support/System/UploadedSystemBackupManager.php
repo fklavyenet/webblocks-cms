@@ -41,7 +41,7 @@ class UploadedSystemBackupManager
       $manifest = $inspection->manifest;
       $output = [
         __('webblocks-cms::admin-feedback.backups.uploaded', [], 'en'),
-        'Source filename: '.$sourceFilename,
+        __('webblocks-cms::admin-feedback.panel_copy.backup_log_source_filename', ['value' => $sourceFilename], 'en'),
         __('webblocks-cms::admin-feedback.panel_copy.backup_validation_passed', [], 'en'),
       ];
 
@@ -80,11 +80,13 @@ class UploadedSystemBackupManager
 
   private function manifestSummaryLines(array $manifest, BackupRestoreInspection $inspection): array
   {
+    $text = fn (string $key, array $replace = []) => __('webblocks-cms::admin-feedback.panel_copy.backup_log_'.$key, $replace, 'en');
+
     return array_values(array_filter([
-      'Manifest app: '.($manifest['app_name'] ?? 'unknown'),
-      isset($manifest['app_version']) ? 'Manifest version: '.$manifest['app_version'] : null,
-      isset($manifest['created_at']) ? 'Manifest created_at: '.$manifest['created_at'] : null,
-      'Contents: '.implode(' + ', $inspection->restoredParts()),
+      $text('manifest_app', ['value' => $manifest['app_name'] ?? $text('unknown')]),
+      isset($manifest['app_version']) ? $text('manifest_version', ['value' => $manifest['app_version']]) : null,
+      isset($manifest['created_at']) ? $text('manifest_created_at', ['value' => $manifest['created_at']]) : null,
+      $text('contents', ['value' => implode(' + ', $inspection->restoredParts())]),
     ]));
   }
 }

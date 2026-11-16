@@ -2,7 +2,7 @@
     <div class="wb-modal-dialog">
         <div class="wb-modal-header">
             <div class="wb-stack wb-stack-1">
-                <h2 class="wb-modal-title" id="acl-role-{{ $role->id }}-title">{{ __('webblocks-cms::acl.role_title', ['name' => $role->name]) }}</h2>
+                <h2 class="wb-modal-title" id="acl-role-{{ $role->id }}-title">{{ __('webblocks-cms::acl.role_title', ['name' => $role->displayName()]) }}</h2>
                 <span class="wb-text-sm wb-text-muted">{{ __('webblocks-cms::acl.protected') }}</span>
             </div>
             <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ __('webblocks-cms::acl.close') }}"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button>

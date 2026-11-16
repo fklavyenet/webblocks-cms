@@ -3,7 +3,7 @@
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.blocks.'.$key, $adminLocale, $replace);
     $blockFormText = fn (string $key, array $replace = []) => $adminTranslator->admin('block_form.'.$key, $adminLocale, $replace);
-    $search = strtolower(trim((string) request('block_type_search')));
+    $search = mb_strtolower(trim((string) request('block_type_search')));
     $availableBlockTypes = $blockTypes
         ->filter(function ($blockType) use ($search) {
             if ($search === '') {
@@ -11,6 +11,7 @@
             }
 
             return str_contains(strtolower($blockType->name), $search)
+                || str_contains(mb_strtolower($blockType->displayName()), $search)
                 || str_contains(strtolower((string) $blockType->description), $search)
                 || str_contains(strtolower((string) $blockType->category), $search)
                 || str_contains(strtolower($blockType->slug), $search);
@@ -57,7 +58,7 @@
                             <optgroup label="{{ $adminText('picker.groups.'.$category) }}">
                                 @foreach ($items as $blockType)
                                     <option value="{{ $blockType->id }}" @selected((string) ($selectedBlockType?->id) === (string) $blockType->id)>
-                                        {{ $labelMap[$blockType->slug] ?? $blockType->name }}
+                                        {{ $labelMap[$blockType->slug] ?? $blockType->displayName() }}
                                     </option>
                                 @endforeach
                             </optgroup>
@@ -70,7 +71,7 @@
                     <div class="wb-card">
                         <div class="wb-card-body">
                             @if ($selectedBlockType)
-                                <strong>{{ $labelMap[$selectedBlockType->slug] ?? $selectedBlockType->name }}</strong>
+                                <strong>{{ $labelMap[$selectedBlockType->slug] ?? $selectedBlockType->displayName() }}</strong>
                                 <div>{{ $selectedBlockType->description ?: ($selectedBlockType->is_system ? $adminText('picker.system_fallback') : $adminText('picker.content_fallback')) }}</div>
                             @else
                                 <strong>{{ $adminText('picker.none_selected') }}</strong>

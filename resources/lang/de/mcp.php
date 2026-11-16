@@ -123,4 +123,5 @@ return [
   'rpc_version_required' => 'Eine Protokollversion ist erforderlich.',
   'rpc_invalid_tool' => 'Ungültiger Werkzeugname oder ungültige Argumente.',
   'authorization_description' => 'Eine Autorisierung für WebBlocks CMS ist erforderlich',
+  'replacement_block_id_description' => 'Beim Verschieben aus einem voll belegten Split werden die Positionen mit diesem Block in der Zielgruppe desselben Slots getauscht.',
 ];

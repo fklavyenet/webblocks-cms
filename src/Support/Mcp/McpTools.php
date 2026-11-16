@@ -134,7 +134,7 @@ final class McpTools
         'type' => ['type' => 'string', 'enum' => EditDraftStructure::ADD_TYPES],
         'text' => ['type' => 'object', 'properties' => $copy, 'additionalProperties' => false],
         'block_id' => $id,
-        'replacement_block_id' => $id + ['description' => 'For a move out of a full Split, exchange positions with this block in the destination group in the same slot.'],
+        'replacement_block_id' => $id + ['description' => __('webblocks-cms::mcp.replacement_block_id_description')],
         'block_ids' => ['type' => 'array', 'items' => $id, 'minItems' => 1, 'maxItems' => 500, 'uniqueItems' => true],
       ], ['locale', 'page_id', 'version', 'operation'], [
         'oneOf' => [

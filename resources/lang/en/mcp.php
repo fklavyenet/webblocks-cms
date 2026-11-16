@@ -123,4 +123,5 @@ return [
   'rpc_version_required' => 'A protocol version is required.',
   'rpc_invalid_tool' => 'Invalid tool name or arguments.',
   'authorization_description' => 'WebBlocks CMS authorization is required',
+  'replacement_block_id_description' => 'For a move out of a full Split, exchange positions with this block in the destination group in the same slot.',
 ];

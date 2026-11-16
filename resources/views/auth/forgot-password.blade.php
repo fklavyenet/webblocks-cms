@@ -22,7 +22,7 @@
                 <span>{{ WebBlocks::name() }}</span>
             </h1>
 
-            <p class="wb-auth-panel-text">{{ WebBlocks::slogan() }}</p>
+            <p class="wb-auth-panel-text">{{ $authTranslator->get('admin-feedback.panel_copy.brand_slogan', $authLocaleCode) }}</p>
         </div>
 
         <div class="wb-auth-form-area">

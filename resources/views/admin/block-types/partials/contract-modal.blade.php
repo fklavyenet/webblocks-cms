@@ -25,7 +25,7 @@
     <div class="wb-modal-dialog">
       <div class="wb-modal-header">
         <div class="wb-stack wb-gap-1">
-          <h2 class="wb-modal-title" id="{{ $modalTitleId }}">{{ $contractModalText('title', ['name' => $blockType->name]) }}</h2>
+          <h2 class="wb-modal-title" id="{{ $modalTitleId }}">{{ $contractModalText('title', ['name' => $blockType->displayName()]) }}</h2>
           <span class="wb-text-sm wb-text-muted" id="{{ $modalDescriptionId }}">{{ $contractModalText('description') }}</span>
         </div>
 

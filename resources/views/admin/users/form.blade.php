@@ -154,7 +154,7 @@
                                                 <select class="wb-select" id="site_role_{{ $site->id }}" name="site_roles[{{ $site->id }}]">
                                                     <option value="">{{ __('webblocks-cms::acl.default_role') }}</option>
                                                     @foreach ($cmsRoles as $cmsRole)
-                                                        <option value="{{ $cmsRole->id }}" @selected((string) old('site_roles.'.$site->id, $siteRoles[$site->id] ?? '') === (string) $cmsRole->id)>{{ $cmsRole->name }}</option>
+                                                        <option value="{{ $cmsRole->id }}" @selected((string) old('site_roles.'.$site->id, $siteRoles[$site->id] ?? '') === (string) $cmsRole->id)>{{ $cmsRole->displayName() }}</option>
                                                     @endforeach
                                                 </select>
                                             @endif

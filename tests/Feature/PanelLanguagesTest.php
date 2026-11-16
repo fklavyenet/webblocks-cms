@@ -314,7 +314,10 @@ class PanelLanguagesTest extends TestCase
       $this->get(route('admin.system.backups.show', $backup))->assertOk()
         ->assertSee($text('backups.uploaded_summary'))
         ->assertSee($text('backups.uploaded'))
-        ->assertSee($text('panel_copy.backup_validation_passed'));
+        ->assertSee($text('panel_copy.backup_validation_passed'))
+        ->assertSee($text('panel_copy.backup_log_source_filename', ['value' => 'fixture.zip']))
+        ->assertSee($text('panel_copy.backup_log_manifest_app', ['value' => $text('panel_copy.backup_log_unknown')]))
+        ->assertSee($text('panel_copy.backup_log_contents', ['value' => $text('panel_copy.backup_part_database')]));
     }
   }
 

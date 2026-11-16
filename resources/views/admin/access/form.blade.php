@@ -1,7 +1,7 @@
 @php
     $errors ??= new \Illuminate\Support\ViewErrorBag;
     $rolePageTitle = $role->exists
-        ? __('webblocks-cms::acl.role_title', ['name' => $role->name])
+        ? __('webblocks-cms::acl.role_title', ['name' => $role->displayName()])
         : ($source ? __('webblocks-cms::acl.copy_title', ['name' => $source->name]) : __('webblocks-cms::acl.new'));
     $selectedPermissions = (array) old('permissions', session()->hasOldInput() ? [] : $selected);
 @endphp
@@ -31,7 +31,7 @@
         <div class="wb-card-body wb-stack wb-gap-4">
             <div class="wb-field">
                 <label class="wb-label" for="acl_name">{{ __('webblocks-cms::acl.name') }}</label>
-                <input class="wb-input" id="acl_name" name="name" value="{{ old('name', $role->name ?? $source?->name) }}" required maxlength="160" @disabled($role->is_protected) @if ($errors->has('name')) aria-invalid="true" aria-describedby="acl-name-error" @endif>
+                <input class="wb-input" id="acl_name" name="name" value="{{ old('name', $role?->displayName() ?? $source?->name) }}" required maxlength="160" @disabled($role->is_protected) @if ($errors->has('name')) aria-invalid="true" aria-describedby="acl-name-error" @endif>
                 @error('name')<div class="wb-field-error" id="acl-name-error">{{ $message }}</div>@enderror
             </div>
             <div class="wb-field">
@@ -80,7 +80,7 @@
                 <div class="wb-modal" id="acl-delete-modal" role="dialog" aria-modal="true" aria-labelledby="acl-delete-title" data-wb-admin-close-url="{{ route('admin.access.roles.edit', $role) }}" data-wb-admin-autoload-overlay hidden>
                     <div class="wb-modal-dialog">
                         <div class="wb-modal-header">
-                            <h2 id="acl-delete-title" class="wb-modal-title">{{ __('webblocks-cms::acl.delete_title', ['name' => $role->name]) }}</h2>
+                            <h2 id="acl-delete-title" class="wb-modal-title">{{ __('webblocks-cms::acl.delete_title', ['name' => $role->displayName()]) }}</h2>
                             <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ __('webblocks-cms::acl.close') }}"><i class="wb-icon wb-icon-x" aria-hidden="true"></i></button>
                         </div>
                         <div class="wb-modal-body"><p>{{ __('webblocks-cms::acl.delete_help') }}</p></div>

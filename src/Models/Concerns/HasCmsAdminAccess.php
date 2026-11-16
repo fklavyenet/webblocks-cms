@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Models\Concerns;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\DB;
+use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\CmsSiteMembership;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
@@ -200,15 +201,18 @@ trait HasCmsAdminAccess
   public function roleLabel(): string
   {
     if (app(CmsAuthorization::class)->ready() && ! $this->isSuperAdmin()) {
-      $names = DB::table('wbcms_site_user as m')->join('wbcms_acl_roles as r', 'r.id', '=', 'm.role_id')->where('m.user_id', $this->id)->distinct()->pluck('r.name');
+      $roles = CmsRole::query()
+        ->whereIn('id', DB::table('wbcms_site_user')->where('user_id', $this->id)->select('role_id'))
+        ->get(['handle', 'name', 'is_protected'])
+        ->unique('name');
 
-      return $names->count() === 1 ? $names->first() : __('webblocks-cms::acl.site_roles');
+      return $roles->count() === 1 ? $roles->first()->displayName() : __('webblocks-cms::acl.site_roles');
     }
 
     return match ($this->normalizedRole()) {
-      static::ROLE_SUPER_ADMIN => 'Super Admin',
-      static::ROLE_SITE_ADMIN => 'Site Admin',
-      default => 'Editor',
+      static::ROLE_SUPER_ADMIN => __('webblocks-cms::acl.event_values.super_admin'),
+      static::ROLE_SITE_ADMIN => __('webblocks-cms::admin-feedback.panel_copy.role_site_admin'),
+      default => __('webblocks-cms::admin-feedback.panel_copy.role_editor'),
     };
   }
 

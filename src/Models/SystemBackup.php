@@ -89,10 +89,39 @@ class SystemBackup extends CmsModel
       $messages[__($key, [], 'en')] = __($key, [], $locale);
     }
 
+    $fields = [];
+    foreach (['source_filename', 'manifest_app', 'manifest_version', 'manifest_created_at', 'contents'] as $field) {
+      $key = 'webblocks-cms::admin-feedback.panel_copy.backup_log_'.$field;
+      $fields[__($key, ['value' => ''], 'en')] = $field;
+    }
+
     return implode('', array_map(
-      fn (string $line): string => $messages[$line] ?? $line,
+      fn (string $line): string => $messages[$line] ?? $this->translateUploadLogField($line, $fields, $locale),
       preg_split('/(\R)/', $this->output, -1, PREG_SPLIT_DELIM_CAPTURE),
     ));
+  }
+
+  private function translateUploadLogField(string $line, array $fields, string $locale): string
+  {
+    [$label, $value] = array_pad(explode(': ', $line, 2), 2, null);
+    $field = $fields[$label.': '] ?? null;
+    if ($field === null || $value === null) {
+      return $line;
+    }
+
+    if ($field === 'manifest_app' && $value === __('webblocks-cms::admin-feedback.panel_copy.backup_log_unknown', [], 'en')) {
+      $value = __('webblocks-cms::admin-feedback.panel_copy.backup_log_unknown', [], $locale);
+    }
+    if ($field === 'contents') {
+      $value = implode(' + ', array_map(
+        fn (string $part): string => in_array($part, ['database', 'uploads', 'site_public'], true)
+          ? __('webblocks-cms::admin-feedback.panel_copy.backup_part_'.$part, [], $locale)
+          : $part,
+        explode(' + ', $value),
+      ));
+    }
+
+    return __('webblocks-cms::admin-feedback.panel_copy.backup_log_'.$field, ['value' => $value], $locale);
   }
 
   public function isFailed(): bool

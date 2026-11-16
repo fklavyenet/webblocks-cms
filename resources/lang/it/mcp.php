@@ -123,4 +123,5 @@ return [
   'rpc_version_required' => 'È necessaria una versione del protocollo.',
   'rpc_invalid_tool' => 'Nome dello strumento o argomenti non validi.',
   'authorization_description' => 'È necessaria l’autorizzazione di WebBlocks CMS',
+  'replacement_block_id_description' => 'Quando sposti un blocco fuori da un blocco diviso già pieno, scambia la sua posizione con quella di questo blocco nel gruppo di destinazione dello stesso slot.',
 ];

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.10
+
+- Localize authentication slogans, built-in role and External Content labels, uploaded backup log details, and the audited media, plugin, and site import messages.
+- Translate the MCP replacement block field description in all six bundled languages.
+
 ## 1.135.9
 
 - Localize the panel slogan, user screen labels, mail diagnostics, system font choices, backup upload log messages, and audited asset, media, plugin, and site import feedback.

@@ -190,7 +190,7 @@ class PluginZipInstaller
     $manifest = is_string($contents) ? json_decode($contents, true) : null;
 
     if (! is_array($manifest)) {
-      throw new RuntimeException('The plugin manifest is malformed JSON.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.plugin_manifest_invalid_json'));
     }
 
     return $manifest;
@@ -208,7 +208,7 @@ class PluginZipInstaller
     }
 
     if (! is_string($manifest['label'] ?? null) || trim((string) $manifest['label']) === '') {
-      throw new RuntimeException('The plugin manifest must declare a label.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.plugin_manifest_label_required'));
     }
 
     if (! is_string($manifest['version'] ?? null) || ! preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', (string) $manifest['version'])) {

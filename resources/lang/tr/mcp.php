@@ -123,4 +123,5 @@ return [
   'rpc_version_required' => 'Protokol sürümü gerekli.',
   'rpc_invalid_tool' => 'Araç adı ya da argümanları geçersiz.',
   'authorization_description' => 'WebBlocks CMS yetkilendirmesi gerekli',
+  'replacement_block_id_description' => 'Dolu bir Split bloğundan taşırken, aynı yuvadaki hedef grupta bu blokla yer değiştirin.',
 ];

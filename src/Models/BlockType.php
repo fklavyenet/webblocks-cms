@@ -38,4 +38,11 @@ class BlockType extends CmsModel
   {
     return $this->is_system ? 'System Block' : 'Content Block';
   }
+
+  public function displayName(): string
+  {
+    return $this->slug === 'external-content' && $this->name === 'External Content'
+      ? __('webblocks-cms::admin-feedback.panel_copy.block_external_content')
+      : $this->name;
+  }
 }

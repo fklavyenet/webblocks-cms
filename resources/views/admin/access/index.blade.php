@@ -70,9 +70,9 @@
                                     <td>
                                         <div class="wb-stack wb-stack-1">
                                             @if ($role->is_protected)
-                                                <strong>{{ $role->name }}</strong>
+                                                <strong>{{ $role->displayName() }}</strong>
                                             @else
-                                                <a href="{{ route('admin.access.roles.edit', $role) }}"><strong>{{ $role->name }}</strong></a>
+                                                <a href="{{ route('admin.access.roles.edit', $role) }}"><strong>{{ $role->displayName() }}</strong></a>
                                             @endif
                                             @if ($role->description)<span class="wb-text-sm wb-text-muted">{{ $role->description }}</span>@endif
                                         </div>

@@ -125,6 +125,7 @@ class RemoteMcpTest extends TestCase
         ->assertHeader('Vary', 'Accept-Language')
         ->assertJsonCount(22, 'result.tools')
         ->assertJsonPath('result.tools.0.description', __('webblocks-cms::mcp.read_description', [], $locale))
+        ->assertJsonPath('result.tools.9.inputSchema.properties.replacement_block_id.description', __('webblocks-cms::mcp.replacement_block_id_description', [], $locale))
         ->assertJsonPath('result.tools.12.description', __('webblocks-cms::mcp.upload_description', [], $locale));
       $challenge = $this->tool('find_page', ['path' => '/missing', 'locale' => 'en'], status: 401)
         ->assertJsonPath('result.content.0.text', __('webblocks-cms::mcp.auth_required', [], $locale));

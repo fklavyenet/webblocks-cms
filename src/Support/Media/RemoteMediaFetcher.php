@@ -23,13 +23,13 @@ class RemoteMediaFetcher
     $mimeType = $this->mimeType($response);
 
     if (! in_array($mimeType, MediaMimeTypes::allowed(), true)) {
-      throw new RuntimeException('Remote media type is not allowed: '.$mimeType.'.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.media_remote_type', ['type' => $mimeType]));
     }
 
     $contents = $response->body();
 
     if (strlen($contents) > $maxBytes) {
-      throw new RuntimeException('Remote media is larger than the configured limit.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.media_remote_size'));
     }
 
     $temporaryPath = tempnam(storage_path('framework/cache'), 'wb-remote-media-');
@@ -76,7 +76,7 @@ class RemoteMediaFetcher
           ],
           'progress' => function (int $downloadTotal, int $downloadedBytes) use ($maxBytes): void {
             if ($downloadTotal > $maxBytes || $downloadedBytes > $maxBytes) {
-              throw new RuntimeException('Remote media is larger than the configured limit.');
+              throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.media_remote_size'));
             }
           },
         ])
@@ -86,7 +86,7 @@ class RemoteMediaFetcher
         $location = $response->header('Location');
 
         if (! is_string($location) || trim($location) === '') {
-          throw new RuntimeException('Remote media redirect did not include a valid target.');
+          throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.media_remote_redirect_target'));
         }
 
         $currentUrl = (string) UriResolver::resolve(new Uri($currentUrl), new Uri($location));

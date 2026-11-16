@@ -123,4 +123,5 @@ return [
   'rpc_version_required' => 'Une version du protocole est requise.',
   'rpc_invalid_tool' => 'Nom d’outil ou arguments invalides.',
   'authorization_description' => 'Une autorisation WebBlocks CMS est requise',
+  'replacement_block_id_description' => 'Lors d’un déplacement hors d’un bloc Scission plein, échangez les positions avec ce bloc dans le groupe de destination du même emplacement.',
 ];

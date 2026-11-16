@@ -124,9 +124,9 @@
                                             <div class="wb-stack wb-stack-1">
                                                 <strong>
                                                     @if (! $blockType->is_system)
-                                                        <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">{{ $blockType->name }}</a>
+                                                        <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">{{ $blockType->displayName() }}</a>
                                                     @else
-                                                        {{ $blockType->name }}
+                                                        {{ $blockType->displayName() }}
                                                     @endif
                                                 </strong>
                                                 <span class="wb-text-sm wb-text-muted"><code>{{ $blockType->slug }}</code> | {{ $blockType->source_type ?: 'static' }} | {{ $blockType->is_system ? $blockTypesIndexText('system') : $blockTypesIndexText('user') }}{{ $blockType->is_container ? ' | '.$blockTypesIndexText('container') : '' }}</span>
