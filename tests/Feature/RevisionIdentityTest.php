@@ -157,6 +157,27 @@ class RevisionIdentityTest extends TestCase
     $this->assertSame([], array_intersect($gallery->blockAssets()->pluck('revision_key')->all(), $duplicate->page->blocks()->where('type', 'gallery')->sole()->blockAssets()->pluck('revision_key')->all()));
   }
 
+  #[Test]
+  public function page_duplication_keeps_gallery_dimensions_and_item_translations(): void
+  {
+    [$page, , $gallery, $first, $second] = $this->fixture();
+    $localeId = $page->defaultTranslation()->locale_id;
+    $first->update(['role' => 'gallery_item', 'physical_width_um' => 400000, 'physical_height_um' => 200000]);
+    $second->update(['role' => 'gallery_item', 'physical_height_um' => 800000]);
+    $first->galleryItemTranslations()->create(['locale_id' => $localeId, 'alt_text' => 'Blue artwork', 'caption' => 'Work 1']);
+    $second->galleryItemTranslations()->create(['locale_id' => $localeId, 'alt_text' => 'Blue detail', 'caption' => 'Work 2']);
+
+    $duplicate = app(PageDuplicator::class)->duplicate($page, $page->site, $this->actor(), collect([
+      ['locale_id' => $localeId, 'name' => 'Independent copy', 'slug' => 'independent', 'path' => '/independent'],
+    ]));
+    $items = $duplicate->page->blocks()->where('type', 'gallery')->sole()->galleryItems();
+    $this->assertSame($gallery->fresh()->galleryItems()->pluck('media_id')->all(), $items->pluck('media_id')->all());
+    $this->assertSame([400000, null], $items->pluck('physical_width_um')->all());
+    $this->assertSame([200000, 800000], $items->pluck('physical_height_um')->all());
+    $this->assertSame(['Work 1', 'Work 2'], $items->map(fn ($item) => $item->galleryItemTranslations()->sole()->caption)->all());
+    $this->assertSame(['Blue artwork', 'Blue detail'], $items->map(fn ($item) => $item->galleryItemTranslations()->sole()->alt_text)->all());
+  }
+
   public static function identityOwners(): array
   {
     return ['block' => [false], 'gallery item' => [true]];

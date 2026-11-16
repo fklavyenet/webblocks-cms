@@ -896,6 +896,7 @@ class InternalContentPlanService
           'media_id' => $blockAsset->media_id,
           'role' => $blockAsset->role,
           'position' => $blockAsset->position,
+          ...$blockAsset->galleryDimensions(),
         ]))->withRevisionIdentity($blockAsset->revision_key);
         $newBlockAsset->save();
 

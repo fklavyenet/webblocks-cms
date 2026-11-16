@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use WebBlocks\Cms\Actions\Blocks\PatchGalleryItems;
 use WebBlocks\Cms\Actions\Blocks\SetBlockMobileMedia;
 use WebBlocks\Cms\Actions\Media\CreateMediaFolder;
 use WebBlocks\Cms\Http\Requests\InternalContentApi\BlockMobileMediaRequest;
@@ -1368,7 +1369,12 @@ class InternalContentResourceController extends Controller
       return $this->validationError($exception->path, $exception->getMessage(), 'invalid_content_source_configuration');
     }
 
-    DB::transaction(function () use ($block, $request, $mediaChanged, $mediaId, $settings, $translationPayload, $locale): void {
+    $update = function () use ($block, $request, $mediaChanged, $mediaId, $settings, $translationPayload, $locale): void {
+      if ($request->has('gallery_items')) {
+        $block = Block::query()->lockForUpdate()->findOrFail($block->id);
+        app(PatchGalleryItems::class)->execute($block, $locale, $request->input('gallery_items'));
+      }
+
       $updates = [];
 
       if ($mediaChanged) {
@@ -1410,7 +1416,13 @@ class InternalContentResourceController extends Controller
 
         $this->translationWriter->sync($block, $translationPayload, $locale->code);
       }
-    });
+    };
+
+    try {
+      DB::transaction($update);
+    } catch (ValidationException $exception) {
+      return $this->validationErrors('invalid_existing_block_update', $exception->getMessage(), $exception->errors());
+    }
 
     $block->refresh()->load([
       'blockType',

@@ -1049,11 +1049,9 @@ class InternalContentApiOperations
       $errors[] = $this->error($path.'.gallery_media_ids', 'Gallery media items must be existing image Media Library records.');
     }
 
-    $payload['_block_media'] = ['gallery_item' => $validMediaIds];
-    $payload['_gallery_items'] = $items
-      ->filter(fn (array $item): bool => in_array((int) $item['media_id'], $validMediaIds, true))
-      ->values()
-      ->all();
+    $placements = $items->filter(fn (array $item): bool => isset($validMediaIdSet[$item['media_id']]))->values();
+    $payload['_block_media'] = ['gallery_item' => $placements->pluck('media_id')->all()];
+    $payload['_gallery_items'] = $placements->all();
 
     return $payload;
   }

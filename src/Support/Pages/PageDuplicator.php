@@ -20,6 +20,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Contact\ContactFormFields;
+use WebBlocks\Cms\Support\Locales\LocaleResolver;
 
 class PageDuplicator
 {
@@ -64,7 +65,7 @@ class PageDuplicator
       $lockedPage->pageAssets()->lockForUpdate()->get();
       $blocks = Block::query()
         ->where('page_id', $lockedPage->id)
-        ->with(['blockAssets', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
+        ->with(['blockAssets.galleryItemTranslations', 'textTranslations', 'buttonTranslations', 'imageTranslations', 'contactFormTranslations'])
         ->orderBy('id')
         ->lockForUpdate()
         ->get();
@@ -148,6 +149,7 @@ class PageDuplicator
       }
 
       $blockMap = [];
+      $targetLocaleIds = app(LocaleResolver::class)->enabledForSite($targetSite)->pluck('id')->flip();
 
       foreach ($blocks as $block) {
         $attributes = Arr::except($block->portableAttributes(), ['id', 'revision_key', 'parent_id', 'page_id', 'created_at', 'updated_at']);
@@ -158,12 +160,21 @@ class PageDuplicator
         $blockMap[$block->id] = $newBlock->id;
 
         foreach ($block->blockAssets as $blockAsset) {
-          BlockAsset::query()->create([
+          $newBlockAsset = BlockAsset::query()->create([
             'block_id' => $newBlock->id,
             'media_id' => $blockAsset->media_id,
             'role' => $blockAsset->role,
             'position' => $blockAsset->position,
+            ...$blockAsset->galleryDimensions(),
           ]);
+
+          foreach ($blockAsset->galleryItemTranslations as $translation) {
+            if ($targetLocaleIds->has($translation->locale_id)) {
+              $newBlockAsset->galleryItemTranslations()->create($translation->only([
+                'locale_id', 'alt_text', 'caption', 'overlay_title', 'overlay_text',
+              ]));
+            }
+          }
         }
 
         $this->cloneBlockTranslations($block, $newBlock);

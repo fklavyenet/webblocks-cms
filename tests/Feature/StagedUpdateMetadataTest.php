@@ -16,15 +16,124 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentPlanService;
 use WebBlocks\Cms\Tests\TestCase;
 
 class StagedUpdateMetadataTest extends TestCase
 {
+  protected function defineEnvironment($app): void
+  {
+    parent::defineEnvironment($app);
+    $app['config']->set('webblocks-cms.routes.admin', true);
+  }
+
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
+
+  #[Test]
+  public function creating_an_update_draft_copies_physical_dimensions_per_gallery_placement(): void
+  {
+    [$source, $slot, $locales, $media] = $this->fixtures();
+    $dimensions = [[400000, 400000], [500000, 200000], [null, null], [null, 800000]];
+    $gallery = $this->physicalGallery($source, $slot, $locales, $media, $dimensions);
+    $draft = $this->createUpdateDraftThroughApi($source);
+
+    $draftGallery = $draft->blocks()->where('type', 'gallery')->sole();
+    $this->assertNotSame($gallery->id, $draftGallery->id);
+    $this->assertPhysicalGallery($draftGallery, $locales, $media, $dimensions);
+    $this->assertPhysicalGallery($gallery->fresh(), $locales, $media, $dimensions);
+    $this->assertRenderedDimensions($draft, $dimensions);
+  }
+
+  #[Test]
+  public function promoting_an_update_draft_publishes_the_dimensions_saved_in_the_draft(): void
+  {
+    [$source, $slot, $locales, $media] = $this->fixtures();
+    $original = [[400000, 400000], [500000, 200000], [null, null], [null, 800000]];
+    $gallery = $this->physicalGallery($source, $slot, $locales, $media, $original);
+    $draft = $this->createUpdateDraftThroughApi($source);
+    $draftGallery = $draft->blocks()->where('type', 'gallery')->sole();
+    $edited = [[800000, 800000], [200000, 500000], [null, null], [600000, null]];
+    $edits = [];
+    foreach ($edited as $position => [$width, $height]) {
+      $edits[] = [
+        'media_id' => $media->id, 'sort_order' => $position,
+        'physical_width_um' => $width, 'physical_height_um' => $height,
+      ];
+    }
+    $this->patchJson('/webadmin/api/blocks/'.$draftGallery->id, ['gallery_items' => $edits])->assertOk();
+    $this->assertPhysicalGallery($draftGallery->fresh(), $locales, $media, $edited);
+    $this->assertPhysicalGallery($gallery->fresh(), $locales, $media, $original);
+
+    $this->postJson('/webadmin/api/content/apply', ['plan' => [
+      'mode' => 'promote_staged_page_update', 'staged_page_id' => $draft->id,
+      'expected_source_page_id' => $source->id, 'expected_source_path' => '/source', 'promote_slots' => ['main'],
+    ]])->assertCreated();
+
+    $this->assertNull($draft->fresh());
+    $this->assertPhysicalGallery($source->blocks()->where('type', 'gallery')->sole(), $locales, $media, $edited);
+    $this->assertRenderedDimensions($source, $edited);
+  }
+
+  #[Test]
+  public function gallery_patch_selects_existing_placements_and_rolls_back_ambiguous_updates(): void
+  {
+    [$source, $slot, $locales, $media] = $this->fixtures();
+    $original = [[400000, 200000], [500000, 300000]];
+    $this->physicalGallery($source, $slot, $locales, $media, $original);
+    $draft = $this->createUpdateDraftThroughApi($source);
+    $gallery = $draft->blocks()->where('type', 'gallery')->sole();
+    $url = '/webadmin/api/blocks/'.$gallery->id;
+    $first = ['media_id' => $media->id, 'sort_order' => 0, 'physical_width_um' => 800000];
+
+    $this->getJson($url)->assertOk()->assertJsonPath('block.gallery_items.1.sort_order', 1);
+    $this->patchJson($url, ['gallery_items' => [array_replace($first, ['physical_width_um' => true])]])
+      ->assertUnprocessable()->assertJsonPath('errors.0.path', 'gallery_items.0.physical_width_um');
+    $this->patchJson($url, ['gallery_items' => [
+      $first, ['media_id' => $media->id, 'physical_height_um' => 500000],
+    ]])->assertUnprocessable()->assertJsonPath('errors.0.path', 'gallery_items.1');
+    $this->assertPhysicalGallery($gallery->fresh(), $locales, $media, $original);
+
+    $this->patchJson($url, ['locale' => 'de', 'gallery_items' => [$first + ['caption' => 'Geändert']]])
+      ->assertOk()->assertJsonPath('block.gallery_items.0.physical_width_um', 800000);
+    $items = $gallery->fresh()->galleryItems();
+    $this->assertSame([800000, 200000], [$items[0]->physical_width_um, $items[0]->physical_height_um]);
+    $this->assertSame([500000, 300000], [$items[1]->physical_width_um, $items[1]->physical_height_um]);
+    $this->assertSame('Geändert', $items[0]->galleryItemTranslations()->where('locale_id', $locales[1]->id)->sole()->caption);
+    $this->assertSame($this->itemCopy('de', 0)['alt_text'], $items[0]->galleryItemTranslations()->where('locale_id', $locales[1]->id)->sole()->alt_text);
+    $this->assertSame($this->itemCopy('en', 0)['caption'], $items[0]->galleryItemTranslations()->where('locale_id', $locales[0]->id)->sole()->caption);
+  }
+
+  #[Test]
+  public function replacing_a_gallery_preserves_repeated_media_and_each_placements_copy(): void
+  {
+    [$source, , $locales, $media] = $this->fixtures();
+    $draft = $this->createUpdateDraftThroughApi($source);
+    $this->postJson('/webadmin/api/content/apply', ['plan' => [
+      'mode' => 'replace_staged_page_update', 'staged_page_id' => $draft->id,
+      'expected_source_page_id' => $source->id, 'expected_source_path' => '/source',
+      'locale' => 'de', 'replace_slots' => ['main' => [[
+        'type' => 'gallery', 'settings' => ['variant' => 'physical-scale'],
+        'gallery_items' => [
+          ['media_id' => $media->id, 'sort_order' => 1, 'physical_width_um' => 800000, 'physical_height_um' => 600000] + $this->itemCopy('de', 1),
+          ['media_id' => $media->id, 'sort_order' => 0, 'physical_width_um' => 400000, 'physical_height_um' => 200000] + $this->itemCopy('de', 0),
+        ],
+      ]]],
+    ]])->assertCreated();
+
+    $items = $draft->blocks()->where('type', 'gallery')->sole()->galleryItems();
+    $this->assertSame([$media->id, $media->id], $items->pluck('media_id')->all());
+    $this->assertSame([400000, 800000], $items->pluck('physical_width_um')->all());
+    $this->assertSame([200000, 600000], $items->pluck('physical_height_um')->all());
+    foreach ($items as $position => $item) {
+      $translation = $item->galleryItemTranslations()->sole();
+      $this->assertSame($locales[1]->id, $translation->locale_id);
+      $this->assertSame($this->itemCopy('de', $position), $translation->only(['alt_text', 'caption', 'overlay_title', 'overlay_text']));
+    }
   }
 
   #[Test]
@@ -153,6 +262,70 @@ class StagedUpdateMetadataTest extends TestCase
   private function itemCopy(string $locale, int $position): array
   {
     return ['alt_text' => $locale.' blue painting '.$position, 'caption' => $locale.' caption '.$position.' — 60 × 80 cm', 'overlay_title' => $locale.' overlay '.$position, 'overlay_text' => $locale." details\n".$position];
+  }
+
+  private function physicalGallery(Page $page, SlotType $slot, array $locales, Media $media, array $dimensions): Block
+  {
+    $gallery = $this->block($page, $slot, 'gallery');
+    $gallery->update(['settings' => [
+      'variant' => 'physical-scale', 'gallery_unit' => 'cm', 'gallery_vertical_alignment' => 'center',
+      'captions_mode' => 'below', 'lightbox_enabled' => true,
+    ]]);
+    // The same media can appear more than once with independent item data.
+    foreach (array_reverse($dimensions, true) as $position => [$width, $height]) {
+      $item = $gallery->blockAssets()->create([
+        'media_id' => $media->id, 'role' => 'gallery_item', 'position' => $position,
+        'physical_width_um' => $width, 'physical_height_um' => $height,
+      ]);
+      foreach ($locales as $locale) {
+        $item->galleryItemTranslations()->create(['locale_id' => $locale->id] + $this->itemCopy($locale->code, $position));
+      }
+    }
+
+    return $gallery;
+  }
+
+  private function createUpdateDraftThroughApi(Page $source): Page
+  {
+    $token = app(CmsApiTokenIssuer::class)->issue('Synthetic gallery editor', capabilities: ['content.apply', 'content.publish', 'content.read'])->plainToken;
+    $this->withToken($token);
+    $created = $this->postJson('/webadmin/api/content/apply', ['plan' => [
+      'mode' => 'create_staged_update_for_published_page', 'source_page_id' => $source->id,
+      'expected_source_path' => '/source', 'managed_slots' => ['main'],
+    ]])->assertCreated();
+
+    return Page::findOrFail($created->json('data.staged_page.id'));
+  }
+
+  private function assertPhysicalGallery(Block $gallery, array $locales, Media $media, array $dimensions): void
+  {
+    $this->assertSame('physical-scale', $gallery->galleryVariant());
+    $this->assertSame('cm', $gallery->setting('gallery_unit'));
+    $this->assertSame('center', $gallery->galleryVerticalAlignment());
+    $this->assertSame('below', $gallery->galleryCaptionsMode());
+    $this->assertTrue($gallery->galleryLightboxEnabled());
+
+    $items = $gallery->galleryItems()->load('galleryItemTranslations');
+    $this->assertCount(count($dimensions), $items);
+    foreach ($items as $position => $item) {
+      $this->assertSame($position, $item->position);
+      $this->assertSame($media->id, $item->media_id);
+      $this->assertSame($dimensions[$position], [$item->physical_width_um, $item->physical_height_um]);
+      $this->assertCount(count($locales), $item->galleryItemTranslations);
+      foreach ($locales as $locale) {
+        $this->assertSame($this->itemCopy($locale->code, $position), $item->galleryItemTranslations->firstWhere('locale_id', $locale->id)->only(['alt_text', 'caption', 'overlay_title', 'overlay_text']));
+      }
+    }
+  }
+
+  private function assertRenderedDimensions(Page $page, array $dimensions): void
+  {
+    $response = $this->get('/webadmin/api/pages/'.$page->id.'/render?format=html&locale=de')->assertOk();
+    preg_match_all('/data-wb-gallery-physical-width="(\d*)"\s+data-wb-gallery-physical-height="(\d*)"/', $response->getContent(), $matches, PREG_SET_ORDER);
+    $this->assertSame(
+      array_map(fn (array $pair): array => array_map(strval(...), $pair), $dimensions),
+      array_map(fn (array $match): array => array_slice($match, 1), $matches),
+    );
   }
 
   private function assertMetadata(Page $page, array $locales, Media $media): void

@@ -25,15 +25,17 @@ class BlockPayloadWriter
     $media = Media::query()->find($block->media_id);
     $block->setRelation('asset', $media)->setRelation('media', $media);
     $assets = $block->blockAssets()->getRelated()->newCollection();
-    $galleryItems = collect($data['_gallery_items'] ?? [])->keyBy('media_id');
-    $existingGalleryItems = ($data['_block_media']['gallery_item'] ?? []) !== []
-      ? $source->galleryItems()->keyBy('media_id') : collect();
-    foreach ($data['_block_media'] ?? [] as $role => $ids) {
+    $galleryItems = array_values($data['_gallery_items'] ?? []);
+    $blockAssets = $this->mediaPlacements($data['_block_media'] ?? [], $galleryItems);
+    $existingGalleryItems = ($blockAssets['gallery_item'] ?? []) !== []
+      ? $source->galleryItems()->groupBy('media_id') : collect();
+    foreach ($blockAssets as $role => $ids) {
       foreach (array_values($ids) as $position => $id) {
         $row = new BlockMedia(['block_id' => $block->id, 'media_id' => $id, 'role' => $role, 'position' => $position]);
         if ($role === 'gallery_item') {
-          $row->fill($existingGalleryItems->get($id)?->galleryDimensions() ?? []);
-          $row->fill(GalleryLayout::dimensions($galleryItems->get($id, [])));
+          $previous = $existingGalleryItems->get($id)?->shift();
+          $row->fill($previous?->galleryDimensions() ?? []);
+          $row->fill(GalleryLayout::dimensions($galleryItems[$position] ?? []));
         }
         $row->setRelation('asset', Media::query()->find($id));
         $row->setRelation('media', $row->asset);
@@ -49,8 +51,8 @@ class BlockPayloadWriter
   {
     $isCreating = ! $block->exists;
     $translationSourceBlock = $isCreating ? null : clone $block;
-    $blockAssets = $data['_block_media'] ?? $data['_block_assets'] ?? [];
-    $galleryItems = $data['_gallery_items'] ?? [];
+    $galleryItems = array_values($data['_gallery_items'] ?? []);
+    $blockAssets = $this->mediaPlacements($data['_block_media'] ?? $data['_block_assets'] ?? [], $galleryItems);
     $canonicalData = $this->blockTranslationWriter->canonicalPayload(
       $data,
       $isCreating ? null : $block,
@@ -65,70 +67,69 @@ class BlockPayloadWriter
     $block->save();
 
     $this->blockTranslationWriter->sync($block, $data, $localeCode, $isCreating, $translationSourceBlock);
-    $syncedBlockMedia = $this->syncAssets($block, $blockAssets, collect($galleryItems)->keyBy('media_id')->all());
-    $this->syncGalleryItemTranslations($block, $syncedBlockMedia, $galleryItems, $localeCode);
+    $syncedGalleryItems = $this->syncAssets($block, $blockAssets, $galleryItems);
+    $this->syncGalleryItemTranslations($block, $syncedGalleryItems, $galleryItems, $localeCode);
 
     return $block;
   }
 
+  private function mediaPlacements(array $blockAssets, array $galleryItems): array
+  {
+    if ($galleryItems !== []) {
+      $blockAssets['gallery_item'] = array_column($galleryItems, 'media_id');
+    }
+
+    return $blockAssets;
+  }
+
   private function syncAssets(Block $block, array $blockAssets, array $galleryItems): array
   {
-    $existingAssets = $block->blockAssets()->get()->groupBy('role');
-    $syncedAssets = [];
+    $existingAssets = $block->blockAssets()->orderBy('id')->get()->groupBy('role');
+    $retainedIds = [];
+    $syncedGalleryItems = [];
 
     foreach ($blockAssets as $role => $assetIds) {
-      $roleAssets = $existingAssets->get($role, collect())->keyBy('media_id');
-      $seenMediaIds = [];
+      $isGallery = $role === 'gallery_item';
+      $roleAssets = $existingAssets->get($role, collect())->groupBy('media_id');
+      $assetIds = $isGallery ? $assetIds : array_unique($assetIds);
 
       foreach (array_values($assetIds) as $position => $assetId) {
         if (! $assetId) {
           continue;
         }
 
-        $seenMediaIds[] = (int) $assetId;
-        $blockMedia = $roleAssets->get((int) $assetId) ?? new BlockMedia([
+        $blockMedia = $roleAssets->get((int) $assetId)?->shift() ?? new BlockMedia([
           'block_id' => $block->id,
           'media_id' => $assetId,
           'role' => $role,
         ]);
 
-        $blockMedia->fill([
-          'block_id' => $block->id,
-          'media_id' => $assetId,
-          'role' => $role,
-          'position' => $position,
-        ]);
-        if ($role === 'gallery_item') {
-          $blockMedia->fill(GalleryLayout::dimensions($galleryItems[$assetId] ?? []));
+        $blockMedia->position = $position;
+        if ($isGallery) {
+          $blockMedia->fill(GalleryLayout::dimensions($galleryItems[$position] ?? []));
         }
         $blockMedia->save();
 
-        $syncedAssets[$role][(int) $assetId] = $blockMedia;
+        $retainedIds[$blockMedia->id] = true;
+        if ($isGallery) {
+          $syncedGalleryItems[$position] = $blockMedia;
+        }
       }
-
-      $roleAssets
-        ->reject(fn (BlockMedia $blockMedia, int|string $mediaId) => in_array((int) $mediaId, $seenMediaIds, true))
-        ->each(function (BlockMedia $blockMedia): void {
-          $blockMedia->delete();
-        });
     }
 
-    $incomingRoles = array_keys($blockAssets);
-
-    $existingAssets
-      ->reject(fn ($items, $role) => in_array($role, $incomingRoles, true))
-      ->flatten()
-      ->each(function (BlockMedia $blockMedia): void {
-        $blockMedia->delete();
-      });
+    foreach ($existingAssets->collapse() as $asset) {
+      if (! isset($retainedIds[$asset->id])) {
+        $asset->delete();
+      }
+    }
 
     $block->unsetRelation('blockAssets');
     $block->unsetRelation('blockMedia');
 
-    return $syncedAssets;
+    return $syncedGalleryItems;
   }
 
-  private function syncGalleryItemTranslations(Block $block, array $syncedBlockMedia, array $galleryItems, ?string $localeCode): void
+  private function syncGalleryItemTranslations(Block $block, array $syncedGalleryItems, array $galleryItems, ?string $localeCode): void
   {
     if ($block->typeSlug() !== 'gallery' || $galleryItems === []) {
       return;
@@ -142,9 +143,8 @@ class BlockPayloadWriter
       return;
     }
 
-    foreach ($galleryItems as $item) {
-      $mediaId = (int) ($item['media_id'] ?? 0);
-      $blockMedia = $syncedBlockMedia['gallery_item'][$mediaId] ?? null;
+    foreach ($galleryItems as $position => $item) {
+      $blockMedia = $syncedGalleryItems[$position] ?? null;
 
       if (! $blockMedia instanceof BlockMedia) {
         continue;

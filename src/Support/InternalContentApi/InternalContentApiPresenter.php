@@ -309,6 +309,14 @@ class InternalContentApiPresenter
       ],
     ];
 
+    if ($payload['type'] === 'gallery' && $block->relationLoaded('blockAssets')) {
+      $payload['gallery_items'] = $block->blockAssets->where('role', 'gallery_item')->values()->map(fn ($item): array => [
+        'media_id' => $item->media_id,
+        'sort_order' => $item->position,
+        ...$item->galleryDimensions(),
+      ])->all();
+    }
+
     if ($includeChildren) {
       $children = $block->relationLoaded('children') ? $block->children : collect();
       $payload['children'] = $children->map(fn (Block $child) => $this->block($child))->values()->all();

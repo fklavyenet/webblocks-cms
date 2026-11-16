@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.138.1
+
+- Preserve each gallery item's physical measurements when creating or publishing an update draft.
+- Keep physical measurements and supported item translations when duplicating a page.
+- Update existing gallery items through the Internal Content API and keep repeated uses of the same media as separate items in content plans.
+
 ## 1.138.0
 
 - Choose Top, Center, or Bottom vertical alignment for Physical scale galleries. Bottom is the default. Captions stay with their artwork and narrow galleries keep their proportional single-column layout.
