@@ -2262,6 +2262,7 @@ $translations = [
     'restore_parts' => [
       'database' => 'BD',
       'uploads' => 'Fichiers téléversés',
+      'site_public' => 'Fichiers publics du site',
     ],
     'archive_statuses' => [
       'available' => 'Archive prête',

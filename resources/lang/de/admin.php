@@ -2263,6 +2263,7 @@ $translations = [
     'restore_parts' => [
       'database' => 'DB',
       'uploads' => 'Uploads',
+      'site_public' => 'Öffentliche Website-Dateien',
     ],
     'archive_statuses' => [
       'available' => 'Archiv bereit',

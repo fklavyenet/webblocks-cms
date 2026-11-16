@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.11
+
+- Translate the public site files label in backup restore history and the block kind labels in the panel.
+- Localize audited validation errors for remote media, plugin installation, and site imports in all six bundled languages.
+
 ## 1.135.10
 
 - Localize authentication slogans, built-in role and External Content labels, uploaded backup log details, and the audited media, plugin, and site import messages.

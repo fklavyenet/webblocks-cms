@@ -20,6 +20,9 @@ class SiteImportUploadRequest extends FormRequest
 
   public function messages(): array
   {
-    return ['archive.required' => __('webblocks-cms::admin-feedback.panel_copy.site_import_archive_required')];
+    return [
+      'archive.required' => __('webblocks-cms::admin-feedback.panel_copy.site_import_archive_required'),
+      'archive.mimes' => __('webblocks-cms::admin-feedback.panel_copy.site_import_archive_type'),
+    ];
   }
 }

@@ -94,6 +94,8 @@ class SystemPluginController extends Controller
 
     $request->validate([
       'plugin_zip' => ['required', 'file', 'mimes:zip', 'max:20480'],
+    ], [
+      'plugin_zip.required' => __('webblocks-cms::admin-feedback.panel_copy.plugin_zip_required'),
     ]);
 
     try {

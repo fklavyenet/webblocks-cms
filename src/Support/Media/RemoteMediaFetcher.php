@@ -101,7 +101,7 @@ class RemoteMediaFetcher
       return [$response, $currentUrl];
     }
 
-    throw new RuntimeException('Remote media followed too many redirects.');
+    throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.media_remote_redirect_limit'));
   }
 
   private function publicAddressForUrl(string $url): string

@@ -2493,6 +2493,7 @@ return [
     'restore_parts' => [
       'database' => 'DB',
       'uploads' => 'Uploads',
+      'site_public' => 'Public site files',
     ],
     'archive_statuses' => [
       'available' => 'Archive ready',

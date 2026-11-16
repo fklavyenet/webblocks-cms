@@ -36,7 +36,7 @@ class BlockType extends CmsModel
 
   public function kindLabel(): string
   {
-    return $this->is_system ? 'System Block' : 'Content Block';
+    return __('webblocks-cms::admin.inline_blocks.'.($this->is_system ? 'system_block' : 'content_block'));
   }
 
   public function displayName(): string

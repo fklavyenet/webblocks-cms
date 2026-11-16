@@ -44,7 +44,7 @@ class ImportArchiveInspector
       }
 
       if (($manifest['package_type'] ?? null) !== SiteTransferPackage::PACKAGE_TYPE) {
-        throw new RuntimeException('Import package type is not supported.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.site_import_type_unsupported'));
       }
 
       if ((int) ($manifest['format_version'] ?? 0) !== SiteTransferPackage::FORMAT_VERSION) {
@@ -83,7 +83,7 @@ class ImportArchiveInspector
     $decoded = json_decode($contents, true);
 
     if (! is_array($decoded)) {
-      throw new RuntimeException($resolvedPath.' is not valid JSON.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.site_import_entry_invalid_json', ['path' => $resolvedPath]));
     }
 
     return $decoded;

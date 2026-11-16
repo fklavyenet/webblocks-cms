@@ -2276,6 +2276,7 @@ $translations = [
     'restore_parts' => [
       'database' => 'DB',
       'uploads' => 'Uploadlar',
+      'site_public' => 'Herkese açık site dosyaları',
     ],
     'archive_statuses' => [
       'available' => 'Arşiv hazır',

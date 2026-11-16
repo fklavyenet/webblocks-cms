@@ -18,6 +18,7 @@ use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Models\SystemBackup;
+use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
 use WebBlocks\Cms\Support\System\SystemSettings;
@@ -249,6 +250,12 @@ class PanelLanguagesTest extends TestCase
     ]);
     $missing = $backup->replicate()->fill(['archive_path' => 'missing.zip', 'archive_filename' => 'missing.zip']);
     $missing->save();
+    SystemBackupRestore::query()->create([
+      'source_backup_id' => $backup->id,
+      'status' => SystemBackupRestore::STATUS_COMPLETED,
+      'restored_parts' => ['database', 'site_public'],
+      'started_at' => now(),
+    ]);
 
     foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
       $actor->forceFill(['admin_locale' => $locale])->save();
@@ -267,7 +274,10 @@ class PanelLanguagesTest extends TestCase
 
       $this->post(route('admin.system.backups.restore', $backup), ['acknowledge_restore_risk' => true])
         ->assertRedirect($restore)->assertSessionHasErrors(['system_restore' => $manifestError]);
-      $this->get($restore)->assertOk()->assertSee($manifestError);
+      $this->get($restore)->assertOk()
+        ->assertSee($manifestError)
+        ->assertSee(__('webblocks-cms::admin.backups.restore_parts.site_public', [], $locale))
+        ->assertDontSee('admin.backups.restore_parts.site_public');
 
       $notFound = __('webblocks-cms::admin.backups.archive_feedback.missing', [], $locale);
       $this->get(route('admin.system.backups.download', $missing))

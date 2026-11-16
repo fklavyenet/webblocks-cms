@@ -204,7 +204,7 @@ class PluginZipInstaller
     $handle = $manifest['handle'] ?? null;
 
     if (! is_string($handle) || ! PluginDefinition::isValidHandle($handle)) {
-      throw new RuntimeException('The plugin manifest handle must be kebab-case.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.plugin_manifest_invalid_handle'));
     }
 
     if (! is_string($manifest['label'] ?? null) || trim((string) $manifest['label']) === '') {
@@ -212,11 +212,11 @@ class PluginZipInstaller
     }
 
     if (! is_string($manifest['version'] ?? null) || ! preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', (string) $manifest['version'])) {
-      throw new RuntimeException('The plugin manifest must declare a semver-like version.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.plugin_manifest_invalid_version'));
     }
 
     if (! is_string($manifest['provider'] ?? null) || trim((string) $manifest['provider']) === '') {
-      throw new RuntimeException('The plugin manifest must declare provider class metadata.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_copy.plugin_manifest_provider_required'));
     }
 
     $definition = PluginDefinition::make($handle)
