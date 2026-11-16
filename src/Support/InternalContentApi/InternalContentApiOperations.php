@@ -35,6 +35,7 @@ use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\SharedSlots\SharedSlotRevisionManager;
@@ -991,10 +992,17 @@ class InternalContentApiOperations
     }
 
     $items = collect(is_array($galleryItems) ? $galleryItems : [])
-      ->map(function (mixed $item, int $index): array {
+      ->map(function (mixed $item, int $index) use (&$errors, $path): array {
         $item = is_array($item) ? $item : [];
+        $dimensions = GalleryLayout::dimensions($item);
+        foreach ($dimensions as $key => $value) {
+          if ($value === null && $item[$key] !== null) {
+            $errors[] = $this->error($path.'.gallery_items.'.$index.'.'.$key, 'Supply a positive integer measurement in micrometers.');
+          }
+        }
 
         return [
+          ...$dimensions,
           'media_id' => (int) ($item['media_id'] ?? $item['asset_id'] ?? 0),
           'sort_order' => (int) ($item['sort_order'] ?? $index),
           'alt_text' => trim((string) ($item['alt_text'] ?? '')) ?: null,

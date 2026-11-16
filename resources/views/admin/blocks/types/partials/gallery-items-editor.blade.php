@@ -18,6 +18,7 @@
 
         return [
           'media_id' => $item->media_id,
+          ...$item->galleryDimensions(),
           'sort_order' => $index,
           'alt_text' => $translation?->alt_text,
           'caption' => $translation?->caption,
@@ -42,6 +43,7 @@
 
       return [
         'media_id' => $mediaId,
+        ...\WebBlocks\Cms\Support\Media\GalleryLayout::dimensions($item),
         'sort_order' => (int) ($item['sort_order'] ?? $index),
         'alt_text' => trim((string) ($item['alt_text'] ?? '')),
         'caption' => trim((string) ($item['caption'] ?? '')),
@@ -143,6 +145,8 @@
                       </div>
                       <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'sort_order') }}" value="{{ $galleryIndex }}" data-admin-sortable-order data-wb-gallery-field="sort_order">
                       <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'media_id') }}" value="{{ $asset->id }}" data-wb-gallery-field="media_id">
+                      <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'physical_width_um') }}" value="{{ $item['physical_width_um'] ?? '' }}" data-wb-gallery-field="physical_width_um">
+                      <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'physical_height_um') }}" value="{{ $item['physical_height_um'] ?? '' }}" data-wb-gallery-field="physical_height_um">
                       <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'alt_text') }}" value="{{ $item['alt_text'] }}" data-wb-gallery-field="alt_text">
                       <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'caption') }}" value="{{ $item['caption'] }}" data-wb-gallery-field="caption">
                       <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'overlay_title') }}" value="{{ $item['overlay_title'] }}" data-wb-gallery-field="overlay_title">
@@ -299,6 +303,8 @@
                   </div>
                   <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'sort_order') }}" value="{{ $galleryIndex }}" data-admin-sortable-order data-wb-gallery-field="sort_order">
                   <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'media_id') }}" value="{{ $asset->id }}" data-wb-gallery-field="media_id">
+                  <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'physical_width_um') }}" value="{{ $item['physical_width_um'] ?? '' }}" data-wb-gallery-field="physical_width_um">
+                  <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'physical_height_um') }}" value="{{ $item['physical_height_um'] ?? '' }}" data-wb-gallery-field="physical_height_um">
                   <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'alt_text') }}" value="{{ $item['alt_text'] }}" data-wb-gallery-field="alt_text">
                   <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'caption') }}" value="{{ $item['caption'] }}" data-wb-gallery-field="caption">
                   <input type="hidden" name="{{ $rowFieldName($galleryIndex, 'overlay_title') }}" value="{{ $item['overlay_title'] }}" data-wb-gallery-field="overlay_title">
@@ -397,6 +403,8 @@
           <span data-wb-gallery-item-index>__INDEX_LABEL__</span>
         </div>
         <input type="hidden" name="__MEDIA_NAME__" value="__MEDIA_ID__" data-wb-gallery-field="media_id">
+        <input type="hidden" name="__PHYSICAL_WIDTH_NAME__" value="" data-wb-gallery-field="physical_width_um">
+        <input type="hidden" name="__PHYSICAL_HEIGHT_NAME__" value="" data-wb-gallery-field="physical_height_um">
         <input type="hidden" name="__SORT_NAME__" value="__SORT_VALUE__" data-admin-sortable-order data-wb-gallery-field="sort_order">
         <input type="hidden" name="__ALT_NAME__" value="" data-wb-gallery-field="alt_text">
         <input type="hidden" name="__CAPTION_NAME__" value="" data-wb-gallery-field="caption">

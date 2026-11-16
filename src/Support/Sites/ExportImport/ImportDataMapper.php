@@ -37,6 +37,7 @@ use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Blocks\CoreBlockTypeCatalogSyncer;
 use WebBlocks\Cms\Support\Catalog\CoreLayoutCatalogSyncer;
 use WebBlocks\Cms\Support\Contact\ContactFormFields;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
 use WebBlocks\Cms\Support\Pages\PublicPageAccess;
@@ -1511,6 +1512,7 @@ class ImportDataMapper
         'media_id' => $assetId,
         'role' => $blockAssetData['role'] ?? null,
         'position' => $blockAssetData['position'] ?? 0,
+        ...GalleryLayout::dimensions($blockAssetData),
         'created_at' => $blockAssetData['created_at'] ?? null,
         'updated_at' => $blockAssetData['updated_at'] ?? null,
       ]);

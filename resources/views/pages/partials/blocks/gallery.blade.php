@@ -78,6 +78,7 @@
                 'width' => $asset->width,
                 'height' => $asset->height,
                 'srcset' => $srcset,
+                ...($galleryRelation?->galleryDimensions() ?? []),
             ];
         })
         ->when($assetSource->isEmpty(), function ($items) use ($legacyItems, $block, $firstGalleryText) {
@@ -117,6 +118,8 @@
 
 @php
     $variant = $block->galleryVariant();
+    $physical = $variant === 'physical-scale';
+    $itemsPerRow = \WebBlocks\Cms\Support\Media\GalleryLayout::ITEMS_PER_PHYSICAL_ROW;
     $galleryClasses = collect(['wb-gallery'])
         ->when($variant !== 'grid', fn ($classes) => $classes->push('wb-gallery--'.$variant))
         ->push('wb-gallery--cols-'.$block->galleryColumns())
@@ -143,6 +146,7 @@
     @if ($galleryItems->isNotEmpty())
         <div class="wb-gallery-grid">
             @foreach ($galleryItems as $item)
+                @if ($physical && $loop->index % $itemsPerRow === 0)<div class="wb-gallery-row">@endif
                 @php
                     $overlayCaptions = in_array($captionMode, ['overlay', 'on-hover'], true);
                     $captionTitle = $overlayCaptions
@@ -151,7 +155,12 @@
                     $captionMeta = $overlayCaptions ? $item['overlay_text'] : '';
                     $showCaption = $captionMode !== 'hidden' && ($captionTitle !== '' || $captionMeta !== '');
                 @endphp
-                <figure class="wb-gallery-item">
+                <figure class="wb-gallery-item"
+                    @if ($physical)
+                        data-wb-gallery-physical-width="{{ $item['physical_width_um'] ?? '' }}"
+                        data-wb-gallery-physical-height="{{ $item['physical_height_um'] ?? '' }}"
+                    @endif
+                >
                     <a
                         href="{{ $item['full_url'] }}"
                         class="wb-gallery-trigger"
@@ -169,7 +178,7 @@
                             src="{{ $item['thumbnail_url'] }}"
                             @if ($item['srcset'] ?? null)
                                 srcset="{{ $item['srcset'] }}"
-                                @if ($variant === 'weighted' || $variant === 'equal-height')
+                                @if ($physical || $variant === 'weighted' || $variant === 'equal-height')
                                     sizes="auto, 100vw"
                                 @else
                                     sizes="(max-width: 640px) 100vw, calc(100vw / {{ max(1, $block->galleryColumns()) }})"
@@ -197,6 +206,7 @@
                         <figcaption class="wb-gallery-caption">{{ $captionTitle }}</figcaption>
                     @endif
                 </figure>
+                @if ($physical && ($loop->iteration % $itemsPerRow === 0 || $loop->last))</div>@endif
             @endforeach
         </div>
 

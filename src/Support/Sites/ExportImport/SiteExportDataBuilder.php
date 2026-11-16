@@ -318,6 +318,7 @@ class SiteExportDataBuilder
           'media_id' => $blockAsset->media_id,
           'role' => $blockAsset->role,
           'position' => $blockAsset->position,
+          ...$blockAsset->galleryDimensions(),
           'created_at' => $blockAsset->created_at?->toDateTimeString(),
           'updated_at' => $blockAsset->updated_at?->toDateTimeString(),
         ])->all()

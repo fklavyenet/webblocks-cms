@@ -8,6 +8,7 @@ use WebBlocks\Cms\Models\BlockMedia;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 
 class BlockPayloadWriter
 {
@@ -24,9 +25,16 @@ class BlockPayloadWriter
     $media = Media::query()->find($block->media_id);
     $block->setRelation('asset', $media)->setRelation('media', $media);
     $assets = $block->blockAssets()->getRelated()->newCollection();
+    $galleryItems = collect($data['_gallery_items'] ?? [])->keyBy('media_id');
+    $existingGalleryItems = ($data['_block_media']['gallery_item'] ?? []) !== []
+      ? $source->galleryItems()->keyBy('media_id') : collect();
     foreach ($data['_block_media'] ?? [] as $role => $ids) {
       foreach (array_values($ids) as $position => $id) {
         $row = new BlockMedia(['block_id' => $block->id, 'media_id' => $id, 'role' => $role, 'position' => $position]);
+        if ($role === 'gallery_item') {
+          $row->fill($existingGalleryItems->get($id)?->galleryDimensions() ?? []);
+          $row->fill(GalleryLayout::dimensions($galleryItems->get($id, [])));
+        }
         $row->setRelation('asset', Media::query()->find($id));
         $row->setRelation('media', $row->asset);
         $assets->push($row);
@@ -57,13 +65,13 @@ class BlockPayloadWriter
     $block->save();
 
     $this->blockTranslationWriter->sync($block, $data, $localeCode, $isCreating, $translationSourceBlock);
-    $syncedBlockMedia = $this->syncAssets($block, $blockAssets);
+    $syncedBlockMedia = $this->syncAssets($block, $blockAssets, collect($galleryItems)->keyBy('media_id')->all());
     $this->syncGalleryItemTranslations($block, $syncedBlockMedia, $galleryItems, $localeCode);
 
     return $block;
   }
 
-  private function syncAssets(Block $block, array $blockAssets): array
+  private function syncAssets(Block $block, array $blockAssets, array $galleryItems): array
   {
     $existingAssets = $block->blockAssets()->get()->groupBy('role');
     $syncedAssets = [];
@@ -90,6 +98,9 @@ class BlockPayloadWriter
           'role' => $role,
           'position' => $position,
         ]);
+        if ($role === 'gallery_item') {
+          $blockMedia->fill(GalleryLayout::dimensions($galleryItems[$assetId] ?? []));
+        }
         $blockMedia->save();
 
         $syncedAssets[$role][(int) $assetId] = $blockMedia;

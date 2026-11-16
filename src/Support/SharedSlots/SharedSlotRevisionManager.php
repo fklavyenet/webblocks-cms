@@ -15,6 +15,7 @@ use WebBlocks\Cms\Support\Audit\CurrentActorResolver;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Contact\ContactConsentRequirements;
 use WebBlocks\Cms\Support\Contact\ContactFormFields;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Relational\PersistentDocuments;
 use WebBlocks\Cms\Support\Revisions\RestoredBlockReads;
@@ -200,6 +201,7 @@ class SharedSlotRevisionManager
               'media_id' => $asset->media_id,
               'role' => $asset->role,
               'position' => $asset->position,
+              ...$asset->galleryDimensions(),
               'gallery_item_translations' => $asset->galleryItemTranslations
                 ->sortBy('locale_id')
                 ->values()
@@ -344,6 +346,7 @@ class SharedSlotRevisionManager
           'media_id' => $asset['media_id'] ?? null,
           'role' => $asset['role'],
           'position' => $asset['position'],
+          ...GalleryLayout::dimensions($asset),
         ]);
 
         $restoredBlockAsset->withRevisionIdentity($asset['revision_key'] ?? null)->save();

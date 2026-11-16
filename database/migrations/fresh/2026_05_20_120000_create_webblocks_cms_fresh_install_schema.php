@@ -516,6 +516,8 @@ return new class extends Migration
       $table->foreignId('media_id')->constrained('wbcms_media')->cascadeOnDelete();
       $table->string('role')->nullable();
       $table->unsignedInteger('position')->default(0);
+      $table->unsignedBigInteger('physical_width_um')->nullable();
+      $table->unsignedBigInteger('physical_height_um')->nullable();
       $table->timestamps();
       $table->index(['block_id', 'role', 'position']);
     });

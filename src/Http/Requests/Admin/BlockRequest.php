@@ -336,6 +336,9 @@ class BlockRequest extends FormRequest
       'gallery_items.*.overlay_title' => [$isGallery ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'gallery_items.*.overlay_text' => [$isGallery ? 'nullable' : 'prohibited', 'string'],
       'gallery_variant' => [$isGallery ? 'nullable' : 'prohibited', Rule::in([...GalleryLayout::VARIANTS, 'masonary'])],
+      'gallery_unit' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(array_keys(GalleryLayout::UNITS))],
+      'gallery_items.*.physical_width_um' => [$isGallery ? 'nullable' : 'prohibited', 'required_if:gallery_variant,physical-scale', 'integer', 'min:1', 'max:'.GalleryLayout::MAX_DIMENSION],
+      'gallery_items.*.physical_height_um' => [$isGallery ? 'nullable' : 'prohibited', 'required_if:gallery_variant,physical-scale', 'integer', 'min:1', 'max:'.GalleryLayout::MAX_DIMENSION],
       'gallery_columns' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4', '5'])],
       'gallery_weights' => [$isGallery ? 'nullable' : 'prohibited', 'array', 'list', 'max:5'],
       'gallery_weights.*' => ['required', 'numeric', 'between:'.GalleryLayout::MIN_WEIGHT.','.GalleryLayout::MAX_WEIGHT],
@@ -1069,8 +1072,9 @@ class BlockRequest extends FormRequest
       $data['media_id'] = $existingBlock->media_id;
     }
 
+    $canChangeGalleryMeasurements = $data['locale'] === null;
     $submittedGalleryItems = collect($data['gallery_items'] ?? [])
-      ->map(function (array $item, int $index): array {
+      ->map(function (array $item, int $index) use ($canChangeGalleryMeasurements): array {
         return [
           'media_id' => (int) ($item['media_id'] ?? 0),
           'sort_order' => (int) ($item['sort_order'] ?? $index),
@@ -1078,6 +1082,7 @@ class BlockRequest extends FormRequest
           'caption' => trim((string) ($item['caption'] ?? '')) ?: null,
           'overlay_title' => trim((string) ($item['overlay_title'] ?? '')) ?: null,
           'overlay_text' => trim((string) ($item['overlay_text'] ?? '')) ?: null,
+          ...($canChangeGalleryMeasurements ? GalleryLayout::dimensions($item) : []),
         ];
       })
       ->sortBy('sort_order')
@@ -1739,6 +1744,9 @@ class BlockRequest extends FormRequest
         if (! $isTranslatedGalleryEdit) {
           $submittedVariant = trim((string) ($data['gallery_variant'] ?? 'grid'));
           $settings['variant'] = GalleryLayout::variant($submittedVariant);
+          if (isset($data['gallery_unit'])) {
+            $settings['gallery_unit'] = $data['gallery_unit'];
+          }
           if (isset($data['gallery_weights'])) {
             $settings['gallery_weights'] = array_map(floatval(...), $data['gallery_weights']);
           }

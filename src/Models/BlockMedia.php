@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use WebBlocks\Cms\Models\Concerns\HasRevisionIdentity;
 use WebBlocks\Cms\Models\Concerns\ReusesMediaRelationAliases;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 
 class BlockMedia extends CmsModel
 {
@@ -23,7 +24,15 @@ class BlockMedia extends CmsModel
     'asset_id',
     'role',
     'position',
+    'physical_width_um',
+    'physical_height_um',
   ];
+
+  public function galleryDimensions(): array
+  {
+    return $this->role === 'gallery_item'
+      ? array_filter(GalleryLayout::dimensions($this->getAttributes())) : [];
+  }
 
   protected function mediaId(): Attribute
   {

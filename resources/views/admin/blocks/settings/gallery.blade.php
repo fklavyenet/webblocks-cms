@@ -45,7 +45,7 @@
     </div>
 
     <div class="wb-grid wb-grid-2">
-        <div class="wb-stack wb-gap-1">
+        <div class="wb-stack wb-gap-1" data-cms-gallery-columns-field @if ($layout === 'physical-scale') hidden @endif>
             <label for="{{ $idPrefix }}gallery_columns" data-cms-gallery-columns-label data-columns="{{ $adminText('columns') }}" data-per-row="{{ $adminText('items_per_row') }}">
                 {{ $adminText($layout === 'equal-height' ? 'items_per_row' : 'columns') }}
             </label>
@@ -55,6 +55,28 @@
                 @endforeach
             </select>
         </div>
+    </div>
+
+    <div class="wb-stack wb-gap-2" data-cms-gallery-physical @if ($layout !== 'physical-scale') hidden @endif>
+        <label class="wb-stack wb-gap-1">
+            <span>{{ $adminText('physical_unit') }}</span>
+            <select class="wb-select" name="{{ $name('gallery_unit') }}" data-cms-gallery-unit @disabled($layout !== 'physical-scale')>
+                @foreach (\WebBlocks\Cms\Support\Media\GalleryLayout::UNITS as $unit => $factor)
+                    <option value="{{ $unit }}" data-factor="{{ $factor }}" @selected($fieldValue('gallery_unit', $block->setting('gallery_unit', 'cm')) === $unit)>{{ $unit }}</option>
+                @endforeach
+            </select>
+        </label>
+        <div class="wb-table-wrap" data-cms-gallery-measurements hidden>
+            <table class="wb-table">
+                <thead><tr>
+                    <th scope="col">{{ $adminText('physical_item') }}</th>
+                    <th scope="col" data-cms-gallery-dimension-label="physical_width_um">{{ $adminText('physical_width') }}</th>
+                    <th scope="col" data-cms-gallery-dimension-label="physical_height_um">{{ $adminText('physical_height') }}</th>
+                </tr></thead>
+                <tbody data-cms-gallery-measurement-rows data-max="{{ \WebBlocks\Cms\Support\Media\GalleryLayout::MAX_DIMENSION }}"></tbody>
+            </table>
+        </div>
+        <p class="wb-text-sm wb-text-muted">{{ $adminText('physical_help') }}</p>
     </div>
 
     <div class="wb-stack wb-gap-1" data-cms-gallery-weights @if ($layout !== 'weighted') hidden @endif>
@@ -87,7 +109,7 @@
             </select>
         </div>
 
-        <div class="wb-stack wb-gap-1" data-cms-gallery-aspect-field @if ($layout === 'equal-height') hidden @endif>
+        <div class="wb-stack wb-gap-1" data-cms-gallery-aspect-field @if (in_array($layout, ['equal-height', 'physical-scale'], true)) hidden @endif>
             <label for="{{ $idPrefix }}gallery_aspect_ratio">{{ $adminText('aspect_ratio') }}</label>
             <select id="{{ $idPrefix }}gallery_aspect_ratio" name="{{ $name('gallery_aspect_ratio') }}" class="wb-select" data-cms-gallery-aspect>
                 @foreach ([
@@ -151,8 +173,10 @@
             </div>
         </div>
         <p class="wb-text-sm wb-text-muted" data-cms-gallery-preview-empty>{{ $adminText('preview_empty') }}</p>
+        <p class="wb-alert wb-alert-info" data-cms-gallery-preview-missing role="status" hidden>{{ $adminText('physical_missing') }}</p>
         <div class="wb-cms-gallery-preview" data-cms-gallery-preview-frame hidden>
-            <div class="wb-gallery" data-cms-gallery-preview aria-labelledby="{{ $idPrefix }}gallery-preview">
+            <div class="wb-gallery" data-cms-gallery-preview data-physical-row-size="{{ \WebBlocks\Cms\Support\Media\GalleryLayout::ITEMS_PER_PHYSICAL_ROW }}"
+                aria-labelledby="{{ $idPrefix }}gallery-preview">
                 <div class="wb-gallery-grid"></div>
             </div>
         </div>

@@ -416,6 +416,7 @@ class SiteCloneService
           'media_id' => $this->clonedAssetId($blockAsset->media_id, $assetMap, $options, $counts),
           'role' => $blockAsset->role,
           'position' => $blockAsset->position,
+          ...$blockAsset->galleryDimensions(),
           'created_at' => $blockAsset->created_at,
           'updated_at' => $blockAsset->updated_at,
         ]);

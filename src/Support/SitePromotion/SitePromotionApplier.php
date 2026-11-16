@@ -29,6 +29,7 @@ use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Blocks\BlockTranslationWriter;
 use WebBlocks\Cms\Support\Contact\ContactFormFields;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 use WebBlocks\Cms\Support\Media\LegacyAssetPayloadNormalizer;
 use WebBlocks\Cms\Support\Pages\PageAssetPathValidator;
 use WebBlocks\Cms\Support\Pages\PublicPageAccess;
@@ -575,6 +576,7 @@ class SitePromotionApplier
             'media_id' => $assetId,
             'role' => $blockAsset['role'] ?? null,
             'position' => $blockAsset['position'] ?? 0,
+        ...GalleryLayout::dimensions($blockAsset),
           ]);
 
           foreach ($galleryItemTranslations[(int) ($blockAsset['id'] ?? 0)] ?? [] as $translation) {

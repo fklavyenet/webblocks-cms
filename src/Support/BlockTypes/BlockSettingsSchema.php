@@ -89,7 +89,7 @@ final class BlockSettingsSchema
       $rules['scale'] = ['enum', ['5']];
     }
     if ($type === 'gallery') {
-      $rules += ['variant' => ['enum', GalleryLayout::VARIANTS], 'gallery_weights' => ['gallery_weights'], 'columns' => ['enum', ['2', '3', '4', '5']], 'gap' => ['enum', ['none', 'sm', 'md', 'lg']],
+      $rules += ['variant' => ['enum', GalleryLayout::VARIANTS], 'gallery_weights' => ['gallery_weights'], 'gallery_unit' => ['enum', array_keys(GalleryLayout::UNITS)], 'columns' => ['enum', ['2', '3', '4', '5']], 'gap' => ['enum', ['none', 'sm', 'md', 'lg']],
         'aspect_ratio' => ['enum', ['auto', 'square', '4:3', '16:9', 'portrait']], 'captions_mode' => ['enum', ['hidden', 'below', 'overlay', 'on-hover']], 'overlay_mode' => ['enum', ['none', 'gradient', 'solid']], 'lightbox_enabled' => ['bool'], 'viewer_title' => ['text', 255]];
     }
     if ($type === 'webblocks-commerce-buy-button') {

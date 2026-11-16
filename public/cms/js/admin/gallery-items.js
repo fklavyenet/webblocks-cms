@@ -1,6 +1,7 @@
 (function () {
     function i18n(key) { return document.body.getAttribute('data-wb-i18n-' + key) || ''; }
     var admin = window.WebBlocksCmsAdmin || {};
+    var physicalFields = ['physical_width_um', 'physical_height_um'];
     var escapeHtml = admin.escapeHtml || function (value) {
         return String(value || '');
     };
@@ -37,6 +38,8 @@
         var image = document.createElement('img');
         var overlay = captionMode === 'overlay' || captionMode === 'on-hover';
         figure.className = 'wb-gallery-item';
+        figure.dataset.wbGalleryPhysicalWidth = field('physical_width_um');
+        figure.dataset.wbGalleryPhysicalHeight = field('physical_height_um');
         image.className = 'wb-gallery-media';
         image.src = thumbnail.dataset.galleryPreviewUrl || thumbnail.src;
         image.loading = 'lazy';
@@ -69,7 +72,45 @@
         return figure;
     }
 
-    function renderGalleryPreview(settings, editor) {
+    function renderMeasurements(settings, rows, active) {
+        var table = settings.querySelector('[data-cms-gallery-measurements]');
+        var body = settings.querySelector('[data-cms-gallery-measurement-rows]');
+        table.hidden = !active || rows.length === 0;
+        body.replaceChildren();
+        if (table.hidden) return;
+
+        var unit = settings.querySelector('[data-cms-gallery-unit]').selectedOptions[0];
+        var factor = Number(unit.dataset.factor);
+        rows.forEach(function (row, index) {
+            var title = row.querySelector('img[data-wb-gallery-preview-image]')?.alt.trim() || String(index + 1);
+            var line = body.insertRow();
+            var heading = document.createElement('th');
+            heading.scope = 'row';
+            heading.textContent = title;
+            line.append(heading);
+            physicalFields.forEach(function (field) {
+                var source = row.querySelector('[data-wb-gallery-field="' + field + '"]');
+                if (!source) return;
+                var label = table.querySelector('[data-cms-gallery-dimension-label="' + field + '"]').textContent.trim();
+                var input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'wb-input';
+                input.step = 'any';
+                input.min = 1 / factor;
+                input.max = Number(body.dataset.max) / factor;
+                input.setAttribute('data-cms-gallery-measurement-input', '');
+                input.value = source.value ? Number((Number(source.value) / factor).toPrecision(12)) : '';
+                input.setAttribute('aria-label', title + ' — ' + label + ' (' + unit.value + ')');
+                input.addEventListener('input', function () {
+                    source.value = input.value && input.validity.valid ? Math.round(input.valueAsNumber * factor) : '';
+                    renderGalleryPreview(settings, row.closest('[data-wb-gallery-items-editor]'), true);
+                });
+                line.insertCell().append(input);
+            });
+        });
+    }
+
+    function renderGalleryPreview(settings, editor, keepMeasurements) {
         var find = function (selector) { return settings.querySelector(selector); };
         var variant = find('[data-cms-gallery-variant]:checked').value;
         var columns = find('[data-cms-gallery-columns]').value;
@@ -81,9 +122,13 @@
         var frame = find('[data-cms-gallery-preview-frame]');
         var weighted = variant === 'weighted';
         var equalHeight = variant === 'equal-height';
+        var physical = variant === 'physical-scale';
         var weights = [];
         find('[data-cms-gallery-weights]').hidden = !weighted;
-        find('[data-cms-gallery-aspect-field]').hidden = equalHeight;
+        find('[data-cms-gallery-aspect-field]').hidden = equalHeight || physical;
+        find('[data-cms-gallery-columns-field]').hidden = physical;
+        find('[data-cms-gallery-physical]').hidden = !physical;
+        find('[data-cms-gallery-unit]').disabled = !physical;
         var columnsLabel = find('[data-cms-gallery-columns-label]');
         columnsLabel.textContent = equalHeight ? columnsLabel.dataset.perRow : columnsLabel.dataset.columns;
         settings.querySelectorAll('[data-cms-gallery-weight]').forEach(function (label, index) {
@@ -104,10 +149,25 @@
         gallery.dataset.wbGalleryItemsPerRow = columns;
 
         var rows = editor ? Array.from(editor.querySelectorAll('[data-wb-gallery-item-row]:not([hidden])')) : [];
+        if (!keepMeasurements) renderMeasurements(settings, rows, physical);
         var items = rows.map(function (row) { return galleryPreviewItem(row, captions); }).filter(Boolean);
-        gallery.querySelector('.wb-gallery-grid').replaceChildren(...items);
+        var missingMeasurements = physical && items.some(function (item) {
+            return !(Number(item.dataset.wbGalleryPhysicalWidth) > 0 && Number(item.dataset.wbGalleryPhysicalHeight) > 0);
+        });
+        var grid = gallery.querySelector('.wb-gallery-grid');
+        grid.replaceChildren();
+        if (physical && !missingMeasurements) {
+            var rowSize = Number(gallery.dataset.physicalRowSize);
+            for (var index = 0; index < items.length; index += rowSize) {
+                var row = document.createElement('div');
+                row.className = 'wb-gallery-row';
+                row.append(...items.slice(index, index + rowSize));
+                grid.append(row);
+            }
+        } else if (!physical) grid.append(...items);
         find('[data-cms-gallery-preview-empty]').hidden = items.length > 0;
-        frame.hidden = items.length === 0;
+        find('[data-cms-gallery-preview-missing]').hidden = !missingMeasurements;
+        frame.hidden = items.length === 0 || missingMeasurements;
         if (window.WBGallery) window.WBGallery.update(gallery);
     }
 
@@ -137,7 +197,9 @@
                 alt_text: itemFieldName(prefix, index, 'alt_text'),
                 caption: itemFieldName(prefix, index, 'caption'),
                 overlay_title: itemFieldName(prefix, index, 'overlay_title'),
-                overlay_text: itemFieldName(prefix, index, 'overlay_text')
+                overlay_text: itemFieldName(prefix, index, 'overlay_text'),
+                physical_width_um: itemFieldName(prefix, index, 'physical_width_um'),
+                physical_height_um: itemFieldName(prefix, index, 'physical_height_um')
             };
 
             Array.prototype.slice.call(inputs).forEach(function (input) {
@@ -172,6 +234,7 @@
                 if (field === 'overlay_text') {
                     input.name = updatableNames.overlay_text;
                 }
+                if (physicalFields.includes(field)) input.name = updatableNames[field];
             });
 
             if (indexLabel) {
@@ -346,6 +409,8 @@
             .replaceAll('__INDEX_LABEL__', escapeHtml(index + 1))
             .replaceAll('__SORT_VALUE__', escapeHtml(index))
             .replaceAll('__MEDIA_NAME__', escapeHtml(itemFieldName(prefix, index, 'media_id')))
+            .replaceAll('__PHYSICAL_WIDTH_NAME__', escapeHtml(itemFieldName(prefix, index, 'physical_width_um')))
+            .replaceAll('__PHYSICAL_HEIGHT_NAME__', escapeHtml(itemFieldName(prefix, index, 'physical_height_um')))
             .replaceAll('__SORT_NAME__', escapeHtml(itemFieldName(prefix, index, 'sort_order')))
             .replaceAll('__ALT_NAME__', escapeHtml(itemFieldName(prefix, index, 'alt_text')))
             .replaceAll('__CAPTION_NAME__', escapeHtml(itemFieldName(prefix, index, 'caption')))
@@ -425,7 +490,7 @@
 
     function onGallerySettingsChange(event) {
         var settings = event.target.closest('[data-cms-gallery-settings]');
-        if (!settings) return;
+        if (!settings || event.target.hasAttribute('data-cms-gallery-measurement-input')) return;
         var editor = galleryPeer(settings, '[data-wb-gallery-items-editor]', settings.dataset.cmsGallerySettings);
         renderGalleryPreview(settings, editor);
     }

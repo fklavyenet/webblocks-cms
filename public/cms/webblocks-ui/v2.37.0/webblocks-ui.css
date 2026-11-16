@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.36.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.37.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -7717,10 +7717,46 @@ align-items: start;
   }
 }
 @media (hover: none) {
-.wb-gallery:is(.wb-gallery--weighted, .wb-gallery--equal-height).wb-gallery--captions-hover > .wb-gallery-grid .wb-gallery-caption {
+.wb-gallery:is(.wb-gallery--weighted, .wb-gallery--equal-height, .wb-gallery--physical-scale).wb-gallery--captions-hover > .wb-gallery-grid .wb-gallery-caption {
     opacity: 1;
     transform: none;
   }
+}
+.wb-gallery.wb-gallery--physical-scale {
+container: wb-gallery / inline-size;
+}
+.wb-gallery--physical-scale > .wb-gallery-grid > .wb-gallery-row {
+display: contents;
+}
+.wb-gallery.wb-gallery--physical-scale > .wb-gallery-grid[data-wb-gallery-layout-ready="physical-scale"] {
+grid-template-columns: minmax(0, 1fr);
+}
+.wb-gallery--physical-scale > .wb-gallery-grid[data-wb-gallery-layout-ready="physical-scale"] > .wb-gallery-row > .wb-gallery-item {
+justify-self: center;
+min-inline-size: 0;
+inline-size: calc(100% * var(--wb-gallery-physical-narrow));
+overflow-wrap: anywhere;
+}
+.wb-gallery--physical-scale > .wb-gallery-grid[data-wb-gallery-layout-ready="physical-scale"] .wb-gallery-media {
+aspect-ratio: var(--wb-gallery-physical-ratio);
+height: auto;
+object-fit: contain;
+}
+.wb-gallery--physical-scale > .wb-gallery-grid[data-wb-gallery-layout-ready="physical-scale"] .wb-gallery-trigger {
+border-width: 0;
+}
+@container wb-gallery (min-width: 40rem) {
+.wb-gallery--physical-scale > .wb-gallery-grid[data-wb-gallery-layout-ready="physical-scale"] > .wb-gallery-row {
+--wb-gallery-physical-space: calc(100cqw - var(--wb-gallery-gap) * var(--wb-gallery-physical-gaps));
+display: flex;
+gap: var(--wb-gallery-gap);
+align-items: flex-start;
+}
+.wb-gallery--physical-scale > .wb-gallery-grid[data-wb-gallery-layout-ready="physical-scale"] > .wb-gallery-row > .wb-gallery-item {
+flex: 0 0 auto;
+inline-size: calc(var(--wb-gallery-physical-space) * var(--wb-gallery-physical-wide));
+padding-block-start: calc(var(--wb-gallery-physical-space) * var(--wb-gallery-physical-offset));
+}
 }
 .wb-slider {
 --wb-slider-min-height: 28rem;

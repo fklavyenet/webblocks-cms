@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.137.0
+
+- Choose Physical scale in the Gallery editor and enter each artwork's width and height in millimeters, centimeters, or inches.
+- Keep artwork sizes proportional across rows and when images stack in a narrow gallery.
+
 ## 1.136.0
 
 - Choose Gallery layouts from illustrated cards and preview the selected images at wide or narrow widths before saving.

@@ -1,5 +1,5 @@
 /*!
- * WebBlocks UI v2.36.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.37.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -2268,7 +2268,7 @@
   'use strict';
 
   var activeViewer = null;
-  var customLayout = '.wb-gallery--weighted, .wb-gallery--equal-height';
+  var customLayout = '.wb-gallery--weighted, .wb-gallery--equal-height, .wb-gallery--physical-scale';
   var defaultImageRatio = 4 / 3;
 
   function toArray(list) {
@@ -2325,9 +2325,50 @@
     grid.setAttribute('data-wb-gallery-layout-ready', 'equal-height');
   }
 
+  function updatePhysicalScale(grid) {
+    var rows = toArray(grid.children).filter(function (row) { return row.matches('.wb-gallery-row'); }).map(function (row) {
+      return toArray(row.children).filter(function (item) { return item.matches('.wb-gallery-item'); }).map(function (item) {
+        return {
+          item: item,
+          width: Number(item.getAttribute('data-wb-gallery-physical-width')),
+          height: Number(item.getAttribute('data-wb-gallery-physical-height'))
+        };
+      });
+    }).filter(function (row) { return row.length > 0; });
+    var items = rows.flat();
+    var valid = items.length > 0 && items.every(function (entry) {
+      return Number.isFinite(entry.width) && Number.isFinite(entry.height) && entry.width > 0 && entry.height > 0;
+    });
+    if (!valid) {
+      grid.removeAttribute('data-wb-gallery-layout-ready');
+      return;
+    }
+    var widest = Math.max.apply(null, items.map(function (entry) { return entry.width; }));
+    var maxTotal = Math.max.apply(null, rows.map(function (row) {
+      return row.reduce(function (sum, entry) { return sum + entry.width; }, 0);
+    }));
+    var maxGaps = Math.max.apply(null, rows.map(function (row) { return row.length - 1; }));
+    grid.style.setProperty('--wb-gallery-physical-gaps', maxGaps);
+    rows.forEach(function (row) {
+      var tallest = Math.max.apply(null, row.map(function (entry) { return entry.height; }));
+      row.forEach(function (entry) {
+        entry.item.style.setProperty('--wb-gallery-physical-narrow', entry.width / widest);
+        entry.item.style.setProperty('--wb-gallery-physical-wide', entry.width / maxTotal);
+        entry.item.style.setProperty('--wb-gallery-physical-offset', (tallest - entry.height) / maxTotal);
+        entry.item.style.setProperty('--wb-gallery-physical-ratio', entry.width / entry.height);
+      });
+    });
+    grid.setAttribute('data-wb-gallery-layout-ready', 'physical-scale');
+  }
+
   function updateLayout(gallery) {
     var grid = toArray(gallery.children).find(function (child) { return child.matches('.wb-gallery-grid'); });
     if (!grid) return;
+
+    if (gallery.matches('.wb-gallery--physical-scale')) {
+      updatePhysicalScale(grid);
+      return;
+    }
 
     var items = toArray(grid.children).filter(function (item) { return item.matches('.wb-gallery-item'); });
     if (gallery.matches('.wb-gallery--equal-height')) {

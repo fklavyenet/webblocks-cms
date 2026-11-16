@@ -88,6 +88,9 @@ class PageRequest extends FormRequest
       'blocks.*.gallery_items.*.overlay_title' => ['nullable', 'string', 'max:255'],
       'blocks.*.gallery_items.*.overlay_text' => ['nullable', 'string'],
       'blocks.*.gallery_variant' => ['nullable', Rule::in([...GalleryLayout::VARIANTS, 'masonary'])],
+      'blocks.*.gallery_unit' => ['nullable', Rule::in(array_keys(GalleryLayout::UNITS))],
+      'blocks.*.gallery_items.*.physical_width_um' => ['nullable', 'required_if:blocks.*.gallery_variant,physical-scale', 'integer', 'min:1', 'max:'.GalleryLayout::MAX_DIMENSION],
+      'blocks.*.gallery_items.*.physical_height_um' => ['nullable', 'required_if:blocks.*.gallery_variant,physical-scale', 'integer', 'min:1', 'max:'.GalleryLayout::MAX_DIMENSION],
       'blocks.*.gallery_columns' => ['nullable', Rule::in(['2', '3', '4', '5'])],
       'blocks.*.gallery_weights' => ['nullable', 'array', 'list', 'max:5'],
       'blocks.*.gallery_weights.*' => ['required', 'numeric', 'between:'.GalleryLayout::MIN_WEIGHT.','.GalleryLayout::MAX_WEIGHT],
@@ -177,6 +180,7 @@ class PageRequest extends FormRequest
               'caption' => trim((string) ($item['caption'] ?? '')) ?: null,
               'overlay_title' => trim((string) ($item['overlay_title'] ?? '')) ?: null,
               'overlay_text' => trim((string) ($item['overlay_text'] ?? '')) ?: null,
+              ...GalleryLayout::dimensions($item),
             ];
           })
           ->sortBy('sort_order')
@@ -235,6 +239,9 @@ class PageRequest extends FormRequest
           $settings = $decodedSettings;
           $submittedVariant = trim((string) ($block['gallery_variant'] ?? ($settings['variant'] ?? 'grid')));
           $settings['variant'] = GalleryLayout::variant($submittedVariant);
+          if (isset($block['gallery_unit'])) {
+            $settings['gallery_unit'] = $block['gallery_unit'];
+          }
           if (isset($block['gallery_weights'])) {
             $settings['gallery_weights'] = array_map(floatval(...), $block['gallery_weights']);
           }

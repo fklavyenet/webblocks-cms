@@ -54,6 +54,31 @@ class GalleryRenderPerformanceTest extends TestCase
   }
 
   #[Test]
+  public function physical_dimensions_are_rendered_and_restored_with_the_gallery_item(): void
+  {
+    [$block] = $this->fixture(3);
+    $block = $block->fresh();
+    $block->update(['settings' => [...$block->decodedSettings(), 'variant' => 'physical-scale', 'gallery_unit' => 'cm']]);
+    foreach ($block->galleryItems() as $index => $item) {
+      $size = $index === 2 ? 800000 : 400000;
+      $item->update(['physical_width_um' => $size, 'physical_height_um' => $size]);
+    }
+    $html = $this->render($block->fresh());
+    $this->assertStringContainsString('wb-gallery--physical-scale', $html);
+    $this->assertSame(1, substr_count($html, 'class="wb-gallery-row"'));
+    $this->assertSame(2, substr_count($html, 'data-wb-gallery-physical-width="400000"'));
+    $this->assertStringContainsString('data-wb-gallery-physical-height="800000"', $html);
+    $revisions = app(PageRevisionManager::class);
+    $page = $block->page;
+    $revision = $revisions->capture($page, force: true);
+    $candidate = Page::create(['site_id' => $page->site_id, 'title' => 'Candidate', 'slug' => 'candidate', 'status' => 'draft']);
+    $revisions->applySnapshotToCandidate($candidate, $revision->fresh()->snapshot, ['source_page_id' => $page->id, 'revision_id' => $revision->id]);
+    $restored = $candidate->blocks()->where('type', 'gallery')->firstOrFail();
+    $this->assertSame('physical-scale', $restored->galleryVariant());
+    $this->assertSame([400000, 400000, 800000], $restored->galleryItems()->map(fn ($item) => $item->galleryDimensions()['physical_width_um'])->all());
+  }
+
+  #[Test]
   public function gallery_schema_validates_an_ordered_list_of_weights(): void
   {
     $fields = app(BlockSettingsSchema::class)->forType('gallery')['fields'];

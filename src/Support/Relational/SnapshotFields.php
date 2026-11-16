@@ -24,7 +24,7 @@ final class SnapshotFields
       'snapshot_slots' => $ints('slot_type_id shared_slot_id sort_order') + $text('source_type'),
       'snapshot_assets' => $text('type path load_position') + $ints('sort_order') + $bools('is_defer is_async is_module is_enabled'),
       'snapshot_blocks' => $ints('snapshot_id parent_snapshot_id block_type_id slot_type_id sort_order media_id') + $text('revision_key type source_type slot title subtitle content url variant status') + $bools('is_system'),
-      'snapshot_block_media' => $ints('snapshot_id media_id position') + $text('revision_key role'),
+      'snapshot_block_media' => $ints('snapshot_id media_id position physical_width_um physical_height_um') + $text('revision_key role'),
       'snapshot_media_translations' => $ints('locale_id') + $text('alt_text caption overlay_title overlay_text'),
       'snapshot_text_translations' => $ints('locale_id') + $text('title eyebrow subtitle content'),
       'snapshot_button_translations' => $ints('locale_id') + $text('title url'),

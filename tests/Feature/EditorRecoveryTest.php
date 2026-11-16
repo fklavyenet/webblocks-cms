@@ -449,6 +449,28 @@ class EditorRecoveryTest extends TestCase
     $this->assertSame([$media[1]->id, $media[0]->id], $this->renderedGalleryIds($this->get($edit)->assertOk()->getContent()));
   }
 
+  #[Test]
+  public function physical_gallery_measurements_are_required_and_follow_media_when_reordered(): void
+  {
+    $media = $this->galleryFixture();
+    $input = ['page_id' => $this->page->id, 'block_type_id' => $this->block->block_type_id, 'slot_type_id' => $this->block->slot_type_id,
+      'sort_order' => 0, 'status' => 'draft', 'gallery_variant' => 'physical-scale', 'gallery_unit' => 'cm'];
+    $items = [
+      ['media_id' => $media[1]->id, 'sort_order' => 0, 'physical_width_um' => 800000, 'physical_height_um' => 800000],
+      ['media_id' => $media[0]->id, 'sort_order' => 1, 'physical_width_um' => 400000],
+    ];
+    $this->put(route('admin.blocks.update', $this->block), [...$input, 'gallery_items' => $items])
+      ->assertRedirect()->assertSessionHasErrors('gallery_items.1.physical_height_um');
+    $items[1]['physical_height_um'] = 400000;
+    $this->put(route('admin.blocks.update', $this->block), [...$input, 'gallery_items' => $items])
+      ->assertRedirect()->assertSessionHasNoErrors();
+    $block = $this->block->fresh();
+    $this->assertSame('physical-scale', $block->galleryVariant());
+    $this->assertSame('cm', $block->setting('gallery_unit'));
+    $this->assertSame([800000, 400000], $block->galleryItems()->map(fn ($row) => $row->galleryDimensions()['physical_width_um'])->all());
+    $this->assertSame([$media[1]->id, $media[0]->id], $block->galleryItems()->pluck('media_id')->all());
+  }
+
   private function galleryFixture(): array
   {
     $type = BlockType::firstOrCreate(['slug' => 'gallery'], ['name' => 'Gallery', 'category' => 'media', 'source_type' => 'static', 'status' => 'published']);
