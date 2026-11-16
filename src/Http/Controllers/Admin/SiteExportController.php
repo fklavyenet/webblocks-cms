@@ -17,6 +17,8 @@ use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Sites\ExportImport\ExportablePages;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportBulkDeleter;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteExportManager;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferLog;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 
 class SiteExportController extends Controller
 {
@@ -68,7 +70,7 @@ class SiteExportController extends Controller
     } catch (Throwable $throwable) {
       return redirect()
         ->route('admin.site-transfers.exports.index')
-        ->withErrors(['site_export' => $throwable->getMessage()]);
+        ->withErrors(['site_export' => SiteTransferLog::display($throwable->getMessage(), app(AdminLocaleResolver::class)->locale())]);
     }
   }
 
@@ -87,7 +89,7 @@ class SiteExportController extends Controller
           'export_site' => $site->id,
         ])
         ->withInput()
-        ->withErrors(['site_export' => $throwable->getMessage()]);
+        ->withErrors(['site_export' => SiteTransferLog::display($throwable->getMessage(), app(AdminLocaleResolver::class)->locale())]);
     }
   }
 

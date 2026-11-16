@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.13
+
+- Localize the panel access-denied page and the browser error page for invalid MCP authorization requests.
+- Translate audited form and connection errors, backup summaries and logs, and site transfer failure details in the six bundled languages.
+
 ## 1.135.12
 
 - Translate the audited form errors, token and account status labels, and site transfer messages in the six bundled panel languages.

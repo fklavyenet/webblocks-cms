@@ -446,7 +446,7 @@ class ImportDataMapper
       $code = Locale::normalizeCode((string) ($localeData['code'] ?? ''));
 
       if (! $code) {
-        throw new RuntimeException('Import package contains a locale without a valid code.');
+        throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.import_locale_invalid', [], 'en'));
       }
 
       $locale = Locale::query()->where('code', $code)->first();

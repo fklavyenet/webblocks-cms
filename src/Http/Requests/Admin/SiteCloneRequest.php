@@ -13,6 +13,11 @@ class SiteCloneRequest extends FormRequest
     return true;
   }
 
+  public function messages(): array
+  {
+    return ['target_identifier.required' => __('webblocks-cms::admin-feedback.panel_validation.clone_target_required')];
+  }
+
   public function rules(): array
   {
     return [

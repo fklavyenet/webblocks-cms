@@ -32,9 +32,14 @@ class LoginController extends Controller
 
   public function store(Request $request): RedirectResponse
   {
+    $locale = $this->localeResolver->locale();
     $credentials = $request->validate([
       'email' => ['required', 'email'],
       'password' => ['required', 'string'],
+    ], [
+      'email.required' => __('webblocks-cms::admin-feedback.panel_validation.email_required', [], $locale),
+      'email.email' => __('webblocks-cms::admin-feedback.panel_validation.user_email_invalid', [], $locale),
+      'password.required' => __('webblocks-cms::admin-feedback.panel_validation.user_password_required', [], $locale),
     ]);
 
     $this->ensureIsNotRateLimited($request);

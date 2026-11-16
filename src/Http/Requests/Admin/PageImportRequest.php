@@ -23,6 +23,11 @@ class PageImportRequest extends FormRequest
     ]);
   }
 
+  public function messages(): array
+  {
+    return ['json_file.required' => __('webblocks-cms::admin-feedback.panel_validation.page_json_required')];
+  }
+
   public function rules(): array
   {
     return [

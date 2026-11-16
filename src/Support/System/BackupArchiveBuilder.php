@@ -31,16 +31,16 @@ class BackupArchiveBuilder
     }
     $archive->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
 
-    [$uploadsCount, $sitePublicCount] = BackupTiming::measure($output, 'File scan and ZIP entry registration',
+    [$uploadsCount, $sitePublicCount] = BackupTiming::measure($output, 'scan_timing',
       fn () => [$this->addUploads($archive), $this->addSitePublicFiles($archive)]);
     // libzip reads and compresses the registered files when the archive closes.
-    if (! BackupTiming::measure($output, 'ZIP writing', fn () => $archive->close())) {
+    if (! BackupTiming::measure($output, 'zip_timing', fn () => $archive->close())) {
       throw new RuntimeException(__('webblocks-cms::admin-feedback.backup_archive.archive_write'));
     }
 
-    $output[] = 'Archive created as '.basename($archivePath).'.';
-    $output[] = 'Added '.$uploadsCount.' upload file(s) from storage/app/public.';
-    $output[] = 'Added '.$sitePublicCount.' site public file(s) from public/site.';
+    $output[] = __('webblocks-cms::admin-feedback.backup_log.archive_created', ['file' => basename($archivePath)], 'en');
+    $output[] = __('webblocks-cms::admin-feedback.backup_log.uploads_added', ['count' => $uploadsCount], 'en');
+    $output[] = __('webblocks-cms::admin-feedback.backup_log.site_files_added', ['count' => $sitePublicCount], 'en');
 
     return [
       'uploads_file_count' => $uploadsCount,

@@ -34,4 +34,15 @@ class SiteTransferLogTest extends TestCase
 
     $this->assertSame($expected, SiteTransferLog::display('Import failed during pages: '.$detail, 'tr'));
   }
+
+  public function test_known_failure_details_saved_in_english_follow_the_viewers_language(): void
+  {
+    $detail = 'manifest.json is empty.';
+    $localized = __('webblocks-cms::admin-feedback.panel_validation.import_entry_empty', ['path' => 'manifest.json'], 'fr');
+    $phase = __('webblocks-cms::admin.site_transfers.import_phases.pages', [], 'fr');
+    $expected = __('webblocks-cms::admin-feedback.transfer_log.import_failed_during', ['phase' => $phase, 'detail' => $localized], 'fr');
+
+    $this->assertSame($localized, SiteTransferLog::display($detail, 'fr'));
+    $this->assertSame($expected, SiteTransferLog::display('Import failed during pages: '.$detail, 'fr'));
+  }
 }

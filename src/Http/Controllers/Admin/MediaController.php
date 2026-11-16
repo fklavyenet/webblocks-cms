@@ -285,7 +285,9 @@ class MediaController extends Controller
           'modal' => 'fetch-media',
         ]))
         ->withInput()
-        ->withErrors(['source_url' => $exception->getMessage()]);
+        ->withErrors(['source_url' => $exception instanceof ConnectionException
+          ? __('webblocks-cms::admin-feedback.panel_validation.remote_connection_failed')
+          : $exception->getMessage()]);
     }
 
     return redirect()

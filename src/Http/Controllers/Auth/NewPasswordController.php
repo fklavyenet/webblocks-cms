@@ -33,10 +33,15 @@ class NewPasswordController extends Controller
      */
   public function store(Request $request): RedirectResponse
   {
+    $locale = $this->localeResolver->locale();
     $request->validate([
       'token' => ['required'],
       'email' => ['required', 'email'],
       'password' => ['required', 'confirmed', Rules\Password::defaults()],
+    ], [
+      'email.required' => __('webblocks-cms::admin-feedback.panel_validation.email_required', [], $locale),
+      'email.email' => __('webblocks-cms::admin-feedback.panel_validation.user_email_invalid', [], $locale),
+      'password.required' => __('webblocks-cms::admin-feedback.panel_validation.user_password_required', [], $locale),
     ]);
 
     $status = Password::reset(

@@ -59,6 +59,6 @@ class SiteTransferDisk
 
   private function adminErrorMessage(): string
   {
-    return 'Site transfer storage is not ready. Check the site-transfers filesystem disk and make sure storage/app/site-transfers is writable.';
+    return __('webblocks-cms::admin-feedback.panel_validation.transfer_storage_unavailable', [], 'en');
   }
 }

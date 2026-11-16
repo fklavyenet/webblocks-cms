@@ -43,7 +43,7 @@ class SiteCloneService
     $targetSite = $this->resolveTarget($target);
 
     if ($targetSite && $targetSite->is($sourceSite)) {
-      throw new RuntimeException('Source and target sites must be different.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.clone_same_site'));
     }
 
     if ($options->dryRun) {

@@ -47,7 +47,7 @@ class SiteImportController extends Controller
     } catch (Throwable $throwable) {
       return redirect()
         ->route('admin.site-transfers.imports.create')
-        ->withErrors(['site_import' => $throwable->getMessage()]);
+        ->withErrors(['site_import' => SiteTransferLog::display($throwable->getMessage(), app(AdminLocaleResolver::class)->locale())]);
     }
   }
 
@@ -120,7 +120,7 @@ class SiteImportController extends Controller
       return response()->json([
         ...SiteImportStepResult::fromImport($siteImport->fresh())->toArray(),
         'failed' => true,
-        'failure_message' => $throwable->getMessage(),
+        'failure_message' => SiteTransferLog::display($throwable->getMessage(), app(AdminLocaleResolver::class)->locale()),
       ], 500);
     } finally {
       $lock->release();

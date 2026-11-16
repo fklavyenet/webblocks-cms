@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use WebBlocks\Cms\Support\System\BackupOperations;
+use WebBlocks\Cms\Support\Translations\LocalizedLog;
 
 class SystemBackup extends CmsModel
 {
@@ -74,13 +75,13 @@ class SystemBackup extends CmsModel
   {
     return $this->type === self::TYPE_UPLOADED && $this->isSuccessful()
       ? __('webblocks-cms::admin-feedback.backups.uploaded_summary', [], $locale)
-      : $this->summary;
+      : $this->displayLog($this->summary, $locale);
   }
 
   public function panelOutput(string $locale): ?string
   {
     if ($this->output === null || $this->type !== self::TYPE_UPLOADED) {
-      return $this->output;
+      return $this->displayLog($this->output, $locale);
     }
 
     $messages = [];
@@ -99,6 +100,23 @@ class SystemBackup extends CmsModel
       fn (string $line): string => $messages[$line] ?? $this->translateUploadLogField($line, $fields, $locale),
       preg_split('/(\R)/', $this->output, -1, PREG_SPLIT_DELIM_CAPTURE),
     ));
+  }
+
+  public function panelError(string $locale): ?string
+  {
+    return $this->displayLog($this->error_message, $locale);
+  }
+
+  private function displayLog(?string $value, string $locale): ?string
+  {
+    return LocalizedLog::display(
+      $value,
+      $locale,
+      LocalizedLog::templates('admin-feedback.backup_log') + LocalizedLog::templates('admin-feedback.backup_archive', [
+        'archive_create', 'archive_add_database', 'archive_write', 'archive_store', 'storage_missing',
+        'storage_unavailable', 'archive_changed', 'manifest_missing', 'manifest_invalid',
+      ]),
+    );
   }
 
   private function translateUploadLogField(string $line, array $fields, string $locale): string

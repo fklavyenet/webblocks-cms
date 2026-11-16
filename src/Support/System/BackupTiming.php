@@ -19,6 +19,6 @@ final class BackupTiming
 
   public static function record(array &$output, string $stage, int|float $startedAt): void
   {
-    $output[] = $stage.': '.(int) round((hrtime(true) - $startedAt) / 1_000_000).' ms';
+    $output[] = __('webblocks-cms::admin-feedback.backup_log.'.$stage, ['elapsed' => (int) round((hrtime(true) - $startedAt) / 1_000_000)], 'en');
   }
 }

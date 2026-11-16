@@ -88,7 +88,7 @@ class BackupArchiveValidation
         // Optional reporting provenance cannot discard an otherwise valid backup.
       }
       if ($startedAt !== null) {
-        BackupTiming::record($output, 'Final archive validation', $startedAt);
+        BackupTiming::record($output, 'final_validation_timing', $startedAt);
       }
     }
   }

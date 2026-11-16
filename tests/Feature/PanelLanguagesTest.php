@@ -117,6 +117,26 @@ class PanelLanguagesTest extends TestCase
     }
   }
 
+  public function test_forbidden_panel_pages_use_the_selected_language(): void
+  {
+    config(['app.debug' => false]);
+    $site = Site::query()->create(['name' => 'Fixture', 'handle' => 'fixture', 'is_primary' => true]);
+    $editor = $this->cmsActor((new User)->forceFill(['role' => 'editor']), [$site->id]);
+    $editor = User::query()->findOrFail($editor->id);
+    $this->actingAs($editor);
+    $url = route('admin.system.settings.edit');
+
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $editor->forceFill(['admin_locale' => $locale])->save();
+      $this->get($url)->assertForbidden()
+        ->assertSee('lang="'.$locale.'"', false)
+        ->assertSee(__('webblocks-cms::admin-feedback.panel_http.forbidden_title', [], $locale))
+        ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    $this->getJson($url)->assertForbidden()->assertJsonStructure(['message']);
+  }
+
   public function test_embedded_application_validation_handles_css_and_enum_values(): void
   {
     $this->actingAs($actor = $this->actor());

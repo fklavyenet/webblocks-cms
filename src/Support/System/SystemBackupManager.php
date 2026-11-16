@@ -160,14 +160,14 @@ class SystemBackupManager
         // Keep the original backup failure detail as the primary signal.
       }
 
-      $output[] = 'Backup failed: '.$sanitizedFailureDetail;
+      $output[] = __('webblocks-cms::admin-feedback.backup_log.failure_detail', ['detail' => $sanitizedFailureDetail], 'en');
       $finishedAt = now();
 
       $backup->forceFill([
         'status' => SystemBackup::STATUS_FAILED,
         'finished_at' => $finishedAt,
         'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
-        'summary' => 'Backup failed.',
+        'summary' => __('webblocks-cms::admin-feedback.backup_log.failed', [], 'en'),
         'output' => implode(PHP_EOL, $output),
         'error_message' => $sanitizedFailureDetail,
       ])->save();
@@ -192,7 +192,7 @@ class SystemBackupManager
       'archive_size_bytes' => $size,
       'finished_at' => $finishedAt,
       'duration_ms' => $startedAt->diffInMilliseconds($finishedAt),
-      'summary' => 'Backup completed with database dump and '.number_format($archiveMeta['uploads_file_count']).' upload file(s).',
+      'summary' => __('webblocks-cms::admin-feedback.backup_log.completed', ['count' => number_format($archiveMeta['uploads_file_count'])], 'en'),
       'output' => implode(PHP_EOL, $output),
       'error_message' => null,
     ]);

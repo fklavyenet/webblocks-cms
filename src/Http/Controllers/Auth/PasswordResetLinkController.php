@@ -34,8 +34,12 @@ class PasswordResetLinkController extends Controller
    */
   public function store(Request $request): RedirectResponse
   {
+    $locale = $this->localeResolver->locale();
     $request->validate([
       'email' => ['required', 'email'],
+    ], [
+      'email.required' => __('webblocks-cms::admin-feedback.panel_validation.email_required', [], $locale),
+      'email.email' => __('webblocks-cms::admin-feedback.panel_validation.user_email_invalid', [], $locale),
     ]);
 
     $broker = Password::broker();

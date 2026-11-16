@@ -23,7 +23,7 @@ class DatabaseDumpWriter
     $connection = DB::connection();
     $driver = $connection->getDriverName();
 
-    $output[] = 'Preparing database dump for driver '.$driver.'.';
+    $output[] = __('webblocks-cms::admin-feedback.backup_log.prepare_dump', ['driver' => $driver], 'en');
 
     return match ($driver) {
       'sqlite' => $this->dumpSqlite($connection, $destinationPath, $output),
@@ -89,8 +89,8 @@ class DatabaseDumpWriter
 
     File::put($destinationPath, implode(PHP_EOL, $lines));
 
-    BackupTiming::record($output, 'SQLite SQL export', $startedAt);
-    $output[] = 'SQLite SQL dump written to '.basename($destinationPath).'.';
+    BackupTiming::record($output, 'sqlite_export_timing', $startedAt);
+    $output[] = __('webblocks-cms::admin-feedback.backup_log.sqlite_written', ['file' => basename($destinationPath)], 'en');
 
     return [
       'driver' => 'sqlite',
@@ -105,8 +105,8 @@ class DatabaseDumpWriter
     $strategy = $this->resolveMysqlDumpStrategy();
     $this->runDirectMysqlDump($destinationPath, $config, $output);
 
-    $output[] = 'Using '.$this->describeMysqlDumpCommand($strategy, $connection->getDriverName()).' for database dump.';
-    $output[] = 'MySQL-compatible SQL dump written to '.basename($destinationPath).'.';
+    $output[] = __('webblocks-cms::admin-feedback.backup_log.mysql_command', ['command' => $this->describeMysqlDumpCommand($strategy, $connection->getDriverName())], 'en');
+    $output[] = __('webblocks-cms::admin-feedback.backup_log.mysql_written', ['file' => basename($destinationPath)], 'en');
 
     return [
       'driver' => $connection->getDriverName(),
@@ -128,7 +128,7 @@ class DatabaseDumpWriter
       $command = $this->buildDirectMysqlDumpCommand($destinationPath, $defaultsFile, $config);
       $process = $this->makeDumpProcess($command);
       $process->setTimeout((int) config('cms.backup.dump_timeout_seconds', 120));
-      BackupTiming::measure($output, 'MySQL dump', function () use ($process): void {
+      BackupTiming::measure($output, 'mysql_dump_timing', function () use ($process): void {
         $process->run();
 
         if (! $process->isSuccessful()) {
@@ -136,7 +136,7 @@ class DatabaseDumpWriter
         }
       });
 
-      BackupTiming::measure($output, 'Raw SQL validation', fn () => $this->assertValidDumpFile($destinationPath));
+      BackupTiming::measure($output, 'sql_validation_timing', fn () => $this->assertValidDumpFile($destinationPath));
     } finally {
       File::delete($defaultsFile);
     }

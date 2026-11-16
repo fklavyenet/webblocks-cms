@@ -159,13 +159,13 @@ class PageJsonImporter
       $decoded = json_decode($file->get(), true, 512, JSON_THROW_ON_ERROR);
     } catch (JsonException) {
       throw ValidationException::withMessages([
-        'json_file' => ['The uploaded file must contain valid JSON.'],
+        'json_file' => [__('webblocks-cms::admin-feedback.panel_validation.page_json_invalid')],
       ]);
     }
 
     if (! is_array($decoded)) {
       throw ValidationException::withMessages([
-        'json_file' => ['The uploaded JSON payload must decode to an object.'],
+        'json_file' => [__('webblocks-cms::admin-feedback.panel_validation.page_json_object')],
       ]);
     }
 
@@ -178,7 +178,7 @@ class PageJsonImporter
 
     if ($schema !== self::SCHEMA) {
       throw ValidationException::withMessages([
-        'json_file' => ['Unsupported page import schema. Expected '.self::SCHEMA.'.'],
+        'json_file' => [__('webblocks-cms::admin-feedback.panel_validation.page_json_schema', ['schema' => self::SCHEMA])],
       ]);
     }
 
@@ -199,7 +199,7 @@ class PageJsonImporter
 
     if (! is_array($translationsData) || $translationsData === []) {
       throw ValidationException::withMessages([
-        'json_file' => ['The payload must include at least one translation keyed by locale code.'],
+        'json_file' => [__('webblocks-cms::admin-feedback.panel_validation.page_json_translations')],
       ]);
     }
 

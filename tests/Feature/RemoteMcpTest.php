@@ -576,6 +576,27 @@ class RemoteMcpTest extends TestCase
       ->assertJsonPath('result.structuredContent.code', 'auth_required');
   }
 
+  public function test_invalid_oauth_authorization_uses_the_panel_language_for_html_and_json(): void
+  {
+    config(['app.debug' => false]);
+    $this->pageFixture();
+    $operator = User::query()->findOrFail($this->operator()->id);
+    $this->actingAs($operator, 'web');
+    $parameters = $this->authorizationRequest();
+    unset($parameters['response_type']);
+    $url = self::MCP.'/authorize?'.http_build_query($parameters);
+
+    foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
+      $operator->forceFill(['admin_locale' => $locale])->save();
+      $this->get($url)->assertBadRequest()
+        ->assertSee('lang="'.$locale.'"', false)
+        ->assertSee(__('webblocks-cms::admin-feedback.panel_http.mcp_bad_request_title', [], $locale))
+        ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+      $this->getJson($url)->assertBadRequest()
+        ->assertJsonPath('message', __('webblocks-cms::mcp.invalid_request', [], $locale));
+    }
+  }
+
   public function test_panel_controls_public_registration_without_a_configured_client(): void
   {
     [$page] = $this->pageFixture();

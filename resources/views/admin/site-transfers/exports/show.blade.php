@@ -43,7 +43,7 @@
                         <div class="wb-alert wb-alert-danger">
                             <div>
                                 <div class="wb-alert-title">{{ $adminText('site_transfers.export_failed') }}</div>
-                                <div>{{ $siteExport->failure_message }}</div>
+                                <div>{{ SiteTransferLog::display($siteExport->failure_message, $adminLocale) }}</div>
                             </div>
                         </div>
                     @endif

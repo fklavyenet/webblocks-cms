@@ -77,7 +77,7 @@ class ImportArchiveInspector
     $contents = $archive->getFromName($resolvedPath);
 
     if (! is_string($contents) || trim($contents) === '') {
-      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.import_entry_empty', ['path' => $resolvedPath]));
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.import_entry_empty', ['path' => $resolvedPath], 'en'));
     }
 
     $decoded = json_decode($contents, true);

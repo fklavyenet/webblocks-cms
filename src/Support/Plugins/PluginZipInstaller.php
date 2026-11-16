@@ -148,7 +148,7 @@ class PluginZipInstaller
     }
 
     if ($entries === []) {
-      throw new RuntimeException('The uploaded plugin package is empty.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.plugin_zip_empty'));
     }
 
     return $entries;

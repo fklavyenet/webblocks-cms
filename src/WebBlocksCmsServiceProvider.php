@@ -26,6 +26,7 @@ use Illuminate\View\View;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 use WebBlocks\Cms\Console\AdminTranslationAuditCommand;
@@ -1190,6 +1191,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     }
     $this->bootViews();
     $this->bootNotFoundView();
+    $this->bootPanelErrorViews();
     \Illuminate\Support\Facades\View::composer('webblocks-cms::layouts.public', function (View $view): void {
       app(SystemPageRenderer::class)->compose($view);
     });
@@ -1683,6 +1685,41 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         return $systemHtml !== null
           ? response($systemHtml, 404)->header('X-Robots-Tag', 'noindex, nofollow')->header('Cache-Control', 'private, no-store')
           : response()->view('webblocks-cms::errors.404', ['request' => $request], 404);
+      });
+    });
+  }
+
+  protected function bootPanelErrorViews(): void
+  {
+    $this->callAfterResolving(ExceptionHandler::class, function (ExceptionHandler $handler): void {
+      if (! $handler instanceof ExceptionsHandler) {
+        return;
+      }
+
+      $handler->renderable(function (HttpExceptionInterface $exception, Request $request) {
+        if ($request->expectsJson()) {
+          return null;
+        }
+
+        $status = $exception->getStatusCode();
+        $message = match (true) {
+          $status === 400 && $request->routeIs('webblocks.mcp.authorize') => 'mcp_bad_request',
+          $status === 403 && $request->routeIs('admin.*', 'webblocks.mcp.authorize')
+            && ! $request->is('webadmin/api', 'webadmin/api/*') => 'forbidden',
+          default => null,
+        };
+
+        if ($message === null || is_file(resource_path('views/errors/'.$status.'.blade.php'))) {
+          return null;
+        }
+
+        return app(UseAdminLocale::class)->handle($request, fn () => response()
+          ->view('webblocks-cms::errors.admin-http', [
+            'title' => __('webblocks-cms::admin-feedback.panel_http.'.$message.'_title'),
+            'body' => __('webblocks-cms::admin-feedback.panel_http.'.$message.'_body'),
+          ], $status, $exception->getHeaders())
+          ->header('X-Robots-Tag', 'noindex, nofollow')
+          ->header('Cache-Control', 'private, no-store'));
       });
     });
   }

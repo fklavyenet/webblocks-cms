@@ -81,11 +81,11 @@
                         <tr><th scope="row">{{ $adminText('backups.triggered_by') }}</th><td>{{ $backup->triggeredBy?->name ?? '-' }}</td></tr>
                     </tbody></table></div>
 
-                    @if ($backup->error_message)
+                    @if ($error = $backup->panelError($adminLocale))
                         <div class="wb-alert wb-alert-danger">
                             <div>
                                 <div class="wb-alert-title">{{ $adminText('backups.error') }}</div>
-                                <div>{{ $backup->error_message }}</div>
+                                <div>{{ $error }}</div>
                             </div>
                         </div>
                     @endif
