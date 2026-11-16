@@ -2015,6 +2015,8 @@ $translations = [
     'unknown' => 'bilinmiyor',
   ],
   'updates' => [
+    'hide_progress' => 'Gizle',
+    'show_status' => 'Durumu göster',
     'progress_title' => 'Sistem güncellemesi: :version',
     'duration' => 'Süre',
     'elapsed' => 'Geçen süre',

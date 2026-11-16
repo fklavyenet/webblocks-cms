@@ -8,7 +8,7 @@ namespace WebBlocks\Cms\Support\Updates\Client;
 
 final class PublisherClient
 {
-    public const VERSION = '1.5.1';
+    public const VERSION = '1.5.3';
 
     public static function version(): string
     {

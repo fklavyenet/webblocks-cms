@@ -12,14 +12,27 @@
     var message = modal.querySelector('[data-update-message]');
     var operation = '00000000-0000-4000-8000-000000000015';
     var scenario = new URLSearchParams(window.location.search).get('case') || 'admission';
+    var query = new URLSearchParams(window.location.search);
+    var hide = modal.querySelector('[data-pc-update-hide]');
+    var status = document.querySelector('[data-pc-update-status]');
+    var result = document.querySelector('[data-pc-update-result]');
+    var dismissible = ['hide', 'return-page', 'server-active', 'lost-admission', 'lost-unknown', 'conflict', 'status-auth'].indexOf(scenario) !== -1;
     var requests = [];
     var posts = 0;
     var opens = 0;
     var checks = [];
     var storageKey = 'publisher-client.operation:/health';
-    sessionStorage.removeItem(storageKey);
+    if (!query.has('reloaded')) { sessionStorage.removeItem(storageKey); }
+    if (!dismissible) { hide.remove(); }
     modal.addEventListener('wb:modal:open', function () { opens += 1; });
     if (scenario === 'resume') { opener.setAttribute('data-active-operation', operation); }
+    if (scenario === 'server-active') {
+        // An older, remembered UUID cannot supersede the active server receipt.
+        sessionStorage.setItem(storageKey, '00000000-0000-4000-8000-000000000099');
+        opener.setAttribute('data-active-operation', operation);
+        status.hidden = false;
+        form.remove();
+    }
     if (scenario === 'client' || scenario === 'legacy') { opener.removeAttribute('data-pc-admission'); }
     if (scenario === 'legacy') {
         var list = document.createElement('ol');
@@ -34,6 +47,7 @@
         });
     };
     function wait(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
+    function nextFrame() { return new Promise(function (resolve) { window.requestAnimationFrame(resolve); }); }
     function seconds() { var parts = elapsed.textContent.split(':'); return Number(parts[0]) * 60 + Number(parts[1]); }
     function assert(condition, text) {
         if (!condition) { throw new Error(text); }
@@ -155,9 +169,101 @@
         assert(opens === 1, 'Entire operation uses one modal opening');
         document.getElementById('test-status').textContent = 'PASS ' + scenario + '\n' + checks.join('\n');
     }
+    async function runDismissible() {
+        var resumed = scenario === 'server-active' || query.has('reloaded');
+        if (resumed) {
+            await poll(progress(65000, 'Restore session'));
+            assert(!modal.classList.contains('is-open') && !status.hidden && posts === 0, 'Page return tracks the right UUID without opening or posting');
+            status.click();
+            assert(seconds() >= 65, 'Resumed progress uses the server elapsed time');
+        } else {
+            form.requestSubmit();
+            var post = await request('POST');
+            assert(!post.options.body.has('operation_id'), 'Only the server assigns the operation ID');
+            assert(!status.hidden && form.hidden && modal.classList.contains('is-open'), 'Show status replaces Update during admission');
+            await nextFrame();
+            assert(document.activeElement === hide, 'Focus enters the dialog');
+            hide.focus();
+            hide.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+            assert(document.activeElement === hide, 'Tab remains in the dialog while Hide is the only visible action');
+            hide.click();
+            assert(!modal.classList.contains('is-open') && document.activeElement === status, 'Hide during admission returns focus to Show status');
+            if (scenario === 'lost-admission' || scenario === 'lost-unknown' || scenario === 'conflict') {
+                if (scenario === 'conflict') { response(post, 409, { message: 'An update is already running.' }); }
+                else { post.reject(new TypeError('Synthetic lost admission response')); }
+                var lookup = await request('GET');
+                assert(new URL(lookup.url, window.location.href).searchParams.get('active') === '1' && posts === 1, 'Admission recovery uses a read-only active lookup');
+                if (scenario === 'lost-unknown') {
+                    response(lookup, 200, { progress: progress(10, 'Other operation', { state: 'success', terminal: true }) });
+                    await wait(50);
+                    assert(!result.hidden && result.textContent.trim() === opener.getAttribute('data-progress-unknown'), 'Without an active receipt, the outcome remains unknown');
+                    status.click();
+                    modal.querySelector('[data-update-recheck]').click();
+                    lookup = await request('GET');
+                    response(lookup, 200, { progress: [] });
+                    await wait(50);
+                    assert(posts === 1, 'Recheck of an unknown admission never posts again');
+                    return;
+                }
+                response(lookup, 200, { progress: progress(1000, 'Queued', { state: 'queued' }) });
+            } else {
+                response(post, 202, { operation_id: operation });
+            }
+            await poll(progress(5000, 'Verify', { target_version: '2.0.0' }));
+            assert(!modal.classList.contains('is-open') && opens === 1, 'Receiving the UUID and progress does not reopen a hidden dialog');
+            if (scenario === 'return-page') {
+                query.set('reloaded', '1');
+                window.history.replaceState(null, '', '?' + query.toString());
+                window.location.reload();
+                return;
+            }
+            status.click();
+        }
+        await nextFrame();
+        assert(modal.classList.contains('is-open') && document.activeElement === hide, 'Show status opens the same dialog and restores its initial focus');
+        document.querySelector('.wb-overlay-backdrop:not([hidden])').click();
+        modal.click();
+        assert(modal.classList.contains('is-open'), 'Backdrop and modal background clicks leave the dialog open');
+        hide.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+        assert(!modal.classList.contains('is-open') && document.activeElement === status, 'Escape hides the dialog and returns focus');
+        var before = seconds();
+        await poll(null, 503);
+        assert(!bar.hidden && message.hidden && seconds() >= before, 'A brief maintenance 503 retains the last phase and elapsed time');
+        await poll(progress(70000, 'Apply'));
+        status.click();
+        assert(modal.classList.contains('is-open') && stage.textContent === 'Apply' && seconds() >= 70, 'Reopening shows progress received while hidden');
+        hide.click();
+        if (scenario === 'status-auth') {
+            await poll(null, 403);
+            assert(!result.hidden && result.textContent.trim() === opener.getAttribute('data-progress-auth'), 'Authorization loss is shown on the page');
+            await wait(1600);
+            assert(requests.length === 0 && posts === 1, 'Authorization loss stops polling');
+            return;
+        }
+        await poll(progress(71000, 'Foreign', { operation_id: '00000000-0000-4000-8000-000000000099',
+            state: 'success', terminal: true, target_version: '2.0.0', installed_version: '2.0.0' }));
+        assert(result.hidden, 'Another operation cannot report completion');
+        await poll(progress(72000, 'Verify', { state: 'success', terminal: true, target_version: '2.0.0' }));
+        assert(result.hidden, 'Without both version fields, success is unconfirmed');
+        await poll(progress(73000, 'Verify', { state: 'success', terminal: true,
+            installed_version: '1.0.0', target_version: '2.0.0' }));
+        assert(result.hidden, 'An installed version mismatch cannot report success');
+        var state = query.get('result') || 'success';
+        var finalMessage = 'Saved result: ' + state;
+        await poll(progress(74000, 'Finish', { state: state, terminal: true, message: finalMessage,
+            installed_version: '2.0.0', target_version: '2.0.0' }));
+        assert(!result.hidden && result.textContent.trim() === finalMessage && !modal.classList.contains('is-open'), 'The saved result is visible while the modal stays hidden');
+        var finished = seconds();
+        await wait(1700);
+        assert(window.location.hash === '' && seconds() === finished && requests.length === 0, 'Completion stays on the page and stops polling and the timer');
+        status.click();
+        assert(!message.hidden && message.textContent === finalMessage && posts === (resumed ? 0 : 1), 'The same result reopens without another POST');
+    }
     document.addEventListener('DOMContentLoaded', function () {
         setTimeout(function () {
-            run().catch(function (error) { document.getElementById('test-status').textContent = 'FAIL ' + scenario + ': ' + error.message + '\n' + checks.join('\n'); });
+            (dismissible ? runDismissible() : run()).then(function () {
+                if (dismissible) { document.getElementById('test-status').textContent = 'PASS ' + scenario + '\n' + checks.join('\n'); }
+            }).catch(function (error) { document.getElementById('test-status').textContent = 'FAIL ' + scenario + ': ' + error.message + '\n' + checks.join('\n'); });
         }, 0);
     });
 })();

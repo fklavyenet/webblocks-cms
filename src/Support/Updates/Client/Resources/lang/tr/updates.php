@@ -39,7 +39,7 @@ return [
         'maintenance_up' => 'Bakım modundan çıkılıyor',
         'rollback' => 'Yedek geri yükleniyor',
     ],
-    'title' => 'Sistem Güncellemeleri',
+    'title' => 'Sistem güncellemeleri',
     'check_button' => 'Güncellemeleri denetle',
     'update_button' => ':version sürümüne güncelle',
     'confirm' => ':from sürümünden :to sürümüne güncellensin mi? Site kısa süre bakım moduna girer; önce yedek alınır ve bir hata olursa otomatik geri yüklenir.',

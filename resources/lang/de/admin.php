@@ -2002,6 +2002,8 @@ $translations = [
     'unknown' => 'unbekannt',
   ],
   'updates' => [
+    'hide_progress' => 'Ausblenden',
+    'show_status' => 'Status anzeigen',
     'progress_title' => 'Systemupdate: :version',
     'duration' => 'Dauer',
     'elapsed' => 'Verstrichen',

@@ -2000,6 +2000,8 @@ $translations = [
     'unknown' => 'sconosciuto',
   ],
   'updates' => [
+    'hide_progress' => 'Nascondi',
+    'show_status' => 'Mostra stato',
     'progress_title' => 'Aggiornamento di sistema: :version',
     'duration' => 'Durata',
     'elapsed' => 'Tempo trascorso',

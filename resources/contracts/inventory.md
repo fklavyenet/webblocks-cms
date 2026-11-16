@@ -2548,6 +2548,17 @@ outside that group. Successful verified updates retain the existing automatic
 return; failed/restored results stay available with the update-history link.
 The embedded Client runtime is unchanged.
 
+The System updates screen can hide the progress dialog while the detached
+worker continues. A backdrop click keeps the dialog open. Hide and Escape
+return focus to Show status. The screen follows the same server-issued
+operation UUID and offers Show status in place of the update form. Returning
+to the screen first uses the active SQL receipt, then a remembered UUID
+from the tab for an exact read. If admission is unconfirmed, a read-only
+lookup can find the active receipt. Status requests never submit the update
+again. Confirmed results stay in the page, including when the dialog is
+hidden. Success requires matching installed and target versions on the same
+operation. The worker and update recovery rules are unchanged.
+
 ### Large staged content-plan writes (1.105.28)
 
 The existing HTTP content-plan modes and publication capabilities remain unchanged.

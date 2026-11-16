@@ -121,6 +121,20 @@ class CmsUpdateProgress
     }
   }
 
+  public function activePayload(): array
+  {
+    if (! Schema::hasTable('wbcms_admin_update_operations')) {
+      return [];
+    }
+
+    $operation = AdminUpdateOperation::whereIn('status', ['queued', 'running'])->latest('started_at')->first();
+    if (! $operation && Schema::hasColumn('wbcms_admin_update_operations', 'recovery_required')) {
+      $operation = AdminUpdateOperation::where('status', 'interrupted')->where('recovery_required', true)->latest('started_at')->first();
+    }
+
+    return $operation ? $this->payload($operation->id) : [];
+  }
+
   public function payload(?string $operationId = null): array
   {
     $operation = Schema::hasTable('wbcms_admin_update_operations')

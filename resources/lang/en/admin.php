@@ -2225,6 +2225,8 @@ return [
     'unknown' => 'unknown',
   ],
   'updates' => [
+    'hide_progress' => 'Hide',
+    'show_status' => 'Show status',
     'progress_title' => 'System update: :version',
     'duration' => 'Duration',
     'elapsed' => 'Elapsed',

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.137.2
+
+- Hide the update dialog and reopen it with Show status while Webadmin keeps tracking the same update.
+- Return to System updates to resume tracking. Temporary connection failures keep the last confirmed phase visible, and the final result stays on the page.
+
 ## 1.137.1
 
 - Show the Media Library title in the Gallery Artwork column. Use the filename when the title is blank.

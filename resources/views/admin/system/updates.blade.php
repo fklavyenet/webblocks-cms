@@ -58,6 +58,10 @@
     $currentNotes = $check['release']['release_details'] ?? null;
     $checkedAtText = ($checkedAt ?? null) instanceof \DateTimeInterface ? $checkedAt->format('Y-m-d H:i') : null;
     $sanitizer = app(SystemUpdateRunOutputSanitizer::class);
+    $trackedOperation = ($updateProgress['terminal'] ?? true) === false
+      && in_array($updateProgress['state'] ?? '', ['queued', 'running', 'interrupted'], true)
+      ? ($updateProgress['operation_id'] ?? null) : null;
+    $canTrackUpdate = $canUpdate || auth()->user()?->can('access-system');
   @endphp
 
   @include('webblocks-cms::admin.partials.page-header', [
@@ -68,6 +72,11 @@
   <div class="wb-stack wb-stack-4" data-webblocks-updates-flash>
     @include('webblocks-cms::admin.partials.flash')
   </div>
+  @if ($canTrackUpdate)
+    <div class="wb-alert wb-alert-info wb-mb-4" data-pc-update-result hidden>
+      <p role="status" aria-atomic="true" data-pc-update-result-text></p>
+    </div>
+  @endif
 
   <section class="wb-card">
     <div class="wb-card-header wb-cluster wb-cluster-between">
@@ -107,7 +116,8 @@
             </div>
           </div>
           <div class="wb-stack wb-stack-2">
-            @if ($canUpdate)
+            @includeWhen($canTrackUpdate, 'webblocks-cms::admin.system.partials.update-status-button')
+            @if ($canUpdate && ! $trackedOperation)
               <form method="POST" action="{{ route('admin.system.updates.store') }}" data-pc-update-form>
                 @csrf
                 <button type="submit" class="wb-btn wb-btn-primary" data-wb-update-submit>
@@ -194,6 +204,8 @@
             </div>
           </div>
         </div>
+
+        @includeWhen($canTrackUpdate, 'webblocks-cms::admin.system.partials.update-status-button')
 
         @if (! empty($check['error_message']))
           <div class="wb-callout wb-callout-warning">
@@ -309,16 +321,16 @@
   @endforeach
 
   @php
-    $updateProgress = app(\WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress::class)->payload();
-    $modalVersion = $latestVersion ?? ($version['current_version'] ?? '');
+    $modalVersion = ($trackedOperation ? ($updateProgress['target_version'] ?? null) : null)
+      ?? $latestVersion ?? ($version['current_version'] ?? '');
     $healthRoute = route('admin.system.updates.indicator');
   @endphp
-@if ($canUpdate || auth()->user()?->can('access-system'))
-    {{-- Progress modal: shown while the update runs. No dismiss — a live update cannot be cancelled. --}}
+@if ($canTrackUpdate)
     <div id="pc-update-progress" data-pc-update-modal class="wb-modal wb-modal-lg" role="dialog" aria-modal="true" aria-labelledby="pc-update-progress-title">
-        <div class="wb-modal-dialog">
+        <div class="wb-modal-dialog" id="pc-update-progress-dialog">
             <div class="wb-modal-header">
-                <h3 class="wb-modal-title" id="pc-update-progress-title">{{ $adminText('updates.progress_title', ['version' => $modalVersion]) }}</h3>
+                <h3 class="wb-modal-title" id="pc-update-progress-title" data-pc-update-title="{{ $adminText('updates.progress_title', ['version' => '__version__']) }}">{{ $adminText('updates.progress_title', ['version' => $modalVersion]) }}</h3>
+                <button type="button" class="wb-btn wb-btn-secondary" data-pc-update-hide>{{ $adminText('updates.hide_progress') }}</button>
             </div>
             <div class="wb-modal-body wb-stack wb-stack-3">
                 <p data-update-chain hidden class="wb-text-sm wb-text-muted" role="status"></p>
@@ -336,13 +348,13 @@
                 <a href="{{ $healthRoute ?? '' }}" data-update-recheck class="wb-btn wb-btn-secondary" hidden>{{ __('publisher-client::updates.progress.recheck') }}</a>
                 <a href="{{ route('admin.system.updates.index') }}" data-update-return class="wb-btn wb-btn-secondary" hidden>{{ __('publisher-client::updates.progress.return') }}</a>
             </div>
-            <button type="button" hidden id="pc-update-progress-dismiss" data-wb-dismiss="modal" aria-hidden="true" tabindex="-1"></button>
         </div>
     </div>
     <button type="button" hidden id="pc-update-progress-open"
             data-wb-toggle="modal" data-wb-target="#pc-update-progress"
-            data-active-operation="{{ in_array($updateProgress['state'] ?? '', ['queued', 'running', 'interrupted'], true) ? ($updateProgress['operation_id'] ?? '') : '' }}"
+            data-active-operation="{{ $trackedOperation }}"
             data-pc-admission="server" data-pc-max-wait-seconds="21600" data-pc-health-url="{{ $healthRoute ?? '' }}"
+            data-pc-active-url="{{ route('admin.system.updates.indicator', ['active' => 1]) }}"
             data-progress-unknown="{{ __('publisher-client::updates.progress.unknown') }}"
             data-progress-interrupted="{{ __('publisher-client::updates.progress.interrupted') }}"
             data-progress-auth="{{ __('publisher-client::updates.progress.auth') }}"
@@ -361,7 +373,7 @@
 
 @endsection
 
-@if ($canUpdate || auth()->user()?->can('access-system'))
+@if ($canTrackUpdate)
 @push('admin-scripts')
   <script src="{{ \WebBlocks\Cms\Support\Updates\Client\Updates\ProgressAssets::url() }}" defer></script>
 @endpush

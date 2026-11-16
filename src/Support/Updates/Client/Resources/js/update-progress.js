@@ -5,6 +5,14 @@ document.addEventListener('DOMContentLoaded', function () {
     var modal = document.querySelector('[data-pc-update-modal], [data-herne-update-modal]');
     if (!opener || !modal || !opener.getAttribute('data-pc-health-url') || !window.fetch) { return; }
 
+    var statusButton = document.querySelector('[data-pc-update-status]');
+    var hideButton = modal.querySelector('[data-pc-update-hide]');
+    var dismissible = statusButton && hideButton && window.WBModal;
+    var result = document.querySelector('[data-pc-update-result]');
+    var resultText = result && result.querySelector('[data-pc-update-result-text]');
+    var title = modal.querySelector('[data-pc-update-title]');
+    var activeUrl = opener.getAttribute('data-pc-active-url');
+    var lookingUp = false;
     var message = modal.querySelector('[data-update-message]');
     var loading = modal.querySelector('[data-update-loading]');
     var footer = modal.querySelector('[data-update-footer]');
@@ -46,7 +54,37 @@ document.addEventListener('DOMContentLoaded', function () {
         tick();
     }
     function showModal() {
-        if (!modal.classList.contains('is-open')) { opener.click(); }
+        if (modal.classList.contains('is-open')) { return; }
+        if (dismissible) {
+            window.WBModal.open(modal, statusButton);
+        } else {
+            opener.click();
+        }
+    }
+    function offerStatus() {
+        if (!dismissible) { return; }
+        if (form) { form.hidden = true; }
+        statusButton.hidden = false;
+    }
+    function hideModal() {
+        window.WBModal.close(modal);
+        statusButton.focus();
+    }
+    function showResult(text) {
+        if (!dismissible || !resultText) { return; }
+        result.hidden = !text;
+        resultText.textContent = text || '';
+    }
+    if (dismissible) {
+        statusButton.addEventListener('click', showModal);
+        hideButton.addEventListener('click', hideModal);
+        modal.addEventListener('wb:overlay:close-request', function (event) {
+            if (event.target !== modal) { return; }
+            if (event.detail.reason === 'outside' || event.detail.reason === 'escape') {
+                event.preventDefault();
+                if (event.detail.reason === 'escape') { hideModal(); }
+            }
+        });
     }
     function syncElapsed(ms) {
         var current = elapsedNow();
@@ -75,12 +113,16 @@ document.addEventListener('DOMContentLoaded', function () {
         clearTimeout(pollTimer);
         clearReconnectWarning();
         if (text) { message.textContent = text; message.hidden = false; }
+        showResult(text);
         recheck.hidden = !retry;
         returnLink.hidden = false;
         loading.hidden = true;
         footer.hidden = false;
     }
     function render(progress) {
+        if (title && typeof progress.target_version === 'string' && progress.target_version !== '') {
+            title.textContent = title.getAttribute('data-pc-update-title').replace('__version__', function () { return progress.target_version; });
+        }
         if (chain) { chain.textContent = progress.chain_label || ''; chain.hidden = !progress.chain_label; }
         syncElapsed(Math.max(0, progress.elapsed_ms));
         loading.hidden = false;
@@ -107,13 +149,17 @@ document.addEventListener('DOMContentLoaded', function () {
             steps.appendChild(row);
         });
         if (progress.terminal === true) {
-            if ((progress.state === 'success' || progress.state === 'success_with_warnings') && progress.installed_version && progress.target_version && progress.installed_version !== progress.target_version) {
+            var succeeded = progress.state === 'success' || progress.state === 'success_with_warnings';
+            var hasVersions = typeof progress.installed_version === 'string' && progress.installed_version !== ''
+                && typeof progress.target_version === 'string' && progress.target_version !== '';
+            if (succeeded && ((dismissible && !hasVersions)
+                || (progress.installed_version && progress.target_version && progress.installed_version !== progress.target_version))) {
                 message.textContent = label('unknown'); message.hidden = false; loading.hidden = true; return;
             }
             halt(progress.message || label(progress.state), false);
             remember(null);
             // Completion comes only from this operation and any product health gate.
-            if (progress.state === 'success' || progress.state === 'success_with_warnings') {
+            if (succeeded && !dismissible) {
                 setTimeout(function () { window.location.assign(returnLink.href); }, 1500);
             }
         } else if (progress.state === 'interrupted') {
@@ -125,6 +171,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (Date.now() >= deadline) { halt(label('unreachable'), true); return; }
         pollTimer = setTimeout(poll, 1500);
     }
+    function authenticationRequired(response) {
+        return response.type === 'opaqueredirect' || [401, 403, 419].indexOf(response.status) !== -1;
+    }
+    function readStatus(url, signal) {
+        return fetch(url, {
+            credentials: 'same-origin', cache: 'no-store', redirect: 'manual',
+            headers: { 'Accept': 'application/json' }, signal: signal
+        });
+    }
     function poll() {
         if (stopped || !operation) { return; }
         var url = new URL(health, window.location.href);
@@ -132,11 +187,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var startedAt = clock();
         var controller = window.AbortController ? new AbortController() : null;
         var timeout = controller ? setTimeout(function () { controller.abort(); }, 10000) : null;
-        fetch(url.href, {
-            credentials: 'same-origin', cache: 'no-store', redirect: 'manual',
-            headers: { 'Accept': 'application/json' }, signal: controller ? controller.signal : undefined
-        }).then(function (response) {
-            if (response.type === 'opaqueredirect' || [401, 403, 419].indexOf(response.status) !== -1) {
+        readStatus(url.href, controller ? controller.signal : undefined).then(function (response) {
+            if (authenticationRequired(response)) {
                 halt(label('auth'), false);
                 return null;
             }
@@ -161,6 +213,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     function monitor(id) {
         if (form) { form.querySelectorAll('button[type="submit"]').forEach(function (button) { button.disabled = true; }); }
+        offerStatus();
+        showResult();
         operation = id;
         remember(id);
         stopped = false;
@@ -171,8 +225,37 @@ document.addEventListener('DOMContentLoaded', function () {
         footer.hidden = true;
         clearTimeout(pollTimer);
         startClock();
-        showModal();
+        if (!dismissible) { showModal(); }
         poll();
+    }
+    function validId(id) {
+        return typeof id === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id);
+    }
+    function lookupActive(fallback, retry) {
+        if (!dismissible || !activeUrl) { halt(fallback, retry); return; }
+        if (lookingUp) { return; }
+        lookingUp = true;
+        var controller = window.AbortController ? new AbortController() : null;
+        var timeout = controller ? setTimeout(function () { controller.abort(); }, 10000) : null;
+        readStatus(activeUrl, controller ? controller.signal : undefined).then(function (response) {
+            if (authenticationRequired(response)) { halt(label('auth'), false); return; }
+            if (!response.ok || response.redirected) { throw new Error('Unavailable'); }
+            return response.json().then(function (data) {
+                var progress = data && data.progress;
+                if (progress && validId(progress.operation_id) && progress.terminal === false
+                    && ['queued', 'running', 'interrupted'].indexOf(progress.state) !== -1) {
+                    localStart = false;
+                    monitor(progress.operation_id);
+                } else {
+                    halt(fallback, retry);
+                }
+            });
+        }).catch(function () {
+            halt(fallback, true);
+        }).finally(function () {
+            clearTimeout(timeout);
+            lookingUp = false;
+        });
     }
     function uuid() {
         if (!window.crypto || !window.crypto.getRandomValues) { return null; }
@@ -183,47 +266,63 @@ document.addEventListener('DOMContentLoaded', function () {
         var hex = Array.from(bytes, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
         return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
     }
-    recheck.addEventListener('click', function (event) { event.preventDefault(); if (operation) { monitor(operation); } else { window.location.assign(returnLink.href); } });
+    recheck.addEventListener('click', function (event) {
+        event.preventDefault();
+        if (operation) { monitor(operation); }
+        else if (dismissible && activeUrl) { lookupActive(label('unknown'), true); }
+        else { window.location.assign(returnLink.href); }
+    });
     if (form) {
         form.addEventListener('submit', function (event) {
             event.preventDefault();
             if (submitted) { return; }
-            var id = uuid();
-            if (!id) { showModal(); halt(label('unknown'), false); return; }
+            var serverAssigned = serverAdmission && dismissible;
+            var id = serverAssigned ? null : uuid();
+            if (!serverAssigned && !id) { showModal(); halt(label('unknown'), false); return; }
             submitted = true;
-            form.querySelectorAll('button[type="submit"]').forEach(function (button) { button.disabled = true; });
             var body = new FormData(form);
-            body.set('operation_id', id);
+            if (id) { body.set('operation_id', id); }
+            form.querySelectorAll('button[type="submit"]').forEach(function (button) { button.disabled = true; });
+            offerStatus();
             elapsedBase = 0;
             localStart = true;
             elapsedOffset = null;
             startClock();
-            // Poll concurrently; the update POST can take minutes or lose its connection.
+            // Only client-admitted products can poll before the POST returns an operation ID.
+            var controller = serverAssigned && window.AbortController ? new AbortController() : null;
+            var timeout = controller ? setTimeout(function () { controller.abort(); }, 30000) : null;
             fetch(form.action, {
                 method: 'POST', body: body, redirect: 'manual', credentials: 'same-origin',
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                signal: controller ? controller.signal : undefined
             }).then(function (response) {
-                if (response.type === 'opaqueredirect' || [401, 403, 419].indexOf(response.status) !== -1) {
+                if (authenticationRequired(response)) {
                     remember(null);
                     halt(label('auth'), false);
                     return null;
                 } else if (response.status >= 400 && response.status < 500) {
                     remember(null);
+                    var settleRejection = function (text) {
+                        if (response.status === 409 && dismissible) { lookupActive(text, false); }
+                        else { halt(text, false); }
+                    };
                     return response.json().then(
-                        function (data) { halt(data.message || label('failed'), false); },
-                        function () { halt(label('failed'), false); }
+                        function (data) { settleRejection((data && data.message) || label('failed')); },
+                        function () { settleRejection(label('failed')); }
                     );
                 }
                 if (serverAdmission && response.ok) {
                     return response.json().then(function (data) {
-                        if (typeof data.operation_id === 'string' && /^[a-f0-9-]{36}$/i.test(data.operation_id)) { monitor(data.operation_id); }
-                        else { halt(label('unknown'), true); }
+                        if (data && validId(data.operation_id)) { monitor(data.operation_id); }
+                        else { lookupActive(label('unknown'), true); }
                     });
                 }
-                if (serverAdmission) { halt(label('unknown'), true); }
+                if (serverAdmission) { lookupActive(label('unknown'), true); }
                 // HTTP health alone never confirms an update.
                 return null;
-            }).catch(function () { if (serverAdmission) { halt(label('unknown'), true); } /* Never repost. */ });
+            }).catch(function () {
+                if (serverAdmission) { lookupActive(label('unknown'), true); }
+            }).finally(function () { clearTimeout(timeout); });
             if (serverAdmission) {
                 showModal(); message.textContent = label('running');
             }
@@ -231,5 +330,5 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
     var active = opener.getAttribute('data-active-operation') || remembered();
-    if (active && /^[a-f0-9-]{36}$/i.test(active)) { submitted = true; monitor(active); }
+    if (validId(active)) { submitted = true; monitor(active); }
 });

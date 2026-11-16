@@ -39,7 +39,7 @@ return [
         'maintenance_up' => 'Leaving maintenance',
         'rollback' => 'Restoring backup',
     ],
-    'title' => 'System Updates',
+    'title' => 'System updates',
     'check_button' => 'Check for updates',
     'update_button' => 'Update to :version',
     'confirm' => 'Update from :from to :to? The site briefly enters maintenance mode; a backup is taken first and restored automatically if anything fails.',

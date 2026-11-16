@@ -43,6 +43,7 @@ class SystemUpdateController extends Controller
       'report' => $report,
       'schedulerNeedsSetup' => app(SchedulerHealth::class)->snapshot()['scheduler_status'] !== 'healthy',
       'runs' => $this->displayRuns(),
+      'updateProgress' => app(CmsUpdateProgress::class)->activePayload(),
       'unfinishedUpdates' => app(SystemUpdateAttention::class)->rows(),
       'canReconcileUpdates' => app(SystemUpdateRecoveryPolicy::class)->reconcile($request->user()),
       'preflight' => $report['checks'] ?? [],
@@ -93,11 +94,12 @@ class SystemUpdateController extends Controller
   public function indicator(Request $request): JsonResponse
   {
     $this->publisherClient->configure();
-    $request->validate(['operation' => ['nullable', 'uuid']]);
-    $progress = app(CmsUpdateProgress::class)->payload($request->query('operation'));
-    $payload = $request->has('operation') ? [] : app(AdminUpdateIndicator::class)->payload();
+    $request->validate(['operation' => ['nullable', 'uuid'], 'active' => ['sometimes', 'boolean']]);
+    $progress = app(CmsUpdateProgress::class);
+    $activeOnly = ! $request->filled('operation') && $request->boolean('active');
+    $payload = $activeOnly || $request->has('operation') ? [] : app(AdminUpdateIndicator::class)->payload();
     $payload['url'] = route('admin.system.updates.index');
-    $payload['progress'] = $progress;
+    $payload['progress'] = $activeOnly ? $progress->activePayload() : $progress->payload($request->query('operation'));
 
     return response()->json($payload)->header('Cache-Control', 'no-store');
   }

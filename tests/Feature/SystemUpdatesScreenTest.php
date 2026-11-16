@@ -6,12 +6,15 @@ use Carbon\CarbonImmutable;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
+use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
+use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
+use WebBlocks\Cms\Support\System\Updates\AdminUpdateIndicator;
 use WebBlocks\Cms\Support\Updates\Client\Updates\ProgressAssets;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -149,10 +152,17 @@ class SystemUpdatesScreenTest extends TestCase
     $opener = $xpath->query('//*[@id="pc-update-progress-open"]')->item(0);
     $this->assertInstanceOf(DOMElement::class, $opener);
     $this->assertSame('server', $opener->getAttribute('data-pc-admission'));
+    $this->assertSame(route('admin.system.updates.indicator', ['active' => 1]), $opener->getAttribute('data-pc-active-url'));
     $this->assertStringContainsString('checking again', $opener->getAttribute('data-progress-reconnecting'));
     $this->assertSame(route('admin.system.updates.indicator'), $opener->getAttribute('data-pc-health-url'));
     $this->assertSame('#pc-update-progress', $opener->getAttribute('data-wb-target'));
     $this->assertCount(1, $xpath->query('//*[@id="pc-update-progress" and @data-pc-update-modal]'));
+    $status = $xpath->query('//button[@data-pc-update-status]')->item(0);
+    $result = $xpath->query('//*[@data-pc-update-result]')->item(0);
+    $this->assertInstanceOf(DOMElement::class, $status);
+    $this->assertTrue($status->hasAttribute('hidden'));
+    $this->assertSame('button', $status->getAttribute('type'));
+    $this->assertCount(1, $xpath->query('//button[@data-pc-update-hide]'));
     $forms = $xpath->query('//form[@data-pc-update-form]');
     $this->assertCount(1, $forms);
     $this->assertSame(route('admin.system.updates.store'), $forms->item(0)->getAttribute('action'));
@@ -177,9 +187,54 @@ class SystemUpdatesScreenTest extends TestCase
     if ($fixture = getenv('WEBBLOCKS_UPDATE_PROGRESS_FIXTURE')) {
       $forms->item(0)->setAttribute('action', '/update');
       $opener->setAttribute('data-pc-health-url', '/health');
+      $opener->setAttribute('data-pc-active-url', '/health?active=1');
       $xpath->query('//*[@data-update-return]')->item(0)->setAttribute('href', '#completed');
-      file_put_contents($fixture, '<!doctype html><html lang="en" data-wb-theme="light"><body>'.$document->saveHTML($forms->item(0)).$document->saveHTML($modal).$document->saveHTML($opener).'</body></html>');
+      file_put_contents($fixture, '<!doctype html><html lang="en" data-wb-theme="light"><body>'.$document->saveHTML($forms->item(0)).$document->saveHTML($status).$document->saveHTML($result).$document->saveHTML($modal).$document->saveHTML($opener).'</body></html>');
     }
+  }
+
+  #[Test]
+  public function status_lookup_and_screen_use_the_active_receipt_without_refreshing_release_metadata(): void
+  {
+    $operation = AdminUpdateOperation::create([
+      'id' => 'b0a62a6a-ec80-4c35-866a-2dc056bc02b7',
+      'user_id' => 1,
+      'from_version' => '1.38.0',
+      'target_version' => '1.39.0',
+      'checksum_sha256' => str_repeat('a', 64),
+      'status' => 'queued',
+      'started_at' => now(),
+    ]);
+    $this->mock(AdminUpdateIndicator::class)->shouldNotReceive('payload');
+    $controller = app(SystemUpdateController::class);
+    $lookup = Request::create('/?active=1');
+    $response = $controller->indicator($lookup);
+    $this->assertSame($operation->id, $response->getData(true)['progress']['operation_id']);
+    $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+
+    $report = $this->upToDateReport();
+    $this->mock(SystemUpdateInspector::class)->shouldReceive('report')->once()->andReturn($report);
+    $view = $controller->index(Request::create('/'));
+    $this->assertSame($operation->id, $view->getData()['updateProgress']['operation_id']);
+
+    auth()->guard()->setUser(new class(['id' => 1, 'name' => 'Synthetic administrator']) extends GenericUser
+    {
+      public function can(string $ability): bool
+      {
+        return $ability === 'access-system';
+      }
+    });
+    $html = $view->render();
+    $this->assertStringContainsString('data-active-operation="'.$operation->id.'"', $html);
+    $this->assertStringContainsString('System update: 1.39.0', $html);
+    $this->assertStringContainsString('Show status', $html);
+    $this->assertStringNotContainsString('data-pc-update-form', $html);
+
+    $operation->update(['status' => 'restored', 'finished_at' => now()]);
+    $this->assertSame([], $controller->indicator($lookup)->getData(true)['progress']);
+    $exact = $controller->indicator(Request::create('/?operation='.$operation->id))->getData(true)['progress'];
+    $this->assertSame($operation->id, $exact['operation_id']);
+    $this->assertTrue($exact['terminal']);
   }
 
   #[Test]
