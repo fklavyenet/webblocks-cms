@@ -23,6 +23,13 @@ class SiteImportRunRequest extends FormRequest
     ]);
   }
 
+  public function messages(): array
+  {
+    return [
+      'site_name.required' => __('webblocks-cms::admin-feedback.panel_validation.import_site_name_required'),
+    ];
+  }
+
   public function rules(): array
   {
     return [

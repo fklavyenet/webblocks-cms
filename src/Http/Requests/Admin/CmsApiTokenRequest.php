@@ -23,6 +23,13 @@ class CmsApiTokenRequest extends FormRequest
     $this->merge(['_editing_token' => $token instanceof CmsApiToken ? (string) $token->id : null]);
   }
 
+  public function messages(): array
+  {
+    return [
+      'capabilities.required' => __('webblocks-cms::admin-feedback.panel_validation.token_capabilities_required'),
+    ];
+  }
+
   public function rules(): array
   {
     return [

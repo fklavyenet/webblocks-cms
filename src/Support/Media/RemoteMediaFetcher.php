@@ -111,7 +111,7 @@ class RemoteMediaFetcher
     $host = trim((string) ($parts['host'] ?? ''), '[]');
 
     if (! in_array($scheme, ['http', 'https'], true) || $host === '') {
-      throw new RuntimeException('Remote media URL must be an HTTP or HTTPS URL.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.remote_url_scheme'));
     }
 
     if ($this->isLocalHostName($host)) {

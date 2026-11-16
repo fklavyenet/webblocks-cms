@@ -45,7 +45,7 @@ class SiteImportManager
       $archivePath = $file->storeAs(now()->format('imports/Y/m/d'), $archiveName, self::ARCHIVE_DISK);
       $inspection = $this->archiveInspector->inspect($disk->path($archivePath));
 
-      $output[] = 'Import package validated successfully.';
+      $output[] = SiteTransferLog::entry('import_validated');
 
       $import->forceFill([
         'status' => SiteImport::STATUS_VALIDATED,
@@ -58,7 +58,7 @@ class SiteImportManager
 
       return $import->fresh(['targetSite', 'user']);
     } catch (Throwable $throwable) {
-      $output[] = 'Import validation failed: '.$throwable->getMessage();
+      $output[] = SiteTransferLog::entry('import_validation_failed', ['detail' => $throwable->getMessage()]);
       $import->forceFill([
         'status' => SiteImport::STATUS_FAILED,
         'output_log' => implode(PHP_EOL, $output),
@@ -101,7 +101,7 @@ class SiteImportManager
   public function step(SiteImport $siteImport, SiteImportOptions $options, float $budgetSeconds = 5.0): SiteImportStepResult
   {
     if (! $siteImport->archive_path) {
-      throw new RuntimeException('Import package archive is missing.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.import_archive_missing'));
     }
 
     $this->pathGuard->assertSafeRelativePath($siteImport->archive_path, 'Import archive path');
@@ -112,7 +112,7 @@ class SiteImportManager
     $archive = new ZipArchive;
 
     if ($archive->open($archivePath) !== true) {
-      throw new RuntimeException('Import package could not be reopened.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.import_archive_reopen_failed'));
     }
 
     try {

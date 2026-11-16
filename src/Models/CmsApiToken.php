@@ -74,9 +74,9 @@ class CmsApiToken extends CmsModel
   public function statusLabel(): string
   {
     return match (true) {
-      $this->isRevoked() => 'Revoked',
-      $this->isExpired() => 'Expired',
-      default => 'Active',
+      $this->isRevoked() => __('webblocks-cms::admin-feedback.token_status.revoked'),
+      $this->isExpired() => __('webblocks-cms::admin-feedback.token_status.expired'),
+      default => __('webblocks-cms::admin-feedback.token_status.active'),
     };
   }
 
@@ -92,6 +92,6 @@ class CmsApiToken extends CmsModel
 
   public function lastUsedAtLabel(): string
   {
-    return $this->last_used_at?->format('Y-m-d H:i') ?? 'Not used yet';
+    return $this->last_used_at?->format('Y-m-d H:i') ?? __('webblocks-cms::admin-feedback.token_status.not_used');
   }
 }

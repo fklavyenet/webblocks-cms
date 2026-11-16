@@ -23,6 +23,7 @@ class SiteImportUploadRequest extends FormRequest
     return [
       'archive.required' => __('webblocks-cms::admin-feedback.panel_copy.site_import_archive_required'),
       'archive.mimes' => __('webblocks-cms::admin-feedback.panel_copy.site_import_archive_type'),
+      'archive.max' => __('webblocks-cms::admin-feedback.panel_validation.import_archive_size'),
     ];
   }
 }

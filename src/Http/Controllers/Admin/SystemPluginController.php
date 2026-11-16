@@ -96,6 +96,8 @@ class SystemPluginController extends Controller
       'plugin_zip' => ['required', 'file', 'mimes:zip', 'max:20480'],
     ], [
       'plugin_zip.required' => __('webblocks-cms::admin-feedback.panel_copy.plugin_zip_required'),
+      'plugin_zip.mimes' => __('webblocks-cms::admin-feedback.panel_validation.plugin_zip_type'),
+      'plugin_zip.max' => __('webblocks-cms::admin-feedback.panel_validation.plugin_zip_size'),
     ]);
 
     try {

@@ -62,7 +62,7 @@ class ExportArchiveBuilder
           $absolutePath = public_path($sourcePath);
 
           if (! is_file($absolutePath)) {
-            $output[] = 'Skipped missing page asset file '.$sourcePath.'.';
+            $output[] = SiteTransferLog::entry('export_missing_page_asset', ['path' => $sourcePath]);
 
             continue;
           }
@@ -80,7 +80,7 @@ class ExportArchiveBuilder
         $absolutePath = public_path($sourcePath);
 
         if (! is_file($absolutePath)) {
-          $output[] = 'Skipped missing site public asset file '.$sourcePath.'.';
+          $output[] = SiteTransferLog::entry('export_missing_site_asset', ['path' => $sourcePath]);
 
           continue;
         }
@@ -92,11 +92,11 @@ class ExportArchiveBuilder
       }
 
       $archive->close();
-      $output[] = 'Archive created as '.basename($archivePath).'.';
-      $output[] = 'JSON manifests written for site, pages, shared slots, blocks, navigation, locales, and media.';
+      $output[] = SiteTransferLog::entry('export_archive_created', ['file' => basename($archivePath)]);
+      $output[] = SiteTransferLog::entry('export_manifests');
 
       if ($includesMedia) {
-        $output[] = 'Added '.$fileCount.' media file(s) to package.';
+        $output[] = SiteTransferLog::entry('export_media', ['count' => $fileCount]);
       }
 
       $size = filesize($archivePath);

@@ -17,7 +17,7 @@ class ImportArchiveInspector
     $result = $archive->open($archivePath);
 
     if ($result !== true) {
-      throw new RuntimeException('Import package could not be opened.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.import_archive_open_failed'));
     }
 
     try {
@@ -77,7 +77,7 @@ class ImportArchiveInspector
     $contents = $archive->getFromName($resolvedPath);
 
     if (! is_string($contents) || trim($contents) === '') {
-      throw new RuntimeException($resolvedPath.' is empty.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.import_entry_empty', ['path' => $resolvedPath]));
     }
 
     $decoded = json_decode($contents, true);

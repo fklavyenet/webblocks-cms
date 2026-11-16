@@ -43,7 +43,7 @@ class PluginZipInstaller
     $installLock = null;
 
     if ($zip->open($zipPath) !== true) {
-      throw new RuntimeException('The uploaded plugin package is not a readable ZIP archive.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.plugin_zip_unreadable'));
     }
 
     try {
@@ -226,7 +226,7 @@ class PluginZipInstaller
       ->requiresCms($manifest['required_cms_version'] ?? null);
 
     if ($definition->requiredCmsVersion() === null || ! $this->compatibility->isCompatible($definition)) {
-      throw new RuntimeException('The plugin package is not compatible with this CMS version.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.plugin_zip_incompatible'));
     }
   }
 
@@ -252,7 +252,7 @@ class PluginZipInstaller
     ));
 
     if ($englishCatalogues === []) {
-      throw new RuntimeException('The plugin package must provide English translation catalogues under resources/lang/en.');
+      throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.plugin_catalog_english_required'));
     }
 
     foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
@@ -260,7 +260,7 @@ class PluginZipInstaller
         $required = preg_replace('#^resources/lang/en/#', 'resources/lang/'.$locale.'/', $englishCatalogue, 1);
 
         if (! is_string($required) || ! in_array($required, $relativeEntries, true)) {
-          throw new RuntimeException("The plugin package is missing the {$locale} translation catalogue for ".basename($englishCatalogue).'.');
+          throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.plugin_catalog_missing', ['locale' => $locale, 'file' => basename($englishCatalogue)]));
         }
       }
     }

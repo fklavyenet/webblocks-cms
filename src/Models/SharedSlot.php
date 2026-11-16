@@ -95,7 +95,7 @@ class SharedSlot extends CmsModel
 
   public function statusLabel(): string
   {
-    return $this->is_active ? 'Active' : 'Inactive';
+    return __('webblocks-cms::admin.shared_slots.'.($this->is_active ? 'active' : 'inactive'));
   }
 
   public function statusBadgeClass(): string
@@ -106,7 +106,7 @@ class SharedSlot extends CmsModel
   public function publicShellLabel(): string
   {
     if (! $this->public_shell) {
-      return 'Any';
+      return __('webblocks-cms::admin.shared_slots.any');
     }
 
     return app(PageLayoutManager::class)->labelForHandle($this->public_shell);
@@ -114,7 +114,7 @@ class SharedSlot extends CmsModel
 
   public function slotLabel(): string
   {
-    return $this->slot_name ?: 'Any';
+    return $this->slot_name ?: __('webblocks-cms::admin.shared_slots.any');
   }
 
   public function compatibilityIssuesFor(Page $page, string $slotName): array

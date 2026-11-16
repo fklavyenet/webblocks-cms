@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.135.12
+
+- Translate the audited form errors, token and account status labels, and site transfer messages in the six bundled panel languages.
+- Display current and historical site transfer logs in the panel language and translate the Turkish and German page layout summaries.
+
 ## 1.135.11
 
 - Translate the public site files label in backup restore history and the block kind labels in the panel.

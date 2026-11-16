@@ -58,7 +58,7 @@ class SiteExportManager
 
       return $export->fresh(['site', 'user']);
     } catch (Throwable $throwable) {
-      $output[] = 'Export failed: '.$throwable->getMessage();
+      $output[] = SiteTransferLog::entry('export_failed', ['detail' => $throwable->getMessage()]);
 
       $export->forceFill([
         'status' => SiteExport::STATUS_FAILED,

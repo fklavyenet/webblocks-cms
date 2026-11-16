@@ -1,5 +1,6 @@
 @php
     use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportPlan;
+    use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferLog;
     use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
     use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
@@ -28,8 +29,8 @@
 
         if ($siteImport->failure_message) {
             $duplicateFailureLines = [
-                'Import failed: '.$siteImport->failure_message,
-                'Import validation failed: '.$siteImport->failure_message,
+                SiteTransferLog::entry('import_failed', ['detail' => $siteImport->failure_message]),
+                SiteTransferLog::entry('import_validation_failed', ['detail' => $siteImport->failure_message]),
             ];
 
             $outputLog = collect(explode(PHP_EOL, $outputLog))
@@ -63,7 +64,7 @@
                         <div class="wb-alert wb-alert-danger">
                             <div>
                                 <div class="wb-alert-title">{{ $adminText('site_transfers.import_failed') }}</div>
-                                <div>{{ $siteImport->failure_message }}</div>
+                                <div>{{ SiteTransferLog::display($siteImport->failure_message, $adminLocale) }}</div>
                             </div>
                         </div>
                     @endif
@@ -180,7 +181,7 @@
 
             <div class="wb-card-body">
                 @if (trim($outputLog) !== '')
-                    <pre class="wb-code-block">{{ $outputLog }}</pre>
+                    <pre class="wb-code-block">{{ SiteTransferLog::display($outputLog, $adminLocale) }}</pre>
                 @else
                     <div class="wb-empty wb-empty-sm">
                         <div class="wb-empty-title">{{ $adminText('site_transfers.no_output_log') }}</div>

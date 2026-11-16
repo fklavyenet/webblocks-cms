@@ -16,6 +16,13 @@ class PageAssetRequest extends FormRequest
     return true;
   }
 
+  public function messages(): array
+  {
+    return [
+      'path.required' => __('webblocks-cms::admin-feedback.panel_validation.asset_path_required'),
+    ];
+  }
+
   public function rules(): array
   {
     return [

@@ -1,4 +1,5 @@
 @php
+    use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferLog;
     use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
     use WebBlocks\Cms\Support\Translations\CmsTranslator;
 
@@ -90,7 +91,7 @@
 
             <div class="wb-card-body">
                 @if ($siteExport->output_log)
-                    <pre class="wb-code-block">{{ $siteExport->output_log }}</pre>
+                    <pre class="wb-code-block">{{ SiteTransferLog::display($siteExport->output_log, $adminLocale) }}</pre>
                 @else
                     <div class="wb-empty wb-empty-sm">
                         <div class="wb-empty-title">{{ $adminText('site_transfers.no_output_log') }}</div>

@@ -129,7 +129,7 @@ class ImportDataMapper
       // retries. Files copied so far are deliberately kept: they are the work
       // a resume would otherwise repeat, and removing them belongs to the
       // explicit teardown, not to a step that may well be retried.
-      $failure = 'Import failed during '.(string) $state['phase'].': '.$throwable->getMessage();
+      $failure = SiteTransferLog::entry('import_failed_during', ['phase' => (string) $state['phase'], 'detail' => $throwable->getMessage()]);
       $this->saveState($siteImport, $state, $payload, [$failure], SiteImport::STATUS_FAILED, $throwable->getMessage());
       $log[] = $failure;
     }
@@ -335,7 +335,7 @@ class ImportDataMapper
         break;
       case 'search_index':
         $indexed = app(PublicSearchIndexer::class)->rebuild($this->stateSite($state));
-        $log[] = 'Rebuilt the public search index ('.$indexed->indexed.' entries).';
+        $log[] = SiteTransferLog::entry('search_index_rebuilt', ['count' => $indexed->indexed]);
         break;
       case 'domains':
         $site = $this->stateSite($state);
@@ -459,7 +459,7 @@ class ImportDataMapper
           'is_enabled' => true,
         ]);
 
-        $output[] = 'Created missing locale ['.$code.'].';
+        $output[] = SiteTransferLog::entry('locale_created', ['locale' => $code]);
       }
 
       $map[(int) $localeData['id']] = $locale->id;
@@ -485,7 +485,7 @@ class ImportDataMapper
       throw new RuntimeException($this->missingCatalogMessage($missingBlockTypes, $missingSlotTypes));
     }
 
-    $output[] = 'Synchronized core block and slot catalogs before import.';
+    $output[] = SiteTransferLog::entry('catalogs_synced');
   }
 
   private function missingCatalogIdentifiers(array $payload): array
@@ -567,7 +567,7 @@ class ImportDataMapper
     $handle = $this->availableHandle($requestedHandle !== '' ? $requestedHandle : 'imported-site');
 
     if ($handle !== $requestedHandle) {
-      $output[] = 'Adjusted imported site handle to ['.$handle.'] to avoid collisions.';
+      $output[] = SiteTransferLog::entry('handle_adjusted', ['handle' => $handle]);
     }
 
     $domain = $options->siteDomain !== null
@@ -629,7 +629,7 @@ class ImportDataMapper
       'social_image_media_id' => $social,
     ], static fn ($value) => $value !== null))->save();
 
-    $output[] = 'Rebound the site favicon and social image to the imported media.';
+    $output[] = SiteTransferLog::entry('branding_rebound');
   }
 
   private function importSiteDomains(Site $site, array $payload, SiteImportOptions $options, array &$output): void
@@ -638,7 +638,7 @@ class ImportDataMapper
 
     if ($options->siteDomain !== null) {
       $site->refresh();
-      $output[] = 'Applied explicit target site domain ['.$site->domain.'] and skipped package domain claims.';
+      $output[] = SiteTransferLog::entry('domain_explicit', ['domain' => $site->domain]);
 
       return;
     }
@@ -672,7 +672,7 @@ class ImportDataMapper
 
       if ($conflict && (int) $conflict->site_id !== (int) $site->id) {
         $skipped++;
-        $output[] = 'Skipped imported domain ['.$domain.'] because it already exists locally.';
+        $output[] = SiteTransferLog::entry('domain_skipped', ['domain' => $domain]);
 
         continue;
       }
@@ -689,11 +689,11 @@ class ImportDataMapper
     }
 
     if ($attached > 0) {
-      $output[] = 'Imported '.$attached.' site domain record(s).';
+      $output[] = SiteTransferLog::entry('domains_imported', ['count' => $attached]);
     }
 
     if ($skipped > 0) {
-      $output[] = 'Skipped '.$skipped.' conflicting site domain record(s).';
+      $output[] = SiteTransferLog::entry('domains_conflicting', ['count' => $skipped]);
     }
   }
 
@@ -721,7 +721,7 @@ class ImportDataMapper
     }
 
     $site->locales()->sync($sync);
-    $output[] = 'Imported '.count($sync).' site locale assignment(s).';
+    $output[] = SiteTransferLog::entry('site_locales_imported', ['count' => count($sync)]);
   }
 
   private function importSiteVariables(Site $site, array $payload, array &$output): void
@@ -750,7 +750,7 @@ class ImportDataMapper
     }
 
     $site->siteVariables()->insert($rows->all());
-    $output[] = 'Imported '.$rows->count().' site variable record(s).';
+    $output[] = SiteTransferLog::entry('site_variables_imported', ['count' => $rows->count()]);
   }
 
   private function importAssetFolders(array $payload, array &$output): array
@@ -796,7 +796,7 @@ class ImportDataMapper
     }
 
     if ($map !== []) {
-      $output[] = 'Imported '.count($map).' media folder(s).';
+      $output[] = SiteTransferLog::entry('media_folders_imported', ['count' => count($map)]);
     }
 
     return $map;
@@ -856,7 +856,7 @@ class ImportDataMapper
     }
 
     if ($map !== []) {
-      $output[] = 'Imported '.count($map).' media record(s) and file(s).';
+      $output[] = SiteTransferLog::entry('media_imported', ['count' => count($map)]);
     }
 
     return $map;
@@ -927,7 +927,7 @@ class ImportDataMapper
       ]);
     }
 
-    $output[] = 'Imported '.count($map).' page(s).';
+    $output[] = SiteTransferLog::entry('pages_imported', ['count' => count($map)]);
 
     return $map;
   }
@@ -966,7 +966,7 @@ class ImportDataMapper
       $count++;
     }
 
-    $output[] = 'Imported '.$count.' page asset row(s).';
+    $output[] = SiteTransferLog::entry('page_assets_imported', ['count' => $count]);
   }
 
   private function importSitePublicAssets(Site $site, ZipArchive $archive, array $payload, array &$copiedFiles, array &$output): void
@@ -1037,7 +1037,7 @@ class ImportDataMapper
     }
 
     if ($count > 0) {
-      $output[] = 'Imported '.$count.' site public override asset file(s).';
+      $output[] = SiteTransferLog::entry('site_assets_imported', ['count' => $count]);
     }
   }
 
@@ -1068,7 +1068,7 @@ class ImportDataMapper
     }
 
     if ($count > 0) {
-      $output[] = 'Imported or verified '.$count.' Embedded Application definition(s).';
+      $output[] = SiteTransferLog::entry('embedded_apps_imported', ['count' => $count]);
     }
   }
 
@@ -1224,7 +1224,7 @@ class ImportDataMapper
     }
 
     if ($sharedSlots !== []) {
-      $output[] = 'Imported '.count($sharedSlots).' shared slot(s).';
+      $output[] = SiteTransferLog::entry('shared_slots_imported', ['count' => count($sharedSlots)]);
     }
 
     return [
@@ -1291,7 +1291,7 @@ class ImportDataMapper
       $count++;
     }
 
-    $output[] = 'Imported '.$count.' page slot assignment(s).';
+    $output[] = SiteTransferLog::entry('page_slots_imported', ['count' => $count]);
   }
 
   private function rebuildSharedSlotAssignments(array $sharedSlots, array &$output): void
@@ -1301,7 +1301,7 @@ class ImportDataMapper
     }
 
     if ($sharedSlots !== []) {
-      $output[] = 'Rebuilt shared slot block assignments for '.count($sharedSlots).' shared slot(s).';
+      $output[] = SiteTransferLog::entry('shared_blocks_rebuilt', ['count' => count($sharedSlots)]);
     }
   }
 
@@ -1355,7 +1355,7 @@ class ImportDataMapper
 
     $this->wireBlockParents($payload, $map);
 
-    $output[] = 'Imported '.count($map).' block(s).';
+    $output[] = SiteTransferLog::entry('blocks_imported', ['count' => count($map)]);
 
     return $map;
   }
@@ -1464,7 +1464,7 @@ class ImportDataMapper
       }
     }
 
-    $output[] = 'Imported '.$count.' block translation row(s).';
+    $output[] = SiteTransferLog::entry('block_translations_imported', ['count' => $count]);
   }
 
   /**
@@ -1524,7 +1524,7 @@ class ImportDataMapper
       $count++;
     }
 
-    $output[] = 'Imported '.$count.' block media link(s).';
+    $output[] = SiteTransferLog::entry('block_media_imported', ['count' => $count]);
 
     return $blockMediaMap;
   }
@@ -1554,7 +1554,7 @@ class ImportDataMapper
       $count++;
     }
 
-    $output[] = 'Imported '.$count.' gallery item translation row(s).';
+    $output[] = SiteTransferLog::entry('gallery_translations_imported', ['count' => $count]);
   }
 
   private function importNavigation(Site $site, array $payload, array $pageMap, array $localeMap, array &$output): void
@@ -1591,7 +1591,7 @@ class ImportDataMapper
       }
     }
 
-    $output[] = 'Imported '.count($map).' navigation item(s).';
+    $output[] = SiteTransferLog::entry('navigation_imported', ['count' => count($map)]);
 
     $translationCount = 0;
 
@@ -1614,7 +1614,7 @@ class ImportDataMapper
     }
 
     if ($translationCount > 0) {
-      $output[] = 'Imported '.$translationCount.' navigation item translation row(s).';
+      $output[] = SiteTransferLog::entry('navigation_translations_imported', ['count' => $translationCount]);
     }
   }
 

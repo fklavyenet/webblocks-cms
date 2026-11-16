@@ -36,6 +36,14 @@ class SharedSlotRequest extends FormRequest
     ]);
   }
 
+  public function messages(): array
+  {
+    return [
+      'name.required' => __('webblocks-cms::admin-feedback.panel_validation.name_required'),
+      'handle.required' => __('webblocks-cms::admin-feedback.panel_validation.handle_required'),
+    ];
+  }
+
   public function rules(): array
   {
     $sharedSlot = $this->route('shared_slot');

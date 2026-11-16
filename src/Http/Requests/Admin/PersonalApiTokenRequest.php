@@ -22,6 +22,13 @@ class PersonalApiTokenRequest extends FormRequest
       || ($token->isPersonal() && (int) $token->created_by_user_id === (int) $this->user()->id);
   }
 
+  public function messages(): array
+  {
+    return [
+      'capabilities.required' => __('webblocks-cms::admin-feedback.panel_validation.token_capabilities_required'),
+    ];
+  }
+
   public function rules(): array
   {
     $siteIds = $this->user()->accessibleSiteIds()->map(fn ($id) => (int) $id)->all();

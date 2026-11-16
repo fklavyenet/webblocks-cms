@@ -10,6 +10,13 @@ use WebBlocks\Cms\Support\System\SystemSettings;
 
 final class McpSettingsRequest extends FormRequest
 {
+  public function messages(): array
+  {
+    return [
+      'mcp_scopes.*.in' => __('webblocks-cms::admin-feedback.panel_validation.mcp_scope_invalid'),
+    ];
+  }
+
   public function rules(): array
   {
     return [

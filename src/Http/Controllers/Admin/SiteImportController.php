@@ -17,7 +17,9 @@ use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportBulkDeleter;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportManager;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportOptions;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteImportStepResult;
+use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferLog;
 use WebBlocks\Cms\Support\Sites\SiteDeleteResult;
+use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 
 class SiteImportController extends Controller
 {
@@ -69,7 +71,7 @@ class SiteImportController extends Controller
     } catch (Throwable $throwable) {
       return redirect()
         ->route('admin.site-transfers.imports.show', $siteImport)
-        ->withErrors(['site_import' => $throwable->getMessage()]);
+        ->withErrors(['site_import' => SiteTransferLog::display($throwable->getMessage(), app(AdminLocaleResolver::class)->locale())]);
     }
   }
 
@@ -108,7 +110,12 @@ class SiteImportController extends Controller
 
       $result = $this->siteImportManager->step($siteImport, $options);
 
-      return response()->json($result->toArray());
+      $data = $result->toArray();
+      if ($result->failureMessage !== null) {
+        $data['failure_message'] = SiteTransferLog::display($result->failureMessage, app(AdminLocaleResolver::class)->locale());
+      }
+
+      return response()->json($data);
     } catch (Throwable $throwable) {
       return response()->json([
         ...SiteImportStepResult::fromImport($siteImport->fresh())->toArray(),

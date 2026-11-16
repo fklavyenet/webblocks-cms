@@ -31,6 +31,14 @@ class UserStoreRequest extends FormRequest
     ]);
   }
 
+  public function messages(): array
+  {
+    return [
+      'email.email' => __('webblocks-cms::admin-feedback.panel_validation.user_email_invalid'),
+      'password.required' => __('webblocks-cms::admin-feedback.panel_validation.user_password_required'),
+    ];
+  }
+
   public function rules(): array
   {
     return [

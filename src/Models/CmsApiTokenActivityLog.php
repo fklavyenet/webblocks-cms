@@ -38,9 +38,9 @@ class CmsApiTokenActivityLog extends CmsModel
   public function statusLabel(): string
   {
     return match ($this->status) {
-      'allowed' => 'Allowed',
-      'denied' => 'Denied',
-      default => 'Authenticated',
+      'allowed' => __('webblocks-cms::admin-feedback.token_status.allowed'),
+      'denied' => __('webblocks-cms::admin-feedback.token_status.denied'),
+      default => __('webblocks-cms::admin-feedback.token_status.authenticated'),
     };
   }
 

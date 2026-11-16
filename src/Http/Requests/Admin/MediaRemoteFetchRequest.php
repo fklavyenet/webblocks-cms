@@ -12,6 +12,14 @@ class MediaRemoteFetchRequest extends FormRequest
     return true;
   }
 
+  public function messages(): array
+  {
+    return [
+      'source_url.required' => __('webblocks-cms::admin-feedback.panel_validation.remote_url_required'),
+      'source_url.url' => __('webblocks-cms::admin-feedback.panel_validation.remote_url_invalid'),
+    ];
+  }
+
   public function rules(): array
   {
     return [

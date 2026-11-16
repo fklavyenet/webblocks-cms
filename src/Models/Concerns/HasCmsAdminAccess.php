@@ -246,7 +246,7 @@ trait HasCmsAdminAccess
 
   public function statusLabel(): string
   {
-    return ($this->is_active ?? true) ? 'Active' : 'Inactive';
+    return __('webblocks-cms::admin.users.'.(($this->is_active ?? true) ? 'active' : 'inactive'));
   }
 
   public function statusBadgeClass(): string

@@ -34,6 +34,13 @@ class SiteExportRequest extends FormRequest
     }
   }
 
+  public function messages(): array
+  {
+    return [
+      'site_id.required' => __('webblocks-cms::admin-feedback.panel_validation.export_site_required'),
+    ];
+  }
+
   public function rules(): array
   {
     return [
