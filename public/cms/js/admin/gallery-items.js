@@ -25,7 +25,7 @@
         });
     }
 
-    function galleryPreviewItem(row, captionMode) {
+    function galleryPreviewItem(row, captionMode, physical) {
         var thumbnail = row.querySelector('[data-wb-gallery-preview-image]');
         if (!thumbnail) return null;
 
@@ -48,7 +48,7 @@
         if (Number(thumbnail.dataset.height) > 0) image.height = Number(thumbnail.dataset.height);
 
         var media = figure;
-        if (overlay) {
+        if (physical || overlay) {
             media = document.createElement('div');
             media.className = 'wb-gallery-trigger';
             figure.append(media);
@@ -67,7 +67,7 @@
                 metaElement.textContent = meta;
                 captionElement.append(metaElement);
             }
-            media.append(captionElement);
+            (overlay ? media : figure).append(captionElement);
         }
         return figure;
     }
@@ -123,12 +123,14 @@
         var weighted = variant === 'weighted';
         var equalHeight = variant === 'equal-height';
         var physical = variant === 'physical-scale';
+        var verticalAlignment = find('[data-cms-gallery-vertical-alignment]');
         var weights = [];
         find('[data-cms-gallery-weights]').hidden = !weighted;
         find('[data-cms-gallery-aspect-field]').hidden = equalHeight || physical;
         find('[data-cms-gallery-columns-field]').hidden = physical;
         find('[data-cms-gallery-physical]').hidden = !physical;
         find('[data-cms-gallery-unit]').disabled = !physical;
+        verticalAlignment.disabled = !physical;
         var columnsLabel = find('[data-cms-gallery-columns-label]');
         columnsLabel.textContent = equalHeight ? columnsLabel.dataset.perRow : columnsLabel.dataset.columns;
         settings.querySelectorAll('[data-cms-gallery-weight]').forEach(function (label, index) {
@@ -147,10 +149,12 @@
         if (overlay !== 'gradient') gallery.classList.add('wb-gallery--overlay-' + overlay);
         gallery.dataset.wbGalleryWeights = weights.join(' ');
         gallery.dataset.wbGalleryItemsPerRow = columns;
+        if (physical) gallery.dataset.wbGalleryVerticalAlignment = verticalAlignment.value;
+        else delete gallery.dataset.wbGalleryVerticalAlignment;
 
         var rows = editor ? Array.from(editor.querySelectorAll('[data-wb-gallery-item-row]:not([hidden])')) : [];
         if (!keepMeasurements) renderMeasurements(settings, rows, physical);
-        var items = rows.map(function (row) { return galleryPreviewItem(row, captions); }).filter(Boolean);
+        var items = rows.map(function (row) { return galleryPreviewItem(row, captions, physical); }).filter(Boolean);
         var missingMeasurements = physical && items.some(function (item) {
             return !(Number(item.dataset.wbGalleryPhysicalWidth) > 0 && Number(item.dataset.wbGalleryPhysicalHeight) > 0);
         });
@@ -492,7 +496,7 @@
     function onGallerySettingsChange(event) {
         var settings = event.target.closest('[data-cms-gallery-settings]');
         if (!settings || event.target.hasAttribute('data-cms-gallery-measurement-input')) return;
-        var editor = galleryPeer(settings, '[data-wb-gallery-items-editor]', settings.dataset.cmsGallerySettings);
+        var editor = galleryPeer(settings, '[data-wb-gallery-field-prefix]', settings.dataset.cmsGallerySettings);
         renderGalleryPreview(settings, editor);
     }
 

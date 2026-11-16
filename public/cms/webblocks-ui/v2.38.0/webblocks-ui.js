@@ -1,5 +1,5 @@
 /*!
- * WebBlocks UI v2.37.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.38.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -2325,7 +2325,9 @@
     grid.setAttribute('data-wb-gallery-layout-ready', 'equal-height');
   }
 
-  function updatePhysicalScale(grid) {
+  function updatePhysicalScale(gallery, grid) {
+    var alignment = gallery.getAttribute('data-wb-gallery-vertical-alignment');
+    var offsetFactor = alignment === 'top' ? 0 : alignment === 'center' ? 0.5 : 1;
     var rows = toArray(grid.children).filter(function (row) { return row.matches('.wb-gallery-row'); }).map(function (row) {
       return toArray(row.children).filter(function (item) { return item.matches('.wb-gallery-item'); }).map(function (item) {
         return {
@@ -2354,7 +2356,7 @@
       row.forEach(function (entry) {
         entry.item.style.setProperty('--wb-gallery-physical-narrow', entry.width / widest);
         entry.item.style.setProperty('--wb-gallery-physical-wide', entry.width / maxTotal);
-        entry.item.style.setProperty('--wb-gallery-physical-offset', (tallest - entry.height) / maxTotal);
+        entry.item.style.setProperty('--wb-gallery-physical-offset', (tallest - entry.height) * offsetFactor / maxTotal);
         entry.item.style.setProperty('--wb-gallery-physical-ratio', entry.width / entry.height);
       });
     });
@@ -2366,7 +2368,7 @@
     if (!grid) return;
 
     if (gallery.matches('.wb-gallery--physical-scale')) {
-      updatePhysicalScale(grid);
+      updatePhysicalScale(gallery, grid);
       return;
     }
 

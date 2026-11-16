@@ -454,7 +454,7 @@ class EditorRecoveryTest extends TestCase
   {
     $media = $this->galleryFixture();
     $input = ['page_id' => $this->page->id, 'block_type_id' => $this->block->block_type_id, 'slot_type_id' => $this->block->slot_type_id,
-      'sort_order' => 0, 'status' => 'draft', 'gallery_variant' => 'physical-scale', 'gallery_unit' => 'cm'];
+      'sort_order' => 0, 'status' => 'draft', 'gallery_variant' => 'physical-scale', 'gallery_unit' => 'cm', 'gallery_vertical_alignment' => 'top'];
     $items = [
       ['media_id' => $media[1]->id, 'sort_order' => 0, 'physical_width_um' => 800000, 'physical_height_um' => 800000],
       ['media_id' => $media[0]->id, 'sort_order' => 1, 'physical_width_um' => 400000],
@@ -467,8 +467,27 @@ class EditorRecoveryTest extends TestCase
     $block = $this->block->fresh();
     $this->assertSame('physical-scale', $block->galleryVariant());
     $this->assertSame('cm', $block->setting('gallery_unit'));
+    $this->assertSame('top', $block->galleryVerticalAlignment());
     $this->assertSame([800000, 400000], $block->galleryItems()->map(fn ($row) => $row->galleryDimensions()['physical_width_um'])->all());
     $this->assertSame([$media[1]->id, $media[0]->id], $block->galleryItems()->pluck('media_id')->all());
+    $this->put(route('admin.blocks.update', $block), [...$input, 'gallery_items' => $items, 'gallery_vertical_alignment' => 'stretch'])
+      ->assertRedirect()->assertSessionHasErrors('gallery_vertical_alignment');
+    $this->assertSame('top', $block->fresh()->galleryVerticalAlignment());
+  }
+
+  #[Test]
+  public function gallery_alignment_saves_through_the_inline_page_form(): void
+  {
+    [$media] = $this->galleryFixture();
+    $input = ['site_id' => $this->page->site_id, 'title' => 'Inline gallery', 'slug' => 'inline-gallery', 'blocks' => [[
+      'block_type_id' => $this->block->block_type_id, 'slot_type_id' => $this->block->slot_type_id, 'status' => 'draft',
+      'gallery_variant' => 'physical-scale', 'gallery_vertical_alignment' => 'center',
+      'gallery_items' => [['media_id' => $media->id, 'physical_width_um' => 400000, 'physical_height_um' => 400000]],
+    ]]];
+    $this->post(route('admin.pages.store'), $input)->assertRedirect()->assertSessionHasNoErrors();
+    $page = Page::whereRelation('translations', 'slug', 'inline-gallery')->firstOrFail();
+    $gallery = $page->blocks()->where('type', 'gallery')->firstOrFail();
+    $this->assertSame('center', $gallery->galleryVerticalAlignment());
   }
 
   private function galleryFixture(): array

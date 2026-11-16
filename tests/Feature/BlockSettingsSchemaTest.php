@@ -216,6 +216,29 @@ class BlockSettingsSchemaTest extends TestCase
   }
 
   #[Test]
+  public function physical_gallery_alignment_is_discoverable_and_writeable_through_the_api(): void
+  {
+    $page = $this->fixture();
+    $fields = app(BlockSettingsSchema::class)->forType('gallery')['fields'];
+    $this->assertSame(['top', 'center', 'bottom'], $fields['gallery_vertical_alignment']['enum']);
+    $controller = app(InternalContentResourceController::class);
+    $response = $controller->storeSlotBlock($this->jsonRequest([
+      'type' => 'gallery', 'locale' => 'en', 'settings' => ['variant' => 'physical-scale', 'gallery_vertical_alignment' => 'top'],
+    ]), $page, 'main');
+    $this->assertSame(201, $response->getStatusCode(), $response->getContent());
+    $gallery = $page->blocks()->where('type', 'gallery')->firstOrFail();
+    $this->assertSame('top', app(InternalContentApiPresenter::class)->block($gallery)['settings']['gallery_vertical_alignment']);
+    $patch = fn (array $settings) => $controller->updateBlock(Request::create('/', 'PATCH', ['locale' => 'en', 'settings' => $settings]), $gallery->fresh());
+    $this->assertSame(200, $patch(['gallery_vertical_alignment' => 'center'])->getStatusCode());
+    $this->assertSame(200, $patch(['gap' => 'lg'])->getStatusCode());
+    $this->assertSame('center', $gallery->fresh()->galleryVerticalAlignment());
+    $this->assertSame(200, $patch(['gallery_vertical_alignment' => null])->getStatusCode());
+    $this->assertSame('bottom', $gallery->fresh()->galleryVerticalAlignment());
+    $this->expectException(HttpResponseException::class);
+    $patch(['gallery_vertical_alignment' => 'stretch']);
+  }
+
+  #[Test]
   public function toc_update_migration_adds_live_and_snapshot_columns_repeatably(): void
   {
     $page = $this->fixture();

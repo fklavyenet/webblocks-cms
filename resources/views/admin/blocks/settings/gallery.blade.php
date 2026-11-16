@@ -58,14 +58,24 @@
     </div>
 
     <div class="wb-stack wb-gap-2" data-cms-gallery-physical @if ($layout !== 'physical-scale') hidden @endif>
-        <label class="wb-stack wb-gap-1">
-            <span>{{ $adminText('physical_unit') }}</span>
-            <select class="wb-select" name="{{ $name('gallery_unit') }}" data-cms-gallery-unit @disabled($layout !== 'physical-scale')>
-                @foreach (\WebBlocks\Cms\Support\Media\GalleryLayout::UNITS as $unit => $factor)
-                    <option value="{{ $unit }}" data-factor="{{ $factor }}" @selected($fieldValue('gallery_unit', $block->setting('gallery_unit', 'cm')) === $unit)>{{ $unit }}</option>
-                @endforeach
-            </select>
-        </label>
+        <div class="wb-grid wb-grid-2">
+            <label class="wb-stack wb-gap-1">
+                <span>{{ $adminText('physical_unit') }}</span>
+                <select class="wb-select" name="{{ $name('gallery_unit') }}" data-cms-gallery-unit @disabled($layout !== 'physical-scale')>
+                    @foreach (\WebBlocks\Cms\Support\Media\GalleryLayout::UNITS as $unit => $factor)
+                        <option value="{{ $unit }}" data-factor="{{ $factor }}" @selected($fieldValue('gallery_unit', $block->setting('gallery_unit', 'cm')) === $unit)>{{ $unit }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label class="wb-stack wb-gap-1">
+                <span>{{ $adminText('physical_vertical_alignment') }}</span>
+                <select class="wb-select" name="{{ $name('gallery_vertical_alignment') }}" data-cms-gallery-vertical-alignment @disabled($layout !== 'physical-scale')>
+                    @foreach (\WebBlocks\Cms\Support\Media\GalleryLayout::VERTICAL_ALIGNMENTS as $alignment)
+                        <option value="{{ $alignment }}" @selected($fieldValue('gallery_vertical_alignment', $block->galleryVerticalAlignment()) === $alignment)>{{ $adminText('physical_align_'.$alignment) }}</option>
+                    @endforeach
+                </select>
+            </label>
+        </div>
         <div class="wb-table-wrap" data-cms-gallery-measurements hidden>
             <table class="wb-table">
                 <thead><tr>

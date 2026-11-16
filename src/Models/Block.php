@@ -2025,6 +2025,11 @@ class Block extends CmsModel
     return GalleryLayout::weights($this->setting('gallery_weights'), (int) $this->galleryColumns());
   }
 
+  public function galleryVerticalAlignment(): string
+  {
+    return GalleryLayout::verticalAlignment($this->setting('gallery_vertical_alignment'));
+  }
+
   public function galleryColumns(): string
   {
     return match ($this->appearanceSetting('columns')) {

@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\InternalContentApi;
 
 use WebBlocks\Cms\Support\Blocks\MobileContentOrder;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 
 /**
  * Stable PATCH field rules and deliberate exclusions shared by the authoring
@@ -121,6 +122,9 @@ final class BlockSettingsPatchPolicy
       'flow' => ['enum', ['none', 'stack']],
     ],
     'content_header' => ['alignment' => ['enum', ['left', 'center', 'right']]],
+    'gallery' => [
+      'gallery_vertical_alignment' => ['enum', GalleryLayout::VERTICAL_ALIGNMENTS],
+    ],
     'grid' => [
       'mobile_order' => ['enum', MobileContentOrder::OPTIONS],
       'layout_name' => ['text', 255],

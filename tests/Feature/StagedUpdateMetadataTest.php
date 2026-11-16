@@ -76,7 +76,8 @@ class StagedUpdateMetadataTest extends TestCase
       'expected_source_page_id' => $page->id, 'expected_source_path' => '/source', 'locale' => 'de',
       'replace_slots' => ['main' => [
         ['type' => 'image', 'media_id' => $media->id, 'translations' => ['alt_text' => 'Blaues Bild', 'caption' => 'Einzelwerk']],
-        ['type' => 'gallery', 'settings' => ['captions_mode' => 'below'], 'gallery_items' => [['media_id' => $media->id] + $this->itemCopy('de', 0)]],
+        ['type' => 'gallery', 'settings' => ['captions_mode' => 'below', 'variant' => 'physical-scale', 'gallery_vertical_alignment' => 'top'],
+          'gallery_items' => [['media_id' => $media->id, 'physical_width_um' => 600000, 'physical_height_um' => 800000] + $this->itemCopy('de', 0)]],
         ['type' => 'contact_form', 'settings' => ['consent_required' => true, 'send_email_notification' => false], 'translations' => ['title' => 'Kontakt', 'submit_label' => 'Senden', 'success_message' => 'Danke', 'consent_label' => 'Ich stimme zu.']],
       ]],
     ]]);
@@ -86,6 +87,7 @@ class StagedUpdateMetadataTest extends TestCase
     $this->promote($staged, $page);
     $image = $page->blocks()->where('type', 'image')->firstOrFail()->imageTranslations()->where('locale_id', $locales[1]->id)->firstOrFail();
     $this->assertSame('Blaues Bild', $image->alt_text);
+    $this->assertSame('top', $page->blocks()->where('type', 'gallery')->firstOrFail()->galleryVerticalAlignment());
     $this->assertSame('Einzelwerk', $image->caption);
     $this->assertRendered($page, 'de', 'de caption 0 — 60 × 80 cm', 'Ich stimme zu.');
   }

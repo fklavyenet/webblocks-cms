@@ -415,12 +415,13 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'gallery' => [
-        'admin_form_fields' => ['Gallery title', 'Description', 'Gallery media'],
+        'admin_form_fields' => ['Gallery title', 'Description', 'Gallery media', 'Vertical alignment (Physical scale)'],
         'translatable_fields' => ['title', 'subtitle'],
-        'shared_settings_fields' => ['ordered block_media gallery_item relations'],
+        'shared_settings_fields' => ['ordered block_media gallery_item relations', 'settings.gallery_vertical_alignment'],
         'storage_fields' => [
           'Translated gallery title and description live in block text translation rows.',
           'Ordered gallery media ownership stays in block_media rows with the gallery_item role.',
+          'Physical scale vertical alignment is shared across locales and stored in the typed media settings relation.',
           'Legacy settings-based gallery item fallbacks remain readable for older saved content.',
         ],
         'media_relationship_fields' => ['Gallery media is ordered through block_media.gallery_item rows; the public renderer also preserves older settings fallback items when needed.'],

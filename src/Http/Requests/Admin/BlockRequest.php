@@ -337,6 +337,7 @@ class BlockRequest extends FormRequest
       'gallery_items.*.overlay_text' => [$isGallery ? 'nullable' : 'prohibited', 'string'],
       'gallery_variant' => [$isGallery ? 'nullable' : 'prohibited', Rule::in([...GalleryLayout::VARIANTS, 'masonary'])],
       'gallery_unit' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(array_keys(GalleryLayout::UNITS))],
+      'gallery_vertical_alignment' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(GalleryLayout::VERTICAL_ALIGNMENTS)],
       'gallery_items.*.physical_width_um' => [$isGallery ? 'nullable' : 'prohibited', 'required_if:gallery_variant,physical-scale', 'integer', 'min:1', 'max:'.GalleryLayout::MAX_DIMENSION],
       'gallery_items.*.physical_height_um' => [$isGallery ? 'nullable' : 'prohibited', 'required_if:gallery_variant,physical-scale', 'integer', 'min:1', 'max:'.GalleryLayout::MAX_DIMENSION],
       'gallery_columns' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4', '5'])],
@@ -1746,6 +1747,9 @@ class BlockRequest extends FormRequest
           $settings['variant'] = GalleryLayout::variant($submittedVariant);
           if (isset($data['gallery_unit'])) {
             $settings['gallery_unit'] = $data['gallery_unit'];
+          }
+          if ($settings['variant'] === 'physical-scale' && isset($data['gallery_vertical_alignment'])) {
+            $settings['gallery_vertical_alignment'] = $data['gallery_vertical_alignment'];
           }
           if (isset($data['gallery_weights'])) {
             $settings['gallery_weights'] = array_map(floatval(...), $data['gallery_weights']);

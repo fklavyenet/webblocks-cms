@@ -26,7 +26,7 @@ final class SettingDefinitions
         '', 'alternate_media_text_sections'
       ),
       'block_media_settings' => self::fields(
-        'background_fit background_overlay background_position image_align image_aspect image_position aspect_ratio gallery_unit height min_height transition overlay content_position content_width captions_mode overlay_mode viewer_title viewer_group loading',
+        'background_fit background_overlay background_position image_align image_aspect image_position aspect_ratio gallery_unit gallery_vertical_alignment height min_height transition overlay content_position content_width captions_mode overlay_mode viewer_title viewer_group loading',
         'interval_ms', 'autoplay pause_on_hover show_arrows show_dots loop swipe keyboard lightbox_enabled viewer_enabled'
       ),
       'block_navigation_settings' => self::fields(

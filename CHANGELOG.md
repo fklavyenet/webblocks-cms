@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.138.0
+
+- Choose Top, Center, or Bottom vertical alignment for Physical scale galleries. Bottom is the default. Captions stay with their artwork and narrow galleries keep their proportional single-column layout.
+- Keep the Gallery preview in sync when settings change in the inline page editor.
+
 ## 1.137.2
 
 - Hide the update dialog and reopen it with Show status while Webadmin keeps tracking the same update.

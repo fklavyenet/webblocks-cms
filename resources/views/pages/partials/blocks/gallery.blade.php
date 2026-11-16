@@ -140,6 +140,7 @@
     data-wb-gallery-variant="{{ $variant }}"
     @if ($variant === 'weighted') data-wb-gallery-weights="{{ implode(' ', $block->galleryWeights()) }}" @endif
     @if ($variant === 'equal-height') data-wb-gallery-items-per-row="{{ $block->galleryColumns() }}" @endif
+    @if ($physical) data-wb-gallery-vertical-alignment="{{ $block->galleryVerticalAlignment() }}" @endif
     data-wb-gallery-captions="{{ $captionMode }}"
     aria-label="{{ $ariaLabel }}"
 >

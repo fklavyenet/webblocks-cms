@@ -10,6 +10,8 @@ final class GalleryLayout
 
   public const UNITS = ['mm' => 1000, 'cm' => 10000, 'in' => 25400];
 
+  public const VERTICAL_ALIGNMENTS = ['top', 'center', 'bottom'];
+
   public const MAX_DIMENSION = 1000000000;
 
   public const ITEMS_PER_PHYSICAL_ROW = 3;
@@ -46,6 +48,11 @@ final class GalleryLayout
   {
     return is_array($value) && array_is_list($value) && count($value) <= 5
       && array_all($value, fn ($weight) => is_numeric($weight) && $weight >= self::MIN_WEIGHT && $weight <= self::MAX_WEIGHT);
+  }
+
+  public static function verticalAlignment(mixed $value): string
+  {
+    return in_array($value, self::VERTICAL_ALIGNMENTS, true) ? $value : 'bottom';
   }
 
   public static function weights(mixed $value, int $columns): array

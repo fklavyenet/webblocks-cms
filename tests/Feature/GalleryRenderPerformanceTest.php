@@ -65,16 +65,22 @@ class GalleryRenderPerformanceTest extends TestCase
     }
     $html = $this->render($block->fresh());
     $this->assertStringContainsString('wb-gallery--physical-scale', $html);
+    $this->assertStringContainsString('data-wb-gallery-vertical-alignment="bottom"', $html);
     $this->assertSame(1, substr_count($html, 'class="wb-gallery-row"'));
     $this->assertSame(2, substr_count($html, 'data-wb-gallery-physical-width="400000"'));
     $this->assertStringContainsString('data-wb-gallery-physical-height="800000"', $html);
+    $block->update(['settings' => [...$block->decodedSettings(), 'gallery_vertical_alignment' => 'center']]);
+    $this->assertStringContainsString('data-wb-gallery-vertical-alignment="center"', $this->render($block->fresh()));
+    $this->assertDatabaseHas('wbcms_block_media_settings', ['gallery_vertical_alignment' => 'center']);
     $revisions = app(PageRevisionManager::class);
     $page = $block->page;
     $revision = $revisions->capture($page, force: true);
+    $this->assertDatabaseHas('wbcms_snapshot_block_media_settings', ['gallery_vertical_alignment' => 'center']);
     $candidate = Page::create(['site_id' => $page->site_id, 'title' => 'Candidate', 'slug' => 'candidate', 'status' => 'draft']);
     $revisions->applySnapshotToCandidate($candidate, $revision->fresh()->snapshot, ['source_page_id' => $page->id, 'revision_id' => $revision->id]);
     $restored = $candidate->blocks()->where('type', 'gallery')->firstOrFail();
     $this->assertSame('physical-scale', $restored->galleryVariant());
+    $this->assertSame('center', $restored->galleryVerticalAlignment());
     $this->assertSame([400000, 400000, 800000], $restored->galleryItems()->map(fn ($item) => $item->galleryDimensions()['physical_width_um'])->all());
   }
 
