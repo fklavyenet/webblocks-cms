@@ -38,6 +38,7 @@ use WebBlocks\Cms\Support\ContentSources\ContentSourceEditor;
 use WebBlocks\Cms\Support\ContentSources\ContentSourceRegistry;
 use WebBlocks\Cms\Support\Icons\IconCatalog;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 use WebBlocks\Cms\Support\Media\VideoCaptions;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
@@ -334,8 +335,10 @@ class BlockRequest extends FormRequest
       'gallery_items.*.caption' => [$isGallery ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'gallery_items.*.overlay_title' => [$isGallery ? 'nullable' : 'prohibited', 'string', 'max:255'],
       'gallery_items.*.overlay_text' => [$isGallery ? 'nullable' : 'prohibited', 'string'],
-      'gallery_variant' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['grid', 'masonry', 'masonary', 'collage'])],
+      'gallery_variant' => [$isGallery ? 'nullable' : 'prohibited', Rule::in([...GalleryLayout::VARIANTS, 'masonary'])],
       'gallery_columns' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['2', '3', '4', '5'])],
+      'gallery_weights' => [$isGallery ? 'nullable' : 'prohibited', 'array', 'list', 'max:5'],
+      'gallery_weights.*' => ['required', 'numeric', 'between:'.GalleryLayout::MIN_WEIGHT.','.GalleryLayout::MAX_WEIGHT],
       'gallery_gap' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['none', 'sm', 'md', 'lg'])],
       'gallery_aspect_ratio' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['auto', 'square', '4:3', '16:9', 'portrait'])],
       'gallery_captions_mode' => [$isGallery ? 'nullable' : 'prohibited', Rule::in(['hidden', 'below', 'overlay', 'on-hover'])],
@@ -1735,11 +1738,10 @@ class BlockRequest extends FormRequest
 
         if (! $isTranslatedGalleryEdit) {
           $submittedVariant = trim((string) ($data['gallery_variant'] ?? 'grid'));
-          $settings['variant'] = match ($submittedVariant) {
-            'masonry', 'masonary' => 'masonry',
-            'collage' => 'collage',
-            default => 'grid',
-          };
+          $settings['variant'] = GalleryLayout::variant($submittedVariant);
+          if (isset($data['gallery_weights'])) {
+            $settings['gallery_weights'] = array_map(floatval(...), $data['gallery_weights']);
+          }
           $settings['columns'] = in_array(trim((string) ($data['gallery_columns'] ?? '3')), ['2', '3', '4', '5'], true)
             ? trim((string) ($data['gallery_columns'] ?? '3'))
             : '3';

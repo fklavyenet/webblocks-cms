@@ -9,3 +9,5 @@
     'inputPrefix' => $prefix,
     'modalIdPrefix' => 'inline-gallery-item-editor-'.$index,
 ])
+
+@include('webblocks-cms::admin.blocks.settings.gallery', ['inputPrefix' => $prefix])

@@ -32,7 +32,7 @@ final class SnapshotFields
       'snapshot_plugin_translations' => $ints('locale_id') + $text('field value'),
       'snapshot_contact_translations' => $ints('locale_id') + $text('title content submit_label success_message consent_label') + array_fill_keys(ContactFormFields::LABELS, 'text'),
     ];
-    foreach (['block_appearance_settings', 'block_media_settings', 'block_navigation_settings', 'block_content_settings', 'block_content_bindings', 'block_content_collections', 'block_video_caption_tracks'] as $name) {
+    foreach (['block_appearance_settings', 'block_media_settings', 'block_navigation_settings', 'block_content_settings', 'block_content_bindings', 'block_content_collections', 'block_video_caption_tracks', 'block_gallery_weights'] as $name) {
       $tables['snapshot_'.$name] = SettingDefinitions::tables()[$name];
     }
     $tables['snapshot_block_applications'] = ['application_handle' => 'text'];
@@ -72,6 +72,8 @@ final class SnapshotFields
         if ($type !== null) {
           return ['snapshot_block_content_bindings', $ancestors[5], $relative[2], $type, (string) $relative[1]];
         }
+      } elseif (count($relative) === 2 && $relative[0] === 'gallery_weights') {
+        return ['snapshot_block_gallery_weights', $nodeIndex, 'weight', 'variant', null];
       } elseif (count($relative) === 2 && $relative[0] === 'caption_tracks') {
         return ['snapshot_block_video_caption_tracks', $nodeIndex, 'path', 'text', (string) $relative[1]];
       } elseif (count($relative) === 2 && $relative[0] === 'content_collection') {

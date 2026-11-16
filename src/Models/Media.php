@@ -253,6 +253,9 @@ class Media extends CmsModel
       'folder_name' => $this->folder?->name,
       'meta_label' => $this->compactMetaLabel(),
       'url' => $this->isImage() ? $this->transformUrl('thumbnail') : $this->url(),
+      'gallery_preview_url' => $this->isImage() ? $this->transformUrl('content-small') : null,
+      'width' => $this->width,
+      'height' => $this->height,
       'previewable' => $this->canPreview(),
     ];
   }

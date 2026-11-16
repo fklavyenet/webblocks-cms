@@ -41,6 +41,7 @@ final class SettingDefinitions
       'block_content_bindings' => self::fields('source record field', '', ''),
       'block_content_collections' => self::fields('source filter_field filter_value sort_field sort_direction empty_behavior error_behavior', 'template_block_id limit per_page', 'paginate'),
       'block_video_caption_tracks' => ['path' => 'text'],
+      'block_gallery_weights' => ['weight' => 'variant'],
       'block_application_values' => ['value' => 'variant'],
       'application_assets' => self::fields('path type load_position', '', ''),
       'application_supports' => self::fields('', '', 'locale theme fullscreen'),
@@ -83,6 +84,8 @@ final class SettingDefinitions
         $table = 'block_content_bindings';
         $index = $positions[1];
         $key = $path[1];
+      } elseif (count($path) === 2 && $path[0] === 'gallery_weights') {
+        return ['block_gallery_weights', $positions[1], 'weight', 'variant', null];
       } elseif (count($path) === 2 && $path[0] === 'caption_tracks') {
         return ['block_video_caption_tracks', $positions[1], 'path', 'text', (string) $path[1]];
       } elseif (count($path) === 2 && $path[0] === 'content_collection') {

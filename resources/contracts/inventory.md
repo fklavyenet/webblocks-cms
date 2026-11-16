@@ -691,11 +691,11 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 | Contract area | Source-backed behavior |
 | --- | --- |
 | Editable content | Ordered Gallery items with locale-owned `alt_text`, `caption`, `overlay_title`, `overlay_text`; optional shared viewer title. Gallery intro copy is intentionally separate. Item translations resolve in the requested visitor locale with default-locale fallback, independently of missing Gallery heading translations. Staged creation and promotion preserve every item translation, media relationship, and position. |
-| Gallery item editor | The item name and its Edit action both open the existing metadata dialog, including for newly added items. |
-| Settings and variants | `variant`: grid, masonry, collage; `columns`: 2–5; `gap`: none, sm, md, lg; `aspect_ratio`: auto, square, 4:3, 16:9, portrait; `captions_mode`: hidden, below, overlay, on-hover; `overlay_mode`: none, gradient, solid; `lightbox_enabled`: boolean. |
+| Gallery item editor | The item name and its Edit action both open the existing metadata dialog, including for newly added items. Gallery settings use illustrated radio cards and a wide/narrow preview of current items in both the block and inline editors. |
+| Settings and variants | `variant`: grid, weighted, equal-height, masonry, collage; `columns`: 2–5 (target images per row for equal-height); `gallery_weights`: an ordered list of up to five numeric weights between 0.01 and 1000 (defaults to 1 for unspecified columns, used by weighted); `gap`: none, sm, md, lg; `aspect_ratio`: auto, square, 4:3, 16:9, portrait; `captions_mode`: hidden, below, overlay, on-hover; `overlay_mode`: none, gradient, solid; `lightbox_enabled`: boolean. |
 | Children/media | `gallery_items` or `gallery_media_ids` referencing image Media records; no block children. |
 | HTML | Root-owning `.wb-gallery.wb-gallery--{variant}` with gallery items, responsive media, captions, and optional registry-owned viewer under the canonical overlay root. |
-| Example appearance | Equal product grid, natural-height editorial masonry, or featured-first collage. |
+| Example appearance | Equal grid, repeating custom column weights, uncropped equal-height rows, natural-height masonry, or featured-first collage. The weighted and equal-height variants stack at a gallery width below 40rem and show images at their natural aspect ratios. |
 | Render reuse | Reuses loaded ordered Media relationships and request-scoped locale identities. Image count does not add locale lookups; missing visitor-language copy keeps the existing default-locale/first-translation fallback. Gallery output is not stored across requests. |
 | Avoid | Adding heading/description into Gallery; compose Content Header or Rich Text before it. |
 

@@ -150,7 +150,7 @@
                     </td>
                     <td>
                       @if ($asset->canPreview())
-                        <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}" width="72" height="48">
+                        <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}" width="72" height="48" data-wb-gallery-preview-image data-gallery-preview-url="{{ $asset->transformUrl('content-small') }}" data-width="{{ $asset->width }}" data-height="{{ $asset->height }}">
                       @else
                         <span class="wb-text-sm wb-text-muted">{{ $adminText('no_preview') }}</span>
                       @endif
@@ -306,7 +306,7 @@
                 </td>
                 <td>
                   @if ($asset->canPreview())
-                    <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}" width="72" height="48">
+                    <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}" width="72" height="48" data-wb-gallery-preview-image data-gallery-preview-url="{{ $asset->transformUrl('content-small') }}" data-width="{{ $asset->width }}" data-height="{{ $asset->height }}">
                   @else
                     <span class="wb-text-sm wb-text-muted">{{ $adminText('no_preview') }}</span>
                   @endif

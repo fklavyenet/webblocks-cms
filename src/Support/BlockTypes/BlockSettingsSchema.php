@@ -8,6 +8,7 @@ use WebBlocks\Cms\Support\Consent\ConsentPresets;
 use WebBlocks\Cms\Support\Contact\ContactPrivacyNotice;
 use WebBlocks\Cms\Support\InternalContentApi\BlockSettingsPatchPolicy;
 use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiOperations;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 use WebBlocks\Cms\Support\Media\VideoCaptions;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
@@ -88,7 +89,7 @@ final class BlockSettingsSchema
       $rules['scale'] = ['enum', ['5']];
     }
     if ($type === 'gallery') {
-      $rules += ['variant' => ['enum', ['grid', 'masonry', 'collage']], 'columns' => ['enum', ['2', '3', '4', '5']], 'gap' => ['enum', ['none', 'sm', 'md', 'lg']],
+      $rules += ['variant' => ['enum', GalleryLayout::VARIANTS], 'gallery_weights' => ['gallery_weights'], 'columns' => ['enum', ['2', '3', '4', '5']], 'gap' => ['enum', ['none', 'sm', 'md', 'lg']],
         'aspect_ratio' => ['enum', ['auto', 'square', '4:3', '16:9', 'portrait']], 'captions_mode' => ['enum', ['hidden', 'below', 'overlay', 'on-hover']], 'overlay_mode' => ['enum', ['none', 'gradient', 'solid']], 'lightbox_enabled' => ['bool'], 'viewer_title' => ['text', 255]];
     }
     if ($type === 'webblocks-commerce-buy-button') {
@@ -119,10 +120,10 @@ final class BlockSettingsSchema
         $closed = 'use_translations';
       }
       $typeName = match ($rule[0]) {
-      'bool' => 'boolean', 'int' => 'integer', 'object', 'application_settings', 'video_captions' => 'object', 'array' => 'array', default => 'string'
+      'bool' => 'boolean', 'int' => 'integer', 'object', 'application_settings', 'video_captions' => 'object', 'array', 'gallery_weights' => 'array', default => 'string'
       };
       $constraints = match ($rule[0]) {
-        'enum' => ['enum' => $rule[1]], 'int' => ['minimum' => $rule[1], 'maximum' => $rule[2]], 'text' => ['max_length' => $rule[1]], 'web_url', 'provider_embed' => ['max_length' => 2048], default => [],
+        'enum' => ['enum' => $rule[1]], 'int' => ['minimum' => $rule[1], 'maximum' => $rule[2]], 'text' => ['max_length' => $rule[1]], 'gallery_weights' => ['max_items' => 5, 'item_minimum' => GalleryLayout::MIN_WEIGHT, 'item_maximum' => GalleryLayout::MAX_WEIGHT], 'web_url', 'provider_embed' => ['max_length' => 2048], default => [],
       };
       $aliases = match (true) {
         $type === 'slider' && $key === 'transition' => ['fade' => 'slide'],
@@ -166,6 +167,7 @@ final class BlockSettingsSchema
       'object', 'application_settings' => is_array($value) && ($value === [] || ! array_is_list($value)),
       'array' => is_array($value),
       'video_captions' => VideoCaptions::validTracks($value),
+      'gallery_weights' => GalleryLayout::validWeights($value),
       default => false,
     };
 
@@ -173,6 +175,7 @@ final class BlockSettingsSchema
       'bool' => $valid ? filter_var($value, FILTER_VALIDATE_BOOL) : $value,
       'int' => $valid ? (int) $value : $value,
       'enum' => $valid ? $text : $value,
+      'gallery_weights' => $valid ? array_map(floatval(...), $value) : $value,
       'provider_embed' => $valid ? app(ConsentPresets::class)->embed($text)['url'] : $value,
       default => $valid && is_string($value) ? trim($value) : $value,
     };

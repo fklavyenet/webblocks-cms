@@ -23,6 +23,7 @@ use WebBlocks\Cms\Support\Blocks\HeaderAnchors;
 use WebBlocks\Cms\Support\Blocks\MobileBlockMedia;
 use WebBlocks\Cms\Support\ContentSources\ContentBindingResolver;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 use WebBlocks\Cms\Support\Navigation\PublicNavigationActiveState;
 use WebBlocks\Cms\Support\Pages\PageListItem;
 use WebBlocks\Cms\Support\Pages\PageListQuery;
@@ -2016,11 +2017,12 @@ class Block extends CmsModel
 
   public function galleryVariant(): string
   {
-    return match ($this->appearanceSetting('variant')) {
-      'masonry', 'masonary' => 'masonry',
-      'collage' => 'collage',
-      default => 'grid',
-    };
+    return GalleryLayout::variant($this->appearanceSetting('variant'));
+  }
+
+  public function galleryWeights(): array
+  {
+    return GalleryLayout::weights($this->setting('gallery_weights'), (int) $this->galleryColumns());
   }
 
   public function galleryColumns(): string

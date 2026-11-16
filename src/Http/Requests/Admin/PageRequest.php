@@ -12,6 +12,7 @@ use WebBlocks\Cms\Models\PageTranslation;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Support\Applications\ApplicationRegistry;
 use WebBlocks\Cms\Support\Applications\ApplicationSettingsValidator;
+use WebBlocks\Cms\Support\Media\GalleryLayout;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Pages\PageLayoutManager;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
@@ -86,8 +87,10 @@ class PageRequest extends FormRequest
       'blocks.*.gallery_items.*.caption' => ['nullable', 'string', 'max:255'],
       'blocks.*.gallery_items.*.overlay_title' => ['nullable', 'string', 'max:255'],
       'blocks.*.gallery_items.*.overlay_text' => ['nullable', 'string'],
-      'blocks.*.gallery_variant' => ['nullable', Rule::in(['grid', 'masonry', 'masonary', 'collage'])],
+      'blocks.*.gallery_variant' => ['nullable', Rule::in([...GalleryLayout::VARIANTS, 'masonary'])],
       'blocks.*.gallery_columns' => ['nullable', Rule::in(['2', '3', '4', '5'])],
+      'blocks.*.gallery_weights' => ['nullable', 'array', 'list', 'max:5'],
+      'blocks.*.gallery_weights.*' => ['required', 'numeric', 'between:'.GalleryLayout::MIN_WEIGHT.','.GalleryLayout::MAX_WEIGHT],
       'blocks.*.gallery_gap' => ['nullable', Rule::in(['none', 'sm', 'md', 'lg'])],
       'blocks.*.gallery_aspect_ratio' => ['nullable', Rule::in(['auto', 'square', '4:3', '16:9', 'portrait'])],
       'blocks.*.gallery_captions_mode' => ['nullable', Rule::in(['hidden', 'below', 'overlay', 'on-hover'])],
@@ -231,11 +234,10 @@ class PageRequest extends FormRequest
         if (($blockType?->slug ?? null) === 'gallery') {
           $settings = $decodedSettings;
           $submittedVariant = trim((string) ($block['gallery_variant'] ?? ($settings['variant'] ?? 'grid')));
-          $settings['variant'] = match ($submittedVariant) {
-            'masonry', 'masonary' => 'masonry',
-            'collage' => 'collage',
-            default => 'grid',
-          };
+          $settings['variant'] = GalleryLayout::variant($submittedVariant);
+          if (isset($block['gallery_weights'])) {
+            $settings['gallery_weights'] = array_map(floatval(...), $block['gallery_weights']);
+          }
           $settings['columns'] = in_array(trim((string) ($block['gallery_columns'] ?? ($settings['columns'] ?? '3'))), ['2', '3', '4', '5'], true)
             ? trim((string) ($block['gallery_columns'] ?? ($settings['columns'] ?? '3')))
             : '3';

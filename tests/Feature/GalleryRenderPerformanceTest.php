@@ -14,6 +14,8 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\BlockTypes\BlockSettingsSchema;
+use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Tests\TestCase;
 
 class GalleryRenderPerformanceTest extends TestCase
@@ -21,6 +23,50 @@ class GalleryRenderPerformanceTest extends TestCase
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
+
+  #[Test]
+  public function custom_gallery_settings_round_trip_through_relational_storage_and_rendering(): void
+  {
+    [$block] = $this->fixture(2);
+    $block = $block->fresh();
+    $block->update(['settings' => [...$block->decodedSettings(), 'variant' => 'weighted', 'columns' => '3', 'gallery_weights' => [1, 2.5]]]);
+    $block = $block->fresh();
+    $this->assertSame([1.0, 2.5, 1], $block->galleryWeights());
+    $this->assertStringContainsString('data-wb-gallery-weights="1 2.5 1"', $this->render($block));
+    $this->assertSame(2, DB::table('wbcms_block_gallery_weights')->count());
+
+    app(PageRevisionManager::class)->capture($block->page, force: true);
+    $this->assertSame(2, DB::table('wbcms_snapshot_block_gallery_weights')->count());
+
+    $block->update(['settings' => [...$block->decodedSettings(), 'variant' => 'equal-height', 'columns' => '4']]);
+    $html = $this->render($block->fresh());
+    $this->assertStringContainsString('wb-gallery--equal-height', $html);
+    $this->assertStringContainsString('data-wb-gallery-items-per-row="4"', $html);
+    $this->assertStringNotContainsString('data-wb-gallery-weights=', $html);
+    $fragment = view('webblocks-cms::admin.blocks.settings.gallery', [
+      'block' => $block->fresh(),
+      'inputPrefix' => 'blocks[7]',
+    ])->render();
+    $this->assertStringContainsString('name="blocks[7][gallery_variant]" value="equal-height" data-cms-gallery-variant checked', $fragment);
+    $this->assertStringContainsString('name="blocks[7][gallery_weights][]"', $fragment);
+    $this->assertStringContainsString('>Column 2<', $fragment);
+  }
+
+  #[Test]
+  public function gallery_schema_validates_an_ordered_list_of_weights(): void
+  {
+    $fields = app(BlockSettingsSchema::class)->forType('gallery')['fields'];
+    $this->assertContains('weighted', $fields['variant']['enum']);
+    $this->assertContains('equal-height', $fields['variant']['enum']);
+    $rule = $fields['gallery_weights']['rule'];
+    $valid = false;
+    $this->assertSame([1.0, 2.5], BlockSettingsSchema::normalizeValue([1, '2.5'], $rule, $valid));
+    $this->assertTrue($valid);
+    foreach ([[0], [1, -2.5], [2 => 1], [1, 1, 1, 1, 1, 1]] as $invalid) {
+      BlockSettingsSchema::normalizeValue($invalid, $rule, $valid);
+      $this->assertFalse($valid);
+    }
   }
 
   #[Test]

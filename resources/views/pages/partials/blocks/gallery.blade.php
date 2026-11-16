@@ -135,6 +135,8 @@
     class="{{ $galleryClasses }}"
     data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}"
     data-wb-gallery-variant="{{ $variant }}"
+    @if ($variant === 'weighted') data-wb-gallery-weights="{{ implode(' ', $block->galleryWeights()) }}" @endif
+    @if ($variant === 'equal-height') data-wb-gallery-items-per-row="{{ $block->galleryColumns() }}" @endif
     data-wb-gallery-captions="{{ $captionMode }}"
     aria-label="{{ $ariaLabel }}"
 >
@@ -167,7 +169,11 @@
                             src="{{ $item['thumbnail_url'] }}"
                             @if ($item['srcset'] ?? null)
                                 srcset="{{ $item['srcset'] }}"
-                                sizes="(max-width: 640px) 100vw, calc(100vw / {{ max(1, $block->galleryColumns()) }})"
+                                @if ($variant === 'weighted' || $variant === 'equal-height')
+                                    sizes="auto, 100vw"
+                                @else
+                                    sizes="(max-width: 640px) 100vw, calc(100vw / {{ max(1, $block->galleryColumns()) }})"
+                                @endif
                             @endif
                             alt="{{ $item['alt'] }}"
                             class="wb-gallery-media"

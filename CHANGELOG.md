@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.136.0
+
+- Choose Gallery layouts from illustrated cards and preview the selected images at wide or narrow widths before saving.
+- Set custom column weights or display images at equal height without cropping. Both layouts stack in narrow gallery areas.
+
 ## 1.135.13
 
 - Localize the panel access-denied page and the browser error page for invalid MCP authorization requests.
