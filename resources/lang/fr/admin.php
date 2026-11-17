@@ -2965,6 +2965,7 @@ $translations = [
     'slot_types_help' => 'Régions de page fixes : en-tête, contenu principal, barre latérale, pied de page',
     'block_types' => 'Types de bloc',
     'block_types_help' => 'Définitions de blocs disponibles pour les éditeurs',
+    'recent_content' => 'Contenus récents',
     'recent_pages' => 'Pages récentes',
     'view_all' => 'Tout voir',
     'no_pages' => 'Aucune page pour l\'instant',

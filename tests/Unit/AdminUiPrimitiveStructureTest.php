@@ -33,7 +33,6 @@ class AdminUiPrimitiveStructureTest extends TestCase
 
         foreach ([
             'resources/views/admin/contact-messages/show.blade.php',
-            'resources/views/admin/dashboard.blade.php',
             'resources/views/admin/pages/partials/details-modal.blade.php',
             'resources/views/admin/system/health.blade.php',
             'resources/views/admin/system/plugins/show.blade.php',

@@ -2964,6 +2964,7 @@ $translations = [
     'slot_types_help' => 'Regioni fisse della pagina: Header, Main, Sidebar, Footer',
     'block_types' => 'Tipi di blocco',
     'block_types_help' => 'Definizioni di blocco disponibili per gli editor',
+    'recent_content' => 'Contenuti recenti',
     'recent_pages' => 'Pagine recenti',
     'view_all' => 'Vedi tutte',
     'no_pages' => 'Ancora nessuna pagina',

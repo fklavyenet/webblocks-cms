@@ -2980,6 +2980,7 @@ $translations = [
     'slot_types_help' => 'Sabit sayfa bölgeleri: Header, Main, Sidebar, Footer',
     'block_types' => 'Blok türleri',
     'block_types_help' => 'Editorler için kullanılabilir blok tanımlari',
+    'recent_content' => 'Son içerikler',
     'recent_pages' => 'Son sayfalar',
     'view_all' => 'Tümunu gör',
     'no_pages' => 'Henüz sayfa yok',

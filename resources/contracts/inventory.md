@@ -1319,16 +1319,25 @@ requires no provider connection or Support installation.
 
 ## Administrator dashboard and quick settings
 
-The administrator dashboard uses compact, responsive three-column summary and
-activity rows. Installation health (or the authorized site scheduler summary),
-scoped content counts and plugin summary cards precede page views, recent pages
-and recent media. Contact unread and awaiting-reply totals remain distinct in
-the content overview. Recent collections contain at most three records. Page
-views retain the accessible source table and WebBlocks UI chart keyboard behavior.
+The administrator dashboard puts New page and authorized quick actions in the
+header. On wide screens one column groups scoped content counts and page views.
+The other groups installation health or the authorized scheduler summary with
+recent content. Narrow screens stack the columns. Recent pages and media share
+one card and use tabs when both are authorized. Each collection contains at
+most three records. Page views retain the accessible source table and WebBlocks
+UI chart keyboard behavior. A separate contact strip shows unread and
+awaiting-reply totals. Summary plugin widgets remain grouped below the core
+dashboard.
 
-Health badges use the saved health snapshot and current scheduler evidence.
-Missing results remain unverified; stale snapshots retain their recorded time.
-Opening the dashboard does not start maintenance scans or external release checks.
+View checks expands the health categories inside the dashboard card. Category
+rows link to their full checks and expose the lead finding on hover and focus.
+When the snapshot is missing, View checks explicitly submits a system-only
+request to generate the health snapshot and returns to the expanded card.
+This request uses existing maintenance and release evidence. Separate
+maintenance refresh remains available on System health. Saved summaries show
+category counts and the last checked time, including when the snapshot is
+stale. Passive dashboard reads use the saved snapshot and current scheduler
+evidence without starting maintenance scans or external release checks.
 Installation health remains restricted to system operators.
 
 The administrator navbar's globe gives the signed-in account access to public

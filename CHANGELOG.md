@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.139.0
+
+- Use a compact two-column Dashboard with content totals and page views on the left, and Site health and recent content on the right.
+- Open health check results inside the Site health card. When a report is missing, View checks generates it and returns to the expanded card.
+- Move New page and Quick actions into the Dashboard header. Switch between recent pages and media in one card.
+
 ## 1.138.2
 
 - Close the System updates dialog automatically after a verified update succeeds without warnings. Keep the result on the page and available through Show status.

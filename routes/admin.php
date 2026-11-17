@@ -600,6 +600,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
       Route::get('system/scheduler', [SystemHealthController::class, 'scheduler'])->name('system.scheduler.index');
       Route::get('system/health', [SystemHealthController::class, 'index'])->name('system.health.index');
+      Route::post('dashboard/health', [SystemHealthController::class, 'checkDashboard'])->middleware('throttle:6,1')->name('dashboard.health.check');
       Route::get('system/diagnostics', [SystemDiagnosticReportController::class, 'index'])->name('system.diagnostics.index');
       Route::post('system/diagnostics', [SystemDiagnosticReportController::class, 'prepare'])->middleware('throttle:6,1')->name('system.diagnostics.prepare');
       Route::post('system/diagnostics/download', [SystemDiagnosticReportController::class, 'download'])->name('system.diagnostics.download');

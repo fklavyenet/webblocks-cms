@@ -22,6 +22,24 @@ class SystemHealthController extends Controller
     return view('webblocks-cms::admin.system.scheduler', ['setup' => $setup->instructions()]);
   }
 
+  public function checkDashboard(SystemHealthRequest $request, SystemHealthQuery $health): RedirectResponse
+  {
+    $redirect = redirect()->route('admin.dashboard', [], 303);
+
+    try {
+      if ($health->dashboardSummary()['status'] === 'missing') {
+        $health->refreshSnapshot();
+      }
+      if ($health->dashboardSummary()['status'] !== 'missing') {
+        return $redirect->with('dashboard_health_open', true);
+      }
+    } catch (\Throwable $exception) {
+      report($exception);
+    }
+
+    return $redirect->with('dashboard_health_failed', true);
+  }
+
   public function refresh(SystemHealthRequest $request): RedirectResponse
   {
     $redirect = $request->filled('cleanup_tab')

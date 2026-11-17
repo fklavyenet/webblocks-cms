@@ -1,17 +1,15 @@
 @if ($panelNotifications !== null && ($compact ?? false))
-    <div data-wb-panel-notification-summary class="wb-cms-dashboard-contact wb-text-sm">
-        <div class="wb-cluster wb-cluster-between wb-cluster-2">
+    <div data-wb-panel-notification-summary class="wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap wb-text-sm">
+        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
             <strong>{{ __('webblocks-cms::notifications.channel_contact') }}</strong>
-            <a href="{{ route('admin.contact-messages.index') }}" class="wb-btn wb-btn-ghost wb-btn-sm">{{ __('webblocks-cms::notifications.open_inbox') }}</a>
+            @if (! $panelNotifications['inbox_available'])
+                <span class="wb-text-muted">{{ __('webblocks-cms::notifications.panel_unavailable') }}</span>
+            @else
+                <span class="wb-text-muted">{{ __('webblocks-cms::notifications.panel_unread') }}: {{ number_format($panelNotifications['unread']) }}</span>
+                <span class="wb-text-muted">{{ __('webblocks-cms::notifications.panel_awaiting') }}: {{ number_format($panelNotifications['awaiting']) }}</span>
+            @endif
         </div>
-        @if (! $panelNotifications['inbox_available'])
-            <p class="wb-text-muted">{{ __('webblocks-cms::notifications.panel_unavailable') }}</p>
-        @else
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <span>{{ __('webblocks-cms::notifications.panel_unread') }}: {{ number_format($panelNotifications['unread']) }}</span>
-                <span>{{ __('webblocks-cms::notifications.panel_awaiting') }}: {{ number_format($panelNotifications['awaiting']) }}</span>
-            </div>
-        @endif
+        <a href="{{ route('admin.contact-messages.index') }}" class="wb-btn wb-btn-secondary wb-btn-sm">{{ __('webblocks-cms::notifications.open_inbox') }}</a>
     </div>
 @elseif ($panelNotifications !== null)
     <section class="wb-card" data-wb-panel-notification-summary>

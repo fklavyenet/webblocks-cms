@@ -140,7 +140,11 @@ class SystemMaintenanceReportsTest extends TestCase
         $this->travel($seconds)->seconds();
       }
       $state = $seconds ? 'stale' : 'fresh';
-      $this->get(route('admin.dashboard'))->assertOk()->assertSee('data-wb-system-health-summary', false);
+      $this->get(route('admin.dashboard'))->assertOk()
+        ->assertSee('data-wb-system-health-summary', false)
+        ->assertSee(route('admin.system.health.index').'#health-storage', false)
+        ->assertSee($seconds ? 'These figures may be out of date.' : 'Last checked:')
+        ->assertDontSee('Report not available yet.');
       $this->get(route('admin.system.backups.index'))->assertOk()->assertSee('data-wb-maintenance-report="'.$state.'"', false);
       $this->get(route('admin.system.cleanup.index'))->assertOk()->assertSee('data-wb-maintenance-report="'.$state.'"', false)->assertSee('Storage report');
       $this->get(route('admin.system.cleanup.index', ['tab' => 'actions']))->assertOk()
@@ -204,6 +208,49 @@ class SystemMaintenanceReportsTest extends TestCase
       $this->assertSame('missing', $reports->read()['status']);
       $this->get(route('admin.system.cleanup.index'))->assertOk()->assertSee('Report not available yet.');
     }
+  }
+
+  #[Test]
+  #[DataProvider('reportStores')]
+  public function opening_checks_for_the_first_time_returns_to_the_expanded_dashboard_card(bool $database): void
+  {
+    if ($database) {
+      $this->useRestrictedDatabaseCache();
+    }
+    $url = route('admin.dashboard');
+    $checksUrl = route('admin.dashboard.health.check');
+    $detailsUrl = route('admin.system.health.index');
+    $this->mock(MaintenanceCleanup::class, fn ($mock) => $mock->shouldNotReceive('overview'));
+
+    $this->get($url)->assertOk()
+      ->assertSee('action="'.$checksUrl.'"', false)
+      ->assertSee('Report not available yet.')
+      ->assertDontSee($detailsUrl.'#health-storage', false);
+    $this->assertSame('missing', app(SystemHealthQuery::class)->dashboardSummary()['status']);
+
+    $this->post($checksUrl)->assertStatus(303)->assertRedirect($url);
+    $this->get($url)->assertOk()
+      ->assertSee('id="dashboard-health-details" class="wb-collapse is-open"', false)
+      ->assertSee('aria-controls="dashboard-health-details" aria-expanded="true"', false)
+      ->assertSee($detailsUrl.'#health-storage', false)
+      ->assertSee('Last checked:')
+      ->assertDontSee('Report not available yet.');
+    $this->assertSame('missing', app(SystemMaintenanceReports::class)->read()['status']);
+    $this->get($url)->assertOk()->assertSee('aria-controls="dashboard-health-details" aria-expanded="false"', false);
+  }
+
+  #[Test]
+  public function a_report_that_cannot_be_saved_leaves_the_dashboard_card_retryable(): void
+  {
+    Cache::setDefaultDriver('null');
+    $url = route('admin.dashboard');
+    $checksUrl = route('admin.dashboard.health.check');
+
+    $this->post($checksUrl)->assertStatus(303)->assertRedirect($url);
+    $this->get($url)->assertOk()
+      ->assertSee('The health report could not be saved. Try again.')
+      ->assertSee('action="'.$checksUrl.'"', false)
+      ->assertDontSee('id="dashboard-health-details"', false);
   }
 
   #[Test]

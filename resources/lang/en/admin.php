@@ -3197,6 +3197,7 @@ return [
     'slot_types_help' => 'Fixed page regions: Header, Main, Sidebar, Footer',
     'block_types' => 'Block types',
     'block_types_help' => 'Available block definitions for editors',
+    'recent_content' => 'Recent content',
     'recent_pages' => 'Recent pages',
     'view_all' => 'View all',
     'no_pages' => 'No pages yet',

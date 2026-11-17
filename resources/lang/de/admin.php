@@ -2967,6 +2967,7 @@ $translations = [
     'slot_types_help' => 'Feste Seitenbereiche: Header, Main, Sidebar, Footer',
     'block_types' => 'Block-Typen',
     'block_types_help' => 'Verfügbare Blockdefinitionen für Redakteure',
+    'recent_content' => 'Letzte Inhalte',
     'recent_pages' => 'Aktuelle Seiten',
     'view_all' => 'Alle anzeigen',
     'no_pages' => 'Noch keine Seiten',

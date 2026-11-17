@@ -106,7 +106,7 @@ class SystemHealthQuery
       $generation = null;
     }
     $snapshot = $this->snapshot();
-    $snapshot['dashboard_counts'] = $this->formatReport($snapshot)['counts'];
+    $snapshot['dashboard_counts'] = $this->formatReport($snapshot, details: false)['counts'];
     try {
       $snapshot['generation'] = $generation;
       Cache::put($this->cacheKey(), $snapshot, SystemMaintenanceReports::RETAIN_SECONDS);

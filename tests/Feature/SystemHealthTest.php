@@ -90,7 +90,7 @@ class SystemHealthTest extends TestCase
   #[Test]
   public function routes_keep_existing_tools_and_require_installation_authority(): void
   {
-    foreach (['admin.system.health.index', 'admin.system.health.refresh', 'admin.system.information', 'admin.system.cleanup.index', 'admin.system.backups.index'] as $name) {
+    foreach (['admin.system.health.index', 'admin.system.health.refresh', 'admin.dashboard.health.check', 'admin.system.information', 'admin.system.cleanup.index', 'admin.system.backups.index'] as $name) {
       $this->assertContains('can:access-system', Route::getRoutes()->getByName($name)->gatherMiddleware());
     }
     $this->assertContains('internal-api.capability:system-health.read', Route::getRoutes()->getByName('internal-content-api.system.health.show')->gatherMiddleware());
@@ -131,15 +131,29 @@ class SystemHealthTest extends TestCase
   }
 
   #[Test]
-  public function system_operators_get_a_compact_dashboard_summary_instead_of_the_scheduler_card(): void
+  public function the_dashboard_discloses_a_saved_report_inline_and_links_to_full_category_details(): void
   {
     $this->site();
     $this->actingAs($this->user());
+    $healthUrl = route('admin.system.health.index');
+    $this->get('/test-dashboard')->assertOk()
+      ->assertSeeInOrder(['Quick actions', 'Overview', 'Site health'])
+      ->assertSee('method="POST" action="'.route('admin.dashboard.health.check').'"', false)
+      ->assertSee('Open the checks to generate the first report.')
+      ->assertDontSee($healthUrl.'#health-system', false);
+
+    $this->get('/test-health')->assertOk();
     $counts = $this->report()['counts'];
     $summary = app(SystemHealthQuery::class)->dashboardSummary();
     $this->assertSame(['critical' => $counts['critical'], 'warning' => $counts['warning'], 'unknown' => $counts['unknown']], $summary['counts']);
     $this->get('/test-dashboard')->assertOk()->assertSee('data-wb-system-health-summary', false)
+      ->assertSee('data-wb-collapse="dashboard-health-details" aria-controls="dashboard-health-details" aria-expanded="false"', false)
       ->assertSee('View checks')->assertSee('Not yet verified')
+      ->assertSee($healthUrl.'#health-system', false)
+      ->assertSee('wb-status-pill wb-status-active', false)
+      ->assertSee('wb-status-pill wb-status-pending', false)
+      ->assertSee('wb-status-pill wb-status-info', false)
+      ->assertDontSee('Report not available yet.')
       ->assertDontSee('Scheduler and notification worker')
       ->assertDontSee('See what needs attention across your sites and find the next step.');
   }

@@ -41,6 +41,7 @@ class DashboardController extends Controller
       'dashboardAccess' => collect(['pages' => 'cms.pages.read', 'create' => 'cms.pages.create', 'shared' => 'cms.shared-slots.read', 'media' => 'cms.media.read'])
         ->map(fn ($permission) => app(CmsAuthorization::class)->allows($request->user(), $permission))->all(),
       'dashboardSystemHealth' => $this->healthPolicy->view($request->user()) ? $this->health->dashboardSummary() : null,
+      'canAccessDashboardSystem' => (bool) $request->user()?->can('access-system'),
       'panelNotifications' => $panelNotifications,
       'notificationHealthSites' => $schedulerDashboard['sites'],
       'dashboardSchedulerHealth' => $schedulerDashboard['health'],
