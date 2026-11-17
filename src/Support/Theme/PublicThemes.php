@@ -81,6 +81,12 @@ final class PublicThemes
     });
   }
 
+  public function installedCatalogVersions(array $handles): array
+  {
+    return DB::table(self::VERSIONS)->whereIn('handle', $handles)->get(['handle', 'version'])
+      ->groupBy('handle')->map(fn ($versions) => $versions->pluck('version')->all())->all();
+  }
+
   public function install(string $file): object
   {
     $package = $this->packages->read($file);

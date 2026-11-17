@@ -1,6 +1,17 @@
 <?php
 
 return [
+  'browse_catalog' => 'Tema kataloğuna göz at',
+  'catalog_version' => 'Katalog sürümü',
+  'catalog_incompatible' => 'Uyumlu sürüm yok',
+  'catalog_install' => 'Kur',
+  'catalog_update' => 'Güncellemeyi kur',
+  'catalog_installed' => 'Kurulu',
+  'catalog_empty' => 'Katalogda tema yok.',
+  'catalog_unavailable' => 'Tema kataloğuna erişilemiyor.',
+  'catalog_download_failed' => 'Tema ZIP dosyası indirilemedi veya sürümle eşleşmiyor.',
+  'catalog_previous' => 'Önceki',
+  'catalog_next' => 'Sonraki',
   'site_heading' => 'Site teması: :site',
   'preview_heading' => 'Önizleme: :name :version',
   'back_to_themes' => 'Site temasına dön',

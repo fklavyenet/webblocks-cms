@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Page;
@@ -145,6 +146,55 @@ final class PublicThemesTest extends TestCase
     $unused = $this->post(self::PACKAGES, ['package' => $this->archive('1.2.0')])->assertCreated()->json('version.id');
     $this->deleteJson(self::PACKAGES.'/'.$unused)->assertOk();
     $this->assertDatabaseMissing('wbcms_theme_assets', ['theme_version_id' => $unused]);
+  }
+
+  public function test_catalog_verifies_download_and_installs_update_without_switching_the_site(): void
+  {
+    $this->actingAs($this->actor());
+    [$site, $page] = $this->sitePage('catalog-site', true);
+    $packages = route('admin.system.themes.index');
+    $catalog = route('admin.system.themes.catalog.index');
+    $this->get($catalog)->assertNotFound();
+    $this->post(route('admin.system.themes.store'), ['package' => $this->archive()])->assertRedirect();
+    $v1 = DB::table('wbcms_theme_versions')->value('id');
+    $comparison = $this->get(route('admin.sites.themes.comparison', [$site, $v1, 'page' => $page->id]))->assertOk();
+    preg_match('/name="confirmation" value="([^"]+)"/', $comparison->getContent(), $matches);
+    $this->post(route('admin.sites.themes.activate', $site), ['confirmation' => $matches[1]])->assertRedirect();
+
+    $origin = 'https://webblocks-extensions.test';
+    config(['webblocks-plugins.catalog.extensions_base_url' => $origin]);
+    $archive = $this->archive('1.1.0');
+    $file = file_get_contents($archive->getPathname());
+    $release = [
+      'handle' => 'editorial', 'version' => '1.1.0', 'sha256' => hash('sha256', $file),
+      'size' => strlen($file), 'layouts' => ['default'], 'download_url' => 'https://other.test/archive',
+    ];
+    $bytes = str_repeat('x', strlen($file));
+    $download = $origin.'/themes/editorial/releases/1.1.0/download';
+    Http::preventStrayRequests();
+    Http::fake([
+      $origin.'/api/themes?*' => Http::response(['data' => [[
+        'handle' => 'editorial', 'name' => 'Editorial', 'release' => $release,
+      ]], 'next_page' => null]),
+      $origin.'/api/themes/editorial/releases/1.1.0' => Http::response(['data' => $release]),
+      $download => function () use (&$bytes) {
+        return Http::response($bytes);
+      },
+    ]);
+
+    $this->get($packages)->assertOk()->assertSee('Browse theme catalog');
+    Http::assertNothingSent();
+    $this->get($catalog)->assertOk()->assertSee('Editorial')->assertSee('Install update');
+    $params = ['handle' => 'editorial', 'version' => '1.1.0'];
+    $this->from($catalog)->post(route('admin.system.themes.catalog.store'), $params)->assertSessionHasErrors('catalog');
+    $this->assertDatabaseCount('wbcms_theme_versions', 1);
+
+    $bytes = $file;
+    $this->post(route('admin.system.themes.catalog.store'), $params)->assertRedirect($packages);
+    $this->assertDatabaseHas('wbcms_theme_versions', ['handle' => 'editorial', 'version' => '1.1.0', 'checksum' => $release['sha256']]);
+    $this->assertDatabaseHas('wbcms_site_theme_changes', ['site_id' => $site->id, 'theme_version_id' => $v1]);
+    $this->assertDatabaseCount('wbcms_site_theme_changes', 1);
+    $this->get($catalog)->assertOk()->assertSee('Installed')->assertDontSee('Install update');
   }
 
   private function actor(): User

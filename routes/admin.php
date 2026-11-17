@@ -67,6 +67,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\SystemPluginController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSearchController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemSettingsController;
 use WebBlocks\Cms\Http\Controllers\Admin\SystemUpdateController;
+use WebBlocks\Cms\Http\Controllers\Admin\ThemeCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\ThemePackageController;
 use WebBlocks\Cms\Http\Controllers\Admin\TwoFactorResetController;
 use WebBlocks\Cms\Http\Controllers\Admin\UserController;
@@ -321,6 +322,10 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
   ->name('admin.')
   ->group(function () use ($themePackageRoutes, $siteThemeRoutes) {
     Route::prefix('system/themes')->name('system.themes.')->middleware('can:manage-public-themes')->group($themePackageRoutes);
+    Route::prefix('system/themes/catalog')->name('system.themes.catalog.')->middleware('can:manage-public-themes')->group(function (): void {
+      Route::get('/', [ThemeCatalogController::class, 'index'])->name('index');
+      Route::post('/', [ThemeCatalogController::class, 'store'])->name('store');
+    });
     Route::prefix('sites/{site}/themes')->name('sites.themes.')->group(fn () => $siteThemeRoutes());
     Route::prefix('notes')->name('notes.')->group(function () {
       Route::get('/', [NoteController::class, 'index'])->name('index');

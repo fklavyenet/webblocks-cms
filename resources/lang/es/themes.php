@@ -1,6 +1,17 @@
 <?php
 
 return [
+  'browse_catalog' => 'Explorar el catálogo de temas',
+  'catalog_version' => 'Versión del catálogo',
+  'catalog_incompatible' => 'Sin versión compatible',
+  'catalog_install' => 'Instalar',
+  'catalog_update' => 'Instalar actualización',
+  'catalog_installed' => 'Instalado',
+  'catalog_empty' => 'No hay temas en el catálogo.',
+  'catalog_unavailable' => 'El catálogo de temas no está disponible.',
+  'catalog_download_failed' => 'El ZIP no se pudo descargar o no coincide con la versión.',
+  'catalog_previous' => 'Anterior',
+  'catalog_next' => 'Siguiente',
   'site_heading' => 'Tema del sitio: :site',
   'preview_heading' => 'Vista previa: :name :version',
   'back_to_themes' => 'Volver al tema del sitio',

@@ -2886,6 +2886,13 @@ CSS. No new authoring field, block catalog entry or persistence is introduced.
 ## Installable public themes
 
 Super admins install immutable ZIP packages under System → Public themes.
+When `WEBBLOCKS_EXTENSIONS_CATALOG_BASE_URL` points to an HTTPS Extensions catalog
+origin, Super admins can browse compatible releases and explicitly install a ZIP
+or install an update from the catalog. The CMS checks the selected handle,
+version, archive size, SHA-256 and package compatibility before installing.
+Catalog downloads follow the same
+installation and activation boundaries as manual uploads. Installing an update
+adds a version and leaves every site's active version and history intact.
 The package management screen filters installed versions by name or version,
 shows the upload date, and opens a ZIP upload dialog from the list header.
 Unused versions are deleted through the row action and confirmation dialog.

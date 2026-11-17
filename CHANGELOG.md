@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.140.0
+
+- Browse compatible public themes and install theme ZIPs from the Extensions catalog under System → Public themes.
+- Configure the catalog with `WEBBLOCKS_EXTENSIONS_CATALOG_BASE_URL`. CMS verifies the selected release, package compatibility, and download checksum before installing.
+- Install theme updates as separate versions. Activate the chosen version per site.
+
 ## 1.139.0
 
 - Use a compact two-column Dashboard with content totals and page views on the left, and Site health and recent content on the right.

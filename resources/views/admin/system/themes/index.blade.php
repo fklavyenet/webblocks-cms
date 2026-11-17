@@ -29,7 +29,12 @@
         <section class="wb-card" aria-labelledby="installed-themes-title">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
                 <strong id="installed-themes-title">{{ $text('versions') }}</strong>
-                <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#upload-theme" aria-haspopup="dialog">{{ $text('upload_new') }}</button>
+                <div class="wb-cluster wb-gap-2">
+                    @if (app(\WebBlocks\Cms\Support\Theme\ThemeCatalog::class)->enabled())
+                        <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.themes.catalog.index') }}">{{ $text('browse_catalog') }}</a>
+                    @endif
+                    <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#upload-theme" aria-haspopup="dialog">{{ $text('upload_new') }}</button>
+                </div>
             </div>
             <div class="wb-card-body">
                 @if ($versions->isEmpty())

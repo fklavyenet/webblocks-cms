@@ -1,6 +1,17 @@
 <?php
 
 return [
+  'browse_catalog' => 'Themenkatalog durchsuchen',
+  'catalog_version' => 'Katalogversion',
+  'catalog_incompatible' => 'Keine kompatible Version',
+  'catalog_install' => 'Installieren',
+  'catalog_update' => 'Update installieren',
+  'catalog_installed' => 'Installiert',
+  'catalog_empty' => 'Im Katalog sind keine Themen aufgeführt.',
+  'catalog_unavailable' => 'Der Themenkatalog ist nicht verfügbar.',
+  'catalog_download_failed' => 'Die ZIP-Datei konnte nicht heruntergeladen werden oder stimmt nicht mit der Version überein.',
+  'catalog_previous' => 'Zurück',
+  'catalog_next' => 'Weiter',
   'site_heading' => 'Website-Theme: :site',
   'preview_heading' => 'Vorschau: :name :version',
   'back_to_themes' => 'Zurück zum Website-Theme',
