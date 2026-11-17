@@ -5,10 +5,12 @@ namespace WebBlocks\Cms\Console;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Throwable;
 use WebBlocks\Cms\Database\Seeders\CoreCatalogSeeder;
 use WebBlocks\Cms\Database\Seeders\FoundationSiteLocaleSeeder;
 use WebBlocks\Cms\Models\Locale;
@@ -27,6 +29,8 @@ use WebBlocks\Cms\Support\Pages\PublicMount;
 use WebBlocks\Cms\Support\Sites\ExportImport\SiteTransferDisk;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\SystemBackupArchiveResolver;
+use WebBlocks\Cms\Support\System\Updates\InstallationTelemetry;
+use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
 use WebBlocks\Cms\Support\Users\EnsuresCmsUserAccess;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -76,6 +80,8 @@ class InstallWebBlocksCmsCommand extends Command
     $this->ensurePublicRoutesCanResolveToCms();
     $this->ensureUserModelIsCmsAware();
     $this->runPackageMigrations();
+    $freshInstallation = ! $this->installState->installMarkerExists()
+      && $this->installedVersionStore->storedVersion() === null;
     $this->ensureLaravelSupportTables();
     $this->ensureSiteTransferStorage();
     $this->ensureBackupStorage();
@@ -86,13 +92,30 @@ class InstallWebBlocksCmsCommand extends Command
     $this->ensureDefaultSiteDomain($site);
     $this->ensureStarterContent($this->defaultHomepageProvisioner->provision($site));
     $this->ensureFirstSuperAdmin($site);
-    $this->installedVersionStore->persist(WebBlocks::version());
-    $this->installState->markInstalled();
+    DB::transaction(function () use ($freshInstallation): void {
+      $this->installedVersionStore->persist(WebBlocks::version());
+      $this->installState->markInstalled($freshInstallation);
+    });
+
+    if ($freshInstallation) {
+      $this->reportInstallation();
+    }
 
     $this->components->info('WebBlocks CMS is ready. Open /webadmin to sign in.');
     $this->line(__('webblocks-cms::scheduler.title').': php artisan webblocks:scheduler:setup');
 
     return self::SUCCESS;
+  }
+
+  private function reportInstallation(): void
+  {
+    try {
+      if (config('webblocks-updates.enabled', true) && app(InstallationTelemetry::class)->installationId() !== null) {
+        app(UpdateServerClient::class)->check();
+      }
+    } catch (Throwable) {
+      // The installation is already complete. The usual update check can report it later.
+    }
   }
 
   private function ensurePublicRoutesCanResolveToCms(): void
@@ -277,7 +300,7 @@ class InstallWebBlocksCmsCommand extends Command
 
     try {
       Artisan::call('storage:link');
-    } catch (\Throwable) {
+    } catch (Throwable) {
       // Ignore local environments that cannot create symlinks.
     }
   }

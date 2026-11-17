@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.141.0
+
+- Report the first successful installation day for new production setups. Retry through later update checks if the first report cannot reach Publisher.
+- Include the default CMS language, operating system and Linux release, database engine and major version, and an optional deployment country in production telemetry.
+- Keep older installations eligible to report after upgrading without assigning them an invented installation date.
+
 ## 1.140.0
 
 - Browse compatible public themes and install theme ZIPs from the Extensions catalog under System → Public themes.

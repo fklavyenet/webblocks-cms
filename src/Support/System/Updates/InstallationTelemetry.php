@@ -28,8 +28,14 @@ final class InstallationTelemetry implements TelemetryProvider
 
   public function updateCheckPayload(string $productKey, string $installedVersion, string $channel): array
   {
-    return $this->enabled()
+    $payload = $this->enabled()
       ? app(FileInstallationTelemetry::class)->updateCheckPayload($productKey, $installedVersion, $channel)
       : [];
+
+    if ($payload === [] || $productKey !== 'webblocks-cms') {
+      return $payload;
+    }
+
+    return [...$payload, ...app(InstallationTelemetryDetails::class)->payload()];
   }
 }

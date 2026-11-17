@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Mockery;
+use WebBlocks\Cms\Support\Install\InstallState;
 use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\Updates\InstallationTelemetry;
 use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
@@ -16,6 +17,11 @@ use WebBlocks\Cms\Tests\TestCase;
 class CmsProductionTelemetryTest extends TestCase
 {
   private string $workspace;
+
+  protected function defineDatabaseMigrations(): void
+  {
+    $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
 
   protected function setUp(): void
   {
@@ -64,6 +70,41 @@ class CmsProductionTelemetryTest extends TestCase
     }
     $this->assertSame($ids[0], $ids[1]);
     $this->assertSame([false, false], $redirects);
+  }
+
+  public function test_fresh_install_day_survives_repair_and_reports_the_same_details_on_both_paths(): void
+  {
+    $this->travelTo(now('UTC')->setDate(2026, 11, 17));
+    $state = app(InstallState::class);
+    $state->markInstalled(true);
+    $this->travel(3)->days();
+    $state->markInstalled();
+    config(['webblocks-updates.telemetry.country_code' => ' de ']);
+    Http::fake(['*' => Http::response([], 200)]);
+
+    $this->panelClient()->check();
+    $this->embeddedClient()->check();
+    Http::assertSentCount(2);
+    foreach (Http::recorded() as [$request]) {
+      $data = json_decode($request->header('X-WebBlocks-Telemetry')[0], true, flags: JSON_THROW_ON_ERROR);
+      $this->assertSame('2026-11-17', $data['installed_on']);
+      $this->assertSame('DE', $data['country_code']);
+      $this->assertSame(strtolower(PHP_OS_FAMILY), $data['os_family']);
+      $this->assertSame('sqlite', $data['database_engine']);
+      $this->assertSame(3, $data['database_major_version']);
+      $this->assertSame('en', $data['cms_locale']);
+      $this->assertStringNotContainsString('installed_on', $request->url());
+    }
+  }
+
+  public function test_existing_installation_still_reports_without_an_invented_installation_day(): void
+  {
+    app(InstallState::class)->markInstalled();
+    $payload = app(TelemetryProvider::class)->updateCheckPayload('webblocks-cms', '1.0.0', 'stable');
+    $this->assertSame('2', $payload['telemetry_schema_version']);
+    $this->assertArrayHasKey('installation_id', $payload);
+    $this->assertArrayNotHasKey('installed_on', $payload);
+    $this->assertNull($payload['country_code']);
   }
 
   public function test_cms_and_shared_client_opt_out_both_suppress_telemetry_on_both_update_paths(): void

@@ -18,6 +18,8 @@ class InstallState
 {
   public const INSTALL_COMPLETED_AT = 'system.install_completed_at';
 
+  public const FIRST_INSTALLATION_DAY = 'telemetry.first_installation_day';
+
   public function __construct(
     private readonly InstalledVersionStore $installedVersionStore,
   ) {}
@@ -77,7 +79,7 @@ class InstallState
       && ($this->installMarkerExists() || $this->installedVersionStore->storedVersion() !== null);
   }
 
-  public function markInstalled(): void
+  public function markInstalled(bool $freshInstallation = false): void
   {
     if (! Schema::hasTable('wbcms_system_settings')) {
       return;
@@ -87,6 +89,13 @@ class InstallState
       ['key' => self::INSTALL_COMPLETED_AT],
       ['value' => now()->toIso8601String()],
     );
+
+    if ($freshInstallation) {
+      SystemSetting::query()->firstOrCreate(
+        ['key' => self::FIRST_INSTALLATION_DAY],
+        ['value' => now('UTC')->toDateString()],
+      );
+    }
   }
 
   private function requiredTablesExist(): bool

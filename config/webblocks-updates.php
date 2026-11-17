@@ -15,6 +15,7 @@ return [
     'telemetry' => [
         'enabled' => env('WEBBLOCKS_TELEMETRY', true),
         'schema_version' => '2',
+        'country_code' => env('WEBBLOCKS_TELEMETRY_COUNTRY'),
     ],
     'timeout_seconds' => 5,
     'connect_timeout_seconds' => 3,
