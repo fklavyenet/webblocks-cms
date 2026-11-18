@@ -79,12 +79,16 @@ class CmsProductionTelemetryTest extends TestCase
     $state->markInstalled(true);
     $this->travel(3)->days();
     $state->markInstalled();
-    config(['webblocks-updates.telemetry.country_code' => ' de ']);
+    config([
+      'app.key' => 'base64:'.base64_encode(random_bytes(16)),
+      'webblocks-updates.telemetry.country_code' => ' de ',
+    ]);
     Http::fake(['*' => Http::response([], 200)]);
 
     $this->panelClient()->check();
     $this->embeddedClient()->check();
     Http::assertSentCount(2);
+    $ids = [];
     foreach (Http::recorded() as [$request]) {
       $data = json_decode($request->header('X-WebBlocks-Telemetry')[0], true, flags: JSON_THROW_ON_ERROR);
       $this->assertSame('2026-11-17', $data['installed_on']);
@@ -94,7 +98,10 @@ class CmsProductionTelemetryTest extends TestCase
       $this->assertSame(3, $data['database_major_version']);
       $this->assertSame('en', $data['cms_locale']);
       $this->assertStringNotContainsString('installed_on', $request->url());
+      $ids[] = $data['installation_id'];
     }
+    $this->assertMatchesRegularExpression('/\A[a-f0-9]{64}\z/', $ids[0]);
+    $this->assertSame($ids[0], $ids[1]);
   }
 
   public function test_existing_installation_still_reports_without_an_invented_installation_day(): void

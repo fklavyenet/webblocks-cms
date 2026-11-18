@@ -1,11 +1,11 @@
 {
     "schema": 1,
     "source_package": "fklavyenet/webblocks-publisher-client",
-    "source_commit": "641d5b25279e4a1ea1f74e100fa2887974f51d71",
+    "source_commit": "cc46ee33d135e7ea39c4926b064646885493c2cf",
     "source_dirty": false,
     "target_namespace": "WebBlocks\\Cms\\Support\\Updates\\Client",
     "output_path": "src/Support/Updates/Client",
-    "aggregate_sha256": "8dedd5f9b8d203920b5c8b2aca6a41ccaff62f6fbcdf881bbe4bf993c1f36475",
+    "aggregate_sha256": "23d1c0386ee72e0364b3d6c14dd124c2d2c6793f1a16ae485aab763c3bb47cca",
     "files": {
         "Apply/AbstractApplyStrategy.php": "34b4bad5c10c8c607328e7d01b2f4d348037fa6481c5a115d903f612c9f9a7d7",
         "Apply/ComposerPackageApplyStrategy.php": "49e64084e4ea6f89ca670ed62e928e78aeefe5751ed3625b81eaf72ce2a2f74d",
@@ -58,7 +58,7 @@
         "Support/RunStatus.php": "baac1d7236899611d12df20a4a6da472135973a86e5ae2e45dd9f2994b89bb61",
         "Support/Version/ConfigVersionResolver.php": "18f26938297b27d474da8c9e78701ffdb2a6ff8d0530b6767f6a0b3f9dfd8d79",
         "Support/Version/VersionResolver.php": "db781d458862e2c56cbd4edde251c5259416ff621756b16e1cee2f5eac7f8bc5",
-        "Telemetry/FileInstallationTelemetry.php": "4335fc25c82bf577362e9e5c09455555bc0c5fa0cf2b8e80fc83ea3681592a96",
+        "Telemetry/FileInstallationTelemetry.php": "1a3c41a7d0ce9bafb16396e2018439420d98d1d199c08a003e523fe2c44189d5",
         "Telemetry/NullTelemetryProvider.php": "47d6faf88556788423ab0895e794ea3a9f7f6514722199fb7d6563d0b6300d7f",
         "Updates/AdminUpdateIndicator.php": "dc6f9ab86ed78c5726a66478eff1d1bc24493252e65d313ac928bcc6b6a3f3e8",
         "Updates/ComposerRepoPreflight.php": "10477b9a2967f98b8ca128bb8cdb5f73586fac66c86bc6d52743a358bc89434b",

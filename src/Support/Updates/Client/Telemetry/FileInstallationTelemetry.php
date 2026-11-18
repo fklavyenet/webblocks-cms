@@ -27,32 +27,70 @@ class FileInstallationTelemetry implements TelemetryProvider
             return null;
         }
 
-        // The application secret stays local. A product-specific HMAC provides
-        // recovery after storage loss without deriving identity from site/user data.
+        $path = storage_path(trim((string) config('publisher-client.apply.workspace_root', 'app/publisher-client'), '/').'/production-identity-'.hash('sha256', $product));
+        try {
+            if (File::isFile($path)) {
+                $existing = $this->storedIdentity(File::get($path, true));
+                if ($existing !== null) {
+                    return $existing;
+                }
+            }
+        } catch (Throwable) {
+            // An unreadable identity may already have been reported.
+            return null;
+        }
+
+        // Preserve recovery for identities already derived by older releases.
         $key = (string) config('app.key', '');
         if (str_starts_with($key, 'base64:')) {
             $key = base64_decode(substr($key, 7), true) ?: '';
         }
-        if (strlen($key) < 32) {
-            return null;
-        }
-        $id = hash_hmac('sha256', 'webblocks-production-telemetry-v2|'.$product, $key);
-        $path = storage_path(trim((string) config('publisher-client.apply.workspace_root', 'app/publisher-client'), '/').'/production-identity-'.hash('sha256', $product));
+        $legacyId = strlen($key) >= 32
+            ? hash_hmac('sha256', 'webblocks-production-telemetry-v2|'.$product, $key)
+            : null;
+
         try {
-            if (File::isFile($path)) {
-                $existing = trim((string) File::get($path));
-                if (preg_match('/\A[a-f0-9]{64}\z/', $existing)) {
-                    return $existing;
-                }
-            }
             File::ensureDirectoryExists(dirname($path));
-            File::put($path, $id);
+            $file = @fopen($path, 'c+b');
         } catch (Throwable) {
-            // The same local application key still gives a stable identity when
-            // storage is read-only. Telemetry never blocks update delivery.
+            return $legacyId;
+        }
+        if ($file === false) {
+            return $legacyId;
         }
 
-        return $id;
+        try {
+            if (! flock($file, LOCK_EX)) {
+                return null;
+            }
+            $contents = stream_get_contents($file);
+            if ($contents === false) {
+                return null;
+            }
+            // Another request may have persisted an identity while we waited.
+            $existing = $this->storedIdentity($contents);
+            if ($existing !== null) {
+                return $existing;
+            }
+
+            $id = $legacyId ?? bin2hex(random_bytes(32));
+            if (! rewind($file) || ! ftruncate($file, 0) || fwrite($file, $id) !== strlen($id) || ! fflush($file)) {
+                return $legacyId;
+            }
+
+            return $id;
+        } catch (Throwable) {
+            return null;
+        } finally {
+            fclose($file);
+        }
+    }
+
+    private function storedIdentity(string $contents): ?string
+    {
+        $id = trim($contents);
+
+        return preg_match('/\A[a-f0-9]{64}\z/', $id) ? $id : null;
     }
 
     public function updateCheckPayload(string $product, string $installedVersion, string $channel): array

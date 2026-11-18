@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.141.1
+
+- Restore production installation reporting on hosts with shorter application keys. Keep existing installation identities so repeated reports count once.
+
 ## 1.141.0
 
 - Report the first successful installation day for new production setups. Retry through later update checks if the first report cannot reach Publisher.
