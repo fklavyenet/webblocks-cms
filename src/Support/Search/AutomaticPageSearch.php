@@ -51,12 +51,7 @@ final class AutomaticPageSearch
       if (! $template || app(PublicPageAccess::class)->protected($template)) {
         continue;
       }
-      try {
-        $records = app(AutomaticPageCatalogue::class)->records($rule);
-      } catch (\Throwable $exception) {
-        report($exception);
-        abort(503);
-      }
+      $records = $this->records($rule, $locale);
       $adoptions = AutomaticPageAdoption::query()->where('automatic_page_rule_id', $rule->id)->get()->keyBy('record_key');
       foreach ($records as $key => $record) {
         $adoption = $adoptions->get($key);
@@ -65,15 +60,8 @@ final class AutomaticPageSearch
           || ! app(PublicationSources::class)->find($rule->source_handle, $rule->site, null, $design, false)) {
           continue;
         }
-        $fields = $record['configuration']['publication'];
-        $values = $record['records'][$locale->code] ?? null;
-        if ($values === null) {
-          continue;
-        }
-        // Only declared public publication metadata is searchable. Never ingest
-        // arbitrary provider fields, admin labels or the retained native copy.
-        $title = $this->normalizer->normalize(data_get($values, $fields['title_field']));
-        $content = $fields['description_field'] === null ? '' : $this->normalizer->normalize(data_get($values, $fields['description_field']));
+        $title = $record['title'];
+        $content = $record['description'];
         $url = parse_url(app(AutomaticPageInspector::class)->url($rule, $record['slug'], $locale->code), PHP_URL_PATH);
         $haystack = $this->normalizer->join([$title, $url, $content]);
         if (collect($terms)->contains(fn ($term) => ! $contains($haystack, $term))) {
@@ -87,5 +75,39 @@ final class AutomaticPageSearch
     }
 
     return $results->unique('url')->sortBy(fn ($result) => mb_strtolower($result->title).' '.$result->url)->values();
+  }
+
+  private function records(AutomaticPageRule $rule, Locale $locale): Collection
+  {
+    $index = app(ExtensionsSearchIndex::class);
+    if ($index->reads($rule)) {
+      return $index->entries($rule, $locale->code)->mapWithKeys(fn ($entry) => [$entry->record_key => [
+        'slug' => $entry->record_key,
+        'title' => $entry->title,
+        'description' => $entry->description,
+      ]]);
+    }
+
+    try {
+      $records = app(AutomaticPageCatalogue::class)->records($rule);
+    } catch (\Throwable $exception) {
+      report($exception);
+      abort(503);
+    }
+
+    return collect($records)->map(function (array $record) use ($locale): ?array {
+      $values = $record['records'][$locale->code] ?? null;
+      if ($values === null) {
+        return null;
+      }
+      // Only the provider's declared public metadata is searchable.
+      $fields = $record['configuration']['publication'];
+
+      return [
+        'slug' => $record['slug'],
+        'title' => $this->normalizer->normalize(data_get($values, $fields['title_field'])),
+        'description' => $fields['description_field'] === null ? '' : $this->normalizer->normalize(data_get($values, $fields['description_field'])),
+      ];
+    })->filter();
   }
 }

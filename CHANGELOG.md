@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.143.0
+
+- Support a local search index for the Extensions catalog. A signed snapshot keeps the search index up to date in all six supported languages.
+- Serve indexed Extensions results during catalog outages when local indexing is enabled.
+
 ## 1.142.1
 
 - Use the selected page preview language in the public search dialog, including searches limited to a section.

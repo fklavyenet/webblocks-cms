@@ -20,6 +20,11 @@ return [
         'rate_limit_per_minute' => (int) env('CMS_INTERNAL_API_RATE_LIMIT_PER_MINUTE', 120),
         'ip_rate_limit_per_minute' => (int) env('CMS_INTERNAL_API_IP_RATE_LIMIT_PER_MINUTE', 300),
     ],
+    'extensions_search' => [
+        'site' => env('CMS_EXTENSIONS_SEARCH_SITE'),
+        'secret' => env('CMS_EXTENSIONS_SEARCH_SECRET'),
+        'read_index' => env('CMS_EXTENSIONS_SEARCH_READ_INDEX', false),
+    ],
     'public_rate_limits' => [
         'pages_per_minute' => (int) env('CMS_PUBLIC_PAGES_PER_MINUTE', 120),
         'pages_per_hour' => (int) env('CMS_PUBLIC_PAGES_PER_HOUR', 1800),

@@ -7,6 +7,7 @@ use WebBlocks\Cms\Http\Controllers\Public\ContactMessageController;
 use WebBlocks\Cms\Http\Controllers\Public\ContentRatingController;
 use WebBlocks\Cms\Http\Controllers\Public\EmbeddedApplicationEntryController;
 use WebBlocks\Cms\Http\Controllers\Public\EmbeddedApplicationPackageController;
+use WebBlocks\Cms\Http\Controllers\Public\ExtensionsSearchWebhookController;
 use WebBlocks\Cms\Http\Controllers\Public\PackagePublicStatusController;
 use WebBlocks\Cms\Http\Controllers\Public\PageController;
 use WebBlocks\Cms\Http\Controllers\Public\PluginAssetController;
@@ -53,6 +54,10 @@ if (config(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_STATUS_ROUTE_LOADING_CONF
     ->get(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_PATH, PackagePublicStatusController::class)
     ->name(WebBlocksCmsServiceProvider::PACKAGE_PUBLIC_ROUTE_NAME);
 }
+
+Route::middleware(['install.required', 'throttle:30,1'])
+  ->post($publicMount->path('/cms/webhooks/extensions-search'), ExtensionsSearchWebhookController::class)
+  ->name('extensions-search.webhook');
 
 Route::middleware($publicPageMiddleware)->get($publicMount->path('/sitemap.xml'), SitemapController::class)->name('sitemap');
 Route::middleware($publicPageMiddleware)->get($publicMount->path('/sitemap/{page}.xml'), SitemapController::class)

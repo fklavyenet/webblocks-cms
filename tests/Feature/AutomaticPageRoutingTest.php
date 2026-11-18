@@ -13,8 +13,10 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use WebBlocks\Cms\Actions\AutomaticPages\ActivateAutomaticPageRule;
 use WebBlocks\Cms\Actions\AutomaticPages\PauseAutomaticPageRule;
 use WebBlocks\Cms\Actions\AutomaticPages\SaveAutomaticPageRule;
+use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Http\Middleware\ServeCmsPageBeforeRedirectCatchAll;
 use WebBlocks\Cms\Models\AutomaticPageAdoption;
+use WebBlocks\Cms\Models\AutomaticPageRule;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\Concerns\HasCmsAdminAccess;
@@ -440,6 +442,54 @@ class AutomaticPageRoutingTest extends TestCase
     Paginator::currentPageResolver(fn () => 1);
   }
 
+  #[Test]
+  public function extensions_search_indexes_authenticated_snapshots_and_survives_the_provider_outage(): void
+  {
+    $this->withoutMiddleware(EnsureInstalled::class);
+    [$site, $template] = $this->fixture();
+    $site->update(['domain' => 'localhost', 'is_primary' => true]);
+    $this->register(handle: 'webblocks-extensions-live');
+    $rule = AutomaticPageRule::create([
+      'name' => 'Extensions', 'site_id' => $site->id, 'template_page_id' => $template->id,
+      'source_handle' => 'webblocks-extensions-live::plugins', 'base_path' => '/extensions',
+    ]);
+    $rule->forceFill(['status' => 'active', 'revision' => 1])->save();
+    $secret = str_repeat('test-secret-', 4);
+    config(['cms.extensions_search' => ['site' => $site->handle, 'secret' => $secret, 'read_index' => true]]);
+    $record = fn (string $description) => ['key' => 'demo', 'translations' => collect(ContentSourceContract::languages())
+      ->mapWithKeys(fn ($locale) => [$locale => ['title' => $locale === 'tr' ? 'İhtiyaç Demo' : 'Tool Demo', 'description' => $description]])->all()];
+    $snapshot = fn (int $sequence, array $records, array $pending = []) => ['schema' => 1, 'sequence' => $sequence, 'pending' => $pending, 'records' => $records];
+    $post = function (array $payload, ?string $signature = null) use ($secret) {
+      $body = json_encode($payload, JSON_THROW_ON_ERROR);
+      $timestamp = (string) now()->timestamp;
+
+      return $this->call('POST', '/cms/webhooks/extensions-search', [], [], [], [
+        'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json',
+        'HTTP_X_WEBBLOCKS_TIMESTAMP' => $timestamp,
+        'HTTP_X_WEBBLOCKS_SIGNATURE' => $signature ?? hash_hmac('sha256', $timestamp.'.'.$body, $secret),
+      ], $body);
+    };
+
+    $post($snapshot(1, [$record('Original')]), 'invalid')->assertUnauthorized();
+    $post($snapshot(1, [$record('Original')]))->assertNoContent();
+    RoutingPublicationFixture::$mode = 'unavailable';
+    RoutingPublicationFixture::$calls = [];
+    $this->getJson('/tr/search.json?q=ihtiyaç&path_prefix=%2Fextensions')->assertOk()->assertJsonPath('results.0.url', '/tr/extensions/demo');
+    $this->getJson('/tr/search.json?q=ihtiyaç&path_prefix=%2Fguides')->assertOk()->assertJsonPath('count', 0);
+    $post($snapshot(2, [], ['demo']))->assertNoContent();
+    $this->getJson('/search.json?q=Original')->assertOk()->assertJsonPath('count', 1);
+    $post($snapshot(3, [$record('Updated')]))->assertNoContent();
+    $post($snapshot(4, [], ['demo', 'demo']))->assertUnprocessable();
+    $this->getJson('/search.json?q=Updated')->assertOk()->assertJsonPath('count', 1);
+    $post($snapshot(4, []))->assertNoContent();
+    $post($snapshot(3, [$record('Updated')]))->assertNoContent();
+    $this->getJson('/search.json?q=Demo')->assertOk()->assertJsonPath('count', 0);
+    $post($snapshot(5, [$record('Restored')]))->assertNoContent();
+    $rule->forceFill(['status' => 'paused', 'revision' => 2])->save();
+    $this->getJson('/search.json?q=Restored')->assertOk()->assertJsonPath('count', 0);
+    $this->assertSame([], RoutingPublicationFixture::$calls);
+  }
+
   private function actor(string $role = 'super_admin'): User
   {
     return User::find(1) ?? User::forceCreate(['id' => 1, 'name' => 'Test editor', 'email' => 'editor@example.test', 'password' => 'local-fixture', 'role' => $role, 'is_active' => true]);
@@ -450,13 +500,13 @@ class AutomaticPageRoutingTest extends TestCase
     return ['name' => 'Library detail pages', 'site_id' => $site->id, 'source_handle' => 'library::books', 'template_page_id' => $page->id, 'base_path' => '/library'];
   }
 
-  private function register(bool $active = true): void
+  private function register(bool $active = true, string $handle = 'library'): void
   {
     $fields = ['id' => 'text', 'slug' => 'text', 'title' => 'text', 'summary' => 'text', 'image' => 'url', 'alt' => 'text'];
-    $registry = new PluginRegistry(['library' => $active]);
-    $registry->register(PluginDefinition::make('library')->contentSources([
-      ContentSourceDefinition::collection('library::books')->standard(ContentSourceContract::languages(), 'Public books', 'Library API', 'id')->resolver(RoutingPublicationFixture::class)->fields($fields)->publishesPages('library::book', 'slug', 'title', 'summary', 'image'),
-      ContentSourceDefinition::entity('library::book')->standard(ContentSourceContract::languages(), 'Public book', 'Library API', 'id')->resolver(RoutingPublicationFixture::class)->fields($fields),
+    $registry = new PluginRegistry([$handle => $active]);
+    $registry->register(PluginDefinition::make($handle)->contentSources([
+      ContentSourceDefinition::collection($handle.'::'.($handle === 'library' ? 'books' : 'plugins'))->standard(ContentSourceContract::languages(), 'Public books', 'Library API', 'id')->resolver(RoutingPublicationFixture::class)->fields($fields)->publishesPages($handle.'::book', 'slug', 'title', 'summary', 'image'),
+      ContentSourceDefinition::entity($handle.'::book')->standard(ContentSourceContract::languages(), 'Public book', 'Library API', 'id')->resolver(RoutingPublicationFixture::class)->fields($fields),
     ]));
     $this->app->instance(PluginRegistry::class, $registry);
     $this->app->forgetInstance(ContentSourceRegistry::class);

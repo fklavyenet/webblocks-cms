@@ -1961,6 +1961,12 @@ have preview=false and actor=null, and both source policies must allow every
 required locale in the same-site design context. Provider translations, images,
 alt text and captions remain authoritative; the CMS does not fabricate them.
 
+The Extensions catalog can provision a local search index for an opted-in site.
+The signed catalog snapshot webhook updates the relational, rule-scoped index
+in one transaction. Pending localization retains the last verified record.
+A record absent from a complete snapshot is removed. Once enabled for reads,
+the Extensions rule uses indexed rows even during a source outage.
+
 ### Designs, preview and transition review
 
 A design is a visible, same-site native page with every enabled site language
