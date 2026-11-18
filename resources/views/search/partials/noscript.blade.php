@@ -3,7 +3,9 @@
     $translator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $localeCode = $locale->code;
     $searchTitle = $translator->public('search.title', $localeCode);
-    $searchDescription = $translator->public('search.description_default', $localeCode);
+    $searchDescription = $pathPrefix === null
+        ? $translator->public('search.description_default', $localeCode)
+        : $translator->public('search.description_scoped', $localeCode, ['path' => $pathPrefix]);
     $searchHome = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class)->homePath($localeCode, $site);
 @endphp
 <noscript>
@@ -16,6 +18,9 @@
 
         <form action="{{ $searchHome }}" method="GET" role="search" class="wb-stack wb-gap-3">
             <input type="hidden" name="cms_search" value="1">
+            @if ($pathPrefix !== null)
+                <input type="hidden" name="path_prefix" value="{{ $pathPrefix }}">
+            @endif
             <div class="wb-cluster wb-cluster-2 wb-items-end">
                 <div class="wb-stack wb-gap-1 wb-flex-1">
                     <label for="public-search-query">{{ $translator->public('search.query_label', $localeCode) }}</label>

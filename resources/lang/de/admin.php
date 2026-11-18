@@ -4418,6 +4418,8 @@ $translations = [
       'keyboard_navigation' => 'Tastaturnavigation',
     ],
     'search_form' => [
+      'path_prefix' => 'Suchpfad-Präfix',
+      'path_prefix_help' => 'Ergebnisse auf Seiten unter einem Pfad wie /guides beschränken. Für die gesamte Website das Feld leer lassen.',
       'locale_help' => 'Suchlabel, Platzhalter und Button-Label werden pro Sprache übersetzt. Button-Sichtbarkeit und Variante bleiben sprachübergreifend gemeinsam.',
       'label' => 'Barrierefreies Label',
       'placeholder_label' => 'Platzhalter',

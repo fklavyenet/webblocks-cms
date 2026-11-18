@@ -4431,6 +4431,8 @@ $translations = [
       'keyboard_navigation' => 'Klavye navigasyonu',
     ],
     'search_form' => [
+      'path_prefix' => 'Arama yolu öneki',
+      'path_prefix_help' => 'Sonuçları /guides gibi bir yolun altındaki sayfalarla sınırlandırın. Tüm siteyi aramak için boş bırakın.',
       'locale_help' => 'Arama etiketi, placeholder ve buton etiketi dile göre çevrilir. Buton görünürlüğü ve varyanti ortak kalır.',
       'label' => 'Erişilebilir etiket',
       'placeholder_label' => 'Placeholder',

@@ -2,6 +2,7 @@
 
 return [
   'search' => [
+    'description_scoped' => ':path altındaki sayfalarda arayın.',
     'title' => 'Arama',
     'description_with_site' => ':site icinde yayindaki icerikleri arayin.',
     'description_default' => 'Bu sitedeki yayindaki icerikleri arayin.',

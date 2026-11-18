@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\InternalContentApi;
 
 use WebBlocks\Cms\Support\Blocks\MobileContentOrder;
 use WebBlocks\Cms\Support\Media\GalleryLayout;
+use WebBlocks\Cms\Support\Pages\PagePath;
 
 /**
  * Stable PATCH field rules and deliberate exclusions shared by the authoring
@@ -179,7 +180,10 @@ final class BlockSettingsPatchPolicy
       'allow_change' => ['bool'],
       'show_summary' => ['bool'],
     ],
-    'search-form' => ['show_button' => ['bool']],
+    'search-form' => [
+      'show_button' => ['bool'],
+      'path_prefix' => ['pattern', PagePath::SECTION_PREFIX_PATTERN],
+    ],
     'section' => [
       'layout_name' => ['text', 255],
       'spacing' => ['enum', ['sm', 'lg']],

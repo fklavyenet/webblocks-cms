@@ -4416,6 +4416,8 @@ $translations = [
       'keyboard_navigation' => 'Navigation au clavier',
     ],
     'search_form' => [
+      'path_prefix' => 'Préfixe du chemin de recherche',
+      'path_prefix_help' => 'Limitez les résultats aux pages sous un chemin comme /guides. Laissez vide pour rechercher dans tout le site.',
       'locale_help' => 'Le libellé de recherche, le texte indicatif et le libellé du bouton sont traduits par langue. La visibilité et la variante du bouton restent communes.',
       'label' => 'Libellé accessible',
       'placeholder_label' => 'Texte indicatif',

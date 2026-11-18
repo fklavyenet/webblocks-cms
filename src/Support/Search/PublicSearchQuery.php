@@ -27,7 +27,7 @@ class PublicSearchQuery
     return mb_strlen($this->normalize($query)) >= $minimumLength;
   }
 
-  public function search(Site $site, Locale $locale, string $query, int $perPage = 10): LengthAwarePaginator
+  public function search(Site $site, Locale $locale, string $query, int $perPage = 10, ?string $pathPrefix = null): LengthAwarePaginator
   {
     if (! $this->schema->tableExists()) {
       return new Paginator([], 0, $perPage, 1, [
@@ -67,6 +67,12 @@ class PublicSearchQuery
       ->orderByDesc('indexed_at')
       ->orderBy('title')->orderBy('id');
 
+    if ($pathPrefix !== null) {
+      $prefix = $pathPrefix.'/';
+      $builder->whereHas('page.translations', fn ($translations) => $translations
+        ->where('locale_id', $locale->id)->whereRaw('SUBSTR(path, 1, ?) = ?', [strlen($prefix), $prefix]));
+    }
+
     foreach ($rules as $rule) {
       // Active prefixes own these URLs, even if a native copy is republished.
       // Compare canonical translation paths, not potentially stale index URLs.
@@ -77,7 +83,7 @@ class PublicSearchQuery
     if ($rules->isEmpty()) {
       $results = $builder->paginate($perPage)->withQueryString();
     } else {
-      $sourceResults = $automatic->results($rules, $locale, $normalizedQuery);
+      $sourceResults = $automatic->results($rules, $locale, $normalizedQuery, $pathPrefix);
       $page = max(1, Paginator::resolveCurrentPage());
       $counts = (clone $builder)->reorder()->selectRaw($rankSql.' as search_rank, COUNT(*) as aggregate', $rankBindings)
         ->groupBy('search_rank')->pluck('aggregate', 'search_rank');

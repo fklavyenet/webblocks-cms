@@ -4416,6 +4416,8 @@ $translations = [
       'keyboard_navigation' => 'Navegación con teclado',
     ],
     'search_form' => [
+      'path_prefix' => 'Prefijo de ruta de búsqueda',
+      'path_prefix_help' => 'Limita los resultados a páginas bajo una ruta como /guides. Déjalo vacío para buscar en todo el sitio.',
       'locale_help' => 'La etiqueta de búsqueda, el texto de ejemplo y la etiqueta del botón se traducen por idioma. La visibilidad del botón y la variante se comparten.',
       'label' => 'Etiqueta accesible',
       'placeholder_label' => 'Texto de ejemplo',

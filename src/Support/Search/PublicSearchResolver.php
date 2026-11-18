@@ -13,13 +13,14 @@ final class PublicSearchResolver
   {
     $site = $this->pageRouteResolver->currentSite($request);
     $locale = $this->pageRouteResolver->currentLocale($request);
+    $pathPrefix = $request->validated('path_prefix');
     $query = $this->search->normalize($request->validated('q'));
     $results = null;
     $minimumLength = 2;
     $state = $query === '' ? 'empty' : 'short';
 
     if ($this->search->isSearchable($query, $minimumLength)) {
-      $results = $this->search->search($site, $locale, $query);
+      $results = $this->search->search($site, $locale, $query, pathPrefix: $pathPrefix);
       $state = $results->isEmpty() ? 'no-results' : 'results';
     }
 
@@ -27,6 +28,7 @@ final class PublicSearchResolver
       'site' => $site,
       'locale' => $locale,
       'query' => $query,
+      'pathPrefix' => $pathPrefix,
       'results' => $results,
       'state' => $state,
       'minimumLength' => $minimumLength,

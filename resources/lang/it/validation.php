@@ -2,6 +2,7 @@
 
 return [
   'search' => [
+    'path_prefix' => 'Inserisci un percorso di pagina come /guides.',
     'string' => 'Inserisci una ricerca testuale valida.',
     'max' => 'La ricerca può contenere al massimo :count caratteri.',
     'terms' => 'La ricerca può contenere al massimo :count parole.',

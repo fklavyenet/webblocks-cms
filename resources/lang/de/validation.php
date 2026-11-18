@@ -2,6 +2,7 @@
 
 return [
   'search' => [
+    'path_prefix' => 'Geben Sie einen Seitenpfad wie /guides ein.',
     'string' => 'Geben Sie eine gültige Suchanfrage als Text ein.',
     'max' => 'Die Suchanfrage darf höchstens :count Zeichen enthalten.',
     'terms' => 'Die Suchanfrage darf höchstens :count Wörter enthalten.',

@@ -2,6 +2,7 @@
 
 return [
   'search' => [
+    'path_prefix' => 'Enter a page path such as /guides.',
     'string' => 'Enter a valid text search query.',
     'max' => 'The search query may contain at most :count characters.',
     'terms' => 'The search query may contain at most :count words.',

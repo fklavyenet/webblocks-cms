@@ -5,6 +5,7 @@
   var activeRequest = 0;
   var copy = {
     helper: 'Enter a search term to find published content for this site and locale.',
+    scopedDescription: 'Search within __path__.',
     unavailable: 'Search is temporarily unavailable. Please try again.',
     count: '__count__ result for __query__.',
     countPlural: '__count__ results for __query__.',
@@ -64,6 +65,7 @@
     var modal = document.querySelector('[data-wb-public-search-modal]');
     var form = document.querySelector('[data-wb-public-search-form]');
     var input = document.querySelector('[data-wb-public-search-input]');
+    var description = document.querySelector('[data-wb-public-search-description]');
     var loading = document.querySelector('[data-wb-public-search-loading]');
     var count = document.querySelector('[data-wb-public-search-count]');
     var message = document.querySelector('[data-wb-public-search-message]');
@@ -85,6 +87,8 @@
 
     copy = Object.assign(copy, parseCopy());
     var helperText = String(copy.helper);
+    var defaultDescription = description ? description.textContent : '';
+    var pathPrefixInput = form.querySelector('[name="path_prefix"]');
 
     function formatTemplate(template, values) {
       return String(template || '').replace(/__([a-z_]+)__/g, function (match, key) {
@@ -176,7 +180,12 @@
 
       setLoading(true);
 
-      window.fetch(jsonPath + '?q=' + encodeURIComponent(query), {
+      var params = new URLSearchParams({ q: query });
+      if (pathPrefixInput && !pathPrefixInput.disabled) {
+        params.set('path_prefix', pathPrefixInput.value);
+      }
+
+      window.fetch(jsonPath + '?' + params.toString(), {
         headers: {
           Accept: 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
@@ -223,8 +232,20 @@
       backdrop.hidden = !visible;
     }
 
-    function openModal(initialQuery) {
-
+    function openModal(initialQuery, initialPathPrefix) {
+      window.clearTimeout(debounceTimer);
+      activeRequest += 1;
+      var pathPrefix = String(initialPathPrefix || '');
+      if (pathPrefixInput) {
+        pathPrefixInput.value = pathPrefix;
+        pathPrefixInput.disabled = !pathPrefix;
+      }
+      if (description) {
+        description.textContent = pathPrefix ? formatTemplate(copy.scopedDescription, { path: pathPrefix }) : defaultDescription;
+      }
+      clearResults();
+      setCount('', false);
+      setMessage('', false);
       setBackdropVisible(true);
       modal.hidden = false;
       modal.classList.add(ACTIVE_CLASS);
@@ -241,13 +262,13 @@
         return;
       }
 
-      clearResults();
       setLoading(false);
-      setCount('', false);
       setMessage(helperText, true);
     }
 
     function closeModal() {
+      window.clearTimeout(debounceTimer);
+      activeRequest += 1;
       setBackdropVisible(false);
       modal.hidden = true;
       modal.classList.remove(ACTIVE_CLASS);
@@ -259,13 +280,15 @@
       inlineForm.addEventListener('submit', function (event) {
         event.preventDefault();
         var queryInput = inlineForm.querySelector('[name="q"]');
-        openModal(queryInput ? queryInput.value : '');
+        var scopeInput = inlineForm.querySelector('[name="path_prefix"]');
+        openModal(queryInput ? queryInput.value : '', scopeInput ? scopeInput.value : '');
       });
     });
 
     function openFromHash() {
       if (window.location.hash === '#site-search') {
-        openModal(new URLSearchParams(window.location.search).get('q') || '');
+        var params = new URLSearchParams(window.location.search);
+        openModal(params.get('q'), params.get('path_prefix'));
       }
     }
     window.addEventListener('hashchange', openFromHash);

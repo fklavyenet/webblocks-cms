@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
+use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Pages\PageRouteResolver;
 use WebBlocks\Cms\Support\Search\SearchTextNormalizer;
 use WebBlocks\Cms\Support\System\RequestSecuritySettings;
@@ -34,6 +35,7 @@ class PublicSearchRequest extends FormRequest
     $limits = $this->limits();
 
     return [
+      'path_prefix' => ['bail', 'nullable', 'string', 'regex:'.PagePath::SECTION_PREFIX_PATTERN],
       'q' => ['bail', 'nullable', 'string', 'max:'.$limits['search_max_characters'], function (string $attribute, mixed $value, Closure $fail) use ($limits): void {
         $query = app(SearchTextNormalizer::class)->query($value);
         $terms = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
@@ -48,6 +50,8 @@ class PublicSearchRequest extends FormRequest
   public function messages(): array
   {
     return [
+      'path_prefix.string' => $this->validationText('path_prefix'),
+      'path_prefix.regex' => $this->validationText('path_prefix'),
       'q.string' => $this->validationText('string'),
       'q.max' => $this->validationText('max', ['count' => $this->limits()['search_max_characters']]),
     ];

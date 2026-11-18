@@ -5,6 +5,7 @@
     $placeholder = $block->stringValueOrNull($block->content) ?? $translator->get('blocks.search_form.placeholder', $localeCode);
     $buttonLabel = $block->stringValueOrNull($block->subtitle) ?? $translator->get('blocks.search_form.submit', $localeCode);
     $showButton = (bool) $block->setting('show_button', true);
+    $pathPrefix = $block->stringValueOrNull($block->setting('path_prefix'));
     $searchPath = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class)->homePath($block->renderLocaleCode(), $block->renderSite());
     $buttonClass = $block->variant === 'secondary' ? 'wb-btn wb-btn-secondary' : 'wb-btn wb-btn-primary';
 @endphp
@@ -12,6 +13,9 @@
 @if ($searchPath)
     <form action="{{ $searchPath }}" method="GET" role="search" class="wb-cluster wb-cluster-2" data-wb-public-search-inline data-wb-public-block-type="{{ $block->publicBlockTypeAttribute() }}">
         <input type="hidden" name="cms_search" value="1">
+        @if ($pathPrefix !== null)
+            <input type="hidden" name="path_prefix" value="{{ $pathPrefix }}">
+        @endif
         <div class="wb-stack wb-gap-1 wb-flex-1">
             <label for="search-form-{{ $block->id }}">{{ $label }}</label>
             <input id="search-form-{{ $block->id }}" type="search" name="q" class="wb-input" placeholder="{{ $placeholder }}" value="{{ request()->query('q', '') }}">

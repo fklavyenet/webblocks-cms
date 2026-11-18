@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.142.0
+
+- Limit an individual Search Form to a section such as `/guides` with its Search path prefix setting.
+- Keep the selected scope in the existing search dialog and in the results shown without JavaScript. The header search opens with site-wide scope.
+- Filter published pages and automatic records before ranking and pagination. Automatic sources outside the selected section are skipped.
+
 ## 1.141.3
 
 - Show which configuration setting prevented the update from starting when updates are disabled in System updates.

@@ -136,6 +136,25 @@ class BlockSettingsSchemaTest extends TestCase
   }
 
   #[Test]
+  public function a_search_form_scope_uses_the_existing_typed_content_settings(): void
+  {
+    $page = $this->fixture();
+    $controller = app(InternalContentResourceController::class);
+    $payload = ['type' => 'search-form', 'locale' => 'en', 'translations' => [
+      'title' => 'Search the library', 'content' => 'Find an article', 'subtitle' => 'Search',
+    ]];
+    $bad = $controller->storeSlotBlock($this->jsonRequest($payload + ['settings' => ['path_prefix' => '/library%']]), $page, 'main');
+    $this->assertSame(422, $bad->getStatusCode());
+
+    $created = $controller->storeSlotBlock($this->jsonRequest($payload + ['settings' => ['path_prefix' => '/library', 'show_button' => false]]), $page, 'main');
+    $this->assertSame(201, $created->getStatusCode());
+    $block = Block::findOrFail($created->getData(true)['block']['id']);
+    $this->assertSame('/library', $block->setting('path_prefix'));
+    $this->assertDatabaseHas('wbcms_block_content_settings', ['path_prefix' => '/library']);
+    $this->assertArrayNotHasKey('path_prefix', $this->merge($block, ['path_prefix' => null]));
+  }
+
+  #[Test]
   public function historical_values_survive_unrelated_changes_snapshots_and_sql_roundtrips(): void
   {
     $page = $this->fixture();

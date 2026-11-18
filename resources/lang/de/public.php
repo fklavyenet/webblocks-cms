@@ -2,6 +2,7 @@
 
 return [
   'search' => [
+    'description_scoped' => 'Seiten unter :path durchsuchen.',
     'title' => 'Suche',
     'description_with_site' => 'Veroeffentlichte Inhalte auf :site durchsuchen.',
     'description_default' => 'Veroeffentlichte Inhalte dieser Website durchsuchen.',

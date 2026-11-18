@@ -2,6 +2,7 @@
 
 return [
   'search' => [
+    'path_prefix' => '/guides gibi bir sayfa yolu girin.',
     'string' => 'Geçerli bir metin arama sorgusu girin.',
     'max' => 'Arama sorgusu en fazla :count karakter içerebilir.',
     'terms' => 'Arama sorgusu en fazla :count kelime içerebilir.',

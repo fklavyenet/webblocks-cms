@@ -27,7 +27,11 @@ class PublicSearchController extends Controller
     abort_unless($home, 404);
     $query = $this->search->normalize($request->validated('q'));
 
-    return redirect($home.'?'.http_build_query(['cms_search' => 1, 'q' => $query]).'#site-search')
+    return redirect($home.'?'.http_build_query([
+      'cms_search' => 1,
+      'q' => $query,
+      'path_prefix' => $request->validated('path_prefix'),
+    ]).'#site-search')
       ->header('Cache-Control', 'private, no-store')
       ->header('X-Robots-Tag', 'noindex');
   }

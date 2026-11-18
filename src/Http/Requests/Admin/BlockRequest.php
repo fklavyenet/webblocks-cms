@@ -41,6 +41,7 @@ use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Media\GalleryLayout;
 use WebBlocks\Cms\Support\Media\VideoCaptions;
 use WebBlocks\Cms\Support\Pages\PageListSettings;
+use WebBlocks\Cms\Support\Pages\PagePath;
 use WebBlocks\Cms\Support\Plugins\PluginBlockCatalog;
 use WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
@@ -438,6 +439,7 @@ class BlockRequest extends FormRequest
       'sidebar_nav_group_initially_open' => [$isSidebarNavGroup ? 'nullable' : 'prohibited', 'boolean'],
       'sidebar_footer_variant' => [$isSidebarFooter ? 'nullable' : 'prohibited', Rule::in(['info', 'success', 'warning', 'danger'])],
       'show_button' => [$isSearchForm ? 'nullable' : 'prohibited', 'boolean'],
+      'search_form_path_prefix' => [$isSearchForm ? 'nullable' : 'prohibited', 'string', 'regex:'.PagePath::SECTION_PREFIX_PATTERN],
       'status' => ['required', Rule::in(['draft', 'published'])],
     ];
   }
@@ -921,6 +923,8 @@ class BlockRequest extends FormRequest
   {
     return [
       'locale.regex' => __('webblocks-cms::admin-feedback.blocks.invalid_locale_code'),
+      'search_form_path_prefix.regex' => app(CmsTranslator::class)
+        ->get('validation.search.path_prefix', app(AdminLocaleResolver::class)->locale($this->user())),
       'locale.exists' => __('webblocks-cms::admin-feedback.blocks.invalid_locale'),
     ];
   }
@@ -2581,6 +2585,14 @@ class BlockRequest extends FormRequest
 
         if (! $isTranslatedSearchFormEdit) {
           $settings['show_button'] = (bool) ($data['show_button'] ?? true);
+          if (array_key_exists('search_form_path_prefix', $data)) {
+            $pathPrefix = $data['search_form_path_prefix'];
+            if (filled($pathPrefix)) {
+              $settings['path_prefix'] = $pathPrefix;
+            } else {
+              unset($settings['path_prefix']);
+            }
+          }
         }
 
         $data['title'] = trim((string) ($data['title'] ?? '')) ?: 'Search';
@@ -2623,7 +2635,7 @@ class BlockRequest extends FormRequest
     unset($data['sidebar_navigation_menu_key'], $data['sidebar_navigation_show_icons'], $data['sidebar_navigation_active_matching']);
     unset($data['sidebar_nav_item_icon'], $data['sidebar_nav_item_active_mode'], $data['sidebar_nav_item_manual_active']);
     unset($data['sidebar_nav_group_icon'], $data['sidebar_nav_group_initially_open'], $data['sidebar_footer_variant']);
-    unset($data['show_button']);
+    unset($data['show_button'], $data['search_form_path_prefix']);
     unset($data['icon_slug'], $data['icon_tone'], $data['icon_size'], $data['badge_label'], $data['badge_tone']);
     unset($data['background_position'], $data['background_overlay']);
     unset($data['name'], $data['alignment'], $data['spacing'], $data['section_flow'], $data['width'], $data['container_flow'], $data['stack_spacing'], $data['split_gap'], $data['split_align'], $data['split_width'], $data['split_responsive'], $data['cluster_gap'], $data['cluster_justify'], $data['cluster_align'], $data['cluster_wrap'], $data['cluster_width'], $data['grid_columns'], $data['grid_ratio'], $data['grid_gap'], $data['grid_alternate_media_text_sections'], $data['grid_alternate_start'], $data['intro_text'], $data['meta_items'], $data['title_level']);

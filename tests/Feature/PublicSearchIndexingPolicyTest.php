@@ -17,6 +17,61 @@ class PublicSearchIndexingPolicyTest extends TestCase
   }
 
   #[Test]
+  public function path_scope_limits_results_before_pagination_and_survives_localized_fallback(): void
+  {
+    $this->withoutMiddleware(EnsureInstalled::class);
+    $site = Site::create(['name' => 'Scope studio', 'handle' => 'scope', 'domain' => 'localhost', 'is_primary' => true]);
+    $locales = collect(['en', 'tr'])->map(fn ($code) => Locale::firstOrCreate(['code' => $code], [
+      'name' => $code, 'is_default' => $code === 'en', 'is_enabled' => true,
+    ]));
+    $site->locales()->sync($locales->mapWithKeys(fn ($locale) => [$locale->id => ['is_enabled' => true]])->all());
+
+    $indexed = [
+      '/' => 'Home',
+      '/guides' => 'Scope sample landing',
+      '/guides/copy' => 'Scope sample guide',
+      '/guides/nested/steps' => 'Scope sample instructions',
+      '/guides-other/blog' => 'Scope sample blog',
+    ];
+    for ($index = 1; $index <= 9; $index++) {
+      $indexed['/guides/extra-'.$index] = 'Scope sample extra '.$index;
+    }
+    foreach ($indexed + ['/guides/draft' => 'Scope sample draft'] as $path => $title) {
+      $page = Page::create(['site_id' => $site->id, 'status' => str_ends_with($path, '/draft') ? 'draft' : 'published']);
+      foreach ($locales as $locale) {
+        $page->translations()->create([
+          'locale_id' => $locale->id,
+          'name' => $title.' '.$locale->code,
+          'slug' => $path === '/' ? 'home' : basename($path),
+          'path' => $path,
+        ]);
+      }
+    }
+
+    $this->getJson('/search.json?q=scope+sample')
+      ->assertOk()->assertJsonPath('count', 13);
+    $this->getJson('/tr/search.json?q=scope+sample&path_prefix=%2Fguides')
+      ->assertOk()->assertJsonPath('count', 11)->assertJsonCount(10, 'results')
+      ->assertJsonMissing(['title' => 'Scope sample landing tr'])
+      ->assertJsonMissing(['title' => 'Scope sample blog tr']);
+    $this->getJson('/tr/search.json?q=scope+sample&path_prefix=%2Fguides&page=2')
+      ->assertOk()->assertJsonCount(1, 'results')
+      ->assertJsonPath('count', 11);
+    $this->getJson('/tr/search.json?q=scope+sample&path_prefix=%2Fguides%2Fnested')
+      ->assertOk()->assertJsonPath('results.0.url', '/tr/guides/nested/steps')->assertJsonPath('count', 1);
+    $this->get('/tr/search?q=scope+sample&path_prefix=%2Fguides%2Fnested')
+      ->assertRedirect('/tr?cms_search=1&q=scope+sample&path_prefix=%2Fguides%2Fnested#site-search');
+    $this->get('/tr?cms_search=1&q=scope+sample&path_prefix=%2Fguides%2Fnested')
+      ->assertOk()->assertHeader('X-Robots-Tag', 'noindex')->assertSee('Scope sample instructions tr')
+      ->assertSee('name="path_prefix" value="/guides/nested"', false)
+      ->assertDontSee('Scope sample blog tr');
+
+    foreach (['path_prefix[]=guides', 'path_prefix=%2F', 'path_prefix=%2Fguides%25', 'path_prefix=https%3A%2F%2Fexample.com'] as $invalid) {
+      $this->getJson('/search.json?q=scope&'.$invalid)->assertUnprocessable()->assertJsonValidationErrors('path_prefix');
+    }
+  }
+
+  #[Test]
   public function search_entries_results_and_json_are_noindex_without_marking_ordinary_pages(): void
   {
     $this->withoutMiddleware(EnsureInstalled::class);

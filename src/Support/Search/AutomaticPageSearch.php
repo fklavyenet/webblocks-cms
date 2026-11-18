@@ -28,7 +28,7 @@ final class AutomaticPageSearch
       : collect();
   }
 
-  public function results(Collection $rules, Locale $locale, string $query): Collection
+  public function results(Collection $rules, Locale $locale, string $query, ?string $pathPrefix = null): Collection
   {
     $results = collect();
     // Turkish has two distinct I/i pairs; Unicode's language-neutral lowercase
@@ -40,6 +40,10 @@ final class AutomaticPageSearch
       || ($locale->code === 'tr' && str_contains($fold($text, true), $fold($needle, true)));
     $terms = preg_split('/\s+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
     foreach ($rules as $rule) {
+      // Every generated record is a direct child of the rule's canonical base path.
+      if ($pathPrefix !== null && $rule->base_path !== $pathPrefix && ! str_starts_with($rule->base_path, $pathPrefix.'/')) {
+        continue;
+      }
       if (! $rule->site->enabledLocales()->whereKey($locale->id)->exists()) {
         continue;
       }

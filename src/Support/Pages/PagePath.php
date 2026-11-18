@@ -7,6 +7,8 @@ use InvalidArgumentException;
 
 class PagePath
 {
+  public const SECTION_PREFIX_PATTERN = '~\A(?=.{1,2048}\z)(?:/[a-z0-9]+(?:-[a-z0-9]+)*)+\z~';
+
   private const RESERVED_FIRST_SEGMENTS = [
     'admin-api',
     'cms',

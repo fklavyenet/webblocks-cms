@@ -1018,12 +1018,12 @@ class BlockTypeContractRegistry
         'known_gaps' => [],
       ],
       'search-form' => [
-        'admin_form_fields' => ['Accessible label', 'Placeholder', 'Button label', 'Button variant', 'Show button'],
+        'admin_form_fields' => ['Accessible label', 'Placeholder', 'Button label', 'Button variant', 'Show button', 'Search path prefix'],
         'translatable_fields' => ['title', 'subtitle', 'content'],
-        'shared_settings_fields' => ['variant', 'settings.show_button'],
+        'shared_settings_fields' => ['variant', 'settings.show_button', 'settings.path_prefix'],
         'storage_fields' => [
           'Translated label, button label, and placeholder text live in block text translation rows.',
-          'Shared button visibility and variant stay on shared block fields or settings.',
+          'Button visibility and the optional path prefix use typed relational block content settings; button variant is shared.',
         ],
         'media_relationship_fields' => ['Search route, site, and locale context are resolved at render time.'],
         'child_container_behavior' => ['Not a container in the current contract.'],

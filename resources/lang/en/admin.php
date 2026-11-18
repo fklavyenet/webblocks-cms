@@ -4659,6 +4659,8 @@ return [
       'keyboard_navigation' => 'Keyboard navigation',
     ],
     'search_form' => [
+      'path_prefix' => 'Search path prefix',
+      'path_prefix_help' => 'Limit results to pages beneath a path such as /guides. Leave blank to search the whole site.',
       'locale_help' => 'Search label, placeholder, and button label are translated per locale. Button visibility and variant stay shared.',
       'label' => 'Accessible label',
       'placeholder_label' => 'Placeholder',

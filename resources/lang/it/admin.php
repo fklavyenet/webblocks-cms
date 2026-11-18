@@ -4415,6 +4415,8 @@ $translations = [
       'keyboard_navigation' => 'Navigazione da tastiera',
     ],
     'search_form' => [
+      'path_prefix' => 'Prefisso del percorso di ricerca',
+      'path_prefix_help' => 'Limita i risultati alle pagine sotto un percorso come /guides. Lascia vuoto per cercare in tutto il sito.',
       'locale_help' => 'Etichetta di ricerca, placeholder ed etichetta del pulsante sono tradotti per lingua. Visibilità e variante del pulsante restano condivise.',
       'label' => 'Etichetta accessibile',
       'placeholder_label' => 'Placeholder',

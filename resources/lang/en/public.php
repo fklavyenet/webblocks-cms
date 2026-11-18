@@ -2,6 +2,7 @@
 
 return [
   'search' => [
+    'description_scoped' => 'Search within :path.',
     'title' => 'Search',
     'description_with_site' => 'Search published content in :site.',
     'description_default' => 'Search published content for this site.',

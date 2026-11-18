@@ -2,6 +2,7 @@
 
 return [
   'search' => [
+    'description_scoped' => 'Cerca nelle pagine sotto :path.',
     'title' => 'Cerca',
     'description_with_site' => 'Cerca i contenuti pubblicati in :site.',
     'description_default' => 'Cerca i contenuti pubblicati di questo sito.',

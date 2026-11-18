@@ -15,6 +15,7 @@
         : $publicTranslator->public('search.description_default', $publicSearchLocaleCode);
     $publicSearchCopy = [
         'helper' => $publicTranslator->public('search.helper', $publicSearchLocaleCode),
+        'scopedDescription' => $publicTranslator->public('search.description_scoped', $publicSearchLocaleCode, ['path' => '__path__']),
         'unavailable' => $publicTranslator->public('search.unavailable', $publicSearchLocaleCode),
         'count' => $publicTranslator->public('search.count', $publicSearchLocaleCode, ['count' => '__count__', 'query' => '__query__']),
         'countPlural' => $publicTranslator->public('search.count_plural', $publicSearchLocaleCode, ['count' => '__count__', 'query' => '__query__']),
@@ -41,7 +42,7 @@
                 <div class="wb-modal-header">
                     <div class="wb-stack wb-gap-1">
                         <h2 class="wb-modal-title" id="{{ $publicSearchTitleId }}">{{ $publicTranslator->public('search.title', $publicSearchLocaleCode) }}</h2>
-                        <p class="wb-text-sm wb-text-muted" id="{{ $publicSearchDescriptionId }}">{{ $publicSearchDescription }}</p>
+                        <p class="wb-text-sm wb-text-muted" id="{{ $publicSearchDescriptionId }}" data-wb-public-search-description>{{ $publicSearchDescription }}</p>
                     </div>
 
                     <button type="button" class="wb-modal-close" data-wb-public-search-close aria-label="{{ $publicTranslator->public('search.close', $publicSearchLocaleCode) }}">
@@ -52,6 +53,7 @@
                 <div class="wb-modal-body wb-stack wb-gap-4">
                     <form action="{{ $publicSearchSearchPath }}" method="GET" role="search" class="wb-stack wb-gap-4" data-wb-public-search-form data-search-path="{{ $publicSearchSearchPath }}" data-search-json-path="{{ $publicSearchJsonPath }}" data-search-copy="{{ $publicSearchCopyJson }}">
                         <input type="hidden" name="cms_search" value="1">
+                        <input type="hidden" name="path_prefix" value="" disabled>
                         <div class="wb-cluster wb-cluster-2 wb-items-end">
                             <div class="wb-stack wb-gap-1 wb-flex-1">
                                 <label for="{{ $publicSearchInputId }}">{{ $publicTranslator->public('search.query_label', $publicSearchLocaleCode) }}</label>

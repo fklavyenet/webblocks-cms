@@ -43,6 +43,14 @@
     </div>
 
     <div class="wb-stack wb-gap-1">
+        <label for="search_form_path_prefix">{{ $adminText('path_prefix') }}</label>
+        <input id="search_form_path_prefix" name="search_form_path_prefix" class="wb-input" type="text"
+            value="{{ old('search_form_path_prefix', $block->setting('path_prefix')) }}" maxlength="2048"
+            aria-describedby="search_form_path_prefix_help" @if (! ($isDefaultLocale ?? true)) readonly @endif>
+        <p id="search_form_path_prefix_help" class="wb-text-sm wb-text-muted">{{ $adminText('path_prefix_help') }}</p>
+    </div>
+
+    <div class="wb-stack wb-gap-1">
         <input type="hidden" name="show_button" value="0">
         <label class="wb-cluster wb-cluster-2" for="search_form_show_button">
             <input id="search_form_show_button" name="show_button" type="checkbox" value="1" @checked(old('show_button', $block->setting('show_button', true)))>
