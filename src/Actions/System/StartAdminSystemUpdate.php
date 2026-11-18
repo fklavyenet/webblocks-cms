@@ -8,6 +8,7 @@ use Throwable;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\SystemUpdateRequest;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateLauncher;
+use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateServerClient;
@@ -28,6 +29,7 @@ class StartAdminSystemUpdate
       if ($active) {
       return $active;
       }
+      app(CmsPublisherClientConfigurator::class)->assertUpdatesEnabled();
       if (SystemUpdateRequest::where('status', 'running')->exists() || app(SystemUpdater::class)->isLocked()) {
       throw new UpdateException('An update is already running.');
       }

@@ -4799,7 +4799,8 @@ $translations = [
   ],
   'update_chain' => [
     'locked' => 'Eine Aktualisierungskette läuft bereits oder erfordert eine Wiederherstellungsprüfung.',
-    'unavailable' => 'Ein vollständiger geprüfter Aktualisierungsplan ist nicht verfügbar.',
+    'unavailable' => 'Das CMS konnte die Aktualisierung nicht vorbereiten. Suchen Sie nach Aktualisierungen und versuchen Sie es erneut.',
+    'disabled' => 'Die Aktualisierung wurde nicht gestartet, weil :setting in der Konfiguration dieser Website deaktiviert ist. Prüfen Sie diese Einstellung mit Ihrem Hosting-Anbieter.',
     'failed' => 'Der Aktualisierungsschritt ist fehlgeschlagen.',
     'interrupted' => 'Die Aktualisierungskette wurde unterbrochen. Prüfen Sie die Wiederherstellung vor einer weiteren Aktualisierung.',
     'complete' => 'Erfolgreich auf :version aktualisiert.',

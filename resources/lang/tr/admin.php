@@ -4849,7 +4849,8 @@ $translations = [
   ],
   'update_chain' => [
     'locked' => 'Bir güncelleme zinciri zaten çalışıyor veya kurtarma incelemesi gerekiyor.',
-    'unavailable' => 'Doğrulanmış tam güncelleme planı alınamadı.',
+    'unavailable' => 'Güncelleme hazırlanamadı. Güncellemeleri kontrol edip yeniden deneyin.',
+    'disabled' => 'Güncelleme başlatılmadı. Bu sitenin yapılandırmasında :setting ayarı kapalı. Bu ayarı sunucu yöneticinizle kontrol edin.',
     'failed' => 'Güncelleme adımı başarısız oldu.',
     'interrupted' => 'Güncelleme zinciri kesintiye uğradı. Yeni güncellemeden önce kurtarma durumunu inceleyin.',
     'complete' => ':version sürümüne başarıyla güncellendi.',

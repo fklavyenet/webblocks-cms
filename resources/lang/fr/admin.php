@@ -4797,7 +4797,8 @@ $translations = [
   ],
   'update_chain' => [
     'locked' => 'Une chaîne de mise à jour est déjà en cours ou nécessite un contrôle de récupération.',
-    'unavailable' => 'Aucun plan de mise à jour complet et vérifié n’est disponible.',
+    'unavailable' => 'Le CMS n’a pas pu préparer la mise à jour. Recherchez les mises à jour et réessayez.',
+    'disabled' => 'La mise à jour n’a pas démarré, car :setting est désactivé dans la configuration du site. Vérifiez ce réglage avec votre hébergeur.',
     'failed' => 'L’étape de mise à jour a échoué.',
     'interrupted' => 'La chaîne de mise à jour a été interrompue. Vérifiez la récupération avant une nouvelle mise à jour.',
     'complete' => 'Mise à jour vers :version réussie.',

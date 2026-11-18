@@ -77,6 +77,45 @@ class SystemUpdateAdmissionResponseTest extends TestCase
       ->assertExactJson(['message' => 'Synthetic safe reason.', 'error' => 'Synthetic safe reason.']);
   }
 
+  public static function disabledSettings(): iterable
+  {
+    foreach (['en', 'tr', 'de', 'fr', 'es', 'it'] as $locale) {
+      yield $locale.' web updates disabled' => [$locale, 'publisher-client.web_run_enabled', 'PUBLISHER_CLIENT_WEB_RUN_ENABLED'];
+    }
+    yield 'CMS updates disabled' => ['en', 'webblocks-updates.enabled', 'WEBBLOCKS_UPDATES_ENABLED'];
+    yield 'Publisher Client disabled' => ['en', 'publisher-client.enabled', 'PUBLISHER_CLIENT_ENABLED'];
+    yield 'single-release CMS updates disabled' => ['en', 'webblocks-updates.enabled', 'WEBBLOCKS_UPDATES_ENABLED', false];
+    yield 'single-release Publisher Client disabled' => ['en', 'publisher-client.enabled', 'PUBLISHER_CLIENT_ENABLED', false];
+    yield 'single-release web updates disabled' => ['tr', 'publisher-client.web_run_enabled', 'PUBLISHER_CLIENT_WEB_RUN_ENABLED', false];
+  }
+
+  #[DataProvider('disabledSettings')]
+  public function test_update_modal_names_the_disabled_setting_without_contacting_publisher(
+    string $locale, string $configKey, string $setting, bool $chainsEnabled = true,
+  ): void {
+    config(['app.locale' => $locale, 'webblocks-updates.chains.enabled' => $chainsEnabled, $configKey => false]);
+    $reason = trans('webblocks-cms::admin.update_chain.disabled', ['setting' => $setting], $locale);
+
+    $this->assertStringContainsString($setting, $reason);
+    $this->postJson(route('admin.system.updates.store'))
+      ->assertConflict()->assertExactJson(['message' => $reason, 'error' => $reason]);
+
+    $this->assertSame(0, AdminUpdateOperation::count());
+    Http::assertNothingSent();
+  }
+
+  public function test_unavailable_plan_uses_the_general_message(): void
+  {
+    Http::fake(['*/api/updates/plan*' => Http::response([], 409)]);
+    $reason = __('webblocks-cms::admin.update_chain.unavailable');
+
+    $this->postJson(route('admin.system.updates.store'))
+      ->assertConflict()->assertExactJson(['message' => $reason, 'error' => $reason]);
+
+    $this->assertSame(0, AdminUpdateOperation::count());
+    Http::assertSentCount(1);
+  }
+
   public function test_html_rejection_keeps_the_existing_redirect_and_validation_error(): void
   {
     SystemUpdateRun::create(['from_version' => '1.0.0', 'to_version' => '1.0.1',

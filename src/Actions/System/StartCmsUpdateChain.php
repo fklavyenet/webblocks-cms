@@ -22,10 +22,9 @@ class StartCmsUpdateChain
 {
   public function execute(?int $userId, bool $background = true): AdminUpdateOperation
   {
-    app(CmsPublisherClientConfigurator::class)->configure();
-    if (! config('webblocks-updates.enabled', true) || ! config('publisher-client.enabled', true) || ! config('publisher-client.web_run_enabled', true)) {
-      throw new UpdateException(__('webblocks-cms::admin.update_chain.unavailable'));
-    }
+    $publisherClient = app(CmsPublisherClientConfigurator::class);
+    $publisherClient->configure();
+    $publisherClient->assertUpdatesEnabled();
     $lock = Cache::lock('system-updates:admission', 30);
     if (! $lock->get()) {
       throw new UpdateException(__('webblocks-cms::admin.update_chain.locked'));

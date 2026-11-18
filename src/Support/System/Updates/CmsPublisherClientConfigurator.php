@@ -57,6 +57,19 @@ final class CmsPublisherClientConfigurator
     $config->set('publisher-client.commands.post_apply', []);
   }
 
+  public function assertUpdatesEnabled(): void
+  {
+    foreach ([
+      'webblocks-updates.enabled' => 'WEBBLOCKS_UPDATES_ENABLED',
+      'publisher-client.enabled' => 'PUBLISHER_CLIENT_ENABLED',
+      'publisher-client.web_run_enabled' => 'PUBLISHER_CLIENT_WEB_RUN_ENABLED',
+    ] as $configKey => $setting) {
+      if (! $this->app['config']->get($configKey, true)) {
+        throw new UpdateException(__('webblocks-cms::admin.update_chain.disabled', ['setting' => $setting]));
+      }
+    }
+  }
+
   private function configureTranslations(): void
   {
     $directory = dirname(__DIR__, 2).'/Updates/Client/Resources/lang';

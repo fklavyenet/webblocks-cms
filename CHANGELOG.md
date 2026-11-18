@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.141.3
+
+- Show which configuration setting prevented the update from starting when updates are disabled in System updates.
+
 ## 1.141.2
 
 - Refresh System updates automatically after a verified successful update. Show the success message alongside the installed version and current update status.

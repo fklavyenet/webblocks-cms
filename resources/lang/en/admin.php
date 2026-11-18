@@ -5081,7 +5081,8 @@ return [
   ],
   'update_chain' => [
     'locked' => 'An update chain is already running or requires recovery review.',
-    'unavailable' => 'A complete verified update plan is unavailable.',
+    'unavailable' => 'The CMS could not prepare the update. Check for updates and try again.',
+    'disabled' => 'The update did not start because :setting is disabled in this site\'s configuration. Check this setting with your hosting administrator.',
     'failed' => 'The update step failed.',
     'interrupted' => 'The update chain is interrupted. Review recovery before another update.',
     'complete' => 'Updated to :version successfully.',

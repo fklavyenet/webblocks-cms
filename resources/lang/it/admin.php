@@ -4796,7 +4796,8 @@ $translations = [
   ],
   'update_chain' => [
     'locked' => 'Una catena di aggiornamento è già in corso o richiede una verifica del ripristino.',
-    'unavailable' => 'Non è disponibile un piano di aggiornamento completo e verificato.',
+    'unavailable' => 'Il CMS non è riuscito a preparare l’aggiornamento. Controlla gli aggiornamenti e riprova.',
+    'disabled' => 'L’aggiornamento non è stato avviato perché :setting è disattivato nella configurazione del sito. Verifica questa impostazione con l’amministratore dell’hosting.',
     'failed' => 'Il passaggio di aggiornamento non è riuscito.',
     'interrupted' => 'La catena di aggiornamento è stata interrotta. Verifica il ripristino prima di un altro aggiornamento.',
     'complete' => 'Aggiornato correttamente a :version.',

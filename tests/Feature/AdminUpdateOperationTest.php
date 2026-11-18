@@ -236,6 +236,7 @@ class AdminUpdateOperationTest extends TestCase
 
   public function test_launcher_failure_is_an_explicit_terminal_error(): void
   {
+    config(['webblocks-updates.enabled' => true]);
     $engine = Mockery::mock(SystemUpdater::class);
     $engine->expects('isLocked')->andReturn(false);
     $this->app->instance(SystemUpdater::class, $engine);

@@ -4797,7 +4797,8 @@ $translations = [
   ],
   'update_chain' => [
     'locked' => 'Ya hay una cadena de actualización en curso o pendiente de revisión de recuperación.',
-    'unavailable' => 'No hay un plan de actualización completo y verificado disponible.',
+    'unavailable' => 'El CMS no pudo preparar la actualización. Busque actualizaciones e inténtelo de nuevo.',
+    'disabled' => 'La actualización no se inició porque :setting está desactivado en la configuración del sitio. Consulte este ajuste con el administrador del alojamiento.',
     'failed' => 'El paso de actualización falló.',
     'interrupted' => 'La cadena de actualización se interrumpió. Revise la recuperación antes de otra actualización.',
     'complete' => 'Actualizado correctamente a :version.',
