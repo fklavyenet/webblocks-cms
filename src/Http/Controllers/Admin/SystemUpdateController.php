@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Collection;
 use Illuminate\Support\MessageBag;
+use Illuminate\Support\Str;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\View\View;
 use WebBlocks\Cms\Actions\System\ReconcileStoppedSystemUpdate;
@@ -44,6 +45,7 @@ class SystemUpdateController extends Controller
       'schedulerNeedsSetup' => app(SchedulerHealth::class)->snapshot()['scheduler_status'] !== 'healthy',
       'runs' => $this->displayRuns(),
       'updateProgress' => app(CmsUpdateProgress::class)->activePayload(),
+      'completedVersion' => $this->completedVersion($request->query('completed_operation'), $report),
       'unfinishedUpdates' => app(SystemUpdateAttention::class)->rows(),
       'canReconcileUpdates' => app(SystemUpdateRecoveryPolicy::class)->reconcile($request->user()),
       'preflight' => $report['checks'] ?? [],
@@ -124,6 +126,24 @@ class SystemUpdateController extends Controller
   private function displayRuns(): Collection
   {
     return app(SystemUpdateRunRetention::class)->retainedRuns();
+  }
+
+  private function completedVersion(mixed $operation, array $report): ?string
+  {
+    if (! is_string($operation) || ! Str::isUuid($operation)) {
+      return null;
+    }
+
+    $progress = app(CmsUpdateProgress::class)->payload($operation);
+    $target = $progress['target_version'] ?? null;
+
+    return ($progress['operation_id'] ?? null) === $operation
+      && ($progress['terminal'] ?? false) === true
+      && ($progress['state'] ?? null) === 'success'
+      && is_string($target) && $target !== ''
+      && $target === ($progress['installed_version'] ?? null)
+      && $target === ($report['installed_version'] ?? null)
+        ? $target : null;
   }
 
   private function reconcileVerifiedPostApplyFailure(): void

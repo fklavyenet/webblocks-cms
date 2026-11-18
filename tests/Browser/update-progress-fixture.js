@@ -22,8 +22,16 @@
     var opens = 0;
     var checks = [];
     var storageKey = 'publisher-client.operation:/health';
+    if (query.has('completed_operation')) {
+        document.getElementById('test-status').textContent = query.get('completed_operation') === operation
+            && sessionStorage.getItem(storageKey) === null
+            ? 'PASS ' + scenario + '\nVerified completion returns with the exact receipt and clears tab tracking.'
+            : 'FAIL ' + scenario + ': completion did not return with the exact receipt or clear tab tracking.';
+        return;
+    }
     if (!query.has('reloaded')) { sessionStorage.removeItem(storageKey); }
     if (!dismissible) { hide.remove(); }
+    if (dismissible) { modal.querySelector('[data-update-return]').href = window.location.href; }
     modal.addEventListener('wb:modal:open', function () { opens += 1; });
     if (scenario === 'resume') { opener.setAttribute('data-active-operation', operation); }
     if (scenario === 'server-active') {
@@ -255,12 +263,13 @@
         var finalMessage = 'Saved result: ' + state;
         await poll(progress(74000, 'Finish', { state: state, terminal: true, message: finalMessage,
             installed_version: '2.0.0', target_version: '2.0.0' }));
-        assert(!result.hidden && result.textContent.trim() === finalMessage, 'The saved result stays visible on the page');
-        var staysOpen = scenario === 'complete-open' && state !== 'success';
-        assert(modal.classList.contains('is-open') === staysOpen, 'An open modal dismisses itself only for verified success without warnings');
-        if (scenario === 'complete-open' && state === 'success') {
-            assert(document.activeElement === status, 'Automatic dismissal returns focus to Show status');
+        if (state === 'success') {
+            await wait(3000);
+            throw new Error('Verified completion did not refresh the page');
         }
+        assert(!result.hidden && result.textContent.trim() === finalMessage, 'The saved result stays visible on the page');
+        var staysOpen = scenario === 'complete-open';
+        assert(modal.classList.contains('is-open') === staysOpen, 'The terminal result preserves the open or hidden dialog');
         var finished = seconds();
         await wait(1700);
         assert(window.location.hash === '' && seconds() === finished && requests.length === 0, 'Completion stays on the page and stops polling and the timer');

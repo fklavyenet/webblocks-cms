@@ -2565,12 +2565,12 @@ operation UUID and offers Show status in place of the update form. Returning
 to the screen first uses the active SQL receipt, then a remembered UUID
 from the tab for an exact read. If admission is unconfirmed, a read-only
 lookup can find the active receipt. Status requests never submit the update
-again. Confirmed results stay on the page. When the tracked operation reports
-success without warnings and its installed and target versions match, the
-CMS closes the open dialog and returns focus to Show status. The screen stays
-in place and Show status can reopen the result. Warnings and failures leave
-an open dialog available for review. If the operator has hidden the dialog,
-completion does not reopen it.
+again. When the tracked operation reports success without warnings and its
+installed and target versions match, the browser returns directly to a fresh
+System updates screen, whether the dialog is open or hidden. The server
+verifies the exact completed operation against the installed version and shows
+a success message alongside the refreshed card and update history. Warnings
+and failures stay available for review in the dialog and on the page.
 
 ### Large staged content-plan writes (1.105.28)
 

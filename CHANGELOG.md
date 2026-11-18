@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.141.2
+
+- Refresh System updates automatically after a verified successful update. Show the success message alongside the installed version and current update status.
+
 ## 1.141.1
 
 - Restore production installation reporting on hosts with shorter application keys. Keep existing installation identities so repeated reports count once.

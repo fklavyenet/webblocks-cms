@@ -161,9 +161,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Completion comes only from this operation and any product health gate.
             if (succeeded && !dismissible) {
                 setTimeout(function () { window.location.assign(returnLink.href); }, 1500);
-            } else if (progress.state === 'success' && dismissible && resultText && !result.hidden
-                && opener.hasAttribute('data-pc-close-on-success') && modal.classList.contains('is-open')) {
-                hideModal();
+            } else if (progress.state === 'success' && dismissible && opener.hasAttribute('data-pc-refresh-on-success')) {
+                var url = new URL(returnLink.href);
+                url.searchParams.set('completed_operation', operation);
+                window.location.replace(url.href);
             }
         } else if (progress.state === 'interrupted') {
             halt(label('interrupted'), true);

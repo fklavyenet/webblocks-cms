@@ -153,7 +153,7 @@ class SystemUpdatesScreenTest extends TestCase
     $opener = $xpath->query('//*[@id="pc-update-progress-open"]')->item(0);
     $this->assertInstanceOf(DOMElement::class, $opener);
     $this->assertSame('server', $opener->getAttribute('data-pc-admission'));
-    $this->assertTrue($opener->hasAttribute('data-pc-close-on-success'));
+    $this->assertTrue($opener->hasAttribute('data-pc-refresh-on-success'));
     $this->assertSame(route('admin.system.updates.indicator', ['active' => 1]), $opener->getAttribute('data-pc-active-url'));
     $this->assertStringContainsString('checking again', $opener->getAttribute('data-progress-reconnecting'));
     $this->assertSame(route('admin.system.updates.indicator'), $opener->getAttribute('data-pc-health-url'));
@@ -237,6 +237,53 @@ class SystemUpdatesScreenTest extends TestCase
     $exact = $controller->indicator(Request::create('/?operation='.$operation->id))->getData(true)['progress'];
     $this->assertSame($operation->id, $exact['operation_id']);
     $this->assertTrue($exact['terminal']);
+  }
+
+  #[Test]
+  public function the_completion_page_shows_the_verified_result_with_the_fresh_card(): void
+  {
+    $version = WebBlocks::version();
+    $report = $this->upToDateReport();
+    $report['installed_version'] = $report['version']['installed_version'] = $report['version']['latest_version'] = $version;
+    $this->mock(SystemUpdateInspector::class)->shouldReceive('report')->andReturn($report);
+    $operation = AdminUpdateOperation::create([
+      'id' => 'b0a62a6a-ec80-4c35-866a-2dc056bc02b7',
+      'user_id' => 1,
+      'from_version' => '1.39.0',
+      'target_version' => $version,
+      'checksum_sha256' => str_repeat('a', 64),
+      'status' => 'success',
+      'started_at' => now()->subMinute(),
+      'finished_at' => now(),
+    ]);
+    auth()->guard()->setUser(new class(['id' => 1, 'name' => 'Synthetic administrator']) extends GenericUser
+    {
+      public function can(string $ability): bool
+      {
+        return $ability === 'access-system';
+      }
+    });
+    $controller = app(SystemUpdateController::class);
+    $request = Request::create('/?completed_operation='.$operation->id);
+    $html = $controller->index($request)->render();
+    $document = new DOMDocument;
+    @$document->loadHTML($html);
+    $xpath = new DOMXPath($document);
+    $message = 'Updated to '.$version.' successfully.';
+    $this->assertSame($message, trim($xpath->query('//*[@role="status" and contains(@class, "wb-alert-success")]')->item(0)->textContent));
+    $this->assertStringContainsString('Up to date', $html);
+    $this->assertStringContainsString('Installed version <strong>'.$version.'</strong>', $html);
+    $this->assertCount(0, $xpath->query('//*[@data-pc-update-status and not(@hidden)] | //form[@data-pc-update-form]'));
+
+    foreach (['/', '/?completed_operation[]=invalid', '/?completed_operation=00000000-0000-4000-8000-000000000099'] as $url) {
+      $this->assertStringNotContainsString($message, $controller->index(Request::create($url))->render());
+    }
+
+    $operation->update(['status' => 'success_with_warnings']);
+    $this->assertStringNotContainsString($message, $controller->index($request)->render());
+
+    $operation->update(['status' => 'success', 'target_version' => '0.1.0']);
+    $this->assertStringNotContainsString($message, $controller->index($request)->render());
   }
 
   #[Test]

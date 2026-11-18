@@ -72,6 +72,11 @@
   <div class="wb-stack wb-stack-4" data-webblocks-updates-flash>
     @include('webblocks-cms::admin.partials.flash')
   </div>
+  @if ($completedVersion ?? null)
+    <div class="wb-alert wb-alert-success wb-mb-4" role="status">
+      {{ $adminText('update_chain.complete', ['version' => $completedVersion]) }}
+    </div>
+  @endif
   @if ($canTrackUpdate)
     <div class="wb-alert wb-alert-info wb-mb-4" data-pc-update-result hidden>
       <p role="status" aria-atomic="true" data-pc-update-result-text></p>
@@ -355,7 +360,7 @@
             data-active-operation="{{ $trackedOperation }}"
             data-pc-admission="server" data-pc-max-wait-seconds="21600" data-pc-health-url="{{ $healthRoute ?? '' }}"
             data-pc-active-url="{{ route('admin.system.updates.indicator', ['active' => 1]) }}"
-            data-pc-close-on-success
+            data-pc-refresh-on-success
             data-progress-unknown="{{ __('publisher-client::updates.progress.unknown') }}"
             data-progress-interrupted="{{ __('publisher-client::updates.progress.interrupted') }}"
             data-progress-auth="{{ __('publisher-client::updates.progress.auth') }}"
