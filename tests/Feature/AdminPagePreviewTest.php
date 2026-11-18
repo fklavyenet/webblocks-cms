@@ -53,6 +53,8 @@ class AdminPagePreviewTest extends TestCase
     $this->assertStringContainsString('Türkçe başlık', $html);
     $this->assertStringContainsString('alt="Türkçe açıklama"', $html);
     $this->assertStringContainsString('<figcaption>Türkçe altyazı</figcaption>', $html);
+    $this->assertStringContainsString('data-search-path="/tr"', $html);
+    $this->assertStringContainsString('data-search-json-path="/tr/search.json"', $html);
     $this->assertStringNotContainsString('English heading', $html);
     $this->assertSame($before, [$page->fresh()->getAttributes(), Block::all()->map->getAttributes()->all()]);
   }
@@ -64,6 +66,8 @@ class AdminPagePreviewTest extends TestCase
     $html = $this->preview($page)->getContent();
     $this->assertStringContainsString('English heading', $html);
     $this->assertStringContainsString('alt="English description"', $html);
+    $this->assertStringContainsString('data-search-path="/"', $html);
+    $this->assertStringContainsString('data-search-json-path="/search.json"', $html);
     $this->assertStringNotContainsString('Türkçe başlık', $html);
   }
 

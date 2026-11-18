@@ -5,10 +5,9 @@
     $publicRouteResolver = app(\WebBlocks\Cms\Support\Pages\PageRouteResolver::class);
     $publicTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $publicSearchSite = $publicRouteResolver->currentSite(request());
-    $publicSearchLocale = $publicRouteResolver->currentLocale(request());
-    $publicSearchLocaleCode = $publicLocaleCode ?? $publicSearchLocale->code;
-    $publicSearchSearchPath = $publicRouteResolver->homePath($publicSearchLocale->code, $publicSearchSite);
-    $publicSearchJsonPath = $publicRouteResolver->searchJsonPath($publicSearchLocale->code, $publicSearchSite);
+    $publicSearchLocaleCode = $publicLocaleCode ?? $publicRouteResolver->currentLocale(request())->code;
+    $publicSearchSearchPath = $publicRouteResolver->homePath($publicSearchLocaleCode, $publicSearchSite);
+    $publicSearchJsonPath = $publicRouteResolver->searchJsonPath($publicSearchLocaleCode, $publicSearchSite);
     $publicSearchSiteLabel = trim((string) ($publicSearchSite->display_name ?: $publicSearchSite->seo_title ?: $publicSearchSite->name));
     $publicSearchDescription = $publicSearchSiteLabel !== ''
         ? $publicTranslator->public('search.description_with_site', $publicSearchLocaleCode, ['site' => $publicSearchSiteLabel])

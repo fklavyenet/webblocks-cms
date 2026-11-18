@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.142.1
+
+- Use the selected page preview language in the public search dialog, including searches limited to a section.
+
 ## 1.142.0
 
 - Limit an individual Search Form to a section such as `/guides` with its Search path prefix setting.
