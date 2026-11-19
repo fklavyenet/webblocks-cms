@@ -2895,9 +2895,13 @@ CSS. No new authoring field, block catalog entry or persistence is introduced.
 ## Installable public themes
 
 Super admins install immutable ZIP packages under System → Public themes.
-When `WEBBLOCKS_EXTENSIONS_CATALOG_BASE_URL` points to an HTTPS Extensions catalog
-origin, Super admins can browse compatible releases and explicitly install a ZIP
-or install an update from the catalog. The CMS checks the selected handle,
+Super admins can browse compatible releases and explicitly install a ZIP or an
+update from the Extensions catalog at `https://extensions.webblocksui.com` by
+default. `WEBBLOCKS_EXTENSIONS_CATALOG_BASE_URL` sets a custom address for both
+themes and plugins. A nonempty `WEBBLOCKS_PLUGIN_CATALOG_BASE_URL` takes
+precedence for plugins and is the theme fallback when the Extensions override
+is unset. Theme browsing requires an HTTPS catalog origin and is disabled by an
+explicitly empty Extensions override. The CMS checks the selected handle,
 version, archive size, SHA-256 and package compatibility before installing.
 Catalog downloads follow the same
 installation and activation boundaries as manual uploads. Installing an update

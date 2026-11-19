@@ -154,6 +154,7 @@ final class PublicThemesTest extends TestCase
     [$site, $page] = $this->sitePage('catalog-site', true);
     $packages = route('admin.system.themes.index');
     $catalog = route('admin.system.themes.catalog.index');
+    config(['webblocks-plugins.catalog.extensions_base_url' => '']);
     $this->get($catalog)->assertNotFound();
     $this->post(route('admin.system.themes.store'), ['package' => $this->archive()])->assertRedirect();
     $v1 = DB::table('wbcms_theme_versions')->value('id');
@@ -161,8 +162,11 @@ final class PublicThemesTest extends TestCase
     preg_match('/name="confirmation" value="([^"]+)"/', $comparison->getContent(), $matches);
     $this->post(route('admin.sites.themes.activate', $site), ['confirmation' => $matches[1]])->assertRedirect();
 
-    $origin = 'https://webblocks-extensions.test';
-    config(['webblocks-plugins.catalog.extensions_base_url' => $origin]);
+    $origin = 'https://extensions.webblocksui.com';
+    config([
+      'webblocks-plugins.catalog.base_url' => null,
+      'webblocks-plugins.catalog.extensions_base_url' => null,
+    ]);
     $archive = $this->archive('1.1.0');
     $file = file_get_contents($archive->getPathname());
     $release = [

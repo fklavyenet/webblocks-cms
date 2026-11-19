@@ -11,19 +11,18 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use WebBlocks\Cms\Support\ExtensionsCatalog;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class PluginCatalogClient
 {
-  private const DEFAULT_BASE_URL = 'https://plugins.webblocksui.com';
-
   /**
    * @param  list<string>  $handles
    * @return array<string, CatalogRelease>|null
    */
   public function installedReleases(array $handles): ?array
   {
-    $baseUrl = $this->baseUrl();
+    $baseUrl = ExtensionsCatalog::pluginBaseUrl();
     $cmsVersion = $this->cmsVersion();
     $responses = Http::pool(function (Pool $pool) use ($handles, $baseUrl, $cmsVersion): void {
       foreach ($handles as $handle) {
@@ -48,7 +47,7 @@ class PluginCatalogClient
 
   public function browse(): PluginCatalogResult
   {
-    $baseUrl = $this->baseUrl();
+    $baseUrl = ExtensionsCatalog::pluginBaseUrl();
     $cmsVersion = $this->cmsVersion();
 
     $request = Http::acceptJson()
@@ -98,7 +97,7 @@ class PluginCatalogClient
 
   public function show(string $handle): PluginCatalogDetailResult
   {
-    $baseUrl = $this->baseUrl();
+    $baseUrl = ExtensionsCatalog::pluginBaseUrl();
     $cmsVersion = $this->cmsVersion();
     $handle = trim($handle);
 
@@ -285,14 +284,6 @@ class PluginCatalogClient
     }
 
     return $release;
-  }
-
-  private function baseUrl(): string
-  {
-    $configured = config('webblocks-plugins.catalog.base_url');
-    $baseUrl = is_string($configured) ? trim($configured) : '';
-
-    return rtrim($baseUrl !== '' ? $baseUrl : self::DEFAULT_BASE_URL, '/');
   }
 
   private function cmsVersion(): string

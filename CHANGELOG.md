@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.143.2
+
+- Use `https://extensions.webblocksui.com` as the default catalog for plugins and public themes. Set `WEBBLOCKS_EXTENSIONS_CATALOG_BASE_URL` to use a custom catalog. Existing plugin and theme catalog overrides retain their precedence.
+
 ## 1.143.1
 
 - Publish localized SEO and Open Graph changes saved in an existing update-draft translation through the panel or Internal Content API.

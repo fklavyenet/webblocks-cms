@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Support\Plugins\Catalog;
 
 use Illuminate\Support\Facades\Cache;
 use Throwable;
+use WebBlocks\Cms\Support\ExtensionsCatalog;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -106,6 +107,6 @@ final class PluginCatalogUpdates
 
   private function cacheKey(): string
   {
-    return 'webblocks-cms:plugin-catalog-updates:'.hash('sha256', (string) config('webblocks-plugins.catalog.base_url'));
+    return 'webblocks-cms:plugin-catalog-updates:'.hash('sha256', ExtensionsCatalog::pluginBaseUrl());
   }
 }

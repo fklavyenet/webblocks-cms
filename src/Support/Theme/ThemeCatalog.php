@@ -7,6 +7,7 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use WebBlocks\Cms\Support\ExtensionsCatalog;
 use WebBlocks\Cms\Support\WebBlocks;
 
 final class ThemeCatalog
@@ -19,7 +20,7 @@ final class ThemeCatalog
 
   public function enabled(): bool
   {
-    return $this->baseUrl() !== null;
+    return ExtensionsCatalog::themeBaseUrl() !== null;
   }
 
   public function browse(int $page): array
@@ -98,7 +99,7 @@ final class ThemeCatalog
   {
     try {
       $deadline = hrtime(true) + 15000000000;
-      $response = $this->http()->withOptions(['stream' => true, 'read_timeout' => 5])->get($this->baseUrl().$path);
+      $response = $this->http()->withOptions(['stream' => true, 'read_timeout' => 5])->get(ExtensionsCatalog::themeBaseUrl().$path);
       $body = $response->toPsrResponse()->getBody();
       try {
         if (! $response->successful()) {
@@ -134,7 +135,7 @@ final class ThemeCatalog
             throw new RuntimeException('Theme catalog response exceeded the size limit.');
           }
         },
-      ])->get($this->baseUrl().$path, $query);
+      ])->get(ExtensionsCatalog::themeBaseUrl().$path, $query);
       $json = $response->successful() && strlen($response->body()) <= 524288 ? $response->json() : null;
     } catch (ConnectionException|RuntimeException) {
       $this->invalid('catalog_unavailable');
@@ -150,17 +151,6 @@ final class ThemeCatalog
   private function http(): PendingRequest
   {
     return Http::connectTimeout(3)->timeout(15)->withoutRedirecting()->withHeaders(['Accept-Encoding' => 'identity']);
-  }
-
-  private function baseUrl(): ?string
-  {
-    $url = config('webblocks-plugins.catalog.extensions_base_url');
-    $url = is_string($url) ? rtrim(trim($url), '/') : '';
-    $parts = parse_url($url);
-
-    return is_array($parts) && ($parts['scheme'] ?? null) === 'https' && isset($parts['host'])
-      && array_diff(array_keys($parts), ['scheme', 'host', 'port']) === []
-      && filter_var($url, FILTER_VALIDATE_URL) !== false ? $url : null;
   }
 
   private function validRelease(array $release, string $handle): bool

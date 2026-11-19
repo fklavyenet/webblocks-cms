@@ -1,5 +1,21 @@
 # Upgrading and Installation Topologies
 
+## 1.143.2: Extensions catalog address
+
+Plugins and public themes use `https://extensions.webblocksui.com` by default.
+Set `WEBBLOCKS_EXTENSIONS_CATALOG_BASE_URL` in the host `.env` to share a custom
+catalog. A nonempty `WEBBLOCKS_PLUGIN_CATALOG_BASE_URL` still takes precedence
+for plugins and also supplies the theme address when the Extensions override
+is unset. If both are set, themes use the Extensions override. Themes require
+an HTTPS origin with no path, query, fragment, or credentials. An explicitly
+empty Extensions override disables theme browsing.
+
+If the host has a published `config/webblocks-plugins.php`, check its `catalog`
+section. A retained `base_url` that still defaults to the old domain takes
+precedence over the package default. Update that fallback or remove it to follow
+the package configuration. Rebuild the Laravel config cache after changing
+the host configuration or `.env` if the installation uses config caching.
+
 ## 1.117.2: System Pages start with editable native content
 
 In Pages, choose a site and prepare a System Page. Its initial draft already
