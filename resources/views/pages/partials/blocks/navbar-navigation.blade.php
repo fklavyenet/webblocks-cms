@@ -63,8 +63,8 @@
   };
   $drawerId = 'wb-navbar-drawer-'.$block->id;
   $iconPresenter = app(\WebBlocks\Cms\Support\PublicRendering\PublicIconPresenter::class);
-  $renderItemContent = function ($item) use ($iconPresenter): string {
-    $title = e($item->resolvedTitle());
+  $renderItemContent = function ($item) use ($iconPresenter, $block): string {
+    $title = e($item->resolvedTitleForBlock($block));
     $iconClass = $iconPresenter->iconClass($item->sidebarIcon());
 
     if ($iconClass === null) {
@@ -84,7 +84,7 @@
       $children = $item->children;
 
       if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty()) {
-        $html .= '<span class="wb-text-sm wb-text-muted">'.e($item->resolvedTitle()).'</span>';
+        $html .= '<span class="wb-text-sm wb-text-muted">'.e($item->resolvedTitleForBlock($block)).'</span>';
         $html .= $renderDrawerItems($children);
 
         continue;
@@ -113,7 +113,7 @@
         $groupMenuId = 'navbar-navigation-group-'.$block->id.'-'.$item->id;
         $html .= '<li class="wb-navbar-nav-item wb-dropdown">';
         $html .= '<button type="button" class="wb-navbar-link'.($isActive ? ' is-active' : '').'" data-wb-toggle="dropdown" data-wb-target="#'.$groupMenuId.'" aria-expanded="false">';
-        $html .= e($item->resolvedTitle());
+        $html .= e($item->resolvedTitleForBlock($block));
         $html .= ' <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>';
         $html .= '</button>';
         $html .= '<div class="wb-dropdown-menu" id="'.$groupMenuId.'">';
@@ -124,7 +124,7 @@
           $childTarget = $child->target ? ' target="'.e($child->target).'" rel="noopener noreferrer"' : '';
 
           if ($childUrl) {
-            $html .= '<a class="wb-dropdown-item'.($childActive ? ' is-active' : '').'" href="'.e($childUrl).'"'.($childActive ? ' aria-current="page"' : '').$childTarget.\WebBlocks\Cms\Support\Seo\SeoHtmlEvidence::navigationAttribute((int) $child->id, $block).'>'.e($child->resolvedTitle()).'</a>';
+            $html .= '<a class="wb-dropdown-item'.($childActive ? ' is-active' : '').'" href="'.e($childUrl).'"'.($childActive ? ' aria-current="page"' : '').$childTarget.\WebBlocks\Cms\Support\Seo\SeoHtmlEvidence::navigationAttribute((int) $child->id, $block).'>'.e($child->resolvedTitleForBlock($block)).'</a>';
           }
         }
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.143.3
+
+- Use the selected page preview language for menu labels in shared headers, desktop dropdowns, mobile navigation, and menu-backed sidebar and footer blocks.
+
 ## 1.143.2
 
 - Use `https://extensions.webblocksui.com` as the default catalog for plugins and public themes. Set `WEBBLOCKS_EXTENSIONS_CATALOG_BASE_URL` to use a custom catalog. Existing plugin and theme catalog overrides retain their precedence.

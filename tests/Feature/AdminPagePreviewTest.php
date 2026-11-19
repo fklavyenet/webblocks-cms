@@ -18,10 +18,13 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Models\Media;
 use WebBlocks\Cms\Models\NavigationItem;
 use WebBlocks\Cms\Models\Page;
+use WebBlocks\Cms\Models\PageSlot;
+use WebBlocks\Cms\Models\SharedSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Support\Pages\PageLayoutSlotComparison;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
+use WebBlocks\Cms\Support\SharedSlots\SharedSlotSourcePageManager;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Tests\CmsSqlTestUser;
@@ -72,7 +75,7 @@ class AdminPagePreviewTest extends TestCase
   }
 
   #[Test]
-  public function private_preview_menu_links_use_the_rendered_site_and_locale(): void
+  public function private_preview_menu_labels_and_links_use_the_rendered_site_and_locale(): void
   {
     config()->set('app.url', 'https://admin.example.test');
     [$page, $turkish] = $this->fixture();
@@ -80,35 +83,53 @@ class AdminPagePreviewTest extends TestCase
     $site->update(['domain' => 'cms.example.test']);
     $site->siteDomains()->create(['domain' => 'alias.example.test', 'status' => 'active']);
     Site::create(['name' => 'Admin host', 'handle' => 'admin-host', 'domain' => 'admin.example.test', 'is_primary' => true]);
+    $german = Locale::create(['code' => 'de', 'name' => 'German', 'is_enabled' => true]);
+    $site->locales()->attach($german->id, ['is_enabled' => true]);
+    $page->translations()->create(['locale_id' => $german->id, 'name' => 'Deutsche Seite', 'slug' => 'vorschau', 'path' => '/vorschau']);
 
     $blogs = Page::create(['site_id' => $site->id, 'title' => 'Blogs', 'slug' => 'blogs', 'status' => Page::STATUS_PUBLISHED, 'published_at' => now()]);
     $blogs->translations()->create(['locale_id' => $turkish->id, 'name' => 'Türkçe blog', 'slug' => 'yazilar', 'path' => '/yazilar']);
+    $blogs->translations()->create(['locale_id' => $german->id, 'name' => 'Deutscher Blog', 'slug' => 'beitraege', 'path' => '/beitraege']);
     $englishOnly = Page::create(['site_id' => $site->id, 'title' => 'News', 'slug' => 'news', 'status' => Page::STATUS_PUBLISHED, 'published_at' => now()]);
     $group = $site->navigationItems()->create(['title' => 'Articles', 'menu_key' => 'primary', 'link_type' => NavigationItem::LINK_GROUP]);
-    $site->navigationItems()->create(['title' => 'Blogs', 'menu_key' => 'primary', 'parent_id' => $group->id, 'link_type' => NavigationItem::LINK_PAGE, 'page_id' => $blogs->id]);
+    $blogLink = $site->navigationItems()->create(['title' => 'Blogs', 'menu_key' => 'primary', 'parent_id' => $group->id, 'link_type' => NavigationItem::LINK_PAGE, 'page_id' => $blogs->id]);
+    $group->translations()->create(['locale_id' => $turkish->id, 'title' => 'Makaleler']);
+    $group->translations()->create(['locale_id' => $german->id, 'title' => 'Artikel']);
+    $blogLink->translations()->create(['locale_id' => $turkish->id, 'title' => 'Yazılar']);
+    $blogLink->translations()->create(['locale_id' => $german->id, 'title' => 'Beiträge']);
     $site->navigationItems()->create(['title' => 'News', 'menu_key' => 'primary', 'link_type' => NavigationItem::LINK_PAGE, 'page_id' => $englishOnly->id]);
-    foreach (['Relative URL' => '/blogs?view=all#top', 'External URL' => 'https://external.example.test/blogs'] as $title => $url) {
-      $site->navigationItems()->create(['title' => $title, 'menu_key' => 'primary', 'link_type' => NavigationItem::LINK_CUSTOM_URL, 'url' => $url]);
+    $relativeLink = $site->navigationItems()->create(['title' => 'Relative URL', 'menu_key' => 'primary', 'link_type' => NavigationItem::LINK_CUSTOM_URL, 'url' => '/blogs?view=all#top']);
+    $relativeLink->translations()->create(['locale_id' => $german->id, 'title' => '   ']);
+    $externalLink = $site->navigationItems()->create(['title' => 'External URL', 'menu_key' => 'primary', 'link_type' => NavigationItem::LINK_CUSTOM_URL, 'url' => 'https://external.example.test/blogs']);
+    $externalLink->translations()->create(['locale_id' => $german->id, 'title' => 'Externer Link']);
+
+    $header = SlotType::create(['name' => 'Header', 'slug' => 'header', 'status' => 'published']);
+    $sharedHeader = SharedSlot::create(['site_id' => $site->id, 'name' => 'Site Header', 'handle' => 'site-header', 'slot_name' => 'header', 'is_active' => true]);
+    $sharedSlots = app(SharedSlotSourcePageManager::class);
+    $headerSource = $sharedSlots->ensureFor($sharedHeader);
+    foreach (['navbar-navigation', 'header-actions'] as $type) {
+      $headerSource->blocks()->create(['type' => $type, 'slot_type_id' => $header->id, 'status' => 'published', 'settings' => ['menu_key' => 'primary']]);
     }
-    foreach (['header' => ['navbar-navigation', 'header-actions'], 'sidebar' => ['sidebar-navigation'], 'footer' => ['navigation-auto']] as $slug => $types) {
+    $sharedSlots->rebuildAssignments($sharedHeader);
+    $page->slots()->create(['slot_type_id' => $header->id, 'source_type' => PageSlot::SOURCE_TYPE_SHARED_SLOT, 'shared_slot_id' => $sharedHeader->id]);
+
+    foreach (['sidebar' => 'sidebar-navigation', 'footer' => 'navigation-auto'] as $slug => $type) {
       $slot = SlotType::create(['name' => $slug, 'slug' => $slug, 'status' => 'published']);
       $page->slots()->create(['slot_type_id' => $slot->id]);
-      foreach ($types as $type) {
-        $page->blocks()->create(['type' => $type, 'slot_type_id' => $slot->id, 'status' => 'published', 'settings' => ['menu_key' => 'primary']]);
-      }
+      $page->blocks()->create(['type' => $type, 'slot_type_id' => $slot->id, 'status' => 'published', 'settings' => ['menu_key' => 'primary']]);
     }
 
     $this->withoutMiddleware(RedirectIfNotInstalled::class);
-    $preview = '/webadmin/pages/'.$page->id.'/preview?locale=tr';
-    $this->get('https://admin.example.test'.$preview)->assertRedirect();
+    $preview = '/webadmin/pages/'.$page->id.'/preview';
+    $this->get('https://admin.example.test'.$preview.'?locale=tr')->assertRedirect();
     if (! class_exists(User::class)) {
       class_alias(CmsSqlTestUser::class, User::class);
     }
     $this->actingAs($this->cmsActor(new User(['role' => 'super_admin'])));
     foreach (['admin.example.test' => 'https://cms.example.test', 'cms.example.test' => '', 'alias.example.test' => ''] as $host => $origin) {
-      $html = $this->get('https://'.$host.$preview)->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')->getContent();
-      $this->assertMenuHrefs($html, [
-        'Blogs' => $origin.'/tr/yazilar',
+      $html = $this->get('https://'.$host.$preview.'?locale=tr')->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')->getContent();
+      $this->assertMenu($html, 'Makaleler', [
+        'Yazılar' => $origin.'/tr/yazilar',
         'News' => $origin.'/news',
         'Relative URL' => '/blogs?view=all#top',
         'External URL' => 'https://external.example.test/blogs',
@@ -117,29 +138,41 @@ class AdminPagePreviewTest extends TestCase
       $this->assertStringContainsString('href="/tr/onizleme"', $html);
       $this->assertStringContainsString('aria-current="true"', $html);
     }
+
+    $germanLinks = ['Beiträge' => '/de/beitraege', 'Relative URL' => '/blogs?view=all#top', 'Externer Link' => 'https://external.example.test/blogs'];
+    $defaultLinks = ['Blogs' => '/blogs', 'News' => '/news', 'Relative URL' => '/blogs?view=all#top', 'External URL' => 'https://external.example.test/blogs'];
+    $germanPreview = $this->get('https://cms.example.test'.$preview.'?locale=de')->assertOk()->getContent();
+    $this->assertMenu($germanPreview, 'Artikel', $germanLinks + ['News' => '/news']);
+    $defaultPreview = $this->get('https://cms.example.test'.$preview)->assertOk()->getContent();
+    $this->assertMenu($defaultPreview, 'Articles', $defaultLinks);
     $this->assertSame(Page::STATUS_DRAFT, $page->fresh()->status);
 
     $page->update(['status' => Page::STATUS_PUBLISHED, 'published_at' => now()]);
     $public = $this->get('https://cms.example.test/tr/onizleme')->assertOk()->getContent();
-    $this->assertMenuHrefs($public, [
-      'Blogs' => '/tr/yazilar',
+    $this->assertMenu($public, 'Makaleler', [
+      'Yazılar' => '/tr/yazilar',
       'News' => null,
       'Relative URL' => '/blogs?view=all#top',
       'External URL' => 'https://external.example.test/blogs',
     ]);
+    $this->assertMenu($this->get('https://cms.example.test/de/vorschau')->assertOk()->getContent(), 'Artikel', $germanLinks + ['News' => null]);
+    $this->assertMenu($this->get('https://cms.example.test/preview?locale=de')->assertOk()->getContent(), 'Articles', $defaultLinks);
   }
 
-  private function assertMenuHrefs(string $html, array $links): void
+  private function assertMenu(string $html, string $groupLabel, array $links): void
   {
     $document = new DOMDocument;
     $document->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
     $xpath = new DOMXPath($document);
     foreach (['wb-navbar-links', 'wb-navbar-drawer', 'wb-sidebar-nav', 'wb-slot-footer'] as $region) {
+      $regionPath = '//*[contains(concat(" ", normalize-space(@class), " "), " '.$region.' ")]';
       foreach ($links as $label => $href) {
-        $anchors = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " '.$region.' ")]//a[normalize-space(.)="'.$label.'"]');
+        $anchors = $xpath->query($regionPath.'//a[normalize-space(.)="'.$label.'"]');
         $this->assertSame($href === null ? 0 : 1, $anchors->length, $region.' '.$label);
         $this->assertSame($href, $anchors->item(0)?->getAttribute('href'), $region.' '.$label);
       }
+      $groups = $xpath->query($regionPath.'//*[self::span or self::button][normalize-space(text())="'.$groupLabel.'"]');
+      $this->assertSame(1, $groups->length, $region.' '.$groupLabel);
     }
   }
 

@@ -25,7 +25,7 @@
 
       $children = $item->children->filter(fn ($child) => $child->isVisible() && (! $child->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($child->page)) && ! $linksToUnpublishedPage($child));
       $url = $item->resolvedUrlForBlock($block);
-      $label = e($item->resolvedTitle());
+      $label = e($item->resolvedTitleForBlock($block));
       $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
 
       $html .= '<li class="wb-stack wb-gap-1">';

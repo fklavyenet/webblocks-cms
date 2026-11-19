@@ -207,11 +207,25 @@ class NavigationItem extends CmsModel
 
   public function resolvedTitle(?Locale $locale = null): string
   {
-    if ($this->link_type === self::LINK_COOKIE_SETTINGS && ! $this->translatedTitle($locale) && ! $this->title) {
-      return app(ConsentPreferencesLink::class)->label($this->site, $locale?->code ?? request()?->route('locale') ?? request()?->query('locale'));
+    return $this->resolveTitleForLocaleCode($locale?->code);
+  }
+
+  public function resolvedTitleForBlock(Block $block): string
+  {
+    $localeCode = $block->getAttribute('render_preview') ? $block->renderLocaleCode() : null;
+
+    return $localeCode === null ? $this->resolvedTitle() : $this->resolveTitleForLocaleCode($localeCode);
+  }
+
+  private function resolveTitleForLocaleCode(?string $localeCode): string
+  {
+    $translatedTitle = $this->translatedTitle($localeCode);
+
+    if ($this->link_type === self::LINK_COOKIE_SETTINGS && ! $translatedTitle && ! $this->title) {
+      return app(ConsentPreferencesLink::class)->label($this->site, $localeCode ?? request()?->route('locale') ?? request()?->query('locale'));
     }
 
-    return $this->translatedTitle($locale)
+    return $translatedTitle
       ?? ($this->title ?: ($this->page?->name ?: ($this->link_type === self::LINK_GROUP ? 'Untitled Group' : (string) $this->url)));
   }
 
@@ -239,9 +253,9 @@ class NavigationItem extends CmsModel
       ->first();
   }
 
-  private function translatedTitle(?Locale $locale): ?string
+  private function translatedTitle(?string $localeCode): ?string
   {
-    $requested = $locale?->code ?? request()?->route('locale');
+    $requested = $localeCode ?? request()?->route('locale');
 
     if (! is_string($requested) || $requested === '') {
       return null;
