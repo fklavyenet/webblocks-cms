@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.143.1
+
+- Publish localized SEO and Open Graph changes saved in an existing update-draft translation through the panel or Internal Content API.
+- Preserve blocks during metadata-only promotion and reject translation promotion when the published source has changed.
+
 ## 1.143.0
 
 - Support a local search index for the Extensions catalog. A signed snapshot keeps the search index up to date in all six supported languages.

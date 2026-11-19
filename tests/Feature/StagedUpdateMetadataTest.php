@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ViewErrorBag;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalPageRenderController;
@@ -27,6 +28,7 @@ class StagedUpdateMetadataTest extends TestCase
   {
     parent::defineEnvironment($app);
     $app['config']->set('webblocks-cms.routes.admin', true);
+    $app['config']->set('webblocks-cms.routes.public', true);
   }
 
   protected function defineDatabaseMigrations(): void
@@ -66,6 +68,12 @@ class StagedUpdateMetadataTest extends TestCase
       ];
     }
     $this->patchJson('/webadmin/api/blocks/'.$draftGallery->id, ['gallery_items' => $edits])->assertOk();
+    $draftTranslation = $draft->translationForLocale($locales[1]);
+    $this->patchJson('/webadmin/api/pages/'.$draft->id.'/translations/'.$draftTranslation->id, [
+      'seo_description' => 'Deutsch mit Galerie',
+    ])->assertOk()->assertJsonPath('translation.seo_description', 'Deutsch mit Galerie');
+    $this->get('/webadmin/api/pages/'.$draft->id.'/render?format=html&locale=de')
+      ->assertOk()->assertSee('<meta name="description" content="Deutsch mit Galerie">', false);
     $this->assertPhysicalGallery($draftGallery->fresh(), $locales, $media, $edited);
     $this->assertPhysicalGallery($gallery->fresh(), $locales, $media, $original);
 
@@ -75,8 +83,81 @@ class StagedUpdateMetadataTest extends TestCase
     ]])->assertCreated();
 
     $this->assertNull($draft->fresh());
+    $this->assertSame('Deutsch mit Galerie', $source->fresh()->translationForLocale($locales[1])->seo_description);
+    $this->assertNull($source->fresh()->translationForLocale($locales[0])->seo_description);
+    $this->get('http://example.test/de/source')->assertOk()->assertSee('<meta name="description" content="Deutsch mit Galerie">', false);
     $this->assertPhysicalGallery($source->blocks()->where('type', 'gallery')->sole(), $locales, $media, $edited);
     $this->assertRenderedDimensions($source, $edited);
+  }
+
+  #[Test]
+  public function api_metadata_only_promotion_can_clear_one_field_without_replacing_blocks(): void
+  {
+    [$source, $slot, [$english, $german], $media] = $this->fixtures();
+    $source->site->update(['seo_description' => 'Site fallback']);
+    $source->translationForLocale($english)->update(['seo_description' => 'Keep English']);
+    $published = $source->translationForLocale($german);
+    $published->update(['seo_description' => 'Remove German', 'og_description' => 'Keep Open Graph']);
+    $gallery = $this->physicalGallery($source, $slot, [$english, $german], $media, [[400000, 400000]]);
+    $draft = $this->createUpdateDraftThroughApi($source);
+    $translation = $draft->translationForLocale($german);
+    $endpoint = '/webadmin/api/pages/'.$draft->id.'/translations/'.$translation->id;
+    $promotion = ['plan' => [
+      'mode' => 'promote_staged_page_update', 'staged_page_id' => $draft->id,
+      'expected_source_path' => '/source', 'promote_slots' => [],
+    ]];
+    $this->postJson('/webadmin/api/content/apply', $promotion)->assertUnprocessable()
+      ->assertJsonPath('errors.0.path', 'plan.promote_slots');
+    $this->patchJson($endpoint, ['seo_description' => null])->assertOk()->assertJsonPath('translation.seo_description', null);
+    $this->get('/webadmin/api/pages/'.$draft->id.'/render?format=html&locale=de')
+      ->assertOk()->assertSee('<meta name="description" content="Site fallback">', false);
+    $this->assertSame('Remove German', $published->fresh()->seo_description);
+
+    $this->postJson('/webadmin/api/content/apply', $promotion)
+      ->assertCreated()->assertJsonPath('normalized_plan.staged_update.promote_slots', []);
+
+    $this->assertNull($published->fresh()->seo_description);
+    $this->assertSame('Keep Open Graph', $published->fresh()->og_description);
+    $this->assertSame('Keep English', $source->fresh()->translationForLocale($english)->seo_description);
+    $this->assertSame($gallery->id, $source->blocks()->sole()->id);
+    $this->assertModelMissing($draft);
+    $this->get('http://example.test/de/source')->assertOk()->assertSee('<meta name="description" content="Site fallback">', false);
+  }
+
+  #[Test]
+  public function api_staged_metadata_rejects_a_changed_source_a_missing_baseline_or_a_disabled_locale(): void
+  {
+    [$source, $slot, [$english, $german], $media] = $this->fixtures();
+    $published = $source->translationForLocale($german);
+    $published->update(['seo_description' => 'Original']);
+    $gallery = $this->physicalGallery($source, $slot, [$english, $german], $media, [[400000, 400000]]);
+    $draft = $this->createUpdateDraftThroughApi($source);
+    $translation = $draft->translationForLocale($german);
+    $endpoint = '/webadmin/api/pages/'.$draft->id.'/translations/'.$translation->id;
+    $this->patchJson($endpoint, ['seo_description' => '   '])->assertOk()->assertJsonPath('translation.seo_description', null);
+    $promotion = ['plan' => [
+      'mode' => 'promote_staged_page_update', 'staged_page_id' => $draft->id,
+      'expected_source_path' => '/source', 'promote_slots' => ['main'],
+    ]];
+
+    $source->site->locales()->updateExistingPivot($german->id, ['is_enabled' => false]);
+    $this->patchJson($endpoint, ['seo_description' => 'Disabled'])->assertUnprocessable();
+    $this->postJson('/webadmin/api/content/apply', $promotion)->assertUnprocessable()
+      ->assertJsonPath('errors.0.path', 'plan.translation_changes.locale');
+    $source->site->locales()->updateExistingPivot($german->id, ['is_enabled' => true]);
+
+    $published->update(['seo_description' => 'Changed after draft creation']);
+    $this->postJson('/webadmin/api/content/apply', $promotion)->assertUnprocessable()
+      ->assertJsonPath('errors.0.path', 'plan.translation_changes.source_page');
+    $this->assertSame('Changed after draft creation', $published->fresh()->seo_description);
+
+    $published->update(['seo_description' => 'Original']);
+    DB::table('wbcms_staged_page_bases')->where('page_id', $draft->id)->delete();
+    $this->postJson('/webadmin/api/content/apply', $promotion)->assertUnprocessable()
+      ->assertJsonPath('errors.0.path', 'plan.translation_changes.source_page');
+    $this->assertSame('Original', $published->fresh()->seo_description);
+    $this->assertSame($gallery->id, $source->blocks()->sole()->id);
+    $this->assertModelExists($draft);
   }
 
   #[Test]

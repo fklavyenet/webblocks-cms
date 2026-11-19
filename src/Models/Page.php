@@ -32,6 +32,8 @@ class Page extends CmsModel
 
   public const TYPE_SHARED_SLOT_SOURCE = 'shared_slot_source';
 
+  public const STAGED_UPDATE_TYPE = 'published_page_update';
+
   private ?string $pendingDefaultTranslationName = null;
 
   private ?string $pendingDefaultTranslationSlug = null;
@@ -145,6 +147,11 @@ class Page extends CmsModel
   public function setting(string $key, mixed $default = null): mixed
   {
     return data_get(is_array($this->settings) ? $this->settings : [], $key, $default);
+  }
+
+  public function isStagedUpdate(): bool
+  {
+    return $this->setting('staged_update.type') === self::STAGED_UPDATE_TYPE;
   }
 
   public function isRevisionRestoreCandidate(): bool

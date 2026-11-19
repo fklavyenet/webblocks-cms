@@ -19,6 +19,7 @@ use WebBlocks\Cms\Support\EditorRecovery\EditorRecovery;
 use WebBlocks\Cms\Support\Pages\PageIndexState;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageWorkflowManager;
+use WebBlocks\Cms\Support\Pages\StagedPageTranslations;
 use WebBlocks\Cms\Support\Users\AdminAuthorization;
 
 class PageTranslationController extends Controller
@@ -28,6 +29,7 @@ class PageTranslationController extends Controller
     private readonly PageIndexState $pageIndexState,
     private readonly PageRevisionManager $revisionManager,
     private readonly PageWorkflowManager $workflowManager,
+    private readonly StagedPageTranslations $stagedTranslations,
   ) {}
 
   public function create(Page $page, Locale $locale): View
@@ -124,7 +126,7 @@ class PageTranslationController extends Controller
     DB::transaction(function () use ($request, $page, $translation): void {
       $recovery = app(EditorFormRecovery::class);
       $context = $recovery->guardSave($request, 'translation', ['page_id' => $page->id, 'locale' => $translation->locale->code, 'translation_id' => $translation->id]);
-      $translation->update($request->validatedTranslation());
+      $this->stagedTranslations->updateExisting($page, $translation, $request->validatedTranslation(), trackOnlyChangedMetadata: true);
       $this->revisionManager->recordTranslationChange(
         $page,
         $request->user(),

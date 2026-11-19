@@ -28,13 +28,19 @@ class PageTranslationRequest extends FormRequest
     $path = trim((string) $this->input('path'));
     $authorization = app(AdminAuthorization::class);
     $user = $this->user();
+    $preserveOmittedMetadata = $this->isStagedTranslationUpdate();
 
     $input = [
       'slug' => $normalizedSlug,
       'path' => $path !== '' ? $this->normalizePathInput($path) : PageTranslation::pathFromSlug($normalizedSlug),
-      'og_image_media_id' => $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('og_image_media_id') ?: $this->integer('og_image_asset_id') ?: null) : null,
     ];
+    if (! $preserveOmittedMetadata || $this->hasAny(['og_image_media_id', 'og_image_asset_id'])) {
+      $input['og_image_media_id'] = $user ? $authorization->normalizeAllowedMediaId($user, $this->integer('og_image_media_id') ?: $this->integer('og_image_asset_id') ?: null) : null;
+    }
     foreach (array_keys(PageTranslationPayload::TEXT_FIELDS) as $field) {
+      if ($preserveOmittedMetadata && ! $this->has($field)) {
+        continue;
+      }
       $input[$field] = $this->nullableTrimmed($field);
     }
 
@@ -75,9 +81,10 @@ class PageTranslationRequest extends FormRequest
 
   public function validatedTranslation(): array
   {
-    $data = $this->validated();
-
-    $translation = $data + array_fill_keys(PageTranslationPayload::SEO_FIELDS, null);
+    $translation = $this->validated();
+    if (! $this->isStagedTranslationUpdate()) {
+      $translation += array_fill_keys(PageTranslationPayload::SEO_FIELDS, null);
+    }
     $translation['path'] = PagePath::canonicalize($translation['path']);
     $acl = app(CmsAuthorization::class);
     if ($acl->ready() && ! $acl->allows($this->user(), 'cms.seo.update', $this->route('page')?->site_id)) {
@@ -85,6 +92,13 @@ class PageTranslationRequest extends FormRequest
     }
 
     return $translation;
+  }
+
+  private function isStagedTranslationUpdate(): bool
+  {
+    $page = $this->route('page');
+
+    return $page instanceof Page && $page->isStagedUpdate() && $this->route('translation') instanceof PageTranslation;
   }
 
   private function normalizePathInput(string $path): string

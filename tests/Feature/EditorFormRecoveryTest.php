@@ -95,6 +95,46 @@ class EditorFormRecoveryTest extends TestCase
   }
 
   #[Test]
+  public function metadata_saved_in_the_panel_on_a_staged_update_is_promoted_through_the_api(): void
+  {
+    $this->page->update(['status' => Page::STATUS_PUBLISHED]);
+    $sourceTranslation = $this->page->defaultTranslation();
+    $sourceTranslation->update(['seo_description' => 'Published description', 'seo_title' => 'Original SEO title', 'og_description' => 'Keep the sharing description']);
+    $token = app(CmsApiTokenIssuer::class)->issue('Synthetic staged editor', capabilities: ['content.apply', 'content.publish'])->plainToken;
+    $created = $this->postJson(route('internal-content-api.content.apply'), ['plan' => [
+      'mode' => 'create_staged_update_for_published_page', 'source_page_id' => $this->page->id,
+      'expected_source_path' => '/saved-page', 'managed_slots' => ['main'],
+    ]], ['Authorization' => 'Bearer '.$token])->assertCreated();
+    $draft = Page::findOrFail($created->json('data.staged_page.id'));
+    $translation = $draft->defaultTranslation();
+    $this->get(route('admin.pages.translations.edit', [$draft, $translation]))
+      ->assertOk()->assertSee('Published description');
+    $identity = ['form_kind' => 'translation', 'page_id' => $draft->id, 'translation_id' => $translation->id, 'locale' => 'en'];
+    $values = $translation->only(['name', 'slug', 'path', 'seo_title']);
+    $values['seo_description'] = 'Edited in the panel';
+    $checkpoint = $this->checkpoint((string) Str::uuid(), $identity, $values);
+    $this->putJson(route('admin.pages.translations.update', [$draft, $translation]), [...$values, ...$checkpoint], ['X-WebBlocks-Editor-Save' => '1'])
+      ->assertOk()->assertJsonPath('saved', true);
+    $this->get(route('admin.pages.preview', ['page' => $draft, 'locale' => 'en']))
+      ->assertOk()->assertSee('<meta name="description" content="Edited in the panel">', false);
+    $this->assertSame('Published description', $sourceTranslation->fresh()->seo_description);
+
+    $this->postJson(route('internal-content-api.content.apply'), ['plan' => [
+      'mode' => 'promote_staged_page_update', 'staged_page_id' => $draft->id,
+      'expected_source_path' => '/saved-page', 'promote_slots' => [],
+    ]], ['Authorization' => 'Bearer '.$token])->assertCreated()
+      ->assertJsonPath('normalized_plan.staged_update.translation_changes', [
+        $translation->locale_id => ['seo_description' => 'Edited in the panel'],
+      ]);
+
+    $this->assertSame('Edited in the panel', $sourceTranslation->fresh()->seo_description);
+    $this->assertSame('Original SEO title', $sourceTranslation->fresh()->seo_title);
+    $this->assertSame('Keep the sharing description', $sourceTranslation->fresh()->og_description);
+    $this->assertSame('/saved-page', $sourceTranslation->fresh()->path);
+    $this->assertModelMissing($draft);
+  }
+
+  #[Test]
   public function the_visual_picker_creates_and_updates_columns_without_adding_unselected_slots(): void
   {
     app(CoreLayoutCatalogSyncer::class)->sync();

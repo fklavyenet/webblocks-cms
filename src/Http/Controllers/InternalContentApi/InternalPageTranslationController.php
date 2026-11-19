@@ -14,6 +14,7 @@ use WebBlocks\Cms\Support\InternalContentApi\InternalContentApiPresenter;
 use WebBlocks\Cms\Support\Locales\LocaleResolver;
 use WebBlocks\Cms\Support\Pages\PageRevisionManager;
 use WebBlocks\Cms\Support\Pages\PageTranslationPayload;
+use WebBlocks\Cms\Support\Pages\StagedPageTranslations;
 
 /**
  * Page translations own localized page identity and the page-level SEO and
@@ -32,6 +33,7 @@ class InternalPageTranslationController extends Controller
     private readonly InternalContentApiPresenter $presenter,
     private readonly PageRevisionManager $revisionManager,
     private readonly PageTranslationPayload $payload,
+    private readonly StagedPageTranslations $stagedTranslations,
   ) {}
 
   public function index(Page $page): JsonResponse
@@ -118,7 +120,7 @@ class InternalPageTranslationController extends Controller
     }
 
     DB::transaction(function () use ($page, $translation, $data, $locale): void {
-      $translation->update($data);
+      $this->stagedTranslations->updateExisting($page, $translation, $data);
 
       $this->revisionManager->recordTranslationChange($page, null, 'Translation updated', 'A page translation was updated for locale '.$locale->code.' through the Internal Content API.', source: 'internal-content-api');
     });

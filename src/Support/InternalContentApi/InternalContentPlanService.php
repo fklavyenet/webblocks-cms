@@ -39,7 +39,6 @@ use WebBlocks\Cms\Support\Contact\ContactConsentValidationException;
 use WebBlocks\Cms\Support\Contact\ContactFormFields;
 use WebBlocks\Cms\Support\Database\ContentVersionUpdates;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
-use WebBlocks\Cms\Support\Mcp\McpConfiguration;
 use WebBlocks\Cms\Support\Pages\PageDraftInitializer;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\Pages\PagePath;
@@ -65,8 +64,6 @@ class InternalContentPlanService
   public const MODE_REPLACE_STAGED_UPDATE = 'replace_staged_page_update';
 
   public const MODE_PROMOTE_STAGED_UPDATE = 'promote_staged_page_update';
-
-  private const STAGED_UPDATE_TYPE = 'published_page_update';
 
   public const UNSUPPORTED_KEY_ERROR_CODE = 'unsupported_plan_fields';
 
@@ -690,7 +687,7 @@ class InternalContentPlanService
     $defaultTitle = $sourcePage->defaultTranslation()?->name ?? $sourcePage->name ?? 'Staged update';
     $settings = is_array($sourcePage->settings) ? $sourcePage->settings : [];
     $settings['staged_update'] = [
-      'type' => self::STAGED_UPDATE_TYPE,
+      'type' => Page::STAGED_UPDATE_TYPE,
       'source_page_id' => $sourcePage->id,
       'source_path' => $sourcePath,
       'source_updated_at' => $sourcePage->updated_at?->toIso8601String(),
@@ -770,9 +767,7 @@ class InternalContentPlanService
 
     // This baseline is set once. Reusing a draft may refresh workflow metadata,
     // but cannot make its existing content a copy of a newer published version.
-    if (app(McpConfiguration::class)->enabled()) {
-      $this->stagedBase->record($stagedPage, $sourcePage);
-    }
+    $this->stagedBase->record($stagedPage, $sourcePage);
 
     return $stagedPage;
   }
@@ -786,7 +781,7 @@ class InternalContentPlanService
   {
     return Page::query()
       ->where('site_id', $sourcePage->site_id)
-      ->whereRuntimeSetting('staged_update.type', self::STAGED_UPDATE_TYPE)
+      ->whereRuntimeSetting('staged_update.type', Page::STAGED_UPDATE_TYPE)
       ->whereRuntimeSetting('staged_update.source_page_id', $sourcePage->id)
       ->whereRuntimeSetting('staged_update.state', 'draft');
   }
@@ -797,7 +792,7 @@ class InternalContentPlanService
     $metadata = is_array($settings['staged_update'] ?? null) ? $settings['staged_update'] : [];
 
     $settings['staged_update'] = array_merge($metadata, [
-      'type' => self::STAGED_UPDATE_TYPE,
+      'type' => Page::STAGED_UPDATE_TYPE,
       'source_page_id' => $sourcePage->id,
       'source_path' => $this->pagePath($sourcePage),
       'source_updated_at' => $sourcePage->updated_at?->toIso8601String(),
@@ -1611,6 +1606,12 @@ class InternalContentPlanService
       return [];
     }
 
+    if ($rawSlots === [] && data_get($input, 'promote_slots', data_get($input, 'managed_slots')) === []) {
+      $errors[] = $this->error('plan.promote_slots', 'An empty slot list requires at least one staged translation change.');
+
+      return [];
+    }
+
     if (! is_array($rawSlots) || $rawSlots === []) {
       $rawSlots = $this->sourceSync($stagedPage)['managed_slots'] ?? [];
     }
@@ -1819,7 +1820,7 @@ class InternalContentPlanService
 
     $metadata = $page->settings['staged_update'] ?? null;
 
-    if (! is_array($metadata) || ($metadata['type'] ?? null) !== self::STAGED_UPDATE_TYPE) {
+    if (! is_array($metadata) || ($metadata['type'] ?? null) !== Page::STAGED_UPDATE_TYPE) {
       return [];
     }
 

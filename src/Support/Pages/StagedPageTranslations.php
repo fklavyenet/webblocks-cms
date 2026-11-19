@@ -56,6 +56,29 @@ final class StagedPageTranslations
       ] + $previewData);
     }
 
+    $this->recordFields($translation, $data);
+  }
+
+  public function updateExisting(Page $page, PageTranslation $translation, array $data, bool $trackOnlyChangedMetadata = false): void
+  {
+    if (! $page->isStagedUpdate()) {
+      $translation->update($data);
+
+      return;
+    }
+
+    $draft = Page::query()->lockForUpdate()->findOrFail($page->id);
+    abort_unless($draft->isStagedUpdate() && $draft->status === Page::STATUS_DRAFT && $draft->setting('staged_update.state') === 'draft', 409);
+    $translation = $draft->translations()->lockForUpdate()->findOrFail($translation->id);
+    $translation->fill($data);
+    // The panel submits a form with existing values. PATCH supplies individual fields.
+    $metadata = Arr::only($trackOnlyChangedMetadata ? $translation->getDirty() : $data, PageTranslationPayload::SEO_FIELDS);
+    $translation->save();
+    $this->recordFields($translation, $metadata);
+  }
+
+  private function recordFields(PageTranslation $translation, array $data): void
+  {
     $rows = [];
     foreach ($data as $field => $value) {
       $rows[] = [
