@@ -29,29 +29,30 @@
             </div>
         </div>
     @else
-        <div class="wb-grid wb-grid-auto-lg wb-gap-4">
+        <div class="wb-grid wb-cms-plugin-catalog-grid">
             @foreach ($catalog->plugins as $plugin)
                 @php
                     $compatibility = $plugin->compatibilityStatus ?? ($plugin->latestCompatibleRelease ? 'compatible' : 'unknown');
                     $compatibilityClass = match ($compatibility) {
                         'compatible', 'supported' => 'wb-status-active',
-                        'incompatible', 'unsupported' => 'wb-status-danger',
+                        'incompatible', 'unsupported' => 'wb-status-error',
                         default => 'wb-status-pending',
                     };
                     $price = $plugin->pricingType === 'paid'
                         ? ($plugin->priceMinor !== null ? trim(($plugin->priceCurrency ?? '').' '.number_format($plugin->priceMinor / 100, 2)) : $pluginCatalogText('not_listed'))
                         : $pluginCatalogText('free');
+                    $detailUrl = route('admin.plugins.catalog.show', $plugin->handle);
                 @endphp
-                <article class="wb-card">
+                <article class="wb-card wb-cms-plugin-catalog-card">
                     @if ($plugin->artworkUrl)
-                        <a href="{{ route('admin.plugins.catalog.show', $plugin->handle) }}" class="wb-media">
-                            <img class="wb-media-img" src="{{ $plugin->artworkUrl }}" alt="{{ $plugin->artworkAlt ?? '' }}" loading="lazy">
+                        <a href="{{ $detailUrl }}" class="wb-card-media wb-card-media--aspect-wide">
+                            <img src="{{ $plugin->artworkUrl }}" alt="{{ $plugin->artworkAlt ?: $plugin->label }}" loading="lazy">
                         </a>
                     @endif
-                    <div class="wb-card-body wb-stack wb-gap-3">
-                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                            <h2 class="wb-card-title"><a href="{{ route('admin.plugins.catalog.show', $plugin->handle) }}">{{ $plugin->label }}</a></h2>
-                            <span class="wb-badge {{ $plugin->pricingType === 'paid' ? 'wb-badge-primary' : 'wb-badge-success' }}">{{ $price }}</span>
+                    <div class="wb-card-body wb-stack wb-stack-2">
+                        <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-cms-plugin-catalog-heading">
+                            <h2 class="wb-card-title"><a href="{{ $detailUrl }}">{{ $plugin->label }}</a></h2>
+                            <span class="wb-badge">{{ $price }}</span>
                         </div>
                         <p class="wb-m-0">{{ $plugin->summary ?? $pluginCatalogText('not_listed') }}</p>
                         @if (count($plugin->categories) > 0)
@@ -61,16 +62,14 @@
                                 @endforeach
                             </div>
                         @endif
-                        <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-text-sm">
-                            <span class="wb-status {{ $compatibilityClass }}">{{ ucfirst($compatibility) }}</span>
-                            <span class="wb-text-muted">{{ $pluginCatalogText('downloads_count', ['count' => number_format($plugin->downloadsTotal)]) }}</span>
-                        </div>
-                        <div class="wb-text-sm wb-text-muted">
-                            {{ $pluginCatalogText('latest_release', ['version' => $plugin->latestCompatibleRelease?->version ?? $pluginCatalogText('not_listed')]) }}
+                        <div class="wb-cluster wb-cluster-2 wb-text-sm wb-text-muted wb-cms-plugin-catalog-meta">
+                            <span class="{{ $compatibilityClass }}">{{ ucfirst($compatibility) }}</span>
+                            <span>{{ $pluginCatalogText('latest_release', ['version' => $plugin->latestCompatibleRelease?->version ?? $pluginCatalogText('not_listed')]) }}</span>
+                            <span>{{ $pluginCatalogText('downloads_count', ['count' => number_format($plugin->downloadsTotal)]) }}</span>
                         </div>
                     </div>
                     <div class="wb-card-footer">
-                        <a href="{{ route('admin.plugins.catalog.show', $plugin->handle) }}" class="wb-btn wb-btn-secondary wb-w-full">{{ $pluginCatalogText('view_plugin') }}</a>
+                        <a href="{{ $detailUrl }}" class="wb-btn wb-btn-secondary wb-w-full">{{ $pluginCatalogText('view_plugin') }}</a>
                     </div>
                 </article>
             @endforeach
