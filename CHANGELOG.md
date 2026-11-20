@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.143.5
+
+- Browse plugins in a compact catalog with up to four columns and consistently sized 16:9 covers.
+- Scan plugin titles more easily with stronger headings, subdued badges, and grouped compatibility, release, and download information.
+
 ## 1.143.4
 
 - Check the plugin catalog on demand from the Registered plugins card. The card shows the last successful check and keeps the previous result if the catalog is unavailable.

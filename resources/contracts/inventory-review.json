@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
     "document": "resources/contracts/inventory.md",
-    "product_version": "1.143.4",
+    "product_version": "1.143.5",
     "inventory_sha256": "d88501ea2d07ea63e6ab08afa846975e6a75ff151516e501196a37e09e49905b",
-    "source_sha256": "bc13d42a676164443eb25f134c8ce956bc9c30b55c791a687c1e5e84c1bb0d81",
+    "source_sha256": "7df53de27c479f7982ee82fd1489c48f98a67b422edada0b47d24faa96d59be0",
     "review_outcome": "no-authoring-impact",
-    "review_note": "The changes are confined to the administration browse view and styles. The inventory still describes the same plugin catalog metadata, permissions, installation, and authoring behavior.",
+    "review_note": "This release changes the admin catalog listing presentation. Plugin authoring, catalog data, permissions, and installation behavior retain their documented contracts.",
     "sources": {
         "composer.json": "3d570f950a7c34c2b98b1d7bd924c8a3af89c5cebf702108ab5e9e280f91ff66",
         "config/cms.php": "cf6dc069beee4068d34956e5be20ea295c34b503ac13ccff175bda3901adcc49",
@@ -2216,7 +2216,7 @@
         "src/Support/Visitors/VisitorEventLogger.php": "d3604bb2b8a10de4912a866aaabb6d5c92be231f719c9b5433cb3aa4d22047b5",
         "src/Support/Visitors/VisitorReportRetention.php": "5b76a7790e610ebfe2016b13c494d5ba86ff6e854e2a02cff4b06ac11ad240bb",
         "src/Support/Visitors/VisitorReportsQuery.php": "950f0a24d7aa722d6e171b3f57821fcb31af1811972071abf618e377d65619a9",
-        "src/Support/WebBlocks.php": "89bee1904e1a1fc0bec73ddedefe8eebb17eccc02b5d400f6bfbe9708ceb0559",
+        "src/Support/WebBlocks.php": "f4961cb2fa1f63b4d3c557628e39813e83edbe42af9ae332d2cc94bca6f63140",
         "src/Support/helpers.php": "d972cb707734997050f09ac1b65af9f8fd5a1029f18d98b9e1b4819f25fd043b",
         "src/WebBlocksCmsServiceProvider.php": "dd123336e7a5d19604def4a2cc166cb8eb17f44fecd7735875ed0c4311d79bc6",
         "stubs/README.md": "3100275ae8eb8973105ddd8e288e2fc5dcfe0c459867838058efaead6dc2d926",
