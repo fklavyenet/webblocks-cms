@@ -15,6 +15,11 @@ final class ExtensionsCatalog
 
   public static function themeBaseUrl(): ?string
   {
+    return self::secureBaseUrl();
+  }
+
+  public static function secureBaseUrl(): ?string
+  {
     $override = config('webblocks-plugins.catalog.extensions_base_url');
     $url = $override === null ? self::pluginBaseUrl() : self::configuredUrl($override);
     if ($url === null) {

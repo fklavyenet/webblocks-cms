@@ -3,11 +3,10 @@
 namespace WebBlocks\Cms\Support\Theme;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use WebBlocks\Cms\Support\ExtensionsCatalog;
+use WebBlocks\Cms\Support\ExtensionsCatalogHttp;
 use WebBlocks\Cms\Support\WebBlocks;
 
 final class ThemeCatalog
@@ -16,7 +15,11 @@ final class ThemeCatalog
 
   public const VERSION_PATTERN = '(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[a-z0-9]+(?:[.-][a-z0-9]+)*)?';
 
-  public function __construct(private readonly ThemePackage $packages, private readonly PublicThemes $themes) {}
+  public function __construct(
+    private readonly ThemePackage $packages,
+    private readonly PublicThemes $themes,
+    private readonly ExtensionsCatalogHttp $http,
+  ) {}
 
   public function enabled(): bool
   {
@@ -98,29 +101,7 @@ final class ThemeCatalog
   private function download(string $path, mixed $file, int $size, string $checksum): void
   {
     try {
-      $deadline = hrtime(true) + 15000000000;
-      $response = $this->http()->withOptions(['stream' => true, 'read_timeout' => 5])->get(ExtensionsCatalog::themeBaseUrl().$path);
-      $body = $response->toPsrResponse()->getBody();
-      try {
-        if (! $response->successful()) {
-          $this->invalid('catalog_download_failed');
-        }
-        $bytes = 0;
-        $hash = hash_init('sha256');
-        while (! $body->eof()) {
-          $chunk = $body->read(min(65536, $size - $bytes + 1));
-          $bytes += strlen($chunk);
-          if ($chunk === '' || $bytes > $size || hrtime(true) > $deadline || fwrite($file, $chunk) !== strlen($chunk)) {
-            $this->invalid('catalog_download_failed');
-          }
-          hash_update($hash, $chunk);
-        }
-        if ($bytes !== $size || ! hash_equals($checksum, hash_final($hash)) || ! fflush($file)) {
-          $this->invalid('catalog_download_failed');
-        }
-      } finally {
-        $body->close();
-      }
+      $this->http->download($path, $file, $size, $checksum);
     } catch (ConnectionException|RuntimeException) {
       $this->invalid('catalog_download_failed');
     }
@@ -129,28 +110,10 @@ final class ThemeCatalog
   private function json(string $path, array $query): array
   {
     try {
-      $response = $this->http()->acceptJson()->withOptions([
-        'progress' => static function ($total, $downloaded): void {
-          if ($total > 524288 || $downloaded > 524288) {
-            throw new RuntimeException('Theme catalog response exceeded the size limit.');
-          }
-        },
-      ])->get(ExtensionsCatalog::themeBaseUrl().$path, $query);
-      $json = $response->successful() && strlen($response->body()) <= 524288 ? $response->json() : null;
+      return $this->http->json($path, $query, 524288);
     } catch (ConnectionException|RuntimeException) {
       $this->invalid('catalog_unavailable');
     }
-
-    if (! is_array($json)) {
-      $this->invalid('catalog_unavailable');
-    }
-
-    return $json;
-  }
-
-  private function http(): PendingRequest
-  {
-    return Http::connectTimeout(3)->timeout(15)->withoutRedirecting()->withHeaders(['Accept-Encoding' => 'identity']);
   }
 
   private function validRelease(array $release, string $handle): bool

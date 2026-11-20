@@ -40,7 +40,14 @@ class AdminLocaleResolver
 
   public function packagedLocale(?Authenticatable $user = null): string
   {
-    return $this->userLocale($user, self::PACKAGED_OPTIONS) ?? $this->configuredLocale(self::PACKAGED_OPTIONS);
+    $options = $this->nativeOptions();
+
+    return $this->userLocale($user, $options) ?? $this->configuredLocale($options);
+  }
+
+  public function nativeOptions(): array
+  {
+    return app(PanelLanguageSource::class)->nativeOptions();
   }
 
   public function options(): array

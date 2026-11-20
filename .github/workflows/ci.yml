@@ -35,6 +35,7 @@ jobs:
       - run: composer check-platform-reqs
       - run: composer audit
       - run: composer format:test
+      - run: composer test:language-pack
       - run: composer test
 
   php83-framework-compatibility:

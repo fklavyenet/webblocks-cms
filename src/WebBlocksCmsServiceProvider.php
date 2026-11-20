@@ -174,6 +174,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsUpdateDownloader;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateExtractor;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\SystemPages\SystemPageRenderer;
+use WebBlocks\Cms\Support\Translations\NativeLanguageLoader;
 use WebBlocks\Cms\Support\Translations\SiteLocaleValidation;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager as ClientBackupManager;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\InstalledVersionStore as ClientInstalledVersionStore;
@@ -1017,6 +1018,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     });
     $this->app->singleton(ConsentIntegrations::class);
     $this->app->scoped(RequestMemo::class);
+    $this->app->extend('translation.loader', fn ($loader) => new NativeLanguageLoader($loader));
     $this->app->scoped(SiteLocaleValidation::class);
     $this->app->scoped(BlockCopyCatalog::class);
     $this->app->scoped(BlockIndexTargets::class);

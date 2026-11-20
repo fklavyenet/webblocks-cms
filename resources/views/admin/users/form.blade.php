@@ -79,6 +79,8 @@
                                         type="button"
                                         data-wb-password-toggle
                                         data-wb-target="#password"
+                                        data-wb-password-label-show="{{ $adminText('show_password') }}"
+                                        data-wb-password-label-hide="{{ $adminTranslator->admin('auth.hide_password', $adminLocale) }}"
                                         aria-label="{{ $adminText('show_password') }}"
                                         aria-pressed="false"
                                     >
@@ -113,6 +115,8 @@
                                         type="button"
                                         data-wb-password-toggle
                                         data-wb-target="#password_confirmation"
+                                        data-wb-password-label-show="{{ $adminText('show_password') }}"
+                                        data-wb-password-label-hide="{{ $adminTranslator->admin('auth.hide_password', $adminLocale) }}"
                                         aria-label="{{ $adminText('show_password') }}"
                                         aria-pressed="false"
                                     >

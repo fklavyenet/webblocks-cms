@@ -8,7 +8,12 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $text('title'), 'heading' => $text('title')])
 
 @section('content')
-    @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title')])
+    @include('webblocks-cms::admin.partials.page-header', [
+        'title' => $text('title'),
+        'actions' => $extensionsAvailable
+            ? '<a class="wb-btn wb-btn-secondary" href="'.e(route('admin.system.panel-languages.extensions.index')).'">'.e($text('extensions_browse')).'</a>'
+            : null,
+    ])
     @include('webblocks-cms::admin.system.panel-languages.feedback')
 
     <div class="wb-tabs" data-wb-tabs>

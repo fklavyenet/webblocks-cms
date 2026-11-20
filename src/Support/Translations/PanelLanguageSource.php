@@ -3,10 +3,13 @@
 namespace WebBlocks\Cms\Support\Translations;
 
 use Illuminate\Support\Arr;
+use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\WebBlocks;
 
 class PanelLanguageSource
 {
+  public const CODE_PATTERN = '[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2}';
+
   private const EMAIL_KEYS = [
     'notifications.new_body', 'notifications.summary_body', 'notifications.open_inbox', 'notifications.login_required',
   ];
@@ -57,7 +60,7 @@ class PanelLanguageSource
 
   public function packagedOptions(): array
   {
-    $options = AdminLocaleResolver::PACKAGED_OPTIONS;
+    $options = $this->nativeOptions();
 
     foreach (glob($this->directory().'/*/admin.php') ?: [] as $file) {
       $code = basename(dirname($file));
@@ -69,9 +72,36 @@ class PanelLanguageSource
     return $options;
   }
 
+  public function nativeOptions(): array
+  {
+    return app(RequestMemo::class)->remember('panel.languages.native', [], function (): array {
+      $options = AdminLocaleResolver::PACKAGED_OPTIONS;
+
+      foreach (glob(lang_path('vendor/webblocks-cms/*/webblocks-language.txt')) ?: [] as $manifest) {
+        $directory = dirname($manifest);
+        $code = basename($directory);
+        if (isset($options[$code]) || ! $this->validCode($code) || ! is_file($directory.'/admin.php')
+          || ! is_file($manifest) || ! is_readable($manifest)) {
+          continue;
+        }
+
+        $name = trim((string) file_get_contents($manifest, length: 401));
+        if ($name !== '' && mb_strlen($name) <= 100 && $this->plainText($name) && ! preg_match('/[\r\n\t]/', $name)) {
+          $options[$code] = strtoupper($code).' - '.$name;
+        }
+      }
+
+      foreach (app(NativeLanguagePacks::class)->installed() as $code => $pack) {
+        $options[$code] ??= strtoupper($code).' - '.$pack->name;
+      }
+
+      return $options;
+    });
+  }
+
   public function validCode(string $code): bool
   {
-    return strlen($code) <= 12 && preg_match('/\A[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2}\z/D', $code) === 1;
+    return strlen($code) <= 12 && preg_match('/\A'.self::CODE_PATTERN.'\z/', $code) === 1;
   }
 
   public function plainText(string $value): bool

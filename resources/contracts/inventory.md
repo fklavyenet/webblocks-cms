@@ -38,6 +38,34 @@ sample translations next to the English source. The Catalogs tab has row
 actions to preview, activate, deactivate, and delete uploaded catalogs. Only
 inactive catalogs can be deleted, after confirmation. The Import tab contains
 the upload form and the Settings tab contains the default panel language.
+The panel language picker also recognizes host-installed language packs.
+A host language directory at `lang/vendor/webblocks-cms/<code>/` with
+`admin.php` and a `webblocks-language.txt` display name registers a native
+locale. Native packs use Laravel translation overrides, so their CMS validation,
+public interface and email strings can take part in normal locale resolution.
+The package does not enable a public site locale or change authored content
+when a host installs the files. An active uploaded panel catalog can overlay the
+native panel strings.
+
+**Browse Extensions** queries the public language catalog for the installed
+CMS version only when a Super admin opens it. The catalog lists compatible
+panel-only and full CMS releases. An explicit POST rechecks the selected
+release and verifies the download against its catalog size and SHA-256.
+Downloaded panel JSON uses the existing preview and activation workflow.
+Repeating a download of the same panel catalog opens the existing preview.
+Full ZIPs require a complete catalog for the running CMS version. CMS reads
+the translation arrays as data and stores the installed release and its
+messages in SQL without extracting PHP files to the host. Installing or
+updating a full pack leaves the panel default, user preferences, and public
+site locale settings as they are. A user may choose the installed locale in
+their profile, and a Super admin may set it as the panel default.
+
+Host Laravel overrides take precedence over the matching installed strings.
+An active uploaded panel catalog still overlays eligible panel messages.
+After a CMS upgrade, unchanged source messages in an installed pack remain
+usable. Added or changed messages fall back through normal locale resolution
+until the matching language pack is installed.
+
 The template has `format_version`, `source_version`, `code`, `name` and a list
 of `translations` rows with `key` and `text`.
 Retain the listed keys and their placeholders. Catalogs can be partial.

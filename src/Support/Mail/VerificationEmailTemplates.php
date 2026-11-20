@@ -77,6 +77,6 @@ final class VerificationEmailTemplates
 
   private function locale(string $locale): string
   {
-    return in_array($locale, AdminLocaleResolver::SUPPORTED_LOCALES, true) ? $locale : 'en';
+    return isset(app(AdminLocaleResolver::class)->nativeOptions()[$locale]) ? $locale : 'en';
   }
 }

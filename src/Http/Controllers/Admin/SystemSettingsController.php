@@ -38,7 +38,8 @@ class SystemSettingsController extends Controller
   public function edit(McpConfiguration $mcp): View
   {
     $verificationLocale = request()->query('verification_locale', $this->adminLocaleResolver->packagedLocale(request()->user()));
-    $verificationLocale = is_string($verificationLocale) && in_array($verificationLocale, AdminLocaleResolver::SUPPORTED_LOCALES, true) ? $verificationLocale : 'en';
+    $verificationLocaleOptions = $this->adminLocaleResolver->nativeOptions();
+    $verificationLocale = is_string($verificationLocale) && isset($verificationLocaleOptions[$verificationLocale]) ? $verificationLocale : 'en';
     $canManageVerificationEmail = app(VerificationEmailPolicy::class)->update(request()->user());
     $customMail = $this->systemSettings->cmsMailSettings();
     $mailSummaries = [
@@ -81,7 +82,7 @@ class SystemSettingsController extends Controller
       'securityHasOverrides' => app(RequestSecuritySettings::class)->hasOverrides(),
       'cmsMailMailerOptions' => array_combine(CmsMailSettingsResolver::SUPPORTED_MAILERS, CmsMailSettingsResolver::SUPPORTED_MAILERS),
       'localeOptions' => $this->systemSettings->enabledLocaleOptions(),
-      'verificationLocaleOptions' => AdminLocaleResolver::PACKAGED_OPTIONS,
+      'verificationLocaleOptions' => $verificationLocaleOptions,
       'timezoneOptions' => $this->systemSettings->timezoneOptions(),
       'installedVersionDisplay' => $this->installedVersionStore->displayVersion(),
       'environment' => app()->environment(),

@@ -6,7 +6,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Process\Process;
 use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
 use WebBlocks\Cms\Models\BlockType;
@@ -23,6 +25,7 @@ use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Support\Translations\PanelLanguages;
 use WebBlocks\Cms\Support\Translations\PanelLanguageSource;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -424,6 +427,51 @@ class PanelLanguagesTest extends TestCase
 
     $root->forceFill(['is_active' => false])->save();
     $this->getJson(self::API)->assertForbidden();
+  }
+
+  public function test_generated_russian_pack_uses_the_native_cms_locale_and_accepts_the_panel_overlay(): void
+  {
+    $directory = sys_get_temp_dir().'/webblocks-language-'.bin2hex(random_bytes(8));
+    File::makeDirectory($directory);
+
+    try {
+      (new Process([PHP_BINARY, 'scripts/check-language-pack.php', '--build', $directory], dirname(__DIR__, 2)))->mustRun();
+      $zip = new ZipArchive;
+      $this->assertTrue($zip->open($directory.'/webblocks-cms-ru-'.WebBlocks::VERSION.'.zip'));
+      $this->assertTrue($zip->extractTo($directory));
+      $zip->close();
+      $this->app->useLangPath($directory.'/lang');
+      app('translator')->addPath($this->app->langPath());
+
+      $languages = app(PanelLanguages::class);
+      $this->assertSame('RU - Русский', $languages->options()['ru']);
+      $languages->saveDefault('ru');
+      $this->actingAs($actor = $this->actor());
+      $this->get(route('admin.profile.edit'))->assertOk()
+        ->assertSee('lang="ru"', false)
+        ->assertSee('Язык интерфейса')
+        ->assertSee('data-wb-password-label-show="Показать пароль"', false)
+        ->assertSee('data-wb-password-label-hide="Скрыть пароль"', false);
+      $this->assertSame('ru', app(AdminLocaleResolver::class)->packagedLocale($actor));
+      $this->assertSame('ru', $this->app->getLocale());
+      $this->assertSame('Введите своё имя.', __('webblocks-cms::validation.contact_form.name_required'));
+      $this->assertSame('Поиск', app(CmsTranslator::class)->public('search.title', 'ru'));
+      $this->assertSame('Проверить обновления', __('publisher-client::updates.check_button'));
+      $this->assertStringContainsString('{code}', app(VerificationEmailTemplates::class)->defaults('ru')['subject']);
+      $this->assertNotSame(app(VerificationEmailTemplates::class)->defaults('en'), app(VerificationEmailTemplates::class)->defaults('ru'));
+      $this->assertSame('21 непрочитанное сообщение', trans_choice('webblocks-cms::notifications.panel_new_messages', 21));
+
+      $candidate = $languages->import(File::get($directory.'/webblocks-cms-ru-panel-'.WebBlocks::VERSION.'.json'));
+      $this->assertSame([], $languages->preview($candidate)['missing']);
+      $overlay = $languages->import($this->upload([['key' => 'admin.profile.interface_language', 'text' => 'Язык панели']])->getContent());
+      $languages->activate($overlay);
+      $this->get(route('admin.profile.edit'))->assertOk()->assertSee('Язык панели');
+      $this->assertSame('ru', $this->app->getLocale());
+      $languages->deactivate('ru');
+      $this->get(route('admin.profile.edit'))->assertOk()->assertSee('Язык интерфейса');
+    } finally {
+      File::deleteDirectory($directory);
+    }
   }
 
   public function test_package_collision_keeps_the_catalog_and_uses_package_then_english_for_missing_keys(): void

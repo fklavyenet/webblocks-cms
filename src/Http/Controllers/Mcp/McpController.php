@@ -35,7 +35,8 @@ final class McpController
   {
     $app = app();
     $previous = $app->getLocale();
-    $preferred = $request->getPreferredLanguage(array_values(array_unique([$previous, ...AdminLocaleResolver::SUPPORTED_LOCALES])));
+    $nativeLocales = array_keys(app(AdminLocaleResolver::class)->nativeOptions());
+    $preferred = $request->getPreferredLanguage(array_values(array_unique([$previous, ...$nativeLocales])));
 
     if ($preferred === $previous) {
       $response = $this->handle($request);

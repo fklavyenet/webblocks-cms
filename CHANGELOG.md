@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.0
+
+- Browse compatible language packs from Extensions in System → Panel languages. Download a panel catalog for review or install a full CMS language pack after checksum and compatibility verification.
+- Use installed language packs in Webadmin, CMS email, the public system interface, and the updater. Full packs store translations in SQL and remain available as a choice in the profile and panel settings.
+- Run the normal package update migrations to enable catalog installation. The Russian language pack is versioned independently and matches this CMS release.
+
 ## 1.143.5
 
 - Browse plugins in a compact catalog with up to four columns and consistently sized 16:9 covers.

@@ -22,6 +22,11 @@ final class PanelLanguages
 
   private const LINES = 'wbcms_panel_language_lines';
 
+  private const CATALOG_FIELDS = [
+    'catalogs.id', 'catalogs.language_code', 'catalogs.name', 'catalogs.source_version',
+    'catalogs.created_at', 'languages.active_catalog_id',
+  ];
+
   public const MAX_KILOBYTES = 2048;
 
   public function __construct(
@@ -52,11 +57,11 @@ final class PanelLanguages
   {
     return DB::table(self::CATALOGS.' as catalogs')
       ->join(self::LANGUAGES.' as languages', 'languages.code', '=', 'catalogs.language_code')
-      ->select('catalogs.*', 'languages.active_catalog_id')
+      ->select(self::CATALOG_FIELDS)
       ->orderByDesc('catalogs.id')->paginate($perPage);
   }
 
-  public function import(string $json): int
+  public function import(string $json, ?string $catalogCode = null): int
   {
     try {
       $catalog = json_decode($json, true, 8, JSON_THROW_ON_ERROR);
@@ -69,6 +74,7 @@ final class PanelLanguages
     $translations = $catalog['translations'] ?? null;
     if (($catalog['format_version'] ?? null) !== 1 || ($catalog['source_version'] ?? null) !== WebBlocks::VERSION
       || ! is_string($code) || ! $this->source->validCode($code) || in_array($code, AdminLocaleResolver::SUPPORTED_LOCALES, true)
+      || ($catalogCode !== null && $code !== $catalogCode)
       || ! is_string($name) || trim($name) === '' || mb_strlen($name) > 100 || ! $this->source->plainText($name)
       || ! is_array($translations) || ! array_is_list($translations) || $translations === []) {
       $this->invalid('invalid_catalog');
@@ -88,14 +94,27 @@ final class PanelLanguages
       $lines[$key] = ['translation_key' => $key, 'translation' => $value, 'source_hash' => hash('sha256', $source[$key])];
     }
 
-    return DB::transaction(function () use ($code, $name, $lines): int {
+    $checksum = $catalogCode === null ? null : hash('sha256', $json);
+
+    return DB::transaction(function () use ($code, $name, $lines, $checksum): int {
       DB::table(self::LANGUAGES)->insertOrIgnore(['code' => $code]);
-      $id = DB::table(self::CATALOGS)->insertGetId([
+      $metadata = [
         'language_code' => $code,
         'name' => trim($name),
         'source_version' => WebBlocks::VERSION,
         'created_at' => now(),
-      ]);
+      ];
+
+      if ($checksum !== null) {
+        DB::table(self::LANGUAGES)->where('code', $code)->lockForUpdate()->first(['code']);
+        $existing = DB::table(self::CATALOGS)->where('language_code', $code)->where('artifact_checksum', $checksum)->first(['id']);
+        if ($existing !== null) {
+          return $existing->id;
+        }
+        $metadata['artifact_checksum'] = $checksum;
+      }
+
+      $id = DB::table(self::CATALOGS)->insertGetId($metadata);
 
       foreach (array_chunk($lines, 150) as $chunk) {
         DB::table(self::LINES)->insert(array_map(fn (array $line) => $line + ['catalog_id' => $id], $chunk));
@@ -231,7 +250,7 @@ final class PanelLanguages
   {
     $catalog = DB::table(self::CATALOGS.' as catalogs')
       ->join(self::LANGUAGES.' as languages', 'languages.code', '=', 'catalogs.language_code')
-      ->where('catalogs.id', $id)->first(['catalogs.*', 'languages.active_catalog_id']);
+      ->where('catalogs.id', $id)->first(self::CATALOG_FIELDS);
     abort_if($catalog === null, 404);
 
     return $catalog;

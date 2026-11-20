@@ -25,6 +25,13 @@ Keep changes focused, follow the existing two-space PHP style, add tests for beh
 
 Runtime code lives in `src/`; package configuration, migrations, assets, views, translations, routes, and stubs live in their matching root directories. Package-owned assets ship under `public/cms`. Do not introduce an outer `artisan`, `app/`, `project/`, `plugins/`, nested package path, Node build chain, or dependency on the private maintenance harness. Schema needed by runtime code must support fresh installs and package-native update migrations.
 
+Run `composer test:language-pack` after changing English CMS or CMS updater
+messages. Update the corresponding Russian translations and source fingerprints
+in `scripts/language-packs/ru/messages.json`. Review the wording for changed source
+messages even when the existing Russian text still fits. CI, pre-push and release
+preparation run the same check. Build the separately distributed pack for the
+matching CMS version using the instructions in `scripts/language-packs/ru/README.md`.
+
 The package CI exercises the source tree, exported distribution, current Laravel consumer, and Laravel `13.0.*` resolution floor. Its reusable checks live under `tests/Support/` and clean their temporary directories.
 
 PHPUnit checks the rendered System Updates screen and serves its shared progress asset through the real route. These checks run in CI and the local pre-push hook without Node.js. They do not execute browser JavaScript.

@@ -19,6 +19,7 @@ cd "${ROOT_DIR}"
 # Refuse a release whose authoring contract has not been reviewed against its
 # runtime sources. This runs before network checks, tags or archive creation.
 "${PHP_BIN}" "${ROOT_DIR}/tests/Support/check-inventory.php"
+"${PHP_BIN}" "${ROOT_DIR}/scripts/check-language-pack.php"
 DOCS_ROOT="${WEBBLOCKS_CMS_DOCS_ROOT:-${ROOT_DIR}/../webblocks-cms-docs}"
 if [ ! -f "${DOCS_ROOT}/tools/inventory-snapshot.php" ]; then
   printf '[webblocks-release-prepare] A checked documentation snapshot is required. Set WEBBLOCKS_CMS_DOCS_ROOT to the documentation checkout.\n' >&2

@@ -19,7 +19,7 @@ final class VerificationEmailSettingsRequest extends FormRequest
   public function rules(): array
   {
     $rules = [
-      'locale' => ['required', 'string', Rule::in(AdminLocaleResolver::SUPPORTED_LOCALES)],
+      'locale' => ['required', 'string', Rule::in(array_keys(app(AdminLocaleResolver::class)->nativeOptions()))],
       'intent' => ['required', Rule::in(['save', 'preview', 'reset'])],
     ];
 
@@ -52,7 +52,7 @@ final class VerificationEmailSettingsRequest extends FormRequest
 
     return route('admin.system.settings.edit', [
       'tab' => 'mail',
-      'verification_locale' => is_string($locale) && in_array($locale, AdminLocaleResolver::SUPPORTED_LOCALES, true) ? $locale : 'en',
+      'verification_locale' => is_string($locale) && isset(app(AdminLocaleResolver::class)->nativeOptions()[$locale]) ? $locale : 'en',
     ]);
   }
 }

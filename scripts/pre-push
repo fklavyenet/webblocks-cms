@@ -25,6 +25,9 @@ php tests/Support/check-node-dependencies.php
 echo "pre-push: composer validate"
 composer validate
 
+echo "pre-push: check-language-pack"
+composer test:language-pack
+
 if [ -x vendor/bin/pint ]; then
     echo "pre-push: pint --test"
     vendor/bin/pint --test

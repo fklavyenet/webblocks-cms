@@ -18,7 +18,9 @@ class UseAdminLocale
   public function handle(Request $request, Closure $next, ?string $mode = null): Response
   {
     $locale = $this->localeResolver->locale($request->user());
-    if (in_array($locale, AdminLocaleResolver::SUPPORTED_LOCALES, true)) {
+    $bundled = in_array($locale, AdminLocaleResolver::SUPPORTED_LOCALES, true);
+    $lines = $bundled ? [] : app(PanelLanguages::class)->translations($locale);
+    if ($bundled || ($lines === [] && isset($this->localeResolver->nativeOptions()[$locale]))) {
       if ($mode !== 'custom-only') {
         app()->setLocale($locale);
       }
@@ -31,13 +33,12 @@ class UseAdminLocale
     $original = $application->make('translator');
 
     try {
-      // Content and mail code still see the packaged application locale.
+      // Content and mail use the native locale independently of the panel overlay.
       if ($mode !== 'custom-only') {
         $application->setLocale($this->localeResolver->packagedLocale($request->user()));
       }
 
       $translator = clone $original;
-      $lines = app(PanelLanguages::class)->translations($locale);
       foreach (array_unique(array_map(fn (string $key) => strstr($key, '.', true), array_keys($lines))) as $group) {
         $translator->load('webblocks-cms', $group, $locale);
       }

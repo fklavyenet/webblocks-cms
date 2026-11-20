@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Requests\Admin\PanelLanguageCatalogRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PanelLanguageDefaultRequest;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\Translations\LanguagePackCatalog;
 use WebBlocks\Cms\Support\Translations\PanelLanguages;
 use WebBlocks\Cms\Support\Translations\PanelLanguageSource;
 
@@ -36,7 +37,9 @@ final class PanelLanguageController
       'packaged' => array_keys($this->source->packagedOptions()),
     ];
 
-    return $api ? response()->json($data) : view('webblocks-cms::admin.system.panel-languages.index', $data);
+    return $api ? response()->json($data) : view('webblocks-cms::admin.system.panel-languages.index', $data + [
+      'extensionsAvailable' => app(LanguagePackCatalog::class)->enabled(),
+    ]);
   }
 
   public function template(): JsonResponse

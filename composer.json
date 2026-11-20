@@ -66,6 +66,7 @@
     "test:consumer": "tests/Support/check-current-consumer.sh",
     "test:dist": "tests/Support/check-dist.sh",
     "test:docs": "php tests/Support/check-docs.php",
+    "test:language-pack": "php scripts/check-language-pack.php",
     "test:inventory": "php tests/Support/check-inventory.php",
     "inventory:review": "php tests/Support/review-inventory.php",
     "test:floor": "tests/Support/check-laravel-floor.sh"

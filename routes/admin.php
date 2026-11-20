@@ -20,6 +20,7 @@ use WebBlocks\Cms\Http\Controllers\Admin\EmbeddedApplicationController;
 use WebBlocks\Cms\Http\Controllers\Admin\EngagementController;
 use WebBlocks\Cms\Http\Controllers\Admin\IconCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\JobController;
+use WebBlocks\Cms\Http\Controllers\Admin\LanguagePackCatalogController;
 use WebBlocks\Cms\Http\Controllers\Admin\ListingViewController;
 use WebBlocks\Cms\Http\Controllers\Admin\LocaleController;
 use WebBlocks\Cms\Http\Controllers\Admin\MaintenanceCleanupController;
@@ -594,6 +595,8 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::post('system/cleanup/{category}', [MaintenanceCleanupController::class, 'run'])->name('system.cleanup.run');
       Route::prefix('system/panel-languages')->name('system.panel-languages.')->middleware('can:manage-panel-languages')->group(function () {
         Route::get('/', [PanelLanguageController::class, 'index'])->name('index');
+        Route::get('/extensions', [LanguagePackCatalogController::class, 'index'])->middleware('throttle:20,1')->name('extensions.index');
+        Route::post('/extensions', [LanguagePackCatalogController::class, 'store'])->middleware('throttle:6,1')->name('extensions.store');
         Route::get('/template', [PanelLanguageController::class, 'template'])->name('template');
         Route::post('/catalogs', [PanelLanguageController::class, 'store'])->name('store');
         Route::get('/catalogs/{catalog}', [PanelLanguageController::class, 'show'])->where('catalog', '[1-9][0-9]{0,17}')->name('show');
