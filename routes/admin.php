@@ -626,6 +626,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::post('plugins/catalog/{handle}/install', [PluginCatalogController::class, 'install'])->name('plugins.catalog.install');
       Route::get('system/plugins', [SystemPluginController::class, 'index'])->name('system.plugins.index');
       Route::post('system/plugins/update-indicator', [SystemPluginController::class, 'updateIndicator'])->name('system.plugins.update-indicator');
+      Route::post('system/plugins/check-catalog-updates', [SystemPluginController::class, 'checkCatalogUpdates'])->name('system.plugins.check-catalog-updates');
       Route::post('system/plugins/upload', [SystemPluginController::class, 'upload'])->name('system.plugins.upload');
       Route::post('system/plugins/{plugin}/update-from-catalog', [SystemPluginController::class, 'updateFromCatalog'])->name('system.plugins.update-from-catalog');
       Route::post('system/plugins/{plugin}/enable', [SystemPluginController::class, 'enable'])->name('system.plugins.enable');

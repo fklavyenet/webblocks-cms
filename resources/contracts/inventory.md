@@ -1398,9 +1398,13 @@ The default startup timeout is 30 seconds (`webblocks-plugins.install.boot_timeo
 Super admins see the number of installed plugins with a newer installable catalog
 release in the Webadmin notification bell. The entry opens System → Plugins.
 The panel checks installed plugins in a background request. The bell and Plugins
-list share the last successful result for one hour. On a catalog failure they
-retain the last result, and the Plugins screen shows the check status. Updating or
-uninstalling a plugin clears its pending entry on the next panel load.
+list share the last successful result for one hour. Super admins can use
+**Check for updates** in the Registered plugins header to query the catalog
+immediately. Both paths share the same refresh lock and results. A successful
+check refreshes the timestamp and row actions. A failed check preserves the last
+successful timestamp and results and displays a warning. Applying an update
+requires the separate row action. Updating or uninstalling a plugin clears its
+pending entry on the next panel load.
 
 Enabled CMS-managed Laravel service providers are registered and booted once per
 application after the host boot completes, including when routes are cached.

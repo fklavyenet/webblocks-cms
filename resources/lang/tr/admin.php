@@ -1258,6 +1258,10 @@ $translations = [
     'invalid_declaration' => 'Yönetim menüsü olan eklentiler bir WebBlocks UI ikonu tanımlamalıdır. Manifest dosyasının icon alanında paketle gelen bir ikonun adını kullanın.',
   ],
   'system_plugins_index' => [
+    'check_catalog_updates' => 'Güncellemeleri denetle',
+    'catalog_check_succeeded' => 'Eklenti güncellemeleri denetlendi.',
+    'catalog_check_in_progress' => 'Eklenti güncellemeleri zaten denetleniyor.',
+    'catalog_check_no_plugins' => 'Denetlenecek kurulu eklenti yok.',
     'catalog_checked_at' => 'Son başarılı katalog kontrolü: :time',
     'catalog_check_unavailable' => 'Eklenti kataloğu kontrol edilemedi. Gösterilen güncellemeler son başarılı kontrolden alınmıştır.',
     'retry_database_update' => 'Veritabanı güncellemesini tekrar dene',

@@ -1461,6 +1461,10 @@ return [
     'invalid_declaration' => 'Plugins with admin menus must declare a WebBlocks UI icon. Use a bundled icon slug in the manifest icon field.',
   ],
   'system_plugins_index' => [
+    'check_catalog_updates' => 'Check for updates',
+    'catalog_check_succeeded' => 'Plugin update check complete.',
+    'catalog_check_in_progress' => 'A plugin update check is already in progress.',
+    'catalog_check_no_plugins' => 'There are no installed plugins to check.',
     'catalog_checked_at' => 'Last successful catalog check: :time',
     'catalog_check_unavailable' => 'The Plugin Catalog could not be checked. Any updates shown are from the last successful check.',
     'retry_database_update' => 'Retry database update',

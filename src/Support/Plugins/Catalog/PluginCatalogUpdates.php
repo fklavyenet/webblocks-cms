@@ -42,52 +42,74 @@ final class PluginCatalogUpdates
       return $snapshot;
     }
 
+    $this->refresh(force: false);
+
+    return $this->snapshot();
+  }
+
+  public function checkNow(): string
+  {
+    return $this->refresh(force: true);
+  }
+
+  private function refresh(bool $force): string
+  {
     $key = $this->cacheKey();
     $lock = Cache::lock($key.':refresh', 120);
     if (! $lock->get()) {
-      return $snapshot;
+      return 'in_progress';
     }
 
     try {
-      $snapshot = $this->snapshot();
-      if (! $snapshot['due'] || $snapshot['retry_pending']) {
-        return $snapshot;
+      if (! $force) {
+        $snapshot = $this->snapshot();
+        if (! $snapshot['due'] || $snapshot['retry_pending']) {
+          return 'cached';
+        }
+      }
+
+      $installed = $this->installedVersions();
+      if ($installed === []) {
+        return 'no_plugins';
       }
 
       try {
-        $releases = $this->catalog->installedReleases(array_keys($this->installedVersions()));
+        $releases = $this->catalog->installedReleases(array_keys($installed));
       } catch (Throwable) {
         $releases = null;
       }
 
       if ($releases === null) {
         Cache::put($key.':retry', true, now()->addMinutes(5));
-      } else {
-        $updates = [];
-        foreach ($releases as $handle => $release) {
-          if ($release->hasInstallableArtifact()) {
-            $updates[$handle] = [
-              'version' => $release->version,
-              'summary' => $release->summary,
-              'notes' => $release->notes,
-              'highlights' => $release->highlights,
-              'note_items' => $release->noteItems(),
-              'details_url' => $release->detailsUrl,
-            ];
-          }
-        }
-        // Keep the last successful check available during catalog outages.
-        Cache::forever($key, [
-          'cms_version' => WebBlocks::version(),
-          'updates' => $updates,
-          'checked_at' => now()->getTimestamp(),
-        ]);
+
+        return 'unavailable';
       }
+
+      $updates = [];
+      foreach ($releases as $handle => $release) {
+        if ($release->hasInstallableArtifact()) {
+          $updates[$handle] = [
+            'version' => $release->version,
+            'summary' => $release->summary,
+            'notes' => $release->notes,
+            'highlights' => $release->highlights,
+            'note_items' => $release->noteItems(),
+            'details_url' => $release->detailsUrl,
+          ];
+        }
+      }
+
+      Cache::forever($key, [
+        'cms_version' => WebBlocks::version(),
+        'updates' => $updates,
+        'checked_at' => now()->getTimestamp(),
+      ]);
+      Cache::forget($key.':retry');
+
+      return 'checked';
     } finally {
       $lock->release();
     }
-
-    return $this->snapshot();
   }
 
   /** @return array<string, string> */

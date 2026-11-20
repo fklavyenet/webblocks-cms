@@ -1259,6 +1259,10 @@ $translations = [
     'invalid_declaration' => 'Plugins mit Verwaltungsmenüs müssen ein WebBlocks UI-Symbol deklarieren. Verwenden Sie im Feld icon des Manifests den Slug eines mitgelieferten Symbols.',
   ],
   'system_plugins_index' => [
+    'check_catalog_updates' => 'Nach Updates suchen',
+    'catalog_check_succeeded' => 'Die Suche nach Plugin-Updates ist abgeschlossen.',
+    'catalog_check_in_progress' => 'Es wird bereits nach Plugin-Updates gesucht.',
+    'catalog_check_no_plugins' => 'Es sind keine Plugins zur Prüfung installiert.',
     'catalog_checked_at' => 'Letzte erfolgreiche Katalogprüfung: :time',
     'catalog_check_unavailable' => 'Der Plugin-Katalog war nicht erreichbar. Angezeigte Updates stammen aus der letzten erfolgreichen Prüfung.',
     'retry_database_update' => 'Datenbankaktualisierung erneut versuchen',

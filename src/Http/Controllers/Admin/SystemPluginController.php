@@ -74,6 +74,15 @@ class SystemPluginController extends Controller
     ])->header('Cache-Control', 'no-store');
   }
 
+  public function checkCatalogUpdates(Request $request): RedirectResponse
+  {
+    abort_unless($request->user()?->isSuperAdmin(), 403);
+
+    return redirect()->route('admin.system.plugins.index')
+      ->withFragment('registered-plugins')
+      ->with('plugin_catalog_check_result', $this->catalogUpdates->checkNow());
+  }
+
   public function show(string $plugin): View
   {
     $definition = $this->plugins->get($plugin);

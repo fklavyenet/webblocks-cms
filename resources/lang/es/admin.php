@@ -1258,6 +1258,10 @@ $translations = [
     'invalid_declaration' => 'Los plugins con menús de administración deben declarar un icono de WebBlocks UI. Use el slug de un icono incluido en el campo icon del manifiesto.',
   ],
   'system_plugins_index' => [
+    'check_catalog_updates' => 'Buscar actualizaciones',
+    'catalog_check_succeeded' => 'Se completó la búsqueda de actualizaciones de plugins.',
+    'catalog_check_in_progress' => 'Ya hay una búsqueda de actualizaciones de plugins en curso.',
+    'catalog_check_no_plugins' => 'No hay plugins instalados que comprobar.',
     'catalog_checked_at' => 'Última comprobación correcta del catálogo: :time',
     'catalog_check_unavailable' => 'No se pudo consultar el catálogo de plugins. Las actualizaciones mostradas proceden de la última comprobación correcta.',
     'retry_database_update' => 'Reintentar actualización de base de datos',

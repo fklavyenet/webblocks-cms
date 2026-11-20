@@ -1257,6 +1257,10 @@ $translations = [
     'invalid_declaration' => 'I plugin con menu di amministrazione devono dichiarare un’icona WebBlocks UI. Usa lo slug di un’icona inclusa nel campo icon del manifest.',
   ],
   'system_plugins_index' => [
+    'check_catalog_updates' => 'Controlla aggiornamenti',
+    'catalog_check_succeeded' => 'La verifica degli aggiornamenti dei plugin è terminata.',
+    'catalog_check_in_progress' => 'È già in corso una verifica degli aggiornamenti dei plugin.',
+    'catalog_check_no_plugins' => 'Non ci sono plugin installati da verificare.',
     'catalog_checked_at' => 'Ultimo controllo riuscito del catalogo: :time',
     'catalog_check_unavailable' => 'Impossibile controllare il catalogo dei plugin. Gli aggiornamenti mostrati provengono dall’ultimo controllo riuscito.',
     'retry_database_update' => 'Riprova aggiornamento del database',

@@ -274,6 +274,65 @@ class PanelNotificationsTest extends TestCase
   }
 
   #[Test]
+  public function a_super_admin_can_check_for_plugin_updates_before_the_hourly_result_expires(): void
+  {
+    $this->withoutMiddleware(RedirectIfNotInstalled::class);
+    $site = $this->site('manual-plugin-updates');
+    app(PluginRegistry::class)->register(
+      PluginDefinition::make('installed-plugin')->label('Installed plugin')->version('1.0.0')->installPath(__DIR__)
+    );
+    config(['webblocks-plugins.catalog.base_url' => 'https://catalog.example.test', 'app.timezone' => 'UTC']);
+    Http::preventStrayRequests();
+    $release = [
+      'data' => [
+        'release' => ['version' => '1.0.0', 'status' => 'published'],
+        'artifact' => ['download_url' => 'https://catalog.example.test/update.zip', 'checksum_sha256' => str_repeat('a', 64), 'file_name' => 'update.zip'],
+      ],
+    ];
+    $newRelease = $release;
+    $newRelease['data']['release']['version'] = '1.1.0';
+    Http::fake([
+      'https://catalog.example.test/api/plugins/installed-plugin/latest*' => Http::sequence()
+        ->push($release)->push($newRelease)->pushStatus(503)->push($newRelease),
+    ]);
+
+    $check = route('admin.system.plugins.check-catalog-updates');
+    $indicator = route('admin.system.plugins.update-indicator');
+    $plugins = route('admin.system.plugins.index');
+    $this->actingAs($this->user([$site->id]));
+    $this->post($check)->assertForbidden();
+    Http::assertNothingSent();
+
+    $this->actingAs($this->user([$site->id], super: true));
+    $this->freezeTime(function ($firstCheck) use ($check, $indicator, $plugins): void {
+      $this->get($plugins)->assertOk()
+        ->assertSeeInOrder(['id="registered-plugins-title"', $firstCheck->format('Y-m-d H:i'), 'Check for updates'], false)
+        ->assertSee('action="'.$check.'"', false)
+        ->assertDontSee('Update from catalog');
+      Http::assertSentCount(1);
+
+      $secondCheck = $firstCheck->copy()->addMinutes(2);
+      $this->travelTo($secondCheck);
+      $this->post($check)->assertRedirect($plugins.'#registered-plugins');
+      $this->get($plugins)->assertOk()->assertSee('Plugin update check complete.')
+        ->assertSee($secondCheck->format('Y-m-d H:i'))->assertSee('Update from catalog');
+      $this->postJson($indicator)->assertOk()->assertJsonPath('count', 1);
+      Http::assertSentCount(2);
+
+      $this->travelTo($secondCheck->copy()->addMinute());
+      $this->post($check)->assertRedirect($plugins.'#registered-plugins');
+      $this->get($plugins)->assertOk()->assertSee('The Plugin Catalog could not be checked.')
+        ->assertSee($secondCheck->format('Y-m-d H:i'))->assertSee('Update from catalog');
+      Http::assertSentCount(3);
+
+      $this->post($check)->assertRedirect($plugins.'#registered-plugins');
+      $this->get($plugins)->assertOk()->assertSee('Plugin update check complete.')
+        ->assertDontSee('The Plugin Catalog could not be checked.');
+      Http::assertSentCount(4);
+    });
+  }
+
+  #[Test]
   public function the_real_dashboard_and_other_panel_pages_render_the_authorized_indicator(): void
   {
     $site = $this->site('dashboard-render');

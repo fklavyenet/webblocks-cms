@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.143.4
+
+- Check the plugin catalog on demand from the Registered plugins card. The card shows the last successful check and keeps the previous result if the catalog is unavailable.
+
 ## 1.143.3
 
 - Use the selected page preview language for menu labels in shared headers, desktop dropdowns, mobile navigation, and menu-backed sidebar and footer blocks.

@@ -5,6 +5,7 @@
     $systemPluginsIndexLocale = app(AdminLocaleResolver::class)->locale();
     $systemPluginsIndexTranslator = app(CmsTranslator::class);
     $systemPluginsIndexText = static fn (string $key, array $replace = []) => $systemPluginsIndexTranslator->admin('system_plugins_index.'.$key, $systemPluginsIndexLocale, $replace);
+    $catalogCheckResult = session('plugin_catalog_check_result');
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $systemPluginsIndexText('plugins'), 'heading' => $systemPluginsIndexText('plugins')])
@@ -17,15 +18,6 @@
     ])
 
     @include('webblocks-cms::admin.partials.flash')
-
-    @if ($pluginCatalogUpdateStatus['retry_pending'] ?? false)
-        <div class="wb-alert wb-alert-warning" role="status">{{ $systemPluginsIndexText('catalog_check_unavailable') }}</div>
-    @endif
-    @if ($pluginCatalogUpdateStatus['checked_at'] ?? null)
-        <p class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('catalog_checked_at', [
-            'time' => \Illuminate\Support\Carbon::createFromTimestamp($pluginCatalogUpdateStatus['checked_at'], config('app.timezone'))->format('Y-m-d H:i'),
-        ]) }}</p>
-    @endif
 
     @if ($canInstallPlugins)
         <div class="wb-card wb-mb-4">
@@ -51,12 +43,39 @@
         </div>
     @endif
 
-    <div class="wb-card">
-        <div class="wb-card-header">
-            <strong>{{ $systemPluginsIndexText('registered_plugins') }}</strong>
+    <section class="wb-card" id="registered-plugins" aria-labelledby="registered-plugins-title">
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+            <h2 class="wb-card-title" id="registered-plugins-title">{{ $systemPluginsIndexText('registered_plugins') }}</h2>
+
+            @if ($canInstallPlugins)
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    @if ($pluginCatalogUpdateStatus['checked_at'] ?? null)
+                        <span class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('catalog_checked_at', [
+                            'time' => \Illuminate\Support\Carbon::createFromTimestamp($pluginCatalogUpdateStatus['checked_at'], config('app.timezone'))->format('Y-m-d H:i'),
+                        ]) }}</span>
+                    @endif
+                    <form method="POST" action="{{ route('admin.system.plugins.check-catalog-updates') }}">
+                        @csrf
+                        <button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">
+                            <i class="wb-icon wb-icon-rotate-cw" aria-hidden="true"></i>
+                            {{ $systemPluginsIndexText('check_catalog_updates') }}
+                        </button>
+                    </form>
+                </div>
+            @endif
         </div>
 
         <div class="wb-card-body">
+            @if ($catalogCheckResult === 'unavailable' || ($pluginCatalogUpdateStatus['retry_pending'] ?? false))
+                <div class="wb-alert wb-alert-warning wb-mb-4" role="status">{{ $systemPluginsIndexText('catalog_check_unavailable') }}</div>
+            @elseif ($catalogCheckResult === 'checked')
+                <div class="wb-alert wb-alert-success wb-mb-4" role="status">{{ $systemPluginsIndexText('catalog_check_succeeded') }}</div>
+            @elseif ($catalogCheckResult === 'in_progress')
+                <div class="wb-alert wb-alert-info wb-mb-4" role="status">{{ $systemPluginsIndexText('catalog_check_in_progress') }}</div>
+            @elseif ($catalogCheckResult === 'no_plugins')
+                <div class="wb-alert wb-alert-info wb-mb-4" role="status">{{ $systemPluginsIndexText('catalog_check_no_plugins') }}</div>
+            @endif
+
             @if (count($plugins) === 0)
                 <div class="wb-empty">
                     <div class="wb-empty-title">{{ $systemPluginsIndexText('empty_title') }}</div>
@@ -251,5 +270,5 @@
                 </div>
             @endif
         </div>
-    </div>
+    </section>
 @endsection

@@ -1258,6 +1258,10 @@ $translations = [
     'invalid_declaration' => 'Les extensions avec des menus d’administration doivent déclarer une icône WebBlocks UI. Utilisez le slug d’une icône incluse dans le champ icon du manifeste.',
   ],
   'system_plugins_index' => [
+    'check_catalog_updates' => 'Rechercher des mises à jour',
+    'catalog_check_succeeded' => 'La recherche de mises à jour des extensions est terminée.',
+    'catalog_check_in_progress' => 'Une recherche de mises à jour des extensions est déjà en cours.',
+    'catalog_check_no_plugins' => 'Aucune extension installée à vérifier.',
     'catalog_checked_at' => 'Dernière vérification réussie du catalogue : :time',
     'catalog_check_unavailable' => 'Le catalogue de plugins est inaccessible. Les mises à jour affichées proviennent de la dernière vérification réussie.',
     'retry_database_update' => 'Réessayer la mise à jour de la base de données',
