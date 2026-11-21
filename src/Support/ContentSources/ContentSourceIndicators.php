@@ -14,21 +14,31 @@ final class ContentSourceIndicators
 
   public function labels(Block $block): array
   {
+    return $this->describe($block)['labels'];
+  }
+
+  /** @return array{labels: list<string>, roles: list<string>} */
+  public function describe(Block $block): array
+  {
     $translator = app(CmsTranslator::class);
     $locale = app(AdminLocaleResolver::class)->locale();
     $text = fn ($key, $replace = []) => $translator->get('dynamic-content.'.$key, $locale, $replace);
     $items = [];
+    $roles = [];
     if (is_string($source = $block->setting('content_collection.source')) && $source !== '') {
+      $roles['loop'] = true;
       $items[] = $text('loop_label', ['source' => $this->sources->find($source)?->labelText() ?? $source]);
       $items[] = $text('template_label', ['id' => (string) $block->setting('content_collection.template_block_id')]);
     }
     if ($block->relationLoaded('parent') && $block->parent && (int) $block->parent->setting('content_collection.template_block_id') === (int) $block->id) {
+      $roles['template'] = true;
       $items[] = $text('repeated_template', ['id' => $block->parent->id]);
     }
     foreach ((array) $block->setting('content_bindings', []) as $target => $binding) {
       if (! is_array($binding) || ! is_string($binding['source'] ?? null) || ! is_string($binding['field'] ?? null) || ! is_string($binding['record'] ?? null)) {
         continue;
       }
+      $roles['binding'] = true;
       $source = $this->sources->find((string) ($binding['source'] ?? ''));
       $context = ($binding['record'] ?? '') === '@item' ? $text('current_item') : (string) ($binding['record'] ?? '');
       $field = $source?->fieldDefinitions()[$binding['field'] ?? '']['label'] ?? ($binding['field'] ?? '');
@@ -39,10 +49,11 @@ final class ContentSourceIndicators
       $items[] = $targetLabel.' ← '.($source?->labelText() ?? ($binding['source'] ?? '')).' / '.$context.' / '.$field;
     }
     if ($items === [] && $block->relationLoaded('children') && $this->hasDynamicDescendant($block)) {
+      $roles['descendants'] = true;
       $items[] = $text('dynamic_descendants');
     }
 
-    return $items;
+    return ['labels' => $items, 'roles' => array_keys($roles)];
   }
 
   public function authoringUrl(Block $block): string

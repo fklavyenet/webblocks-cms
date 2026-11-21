@@ -264,6 +264,51 @@ namespace WebBlocks\Cms\Tests\Feature {
 
     #[Test]
     #[DataProvider('imageSummaryEditors')]
+    public function slot_block_rows_show_distinct_searchable_role_badges(bool $shared): void
+    {
+      if ($shared) {
+        [$sharedSlot, $page, $slot, $plain] = $this->seedSharedSlotBlockContext();
+        $url = route('admin.shared-slots.blocks.edit', ['shared_slot' => $sharedSlot]);
+      } else {
+        [$page, $slot, $plain] = $this->seedPageBlockContext();
+        $url = route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $slot]);
+      }
+
+      $section = Block::query()->create(['type' => 'section', 'page_id' => $page->id, 'slot_type_id' => $slot->slot_type_id]);
+      $grid = $section->children()->create(['type' => 'grid', 'page_id' => $page->id, 'slot_type_id' => $slot->slot_type_id]);
+      $card = $grid->children()->create(['type' => 'card', 'page_id' => $page->id, 'slot_type_id' => $slot->slot_type_id]);
+      $heading = $card->children()->create(['type' => 'header', 'page_id' => $page->id, 'slot_type_id' => $slot->slot_type_id]);
+      $system = Block::query()->create(['type' => 'comments', 'is_system' => true, 'page_id' => $page->id, 'slot_type_id' => $slot->slot_type_id]);
+      $grid->update(['settings' => ['content_collection' => ['source' => 'example::items', 'template_block_id' => $card->id]]]);
+      $heading->update(['settings' => ['content_bindings' => ['title' => ['source' => 'example::items', 'record' => '@item', 'field' => 'title']]]]);
+      if ($shared) {
+        app(SharedSlotSourcePageManager::class)->rebuildAssignments($sharedSlot);
+      }
+
+      $xpath = $this->formXPath($this->get($url)->assertOk());
+      $prefix = '//table[@data-wb-slot-block-table]//tr';
+      foreach ([
+        [$section, 'descendants', 'Dynamic children'],
+        [$grid, 'loop', 'Loop'],
+        [$card, 'template', 'Repeated template'],
+        [$heading, 'binding', 'Data bound'],
+        [$system, 'system', 'System block'],
+      ] as [$block, $role, $label]) {
+        $row = $prefix.'[@id="slot-block-row-'.$block->id.'"]';
+        $badge = $xpath->query($row.'/td[1]//span[@data-wb-block-role="'.$role.'"]')->item(0);
+        $this->assertInstanceOf(DOMElement::class, $badge);
+        $this->assertSame($label, trim($badge->textContent));
+        $this->assertSame(1, $xpath->query('.//i[@aria-hidden="true"]', $badge)->length);
+        $this->assertSame(1, $xpath->query($row.'[contains(@data-wb-slot-block-search-text, "'.strtolower($label).'")]')->length);
+        $this->assertSame(1, $xpath->query($row.'//span[@data-wb-block-role]')->length);
+      }
+
+      $this->assertSame(0, $xpath->query($prefix.'[@id="slot-block-row-'.$plain->id.'"]//*[@data-wb-block-role]')->length);
+      $this->assertSame(1, $xpath->query($prefix.'[@id="slot-block-row-'.$heading->id.'"]/td[2]//a[contains(., "Current loop record")]')->length);
+    }
+
+    #[Test]
+    #[DataProvider('imageSummaryEditors')]
     public function image_rows_keep_media_summaries_and_localized_copy_without_loading_picker_images(bool $shared): void
     {
       if ($shared) {

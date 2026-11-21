@@ -667,11 +667,6 @@ input.wb-admin-table-grid-input:focus {
     flex-shrink: 0;
 }
 
-.wb-cms-block-tree-label {
-    min-width: 0;
-    white-space: nowrap;
-}
-
 .wb-cms-block-row-title {
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -738,10 +733,26 @@ input.wb-admin-table-grid-input:focus {
 }
 
 .wb-admin-slot-blocks-table .wb-admin-slot-block-type {
-    display: inline-block;
-    min-width: 7rem;
-    max-width: 100%;
-    white-space: nowrap;
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--wb-s1);
+    min-inline-size: 7rem;
+    max-inline-size: 20rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.wb-admin-slot-block-type .wb-badge .wb-icon {
+    --wb-icon-size: 1em;
+}
+
+.wb-admin-slot-block-type .wb-badge-primary {
+    color: var(--wb-accent-text);
+}
+
+.wb-admin-slot-block-type .wb-badge-info {
+    color: var(--wb-text);
 }
 
 .wb-admin-slot-blocks-table .wb-admin-slot-block-summary-cell {

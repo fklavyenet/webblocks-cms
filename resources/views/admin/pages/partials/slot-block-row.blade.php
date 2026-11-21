@@ -9,10 +9,20 @@
     $rowSummary = $blockAdminSummary->primary($block);
     $childCount = $block->children->count();
     if ($parentBlock instanceof \WebBlocks\Cms\Models\Block) $block->setRelation('parent', $parentBlock);
-    $dynamicLabels = app(\WebBlocks\Cms\Support\ContentSources\ContentSourceIndicators::class)->labels($block);
+    $dynamicIndicators = app(\WebBlocks\Cms\Support\ContentSources\ContentSourceIndicators::class)->describe($block);
+    $dynamicLabels = $dynamicIndicators['labels'];
     $sharedSlot = $sharedSlot ?? null;
     $inlineBlocksLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
-    $inlineBlocksText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('inline_blocks.'.$key, $inlineBlocksLocale, $replace);
+    $translator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
+    $inlineBlocksText = fn (string $key, array $replace = []) => $translator->admin('inline_blocks.'.$key, $inlineBlocksLocale, $replace);
+    $roleLabels = [];
+    if ($block->is_system) {
+        $roleLabels['system'] = $inlineBlocksText('system_block');
+    }
+    foreach ($dynamicIndicators['roles'] as $role) {
+        $roleLabels[$role] = $translator->get('dynamic-content.role_'.$role, $inlineBlocksLocale);
+    }
+    $roleIcons = ['system' => 'settings', 'loop' => 'repeat', 'template' => 'copy', 'binding' => 'link', 'descendants' => 'layers'];
 @endphp
 
 <tbody
@@ -37,7 +47,7 @@
         @endif
         data-slot-depth="{{ $depth }}"
         data-wb-slot-depth="{{ $depth }}"
-        data-wb-slot-block-search-text="{{ \Illuminate\Support\Str::lower(implode(' ', array_filter([(string) $block->id, $block->typeName(), $rowSummary, ...$dynamicLabels]))) }}"
+        data-wb-slot-block-search-text="{{ \Illuminate\Support\Str::lower(implode(' ', array_filter([(string) $block->id, $block->typeName(), $rowSummary, ...$dynamicLabels, ...array_values($roleLabels)]))) }}"
     >
         <td class="wb-block-hierarchy-cell wb-admin-slot-block-type-cell">
             <div class="wb-block-hierarchy">
@@ -62,7 +72,14 @@
                         </button>
                     @endif
 
-                    <span class="wb-cms-block-tree-label wb-admin-slot-block-type"><strong>{{ $block->typeName() }}</strong></span>
+                    <span class="wb-admin-slot-block-type">
+                        <strong>{{ $block->typeName() }}</strong>
+                        @foreach ($roleLabels as $role => $label)
+                            <span @class(['wb-badge', 'wb-badge-primary' => in_array($role, ['loop', 'template', 'binding'], true), 'wb-badge-info' => $role === 'descendants']) data-wb-block-role="{{ $role }}">
+                                <i class="wb-icon wb-icon-{{ $roleIcons[$role] }}" aria-hidden="true"></i>{{ $label }}
+                            </span>
+                        @endforeach
+                    </span>
                 </div>
             </div>
         </td>

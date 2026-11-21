@@ -1950,8 +1950,12 @@ The compatibility path does not certify legacy language coverage or rewrite
 records, media, translations or bindings. No automatic record-detail routes or
 new page-publication lifecycle is introduced.
 
-Block trees expose loop owners, repeated template IDs, current-item and fixed
-record field connections, and collapsed ancestors containing dynamic content.
+Page and Shared Slot block trees show compact, localized icon badges next to
+the block type for system blocks, loops, repeated templates, and field bindings.
+Containers whose dynamic content comes only from descendants have a separate
+badge visible even when collapsed. Block search includes the badge labels.
+The summary links retain loop sources, template IDs, and current-item and fixed
+record field connections.
 The requested block translation locale is authoritative for source resolution,
 including when editorial fallback or a slot owner uses the default language.
 

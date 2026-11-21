@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.1
+
+- Identify system blocks, loops, repeated templates, and data-bound blocks by compact icon badges in page and Shared Slot block lists.
+- See which collapsed containers contain dynamic content, and search the block list by badge label.
+
 ## 1.144.0
 
 - Browse compatible language packs from Extensions in System → Panel languages. Download a panel catalog for review or install a full CMS language pack after checksum and compatibility verification.
