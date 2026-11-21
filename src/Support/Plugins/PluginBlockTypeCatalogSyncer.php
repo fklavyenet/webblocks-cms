@@ -30,10 +30,10 @@ class PluginBlockTypeCatalogSyncer
   /**
    * @return array{created: int, updated: int, unchanged: int, skipped: int}
    */
-  public function sync(bool $dryRun = false): array
+  public function sync(bool $dryRun = false, ?PluginDefinition $plugin = null): array
   {
     $summary = ['created' => 0, 'updated' => 0, 'unchanged' => 0, 'skipped' => 0];
-    $definitions = $this->definitions();
+    $definitions = $this->definitions($plugin);
 
     if ($definitions === []) {
       return $summary;
@@ -61,12 +61,12 @@ class PluginBlockTypeCatalogSyncer
 
       $blockType = BlockType::query()->where('slug', $definition['slug'])->first();
 
-      if (! $blockType) {
-        $summary['created']++;
+      if (! $blockType && ! $dryRun) {
+        $blockType = BlockType::query()->firstOrCreate(['slug' => $definition['slug']], $definition);
+      }
 
-        if (! $dryRun) {
-          BlockType::query()->create($definition);
-        }
+      if (! $blockType || $blockType->wasRecentlyCreated) {
+        $summary['created']++;
 
         continue;
       }
@@ -100,12 +100,12 @@ class PluginBlockTypeCatalogSyncer
    *
    * @return array<int, array<string, mixed>>
    */
-  public function definitions(): array
+  public function definitions(?PluginDefinition $plugin = null): array
   {
     $definitions = [];
 
-    foreach ($this->plugins->all() as $plugin) {
-      foreach ($this->catalog->blockTypeDefinitionsFor($plugin) as $blockType) {
+    foreach ($plugin ? [$plugin] : $this->plugins->all() as $definition) {
+      foreach ($this->catalog->blockTypeDefinitionsFor($definition) as $blockType) {
         $slug = $this->catalog->catalogSlugForDefinition($blockType);
 
         if ($slug === '' || isset($definitions[$slug])) {

@@ -10,13 +10,15 @@ use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateCommandRunner;
 
 class PluginDatabaseSetup
 {
+  public const BLOCK_CATALOG_SYNCED = 'WEBBLOCKS_PLUGIN_BLOCK_CATALOG_SYNCED';
+
   public function __construct(
     private readonly PluginMigrationRunner $migrations,
     private readonly InstalledPluginRepository $plugins,
   ) {}
 
   /** @return array{status: string, ran: bool, paths_count: int} */
-  public function run(PluginDefinition $plugin, bool $repairRecordedMigrations = false, bool $verifyBoot = true): array
+  public function run(PluginDefinition $plugin, bool $repairRecordedMigrations = false, bool $verifyBoot = true, bool $syncBlockCatalog = false): array
   {
     app(PluginCompatibility::class)->assertCompatible($plugin);
 
@@ -37,7 +39,7 @@ class PluginDatabaseSetup
     try {
       $this->plugins->recordSetupResult($plugin->handle(), $version, ['status' => 'running']);
       $pending = $repairRecordedMigrations || $this->migrations->hasPendingMigrations($plugin);
-      if ($pending) {
+      if ($pending || $syncBlockCatalog) {
         // A fresh CLI process loads the installed version, never the old provider
         // already present in the PHP request that replaced the package.
         $result = Process::path(base_path())
@@ -46,9 +48,12 @@ class PluginDatabaseSetup
           ->run((new UpdateCommandRunner)->artisanCommand([
             'cms:plugin-migrate', $plugin->handle(), $version, '--no-interaction',
             ...($repairRecordedMigrations ? ['--repair'] : []),
+            ...($syncBlockCatalog ? ['--sync-block-catalog'] : []),
           ]));
 
-        if (! $result->successful() || $this->migrations->hasPendingMigrations($plugin)) {
+        if (! $result->successful()
+          || ($syncBlockCatalog && ! in_array(self::BLOCK_CATALOG_SYNCED, preg_split('/\R/', trim($result->output())), true))
+          || $this->migrations->hasPendingMigrations($plugin)) {
           throw new RuntimeException('Plugin database update did not complete.');
         }
       }

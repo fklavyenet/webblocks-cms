@@ -3,14 +3,21 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use ExampleAutoFixture\Provider;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Process\Factory;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Schema;
 use Monolog\Handler\NullHandler;
+use PHPUnit\Framework\Attributes\TestWith;
 use RuntimeException;
+use WebBlocks\Cms\Models\BlockType;
+use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
+use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
+use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogDetailResult;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginBootProbe;
@@ -20,12 +27,19 @@ use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginZipInstaller;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
+use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\Tests\TestCase;
 use ZipArchive;
 
 class AutomaticPluginDatabaseSetupTest extends TestCase
 {
   private string $fixtureRoot;
+
+  protected function defineEnvironment($app): void
+  {
+    parent::defineEnvironment($app);
+    $app['config']->set('webblocks-cms.routes.admin', true);
+  }
 
   protected function setUp(): void
   {
@@ -112,6 +126,65 @@ class AutomaticPluginDatabaseSetupTest extends TestCase
     Process::assertNothingRan();
   }
 
+  #[TestWith(['panel'])]
+  #[TestWith(['api'])]
+  public function test_catalog_update_without_migrations_registers_block_types_from_the_new_provider(string $entryPoint): void
+  {
+    $this->isolatedHost();
+    (require dirname(__DIR__, 2).'/database/migrations/2026_04_08_020030_create_block_types_table.php')->up();
+    $installer = app(PluginZipInstaller::class);
+    $repository = app(InstalledPluginRepository::class);
+    $installed = $installer->install($this->zip('1.0.0', migrations: false));
+    $repository->enable('example-auto', '1.0.0');
+    app(InstalledPluginDefinitionFactory::class)->make($this->manifest('1.0.0'), $installed['path'], true);
+    $this->assertSame('1.0.0', Provider::VERSION);
+    $existing = BlockType::query()->create([
+      'slug' => 'example-auto-message', 'name' => 'Existing message', 'category' => 'form',
+      'source_type' => 'static', 'sort_order' => 21, 'status' => 'draft',
+    ]);
+
+    $zip = $this->zip('2.0.0', migrations: false);
+    $download = 'https://catalog.example.test/example-auto-2.0.0.zip';
+    $catalogPlugin = CatalogPlugin::fromArray([
+      'handle' => 'example-auto', 'compatibility_status' => 'compatible',
+      'latest_compatible_release' => [
+        'version' => '2.0.0', 'status' => 'published', 'channel' => 'stable',
+        'artifact' => ['download_url' => $download, 'file_name' => basename($download),
+          'checksum_sha256' => hash_file('sha256', $zip)],
+      ],
+    ]);
+    $this->mock(PluginCatalogClient::class)->shouldReceive('show')->once()->with('example-auto')
+      ->andReturn(new PluginCatalogDetailResult(true, $catalogPlugin, 'https://catalog.example.test', WebBlocks::version()));
+    Http::preventStrayRequests();
+    Http::fake([$download => Http::response(File::get($zip))]);
+    $this->app->forgetInstance(PluginRegistry::class);
+    $this->withoutMiddleware();
+
+    if ($entryPoint === 'panel') {
+      $this->actingAs(new class extends User
+      {
+        public function isSuperAdmin(): bool
+        {
+          return true;
+        }
+      });
+      $this->post('/webadmin/system/plugins/example-auto/update-from-catalog')
+        ->assertRedirect('/webadmin/system/plugins')->assertSessionHasNoErrors();
+    } else {
+      $this->postJson('/webadmin/api/plugins/catalog/example-auto/update')
+        ->assertOk()->assertJsonPath('updated.version', '2.0.0');
+    }
+
+    $this->assertSame('2.0.0', $repository->enabledVersion('example-auto'));
+    $this->assertSame('1.0.0', Provider::VERSION);
+    $this->assertFalse($repository->setupResult('example-auto', '2.0.0')['ran']);
+    $this->assertDatabaseHas('wbcms_block_types', [
+      'slug' => 'example-auto-reply', 'name' => 'Reply', 'status' => 'published',
+    ]);
+    $this->assertSame(['name' => 'Message', 'category' => 'form', 'sort_order' => 21, 'status' => 'draft'],
+      $existing->fresh()->only(['name', 'category', 'sort_order', 'status']));
+  }
+
   public function test_successful_process_with_pending_migrations_is_still_a_failure(): void
   {
     $this->mock(PluginBootProbe::class)->shouldReceive('check');
@@ -182,7 +255,26 @@ class AutomaticPluginDatabaseSetupTest extends TestCase
     foreach (AdminLocaleResolver::SUPPORTED_LOCALES as $locale) {
       $zip->addFromString('resources/lang/'.$locale.'/admin.php', '<?php return [];');
     }
-    $zip->addFromString('src/Provider.php', '<?php namespace ExampleAutoFixture; class Provider { public const VERSION = '.var_export($version, true).'; }');
+    $zip->addFromString('src/Provider.php', str_replace('__VERSION__', var_export($version, true), <<<'PROVIDER'
+<?php
+namespace ExampleAutoFixture;
+use WebBlocks\Cms\Support\Plugins\PluginBlockTypeDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+class Provider
+{
+  public const VERSION = __VERSION__;
+
+  public static function definition(): PluginDefinition
+  {
+    $blocks = [PluginBlockTypeDefinition::make('example-auto::message')->label('Message')];
+    if (self::VERSION === '2.0.0') {
+      $blocks[] = PluginBlockTypeDefinition::make('example-auto::reply')->label('Reply');
+    }
+
+    return PluginDefinition::make('example-auto')->label('Example Plugin')->version(self::VERSION)->provider(self::class)->blockTypes($blocks);
+  }
+}
+PROVIDER));
     if ($migrations) {
       $zip->addFromString('database/migrations/2026_10_01_000000_create_messages.php', <<<'MIGRATION'
 <?php

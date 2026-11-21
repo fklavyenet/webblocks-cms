@@ -102,9 +102,11 @@ class PluginZipInstaller
           $this->plugins->disable($handle, force: true);
         }
         $setupStarted = true;
-        $setup = app(PluginDatabaseSetup::class)->run($definition, verifyBoot: false);
+        $setup = app(PluginDatabaseSetup::class)->run($definition, verifyBoot: false, syncBlockCatalog: $wasEnabled);
         if ($wasEnabled) {
           $this->plugins->enable($handle, $version);
+        } elseif ($currentVersion !== null) {
+          app(PluginBlockTypeCatalogSyncer::class)->sync(plugin: $definition);
         }
         if ($expectedHandle !== null && $currentVersion !== null) {
           $this->plugins->recordPrevious($handle, $currentVersion, $version, ! $setup['ran']);

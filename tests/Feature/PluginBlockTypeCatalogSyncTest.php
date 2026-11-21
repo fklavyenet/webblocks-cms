@@ -151,9 +151,8 @@ class PluginBlockTypeCatalogSyncTest extends TestCase
   }
 
   /**
-   * Every plugin lifecycle transition — install, enable, disable, setup,
-   * update — ends in a runtime refresh, which is what makes the catalog row
-   * appear without an operator running anything.
+   * Install, enable, disable and setup use the runtime refresh to register
+   * catalog rows without a separate operator action.
    */
   #[Test]
   public function a_runtime_refresh_writes_the_catalog_row(): void
@@ -175,6 +174,24 @@ class PluginBlockTypeCatalogSyncTest extends TestCase
       ->assertSuccessful();
 
     $this->assertSame(1, BlockType::query()->where('slug', 'appointments-form')->count());
+  }
+
+  #[Test]
+  public function the_cms_update_backfills_a_missing_plugin_block_without_removing_it_on_rollback(): void
+  {
+    $this->bindRegistryFor($this->pluginWithForm());
+    $migration = require dirname(__DIR__, 2).'/database/migrations/updates/2026_11_21_230000_sync_installed_plugin_block_catalog.php';
+
+    $this->assertSame(0, BlockType::query()->where('slug', 'appointments-form')->count());
+    $migration->up();
+    $blockType = BlockType::query()->where('slug', 'appointments-form')->sole();
+    $blockType->update(['status' => 'draft', 'sort_order' => 12]);
+    $migration->up();
+    $migration->down();
+
+    $this->assertSame(1, BlockType::query()->where('slug', 'appointments-form')->count());
+    $this->assertSame('draft', $blockType->fresh()->status);
+    $this->assertSame(12, $blockType->fresh()->sort_order);
   }
 
   private function pluginWithForm(): PluginDefinition

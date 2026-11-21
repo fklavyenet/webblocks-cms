@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.5
+
+- Register new plugin block types automatically when a plugin is updated from the catalog.
+- Restore missing plugin block types during the CMS update. Existing block visibility, categories and sort order are preserved.
+
 ## 1.144.4
 
 - Keep default favicon URLs stable across CMS updates by versioning them with the icon file's content hash. Normal pages, 404 pages and maintenance pages use the same rule.

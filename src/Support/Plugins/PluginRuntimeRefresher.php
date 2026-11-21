@@ -92,17 +92,14 @@ class PluginRuntimeRefresher
     /*
      * Resolved after the forget loop above, so the syncer reads the registry
      * that the lifecycle change just produced rather than the one it replaced.
-     * Every plugin install, enable, disable, setup and update funnels through
-     * here, which makes it the one place where a plugin's declared blocks can
-     * be guaranteed a catalog row.
+     * Catalog updates synchronize the incoming package during database setup,
+     * before activating it and while the old provider is still in this process.
      */
     $blockTypes = app(PluginBlockTypeCatalogSyncer::class)->sync();
 
     /*
-     * Published from the same place and for the same reason as the block catalog
-     * rows: this is the one point every install, enable, disable, setup and update
-     * passes through, so it is the only place a plugin's static files can be
-     * guaranteed to match the version that is installed.
+     * Catalog updates publish the installed package's assets separately,
+     * without loading the provider from the new version here.
      */
     $assets = app(PluginAssetPublisher::class)->publishAll(app(PluginRegistry::class)->all());
 

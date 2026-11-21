@@ -1447,6 +1447,12 @@ plugins do not start. Catchable provider startup failures quarantine the plugin
 without exposing its diagnostics.
 
 Successful updates retain the previous package and record whether migrations ran.
+Catalog updates synchronize the incoming plugin's block types before activation.
+The isolated database setup loads the incoming provider for an enabled plugin,
+even when there are no pending plugin migrations. Disabled plugins synchronize
+their manifest declarations. The CMS package update also backfills missing
+catalog rows for already installed plugins. Synchronization keeps existing row
+IDs, categories, sort orders and workflow status.
 Database setup failures leave the plugin disabled and preserve its tables and packages.
 Runtime source/route failures quarantine the plugin; an explicit disable overrides
 configuration-based enablement. Lifecycle JSON records use atomic replacement.
