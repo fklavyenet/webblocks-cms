@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.3
+
+- Save translated plugin block fields in the selected language when editing blocks in Webadmin.
+- Clear individual translations to restore fallback wording while preserving fields left out of the edit.
+
 ## 1.144.2
 
 - Check the update-chain database schema before starting an update and again before recording success, including after Composer deployments.

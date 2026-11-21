@@ -2728,7 +2728,15 @@ class BlockRequest extends FormRequest
     }
     $data['settings'] = $settings === [] ? null : json_encode($settings, JSON_UNESCAPED_SLASHES);
 
+    $postedPluginCopy = array_intersect_key($data['plugin_settings'] ?? [], array_flip($translatedKeys));
     unset($data['plugin_settings'], $data['content_binding_selection']);
+    if ($postedPluginCopy !== []) {
+      // An explicitly emptied field clears its translation. Omitted fields keep theirs.
+      $data['plugin_settings'] = array_map(
+        static fn (mixed $value): ?string => is_scalar($value) ? Str::limit(trim((string) $value), 2000, '') : null,
+        $postedPluginCopy,
+      );
+    }
     unset($data['content_collection_source'], $data['content_collection_template_id'], $data['content_collection_limit']);
     unset($data['content_collection_filter_field'], $data['content_collection_filter_value'], $data['content_collection_sort_field'], $data['content_collection_sort_direction']);
     unset($data['content_collection_paginate'], $data['content_collection_per_page']);

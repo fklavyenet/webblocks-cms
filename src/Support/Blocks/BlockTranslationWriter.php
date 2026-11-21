@@ -40,6 +40,7 @@ class BlockTranslationWriter
       $data['settings'] = $settings === []
         ? null
         : json_encode($settings, JSON_UNESCAPED_SLASHES);
+      unset($data['plugin_settings']);
 
       return $data;
     }
