@@ -10,6 +10,7 @@ use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Throwable;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdater;
+use WebBlocks\Cms\Support\System\Updates\UpdateChainSchema;
 use WebBlocks\Cms\Support\System\Updates\UpdateServerClient;
 use ZipArchive;
 
@@ -27,6 +28,7 @@ class SystemUpdateInspector
     private readonly UpdateServerClient $updateServerClient,
     private readonly InstalledVersionStore $installedVersionStore,
     private readonly SystemUpdater $systemUpdater,
+    private readonly UpdateChainSchema $chainSchema,
   ) {}
 
   public function report(): array
@@ -42,8 +44,11 @@ class SystemUpdateInspector
   /** Read readiness without fetching releases, creating workspaces or probing writes. */
   public function readOnlyChecks(): array
   {
+    $schema = $this->chainSchemaCheck();
+
     return [
       $this->databaseCheck(),
+      ...($schema ? [$schema] : []),
       $this->archiveSupportCheck(),
       $this->signatureSupportCheck(),
       $this->commandExecutionCheck(),
@@ -73,8 +78,10 @@ class SystemUpdateInspector
       $version['update_available'] = false;
     }
 
+    $schema = $this->chainSchemaCheck();
     $checks = [
       $this->databaseCheck(),
+      ...($schema ? [$schema] : []),
       $this->archiveSupportCheck(),
       $this->signatureSupportCheck(),
       $this->commandExecutionCheck(),
@@ -109,6 +116,7 @@ class SystemUpdateInspector
       'stored_installed_version' => $this->installedVersionStore->storedVersion(),
       'version' => $version,
       'checks' => $checks,
+      'chain_schema' => $schema['state'] ?? null,
       'can_update' => $canUpdate,
       'environment' => [
         'server_url' => $version['server_url'] ?? '',
@@ -121,16 +129,26 @@ class SystemUpdateInspector
     ];
   }
 
+  private function chainSchemaCheck(): ?array
+  {
+    if (! $this->chainSchema->required()) {
+      return null;
+    }
+    $state = $this->chainSchema->state();
+
+    return $this->check(__('webblocks-cms::update_schema.title'), $state === 'ready' ? 'pass' : 'fail', $this->chainSchema->stateMessage($state))
+      + ['state' => $state, 'key' => 'update_chain_schema'];
+  }
+
   private function databaseCheck(): array
   {
     try {
       DB::connection()->getPdo();
-    } catch (Throwable $throwable) {
-      return $this->check('Database connection', 'fail', 'The database connection failed: '.$throwable->getMessage());
-    }
-
-    if (! Schema::hasTable('wbcms_system_update_runs')) {
-      return $this->check('Database connection', 'fail', 'The system update runs table is missing. Run the latest migrations before updating.');
+      if (! Schema::hasTable('wbcms_system_update_runs')) {
+        return $this->check('Database connection', 'fail', 'The system update runs table is missing. Run the latest migrations before updating.');
+      }
+    } catch (Throwable) {
+      return $this->check('Database connection', 'fail', __('webblocks-cms::update_schema.unavailable'));
     }
 
     return $this->check('Database connection', 'pass', 'The database is reachable and update runs can be recorded.');

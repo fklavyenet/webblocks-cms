@@ -9,6 +9,7 @@ use WebBlocks\Cms\Support\System\InstalledVersionStore;
 use WebBlocks\Cms\Support\System\Updates\CmsChainAdmission;
 use WebBlocks\Cms\Support\System\Updates\CmsComposerState;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
+use WebBlocks\Cms\Support\System\Updates\UpdateChainSchema;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
 use WebBlocks\Cms\Support\System\Updates\UpdateInstaller;
 use WebBlocks\Cms\Support\Updates\Client\Updates\RunHeartbeat;
@@ -52,6 +53,7 @@ class FinalizeSystemUpdateCommand extends Command
       $output = [];
       $installer->installDependencies($output);
       $installer->runPostInstallCommands($output);
+      app(UpdateChainSchema::class)->assertReady();
       $installer->syncRuntimeAssets($output);
       app(InstalledVersionStore::class)->persist(WebBlocks::version());
       $this->info(__('webblocks-cms::admin.update_cli.finalized'));

@@ -25,7 +25,7 @@ class UnfinishedSystemUpdates
       if (Schema::hasColumn($model->getTable(), 'recovery_required')) {
         $query->orWhere('recovery_required', true);
       }
-      if ($model instanceof AdminUpdateOperation && Schema::hasTable('wbcms_update_chain_steps')) {
+      if ($model instanceof AdminUpdateOperation && Schema::hasColumns('wbcms_update_chain_steps', ['operation_id', 'status'])) {
         $query->orWhereIn('id', UpdateChainStep::whereIn('status', ['running', 'interrupted'])->select('operation_id'));
       }
     });
@@ -51,7 +51,7 @@ class UnfinishedSystemUpdates
         $ids = array_merge($ids, $this->query($kind)->whereNotNull('system_update_run_id')->pluck('system_update_run_id')->all());
       }
     }
-    if (Schema::hasTable('wbcms_update_chain_steps') && Schema::hasTable('wbcms_admin_update_operations')) {
+    if (Schema::hasColumns('wbcms_update_chain_steps', ['operation_id', 'system_update_run_id']) && Schema::hasTable('wbcms_admin_update_operations')) {
       $ids = array_merge($ids, UpdateChainStep::whereIn('operation_id', $this->query('operation')->select('id'))->whereNotNull('system_update_run_id')->pluck('system_update_run_id')->all());
     }
 
@@ -74,7 +74,7 @@ class UnfinishedSystemUpdates
     }
     $runs = $record instanceof SystemUpdateRun ? [$record->id] : array_filter([$record->system_update_run_id]);
     $operationIds = $record instanceof AdminUpdateOperation ? [$record->id] : [];
-    if (Schema::hasTable('wbcms_update_chain_steps')) {
+    if (Schema::hasColumns('wbcms_update_chain_steps', ['operation_id', 'system_update_run_id'])) {
       $operationIds = array_merge($operationIds, UpdateChainStep::whereIn('system_update_run_id', $runs)->pluck('operation_id')->all());
       $runs = array_merge($runs, UpdateChainStep::whereIn('operation_id', $operationIds)->whereNotNull('system_update_run_id')->pluck('system_update_run_id')->all());
     }

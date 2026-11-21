@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.2
+
+- Check the update-chain database schema before starting an update and again before recording success, including after Composer deployments.
+- Use **Repair installation** in the update panel when the pending migration can be applied safely. The CMS verifies a backup before applying the migration and checks the resulting schema.
+- See a localized explanation and the relevant migration name when the installation needs hosting support.
+
 ## 1.144.1
 
 - Identify system blocks, loops, repeated templates, and data-bound blocks by compact icon badges in page and Shared Slot block lists.

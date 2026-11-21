@@ -34,7 +34,9 @@ class SystemUpdateRunRetention
 
   public function prune(?int $keep = null): int
   {
-    if (! $this->schemaReady()) {
+    $chainSchema = app(UpdateChainSchema::class);
+    $hasChainStorage = Schema::hasColumn('wbcms_admin_update_operations', 'chain_protocol') || Schema::hasTable('wbcms_update_chain_steps');
+    if (! $this->schemaReady() || (($chainSchema->required() || $hasChainStorage) && $chainSchema->state() !== 'ready')) {
       return 0;
     }
 
@@ -88,7 +90,7 @@ class SystemUpdateRunRetention
       $ids[] = $latestFailedRun->id;
     }
 
-    if (Schema::hasTable('wbcms_update_chain_steps')) {
+    if (app(UpdateChainSchema::class)->stepsReady() && Schema::hasColumns('wbcms_admin_update_operations', ['chain_protocol', 'recovery_required'])) {
       $operations = AdminUpdateOperation::where('chain_protocol', 1)
         ->where(function ($query): void {
         $query->whereIn('status', ['queued', 'running', 'interrupted'])->orWhere('recovery_required', true);

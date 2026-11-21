@@ -19,8 +19,11 @@ class CmsChainAdmission implements UpdateAdmission
     }
 
     return AdminUpdateOperation::where('chain_protocol', 1)->where(function ($query): void {
-      $query->whereIn('status', ['queued', 'running', 'interrupted'])->orWhere('recovery_required', true);
-      if (Schema::hasTable('wbcms_update_chain_steps')) {
+      $query->whereIn('status', ['queued', 'running', 'interrupted']);
+      if (Schema::hasColumn('wbcms_admin_update_operations', 'recovery_required')) {
+        $query->orWhere('recovery_required', true);
+      }
+      if (Schema::hasColumns('wbcms_update_chain_steps', ['operation_id', 'status'])) {
         $query->orWhereIn('id', UpdateChainStep::whereIn('status', ['running', 'interrupted'])->select('operation_id'));
       }
     })->first();

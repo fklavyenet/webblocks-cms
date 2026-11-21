@@ -1708,6 +1708,13 @@ and verifies the newly installed CMS/Composer state in another fresh process
 before its transaction commits. A global lease and maintenance span the chain.
 Typed relational parent fields and `wbcms_update_chain_steps` are authoritative;
 parent completion, aggregate elapsed time and per-step receipts remain distinct.
+The System Updates preflight and chain admission require the physical chain
+schema. CMS-managed completion and external Composer finalization verify the
+schema before persisting success. A system administrator can explicitly repair
+a pending chain migration from System Updates. The action requires a verified
+backup, uses the migration shipped in the running package and leaves recovery
+records intact. Recorded-but-incomplete migrations and damaged step tables
+require operator review.
 All audit rows survive a database rollback. Failure restores only the failed
 step's last verified checkpoint and stops; unknown child exits or incomplete
 recovery keep maintenance active and block new updates pending review. The

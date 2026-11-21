@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\View\View;
 use WebBlocks\Cms\Actions\System\ReconcileStoppedSystemUpdate;
+use WebBlocks\Cms\Actions\System\RepairUpdateChainSchema;
 use WebBlocks\Cms\Actions\System\StartAdminSystemUpdate;
 use WebBlocks\Cms\Http\Requests\Admin\ReconcileSystemUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest;
@@ -49,10 +50,25 @@ class SystemUpdateController extends Controller
       'unfinishedUpdates' => app(SystemUpdateAttention::class)->rows(),
       'canReconcileUpdates' => app(SystemUpdateRecoveryPolicy::class)->reconcile($request->user()),
       'preflight' => $report['checks'] ?? [],
+      'canRepairChainSchema' => ($report['chain_schema'] ?? null) === 'missing' && app(RepairUpdateChainSchema::class)->available(),
       'checkedAt' => is_string($checkedAt)
         ? now()->parse($checkedAt)
         : ($report['checked_at'] ?? now()),
     ]);
+  }
+
+  public function repairSchema(RunSystemUpdateRequest $request, RepairUpdateChainSchema $repair): RedirectResponse
+  {
+    $redirect = redirect()->route('admin.system.updates.index');
+    try {
+      $backup = $repair->execute((int) $request->user()->getKey());
+
+      return $redirect->with('status', $backup
+        ? __('webblocks-cms::update_schema.repaired', ['backup' => $backup->id])
+        : __('webblocks-cms::update_schema.ready'));
+    } catch (UpdateException $exception) {
+      return $redirect->withErrors(['update_schema' => $exception->userMessage()]);
+    }
   }
 
   public function check(): RedirectResponse

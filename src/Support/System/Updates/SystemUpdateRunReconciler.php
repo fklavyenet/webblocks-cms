@@ -32,6 +32,11 @@ class SystemUpdateRunReconciler
       return null;
     }
 
+    $schema = app(UpdateChainSchema::class);
+    if ($schema->required() && $schema->state() !== 'ready') {
+      return null;
+    }
+
     $marker = 'Post-apply reconciliation: active CMS code still reports '.$currentVersion.'; the previous failure was recorded after the target version had been verified.';
     $lines = trim($output) === '' ? [] : [$output];
 

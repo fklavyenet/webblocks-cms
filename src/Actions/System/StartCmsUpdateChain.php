@@ -4,7 +4,6 @@ namespace WebBlocks\Cms\Actions\System;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\SystemUpdateRequest;
@@ -13,6 +12,7 @@ use WebBlocks\Cms\Models\UpdateChainStep;
 use WebBlocks\Cms\Support\System\Updates\AdminUpdateLauncher;
 use WebBlocks\Cms\Support\System\Updates\CmsChainAdmission;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
+use WebBlocks\Cms\Support\System\Updates\UpdateChainSchema;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
 use WebBlocks\Cms\Support\Updates\Client\Chains\UpdatePlanClient;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\VersionResolver;
@@ -30,6 +30,7 @@ class StartCmsUpdateChain
       throw new UpdateException(__('webblocks-cms::admin.update_chain.locked'));
     }
     try {
+      app(UpdateChainSchema::class)->assertReady();
       if ($active = app(CmsChainAdmission::class)->active()) {
         throw new UpdateException(__('webblocks-cms::admin.update_chain.locked'));
       }
@@ -37,9 +38,6 @@ class StartCmsUpdateChain
         || AdminUpdateOperation::whereIn('status', ['queued', 'running'])->exists()
         || SystemUpdateRequest::where('status', 'running')->exists() || app(SystemUpdater::class)->isLocked()) {
         throw new UpdateException(__('webblocks-cms::admin.update_chain.locked'));
-      }
-      if (! Schema::hasTable('wbcms_update_chain_steps')) {
-        throw new UpdateException(__('webblocks-cms::admin.update_chain.unavailable'));
       }
       $plan = app(UpdatePlanClient::class)->fetch(app(VersionResolver::class)->current());
       if ($plan->steps === []) {

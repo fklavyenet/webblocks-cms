@@ -35,7 +35,7 @@
     $installedVersion = $report['installed_version'] ?? ($check['installed_version'] ?? '');
     $runs = $runs ?? collect();
     $preflight = collect($preflight ?? ($report['checks'] ?? []));
-    $failingChecks = $preflight->filter(fn ($item) => ($item['status'] ?? '') !== 'pass')->values();
+    $failingChecks = $preflight->filter(fn ($item) => ($item['status'] ?? '') !== 'pass' && ($item['key'] ?? '') !== 'update_chain_schema')->values();
     $canUpdate = ($report['can_update'] ?? false) === true;
     $state = (string) ($check['state'] ?? 'unknown');
     $latestVersion = $check['latest_version'] ?? null;
@@ -91,6 +91,7 @@
 
     <div class="wb-card-body wb-stack wb-stack-4">
       @include('webblocks-cms::admin.system.partials.update-attention')
+      @include('webblocks-cms::admin.system.partials.update-schema')
       <p class="wb-text-sm wb-text-muted">{{ $adminText('update_cli.composer_notice') }}</p>
       @if ($failingChecks->isNotEmpty())
         <div class="wb-callout wb-callout-warning wb-stack wb-stack-2" data-webblocks-updates-preflight>

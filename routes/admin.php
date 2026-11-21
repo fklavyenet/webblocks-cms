@@ -644,6 +644,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::get('system/updates/indicator', [SystemUpdateController::class, 'indicator'])->name('system.updates.indicator');
       Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
       Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');
+      Route::post('system/updates/repair-schema', [SystemUpdateController::class, 'repairSchema'])->name('system.updates.repair-schema');
       Route::post('system/updates/reconcile', [SystemUpdateController::class, 'reconcile'])->name('system.updates.reconcile');
       Route::get('system/icons', [IconCatalogController::class, 'index'])->name('system.icons.index');
       Route::post('system/icons/sync-webblocks-ui', [IconCatalogController::class, 'sync'])->name('system.icons.sync-webblocks-ui');

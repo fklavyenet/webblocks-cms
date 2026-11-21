@@ -37,6 +37,7 @@ class SystemUpdateConsoleTest extends TestCase
 
   public function test_finalizer_runs_the_product_steps_only_after_composer_consistency_validation(): void
   {
+    config(['webblocks-updates.chains.enabled' => false]);
     $this->mock(CmsComposerState::class)->expects('assertCurrent')->ordered();
     $installer = $this->mock(UpdateInstaller::class);
     $installer->expects('installDependencies')->with(Mockery::type('array'))->ordered();

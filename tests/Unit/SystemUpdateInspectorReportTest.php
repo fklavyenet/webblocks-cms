@@ -27,6 +27,9 @@ class SystemUpdateInspectorReportTest extends TestCase
       $table->string('status', 32);
       $table->timestamps();
     });
+    foreach (['2026_10_13_180000_create_admin_update_operations', '2026_11_02_200000_add_update_chains'] as $migration) {
+      (require dirname(__DIR__, 2).'/database/migrations/updates/'.$migration.'.php')->up();
+    }
   }
 
   #[Test]

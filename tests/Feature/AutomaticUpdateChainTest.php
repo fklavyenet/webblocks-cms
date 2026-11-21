@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Mockery;
 use WebBlocks\Cms\Actions\System\StartCmsUpdateChain;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
@@ -14,6 +15,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsChainAdmission;
 use WebBlocks\Cms\Support\System\Updates\CmsChainStepExecutor;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\RunCmsUpdateChain;
+use WebBlocks\Cms\Support\System\Updates\UpdateChainSchema;
 use WebBlocks\Cms\Support\System\Updates\UpdateCommandRunner;
 use WebBlocks\Cms\Support\System\Updates\UpdateException;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
@@ -170,6 +172,31 @@ class AutomaticUpdateChainTest extends TestCase
     $this->assertSame(2, UpdateChainStep::count());
     $this->assertSame($this->bridgeVersion(), $operation->fresh()->last_verified_version);
     $this->assertSame('running', $operation->fresh()->status);
+  }
+
+  public function test_rollback_can_restore_the_backup_when_a_failed_step_lost_the_step_table(): void
+  {
+    $operation = $this->admit(withBridge: false);
+    $operation->update(['status' => 'running']);
+    $step = UpdateChainStep::sole();
+    $run = SystemUpdateRun::create(['from_version' => $step->from_version, 'to_version' => $step->version,
+      'status' => 'running', 'started_at' => now()]);
+    $step->update(['system_update_run_id' => $run->id, 'status' => 'running']);
+    $checkpointStep = (array) DB::table('wbcms_update_chain_steps')->first();
+    $progress = app(CmsUpdateProgress::class);
+    $progress->operation($operation->id);
+    $progress->start($run);
+
+    Schema::drop('wbcms_update_chain_steps');
+    $progress->restorePreservingProgress(function () use ($checkpointStep): void {
+      (require app(UpdateChainSchema::class)->migrationPath())->up();
+      DB::table('wbcms_update_chain_steps')->insert($checkpointStep);
+    });
+
+    $this->assertTrue(app(UpdateChainSchema::class)->ready());
+    $this->assertSame($run->id, $step->fresh()->system_update_run_id);
+    $this->assertSame($run->id, $operation->fresh()->system_update_run_id);
+    $this->assertNotNull($run->fresh());
   }
 
   public function test_failed_second_step_restores_its_checkpoint_and_never_replays_the_first(): void

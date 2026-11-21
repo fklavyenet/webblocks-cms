@@ -7,6 +7,8 @@ use Illuminate\Support\Str;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
 use WebBlocks\Cms\Models\UpdateChainStep;
 use WebBlocks\Cms\Support\System\Updates\CmsComposerState;
+use WebBlocks\Cms\Support\System\Updates\UpdateChainSchema;
+use WebBlocks\Cms\Support\System\Updates\UpdateChainSchemaException;
 use WebBlocks\Cms\Support\Updates\CmsUpdateMaintenance;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -22,17 +24,22 @@ class VerifyUpdateChainCommand extends Command
     if (! Str::isUuid((string) $this->argument('operation')) || ! ctype_digit((string) $this->argument('position'))) {
       return self::FAILURE;
     }
-    $operation = AdminUpdateOperation::find($this->argument('operation'));
-    $step = UpdateChainStep::where('operation_id', $this->argument('operation'))->where('position', (int) $this->argument('position'))->first();
-    $expected = $this->option('checkpoint') ? $step?->from_version : $step?->version;
-    if (! $operation || ! $step || $operation->chain_protocol !== 1 || $operation->status !== 'running'
-      || ! CmsUpdateMaintenance::active() || WebBlocks::version() !== $expected) {
-      return self::FAILURE;
-    }
     try {
+      app(UpdateChainSchema::class)->assertReady();
+      $operation = AdminUpdateOperation::find($this->argument('operation'));
+      $step = UpdateChainStep::where('operation_id', $this->argument('operation'))->where('position', (int) $this->argument('position'))->first();
+      $expected = $this->option('checkpoint') ? $step?->from_version : $step?->version;
+      if (! $operation || ! $step || $operation->chain_protocol !== 1 || $operation->status !== 'running'
+        || ! CmsUpdateMaintenance::active() || WebBlocks::version() !== $expected) {
+        return self::FAILURE;
+      }
       app(CmsComposerState::class)->assertCurrent();
 
       return self::SUCCESS;
+    } catch (UpdateChainSchemaException $exception) {
+      $this->error($exception->userMessage());
+
+      return self::FAILURE;
     } catch (\Throwable) {
       return self::FAILURE;
     }

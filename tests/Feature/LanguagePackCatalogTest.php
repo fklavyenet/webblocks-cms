@@ -113,6 +113,7 @@ final class LanguagePackCatalogTest extends TestCase
       $this->assertSame($publicDefault, app(SystemSettings::class)->get(SystemSettings::DEFAULT_LOCALE));
       $this->assertSame('Поиск', app(CmsTranslator::class)->public('search.title', 'ru'));
       $this->assertSame('Проверить обновления', trans('publisher-client::updates.check_button', [], 'ru'));
+      $this->assertSame('Восстановить установку', trans('webblocks-cms::update_schema.repair', [], 'ru'));
       $this->assertSame('{code} — ваш код подтверждения для CMS', app(VerificationEmailTemplates::class)->defaults('ru')['subject']);
       $this->assertSame('21 непрочитанное сообщение', trans_choice('webblocks-cms::notifications.panel_new_messages', 21, [], 'ru'));
       $this->put(route('admin.system.panel-languages.default'), ['code' => 'ru'])->assertRedirect();

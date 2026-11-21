@@ -50,6 +50,14 @@ updates until reviewed. The existing API keeps its single-step approval contract
 Deploy Publisher plan support before enabling this release. Older engines need a
 normal update to obtain the coordinator; other products retain one-step behavior.
 
+When Maintenance → Update reports an incomplete chain schema, use **Repair
+installation** if offered. The CMS creates and validates a backup, then applies
+the pending chain migration from the running package. If the migration is
+already recorded or the step table is damaged, ask hosting support to inspect
+the installed package and database before retrying. After external Composer
+deployment, run the documented finalizer in the release directory against the
+application database. Require its successful exit before ending maintenance.
+
 
 ## 1.112.3–1.112.4: Composer-owned package updates
 

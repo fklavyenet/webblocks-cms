@@ -90,14 +90,16 @@ class CmsUpdateProgress
     $this->stage('rollback');
     $rows = [];
     foreach (['wbcms_system_update_runs', 'wbcms_admin_update_operations', 'wbcms_system_update_requests', 'wbcms_system_update_run_steps'] as $table) {
-      if ($this->runId === null || ! Schema::hasTable($table)) {
+      $column = $table === 'wbcms_system_update_runs' ? 'id' : 'system_update_run_id';
+      if ($this->runId === null || ! Schema::hasColumns($table, ['id', $column])) {
         continue;
       }
-      $column = $table === 'wbcms_system_update_runs' ? 'id' : 'system_update_run_id';
       $rows[$table] = DB::table($table)->where($column, $this->runId)->get()->map(fn ($row) => (array) $row)->all();
     }
-    $operation = $this->operationId ? AdminUpdateOperation::find($this->operationId) : null;
-    if ($operation?->chain_protocol === 1) {
+    $operation = $this->operationId && Schema::hasColumn('wbcms_admin_update_operations', 'id')
+      ? AdminUpdateOperation::find($this->operationId) : null;
+    // When the failed update damaged the step table, recover its existing receipts from the backup.
+    if ($operation?->chain_protocol === 1 && Schema::hasColumns('wbcms_update_chain_steps', ['id', 'operation_id', 'system_update_run_id'])) {
       $chain = DB::table('wbcms_update_chain_steps')->where('operation_id', $operation->id)->get();
       $ids = $chain->pluck('system_update_run_id')->filter()->all();
       $rows['wbcms_system_update_runs'] = DB::table('wbcms_system_update_runs')->whereIn('id', $ids)->get()->map(fn ($row) => (array) $row)->all();
@@ -164,7 +166,8 @@ class CmsUpdateProgress
     $started = $operation?->started_at ?? $run?->started_at;
 
     $chain = $operation?->chain_protocol === 1;
-    $chainSteps = $chain ? UpdateChainStep::where('operation_id', $operation->id)->orderBy('position')->get() : collect();
+    $chainSteps = $chain && app(UpdateChainSchema::class)->stepsReady()
+      ? UpdateChainStep::where('operation_id', $operation->id)->orderBy('position')->get() : collect();
     $currentStep = $chainSteps->firstWhere('status', 'running') ?? $chainSteps->firstWhere('status', 'queued') ?? $chainSteps->last();
     $totalSteps = $chainSteps->count();
 

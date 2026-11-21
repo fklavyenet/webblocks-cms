@@ -7,6 +7,7 @@ use Illuminate\Console\ConfirmableTrait;
 use WebBlocks\Cms\Actions\System\StartCmsUpdateChain;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\RunCmsUpdateChain;
+use WebBlocks\Cms\Support\System\Updates\UpdateChainSchemaException;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
 
 class RunSystemUpdateCommand extends Command
@@ -40,6 +41,10 @@ class RunSystemUpdateCommand extends Command
       $this->info($result->summary);
 
       return self::SUCCESS;
+    } catch (UpdateChainSchemaException $exception) {
+      $this->error($exception->userMessage());
+
+      return self::FAILURE;
     } catch (\Throwable) {
       $this->error(__('webblocks-cms::admin.update_cli.failed'));
 

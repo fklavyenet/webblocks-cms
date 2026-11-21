@@ -8,17 +8,23 @@ return new class extends Migration
 {
   public function up(): void
   {
-    if (! Schema::hasColumn('wbcms_admin_update_operations', 'chain_protocol')) {
-      Schema::table('wbcms_admin_update_operations', function (Blueprint $table): void {
-        $table->unsignedTinyInteger('chain_protocol')->nullable();
-        $table->string('product', 100)->nullable();
-        $table->string('channel', 100)->nullable();
-        $table->string('last_verified_version', 100)->nullable();
-        $table->boolean('maintenance_owned')->default(false);
-        $table->boolean('recovery_required')->default(false)->index();
+    $operationColumns = collect(Schema::getColumns('wbcms_admin_update_operations'))->keyBy('name');
+    Schema::table('wbcms_admin_update_operations', function (Blueprint $table) use ($operationColumns): void {
+      foreach (['chain_protocol', 'product', 'channel', 'last_verified_version', 'maintenance_owned', 'recovery_required'] as $column) {
+        if ($operationColumns->has($column)) {
+          continue;
+        }
+        match ($column) {
+          'chain_protocol' => $table->unsignedTinyInteger($column)->nullable(),
+          'product', 'channel', 'last_verified_version' => $table->string($column, 100)->nullable(),
+          'maintenance_owned' => $table->boolean($column)->default(false),
+          'recovery_required' => $table->boolean($column)->default(false)->index(),
+        };
+      }
+      if (! $operationColumns['user_id']['nullable']) {
         $table->unsignedBigInteger('user_id')->nullable()->change();
-      });
-    }
+      }
+    });
     if (! Schema::hasTable('wbcms_update_chain_steps')) {
       Schema::create('wbcms_update_chain_steps', function (Blueprint $table): void {
         $table->bigIncrements('id');
