@@ -67,11 +67,12 @@
             <link rel="shortcut icon" href="{{ $notFoundFaviconUrl }}">
             <link rel="apple-touch-icon" href="{{ $notFoundFaviconUrl }}">
         @else
-            <link rel="icon" type="image/svg+xml" href="{{ asset('cms/brand/favicon.svg') }}?v={{ \WebBlocks\Cms\Support\WebBlocks::VERSION }}">
-            <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('cms/brand/favicon-16x16.png') }}?v={{ \WebBlocks\Cms\Support\WebBlocks::VERSION }}">
-            <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('cms/brand/favicon-32x32.png') }}?v={{ \WebBlocks\Cms\Support\WebBlocks::VERSION }}">
-            <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('cms/brand/apple-touch-icon.png') }}">
-            <link rel="shortcut icon" href="{{ asset('cms/brand/favicon-32x32.png') }}?v={{ \WebBlocks\Cms\Support\WebBlocks::VERSION }}">
+            @php($faviconPng32Url = WebBlocks::faviconUrl('favicon-32x32.png'))
+            <link rel="icon" type="image/svg+xml" href="{{ WebBlocks::faviconUrl('favicon.svg') }}">
+            <link rel="icon" type="image/png" sizes="16x16" href="{{ WebBlocks::faviconUrl('favicon-16x16.png') }}">
+            <link rel="icon" type="image/png" sizes="32x32" href="{{ $faviconPng32Url }}">
+            <link rel="apple-touch-icon" sizes="180x180" href="{{ WebBlocks::faviconUrl('apple-touch-icon.png') }}">
+            <link rel="shortcut icon" href="{{ $faviconPng32Url }}">
         @endif
         <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
         @if (is_file($notFoundPublicCssPath))

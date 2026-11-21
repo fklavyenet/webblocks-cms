@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use Illuminate\Support\Facades\File;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -20,6 +21,30 @@ class BrandedNotFoundPageTest extends TestCase
   protected function defineDatabaseMigrations(): void
   {
     $this->loadMigrationsFrom(dirname(__DIR__, 2).'/database/migrations/fresh');
+  }
+
+  #[Test]
+  public function public_pages_and_the_404_use_the_same_content_versioned_favicons(): void
+  {
+    $site = $this->seedSite();
+    $page = Page::query()->create(['site_id' => $site->id, 'status' => 'published']);
+    $page->translations()->create([
+      'site_id' => $site->id,
+      'locale_id' => Locale::query()->where('code', 'en')->value('id'),
+      'name' => 'Favicon test',
+      'slug' => 'favicon-test',
+      'path' => '/favicon-test',
+    ]);
+
+    $normal = $this->get('/favicon-test')->assertOk();
+    $notFound = $this->get('/no-such-page')->assertNotFound();
+    foreach (['favicon.svg', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png'] as $filename) {
+      $path = 'cms/brand/'.$filename;
+      $hash = substr(hash_file('sha256', dirname(__DIR__, 2).'/public/'.$path), 0, 12);
+      $href = 'href="'.asset($path).'?v='.$hash.'"';
+      $normal->assertSee($href, escape: false);
+      $notFound->assertSee($href, escape: false);
+    }
   }
 
   #[Test]
@@ -87,11 +112,13 @@ class BrandedNotFoundPageTest extends TestCase
     }
   }
 
-  private function seedSite(): void
+  private function seedSite(): Site
   {
     $site = Site::query()->create(['name' => 'Test', 'handle' => 'test', 'is_primary' => true]);
     $english = Locale::query()->firstOrCreate(['code' => 'en'], ['name' => 'English', 'is_default' => true, 'is_enabled' => true]);
     $turkish = Locale::query()->firstOrCreate(['code' => 'tr'], ['name' => 'Türkçe', 'is_default' => false, 'is_enabled' => true]);
     $site->locales()->syncWithoutDetaching([$english->id => ['is_enabled' => true], $turkish->id => ['is_enabled' => true]]);
+
+    return $site;
   }
 }

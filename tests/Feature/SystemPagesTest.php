@@ -228,6 +228,13 @@ class SystemPagesTest extends TestCase
     $page->update(['status' => 'archived']);
     CmsUpdateMaintenance::arguments();
     $this->assertFileDoesNotExist(SystemPageRenderer::maintenancePath());
+
+    $html = view(CmsUpdateMaintenance::VIEW)->render();
+    foreach (['favicon.svg', 'favicon-16x16.png', 'favicon-32x32.png'] as $filename) {
+      $path = '/cms/brand/'.$filename;
+      $hash = substr(hash_file('sha256', dirname(__DIR__, 2).'/public'.$path), 0, 12);
+      $this->assertStringContainsString('href="'.$path.'?v='.$hash.'"', $html);
+    }
   }
 
   #[Test]

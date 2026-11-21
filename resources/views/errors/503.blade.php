@@ -18,9 +18,9 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ $maintenanceText('title') }}</title>
-        <link rel="icon" type="image/svg+xml" href="/cms/brand/favicon.svg?v={{ \WebBlocks\Cms\Support\WebBlocks::VERSION }}">
-        <link rel="icon" type="image/png" sizes="16x16" href="/cms/brand/favicon-16x16.png?v={{ \WebBlocks\Cms\Support\WebBlocks::VERSION }}">
-        <link rel="icon" type="image/png" sizes="32x32" href="/cms/brand/favicon-32x32.png?v={{ \WebBlocks\Cms\Support\WebBlocks::VERSION }}">
+        <link rel="icon" type="image/svg+xml" href="{{ \WebBlocks\Cms\Support\WebBlocks::faviconUrl('favicon.svg', rootRelative: true) }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ \WebBlocks\Cms\Support\WebBlocks::faviconUrl('favicon-16x16.png', rootRelative: true) }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ \WebBlocks\Cms\Support\WebBlocks::faviconUrl('favicon-32x32.png', rootRelative: true) }}">
         <link rel="stylesheet" href="{{ \WebBlocks\Cms\Support\WebBlocks::uiCssUrl() }}">
         <link rel="stylesheet" href="/cms/css/public.css">
     </head>

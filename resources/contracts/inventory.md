@@ -398,6 +398,11 @@ promotion retain the complete accepted source binding.
 
 ## Public Rendering Shell
 
+The packaged favicon URLs use a revision derived from each asset's file
+contents. Normal pages, the branded 404 and the built-in maintenance page
+use the same revision rule. A site's selected public favicon still takes
+precedence on its public pages.
+
 Normal main-slot rendering provides:
 
 ```html

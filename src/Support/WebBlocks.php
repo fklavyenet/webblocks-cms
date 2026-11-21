@@ -10,7 +10,7 @@ final class WebBlocks
 
   public const HANDLE = 'webblocks-cms';
 
-  public const VERSION = '1.144.3';
+  public const VERSION = '1.144.4';
 
   public const UI_VERSION = 'v2.38.0';
 
@@ -47,6 +47,17 @@ final class WebBlocks
   public static function uiVersion(): string
   {
     return self::UI_VERSION;
+  }
+
+  public static function faviconUrl(string $filename, bool $rootRelative = false): string
+  {
+    $assetPath = 'cms/brand/'.$filename;
+    $url = $rootRelative ? '/'.$assetPath : asset($assetPath);
+    $path = dirname(__DIR__, 2).'/public/'.$assetPath;
+    // The built-in error pages must still render if an asset is unavailable.
+    $hash = @hash_file('sha256', $path);
+
+    return $hash === false ? $url : $url.'?v='.substr($hash, 0, 12);
   }
 
   public static function uiCssUrl(): string

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.144.4
+
+- Keep default favicon URLs stable across CMS updates by versioning them with the icon file's content hash. Normal pages, 404 pages and maintenance pages use the same rule.
+
 ## 1.144.3
 
 - Save translated plugin block fields in the selected language when editing blocks in Webadmin.
