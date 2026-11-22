@@ -3,9 +3,13 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\Console\Input\StringInput;
+use Symfony\Component\Console\Output\BufferedOutput;
 use WebBlocks\Cms\Actions\Jobs\TransitionJobRun;
 use WebBlocks\Cms\Actions\Seo\ManageSeoAudit;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
@@ -339,6 +343,20 @@ class JobExecutionTest extends TestCase
         $this->assertNotSame('json', $column['type_name']);
       }
     }
+  }
+
+  #[Test]
+  public function laravel_scheduled_worker_records_a_completed_automatic_tick(): void
+  {
+    $this->registry([new JobDefinition('probe', 'test', fn () => ['state' => 'complete'], '* * * * *', web: true, automatic: true)]);
+    $event = collect(app(Schedule::class)->events())
+      ->sole(fn ($event) => str_contains($event->command ?? '', 'webblocks:jobs:work'));
+    $input = new StringInput(strstr($event->command, 'webblocks:jobs:work'));
+    $output = new BufferedOutput;
+
+    $this->assertSame(0, app(Kernel::class)->handle($input, $output), $output->fetch());
+    $this->assertDatabaseHas('wbcms_job_ticks', ['source' => 'cli', 'probe_completed' => true]);
+    $this->assertNotNull(DB::table('wbcms_job_ticks')->where('source', 'cli')->value('completed_at'));
   }
 
   #[Test]

@@ -1318,7 +1318,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         ->everyMinute();
 
       $this->app->make(Schedule::class)
-        ->command('webblocks:jobs:work', ['--scheduled' => true])->everyMinute()->withoutOverlapping(15);
+        ->command('webblocks:jobs:work', ['--scheduled'])->everyMinute()->withoutOverlapping(15);
 
     });
   }

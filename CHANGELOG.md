@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.144.10
+
+- Restore automatic CMS jobs run by the Laravel scheduler, including maintenance reports and backup archive verification.
+
 ## 1.144.9
 
 - Find Plugins, Public themes and Language packs together under Extensions in Webadmin.
