@@ -49,7 +49,7 @@ final class PublicThemesTest extends TestCase
     [$other, $otherPage] = $this->sitePage('two');
     $content = DB::table('wbcms_page_translations')->orderBy('id')->get()->toArray();
     $packages = route('admin.system.themes.index');
-    $this->get($packages)->assertOk()->assertSee('Upload new theme')->assertSee('id="upload-theme"', false)
+    $this->get($packages)->assertOk()->assertSee('Upload theme')->assertSee('data-wb-modal-submit-progress="uploading"', false)->assertSee('id="upload-theme"', false)
       ->assertSee('data-admin-listing-filters', false);
     $this->from($packages)->post(route('admin.system.themes.store'), ['theme_operation' => 'upload'])
       ->assertRedirect($packages)->assertSessionHasErrors('package');
@@ -74,8 +74,8 @@ final class PublicThemesTest extends TestCase
     $workspace = $this->get(route('admin.sites.themes.comparison', [$site, $version, 'page' => $page->id, 'button_corners' => 'soft']))
       ->assertOk()->assertSee('Preview: Editorial 1.0.0')->assertSee('Apply')
       ->assertSee('Current appearance')->assertSee('Candidate appearance')->assertSee('Activate on this site');
-    $this->get($packages.'?search=1.0.0')->assertOk()->assertSee('Editorial · 1.0.0')->assertSee('Uploaded at')
-      ->assertSee('wb-icon-trash')->assertDontSee('<details class="wb-collapse-panel"', false);
+    $this->get($packages.'?search=1.0.0')->assertOk()->assertSee('Editorial · 1.0.0')->assertSee('Installed at')
+      ->assertSee('wb-icon-trash')->assertSee('aria-label="Delete Editorial 1.0.0"', false)->assertDontSee('<details class="wb-collapse-panel"', false);
     $this->get($packages.'?search=unmatched')->assertOk()->assertSee('No theme versions match your search.')
       ->assertDontSee('Editorial · 1.0.0');
     preg_match('/name="confirmation" value="([^"]+)"/', $workspace->getContent(), $matches);
@@ -154,6 +154,8 @@ final class PublicThemesTest extends TestCase
     [$site, $page] = $this->sitePage('catalog-site', true);
     $packages = route('admin.system.themes.index');
     $catalog = route('admin.system.themes.catalog.index');
+    $secondPage = route('admin.system.themes.catalog.index', ['page' => 2]);
+    $install = route('admin.system.themes.catalog.store', ['page' => 2]);
     config(['webblocks-plugins.catalog.extensions_base_url' => '']);
     $this->get($catalog)->assertNotFound();
     $this->post(route('admin.system.themes.store'), ['package' => $this->archive()])->assertRedirect();
@@ -177,9 +179,10 @@ final class PublicThemesTest extends TestCase
     $download = $origin.'/themes/editorial/releases/1.1.0/download';
     Http::preventStrayRequests();
     Http::fake([
-      $origin.'/api/themes?*' => Http::response(['data' => [[
-        'handle' => 'editorial', 'name' => 'Editorial', 'release' => $release,
-      ]], 'next_page' => null]),
+      $origin.'/api/themes?*' => fn ($request) => Http::response([
+        'data' => [['handle' => 'editorial', 'name' => 'Editorial', 'release' => $release]],
+        'next_page' => str_contains($request->url(), 'page=1') ? 2 : null,
+      ]),
       $origin.'/api/themes/editorial/releases/1.1.0' => Http::response(['data' => $release]),
       $download => function () use (&$bytes) {
         return Http::response($bytes);
@@ -188,17 +191,21 @@ final class PublicThemesTest extends TestCase
 
     $this->get($packages)->assertOk()->assertSee('Browse theme catalog');
     Http::assertNothingSent();
-    $this->get($catalog)->assertOk()->assertSee('Editorial')->assertSee('Install update');
+    $this->get($catalog)->assertOk()->assertSee('Editorial')->assertSee('Update available')->assertSee('Install update')
+      ->assertSee('wb-pagination wb-border-0', false)->assertSee($secondPage);
+    $this->get($secondPage)->assertOk()->assertSee('aria-current="page">2', false)->assertSee($install)
+      ->assertSeeInOrder(['wb-nav-group-label">System', 'wb-nav-group-label">Extensions', 'wb-nav-group-label">Maintenance'], false)
+      ->assertSeeInOrder(['wb-breadcrumb-current">Extensions', 'wb-breadcrumb-link" href="'.$packages.'">Public themes', 'aria-current="page">Theme catalog'], false);
     $params = ['handle' => 'editorial', 'version' => '1.1.0'];
-    $this->from($catalog)->post(route('admin.system.themes.catalog.store'), $params)->assertSessionHasErrors('catalog');
+    $this->post($install, $params)->assertRedirect($secondPage)->assertSessionHasErrors('catalog');
     $this->assertDatabaseCount('wbcms_theme_versions', 1);
 
     $bytes = $file;
-    $this->post(route('admin.system.themes.catalog.store'), $params)->assertRedirect($packages);
+    $this->post($install, $params)->assertRedirect($secondPage);
     $this->assertDatabaseHas('wbcms_theme_versions', ['handle' => 'editorial', 'version' => '1.1.0', 'checksum' => $release['sha256']]);
     $this->assertDatabaseHas('wbcms_site_theme_changes', ['site_id' => $site->id, 'theme_version_id' => $v1]);
     $this->assertDatabaseCount('wbcms_site_theme_changes', 1);
-    $this->get($catalog)->assertOk()->assertSee('Installed')->assertDontSee('Install update');
+    $this->get($secondPage)->assertOk()->assertSee('Theme version installed.')->assertSee('Installed')->assertDontSee('Install update');
   }
 
   private function actor(): User

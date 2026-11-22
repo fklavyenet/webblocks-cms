@@ -89,23 +89,31 @@ final class AdminNavigation
                         'items' => [
                             ['label' => $adminText('navigation.domains'), 'route' => 'admin.domains.index', 'active' => ['admin.domains.*', 'admin.sites.domains.*'], 'icon' => 'wb-icon-globe'],
                             ['label' => $adminText('navigation.icons'), 'route' => 'admin.system.icons.index', 'active' => ['admin.system.icons.*'], 'icon' => 'wb-icon-sparkles'],
-                            ...($user->can('manage-public-themes') && app(PublicThemes::class)->ready() ? [[
-                                'label' => $adminTranslator->get('themes.title', $adminLocale), 'route' => 'admin.system.themes.index',
-                                'active' => ['admin.system.themes.*'], 'icon' => 'wb-icon-palette',
-                            ]] : []),
-                            ...($user->can('manage-panel-languages') ? [[
-                                'label' => $adminTranslator->get('panel-languages.title', $adminLocale), 'route' => 'admin.system.panel-languages.index',
-                                'active' => ['admin.system.panel-languages.*'], 'icon' => 'wb-icon-languages',
-                            ]] : []),
                             ['label' => $adminText('navigation.locales'), 'route' => 'admin.locales.index', 'active' => ['admin.locales.*'], 'icon' => 'wb-icon-languages'],
                             ['label' => $adminText('navigation.page_layouts'), 'route' => 'admin.page-layouts.index', 'active' => ['admin.page-layouts.*'], 'icon' => 'wb-icon-layout'],
                             ['label' => $adminText('navigation.slot_types'), 'route' => 'admin.slot-types.index', 'active' => ['admin.slot-types.*'], 'icon' => 'wb-icon-columns2'],
                             ['label' => $adminText('navigation.block_types'), 'route' => 'admin.block-types.index', 'active' => ['admin.block-types.*'], 'icon' => 'wb-icon-box'],
                             ['label' => $adminText('navigation.embedded_applications'), 'route' => 'admin.embedded-applications.index', 'active' => ['admin.embedded-applications.*'], 'icon' => 'wb-icon-square-terminal'],
                             ['label' => $adminText('navigation.settings'), 'route' => 'admin.system.settings.edit', 'active' => ['admin.system.settings.*'], 'icon' => 'wb-icon-settings'],
-                            ['label' => $adminText('navigation.plugins'), 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*'], 'icon' => 'wb-icon-plug'],
                         ],
-                    ];
+                ];
+
+                $sidebarGroups[] = [
+                    'key' => 'extensions',
+                    'label' => $adminText('navigation.extensions'),
+                    'icon' => 'wb-icon-package',
+                    'items' => [
+                        ['label' => $adminText('navigation.plugins'), 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*', 'admin.plugins.catalog.*'], 'icon' => 'wb-icon-plug'],
+                        ...($user->can('manage-public-themes') && app(PublicThemes::class)->ready() ? [[
+                            'label' => $adminTranslator->get('themes.title', $adminLocale), 'route' => 'admin.system.themes.index',
+                            'active' => ['admin.system.themes.*'], 'icon' => 'wb-icon-palette',
+                        ]] : []),
+                        ...($user->can('manage-panel-languages') ? [[
+                            'label' => $adminTranslator->get('panel-languages.language_packs', $adminLocale), 'route' => 'admin.system.panel-languages.index',
+                            'active' => ['admin.system.panel-languages.*'], 'icon' => 'wb-icon-languages',
+                        ]] : []),
+                    ],
+                ];
 
                 $sidebarGroups[] = [
                     'key' => 'maintenance',
@@ -166,7 +174,7 @@ final class AdminNavigation
       }
       $sidebarGroups[$audience]['items'][] = ['label' => $adminTranslator->get('jobs.seo', $adminLocale), 'route' => 'admin.jobs.seo', 'active' => ['admin.jobs.seo', 'admin.sites.seo-audits.*'], 'icon' => 'wb-icon-search'];
     }
-    $order = ['content-tools', 'audience', 'access', 'consent', 'structure', 'system', 'maintenance'];
+    $order = ['content-tools', 'audience', 'access', 'consent', 'structure', 'system', 'extensions', 'maintenance'];
     usort($sidebarGroups, fn ($a, $b) => (array_search($a['key'], $order, true) === false ? 100 : array_search($a['key'], $order, true)) <=> (array_search($b['key'], $order, true) === false ? 100 : array_search($b['key'], $order, true)));
 
     return ['menuItems' => $menuItems, 'sidebarGroups' => array_values(array_filter($sidebarGroups, fn ($group) => $group['items'] !== []))];

@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\InstallCatalogThemeRequest;
@@ -18,8 +19,7 @@ final class ThemeCatalogController
   {
     abort_unless($this->themes->ready(), 503);
     abort_unless($this->catalog->enabled(), 404);
-    $query = $request->query('page', '1');
-    $page = is_string($query) && ctype_digit($query) ? min(10000, max(1, (int) $query)) : 1;
+    $page = $this->page($request);
     $catalogError = null;
     try {
       $result = $this->catalog->browse($page);
@@ -28,15 +28,31 @@ final class ThemeCatalogController
       $catalogError = $exception->getMessage();
     }
 
-    return view('webblocks-cms::admin.system.themes.catalog', $result + compact('page', 'catalogError'));
+    $themes = new Paginator($result['themes'], ThemeCatalog::PAGE_SIZE, $page, ['path' => $request->url()]);
+    $themes->hasMorePagesWhen($page < 10000 && $result['hasMore']);
+
+    return view('webblocks-cms::admin.system.themes.catalog', compact('themes', 'catalogError'));
   }
 
   public function store(InstallCatalogThemeRequest $request): RedirectResponse
   {
     abort_unless($this->themes->ready(), 503);
     abort_unless($this->catalog->enabled(), 404);
-    $this->catalog->install($request->validated('handle'), $request->validated('version'));
+    $page = $this->page($request);
+    $return = redirect()->route('admin.system.themes.catalog.index', $page > 1 ? ['page' => $page] : []);
+    try {
+      $this->catalog->install($request->validated('handle'), $request->validated('version'));
+    } catch (ValidationException $exception) {
+      return $return->withErrors($exception->errors());
+    }
 
-    return redirect()->route('admin.system.themes.index')->with('theme_status', 'installed');
+    return $return->with('theme_status', 'catalog_install_success');
+  }
+
+  private function page(Request $request): int
+  {
+    $query = $request->query('page', '1');
+
+    return is_string($query) && ctype_digit($query) ? min(10000, max(1, (int) $query)) : 1;
   }
 }

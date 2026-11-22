@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.9
+
+- Find Plugins, Public themes and Language packs together under Extensions in Webadmin.
+- Manage installed theme versions with a compact filter, visible compatibility and retention details, and progress feedback for ZIP uploads.
+- Browse theme releases with separate version and status columns and shared pagination. Stay on the same catalog page after installing a release.
+
 ## 1.144.8
 
 - Review compatibility, version, installation status, price, and total downloads in a single plugin detail card. Open documentation beside the install action.

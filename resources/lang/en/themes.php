@@ -1,6 +1,17 @@
 <?php
 
 return [
+  'catalog_title' => 'Theme catalog',
+  'catalog_back' => 'Back to public themes',
+  'status' => 'Status',
+  'catalog_available' => 'Available',
+  'catalog_update_available' => 'Update available',
+  'catalog_installing' => 'Installing…',
+  'catalog_install_named' => 'Install :name',
+  'catalog_update_named' => 'Install update for :name',
+  'catalog_install_success' => 'Theme version installed.',
+  'incompatible_short' => 'Incompatible',
+  'delete_named' => 'Delete :name :version',
   'browse_catalog' => 'Browse theme catalog',
   'catalog_version' => 'Catalog version',
   'catalog_incompatible' => 'No compatible release',
@@ -18,6 +29,7 @@ return [
   'upload_new' => 'Upload new theme',
   'search_placeholder' => 'Name or version',
   'no_matches' => 'No theme versions match your search.',
+  'installed_at' => 'Installed at',
   'uploaded_at' => 'Uploaded at',
   'title' => 'Public themes',
   'site_title' => 'Site theme',

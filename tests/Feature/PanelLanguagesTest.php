@@ -361,7 +361,7 @@ class PanelLanguagesTest extends TestCase
     $publicationDefault = app(SystemSettings::class)->get(SystemSettings::DEFAULT_LOCALE);
     $this->get(route('admin.system.panel-languages.index', ['tab' => 'import']))
       ->assertOk()->assertSee('Download English template')
-      ->assertSee('class="wb-page-header-title">Panel languages</h1>', false)
+      ->assertSee('class="wb-page-header-title">Language packs</h1>', false)
       ->assertSee('class="wb-file" type="file"', false);
     $this->post(route('admin.system.panel-languages.store'), ['catalog' => $this->upload()])->assertRedirect();
     $id = DB::table('wbcms_panel_language_catalogs')->value('id');

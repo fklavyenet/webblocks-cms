@@ -1,44 +1,44 @@
 @php
-    $text = static fn (string $key) => __('webblocks-cms::themes.'.$key);
+    $text = static fn (string $key, array $replace = []) => __('webblocks-cms::themes.'.$key, $replace);
     $indexUrl = route('admin.system.themes.index');
     $searchQuery = $search === '' ? [] : ['search' => $search];
+    $uploadError = $errors->has('package') && old('theme_operation') === 'upload';
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $text('title'), 'heading' => $text('title')])
 
 @section('content')
-    @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title')])
-    @include('webblocks-cms::admin.system.themes.feedback')
+    @component('webblocks-cms::admin.partials.page-header', ['title' => $text('title')])
+        @slot('actions')
+            @if (app(\WebBlocks\Cms\Support\Theme\ThemeCatalog::class)->enabled())
+                <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.themes.catalog.index') }}">{{ $text('browse_catalog') }}</a>
+            @endif
+            <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#upload-theme" aria-haspopup="dialog">{{ $text('upload') }}</button>
+        @endslot
+    @endcomponent
+    @include('webblocks-cms::admin.system.themes.feedback', ['inlineErrors' => $uploadError ? ['package'] : []])
 
     <div class="wb-stack wb-gap-4">
-        <div class="wb-card wb-card-muted">
-            <div class="wb-card-body">
-                @include('webblocks-cms::admin.partials.listing-filters', [
-                    'action' => $indexUrl,
-                    'search' => [
-                        'id' => 'theme-search', 'name' => 'search',
-                        'label' => __('webblocks-cms::admin.common.search'),
-                        'value' => $search, 'placeholder' => $text('search_placeholder'),
-                    ],
-                    'showReset' => $search !== '',
-                    'resetUrl' => $indexUrl,
-                ])
-            </div>
-        </div>
+        @include('webblocks-cms::admin.partials.listing-filters', [
+            'action' => $indexUrl,
+            'search' => [
+                'id' => 'theme-search', 'name' => 'search',
+                'label' => __('webblocks-cms::admin.common.search'),
+                'value' => $search, 'placeholder' => $text('search_placeholder'),
+            ],
+            'showReset' => $search !== '',
+            'resetUrl' => $indexUrl,
+        ])
 
         <section class="wb-card" aria-labelledby="installed-themes-title">
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
-                <strong id="installed-themes-title">{{ $text('versions') }}</strong>
-                <div class="wb-cluster wb-gap-2">
-                    @if (app(\WebBlocks\Cms\Support\Theme\ThemeCatalog::class)->enabled())
-                        <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.themes.catalog.index') }}">{{ $text('browse_catalog') }}</a>
-                    @endif
-                    <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#upload-theme" aria-haspopup="dialog">{{ $text('upload_new') }}</button>
-                </div>
+            <div class="wb-card-header">
+                <h2 id="installed-themes-title" class="wb-card-title">{{ $text('versions') }}</h2>
             </div>
             <div class="wb-card-body">
                 @if ($versions->isEmpty())
-                    <p class="wb-text-muted">{{ $text($search === '' ? 'empty' : 'no_matches') }}</p>
+                    <div class="wb-empty">
+                        <p class="wb-empty-title">{{ $text($search === '' ? 'empty' : 'no_matches') }}</p>
+                    </div>
                 @else
                     <div class="wb-table-wrap">
                         <table class="wb-table">
@@ -47,26 +47,34 @@
                                     <th scope="col">{{ $text('theme') }}</th>
                                     <th scope="col">{{ $text('compatibility') }}</th>
                                     <th scope="col">{{ $text('layouts') }}</th>
-                                    <th scope="col">{{ $text('uploaded_at') }}</th>
+                                    <th scope="col">{{ $text('installed_at') }}</th>
                                     <th scope="col" class="wb-table-actions">{{ $text('actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($versions as $version)
-                                    @php($uploaded = \Illuminate\Support\Carbon::parse($version->created_at))
+                                    @php
+                                        $uploaded = \Illuminate\Support\Carbon::parse($version->created_at);
+                                        $deleteLabel = $text('delete_named', ['name' => $version->name, 'version' => $version->version]);
+                                    @endphp
                                     <tr>
                                         <th scope="row">{{ $version->name }} · {{ $version->version }}</th>
-                                        <td>{{ $text($version->compatible ? 'compatible' : 'incompatible') }}</td>
+                                        <td>
+                                            <span class="wb-status-pill {{ $version->compatible ? 'wb-status-active' : 'wb-status-danger' }}">
+                                                {{ $text($version->compatible ? 'compatible' : 'incompatible_short') }}
+                                            </span>
+                                            @unless ($version->compatible)
+                                                <p class="wb-text-sm wb-text-muted wb-m-0">{{ $text('incompatible') }}</p>
+                                            @endunless
+                                        </td>
                                         <td>{{ implode(', ', $version->layouts) }}</td>
                                         <td><time datetime="{{ $uploaded->toIso8601String() }}">{{ $uploaded->format('Y-m-d H:i') }}</time></td>
                                         <td class="wb-table-actions">
                                             <div class="wb-action-group">
                                                 @if ($version->uses)
-                                                    <button type="button" class="wb-action-btn wb-action-btn-delete" title="{{ $text('retained') }}" aria-label="{{ $text('retained') }}" disabled>
-                                                        <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
-                                                    </button>
+                                                    <span class="wb-text-sm wb-text-muted">{{ $text('retained') }}</span>
                                                 @else
-                                                    <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#delete-theme-{{ $version->id }}" title="{{ $text('delete') }}" aria-label="{{ $text('delete') }}" aria-haspopup="dialog">
+                                                    <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#delete-theme-{{ $version->id }}" data-wb-tooltip="{{ $deleteLabel }}" aria-label="{{ $deleteLabel }}" aria-haspopup="dialog">
                                                         <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                     </button>
                                                 @endif
@@ -85,22 +93,22 @@
 @endsection
 
 @push('overlays')
-    <dialog class="wb-modal" id="upload-theme" aria-labelledby="upload-theme-title" @if ($errors->has('package') && old('theme_operation') === 'upload') data-wb-admin-autoload-overlay @endif>
+    <dialog class="wb-modal" id="upload-theme" aria-labelledby="upload-theme-title" @if ($uploadError) data-wb-admin-autoload-overlay @endif>
         <div class="wb-modal-dialog">
             <div class="wb-modal-header">
-                <h2 class="wb-modal-title" id="upload-theme-title">{{ $text('upload_new') }}</h2>
-                <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ __('webblocks-cms::admin.common.close_named', ['name' => $text('upload_new')]) }}">
+                <h2 class="wb-modal-title" id="upload-theme-title">{{ $text('upload') }}</h2>
+                <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ __('webblocks-cms::admin.common.close_named', ['name' => $text('upload')]) }}">
                     <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                 </button>
             </div>
-            <form method="post" action="{{ route('admin.system.themes.store') }}" enctype="multipart/form-data">
+            <form method="post" action="{{ route('admin.system.themes.store') }}" enctype="multipart/form-data" data-wb-modal-submit-progress="uploading">
                 @csrf
                 <input type="hidden" name="theme_operation" value="upload">
                 <div class="wb-modal-body wb-field">
                     <label class="wb-label" for="theme-package">{{ $text('package') }}</label>
                     <input id="theme-package" name="package" type="file" class="wb-file" accept=".zip,application/zip"
-                        aria-describedby="theme-package-help{{ $errors->has('package') && old('theme_operation') === 'upload' ? ' theme-package-error' : '' }}"
-                        @if ($errors->has('package') && old('theme_operation') === 'upload') aria-invalid="true" @endif required>
+                        aria-describedby="theme-package-help{{ $uploadError ? ' theme-package-error' : '' }}"
+                        @if ($uploadError) aria-invalid="true" @endif required>
                     <p id="theme-package-help" class="wb-text-sm wb-text-muted">{{ $text('upload_help') }}</p>
                     @if (old('theme_operation') === 'upload')
                         @error('package')

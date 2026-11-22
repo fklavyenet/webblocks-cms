@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'language_packs' => 'Packs de langue',
   'title' => 'Langues du panneau',
   'help' => 'Téléversez un catalogue de traductions UTF-8 pour le panneau d’administration. Pour les traductions manquantes, le panneau utilise la langue fournie si elle est disponible, puis l’anglais.',
   'catalogs' => 'Catalogues',

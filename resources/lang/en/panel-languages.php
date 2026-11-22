@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'language_packs' => 'Language packs',
   'title' => 'Panel languages',
   'help' => 'Upload a UTF-8 translation catalog for the management panel. Missing translations use the packaged language when available, then English.',
   'catalogs' => 'Catalogs',

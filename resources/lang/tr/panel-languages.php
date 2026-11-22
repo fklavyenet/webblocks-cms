@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'language_packs' => 'Dil paketleri',
   'title' => 'Panel dilleri',
   'help' => 'Yönetim paneli için bir UTF-8 çeviri kataloğu yükleyin. Eksik çeviriler için önce varsa paketle gelen dil, ardından İngilizce kullanılır.',
   'catalogs' => 'Kataloglar',

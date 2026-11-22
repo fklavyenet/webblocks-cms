@@ -11,6 +11,8 @@ use WebBlocks\Cms\Support\WebBlocks;
 
 final class ThemeCatalog
 {
+  public const PAGE_SIZE = 24;
+
   public const HANDLE_PATTERN = '[a-z0-9]+(?:-[a-z0-9]+)*';
 
   public const VERSION_PATTERN = '(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[a-z0-9]+(?:[.-][a-z0-9]+)*)?';
@@ -34,7 +36,7 @@ final class ThemeCatalog
       'ui' => ltrim(WebBlocks::UI_VERSION, 'v'),
     ]);
 
-    if (! is_array($result['data'] ?? null) || ! array_is_list($result['data']) || count($result['data']) > 24) {
+    if (! is_array($result['data'] ?? null) || ! array_is_list($result['data']) || count($result['data']) > self::PAGE_SIZE) {
       $this->invalid('catalog_unavailable');
     }
 

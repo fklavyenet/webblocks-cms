@@ -1,6 +1,17 @@
 <?php
 
 return [
+  'catalog_title' => 'Tema kataloğu',
+  'catalog_back' => 'Site temalarına dön',
+  'status' => 'Durum',
+  'catalog_available' => 'Kurulabilir',
+  'catalog_update_available' => 'Güncelleme var',
+  'catalog_installing' => 'Kuruluyor…',
+  'catalog_install_named' => ':name temasını kur',
+  'catalog_update_named' => ':name temasının güncellemesini kur',
+  'catalog_install_success' => 'Tema sürümü kuruldu.',
+  'incompatible_short' => 'Uyumsuz',
+  'delete_named' => ':name :version sürümünü sil',
   'browse_catalog' => 'Tema kataloğuna göz at',
   'catalog_version' => 'Katalog sürümü',
   'catalog_incompatible' => 'Uyumlu sürüm yok',
@@ -18,6 +29,7 @@ return [
   'upload_new' => 'Yeni tema yükle',
   'search_placeholder' => 'Ad veya sürüm',
   'no_matches' => 'Aramanıza uyan tema sürümü yok.',
+  'installed_at' => 'Kurulum tarihi',
   'uploaded_at' => 'Yükleme tarihi',
   'title' => 'Site temaları',
   'site_title' => 'Site teması',

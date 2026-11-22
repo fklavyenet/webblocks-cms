@@ -5,11 +5,11 @@
     $tab = in_array($tab, $tabs, true) ? $tab : 'catalogs';
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $text('title'), 'heading' => $text('title')])
+@extends('webblocks-cms::layouts.admin', ['title' => $text('language_packs'), 'heading' => $text('language_packs')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => $text('title'),
+        'title' => $text('language_packs'),
         'actions' => $extensionsAvailable
             ? '<a class="wb-btn wb-btn-secondary" href="'.e(route('admin.system.panel-languages.extensions.index')).'">'.e($text('extensions_browse')).'</a>'
             : null,
@@ -17,7 +17,7 @@
     @include('webblocks-cms::admin.system.panel-languages.feedback')
 
     <div class="wb-tabs" data-wb-tabs>
-        <div class="wb-tabs-nav" role="tablist" aria-label="{{ $text('title') }}">
+        <div class="wb-tabs-nav" role="tablist" aria-label="{{ $text('language_packs') }}">
             @foreach ($tabs as $section)
                 <button type="button" role="tab" id="panel-languages-tab-{{ $section }}"
                     class="wb-tabs-btn{{ $tab === $section ? ' is-active' : '' }}"

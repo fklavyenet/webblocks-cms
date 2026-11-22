@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'language_packs' => 'Sprachpakete',
   'title' => 'Sprachen der Verwaltung',
   'help' => 'Laden Sie einen UTF-8-Übersetzungskatalog für die Verwaltung hoch. Fehlt eine Übersetzung, wird die mitgelieferte Sprache verwendet, sofern sie verfügbar ist, sonst Englisch.',
   'catalogs' => 'Kataloge',

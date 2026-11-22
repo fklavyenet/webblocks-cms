@@ -133,6 +133,7 @@ return [
     'draft' => 'Draft',
   ],
   'navigation' => [
+    'extensions' => 'Extensions',
     'content_tools' => 'Content tools',
     'communication_analytics' => 'Contact & analytics',
     'users_access' => 'Users & access',

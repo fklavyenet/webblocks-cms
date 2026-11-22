@@ -102,7 +102,8 @@ announced with an appropriate status/alert live region.
 
 Admin lists use the shared `admin.partials.pagination` in the list card footer.
 Use `wb-border-0` on the `wb-pagination` navigation to remove its outer frame.
-Keep the individual controls and their visible keyboard focus styles.
+Keep the individual controls and their visible keyboard focus styles. Use the
+simple paginator when the source offers a next page and no total.
 
 Use `admin.more-actions-trigger` for overflow menus in an Actions column or
 alongside a record's primary actions. The WebBlocks UI button pairs horizontal

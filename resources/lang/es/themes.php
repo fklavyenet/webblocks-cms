@@ -1,6 +1,17 @@
 <?php
 
 return [
+  'catalog_title' => 'Catálogo de temas',
+  'catalog_back' => 'Volver a los temas públicos',
+  'status' => 'Estado',
+  'catalog_available' => 'Disponible',
+  'catalog_update_available' => 'Actualización disponible',
+  'catalog_installing' => 'Instalando…',
+  'catalog_install_named' => 'Instalar :name',
+  'catalog_update_named' => 'Instalar la actualización de :name',
+  'catalog_install_success' => 'Se instaló la versión del tema.',
+  'incompatible_short' => 'Incompatible',
+  'delete_named' => 'Eliminar :name :version',
   'browse_catalog' => 'Explorar el catálogo de temas',
   'catalog_version' => 'Versión del catálogo',
   'catalog_incompatible' => 'Sin versión compatible',
@@ -18,6 +29,7 @@ return [
   'upload_new' => 'Subir un tema nuevo',
   'search_placeholder' => 'Nombre o versión',
   'no_matches' => 'Ninguna versión coincide con la búsqueda.',
+  'installed_at' => 'Fecha de instalación',
   'uploaded_at' => 'Fecha de carga',
   'title' => 'Temas públicos',
   'site_title' => 'Tema del sitio',

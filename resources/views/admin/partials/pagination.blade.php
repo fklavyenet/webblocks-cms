@@ -4,17 +4,20 @@
   $adminText = fn (string $key, array $replace = []) => $adminTranslator->get('admin.pagination.'.$key, $adminLocale, $replace);
   $ariaLabel = $ariaLabel ?? $adminText('aria_label');
   $compact = $compact ?? false;
-  $summaryText = $paginator->firstItem() !== null && $paginator->lastItem() !== null
+  $lengthAware = $paginator instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+  $summaryText = $lengthAware && $paginator->firstItem() !== null && $paginator->lastItem() !== null
     ? $paginator->firstItem().'-'.$paginator->lastItem().'/'.$paginator->total()
     : null;
   $window = 2;
   $currentPage = $paginator->currentPage();
-  $lastPage = $paginator->lastPage();
+  $lastPage = $lengthAware ? $paginator->lastPage() : $currentPage;
   $startPage = max(1, $currentPage - $window);
   $endPage = min($lastPage, $currentPage + $window);
   $pages = [];
 
-  if ($lastPage > 0) {
+  if (! $lengthAware) {
+    $pages[] = $currentPage;
+  } elseif ($lastPage > 0) {
     $pages[] = 1;
 
     for ($page = $startPage; $page <= $endPage; $page++) {

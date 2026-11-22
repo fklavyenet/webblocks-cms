@@ -736,6 +736,7 @@
     "backup_log.site_files_added": ["09d1d8b5e43827d6a78919c676454f809662a6a5ace76607f22fb9f6b13cb177", "Добавлен публичный файл (файлы) сайта :count с публичного/сайта."]
   },
   "webblocks-cms::admin": {
+    "navigation.extensions": ["fe3436af86b47d22f22d93da68119fcb749dbed0335b4dc99f254e02db236156", "Extensions"],
     "page_workflow.submit_review": ["5acdc339980686e4635f89d92be30731f4a9d63d0579be9022cfbe556c921348", "Представление для обзора"],
     "page_workflow.publish": ["859390eb495b2ead7f05f0f799546c71435b2db31dbe082adecc3426fffc3391", "Опубликовать"],
     "page_workflow.restore_draft": ["c3fe7de073d2fe8ee7a27bdf12f4fc914ee7db72f91cf0abf0b592ca7ea676c5", "Вернуться к проекту"],
@@ -6543,6 +6544,7 @@
     "errors.confirmation_required": ["930b478580465b50e65071894ad82b9c1de5560dbb439415e1f0462710a13405", "Требуется явное одобрение для восстановления выбранного языка."]
   },
   "webblocks-cms::panel-languages": {
+    "language_packs": ["6a2b54fada8e92a5b0657147c8023a8cd5ee003021df2d92ed7ba8443cd5973d", "Языковые пакеты"],
     "title": ["3a7bb48480357ff2b6a3b4da094ff35f326bdeae165b3afc6c34db7fc551182f", "Языки панели управления"],
     "help": ["921c04940b7ce02ad434a1088ef5b80ced67b17674e65012e8dc1330ea5bd07b", "Загрузите каталог переводов панели управления в кодировке UTF-8. При отсутствии перевода используется установленный языковой пакет, а при его отсутствии — английский."],
     "catalogs": ["d1dfb17daacb99d4bf84986be64787f79f0d363f8b9e59c862335af7e227b560", "Каталоги"],
@@ -7125,6 +7127,17 @@
     "listings.imports": ["8b55848bab54f4d5b5971395c96e67455fc60d456bfd048fec7244df65521639", "Импорт сайтов"]
   },
   "webblocks-cms::themes": {
+    "catalog_title": ["9ed9ed4aa6013598a888832d26e621ee55c29706df1d045cf951d3cd81e9bea0", "Каталог тем"],
+    "catalog_back": ["bdc96a548b4328c38a5b3a507b666d1f8f25bcd30dd64db0fde31cf4503a4ba0", "Вернуться к публичным темам"],
+    "status": ["920e413c7d411b61ef3e8c63b1cb6ad058d5f95f8b481dbafe60248387d8c355", "Статус"],
+    "catalog_available": ["e674447337e83c1346f6122ed69f35bf5526e2a11842b2f2b788f3fb67d714ca", "Доступна"],
+    "catalog_update_available": ["ff8b555d818f0b25bbdd1bec8b479660bac7fc276acbe993e759bf67fed32c34", "Доступно обновление"],
+    "catalog_installing": ["530bcc355f0a3cd6a75a5216f1648e3dc48da5615ee41f56e033f4732982a3df", "Установка…"],
+    "catalog_install_named": ["d7714e2ebe079bb78370b8d5692a210aa67256608a058f701beee7fb65035a9c", "Установить :name"],
+    "catalog_update_named": ["9454e48cc45b839f14a04f39f45f5604128fe852928989c38db9bab022424bf9", "Установить обновление для :name"],
+    "catalog_install_success": ["fa76c88c817e5d0207f8ecba5139d9a25dd43199a0039e0ebfa61f696e4c62a4", "Версия темы установлена."],
+    "incompatible_short": ["8777e3a9e3ec54a016500ed03f79cdcbebe135d6505cca8fa5dc6c4d6767d72a", "Несовместима"],
+    "delete_named": ["8ceedd074aa0d6faba4988aaa09a4e6ec38c72159835fa4892e3ef2f30649563", "Удалить :name :version"],
     "browse_catalog": ["f2675c5de849dc481b161912a28bf411efcab95c90049d108fe0e7b029c1bf23", "Просмотреть тематический каталог"],
     "catalog_version": ["22296b826b25e56ae3ec7eff0cc954104e644f154dfabcc559028bf31803cff0", "Каталоговая версия"],
     "catalog_incompatible": ["c6449ceae30f02a6d564bd079f343e7da49ec871efdbe7cd2240051acbae4fe0", "Нет совместимого выпуска"],
@@ -7142,6 +7155,7 @@
     "upload_new": ["fdc38306daa522c612b86717b721fe865a885d8ed27fa687b91263b0454b5b96", "Загрузить новую тему"],
     "search_placeholder": ["65d5ddb0ad4a004730f470395ce90166c3340d0c00da8e23ea07fe36ff0bcb1b", "Имя или версия"],
     "no_matches": ["87d2c1397617419a762029b933f435bf84ae390163d6fc504d622dfa5a1a59ec", "Никакие версии темы не соответствуют вашему поиску."],
+    "installed_at": ["5879876b0fbd9dc4143bc9a88c81fa27b800de3a4cd2bc5bbaf563e6e574c4bf", "Дата установки"],
     "uploaded_at": ["124a47f5a569f4a586f20b10f731be42d6021b7626e492143eec2b09f0e0c4b5", "Загруженный на"],
     "title": ["eab597934f610bb8e4b1798373773a3a03cce7bbc4c1a2df6c9f7e7a35f9aea7", "Публичные темы"],
     "site_title": ["1ea56c667ffac1a52d7b65da4e43f2282555a8bcdef675aba5e12c9880b0cd30", "Тема сайта"],

@@ -89,16 +89,23 @@ class AdminSidebarGroupingTest extends TestCase
   {
     $xpath = $this->sidebar($this->user());
     $groups = $this->sidebarGroups($xpath);
-    $this->assertSame(['Content', 'Contact & analytics', 'Users & access', 'Cookies and privacy', 'Structure and design', 'System', 'Maintenance'], array_keys($groups));
+    $this->assertSame(['Content', 'Contact & analytics', 'Users & access', 'Cookies and privacy', 'Structure and design', 'System', 'Extensions', 'Maintenance'], array_keys($groups));
     $this->assertSame(['/webadmin/blocks', '/webadmin/dynamic-content', '/webadmin/shared-slots', '/webadmin/navigation'], $this->paths($xpath, $groups['Content']));
     $this->assertSame(['/webadmin/contact-messages', '/webadmin/engagement', '/webadmin/reports/visitors', '/webadmin/seo-audits'], $this->paths($xpath, $groups['Contact & analytics']));
     $this->assertSame(['/webadmin/users', '/webadmin/access/roles', '/webadmin/system/api-tokens'], $this->paths($xpath, $groups['Users & access']));
     $this->assertSame(['/webadmin/privacy', '/webadmin/privacy/services', '/webadmin/privacy/texts'], $this->paths($xpath, $groups['Cookies and privacy']));
     $this->assertNotContains('/webadmin/users', $this->paths($xpath, $groups['System']));
     $this->assertNotContains('/webadmin/system/api-tokens', $this->paths($xpath, $groups['System']));
-    $pluginsLink = $xpath->query('.//a[@href="'.route('admin.system.plugins.index').'"]', $groups['System']);
-    $this->assertSame(1, $pluginsLink->length);
-    $this->assertSame('Plugins', trim($pluginsLink->item(0)->textContent));
+    $this->assertSame([
+      '/webadmin/system/plugins',
+      '/webadmin/system/themes',
+      '/webadmin/system/panel-languages',
+    ], $this->paths($xpath, $groups['Extensions']));
+    $labels = [];
+    foreach ($xpath->query('.//a/span', $groups['Extensions']) as $label) {
+      $labels[] = trim($label->textContent);
+    }
+    $this->assertSame(['Plugins', 'Public themes', 'Language packs'], $labels);
     $nav = $xpath->query('//aside[@id="admin-sidebar"]/nav')->item(0);
     $primary = $xpath->query('./div[1]', $nav)->item(0);
     $this->assertSame(['/webadmin', '/webadmin/sites', '/webadmin/pages', '/webadmin/media', '/webadmin/notes', '/webadmin/assets'], $this->paths($xpath, $primary));
@@ -117,7 +124,17 @@ class AdminSidebarGroupingTest extends TestCase
   public function active_routes_open_only_their_own_group_including_nested_screens(): void
   {
     $user = $this->user();
-    foreach (['admin.dynamic-content.index' => 'Content', 'admin.engagement.index' => 'Contact & analytics', 'admin.access.inspect' => 'Users & access', 'admin.system.api-tokens.index' => 'Users & access', 'admin.system.settings.edit' => 'System', 'admin.system.health.index' => 'Maintenance'] as $route => $expectedGroup) {
+    foreach ([
+      'admin.dynamic-content.index' => 'Content',
+      'admin.engagement.index' => 'Contact & analytics',
+      'admin.access.inspect' => 'Users & access',
+      'admin.system.api-tokens.index' => 'Users & access',
+      'admin.system.settings.edit' => 'System',
+      'admin.system.themes.catalog.index' => 'Extensions',
+      'admin.plugins.catalog.show' => 'Extensions',
+      'admin.system.panel-languages.extensions.index' => 'Extensions',
+      'admin.system.health.index' => 'Maintenance',
+    ] as $route => $expectedGroup) {
       $xpath = $this->sidebar($user, $route);
       $openGroups = array_filter($this->sidebarGroups($xpath), fn ($group) => $group->hasAttribute('open'));
       $this->assertSame([$expectedGroup], array_keys($openGroups), $route);

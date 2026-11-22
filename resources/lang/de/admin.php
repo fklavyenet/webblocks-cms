@@ -87,6 +87,7 @@ $translations = [
   ],
 
   'navigation' => [
+    'extensions' => 'Extensions',
     'content_tools' => 'Inhaltswerkzeuge',
     'communication_analytics' => 'Kontakt und Analyse',
     'users_access' => 'Benutzer und Zugriff',

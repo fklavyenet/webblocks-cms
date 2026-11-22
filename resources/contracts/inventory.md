@@ -1430,7 +1430,7 @@ leaves the current package active; subprocess diagnostics are not exposed in res
 The default startup timeout is 30 seconds (`webblocks-plugins.install.boot_timeout_seconds`).
 
 Super admins see the number of installed plugins with a newer installable catalog
-release in the Webadmin notification bell. The entry opens System → Plugins.
+release in the Webadmin notification bell. The entry opens Extensions → Plugins.
 The panel checks installed plugins in a background request. The bell and Plugins
 list share the last successful result for one hour. Super admins can use
 **Check for updates** in the Registered plugins header to query the catalog
@@ -2952,7 +2952,7 @@ CSS. No new authoring field, block catalog entry or persistence is introduced.
 
 ## Installable public themes
 
-Super admins install immutable ZIP packages under System → Public themes.
+Super admins install immutable ZIP packages under Extensions → Public themes.
 Super admins can browse compatible releases and explicitly install a ZIP or an
 update from the Extensions catalog at `https://extensions.webblocksui.com` by
 default. `WEBBLOCKS_EXTENSIONS_CATALOG_BASE_URL` sets a custom address for both
@@ -2965,8 +2965,10 @@ Catalog downloads follow the same
 installation and activation boundaries as manual uploads. Installing an update
 adds a version and leaves every site's active version and history intact.
 The package management screen filters installed versions by name or version,
-shows the upload date, and opens a ZIP upload dialog from the list header.
-Unused versions are deleted through the row action and confirmation dialog.
+shows compatibility and installation time, and opens a ZIP upload dialog
+from the page header. The catalog keeps the same page after installation and
+shows the result there. Unused versions are deleted through the row action
+and confirmation dialog. Versions referenced by site history are retained.
 API package management requires the explicit `themes.manage` capability on an
 installation-wide system token owned by an active Super admin. Packages contain
 a format-1 `webblocks-theme.json` manifest, root `theme.css` and optional
