@@ -7,7 +7,7 @@ use Illuminate\Support\Arr;
 class CatalogPlugin
 {
   /**
-   * @param  array<string, mixed>  $payload
+   * @param  list<array{url: string, alt: ?string, caption: ?string, width: ?int, height: ?int}>  $screenshots
    */
   public function __construct(
     public readonly string $handle,
@@ -40,6 +40,7 @@ class CatalogPlugin
     public readonly array $declaredProviders,
     public readonly array $declaredCommands,
     public readonly ?CatalogRelease $latestCompatibleRelease,
+    public readonly array $screenshots = [],
   ) {}
 
   /**
@@ -103,6 +104,7 @@ class CatalogPlugin
       declaredProviders: self::stringList(Arr::get($payload, 'providers')),
       declaredCommands: self::stringList(Arr::get($payload, 'commands')),
       latestCompatibleRelease: $latestCompatibleRelease,
+      screenshots: self::screenshots($payload['media'] ?? null),
     );
   }
 
@@ -204,6 +206,38 @@ class CatalogPlugin
 
       return $date !== null && $downloads !== null ? ['date' => $date, 'downloads' => max(0, $downloads)] : null;
     }, $value)));
+  }
+
+  /** @return list<array{url: string, alt: ?string, caption: ?string, width: ?int, height: ?int}> */
+  private static function screenshots(mixed $media): array
+  {
+    if (! is_array($media)) {
+      return [];
+    }
+
+    $screenshots = [];
+    foreach ($media as $item) {
+      if (! is_array($item) || ($item['role'] ?? null) !== 'screenshot') {
+        continue;
+      }
+
+      $url = self::safeUrl($item['url'] ?? null);
+      if ($url === null || filter_var($url, FILTER_VALIDATE_URL) === false) {
+        continue;
+      }
+
+      $width = self::integerOrNull($item['width'] ?? null);
+      $height = self::integerOrNull($item['height'] ?? null);
+      $screenshots[] = [
+        'url' => $url,
+        'alt' => self::stringOrNull($item['alt'] ?? null),
+        'caption' => self::stringOrNull($item['caption'] ?? null),
+        'width' => $width > 0 ? $width : null,
+        'height' => $height > 0 ? $height : null,
+      ];
+    }
+
+    return $screenshots;
   }
 
   private static function safeUrl(mixed $value): ?string

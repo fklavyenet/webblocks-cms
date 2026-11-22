@@ -104,6 +104,28 @@
             @endif
         </div>
 
+        @if ($plugin->screenshots !== [])
+            <section class="wb-card" aria-labelledby="plugin-catalog-screenshots">
+                <div class="wb-card-header"><h2 class="wb-card-title" id="plugin-catalog-screenshots">{{ $adminText('screenshots') }}</h2></div>
+                <div class="wb-card-body wb-gallery wb-gallery--cols-2 wb-gallery--aspect-auto">
+                    <div class="wb-gallery-grid">
+                        @foreach ($plugin->screenshots as $screenshot)
+                            <figure class="wb-gallery-item">
+                                <a class="wb-gallery-trigger" href="{{ $screenshot['url'] }}" target="_blank" rel="noopener noreferrer">
+                                    <img class="wb-gallery-media" src="{{ $screenshot['url'] }}" alt="{{ $screenshot['alt'] ?? $screenshot['caption'] ?? $plugin->label }}"
+                                         @if ($screenshot['width'] !== null && $screenshot['height'] !== null) width="{{ $screenshot['width'] }}" height="{{ $screenshot['height'] }}" @endif
+                                         loading="lazy" decoding="async" referrerpolicy="no-referrer">
+                                </a>
+                                @if ($screenshot['caption'] !== null)
+                                    <figcaption class="wb-gallery-caption">{{ $screenshot['caption'] }}</figcaption>
+                                @endif
+                            </figure>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+        @endif
+
         @if ($hasDownloadActivity)
             <section class="wb-card">
                 <div class="wb-card-header"><h2 class="wb-card-title">{{ $adminText('download_activity') }}</h2></div>

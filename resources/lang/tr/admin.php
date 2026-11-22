@@ -1882,6 +1882,7 @@ $translations = [
       'billing_month' => 'aylık',
       'billing_year' => 'yıllık',
       'downloads_count' => ':count indirme',
+      'screenshots' => 'Ekran görüntüleri',
       'download_activity' => 'İndirme etkinliği',
       'download_activity_help' => 'Toplam :count indirme. Grafik son 30 günü gösterir.',
       'downloads' => 'İndirmeler',

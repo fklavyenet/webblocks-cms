@@ -2092,6 +2092,7 @@ return [
       'billing_month' => 'per month',
       'billing_year' => 'per year',
       'downloads_count' => ':count downloads',
+      'screenshots' => 'Screenshots',
       'download_activity' => 'Download activity',
       'download_activity_help' => ':count total downloads. The chart shows the last 30 days.',
       'downloads' => 'Downloads',

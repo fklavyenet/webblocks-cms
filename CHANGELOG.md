@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.144.7
+
+- Show publisher-provided screenshots on plugin catalog detail pages in Webadmin. Open an image at its original size from the gallery.
+
 ## 1.144.6
 
 - Show the standard table of contents title in the displayed page language, including in previews and in the navigation's accessible name.

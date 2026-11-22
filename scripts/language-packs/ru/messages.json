@@ -2751,6 +2751,7 @@
     "plugin_catalog.show.billing_month": ["88b1d1a67e34a269fec10b917a624817de854eeadb142640ab17c8199ab6bdae", "в месяц"],
     "plugin_catalog.show.billing_year": ["611c1ee32d89ed3c52394b0884b649dd73e1b141eaad3810a05b6cbd2f14b805", "в год"],
     "plugin_catalog.show.downloads_count": ["433c1694f27b97c292af882d46bb18cc7f3b1f86af338cc4c7bb562f3c55ef23", "Скачиваний: :count"],
+    "plugin_catalog.show.screenshots": ["067348ce68943b630359fea7b8b9aa2f7e00bda7532fa406f0286c943261f823", "Снимки экрана"],
     "plugin_catalog.show.download_activity": ["b624a93e7a0c7a82fb35cbbbbc2605962b6050238109e998a990df52065dbc98", "Статистика скачиваний"],
     "plugin_catalog.show.download_activity_help": ["8eaa6770bfab17bf2b34c89b1504f74a0214fa6f2f2f50696f891444e6657972", "Всего скачиваний: :count. На графике показаны последние 30 дней."],
     "plugin_catalog.show.downloads": ["d5fdc1af021e2d360ff80496c4c5d698e77fc3015a157ea08e8e60cf81690a46", "Скачивания"],

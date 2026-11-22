@@ -1868,6 +1868,7 @@ $translations = [
       'billing_month' => 'al mes',
       'billing_year' => 'al año',
       'downloads_count' => ':count descargas',
+      'screenshots' => 'Capturas de pantalla',
       'download_activity' => 'Actividad de descargas',
       'download_activity_help' => ':count descargas totales. El gráfico muestra los últimos 30 días.',
       'downloads' => 'Descargas',
