@@ -4546,7 +4546,9 @@ $translations = [
     ],
     'toc' => [
       'title_label' => 'Título del TOC',
-      'title_help' => 'Etiqueta opcional sobre las secciones H2/H3 de este mismo slot, incluidos los bloques de diseño anidados.',
+      'title_help' => 'El título se aplica al idioma seleccionado de la página. Deja el campo vacío para usar el título predeterminado.',
+      'hide_title' => 'Ocultar título',
+      'reset_title' => 'Restaurar el título predeterminado',
       'position_label' => 'Posición',
       'position_right' => 'Derecha',
       'position_left' => 'Izquierda',

@@ -4789,7 +4789,9 @@ return [
     ],
     'toc' => [
       'title_label' => 'TOC title',
-      'title_help' => 'Optional label above the H2/H3 section headings from this same slot, including nested layout blocks.',
+      'title_help' => 'The title applies to the selected page language. Clear the field to use the standard title.',
+      'hide_title' => 'Hide title',
+      'reset_title' => 'Restore default',
       'position_label' => 'Position',
       'position_right' => 'Right',
       'position_left' => 'Left',

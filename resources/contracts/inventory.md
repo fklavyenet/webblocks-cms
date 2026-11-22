@@ -911,10 +911,11 @@ Use `plain` for qualities, principles, benefits, process summaries, and other co
 
 | Contract area | Source-backed behavior |
 | --- | --- |
-| Editable content | Optional shared title. |
+| Editable content | Per-language title, prefilled with the standard title for the selected page language on new blocks. An editor can change it, restore the standard title, or hide it for that language. In the Internal Content API use `translations.title` with a string, `null` for the standard title, or `false` to hide it. |
+| Title resolution | An override applies only to its own language. For languages without an override, an existing shared title of exactly `On this page` uses the localized standard title. Other shared titles and existing titleless blocks retain their behavior. |
 | Settings and variants | `settings.toc_position`: `left` or `right`, default `right`; available in the panel and Internal Content API. |
 | Children/media | Reads only Header blocks in its own page-owned slot tree, including nested layouts, in document order. Public output excludes unpublished blocks and their branches; preview includes draft headings. Eligible headings render as H2/H3, have nonblank resolved text and `include_in_toc` enabled. Other component titles, HTML headings and other slots are not scanned. Shared Slot source trees remain outside this page-owned scan. |
-| HTML | Generic wrapper with `nav.wb-section-nav`; H3 entries nest under their preceding eligible H2. Leading H3 entries and H3 entries after an excluded H2 remain at the top level. |
+| HTML | Generic wrapper with `nav.wb-section-nav`. When shown, its visible title and `aria-label` use the same text in the public or preview language. H3 entries nest under their preceding eligible H2. Leading H3 entries and H3 entries after an excluded H2 remain at the top level. |
 | Placement | The first eligible direct-child TOC sits in a sticky left/right rail beside the rest of its slot, independently of page layout. Nested and additional TOCs remain inline. At viewport widths up to 1180px, or when the slot is at most 48rem wide in browsers supporting container queries, the rail is above the content in one column without sticky scrolling. |
 | Anchors | Uses the same resolved ID as the rendered Header; editing heading copy or translating it does not regenerate its stored automatic anchor. Disabling `include_in_toc` removes only the entry, preserving its link target. |
 | Live behavior | Active-section highlighting uses the bundled WebBlocks UI `WBSectionNav`; no renderer-owned JavaScript. |

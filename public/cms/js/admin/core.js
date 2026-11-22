@@ -23,6 +23,16 @@
         if (reset) {
             fillContactConsent(reset, true);
         }
+
+        var tocReset = event.target.closest('[data-wb-toc-title-reset]');
+        if (tocReset) {
+            var editor = tocReset.closest('[data-wb-toc-title-editor]');
+            var title = editor.querySelector('[data-wb-toc-title-default]');
+            var hidden = editor.querySelector('[data-wb-toc-title-hidden]');
+            title.value = title.dataset.wbTocTitleDefault;
+            hidden.checked = false;
+            title.dispatchEvent(new Event('input', { bubbles: true }));
+        }
     });
 
     if (body && body.dataset && body.dataset.wbAdminLoginUrl) {

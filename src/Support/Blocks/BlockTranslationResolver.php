@@ -130,6 +130,10 @@ class BlockTranslationResolver
       return [$requested, 'translated', $requestedLocale];
     }
 
+    if ($relation === 'textTranslations' && $block->typeSlug() === 'toc') {
+      return [null, 'shared', $requestedLocale];
+    }
+
     $default = $translations->firstWhere('locale_id', $defaultLocale->id);
 
     if ($default) {

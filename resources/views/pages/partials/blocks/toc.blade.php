@@ -11,9 +11,10 @@
 @endphp
 
 @if ($sections !== [])
-    <nav class="wb-section-nav"@if ($block->title) aria-label="{{ $block->title }}"@endif>
-        @if ($block->title)
-            <div class="wb-section-nav-title">{{ $block->title }}</div>
+    @php $title = $block->tocTitle(); @endphp
+    <nav class="wb-section-nav"@if ($title !== null) aria-label="{{ $title }}"@endif>
+        @if ($title !== null)
+            <div class="wb-section-nav-title">{{ $title }}</div>
         @endif
         <ul class="wb-section-nav-list">
             @foreach ($sections as $section)

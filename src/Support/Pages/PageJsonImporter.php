@@ -108,7 +108,7 @@ class PageJsonImporter
           'slot' => $block['slot_slug'],
           'slot_type_id' => $block['slot_type_id'],
           'sort_order' => $block['sort_order'],
-          'title' => null,
+          'title' => $block['type'] === 'toc' ? Block::TOC_STANDARD_TITLE : null,
           'subtitle' => null,
           'content' => null,
           'url' => $block['url'],
@@ -517,10 +517,10 @@ class PageJsonImporter
       return [];
     }
 
-    $allowedFields = $this->blockTranslationRegistry->translatedFieldMap($family);
+    $allowedFields = $typeSlug === 'toc' ? ['title'] : $this->blockTranslationRegistry->translatedFieldMap($family);
 
     return collect($translations)
-      ->map(function ($translation, $localeCode) use ($tmpId, $localeMap, $allowedFields) {
+      ->map(function ($translation, $localeCode) use ($tmpId, $localeMap, $allowedFields, $typeSlug) {
         $localeCode = strtolower(trim((string) $localeCode));
         $locale = $localeMap->get($localeCode);
 
@@ -544,11 +544,19 @@ class PageJsonImporter
           ]);
         }
 
+        if ($typeSlug === 'toc' && ! BlockTranslationRegistry::validTocTitle($translation['title'] ?? null)) {
+          throw ValidationException::withMessages([
+            'blocks' => ['Block ['.$tmpId.'] title must be text of at most 255 characters, null, or false.'],
+          ]);
+        }
+
         return [
           'locale_id' => $locale['locale_id'],
           'locale_code' => $localeCode,
           'fields' => collect($translation)
-            ->mapWithKeys(fn ($value, $field) => [$field => $this->nullableString($value)])
+            ->mapWithKeys(fn ($value, $field) => [
+              $field => $typeSlug === 'toc' && ($value === '' || $value === false) ? '' : $this->nullableString($value),
+            ])
             ->all(),
         ];
       })

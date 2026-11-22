@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'toc' => [
+    'title' => 'Bu sayfada',
+  ],
   'search' => [
     'description_scoped' => ':path altındaki sayfalarda arayın.',
     'title' => 'Arama',

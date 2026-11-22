@@ -4545,7 +4545,9 @@ $translations = [
     ],
     'toc' => [
       'title_label' => 'Titolo del sommario',
-      'title_help' => 'Etichetta facoltativa sopra le sezioni H2/H3 dello stesso slot, inclusi i blocchi di layout annidati.',
+      'title_help' => 'Il titolo si applica alla lingua selezionata per la pagina. Lascia vuoto il campo per usare il titolo predefinito.',
+      'hide_title' => 'Nascondi titolo',
+      'reset_title' => 'Ripristina il titolo predefinito',
       'position_label' => 'Posizione',
       'position_right' => 'Destra',
       'position_left' => 'Sinistra',

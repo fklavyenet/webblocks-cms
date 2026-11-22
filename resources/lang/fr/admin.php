@@ -4546,7 +4546,9 @@ $translations = [
     ],
     'toc' => [
       'title_label' => 'Titre du sommaire',
-      'title_help' => 'Libellé facultatif au-dessus des sections H2/H3 de ce même emplacement, y compris les blocs de mise en page imbriqués.',
+      'title_help' => 'Le titre s’applique à la langue sélectionnée pour la page. Laissez le champ vide pour utiliser le titre par défaut.',
+      'hide_title' => 'Masquer le titre',
+      'reset_title' => 'Rétablir le titre par défaut',
       'position_label' => 'Position',
       'position_right' => 'Droite',
       'position_left' => 'Gauche',

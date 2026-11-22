@@ -4548,7 +4548,9 @@ $translations = [
     ],
     'toc' => [
       'title_label' => 'TOC-Titel',
-      'title_help' => 'Optionale Beschriftung über den H2/H3-Abschnitten desselben Slots, einschließlich verschachtelter Layout-Blöcke.',
+      'title_help' => 'Der Titel gilt für die ausgewählte Seitensprache. Lassen Sie das Feld leer, um den Standardtitel zu verwenden.',
+      'hide_title' => 'Titel ausblenden',
+      'reset_title' => 'Standard wiederherstellen',
       'position_label' => 'Position',
       'position_right' => 'Rechts',
       'position_left' => 'Links',

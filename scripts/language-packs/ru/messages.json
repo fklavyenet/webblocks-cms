@@ -5226,7 +5226,9 @@
     "blocks.text.locale_help": ["d034cf972a4d2fc894648a45e2c22627d4be4401ae72934f61cad911f611ba85", "Текстовый контент переводится на местность."],
     "blocks.text.label": ["c24623502a05ae7e75a9fc8c3fe27b913c2096918a9768e845a6985649e313a7", "Текстовый контент"],
     "blocks.toc.title_label": ["8a1d988e5f11428e56f276286e4c75c8a0cfb29f2e0db679e86495af3e0dbee5", "Название TOC"],
-    "blocks.toc.title_help": ["97e51da6110ac7992529a5099416944cbb96e8bc1ebb18ddc888ab8b937b743d", "Факультативная метка над заголовками раздела H2/H3 из этого же слота, включая вложенные блоки компоновки."],
+    "blocks.toc.title_help": ["67c6699ea638c259328786b2d8066ca8384ca9cb757016d25be461e1e38e2e3c", "Заголовок применяется к выбранному языку страницы. Оставьте поле пустым, чтобы использовать заголовок по умолчанию."],
+    "blocks.toc.hide_title": ["8685c26c986f05187ff70993f15f67c90c7271719b903bf9670bc89648a65bfc", "Скрыть заголовок"],
+    "blocks.toc.reset_title": ["19d66a2331b543324b48fc43894d8411c8c2bdc2c087660e33b4a3b33c49bffa", "Восстановить заголовок по умолчанию"],
     "blocks.toc.position_label": ["6d031af10da7a25e554bb21247f28f0e6cef77f1471175199e7fcc571964dc3d", "Позиция"],
     "blocks.toc.position_right": ["883361d5d682a1574410961ce51450b6e036a779c9f098dec71e28aec832bfa6", "Справа"],
     "blocks.toc.position_left": ["58eb9032e3bb83f0e39d644ebc87ca254117b95bf458483bec7379bea0b419d0", "Слева"],
@@ -6623,6 +6625,7 @@
     "last_render": ["1531e79acb3f4560b2cb4ce6929bcb68f6c281ef4b925393b4cdde2f3709001f", "Последняя успешная передача:"]
   },
   "webblocks-cms::public": {
+    "toc.title": ["b5658fc8edda24f9c94eabac9e536e0a18e3055a8ca255f9d1b8f256ea02a6cc", "На этой странице"],
     "search.description_scoped": ["5f7f77c53bfb363586f4a55a60c84fdc69f6b49525b53ea638fd7fe88489bd8b", "Поиск в разделе :path."],
     "search.title": ["49c266baaaa70981ea188fa714d5c40cf13830d786a861c9943ae0d26a7f3fe9", "Поиск"],
     "search.description_with_site": ["9a3bc5424f618dcdaba46901880ea29548ec05cff86c7c1d038640bb76f18634", "Поиск по опубликованным материалам сайта :site."],

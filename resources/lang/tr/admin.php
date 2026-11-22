@@ -4561,7 +4561,9 @@ $translations = [
     ],
     'toc' => [
       'title_label' => 'TOC başlığı',
-      'title_help' => 'İç içe yerleşim blokları dahil, aynı slottaki H2/H3 bölüm başlıklarının üzerinde gösterilen isteğe bağlı etiket.',
+      'title_help' => 'Başlık, sayfa için seçili dile uygulanır. Standart başlığı kullanmak için alanı boş bırakın.',
+      'hide_title' => 'Başlığı gizle',
+      'reset_title' => 'Varsayılana dön',
       'position_label' => 'Konum',
       'position_right' => 'Sağ',
       'position_left' => 'Sol',

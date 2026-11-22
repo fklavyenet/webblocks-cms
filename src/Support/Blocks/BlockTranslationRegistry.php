@@ -35,6 +35,11 @@ class BlockTranslationRegistry
     'contact_form' => ['title', 'content', ...self::CONTACT_FORM_COPY_FIELDS],
   ];
 
+  public static function validTocTitle(mixed $title): bool
+  {
+    return $title === null || $title === false || (is_string($title) && mb_strlen($title) <= 255);
+  }
+
   public function familyFor(Block|string|null $block): ?string
   {
     $slug = $block instanceof Block ? $block->typeSlug() : $block;
@@ -44,7 +49,7 @@ class BlockTranslationRegistry
     }
 
     return match ($slug) {
-      'header', 'plain_text', 'rich-text', 'code', 'table', 'quote', 'html', 'content_header', 'hero', 'columns', 'column_item', 'feature-grid', 'feature-item', 'button_link', 'stat-card', 'gallery', 'download', 'file', 'external-content', 'video', 'audio', 'alert', 'cta', 'link-list', 'link-list-item', 'navbar-brand', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer', 'search-form', 'rating' => 'text',
+      'header', 'plain_text', 'rich-text', 'code', 'table', 'quote', 'html', 'content_header', 'hero', 'columns', 'column_item', 'feature-grid', 'feature-item', 'button_link', 'stat-card', 'gallery', 'download', 'file', 'external-content', 'video', 'audio', 'alert', 'cta', 'link-list', 'link-list-item', 'navbar-brand', 'sidebar-brand', 'sidebar-navigation', 'sidebar-nav-item', 'sidebar-nav-group', 'sidebar-footer', 'search-form', 'rating', 'toc' => 'text',
       'button' => 'button',
       'image' => 'image',
       'contact_form' => 'contact_form',
@@ -88,6 +93,7 @@ class BlockTranslationRegistry
       'search-form',
       'navbar-brand',
       'rating',
+      'toc',
       'button',
       'image',
       'contact_form',
@@ -111,6 +117,11 @@ class BlockTranslationRegistry
    */
   public function translatedFieldsFor(Block|string|null $block): array
   {
+    $slug = $block instanceof Block ? $block->typeSlug() : $block;
+    if ($slug === 'toc') {
+      return ['title'];
+    }
+
     $family = $this->familyFor($block);
 
     if ($family === null) {
@@ -121,7 +132,7 @@ class BlockTranslationRegistry
       return $this->translatedFieldMap($family);
     }
 
-    return $this->pluginFieldsFor($block instanceof Block ? $block->typeSlug() : $block);
+    return $this->pluginFieldsFor($slug);
   }
 
   /**

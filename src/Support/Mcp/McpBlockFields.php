@@ -22,6 +22,7 @@ final class McpBlockFields
     'cta' => ['title', 'subtitle', 'content'],
     'button' => ['title'],
     'button_link' => ['title'],
+    'toc' => ['title'],
   ];
 
   private const COPY_LIMITS = ['title' => 255, 'subtitle' => 255, 'eyebrow' => 255, 'caption' => 255, 'alt_text' => 255, 'content' => 8000];
@@ -64,6 +65,10 @@ final class McpBlockFields
   public function values(Block $block, Locale $locale): array
   {
     $resolved = $this->translations->resolve($block, $locale);
+    if ($block->typeSlug() === 'toc') {
+      return ['title' => $resolved->tocTitle()];
+    }
+
     $values = [];
     foreach ($this->textFields($block) as $field) {
       $key = BlockTranslationRegistry::IMAGE_BLOCK_FIELDS[$field] ?? $field;

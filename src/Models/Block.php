@@ -35,6 +35,7 @@ use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\Revisions\RestoredIndexTargets;
 use WebBlocks\Cms\Support\Search\BlockIndexTargets;
 use WebBlocks\Cms\Support\Search\ReindexesPublicSearch;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
 
@@ -46,6 +47,8 @@ class Block extends CmsModel
   use ReusesMediaRelationAliases;
 
   public const SPLIT_CHILD_COUNT = 2;
+
+  public const TOC_STANDARD_TITLE = 'On this page';
 
   protected $fillable = [
     'page_id',
@@ -525,6 +528,23 @@ class Block extends CmsModel
   public function tocPosition(): string
   {
     return $this->setting('toc_position') === 'left' ? 'left' : 'right';
+  }
+
+  public static function tocDefaultTitle(?string $locale = null): string
+  {
+    return app(CmsTranslator::class)->public('toc.title', $locale ?? app()->getLocale());
+  }
+
+  public function tocTitle(?string $locale = null): ?string
+  {
+    $title = $this->title;
+    // A locale row can explicitly request the standard heading (null) or hide it ('').
+    // Without a row, honor the block's original shared title.
+    $usesDefault = $this->getAttribute('translation_state') === 'translated'
+      ? $title === null
+      : $title === self::TOC_STANDARD_TITLE;
+
+    return $usesDefault ? self::tocDefaultTitle($locale ?? $this->renderLocaleCode()) : ($title === '' ? null : $title);
   }
 
   public function pageListSettings(): PageListSettings

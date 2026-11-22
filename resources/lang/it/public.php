@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'toc' => [
+    'title' => 'In questa pagina',
+  ],
   'search' => [
     'description_scoped' => 'Cerca nelle pagine sotto :path.',
     'title' => 'Cerca',

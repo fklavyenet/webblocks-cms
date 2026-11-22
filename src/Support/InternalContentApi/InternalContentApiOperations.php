@@ -529,7 +529,7 @@ class InternalContentApiOperations
       'media_id' => $payload['media_id'] ?? null,
       '_block_media' => $payload['_block_media'] ?? [],
       '_gallery_items' => $payload['_gallery_items'] ?? [],
-      'title' => $copy['title'] ?? null,
+      ...($blockType->slug === 'toc' ? $copy : ['title' => $copy['title'] ?? null]),
       'subtitle' => $copy['subtitle'] ?? null,
       ...$extraFields,
       'content' => $translations['content'] ?? null,
@@ -630,6 +630,15 @@ class InternalContentApiOperations
     foreach (BlockTranslationRegistry::TEXT_FIELDS as $field) {
       if (array_key_exists($field, $block) && ! array_key_exists($field, $translations)) {
         $translations[$field] = $block[$field];
+      }
+    }
+
+    if ($blockType->slug === 'toc') {
+      foreach (array_diff_key($translations, ['title' => true]) as $field => $_value) {
+        $errors[] = $this->error($path.'.translations.'.$field, 'TOC only accepts a translated title.');
+      }
+      if (! BlockTranslationRegistry::validTocTitle($translations['title'] ?? null)) {
+        $errors[] = $this->error($path.'.translations.title', 'Use text of at most 255 characters, null for the standard title, or false to hide it.');
       }
     }
 

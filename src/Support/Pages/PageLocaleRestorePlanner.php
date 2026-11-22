@@ -217,6 +217,9 @@ final class PageLocaleRestorePlanner
         continue;
       }
       $owner = $change['entity'] === 'gallery' ? BlockMedia::findOrFail($change['owner_id']) : Block::findOrFail($change['owner_id']);
+      if ($owner instanceof Block && $owner->typeSlug() === 'toc') {
+        continue;
+      }
       $rows = $owner->{$change['relation']}()->get();
       $translated = $rows->pluck('locale_id')->all();
       $fields = array_keys(array_filter($change['after'], fn ($value, $field) => ($change['before'][$field] ?? null) !== $value, ARRAY_FILTER_USE_BOTH));

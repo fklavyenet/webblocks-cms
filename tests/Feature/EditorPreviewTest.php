@@ -137,6 +137,40 @@ class EditorPreviewTest extends TestCase
   }
 
   #[Test]
+  public function the_toc_editor_prefills_saves_and_previews_titles_in_the_page_language(): void
+  {
+    $german = Locale::create(['code' => 'de', 'name' => 'German', 'is_enabled' => true]);
+    $this->page->site->locales()->attach($german->id, ['is_enabled' => true]);
+    $this->page->translations()->create(['site_id' => $this->page->site_id, 'locale_id' => $german->id, 'name' => 'Vorschau', 'slug' => 'vorschau']);
+    $slot = $this->page->slots()->firstOrFail();
+    $type = BlockType::firstOrCreate(['slug' => 'toc'], ['name' => 'TOC', 'category' => 'navigation', 'source_type' => 'static', 'status' => 'published', 'is_system' => true]);
+    $headerType = BlockType::firstOrCreate(['slug' => 'header'], ['name' => 'Header', 'category' => 'content', 'source_type' => 'static', 'status' => 'published']);
+    $this->page->blocks()->create(['block_type_id' => $headerType->id, 'slot_type_id' => $slot->slot_type_id, 'type' => 'header', 'variant' => 'h2', 'title' => 'Section', 'status' => 'draft']);
+    $toc = $this->page->blocks()->create(['block_type_id' => $type->id, 'slot_type_id' => $slot->slot_type_id, 'type' => 'toc', 'sort_order' => 2, 'title' => 'On this page', 'status' => 'draft']);
+    $editor = route('admin.pages.slots.blocks', ['page' => $this->page, 'slot' => $slot, 'edit' => $toc->id, 'locale' => 'de']);
+    $this->get($editor)->assertOk()->assertSee('value="Auf dieser Seite"', escape: false)->assertSee('Restore default');
+
+    $context = ['block_id' => $toc->id, 'form_locale' => 'de'];
+    $preview = $this->render(['title' => 'Übersicht', 'toc_hide_title' => 0], $context + ['locale' => 'de'])->assertOk()->json('html');
+    $this->assertStringContainsString('aria-label="Übersicht"', $preview);
+    $this->assertStringContainsString('wb-cms-toc-layout-right', $preview);
+    $english = $this->render(['title' => 'Übersicht', 'toc_hide_title' => 0], $context + ['locale' => 'en'])->assertOk()->json('html');
+    $this->assertStringContainsString('aria-label="On this page"', $english);
+    $this->assertFalse($toc->textTranslations()->exists());
+
+    $path = route('admin.blocks.update', $toc);
+    $fields = ['page_id' => $this->page->id, 'block_type_id' => $type->id, 'slot_type_id' => $slot->slot_type_id, 'sort_order' => 2, 'status' => 'draft', 'locale' => 'de'];
+    $this->put($path, $fields + ['title' => 'Übersicht', 'toc_hide_title' => 0])->assertRedirect()->assertSessionHasNoErrors();
+    $this->get($editor)->assertOk()->assertSee('value="Übersicht"', escape: false);
+    $this->assertSame('Übersicht', $toc->textTranslations()->where('locale_id', $german->id)->firstOrFail()->title);
+
+    $this->put($path, $fields + ['title' => 'Übersicht', 'toc_hide_title' => 1])->assertRedirect()->assertSessionHasNoErrors();
+    $this->assertSame('', $toc->textTranslations()->where('locale_id', $german->id)->firstOrFail()->title);
+    $this->put($path, $fields + ['title' => 'Auf dieser Seite', 'toc_hide_title' => 0])->assertRedirect()->assertSessionHasNoErrors();
+    $this->assertNull($toc->textTranslations()->where('locale_id', $german->id)->firstOrFail()->title);
+  }
+
+  #[Test]
   public function staged_preview_preserves_published_source_and_staged_identity(): void
   {
     $published = Page::create(['site_id' => $this->page->site_id, 'title' => 'Published source', 'slug' => 'published-source', 'status' => 'published']);

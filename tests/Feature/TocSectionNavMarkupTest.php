@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use WebBlocks\Cms\Models\Block;
 use WebBlocks\Cms\Models\Locale;
@@ -9,6 +10,8 @@ use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\PageSlot;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Models\SlotType;
+use WebBlocks\Cms\Support\Blocks\BlockPayloadWriter;
+use WebBlocks\Cms\Support\Blocks\BlockTranslationResolver;
 use WebBlocks\Cms\Tests\TestCase;
 
 /**
@@ -69,6 +72,57 @@ class TocSectionNavMarkupTest extends TestCase
     $this->assertStringNotContainsString('wb-section-nav-title', $withoutTitle);
   }
 
+  public static function standardTitles(): array
+  {
+    return [
+      'English' => ['en', 'On this page'],
+      'Turkish' => ['tr', 'Bu sayfada'],
+      'German' => ['de', 'Auf dieser Seite'],
+      'Spanish' => ['es', 'En esta página'],
+      'Italian' => ['it', 'In questa pagina'],
+      'French' => ['fr', 'Sur cette page'],
+    ];
+  }
+
+  #[Test]
+  #[DataProvider('standardTitles')]
+  public function a_legacy_standard_title_uses_the_render_locale_for_both_labels(string $locale, string $title): void
+  {
+    app()->setLocale('en');
+    $html = $this->renderToc(title: 'On this page', locale: $locale);
+    $this->assertTitle($title, $html);
+    $this->assertSame(2, substr_count($html, 'class="wb-section-nav-link"'));
+    $this->assertStringContainsString('href="#first"', $html);
+    $this->assertStringContainsString('href="#second"', $html);
+  }
+
+  #[Test]
+  public function overrides_are_local_and_preserve_the_three_title_states(): void
+  {
+    $this->renderToc(title: 'Original shared title');
+    $toc = Block::where('type', 'toc')->firstOrFail();
+    $page = $toc->page;
+    $de = Locale::create(['code' => 'de', 'name' => 'German', 'is_enabled' => true]);
+    $page->site->locales()->attach($de->id, ['is_enabled' => true]);
+    $writer = app(BlockPayloadWriter::class);
+
+    $writer->save($toc, $page, ['title' => 'English override'], 'en');
+    $this->assertTitle('Original shared title', $this->renderBlock($toc, 'de'));
+    $writer->save($toc, $page, ['title' => 'On this page'], 'de');
+    $this->assertTitle('On this page', $this->renderBlock($toc, 'de'));
+
+    $writer->save($toc, $page, ['title' => ''], 'de');
+    $hidden = $this->renderBlock($toc, 'de');
+    $this->assertStringNotContainsString('aria-label', $hidden);
+    $this->assertStringNotContainsString('wb-section-nav-title', $hidden);
+    $this->assertStringContainsString('href="#first"', $hidden);
+
+    $writer->save($toc, $page, ['title' => null], 'de');
+    $this->assertTitle('Auf dieser Seite', $this->renderBlock($toc, 'de'));
+    $this->assertTitle('English override', $this->renderBlock($toc, 'en'));
+    $this->assertSame('Original shared title', $toc->fresh()->title);
+  }
+
   #[Test]
   public function links_target_the_heading_anchors_in_document_order(): void
   {
@@ -113,10 +167,27 @@ class TocSectionNavMarkupTest extends TestCase
     $this->assertStringNotContainsString('Excluded section', $html);
   }
 
-  private function renderToc(?string $title, string $suffix = 'x'): string
+  private function assertTitle(string $title, string $html): void
+  {
+    $this->assertStringContainsString('aria-label="'.$title.'"', $html);
+    $this->assertStringContainsString('<div class="wb-section-nav-title">'.$title.'</div>', $html);
+  }
+
+  private function renderBlock(Block $toc, string $locale): string
+  {
+    $resolved = app(BlockTranslationResolver::class)->resolve($toc->fresh(), $locale);
+
+    return view('webblocks-cms::pages.partials.blocks.toc', ['block' => $resolved])->render();
+  }
+
+  private function renderToc(?string $title, string $suffix = 'x', string $locale = 'en'): string
   {
     $site = Site::query()->create(['name' => 'Test', 'handle' => 'test-'.$suffix, 'is_primary' => true]);
     Locale::query()->create(['code' => 'en', 'name' => 'English', 'is_default' => true, 'is_enabled' => true]);
+    if ($locale !== 'en') {
+      $localized = Locale::create(['code' => $locale, 'name' => $locale, 'is_enabled' => true]);
+      $site->locales()->attach($localized->id, ['is_enabled' => true]);
+    }
     $mainSlot = SlotType::query()->create(['name' => 'Main', 'slug' => 'main', 'status' => 'published', 'sort_order' => 0]);
     $page = Page::query()->create(['site_id' => $site->id, 'slug' => 'article-'.$suffix, 'status' => Page::STATUS_DRAFT]);
     PageSlot::query()->create(['page_id' => $page->id, 'slot_type_id' => $mainSlot->id, 'sort_order' => 0]);
@@ -134,6 +205,6 @@ class TocSectionNavMarkupTest extends TestCase
       'status' => 'published',
     ]);
 
-    return view('webblocks-cms::pages.partials.blocks.toc', ['block' => $toc])->render();
+    return $this->renderBlock($toc, $locale);
   }
 }

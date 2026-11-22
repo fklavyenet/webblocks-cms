@@ -25,6 +25,15 @@ class BlockTranslationWriter
       return $data;
     }
 
+    if ($blockTypeSlug === 'toc') {
+      unset($data['title']);
+      if ($isCreating) {
+        $data['title'] = Block::TOC_STANDARD_TITLE;
+      }
+
+      return $data;
+    }
+
     if ($family === BlockTranslationRegistry::PLUGIN_FAMILY) {
       /*
        * The same rule Contact Form follows below: once a field is translated the
@@ -71,6 +80,15 @@ class BlockTranslationWriter
     }
 
     $locale = $this->resolveLocale($localeCode);
+    if ($block->typeSlug() === 'toc') {
+      if (array_key_exists('title', $data)) {
+        $this->writeTranslation($block, 'text', $locale->id, $this->translationPayload($family, $data, $block, $locale->id));
+        $block->unsetRelation('textTranslations');
+      }
+
+      return;
+    }
+
     $defaultLocale = $this->localeResolver->default();
     $translationSourceBlock ??= $block;
 
@@ -99,6 +117,9 @@ class BlockTranslationWriter
     if (! $family || $family === BlockTranslationRegistry::PLUGIN_FAMILY) {
       return;
     }
+    if ($source->typeSlug() === 'toc' && ! array_key_exists('title', $data)) {
+      return;
+    }
     $locale = $this->resolveLocale($localeCode);
     $relation = match ($family) {
       'text' => 'textTranslations',
@@ -116,7 +137,7 @@ class BlockTranslationWriter
   {
     $family = $this->registry->familyFor($block);
 
-    if (! $family) {
+    if (! $family || $block->typeSlug() === 'toc') {
       return;
     }
 
@@ -232,6 +253,10 @@ class BlockTranslationWriter
 
   private function translationPayload(string $family, array $data, Block $block, int $localeId): array
   {
+    if ($block->typeSlug() === 'toc') {
+      return ['title' => $data['title'] === false ? '' : $data['title']];
+    }
+
     if ($family === BlockTranslationRegistry::PLUGIN_FAMILY) {
       return $this->pluginTranslationPayload($data, $block, $localeId);
     }

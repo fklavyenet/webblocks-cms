@@ -1892,7 +1892,8 @@ class InternalContentResourceController extends Controller
       );
     }
 
-    $accepted = $this->translationRegistry->blockFieldsForFamily($family);
+    $isToc = $block->typeSlug() === 'toc';
+    $accepted = $isToc ? ['title' => 'title'] : $this->translationRegistry->blockFieldsForFamily($family);
 
     if ($family === 'image') {
       // Both spellings are accepted; the translation column name wins.
@@ -1911,7 +1912,7 @@ class InternalContentResourceController extends Controller
         sprintf(
           'A %s block only accepts these translated fields: %s.',
           $family,
-          implode(', ', $this->translationRegistry->translatedFieldMap($family)),
+          implode(', ', $isToc ? ['title'] : $this->translationRegistry->translatedFieldMap($family)),
         ),
         'unsupported_block_translation_fields',
       );
@@ -1928,6 +1929,14 @@ class InternalContentResourceController extends Controller
     $payload = [];
 
     foreach ($input as $field => $value) {
+      if ($isToc) {
+        if (! BlockTranslationRegistry::validTocTitle($value)) {
+          return $this->validationError('translations.title', 'Use text of at most 255 characters, null for the standard title, or false to hide it.');
+        }
+        $payload['title'] = $value;
+
+        continue;
+      }
       if ($family === 'contact_form' && in_array($field, ContactFormFields::LABELS, true)
         && ! ContactFormFields::validLabel($value)) {
         return $this->validationError('translations.'.$field, 'Use a text label of at most 255 characters or null.', 'invalid_block_translation_field');
