@@ -18,6 +18,9 @@ return [
   'confirm_help' => 'L’arrêt du processus a été vérifié. Cette action consigne l’interruption et conserve l’exigence de restauration. Les journaux, versions et durées d’origine sont préservés. Aucun point de contrôle n’est restauré et aucune nouvelle mise à jour n’est autorisée.',
   'refused' => 'L’état a changé, un verrou est détenu ou les preuves du processus/de restauration sont incertaines. Aucun rapprochement enregistré. Vérifiez les entrées actuelles.',
   'reconciled' => ':count entrée(s) marquée(s) comme interrompue(s). Une vérification de restauration reste nécessaire avant une autre mise à jour.',
+  'dismiss' => 'Retirer des mises à jour inachevées',
+  'dismissed' => 'L’entrée a été retirée de la liste des mises à jour inachevées.',
+  'dismiss_refused' => 'L’entrée peut être retirée une fois que sa vérification et celle des mises à jour associées sont terminées.',
   'kinds' => [
     'run' => 'Exécution',
     'operation' => 'Opération du panneau',

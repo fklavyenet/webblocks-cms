@@ -18,6 +18,9 @@ return [
   'confirm_help' => 'Der Prozess wurde als beendet bestätigt. Die Aktion dokumentiert die Unterbrechung; die Wiederherstellungsprüfung bleibt erforderlich. Originalprotokolle, Versionen und Laufzeiten bleiben erhalten. Es wird kein Prüfpunkt wiederhergestellt und keine weitere Aktualisierung freigegeben.',
   'refused' => 'Der Zustand wurde geändert, eine Sperre ist belegt oder die Prozess-/Wiederherstellungsnachweise sind unklar. Kein Abgleich wurde gespeichert. Prüfen Sie die aktuellen Einträge.',
   'reconciled' => ':count Eintrag/Einträge als unterbrochen markiert. Vor einer weiteren Aktualisierung bleibt eine Wiederherstellungsprüfung erforderlich.',
+  'dismiss' => 'Aus der Liste unvollständiger Aktualisierungen entfernen',
+  'dismissed' => 'Der Eintrag wurde aus der Liste unvollständiger Aktualisierungen entfernt.',
+  'dismiss_refused' => 'Solange dieser Eintrag oder ein zugehöriges Update geprüft werden muss, kann der Eintrag nicht entfernt werden.',
   'kinds' => [
     'run' => 'Lauf',
     'operation' => 'Panelvorgang',

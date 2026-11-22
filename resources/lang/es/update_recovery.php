@@ -18,6 +18,9 @@ return [
   'confirm_help' => 'Se verificó la detención del proceso. Esta acción registra la interrupción y mantiene la recuperación requerida. Se conservan registros, versiones y tiempos originales. No se restaura ningún punto de control ni se permite otra actualización.',
   'refused' => 'El estado cambió, hay un bloqueo o las pruebas del proceso/recuperación son inciertas. No se guardó la conciliación. Revise los registros actuales.',
   'reconciled' => ':count registro(s) marcado(s) como interrumpido(s). Sigue siendo necesaria una revisión de recuperación antes de otra actualización.',
+  'dismiss' => 'Quitar de Actualizaciones sin terminar',
+  'dismissed' => 'El registro se ha quitado de Actualizaciones sin terminar.',
+  'dismiss_refused' => 'No se puede quitar el registro mientras este o una actualización relacionada requieran revisión.',
   'kinds' => [
     'run' => 'Ejecución',
     'operation' => 'Operación del panel',

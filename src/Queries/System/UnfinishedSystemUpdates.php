@@ -4,6 +4,7 @@ namespace WebBlocks\Cms\Queries\System;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
@@ -20,14 +21,51 @@ class UnfinishedSystemUpdates
     $class = self::MODELS[$kind];
     $model = new $class;
 
-    return $model->newQuery()->where(function (Builder $query) use ($model): void {
-      $query->whereIn('status', ['pending', 'queued', 'running', 'interrupted']);
+    return $model->newQuery()->where(function (Builder $query) use ($kind, $model): void {
+      $query->whereIn('status', ['pending', 'queued', 'running'])
+        ->orWhere(fn (Builder $interrupted) => $this->visibleInterrupted($interrupted, $kind, $model));
       if (Schema::hasColumn($model->getTable(), 'recovery_required')) {
         $query->orWhere('recovery_required', true);
       }
       if ($model instanceof AdminUpdateOperation && Schema::hasColumns('wbcms_update_chain_steps', ['operation_id', 'status'])) {
         $query->orWhereIn('id', UpdateChainStep::whereIn('status', ['running', 'interrupted'])->select('operation_id'));
       }
+    });
+  }
+
+  private function visibleInterrupted(Builder $query, string $kind, Model $model): void
+  {
+    $query->where('status', 'interrupted');
+    if (! Schema::hasTable('wbcms_update_reconciliations')) {
+      return;
+    }
+
+    if ($model instanceof AdminUpdateOperation && Schema::hasColumn($model->getTable(), 'chain_protocol')) {
+      // Interrupted chains remain unresolved at admission and stay in review.
+      $query->where(function (Builder $operation) use ($kind, $model): void {
+        $operation->where('chain_protocol', 1)
+          ->orWhere(fn (Builder $nonChain) => $this->withoutDismissal($nonChain, $kind, $model));
+      });
+
+      return;
+    }
+
+    $this->withoutDismissal($query, $kind, $model);
+  }
+
+  private function withoutDismissal(Builder $query, string $kind, Model $model): void
+  {
+    $query->whereNotExists(function (QueryBuilder $audit) use ($kind, $model): void {
+      $audit->selectRaw('1')->from('wbcms_update_reconciliations as dismissal')
+        ->where('dismissal.record_type', $kind)
+        ->whereColumn('dismissal.record_id', $model->getQualifiedKeyName())
+        ->where('dismissal.status', 'dismissed')
+        ->where('dismissal.recovery_required', false)
+        ->where('dismissal.id', function (QueryBuilder $latest): void {
+          $latest->selectRaw('max(id)')->from('wbcms_update_reconciliations')
+            ->whereColumn('record_type', 'dismissal.record_type')
+            ->whereColumn('record_id', 'dismissal.record_id');
+        });
     });
   }
 

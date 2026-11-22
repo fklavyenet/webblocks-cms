@@ -43,6 +43,16 @@
                     <p>{{ __('webblocks-cms::update_recovery.guidance') }}</p>
                   </div>
                 </details>
+                @if ($item['can_dismiss'] && ($canReconcileUpdates ?? false))
+                  <form method="POST" action="{{ route('admin.system.updates.dismiss') }}">
+                    @csrf
+                    <input type="hidden" name="record_type" value="{{ $item['kind'] }}">
+                    <input type="hidden" name="record_id" value="{{ $item['record']->getKey() }}">
+                    <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ __('webblocks-cms::update_recovery.dismiss') }}" aria-label="{{ __('webblocks-cms::update_recovery.dismiss') }}">
+                      <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
+                    </button>
+                  </form>
+                @endif
                 @if ($item['liveness']['can_reconcile'] && ($canReconcileUpdates ?? false))
                   <button type="button" class="wb-btn wb-btn-secondary" data-wb-toggle="modal" data-wb-target="#reconcile-{{ $item['kind'] }}-{{ $item['record']->getKey() }}">{{ __('webblocks-cms::update_recovery.reconcile') }}</button>
                 @endif

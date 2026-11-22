@@ -54,6 +54,10 @@ class SystemUpdateRunRetention
         }
       });
 
+    $details = app(SystemUpdateDetailRetention::class);
+    $details->pruneReceiptLogs();
+    $details->pruneAuditHistory();
+
     return $deleted;
   }
 

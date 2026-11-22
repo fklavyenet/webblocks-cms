@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.12
+
+- Improve badge and status text contrast throughout Webadmin in dark mode, including when the panel follows the system appearance.
+- Identify theme catalog releases by package checksum and show when a different package with the same version is installed.
+- Dismiss resolved interrupted updates from the Unfinished updates list. Keep the dismissal and API request identity while pruning older log and audit details.
+
 ## 1.144.11
 
 - Use Schlüssel and Bezeichnung consistently for keys and labels in the German administration panel.

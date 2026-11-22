@@ -24,6 +24,7 @@ use WebBlocks\Cms\Support\System\Updates\CmsUpdateAdmissionContext;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateApiPresenter;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateAttention;
+use WebBlocks\Cms\Support\System\Updates\SystemUpdateDetailRetention;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateLiveness;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunOutputSanitizer;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
@@ -345,6 +346,129 @@ class UnfinishedSystemUpdateTest extends TestCase
       $this->assertTrue($payload['requires_attention']);
       $this->assertTrue($payload['recovery_required']);
     }
+  }
+
+  private function certifyInterruption(string $kind, $record): void
+  {
+    $audit = (array) DB::table('wbcms_update_reconciliations')->where('record_type', $kind)
+      ->where('record_id', (string) $record->getKey())->first();
+    unset($audit['id']);
+    DB::table('wbcms_update_reconciliations')->insert(array_replace($audit, [
+      'previous_status' => 'interrupted', 'recovery_required' => false,
+    ]));
+    $record->forceFill(['recovery_required' => false])->save();
+  }
+
+  public function test_dismissed_rows_leave_attention_and_follow_normal_run_retention(): void
+  {
+    $this->deadWorkers();
+    $run = $this->makeRun();
+    $receipt = $this->receipt(['system_update_run_id' => $run->id]);
+    $this->postJson(route('admin.system.updates.reconcile'), $this->input('run', $run))->assertOk();
+    $this->certifyInterruption('run', $run);
+    $this->certifyInterruption('request', $receipt);
+    $this->makeRun(['status' => 'success', 'started_at' => now()]);
+
+    $this->get(route('admin.system.updates.index'))->assertOk()
+      ->assertSee(route('admin.system.updates.dismiss'))->assertSee(__('webblocks-cms::update_recovery.dismiss'));
+    $url = route('admin.system.updates.dismiss');
+    $runInput = ['record_type' => 'run', 'record_id' => (string) $run->id];
+    $receiptInput = ['record_type' => 'request', 'record_id' => $receipt->id];
+    $this->post($url, $runInput)->assertSessionHas('status');
+    $this->post($url, $runInput)->assertSessionHas('status');
+    $this->assertCount(1, app(SystemUpdateAttention::class)->rows());
+    $retention = app(SystemUpdateRunRetention::class);
+    $this->assertContains($run->id, $retention->retainedRuns(1)->pluck('id'));
+    $this->post($url, $receiptInput)->assertSessionHas('status');
+    $this->get(route('admin.system.updates.index'))->assertOk()
+      ->assertDontSee('id="update-attention-title"', false);
+
+    $this->assertSame('interrupted', $run->fresh()->status);
+    $this->assertSame('Original log', $run->fresh()->output);
+    $receipt->forceFill(['recovery_required' => true])->save();
+    $this->assertCount(1, app(SystemUpdateAttention::class)->rows());
+    $this->assertContains($run->id, $retention->retainedRuns(1)->pluck('id'));
+    $receipt->forceFill(['recovery_required' => false])->save();
+
+    $this->assertSame(1, $retention->prune(1));
+    $this->assertNull($run->fresh());
+    $this->assertSame($receipt->idempotency_key, $receipt->fresh()->idempotency_key);
+    $this->assertSame('interrupted', $receipt->fresh()->status);
+    $this->assertSame(2, DB::table('wbcms_update_reconciliations')->where('status', 'dismissed')->count());
+    $this->assertDatabaseCount('wbcms_update_reconciliations', 6);
+  }
+
+  public function test_dismissal_refuses_unresolved_or_unauthorized_requests(): void
+  {
+    $this->deadWorkers();
+    $run = $this->makeRun();
+    $this->receipt(['system_update_run_id' => $run->id]);
+    $url = route('admin.system.updates.dismiss');
+    $input = ['record_type' => 'run', 'record_id' => (string) $run->id];
+    $this->post($url, $input)->assertSessionHasErrors(['system_update']);
+
+    $this->postJson(route('admin.system.updates.reconcile'), $this->input('run', $run))->assertOk();
+    $this->certifyInterruption('run', $run);
+    $this->get(route('admin.system.updates.index'))->assertOk()
+      ->assertDontSee(__('webblocks-cms::update_recovery.dismiss'));
+    $this->post($url, $input)->assertSessionHasErrors(['system_update']);
+
+    $actor = User::forceCreate(['name' => 'Synthetic editor', 'email' => 'editor@example.test', 'password' => 'unused', 'role' => 'editor', 'is_active' => true]);
+    $this->actingAs($this->cmsActor($actor));
+    $this->post($url, $input)->assertForbidden();
+    $this->assertDatabaseMissing('wbcms_update_reconciliations', ['status' => 'dismissed']);
+  }
+
+  public function test_old_receipt_logs_are_pruned_without_allowing_a_replay_to_run_again(): void
+  {
+    $result = ['summary' => 'Verified update', 'output' => 'Detailed log', 'warning_count' => 0, 'duration_ms' => 500];
+    $old = $this->receipt(['status' => 'success', 'result' => $result, 'created_at' => now()->subDays(3)]);
+    $protected = $this->receipt(['status' => 'failed', 'result' => $result, 'recovery_required' => true, 'created_at' => now()->subDays(4)]);
+    for ($i = 0; $i < SystemUpdateDetailRetention::KEEP; $i++) {
+      $this->receipt(['status' => 'success', 'result' => $result]);
+    }
+
+    $retention = app(SystemUpdateRunRetention::class);
+    $retention->prune();
+    $retention->prune();
+    $logs = SystemUpdateRequest::all()->filter(fn (SystemUpdateRequest $receipt) => isset($receipt->result['output']));
+    $this->assertCount(SystemUpdateDetailRetention::KEEP + 1, $logs);
+    $this->assertSame($result, $protected->fresh()->result);
+
+    $token = (new CmsApiToken)->forceFill(['id' => $old->cms_api_token_id]);
+    $request = $old->only(['idempotency_key', 'expected_current_version', 'target_version', 'checksum_sha256']);
+    $replay = app(RunApiSystemUpdate::class)->execute($token, $request);
+    $this->assertTrue($replay['replayed']);
+    $this->assertSame($old->id, $replay['operation']->id);
+    $this->assertSame('success', $replay['operation']->status);
+    $this->assertSame('Verified update', $replay['operation']->result['summary']);
+    $this->assertArrayNotHasKey('output', $replay['operation']->result);
+    $this->assertSame(409, app(RunApiSystemUpdate::class)->execute($token, array_replace($request, ['target_version' => '1.0.2']))['http_status']);
+  }
+
+  public function test_old_closed_audit_details_are_pruned_while_dismissal_and_recovery_evidence_are_retained(): void
+  {
+    $this->deadWorkers();
+    $run = $this->makeRun();
+    $this->postJson(route('admin.system.updates.reconcile'), $this->input('run', $run))->assertOk();
+    $this->certifyInterruption('run', $run);
+    $audits = DB::table('wbcms_update_reconciliations');
+    $oldestId = (clone $audits)->min('id');
+    $detail = (array) (clone $audits)->where('id', $oldestId)->first();
+    unset($detail['id']);
+    $audits->insert(array_fill(0, SystemUpdateDetailRetention::KEEP, $detail));
+    $this->certifyInterruption('run', $run);
+
+    $protected = $this->makeRun(['status' => 'interrupted', 'recovery_required' => true]);
+    $protectedAuditId = $audits->insertGetId(array_replace($detail, ['record_id' => (string) $protected->id]));
+    $dismiss = route('admin.system.updates.dismiss');
+    $this->post($dismiss, ['record_type' => 'run', 'record_id' => (string) $run->id])->assertSessionHas('status');
+
+    $this->assertDatabaseMissing('wbcms_update_reconciliations', ['id' => $oldestId]);
+    $this->assertDatabaseHas('wbcms_update_reconciliations', ['id' => $protectedAuditId, 'recovery_required' => true]);
+    $this->assertDatabaseHas('wbcms_update_reconciliations', ['record_type' => 'run', 'record_id' => (string) $run->id, 'status' => 'dismissed']);
+    $this->assertSame(SystemUpdateDetailRetention::KEEP, (clone $audits)->where('record_id', (string) $run->id)->where('status', '!=', 'dismissed')->count());
+    $this->assertSame([$protected->id], app(SystemUpdateAttention::class)->rows()->pluck('record.id')->all());
   }
 
   public function test_a_failed_status_write_rolls_back_its_audit_and_releases_locks(): void

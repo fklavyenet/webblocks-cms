@@ -100,6 +100,10 @@ messages in page content or next to the action. Do not use toast notifications o
 hide feedback automatically. Success and failure must remain visible and be
 announced with an appropriate status/alert live region.
 
+Admin badges and status pills use text colors that meet 4.5:1 against their
+actual background. Use the shared admin palette for semantic status colors
+and verify dark mode, including automatic mode with a dark system appearance.
+
 Admin lists use the shared `admin.partials.pagination` in the list card footer.
 Use `wb-border-0` on the `wb-pagination` navigation to remove its outer frame.
 Keep the individual controls and their visible keyboard focus styles. Use the

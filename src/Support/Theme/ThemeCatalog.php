@@ -54,16 +54,18 @@ final class ThemeCatalog
       $themes[$theme['handle']] = ['release' => $release] + $theme;
     }
 
-    $installed = $this->themes->installedCatalogVersions(array_keys($themes));
+    $installed = $this->themes->installedCatalogChecksums(array_keys($themes));
     foreach ($themes as $handle => $theme) {
-      $version = $theme['release']['version'] ?? null;
+      $release = $theme['release'];
+      $version = $release['version'] ?? null;
       $versions = $installed[$handle] ?? [];
-      $alreadyInstalled = $version !== null && collect($versions)->contains(
-        fn (string $existing) => version_compare($existing, $version, '>=')
-      );
-      $themes[$handle]['install_action'] = $version === null || $alreadyInstalled
-        ? null
-        : ($versions === [] ? 'install' : 'update');
+      $themes[$handle]['state'] = match (true) {
+        $release === null => 'incompatible',
+        isset($versions[$version]) => hash_equals($versions[$version], $release['sha256']) ? 'installed' : 'conflict',
+        collect(array_keys($versions))->contains(fn (string $existing) => version_compare($existing, $version, '>')) => 'newer_installed',
+        $versions !== [] => 'update',
+        default => 'install',
+      };
     }
 
     return ['themes' => array_values($themes), 'hasMore' => ($result['next_page'] ?? null) === $page + 1];
@@ -85,12 +87,17 @@ final class ThemeCatalog
       $path = '/themes/'.$handle.'/releases/'.$version.'/download';
       $this->download($path, $file, $release['size'], $release['sha256']);
       $filename = stream_get_meta_data($file)['uri'];
-      $package = $this->packages->read($filename)['version'];
+      $package = $this->packages->read($filename);
+      $manifest = $package['version'];
+      $archiveLayouts = $package['layouts'];
+      $catalogLayouts = $release['layouts'];
+      sort($archiveLayouts);
+      sort($catalogLayouts);
 
-      if ($package['handle'] !== $handle || $package['version'] !== $version) {
+      if ($manifest['handle'] !== $handle || $manifest['version'] !== $version || $archiveLayouts !== $catalogLayouts) {
         $this->invalid('catalog_download_failed');
       }
-      if (! ThemePackage::compatible((object) $package)) {
+      if (! ThemePackage::compatible((object) $manifest)) {
         $this->invalid('incompatible');
       }
 

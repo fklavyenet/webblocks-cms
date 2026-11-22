@@ -11,9 +11,11 @@ use Illuminate\Support\MessageBag;
 use Illuminate\Support\Str;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\View\View;
+use WebBlocks\Cms\Actions\System\DismissResolvedSystemUpdate;
 use WebBlocks\Cms\Actions\System\ReconcileStoppedSystemUpdate;
 use WebBlocks\Cms\Actions\System\RepairUpdateChainSchema;
 use WebBlocks\Cms\Actions\System\StartAdminSystemUpdate;
+use WebBlocks\Cms\Http\Requests\Admin\DismissSystemUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\ReconcileSystemUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\RunSystemUpdateRequest;
 use WebBlocks\Cms\Policies\SystemUpdateRecoveryPolicy;
@@ -136,6 +138,20 @@ class SystemUpdateController extends Controller
       return $request->expectsJson()
         ? response()->json(['message' => $exception->userMessage(), 'error' => $exception->userMessage()], 409)->header('Cache-Control', 'no-store')
         : redirect()->route('admin.system.updates.index')->withErrors(['system_update' => $exception->userMessage()])->withInput();
+    }
+  }
+
+  public function dismiss(DismissSystemUpdateRequest $request, DismissResolvedSystemUpdate $dismiss): RedirectResponse
+  {
+    $redirect = redirect()->route('admin.system.updates.index');
+    $input = $request->validated();
+
+    try {
+      $dismiss->execute($input['record_type'], $input['record_id'], (int) $request->user()->getKey());
+
+      return $redirect->with('status', __('webblocks-cms::update_recovery.dismissed'));
+    } catch (UpdateException $exception) {
+      return $redirect->withErrors(['system_update' => $exception->userMessage()]);
     }
   }
 

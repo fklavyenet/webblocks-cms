@@ -1747,9 +1747,16 @@ installed target version. Missing/stale worker evidence is **Status unconfirmed*
 not proof of success or failure. The open Unfinished updates table lists pending,
 queued, running and interrupted SQL runs, operations and API receipts independently
 of the recent-history limit, including operations with no run and chains with
-unfinished child steps under a terminal parent. Retention protects these records,
-recovery-flagged records and runs referenced by unresolved operations/chains.
-History keeps saved statuses; worker evidence is displayed separately.
+unfinished child steps under a terminal parent. A system administrator can remove
+an interrupted record from the list once recovery has been verified and all related
+work is resolved. The action appends an audit entry. Removed runs return to normal
+history retention when no other unresolved record protects them. Cleanup keeps up
+to 100 recent removable audit details and 100 recent completed receipt logs.
+The final dismissal entry for an existing record and API idempotency keys are
+retained. Older completed API receipts keep their status and summary after their
+log output is pruned. Recovery-flagged records and runs referenced by unresolved
+operations or chains stay protected. History
+keeps saved statuses and displays worker evidence separately.
 
 CMS-owned adapters capture typed worker PID, booted-host/PID-namespace identity and SQL heartbeat
 fields for new executions. Passive review evaluates these alongside cache heartbeats,
@@ -2967,8 +2974,12 @@ adds a version and leaves every site's active version and history intact.
 The package management screen filters installed versions by name or version,
 shows compatibility and installation time, and opens a ZIP upload dialog
 from the page header. The catalog keeps the same page after installation and
-shows the result there. Unused versions are deleted through the row action
-and confirmation dialog. Versions referenced by site history are retained.
+shows the result there. The catalog identifies installed releases by handle,
+version and checksum. A different installed package with the same version is
+reported as a conflict and cannot be replaced in place. A newer catalog version
+can be installed separately. Layouts advertised by the catalog are checked
+against the downloaded manifest. Unused versions are deleted through the row
+action and confirmation dialog. Versions referenced by site history are retained.
 API package management requires the explicit `themes.manage` capability on an
 installation-wide system token owned by an active Super admin. Packages contain
 a format-1 `webblocks-theme.json` manifest, root `theme.css` and optional

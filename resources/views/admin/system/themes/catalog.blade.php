@@ -31,7 +31,7 @@
                                 <tr>
                                     <th scope="col">{{ $text('theme') }}</th>
                                     <th scope="col">{{ $text('catalog_version') }}</th>
-                                    <th scope="col">{{ $text('layouts') }}</th>
+                                    <th scope="col">{{ $text('catalog_layouts') }}</th>
                                     <th scope="col">{{ $text('status') }}</th>
                                     <th scope="col" class="wb-table-actions">{{ $text('actions') }}</th>
                                 </tr>
@@ -39,11 +39,14 @@
                             <tbody>
                                 @foreach ($themes as $theme)
                                     @php
-                                        [$status, $statusClass] = match (true) {
-                                            $theme['release'] === null => ['catalog_incompatible', 'wb-status-danger'],
-                                            $theme['install_action'] === null => ['catalog_installed', 'wb-status-active'],
-                                            $theme['install_action'] === 'update' => ['catalog_update_available', 'wb-status-pending'],
-                                            default => ['catalog_available', 'wb-status-info'],
+                                        $state = $theme['state'];
+                                        [$status, $statusClass] = match ($state) {
+                                            'incompatible' => ['catalog_incompatible', 'wb-status-danger'],
+                                            'installed' => ['catalog_installed', 'wb-status-active'],
+                                            'conflict' => ['catalog_conflict', 'wb-status-pending'],
+                                            'newer_installed' => ['catalog_newer_installed', 'wb-status-info'],
+                                            'update' => ['catalog_update_available', 'wb-status-pending'],
+                                            'install' => ['catalog_available', 'wb-status-info'],
                                         };
                                     @endphp
                                     <tr>
@@ -55,9 +58,14 @@
                                         </th>
                                         <td>{{ $theme['release']['version'] ?? '—' }}</td>
                                         <td>{{ $theme['release'] ? implode(', ', $theme['release']['layouts']) : '—' }}</td>
-                                        <td><span class="wb-status-pill {{ $statusClass }}">{{ $text($status) }}</span></td>
+                                        <td>
+                                            <span class="wb-status-pill {{ $statusClass }}">{{ $text($status) }}</span>
+                                            @if ($state === 'conflict')
+                                                <p class="wb-text-sm wb-text-muted wb-m-0">{{ $text('catalog_conflict_help') }}</p>
+                                            @endif
+                                        </td>
                                         <td class="wb-table-actions">
-                                            @if ($theme['install_action'])
+                                            @if (in_array($state, ['install', 'update'], true))
                                                 <div class="wb-action-group">
                                                     <form method="post" action="{{ route('admin.system.themes.catalog.store', $page > 1 ? ['page' => $page] : []) }}">
                                                         @csrf
@@ -65,8 +73,8 @@
                                                         <input type="hidden" name="version" value="{{ $theme['release']['version'] }}">
                                                         <button class="wb-btn wb-btn-secondary wb-btn-sm" type="submit" data-wb-busy
                                                             data-wb-busy-label="{{ $text('catalog_installing') }}"
-                                                            aria-label="{{ $text('catalog_'.$theme['install_action'].'_named', ['name' => $theme['name']]) }}">
-                                                            <span data-wb-busy-text>{{ $text('catalog_'.$theme['install_action']) }}</span>
+                                                            aria-label="{{ $text('catalog_'.$state.'_named', ['name' => $theme['name']]) }}">
+                                                            <span data-wb-busy-text>{{ $text('catalog_'.$state) }}</span>
                                                         </button>
                                                     </form>
                                                 </div>

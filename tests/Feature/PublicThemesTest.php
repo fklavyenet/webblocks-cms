@@ -208,6 +208,56 @@ final class PublicThemesTest extends TestCase
     $this->get($secondPage)->assertOk()->assertSee('Theme version installed.')->assertSee('Installed')->assertDontSee('Install update');
   }
 
+  public function test_catalog_distinguishes_exact_installations_from_same_version_package_conflicts(): void
+  {
+    $this->actingAs($this->actor());
+    $catalog = route('admin.system.themes.catalog.index');
+    $install = route('admin.system.themes.catalog.store');
+    $local = $this->archive();
+    $catalogArchive = $this->archive(layouts: ['default', 'columns']);
+    $bytes = file_get_contents($catalogArchive->getPathname());
+    $release = [
+      'handle' => 'editorial', 'version' => '1.0.0', 'sha256' => hash('sha256', $bytes),
+      'size' => strlen($bytes), 'layouts' => ['columns', 'default'],
+    ];
+    $origin = 'https://extensions.webblocksui.com';
+    config(['webblocks-plugins.catalog.extensions_base_url' => $origin]);
+    Http::preventStrayRequests();
+    Http::fake([
+      $origin.'/api/themes?*' => function () use (&$release) {
+        return Http::response(['data' => [['handle' => 'editorial', 'name' => 'Editorial', 'release' => $release]], 'next_page' => null]);
+      },
+      $origin.'/api/themes/editorial/releases/1.0.0' => function () use (&$release) {
+        return Http::response(['data' => $release]);
+      },
+      $origin.'/themes/editorial/releases/1.0.0/download' => fn () => Http::response($bytes),
+    ]);
+
+    $release['layouts'] = ['default'];
+    $params = ['handle' => 'editorial', 'version' => '1.0.0'];
+    $this->post($install, $params)->assertRedirect($catalog)->assertSessionHasErrors('catalog');
+    $this->assertDatabaseCount('wbcms_theme_versions', 0);
+    $release['layouts'] = ['columns', 'default'];
+
+    $this->post(route('admin.system.themes.store'), ['package' => $local])->assertRedirect();
+    $localChecksum = hash_file('sha256', $local->getPathname());
+    $this->get($catalog)->assertOk()->assertSee('Catalog layouts')->assertSee('columns, default')
+      ->assertSee('Different package installed')->assertDontSee('>Installed</span>', false)
+      ->assertDontSee('aria-label="Install Editorial"', false);
+
+    $this->post($install, $params)->assertRedirect($catalog)->assertSessionHasErrors('package');
+    $this->assertDatabaseCount('wbcms_theme_versions', 1);
+    $this->assertDatabaseHas('wbcms_theme_versions', ['version' => '1.0.0', 'checksum' => $localChecksum]);
+
+    $release['sha256'] = $localChecksum;
+    $release['layouts'] = ['default'];
+    $this->get($catalog)->assertOk()->assertSee('>Installed</span>', false)->assertDontSee('Different package installed');
+
+    $release['version'] = '0.9.0';
+    $this->get($catalog)->assertOk()->assertSee('Newer version installed')->assertDontSee('>Installed</span>', false)
+      ->assertDontSee('aria-label="Install Editorial"', false);
+  }
+
   private function actor(): User
   {
     return User::query()->findOrFail($this->cmsActor((new User)->forceFill(['role' => 'super_admin']))->id);
@@ -223,14 +273,14 @@ final class PublicThemesTest extends TestCase
     return [$site, $page];
   }
 
-  private function archive(string $version = '1.0.0', string $css = ':scope { background-image: url(assets/dot.png); }'): UploadedFile
+  private function archive(string $version = '1.0.0', string $css = ':scope { background-image: url(assets/dot.png); }', array $layouts = ['default']): UploadedFile
   {
     $path = tempnam(sys_get_temp_dir(), 'wbcms-test-theme-');
     $zip = new ZipArchive;
     $zip->open($path, ZipArchive::OVERWRITE);
     $zip->addFromString('webblocks-theme.json', json_encode([
       'format_version' => 1, 'name' => 'Editorial', 'handle' => 'editorial', 'version' => $version,
-      'license' => 'MIT', 'cms' => '^1.131.1', 'ui' => '^2.35.1', 'layouts' => ['default'], 'button_corners' => true,
+      'license' => 'MIT', 'cms' => '^1.131.1', 'ui' => '^2.35.1', 'layouts' => $layouts, 'button_corners' => true,
     ], JSON_THROW_ON_ERROR));
     $zip->addFromString('theme.css', $css);
     $zip->addFromString('assets/dot.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a6O0AAAAASUVORK5CYII='));

@@ -18,6 +18,9 @@ return [
   'confirm_help' => 'Worker sürecinin durduğu doğrulandı. Bu işlem kesintiyi kaydeder ve kurtarma gereksinimini korur. Özgün günlükler, sürümler ve çalışma zamanları korunur. Kontrol noktası geri yüklenmez ve yeni güncellemeye izin verilmez.',
   'refused' => 'Kayıtlı durum değişti, bir kilit tutuluyor veya worker/kurtarma kanıtı belirsiz. Uzlaştırma kaydedilmedi. Güncel kayıtları inceleyin.',
   'reconciled' => ':count kayıt kesintiye uğradı olarak işaretlendi. Yeni güncellemeden önce kurtarma incelemesi hâlâ gereklidir.',
+  'dismiss' => 'Tamamlanmamış güncellemeler listesinden kaldır',
+  'dismissed' => 'Kayıt Tamamlanmamış güncellemeler listesinden kaldırıldı.',
+  'dismiss_refused' => 'Bu kayıt veya ilişkili bir güncelleme inceleme gerektirirken kayıt listeden kaldırılamaz.',
   'kinds' => [
     'run' => 'Çalıştırma',
     'operation' => 'Panel işlemi',

@@ -18,6 +18,9 @@ return [
   'confirm_help' => 'The worker was verified stopped. This action records interruption and keeps recovery required. Original logs, versions and execution times are preserved. It does not restore a checkpoint or permit another update.',
   'refused' => 'The saved state changed, a lock is held, or worker/recovery evidence is uncertain. No reconciliation was saved. Review the current records.',
   'reconciled' => ':count record(s) marked interrupted. Recovery review is still required before another update.',
+  'dismiss' => 'Remove from Unfinished updates',
+  'dismissed' => 'The record was removed from Unfinished updates.',
+  'dismiss_refused' => 'This record cannot be removed while it or a related update still needs review.',
   'kinds' => [
     'run' => 'Run',
     'operation' => 'Panel operation',

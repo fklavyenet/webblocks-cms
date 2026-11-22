@@ -18,6 +18,9 @@ return [
   'confirm_help' => 'L’arresto del processo è stato verificato. L’azione registra l’interruzione e mantiene il ripristino richiesto. Log, versioni e tempi originali vengono conservati. Nessun punto di controllo viene ripristinato e nessun nuovo aggiornamento viene autorizzato.',
   'refused' => 'Lo stato è cambiato, un blocco è occupato oppure le prove del processo/ripristino sono incerte. Nessuna riconciliazione salvata. Verificare le voci attuali.',
   'reconciled' => ':count voce/voci segnate come interrotte. La verifica del ripristino resta necessaria prima di un altro aggiornamento.',
+  'dismiss' => 'Rimuovi dagli aggiornamenti incompleti',
+  'dismissed' => 'La voce è stata rimossa dall’elenco degli aggiornamenti incompleti.',
+  'dismiss_refused' => 'La voce può essere rimossa dopo la verifica del record e degli aggiornamenti correlati.',
   'kinds' => [
     'run' => 'Esecuzione',
     'operation' => 'Operazione del pannello',

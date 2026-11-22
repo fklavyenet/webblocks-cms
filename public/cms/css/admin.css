@@ -91,24 +91,16 @@
     border-radius: 2px;
 }
 
-.wb-cms-dashboard {
-    --wb-cms-status-success: var(--wb-success);
+.wb-admin-dashboard-page {
+    --wb-cms-status-primary: var(--wb-accent-text);
+    --wb-cms-status-success: var(--wb-success-dark);
     --wb-cms-status-warning: var(--wb-warning-dark);
-    --wb-cms-status-danger: var(--wb-danger);
-    --wb-cms-status-info: var(--wb-info);
-    display: grid;
-    gap: var(--wb-s4);
-    grid-template-columns: minmax(0, 1fr);
+    --wb-cms-status-danger: var(--wb-danger-dark);
+    --wb-cms-status-info: var(--wb-info-dark);
 }
 
-.wb-cms-dashboard .wb-status-active { color: var(--wb-cms-status-success); }
-.wb-cms-dashboard .wb-status-pending { color: var(--wb-cms-status-warning); }
-.wb-cms-dashboard .wb-status-error { color: var(--wb-cms-status-danger); }
-.wb-cms-dashboard [data-wb-system-health-summary] .wb-status-info {
-    color: var(--wb-cms-status-info);
-}
-
-html[data-mode="dark"] .wb-cms-dashboard {
+html[data-mode="dark"] .wb-admin-dashboard-page {
+    --wb-cms-status-primary: var(--wb-text);
     --wb-cms-status-success: var(--wb-success-light);
     --wb-cms-status-warning: var(--wb-warning-light);
     --wb-cms-status-danger: var(--wb-danger-light);
@@ -116,12 +108,49 @@ html[data-mode="dark"] .wb-cms-dashboard {
 }
 
 @media (prefers-color-scheme: dark) {
-    html[data-mode="auto"] .wb-cms-dashboard {
+    html[data-mode="auto"] .wb-admin-dashboard-page {
+        --wb-cms-status-primary: var(--wb-text);
         --wb-cms-status-success: var(--wb-success-light);
         --wb-cms-status-warning: var(--wb-warning-light);
         --wb-cms-status-danger: var(--wb-danger-light);
         --wb-cms-status-info: var(--wb-info-light);
     }
+}
+
+.wb-admin-dashboard-page :is(.wb-status-active, .wb-status-success, .wb-badge-success) {
+    color: var(--wb-cms-status-success);
+}
+
+.wb-admin-dashboard-page :is(.wb-status-pending, .wb-status-warning, .wb-badge-warning) {
+    color: var(--wb-cms-status-warning);
+}
+
+.wb-admin-dashboard-page :is(.wb-status-error, .wb-status-danger, .wb-badge-danger) {
+    color: var(--wb-cms-status-danger);
+}
+
+.wb-admin-dashboard-page :is(.wb-status-info, .wb-badge-info) {
+    color: var(--wb-cms-status-info);
+}
+
+.wb-admin-dashboard-page .wb-badge-primary {
+    color: var(--wb-cms-status-primary);
+}
+
+/* Status names used by existing CMS and plugin templates. */
+.wb-admin-dashboard-page .wb-status-success { background: var(--wb-success-soft); }
+.wb-admin-dashboard-page .wb-status-warning { background: var(--wb-warning-soft); }
+.wb-admin-dashboard-page .wb-status-danger { background: var(--wb-danger-soft); }
+
+.wb-admin-dashboard-page :is(.wb-status-neutral, .wb-status-muted) {
+    background: var(--wb-surface-2);
+    color: var(--wb-muted);
+}
+
+.wb-cms-dashboard {
+    display: grid;
+    gap: var(--wb-s4);
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .wb-cms-dashboard .wb-page-header {
@@ -745,14 +774,6 @@ input.wb-admin-table-grid-input:focus {
 
 .wb-admin-slot-block-type .wb-badge .wb-icon {
     --wb-icon-size: 1em;
-}
-
-.wb-admin-slot-block-type .wb-badge-primary {
-    color: var(--wb-accent-text);
-}
-
-.wb-admin-slot-block-type .wb-badge-info {
-    color: var(--wb-text);
 }
 
 .wb-admin-slot-blocks-table .wb-admin-slot-block-summary-cell {
