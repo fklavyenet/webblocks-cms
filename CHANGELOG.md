@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.6
+
+- Show the standard table of contents title in the displayed page language, including in previews and in the navigation's accessible name.
+- Edit, hide, or restore the table of contents title for each language in Webadmin. Existing custom and hidden titles are preserved until edited.
+
 ## 1.144.5
 
 - Register new plugin block types automatically when a plugin is updated from the catalog.
