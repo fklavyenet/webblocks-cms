@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.144.11
+
+- Use Schlüssel and Bezeichnung consistently for keys and labels in the German administration panel.
+
 ## 1.144.10
 
 - Restore automatic CMS jobs run by the Laravel scheduler, including maintenance reports and backup archive verification.

@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
     "document": "resources/contracts/inventory.md",
-    "product_version": "1.144.10",
+    "product_version": "1.144.11",
     "inventory_sha256": "771c99ce9d18a87b1d812cf0223410288d2dbc45874bd6e017a9c8859985d413",
-    "source_sha256": "ab736d3b7e1ed94b9a35105a22258e8bc021dc04088453e86686eb38e514b45f",
+    "source_sha256": "54e2dc4ebe765b47b3253e04757f9fead5e641cee58646a5c8285f0172668e5c",
     "review_outcome": "no-authoring-impact",
-    "review_note": "German panel wording now uses Schl\u00fcssel and Bezeichnung consistently. The available controls, stored field keys, placeholders, and authoring behavior are unchanged.",
+    "review_note": "This patch release standardizes German panel wording. Stored keys, available fields, controls, and authoring behavior stay the same.",
     "sources": {
         "composer.json": "0bf0dbcba6e9cbb8cb62c831b57942f42dceb535645a9b00a36a6a3171fd0312",
         "config/cms.php": "cf6dc069beee4068d34956e5be20ea295c34b503ac13ccff175bda3901adcc49",
@@ -2239,7 +2239,7 @@
         "src/Support/Visitors/VisitorEventLogger.php": "d3604bb2b8a10de4912a866aaabb6d5c92be231f719c9b5433cb3aa4d22047b5",
         "src/Support/Visitors/VisitorReportRetention.php": "5b76a7790e610ebfe2016b13c494d5ba86ff6e854e2a02cff4b06ac11ad240bb",
         "src/Support/Visitors/VisitorReportsQuery.php": "950f0a24d7aa722d6e171b3f57821fcb31af1811972071abf618e377d65619a9",
-        "src/Support/WebBlocks.php": "a4249c34accbde5e0aac05aeaefb0792f76a359f480027e6000280f32e6bee65",
+        "src/Support/WebBlocks.php": "7626fd7d10355f1dcdb6a19775e3b02cb8e5743edcaaaa36d2658576dc52b8c6",
         "src/Support/helpers.php": "d972cb707734997050f09ac1b65af9f8fd5a1029f18d98b9e1b4819f25fd043b",
         "src/WebBlocksCmsServiceProvider.php": "36fd6f31175981876e7f1e92e0cc4db994c0375c6ea84d3e4500aa10e8f316ce",
         "stubs/README.md": "3100275ae8eb8973105ddd8e288e2fc5dcfe0c459867838058efaead6dc2d926",
