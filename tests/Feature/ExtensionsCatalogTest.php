@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ViewErrorBag;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -52,7 +54,7 @@ final class ExtensionsCatalogTest extends TestCase
     Http::assertSentCount($themeUrl === null ? 1 : 2);
   }
 
-  public function test_plugin_details_render_only_catalog_screenshots_and_hide_an_empty_gallery(): void
+  public function test_plugin_details_show_installation_information_beside_the_catalog_slider(): void
   {
     $catalog = 'https://catalog.example.test';
     $screenshot = $catalog.'/storage/catalog-media/example/workspace.webp';
@@ -60,11 +62,25 @@ final class ExtensionsCatalogTest extends TestCase
     config(['webblocks-plugins.catalog.base_url' => $catalog]);
     Http::preventStrayRequests();
     Http::fake([
-      $catalog.'/api/plugins/example/latest?*' => Http::response(['data' => ['release' => ['version' => '1.2.3']]]),
+      $catalog.'/api/plugins/example/latest?*' => Http::response(['data' => ['release' => [
+        'version' => '1.2.3',
+        'status' => 'published',
+        'summary' => 'Improves the operator inbox.',
+        'artifact' => [
+          'download_url' => $catalog.'/downloads/example.zip',
+          'checksum_sha256' => str_repeat('a', 64),
+          'file_name' => 'example.zip',
+        ],
+      ]]]),
       $catalog.'/api/plugins/example?*' => Http::response([
         'data' => [
           'handle' => 'example',
-          'artwork' => ['card_url' => $cover],
+          'label' => 'Example plugin',
+          'summary' => 'Support site visitors.',
+          'description' => 'Manage support conversations from the operator inbox.',
+          'artwork' => ['card_url' => $cover, 'alt' => 'Plugin artwork'],
+          'documentation_url' => $catalog.'/docs/example',
+          'downloads' => ['total' => 144, 'daily' => [['date' => '2026-09-18', 'downloads' => 12]]],
           'media' => [
             ['role' => 'cover', 'url' => $cover],
             ['role' => 'icon', 'url' => $catalog.'/icon.png'],
@@ -74,25 +90,67 @@ final class ExtensionsCatalogTest extends TestCase
         ],
       ]),
       $catalog.'/api/plugins/legacy/latest?*' => Http::response([], 404),
-      $catalog.'/api/plugins/legacy?*' => Http::response(['data' => ['handle' => 'legacy']]),
+      $catalog.'/api/plugins/legacy?*' => Http::response(['data' => [
+        'handle' => 'legacy',
+        'compatibility' => ['status' => 'unsupported'],
+        'summary' => 'Legacy plugin summary.',
+        'description' => 'Legacy plugin summary.',
+      ]]),
+      $catalog.'/api/plugins/cover-only/latest?*' => Http::response([], 404),
+      $catalog.'/api/plugins/cover-only?*' => Http::response(['data' => [
+        'handle' => 'cover-only',
+        'artwork' => ['card_url' => $cover],
+      ]]),
     ]);
 
     $this->withoutMiddleware();
     view()->share('errors', new ViewErrorBag);
-    $this->get('/webadmin/plugins/catalog/example')
+    $installUrl = route('admin.plugins.catalog.install', 'example');
+    $response = $this->get('/webadmin/plugins/catalog/example')
       ->assertOk()
-      ->assertSee('id="plugin-catalog-screenshots"', false)
-      ->assertSee('src="'.$screenshot.'"', false)
+      ->assertSeeInOrder(['Manage support conversations from the operator inbox.', 'Compatible', '1.2.3', 'Not installed', 'Free', 'Downloads', '144', 'Install from catalog', 'Documentation', 'Release notes'])
+      ->assertSee('action="'.$installUrl.'"', false)
+      ->assertSee('href="'.$catalog.'/docs/example'.'"', false)
+      ->assertSee('Improves the operator inbox.')
+      ->assertSeeInOrder(['src="'.$cover.'"', 'src="'.$screenshot.'"'], false)
+      ->assertSee('alt="Plugin artwork"', false)
       ->assertSee('alt="Workspace"', false)
       ->assertSee('Example workspace')
       ->assertSee('width="1440" height="900"', false)
-      ->assertSee('src="'.$cover.'"', false)
+      ->assertSee('data-wb-slider-prev', false)
+      ->assertSee('data-wb-slider-next', false)
+      ->assertDontSee('Download activity')
+      ->assertDontSee('data-wb-chart', false)
       ->assertDontSee('src="'.$catalog.'/icon.png"', false)
       ->assertDontSee('javascript:alert(1)', false);
+
+    $dom = new DOMDocument;
+    $dom->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+    $page = new DOMXPath($dom);
+    $card = '//section[@aria-labelledby="plugin-catalog-title"]';
+    $row = $card.'/div[contains(@class, "wb-row")]';
+    $left = $row.'/div[contains(@class, "wb-col-md-5")]';
+    $right = $row.'/div[contains(@class, "wb-col-md-7")]';
+    $this->assertSame(2.0, $page->evaluate('count('.$row.'/div)'));
+    $this->assertSame('144', $page->evaluate('normalize-space('.$left.'//tr[th[normalize-space()="Downloads"]]/td)'));
+    $this->assertSame($catalog.'/docs/example', $page->evaluate('string('.$left.'/div[contains(@class, "wb-action-group")][form]/a/@href)'));
+    $this->assertSame(0.0, $page->evaluate('count('.$left.'//img)'));
+    $this->assertSame($cover, $page->evaluate('string('.$right.'//figure[contains(@class, "is-active")]/a/img/@src)'));
+
     $this->get('/webadmin/plugins/catalog/legacy')
       ->assertOk()
-      ->assertDontSee('id="plugin-catalog-screenshots"', false);
-    Http::assertSentCount(4);
+      ->assertSee('Incompatible')
+      ->assertSee('This plugin is currently unavailable for installation.')
+      ->assertSee('wb-col-12 wb-promo-copy', false)
+      ->assertDontSee('action="'.route('admin.plugins.catalog.install', 'legacy').'"', false)
+      ->assertDontSee('data-wb-slider', false);
+    $this->get('/webadmin/plugins/catalog/cover-only')
+      ->assertOk()
+      ->assertSee('src="'.$cover.'"', false)
+      ->assertSee('data-wb-slider', false)
+      ->assertDontSee('data-wb-slider-prev', false)
+      ->assertDontSee('data-wb-slider-next', false);
+    Http::assertSentCount(6);
   }
 
   public static function catalogAddresses(): array

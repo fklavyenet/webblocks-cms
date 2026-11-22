@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.8
+
+- Review compatibility, version, installation status, price, and total downloads in a single plugin detail card. Open documentation beside the install action.
+- Browse the plugin cover and screenshots in one slider. Open any image at its original size.
+
 ## 1.144.7
 
 - Show publisher-provided screenshots on plugin catalog detail pages in Webadmin. Open an image at its original size from the gallery.

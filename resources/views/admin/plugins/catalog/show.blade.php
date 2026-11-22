@@ -7,149 +7,182 @@
     $plugin = $catalog->plugin;
     $release = $plugin?->latestCompatibleRelease;
     $compatibility = $plugin?->compatibilityStatus ?? ($release ? 'compatible' : 'unknown');
-    $compatibilityClass = match ($compatibility) {
-        'compatible', 'supported' => 'wb-status-active',
-        'incompatible', 'unsupported' => 'wb-status-danger',
-        default => 'wb-status-pending',
+    [$compatibilityLabel, $compatibilityClass] = match ($compatibility) {
+        'compatible', 'supported' => ['compatible', 'wb-status-active'],
+        'incompatible', 'unsupported' => ['incompatible', 'wb-status-error'],
+        default => ['unknown_compatibility', 'wb-status-pending'],
     };
     $canInstallFromCatalog = $plugin?->hasInstallableArtifact() ?? false;
     $price = $plugin?->pricingType === 'paid'
         ? ($plugin?->priceMinor !== null ? trim(($plugin->priceCurrency ?? '').' '.number_format($plugin->priceMinor / 100, 2)) : $adminText('not_provided'))
         : $adminText('free');
     $billingPeriod = $plugin?->billingPeriod ? $adminText('billing_'.$plugin->billingPeriod) : null;
-    $hasDownloadActivity = $plugin && collect($plugin->dailyDownloads)->sum('downloads') > 0;
-    $hasReleaseNotes = $release && ($release->displaySummary() || count($release->highlights) > 0);
+    $description = $plugin?->description ?? $plugin?->summary;
+    $documentation = $plugin?->firstDocumentationUrl();
+    $releaseSummary = $release?->displaySummary();
+    $releaseHighlights = $release?->highlights ?? [];
     $links = $plugin ? array_filter([
         $adminText('website') => $plugin->firstWebsiteUrl(),
-        $adminText('documentation') => $plugin->firstDocumentationUrl(),
         $adminText('support') => $plugin->firstSupportUrl(),
     ]) : [];
-    $chartDate = static fn (string $date): string => \Carbon\CarbonImmutable::parse($date)->locale($adminLocale)->isoFormat('D MMM');
+    $slides = $plugin?->screenshots ?? [];
+    if ($plugin?->artworkUrl !== null) {
+        array_unshift($slides, [
+            'url' => $plugin->artworkUrl,
+            'alt' => $plugin->artworkAlt,
+            'caption' => null,
+            'width' => null,
+            'height' => null,
+        ]);
+    }
+    $sliderText = fn (string $key) => $adminTranslator->get('blocks.a11y.'.$key, $adminLocale);
 @endphp
 
 @section('content')
-    @include('webblocks-cms::admin.partials.page-header', [
-        'title' => $plugin?->label ?? $adminText('title'),
-        'description' => $plugin?->summary ?? $adminText('description'),
-        'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_catalog')).'</a>',
-    ])
-
     @if (! $catalog->available || $plugin === null)
+        @include('webblocks-cms::admin.partials.page-header', [
+            'title' => $adminText('title'),
+            'description' => $adminText('description'),
+            'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_catalog')).'</a>',
+        ])
+
         <div class="wb-alert wb-alert-danger wb-mb-4">{{ $catalog->message ?? $adminText('unavailable_alert') }}</div>
         <div class="wb-card"><div class="wb-card-body"><div class="wb-empty">
             <div class="wb-empty-title">{{ $adminText('unavailable_title') }}</div>
             <div class="wb-empty-text">{!! $adminText('unavailable_text', ['handle' => '<code>'.e($handle).'</code>']) !!}</div>
         </div></div></div>
     @else
-        <section class="wb-card wb-promo wb-promo--split">
-            <div class="wb-card-body wb-promo-copy wb-stack wb-gap-3">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <span class="wb-badge {{ $plugin->pricingType === 'paid' ? 'wb-badge-primary' : 'wb-badge-success' }}">{{ $price }}{{ $billingPeriod ? ' '.$billingPeriod : '' }}</span>
-                    @if ($plugin->downloadsTotal > 0)
-                        <span class="wb-badge wb-badge-info">{{ $adminText('downloads_count', ['count' => number_format($plugin->downloadsTotal)]) }}</span>
-                    @endif
-                    @foreach ($plugin->categories as $category)
-                        <span class="wb-badge">{{ $category['name'] }}</span>
-                    @endforeach
-                </div>
-                <h2 class="wb-promo-title">{{ $plugin->label }}</h2>
-                @if ($plugin->summary)<p class="wb-promo-text">{{ $plugin->summary }}</p>@endif
-            </div>
-            @if ($plugin->artworkUrl)
-                <figure class="wb-promo-media"><img src="{{ $plugin->artworkUrl }}" alt="{{ $plugin->artworkAlt ?? '' }}"></figure>
-            @endif
-        </section>
-
-        <div class="wb-grid wb-grid-2 wb-gap-4">
-            <section class="wb-card">
-                <div class="wb-card-header"><h2 class="wb-card-title">{{ $adminText('compatibility') }}</h2></div>
-                <div class="wb-card-body wb-stack wb-gap-3">
-                    <div><span class="wb-status {{ $compatibilityClass }}">{{ ucfirst($compatibility) }}</span></div>
-                    <div class="wb-grid wb-grid-2">
-                        <div><strong>{{ $adminText('latest_compatible_release') }}</strong><div>{{ $release?->version ?? $adminText('not_provided') }}</div></div>
-                        <div><strong>{{ $adminText('local_state') }}</strong><div>{{ $installedState['installed'] ? $adminText('installed') : $adminText('not_installed') }}</div></div>
-                    </div>
-                    @if ($errors->has('catalog_install'))
-                        <div class="wb-alert wb-alert-danger">{{ $errors->first('catalog_install') }}</div>
-                    @endif
-                    @if ($installedState['installed'])
-                        <a href="{{ route('admin.system.plugins.show', $plugin->handle) }}" class="wb-btn wb-btn-primary">{{ $adminText('installed') }}</a>
-                    @elseif ($canInstallFromCatalog)
-                        <form method="POST" action="{{ route('admin.plugins.catalog.install', $plugin->handle) }}">
-                            @csrf
-                            <button type="submit" class="wb-btn wb-btn-primary"><i class="wb-icon wb-icon-package" aria-hidden="true"></i>{{ $adminText('install_from_catalog') }}</button>
-                        </form>
-                        <p class="wb-text-sm wb-text-muted">{{ $adminText('install_step_disabled') }}</p>
-                    @else
-                        <button type="button" class="wb-btn wb-btn-primary" disabled><i class="wb-icon wb-icon-package" aria-hidden="true"></i>{{ $adminText('install_from_catalog') }}</button>
-                        <p class="wb-text-sm wb-text-muted">{{ $adminText('no_artifact') }}</p>
-                    @endif
-                </div>
-            </section>
-
-            @if ($plugin->description || count($links) > 0)
-                <section class="wb-card">
-                    <div class="wb-card-header"><h2 class="wb-card-title">{{ $adminText('plugin_description') }}</h2></div>
-                    <div class="wb-card-body wb-stack wb-gap-3">
-                        @if ($plugin->description)<p>{{ $plugin->description }}</p>@endif
-                        @if (count($links) > 0)
-                            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                                @foreach ($links as $label => $url)
-                                    <a href="{{ $url }}" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">{{ $label }}</a>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-                </section>
-            @endif
+        <div class="wb-cluster wb-cluster-end wb-mb-4">
+            <a href="{{ route('admin.plugins.catalog.index') }}" class="wb-btn wb-btn-secondary">{{ $adminText('back_to_catalog') }}</a>
         </div>
 
-        @if ($plugin->screenshots !== [])
-            <section class="wb-card" aria-labelledby="plugin-catalog-screenshots">
-                <div class="wb-card-header"><h2 class="wb-card-title" id="plugin-catalog-screenshots">{{ $adminText('screenshots') }}</h2></div>
-                <div class="wb-card-body wb-gallery wb-gallery--cols-2 wb-gallery--aspect-auto">
-                    <div class="wb-gallery-grid">
-                        @foreach ($plugin->screenshots as $screenshot)
-                            <figure class="wb-gallery-item">
-                                <a class="wb-gallery-trigger" href="{{ $screenshot['url'] }}" target="_blank" rel="noopener noreferrer">
-                                    <img class="wb-gallery-media" src="{{ $screenshot['url'] }}" alt="{{ $screenshot['alt'] ?? $screenshot['caption'] ?? $plugin->label }}"
-                                         @if ($screenshot['width'] !== null && $screenshot['height'] !== null) width="{{ $screenshot['width'] }}" height="{{ $screenshot['height'] }}" @endif
-                                         loading="lazy" decoding="async" referrerpolicy="no-referrer">
-                                </a>
-                                @if ($screenshot['caption'] !== null)
-                                    <figcaption class="wb-gallery-caption">{{ $screenshot['caption'] }}</figcaption>
+        <section class="wb-card wb-promo wb-block wb-p-4" aria-labelledby="plugin-catalog-title">
+            <div class="wb-card-body wb-row wb-row-gap-4 wb-items-start wb-p-0">
+                <div class="{{ $slides === [] ? 'wb-col-12' : 'wb-col-md-5' }} wb-promo-copy wb-min-w-0">
+                    <header class="wb-stack wb-stack-2">
+                        <h1 class="wb-promo-title wb-text-3xl" id="plugin-catalog-title">{{ $plugin->label }}</h1>
+                        @if ($description)
+                            <p class="wb-promo-text wb-text-sm">{{ $description }}</p>
+                        @endif
+                    </header>
+
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm" aria-label="{{ $adminText('installation') }}">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" class="wb-table-key">{{ $adminText('compatibility') }}</th>
+                                    <td><span class="wb-status-pill {{ $compatibilityClass }}">{{ $adminText($compatibilityLabel) }}</span></td>
+                                </tr>
+                                @if ($release?->version !== null)
+                                    <tr>
+                                        <th scope="row" class="wb-table-key">{{ $adminText('latest_compatible_release') }}</th>
+                                        <td>{{ $release->version }}</td>
+                                    </tr>
                                 @endif
-                            </figure>
-                        @endforeach
+                                <tr>
+                                    <th scope="row" class="wb-table-key">{{ $adminText('local_state') }}</th>
+                                    <td>{{ $installedState['installed'] ? $adminText('installed') : $adminText('not_installed') }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="wb-table-key">{{ $adminText('price') }}</th>
+                                    <td>{{ $price }}{{ $billingPeriod ? ' '.$billingPeriod : '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="wb-table-key">{{ $adminText('downloads') }}</th>
+                                    <td>{{ number_format($plugin->downloadsTotal) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-            </section>
-        @endif
 
-        @if ($hasDownloadActivity)
-            <section class="wb-card">
-                <div class="wb-card-header"><h2 class="wb-card-title">{{ $adminText('download_activity') }}</h2></div>
-                <div class="wb-card-body wb-stack wb-gap-3">
-                    <p class="wb-text-muted">{{ $adminText('download_activity_help', ['count' => number_format($plugin->downloadsTotal)]) }}</p>
-                    <div class="wb-chart" data-wb-chart="line" aria-label="{{ $adminText('download_activity') }}" lang="{{ $adminLocale }}" data-wb-chart-help="{{ $adminText('chart_help') }}" data-wb-chart-empty="{{ $adminText('chart_empty') }}" data-wb-chart-error="{{ $adminText('chart_error') }}">
-                        <p class="wb-chart-fallback wb-text-muted">{{ $adminText('chart_fallback') }}</p>
-                        <div class="wb-table-wrap"><table class="wb-table">
-                            <thead><tr><th scope="col">{{ $adminText('date') }}</th><th scope="col">{{ $adminText('downloads') }}</th></tr></thead>
-                            <tbody>@foreach ($plugin->dailyDownloads as $day)<tr><th scope="row" data-wb-chart-label="{{ $chartDate($day['date']) }}">{{ $day['date'] }}</th><td data-wb-chart-value="{{ $day['downloads'] }}">{{ number_format($day['downloads']) }}</td></tr>@endforeach</tbody>
-                        </table></div>
+                    <div class="wb-action-group wb-gap-2">
+                        @if ($installedState['installed'])
+                            <a href="{{ route('admin.system.plugins.show', $plugin->handle) }}" class="wb-btn wb-btn-primary wb-btn-sm">{{ $adminText('manage_plugin') }}</a>
+                        @elseif ($canInstallFromCatalog)
+                            <form method="POST" action="{{ route('admin.plugins.catalog.install', $plugin->handle) }}">
+                                @csrf
+                                <button type="submit" class="wb-btn wb-btn-primary wb-btn-sm" aria-describedby="plugin-catalog-install-help">
+                                    <i class="wb-icon wb-icon-package" aria-hidden="true"></i>{{ $adminText('install_from_catalog') }}
+                                </button>
+                            </form>
+                        @else
+                            <button type="button" class="wb-btn wb-btn-primary wb-btn-sm" aria-describedby="plugin-catalog-install-help" disabled>
+                                <i class="wb-icon wb-icon-package" aria-hidden="true"></i>{{ $adminText('install_from_catalog') }}
+                            </button>
+                        @endif
+                        @if ($documentation)
+                            <a href="{{ $documentation }}" class="wb-btn wb-btn-secondary wb-btn-sm" target="_blank" rel="noopener noreferrer">{{ $adminText('documentation') }}</a>
+                        @endif
                     </div>
-                </div>
-            </section>
-        @endif
 
-        @if ($hasReleaseNotes)
-            <section class="wb-card">
-                <div class="wb-card-header"><h2 class="wb-card-title">{{ $adminText('release_notes') }}</h2></div>
-                <div class="wb-card-body wb-stack wb-gap-3">
-                    @if ($release->displaySummary())<p>{{ $release->displaySummary() }}</p>@endif
-                    @if (count($release->highlights) > 0)<ul>@foreach ($release->highlights as $highlight)<li>{{ $highlight }}</li>@endforeach</ul>@endif
+                    @if (! $installedState['installed'])
+                        <p id="plugin-catalog-install-help" class="wb-text-sm wb-text-muted">
+                            {{ $adminText($canInstallFromCatalog ? 'install_step_disabled' : 'no_artifact') }}
+                        </p>
+                    @endif
+                    @if ($errors->has('catalog_install'))
+                        <div class="wb-alert wb-alert-danger" role="alert">{{ $errors->first('catalog_install') }}</div>
+                    @endif
+                    @if ($links !== [])
+                        <div class="wb-cluster wb-cluster-2 wb-text-sm">
+                            @foreach ($links as $label => $url)
+                                <a href="{{ $url }}" target="_blank" rel="noopener noreferrer">{{ $label }}</a>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @if ($releaseSummary || $releaseHighlights !== [])
+                        <section class="wb-stack wb-stack-2" aria-labelledby="plugin-catalog-release-notes">
+                            <h2 class="wb-card-title" id="plugin-catalog-release-notes">{{ $adminText('release_notes') }}</h2>
+                            @if ($releaseSummary)
+                                <p>{{ $releaseSummary }}</p>
+                            @endif
+                            @if ($releaseHighlights !== [])
+                                <ul class="wb-marker-list">
+                                    @foreach ($releaseHighlights as $highlight)
+                                        <li>{{ $highlight }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </section>
+                    @endif
                 </div>
-            </section>
-        @endif
+
+                @if ($slides !== [])
+                    <div class="wb-col-md-7 wb-min-w-0">
+                        <div class="wb-slider wb-slider-ratio-video wb-slider-height-auto wb-slider-overlay-none wb-border"
+                             data-wb-slider data-wb-slider-autoplay="false" role="region" aria-label="{{ $sliderText('slides') }}">
+                            <div class="wb-slider-viewport">
+                                <div class="wb-slider-track">
+                                    @foreach ($slides as $slide)
+                                        <figure @class(['wb-slide', 'is-active' => $loop->first]) @unless ($loop->first) aria-hidden="true" @endunless>
+                                            <a class="wb-slide-media" href="{{ $slide['url'] }}" target="_blank" rel="noopener noreferrer">
+                                                <img class="wb-slide-media wb-slide-media-contain" src="{{ $slide['url'] }}" alt="{{ $slide['alt'] ?? $slide['caption'] ?? $plugin->label }}"
+                                                     @if ($slide['width'] !== null && $slide['height'] !== null) width="{{ $slide['width'] }}" height="{{ $slide['height'] }}" @endif
+                                                     @unless ($loop->first) loading="lazy" @endunless decoding="async" referrerpolicy="no-referrer">
+                                            </a>
+                                            @if ($slide['caption'] !== null && $slide['alt'] !== null && $slide['caption'] !== $slide['alt'])
+                                                <figcaption class="wb-sr-only">{{ $slide['caption'] }}</figcaption>
+                                            @endif
+                                        </figure>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            @if (count($slides) > 1)
+                                <div class="wb-slider-controls">
+                                    <button type="button" class="wb-btn wb-btn-icon wb-btn-sm wb-slider-arrow wb-slider-prev" data-wb-slider-prev aria-label="{{ $sliderText('previous_slide') }}">
+                                        <i class="wb-icon wb-icon-chevron-left" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="wb-btn wb-btn-icon wb-btn-sm wb-slider-arrow wb-slider-next" data-wb-slider-next aria-label="{{ $sliderText('next_slide') }}">
+                                        <i class="wb-icon wb-icon-chevron-right" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </section>
     @endif
 @endsection

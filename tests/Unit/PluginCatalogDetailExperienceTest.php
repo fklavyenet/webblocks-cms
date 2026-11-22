@@ -10,7 +10,6 @@ class PluginCatalogDetailExperienceTest extends TestCase
   {
     $view = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/plugins/catalog/show.blade.php');
 
-    $this->assertStringContainsString('$hasDownloadActivity', $view);
     $this->assertStringContainsString('$canInstallFromCatalog', $view);
     $this->assertStringContainsString("route('admin.plugins.catalog.install'", $view);
     $this->assertStringContainsString("route('admin.system.plugins.show'", $view);
