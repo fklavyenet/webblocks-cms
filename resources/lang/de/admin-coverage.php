@@ -294,7 +294,7 @@ return [
     'settings_empty' => 'Es wurden keine Application Block-Einstellungen hinzugefügt.',
     'no_default' => 'Kein Ausfall',
     'no_constraints' => 'Keine',
-    'duplicate_setting_key' => 'Einstelltasten müssen eindeutig sein.',
+    'duplicate_setting_key' => 'Einstellungsschlüssel müssen eindeutig sein.',
     'save_setting' => 'Speichereinstellung',
     'cancel' => 'Stornierung',
     'enabled' => 'Aktiviert',
