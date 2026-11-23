@@ -2102,3 +2102,53 @@ input.wb-admin-table-grid-input:focus {
 .wb-cms-gallery-diagram[data-layout="physical-scale"] > span:nth-child(n + 4) {
     display: none;
 }
+
+/* Extensions Recovery */
+.wb-extension-recovery-table .wb-extension-recovery-quarantined {
+    background: color-mix(in srgb, var(--wb-warning-soft) 40%, var(--wb-surface));
+}
+
+.wb-extension-recovery-mobile-label {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .wb-extension-recovery-table :is(thead, tbody, tbody tr) {
+        display: block;
+    }
+
+    .wb-extension-recovery-table thead {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    .wb-extension-recovery-table tbody tr {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: start;
+        gap: var(--wb-s2) var(--wb-s3);
+        padding: var(--wb-s3);
+        border-block-end: 1px solid var(--wb-border);
+    }
+
+    .wb-extension-recovery-table tbody tr:last-child {
+        border-block-end: 0;
+    }
+
+    .wb-extension-recovery-table tbody tr > :is(th, td) {
+        padding: 0;
+        border: 0;
+    }
+
+    .wb-extension-recovery-table :is(th[scope="row"], .wb-extension-recovery-actions) {
+        grid-column: 1 / -1;
+    }
+
+    .wb-extension-recovery-mobile-label {
+        display: inline;
+        margin-inline-end: var(--wb-s1);
+    }
+}

@@ -1379,7 +1379,7 @@ evidence without starting maintenance scans or external release checks.
 Installation health remains restricted to system operators.
 
 The administrator navbar's globe gives the signed-in account access to public
-site homes on every admin screen. The globe links directly to the public home
+site homes on standard admin screens. The globe links directly to the public home
 when only one site is available. With multiple sites, the globe and chevron
 open a menu of named public home links. The control retains an accessible
 label and each public home opens in a new tab.
@@ -1479,7 +1479,12 @@ The panel requires Super admin access and the API requires `plugins.uninstall`.
 Plugin-owned database tables are preserved.
 
 `/webadmin/plugin-recovery` and its login form load without installed plugin source,
-routes, or commands. Existing CMS login controls, active admin-access and Super admin authorization, and CSRF
+routes, or commands. From 1.144.16, Super admins can open it through
+Extensions → Extensions Recovery. The screen uses CMS-owned panel components,
+lists quarantined plugins first, shows available diagnostic references, and
+uses confirmation dialogs for disable and safe restore. The direct URL stays
+available independently of normal panel pages. Existing CMS login controls,
+active admin-access and Super admin authorization, and CSRF
 protection apply. Recovery can disable a plugin or restore the retained package when
 no migration ran, after another startup probe. A restore also republishes its assets.
 This is recovery for CMS-managed packages; it does not isolate arbitrary host providers

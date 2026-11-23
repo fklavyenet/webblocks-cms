@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.144.16
+
+- Open Extensions Recovery under Extensions in Webadmin. See quarantined plugins first in a compact list and confirm before disabling a plugin or restoring its previous version. The recovery screen still opens without loading installed plugin code.
+
 ## 1.144.15
 
 - Identify failed extension operations with the package name, handle or language code, available versions, and a diagnostic reference shared with the CMS log.

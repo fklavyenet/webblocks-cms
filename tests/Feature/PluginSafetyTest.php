@@ -93,6 +93,11 @@ class PluginSafetyTest extends TestCase
     $this->assertDirectoryExists($this->packagePath('1.0.0'));
     $this->assertCount(1, $repository->installed());
     $this->assertTrue($repository->previous('safety-example')['rollback_safe']);
+    $this->actingAs($this->user(true))->get('/webadmin/plugin-recovery')
+      ->assertOk()
+      ->assertSee('Restore 1.0.0')
+      ->assertSee('aria-controls="extension-recovery-restore-safety-example"', false)
+      ->assertSee('name="operation" value="restore"', false);
     app(RecoverPlugin::class)->handle('safety-example', 'restore');
     $this->assertSame('1.0.0', $repository->enabledVersion('safety-example'));
     $this->assertSame('1.0.0', $repository->installed()[0]['manifest']['version']);
@@ -183,7 +188,7 @@ class PluginSafetyTest extends TestCase
     $this->actingAs($this->user(true))
       ->get('/webadmin/plugin-recovery')
       ->assertOk()->assertSee($reference)->assertSee('safety-example')->assertSee('1.0.0')
-      ->assertDontSee('AbsentParent');
+      ->assertSee('Quarantined')->assertDontSee('AbsentParent');
     $this->assertTrue($repository->isDisabled('safety-example'));
     $this->assertNull($repository->enabledVersion('safety-example'));
     $this->assertNotNull($registry->get('safety-example'));
@@ -245,7 +250,14 @@ class PluginSafetyTest extends TestCase
     $this->get('/webadmin/plugin-recovery')->assertForbidden();
     $this->post('/webadmin/plugin-recovery/safety-example', ['operation' => 'disable'])->assertForbidden();
     $this->actingAs($this->user(true));
-    $this->get('/webadmin/plugin-recovery')->assertOk()->assertSee('Plugin recovery');
+    $this->get('/webadmin/plugin-recovery')
+      ->assertOk()
+      ->assertSee('Extensions Recovery')
+      ->assertSee('class="wb-dashboard-shell"', false)
+      ->assertSee('class="wb-table wb-extension-recovery-table"', false)
+      ->assertSee('aria-controls="extension-recovery-disable-safety-example"', false)
+      ->assertSee('name="operation" value="disable"', false)
+      ->assertDontSee('name="operation" value="restore"', false);
     $this->assertTrue(app(PluginRecoveryMode::class)->active());
     $this->app->forgetInstance(PluginRegistry::class);
     $this->assertSame([], app(PluginRegistry::class)->all());
@@ -260,6 +272,10 @@ class PluginSafetyTest extends TestCase
     $repository = app(InstalledPluginRepository::class);
     $repository->recordPrevious('safety-example', '1.0.0', '2.0.0', false);
     $this->actingAs($this->user(true));
+    $this->get('/webadmin/plugin-recovery')
+      ->assertOk()
+      ->assertSee('Automatic restore is unavailable')
+      ->assertDontSee('name="operation" value="restore"', false);
     $this->postJson('/webadmin/plugin-recovery/safety-example', ['operation' => 'erase'])->assertUnprocessable();
     $this->from('/webadmin/plugin-recovery')->post('/webadmin/plugin-recovery/safety-example', ['operation' => 'restore'])->assertSessionHasErrors('plugin');
     config(['app.env' => 'production']);

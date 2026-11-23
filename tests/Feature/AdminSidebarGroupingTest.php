@@ -100,12 +100,13 @@ class AdminSidebarGroupingTest extends TestCase
       '/webadmin/system/plugins',
       '/webadmin/system/themes',
       '/webadmin/system/panel-languages',
+      '/webadmin/plugin-recovery',
     ], $this->paths($xpath, $groups['Extensions']));
     $labels = [];
     foreach ($xpath->query('.//a/span', $groups['Extensions']) as $label) {
       $labels[] = trim($label->textContent);
     }
-    $this->assertSame(['Plugins', 'Public themes', 'Language packs'], $labels);
+    $this->assertSame(['Plugins', 'Public themes', 'Language packs', 'Extensions Recovery'], $labels);
     $nav = $xpath->query('//aside[@id="admin-sidebar"]/nav')->item(0);
     $primary = $xpath->query('./div[1]', $nav)->item(0);
     $this->assertSame(['/webadmin', '/webadmin/sites', '/webadmin/pages', '/webadmin/media', '/webadmin/notes', '/webadmin/assets'], $this->paths($xpath, $primary));
@@ -133,6 +134,7 @@ class AdminSidebarGroupingTest extends TestCase
       'admin.system.themes.catalog.index' => 'Extensions',
       'admin.plugins.catalog.show' => 'Extensions',
       'admin.system.panel-languages.extensions.index' => 'Extensions',
+      'admin.plugins.recovery.index' => 'Extensions',
       'admin.system.health.index' => 'Maintenance',
     ] as $route => $expectedGroup) {
       $xpath = $this->sidebar($user, $route);

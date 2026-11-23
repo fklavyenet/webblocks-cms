@@ -6,7 +6,7 @@ return [
     'failed' => 'The :type operation failed (:operation) :identity.',
     'preserved' => 'Installed version :version was kept.',
     'reference' => 'Diagnostic reference :reference.',
-    'quarantined' => 'Plugin (:identity) was quarantined after a startup failure. Open Plugin recovery.',
+    'quarantined' => 'Plugin (:identity) was quarantined after a startup failure. Open Extensions Recovery.',
     'type' => [
       'plugin' => 'plugin',
       'theme' => 'theme',
@@ -113,7 +113,13 @@ return [
         'dependents' => 'Active dependents',
     ],
     'plugin_recovery' => [
-        'title' => 'Plugin recovery',
+        'title' => 'Extensions Recovery',
+        'mode' => 'Recovery mode',
+        'quarantined_status' => 'Quarantined',
+        'diagnostic_details' => 'Diagnostic details',
+        'back_to_plugins' => 'Back to Plugins',
+        'confirm_disable' => ':plugin will be disabled.',
+        'confirm_restore' => ':plugin will be restored to version :version.',
         'description' => 'This screen opens without loading plugin code. Disable a failing plugin or restore its last working version when no database migration was applied.',
         'probe_failed' => 'The plugin failed its startup check.',
         'quarantined' => 'Automatically disabled after a startup error.',
