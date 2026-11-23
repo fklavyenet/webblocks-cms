@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'manual_import' => 'Katalog manuell importieren',
+  'imported_catalogs' => 'Importierte Kataloge',
+  'default_help' => 'Gilt für Konten ohne gespeicherte Spracheinstellung für die Verwaltung.',
   'language_packs' => 'Sprachpakete',
   'title' => 'Sprachen der Verwaltung',
   'help' => 'Laden Sie einen UTF-8-Übersetzungskatalog für die Verwaltung hoch. Fehlt eine Übersetzung, wird die mitgelieferte Sprache verwendet, sofern sie verfügbar ist, sonst Englisch.',
@@ -48,7 +51,7 @@ return [
   'unavailable' => 'Die gespeicherte Sprache der Verwaltung ist derzeit nicht verfügbar. Die Standardsprache des Systems wird verwendet.',
   'token' => 'Sprachkataloge und Standardsprache der Verwaltung verwalten',
   'token_scope' => 'Für die Verwaltung der Sprachen ist ein installationsweiter System-Token erforderlich, der einem Superadministrator gehört.',
-  'extensions_browse' => 'Extensions durchsuchen',
+  'extensions_browse' => 'Sprachpakete durchsuchen',
   'extensions_for_cms' => 'Sprachpakete für CMS :version',
   'extensions_scope' => 'Umfang',
   'extensions_scope_panel' => 'Nur Verwaltung',

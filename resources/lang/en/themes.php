@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'manual_install' => 'Manual theme install',
   'catalog_title' => 'Theme catalog',
   'catalog_back' => 'Back to public themes',
   'status' => 'Status',

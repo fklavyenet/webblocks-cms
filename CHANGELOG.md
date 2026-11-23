@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.18
+
+- Identify plugin Restore actions by an archive icon and see the target version in its tooltip.
+- Import language catalogs, download the English template, and manage imported catalogs on one page. Set the default panel language from the page header.
+- Upload public theme ZIPs directly from the Public themes page and filter installed versions above their table.
+
 ## 1.144.17
 
 - Restore a retained plugin version from the Actions column in **Extensions → Plugins**. The confirmation shows the target version, and the result appears in the same list.

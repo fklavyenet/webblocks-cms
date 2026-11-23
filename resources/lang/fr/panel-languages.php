@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'manual_import' => 'Importation manuelle de catalogue',
+  'imported_catalogs' => 'Catalogues importés',
+  'default_help' => 'S’applique aux comptes sans préférence de langue enregistrée pour le panneau.',
   'language_packs' => 'Packs de langue',
   'title' => 'Langues du panneau',
   'help' => 'Téléversez un catalogue de traductions UTF-8 pour le panneau d’administration. Pour les traductions manquantes, le panneau utilise la langue fournie si elle est disponible, puis l’anglais.',
@@ -48,7 +51,7 @@ return [
   'unavailable' => 'La langue enregistrée pour le panneau est indisponible. La langue par défaut du système est utilisée.',
   'token' => 'Gérer les catalogues et la langue par défaut du panneau',
   'token_scope' => 'Les langues du panneau nécessitent un jeton système valable pour toute l’installation et appartenant à un super administrateur.',
-  'extensions_browse' => 'Parcourir Extensions',
+  'extensions_browse' => 'Parcourir les packs de langue',
   'extensions_for_cms' => 'Packs de langue pour CMS :version',
   'extensions_scope' => 'Périmètre',
   'extensions_scope_panel' => 'Panneau uniquement',

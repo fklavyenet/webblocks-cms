@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'manual_import' => 'Elle katalog içe aktarma',
+  'imported_catalogs' => 'İçe aktarılan kataloglar',
+  'default_help' => 'Panel dili tercihi kaydetmemiş hesaplar için geçerlidir.',
   'language_packs' => 'Dil paketleri',
   'title' => 'Panel dilleri',
   'help' => 'Yönetim paneli için bir UTF-8 çeviri kataloğu yükleyin. Eksik çeviriler için önce varsa paketle gelen dil, ardından İngilizce kullanılır.',
@@ -48,7 +51,7 @@ return [
   'unavailable' => 'Kaydedilen panel dili şu anda kullanılamıyor. Sistemin varsayılan dili kullanılıyor.',
   'token' => 'Panel dili kataloglarını ve varsayılan panel dilini yönet',
   'token_scope' => 'Panel dillerini yönetmek için bir Super admine ait, kurulum genelinde geçerli bir sistem tokenı gerekir.',
-  'extensions_browse' => 'Extensions kataloğuna göz at',
+  'extensions_browse' => 'Dil paketlerine göz at',
   'extensions_for_cms' => 'CMS :version için dil paketleri',
   'extensions_scope' => 'Kapsam',
   'extensions_scope_panel' => 'Yönetim paneli',

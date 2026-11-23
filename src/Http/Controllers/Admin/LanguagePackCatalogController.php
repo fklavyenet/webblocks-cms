@@ -63,7 +63,7 @@ final class LanguagePackCatalogController
     }
 
     return $id === null
-      ? redirect()->route('admin.system.panel-languages.index', ['tab' => 'settings'])->with('panel_language_status', 'extensions_native_installed')
+      ? redirect()->route('admin.system.panel-languages.index')->with('panel_language_status', 'extensions_native_installed')
       : redirect()->route('admin.system.panel-languages.show', $id)->with('panel_language_status', 'uploaded');
   }
 }

@@ -29,7 +29,6 @@
                             </a>
                             <form method="POST" action="{{ $active ? route('admin.system.panel-languages.deactivate', $catalog->language_code) : route('admin.system.panel-languages.activate', $catalog->id) }}">
                                 @csrf
-                                <input type="hidden" name="panel_language_tab" value="catalogs">
                                 <button type="submit" class="wb-action-btn" title="{{ $text($toggle) }}" aria-label="{{ $text($toggle) }} · {{ $catalogLabel }}">
                                     <i class="wb-icon {{ $active ? 'wb-icon-eye-off' : 'wb-icon-check' }}" aria-hidden="true"></i>
                                 </button>

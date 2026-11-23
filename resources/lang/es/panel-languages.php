@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'manual_import' => 'Importación manual de catálogo',
+  'imported_catalogs' => 'Catálogos importados',
+  'default_help' => 'Se aplica a las cuentas sin una preferencia de idioma guardada para el panel.',
   'language_packs' => 'Paquetes de idioma',
   'title' => 'Idiomas del panel',
   'help' => 'Sube un catálogo de traducciones en UTF-8 para el panel de administración. Si falta una traducción, se usa el idioma incluido cuando está disponible y, en su defecto, el inglés.',
@@ -48,7 +51,7 @@ return [
   'unavailable' => 'El idioma del panel guardado no está disponible en este momento. Se usa el idioma predeterminado del sistema.',
   'token' => 'Gestionar los catálogos de idiomas y el idioma predeterminado del panel',
   'token_scope' => 'Los idiomas del panel requieren un token de sistema válido para toda la instalación y perteneciente a un superadministrador.',
-  'extensions_browse' => 'Explorar Extensions',
+  'extensions_browse' => 'Explorar paquetes de idioma',
   'extensions_for_cms' => 'Paquetes de idioma para CMS :version',
   'extensions_scope' => 'Alcance',
   'extensions_scope_panel' => 'Solo panel',

@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'manual_import' => 'Importazione manuale del catalogo',
+  'imported_catalogs' => 'Cataloghi importati',
+  'default_help' => 'Si applica agli account senza una lingua preferita salvata per il pannello.',
   'language_packs' => 'Pacchetti lingua',
   'title' => 'Lingue del pannello',
   'help' => 'Carica un catalogo di traduzioni UTF-8 per il pannello di amministrazione. Per le traduzioni mancanti viene usata la lingua inclusa, se disponibile, altrimenti l’inglese.',
@@ -48,7 +51,7 @@ return [
   'unavailable' => 'La lingua salvata per il pannello non è disponibile. È in uso quella predefinita del sistema.',
   'token' => 'Gestisci i cataloghi e la lingua predefinita del pannello',
   'token_scope' => 'Le lingue del pannello richiedono un token di sistema valido per l’intera installazione e appartenente a un super amministratore.',
-  'extensions_browse' => 'Sfoglia Extensions',
+  'extensions_browse' => 'Sfoglia i pacchetti lingua',
   'extensions_for_cms' => 'Pacchetti lingua per CMS :version',
   'extensions_scope' => 'Ambito',
   'extensions_scope_panel' => 'Solo pannello',

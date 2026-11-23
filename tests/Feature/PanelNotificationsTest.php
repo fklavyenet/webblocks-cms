@@ -247,6 +247,7 @@ class PanelNotificationsTest extends TestCase
 
       $repository->recordPrevious('restore-example', '1.0.0', '2.0.0', true);
       $this->get($list)->assertOk()->assertSee($trigger, false)
+        ->assertSee('class="wb-icon wb-icon-archive-restore"', false)
         ->assertSee('aria-label="Restore 1.0.0 · Restore Example"', false)
         ->assertSee('name="expected_version" value="1.0.0"', false)
         ->assertSee('action="'.route('admin.plugins.recovery.update', ['plugin' => 'restore-example', 'return_to' => 'plugins']).'"', false);

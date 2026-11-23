@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\PanelLanguageCatalogRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PanelLanguageDefaultRequest;
@@ -114,16 +115,20 @@ final class PanelLanguageController
 
   public function updateDefault(PanelLanguageDefaultRequest $request): JsonResponse|RedirectResponse
   {
-    $this->languages->saveDefault($request->validated('code'));
+    try {
+      $this->languages->saveDefault($request->validated('code'));
+    } catch (ValidationException $exception) {
+      throw $exception->errorBag('panelLanguageDefault');
+    }
 
-    return $this->result($request, 'default_saved', ['tab' => 'settings']);
+    return $this->result($request, 'default_saved');
   }
 
-  private function result(Request $request, string $status, array $parameters = []): JsonResponse|RedirectResponse
+  private function result(Request $request, string $status): JsonResponse|RedirectResponse
   {
     return $this->api($request)
       ? response()->json(['ok' => true])
-      : redirect()->route('admin.system.panel-languages.index', $parameters)->with('panel_language_status', $status);
+      : redirect()->route('admin.system.panel-languages.index')->with('panel_language_status', $status);
   }
 
   private function api(Request $request): bool

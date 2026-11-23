@@ -157,7 +157,9 @@
                                             </button>
 
                                             @if ($plugin['can_update_from_catalog'])
-                                                <button type="button" class="wb-action-btn" title="{{ $systemPluginsIndexText('update_from_catalog') }}" aria-label="{{ $systemPluginsIndexText('update_from_catalog') }}" data-wb-toggle="modal" data-wb-target="#{{ $updateModalId }}">
+                                                <button type="button" class="wb-action-btn" data-wb-tooltip="{{ $systemPluginsIndexText('update_from_catalog') }}"
+                                                        aria-label="{{ $systemPluginsIndexText('update_from_catalog') }} · {{ $plugin['label'] }}"
+                                                        aria-haspopup="dialog" data-wb-toggle="modal" data-wb-target="#{{ $updateModalId }}">
                                                     <i class="wb-icon wb-icon-rotate-cw" aria-hidden="true"></i>
                                                 </button>
                                             @endif
@@ -170,7 +172,7 @@
                                                 <button type="button" class="wb-action-btn" data-wb-toggle="modal" data-wb-target="#{{ $restoreModalId }}"
                                                         aria-controls="{{ $restoreModalId }}" aria-haspopup="dialog" data-wb-tooltip="{{ $restoreLabel }}"
                                                         aria-label="{{ $restoreLabel }} · {{ $plugin['label'] }}">
-                                                    <i class="wb-icon wb-icon-rotate-ccw" aria-hidden="true"></i>
+                                                    <i class="wb-icon wb-icon-archive-restore" aria-hidden="true"></i>
                                                 </button>
                                                 @push('overlays')
                                                     @include('webblocks-cms::admin.system.plugins.partials.recovery-confirmation', [

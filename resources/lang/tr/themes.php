@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'manual_install' => 'Elle tema kurulumu',
   'catalog_title' => 'Tema kataloğu',
   'catalog_back' => 'Site temalarına dön',
   'status' => 'Durum',

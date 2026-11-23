@@ -359,10 +359,16 @@ class PanelLanguagesTest extends TestCase
     $this->actingAs($actor = $this->actor());
     $locales = Locale::query()->orderBy('id')->get()->toArray();
     $publicationDefault = app(SystemSettings::class)->get(SystemSettings::DEFAULT_LOCALE);
-    $this->get(route('admin.system.panel-languages.index', ['tab' => 'import']))
-      ->assertOk()->assertSee('Download English template')
+    $index = route('admin.system.panel-languages.index');
+    $this->get($index)->assertOk()->assertSeeInOrder(['Manual catalog import', 'Download English template', 'Imported catalogs'])
       ->assertSee('class="wb-page-header-title">Language packs</h1>', false)
-      ->assertSee('class="wb-file" type="file"', false);
+      ->assertSee('class="wb-file" type="file"', false)
+      ->assertSee('data-wb-target="#panel-language-default-modal"', false)
+      ->assertDontSee('id="panel-languages-tab-import"', false);
+    $this->get(route('admin.system.panel-languages.index', ['tab' => 'settings']))
+      ->assertSee('data-wb-admin-autoload-overlay', false);
+    $this->followRedirects($this->from($index)->post(route('admin.system.panel-languages.store'), ['panel_language_operation' => 'import']))
+      ->assertOk()->assertSee('id="panel-language-file-error"', false)->assertDontSee('data-wb-admin-autoload-overlay', false);
     $this->post(route('admin.system.panel-languages.store'), ['catalog' => $this->upload()])->assertRedirect();
     $id = DB::table('wbcms_panel_language_catalogs')->value('id');
 
@@ -379,10 +385,11 @@ class PanelLanguagesTest extends TestCase
     $this->assertSame('ru', $actor->fresh()->admin_locale);
     $this->get(route('admin.profile.edit'))->assertOk()->assertSee('lang="ru"', false)->assertSee('Язык интерфейса')->assertSee('Русский');
     $this->put(route('admin.system.panel-languages.default'), ['code' => 'ru'])
-      ->assertRedirect(route('admin.system.panel-languages.index', ['tab' => 'settings']));
-    $this->followRedirects($this->from(route('admin.system.panel-languages.index'))
-      ->put(route('admin.system.panel-languages.default'), ['code' => 'unavailable', 'panel_language_tab' => 'settings']))
-      ->assertOk()->assertSee('class="wb-tabs-panel is-active" id="panel-languages-settings"', false);
+      ->assertRedirect($index);
+    $this->followRedirects($this->from($index)->put(route('admin.system.panel-languages.default'), ['code' => 'zz']))
+      ->assertOk()->assertSee('data-wb-admin-autoload-overlay', false)
+      ->assertSee('id="panel-language-default-error"', false)
+      ->assertDontSee('id="panel-language-file-error"', false);
     $this->assertSame('ru', app(AdminLocaleResolver::class)->defaultLocale());
     $this->assertSame($locales, Locale::query()->orderBy('id')->get()->toArray());
     $this->assertSame($publicationDefault, app(SystemSettings::class)->get(SystemSettings::DEFAULT_LOCALE));

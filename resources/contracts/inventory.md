@@ -70,7 +70,10 @@ The template has `format_version`, `source_version`, `code`, `name` and a list
 of `translations` rows with `key` and `text`.
 Retain the listed keys and their placeholders. Catalogs can be partial.
 The enabled language is available in the profile and toolbar, and can be
-saved as the default panel language. Existing bundled language files stay
+saved as the default panel language. From 1.144.18, **Extensions → Language packs**
+shows manual catalog import, the English template, and imported catalogs on one
+page. The **Default panel language** dialog sets the installation default for
+accounts without a saved panel language. Existing bundled language files stay
 intact. If a later release bundles the same code, the active custom catalog
 keeps precedence. Missing or outdated messages use matching package strings
 when available, then English.
@@ -2996,10 +2999,11 @@ version, archive size, SHA-256 and package compatibility before installing.
 Catalog downloads follow the same
 installation and activation boundaries as manual uploads. Installing an update
 adds a version and leaves every site's active version and history intact.
-The package management screen filters installed versions by name or version,
-shows compatibility and installation time, and opens a ZIP upload dialog
-from the page header. The catalog keeps the same page after installation and
-shows the result there. The catalog identifies installed releases by handle,
+The package management screen filters installed versions by name or version
+and shows compatibility and installation time. From 1.144.18, the manual ZIP
+upload form appears above the installed versions table. The catalog keeps the
+same page after installation and shows the result there. The catalog identifies
+installed releases by handle,
 version and checksum. A different installed package with the same version is
 reported as a conflict and cannot be replaced in place. A newer catalog version
 can be installed separately. Layouts advertised by the catalog are checked

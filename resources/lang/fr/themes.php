@@ -1,6 +1,7 @@
 <?php
 
 return [
+  'manual_install' => 'Installation manuelle de thème',
   'catalog_title' => 'Catalogue de thèmes',
   'catalog_back' => 'Retour aux thèmes publics',
   'status' => 'État',

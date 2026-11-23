@@ -1,6 +1,9 @@
 <?php
 
 return [
+  'manual_import' => 'Manual catalog import',
+  'imported_catalogs' => 'Imported catalogs',
+  'default_help' => 'Applies to accounts without a saved panel language preference.',
   'language_packs' => 'Language packs',
   'title' => 'Panel languages',
   'help' => 'Upload a UTF-8 translation catalog for the management panel. Missing translations use the packaged language when available, then English.',
@@ -48,7 +51,7 @@ return [
   'unavailable' => 'The saved panel language is currently unavailable. The system default is in use.',
   'token' => 'Manage panel language catalogs and the default panel language',
   'token_scope' => 'Panel languages require an installation-wide system token owned by a Super admin.',
-  'extensions_browse' => 'Browse Extensions',
+  'extensions_browse' => 'Browse language packs',
   'extensions_for_cms' => 'Language packs for CMS :version',
   'extensions_scope' => 'Scope',
   'extensions_scope_panel' => 'Panel only',
