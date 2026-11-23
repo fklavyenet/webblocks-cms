@@ -71,9 +71,11 @@ class LoginController extends Controller
 
     if ($requiresChallenge) {
       $guard->getProvider()->rehashPasswordIfRequired($user, $credentials);
-      app(TwoFactorSession::class)->begin($request, $user, $request->boolean('remember'));
-
       $credential = app(TwoFactorAuthentication::class)->credential($user);
+      if ($credential?->confirmed_at === null) {
+        return to_route('webblocks.auth.login');
+      }
+      app(TwoFactorSession::class)->begin($request, $user, $credential, $request->boolean('remember'));
       $status = app(EmailTwoFactorCodes::class)->send($request, $user, 'login', $credential->email, app(TwoFactorSession::class)->fingerprint($user, $credential));
 
       return to_route('webblocks.two-factor.challenge')->with($status === 'sent' ? 'status' : 'email_error', __('webblocks-cms::two-factor.'.$status));

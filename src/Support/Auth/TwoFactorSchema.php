@@ -6,27 +6,14 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use WebBlocks\Cms\Support\Auth\Module\Schema as VerificationSchema;
 
 final class TwoFactorSchema
 {
   public function migrate(): void
   {
-    if (! Schema::hasTable('wbcms_two_factor_credentials')) {
-      Schema::create('wbcms_two_factor_credentials', function (Blueprint $table): void {
-        $table->foreignId('user_id')->primary()->constrained('users')->cascadeOnDelete();
-        $table->string('email');
-        $table->uuid('generation');
-        $table->timestamp('confirmed_at')->nullable();
-      });
-    }
-    if (! Schema::hasTable('wbcms_two_factor_enrollments')) {
-      Schema::create('wbcms_two_factor_enrollments', function (Blueprint $table): void {
-        $table->foreignId('user_id')->primary()->constrained('users')->cascadeOnDelete();
-        $table->string('email');
-        $table->uuid('generation');
-        $table->timestamp('expires_at');
-      });
-    }
+    app(VerificationSchema::class)->migrate();
+
     // Upgrade existing TOTP installations without disabling their protection or recovery codes.
     foreach (['credentials', 'enrollments'] as $name) {
       $table = 'wbcms_two_factor_'.$name;
@@ -49,37 +36,6 @@ final class TwoFactorSchema
     }
     if (Schema::hasColumn('wbcms_two_factor_credentials', 'last_used_step')) {
       Schema::table('wbcms_two_factor_credentials', fn (Blueprint $table) => $table->dropColumn('last_used_step'));
-    }
-    if (! Schema::hasTable('wbcms_two_factor_email_codes')) {
-      Schema::create('wbcms_two_factor_email_codes', function (Blueprint $table): void {
-        $table->uuid('id')->primary();
-        $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-        $table->string('purpose', 16);
-        $table->string('email');
-        $table->char('binding', 64);
-        $table->char('code_hash', 64);
-        $table->unsignedTinyInteger('attempts')->default(0);
-        $table->timestamp('sent_at');
-        $table->timestamp('expires_at');
-        $table->timestamp('consumed_at')->nullable();
-        $table->index(['user_id', 'sent_at']);
-      });
-    }
-    if (! Schema::hasTable('wbcms_two_factor_recovery_codes')) {
-      Schema::create('wbcms_two_factor_recovery_codes', function (Blueprint $table): void {
-        $table->id();
-        $table->foreignId('user_id')->constrained('wbcms_two_factor_credentials', 'user_id')->cascadeOnDelete();
-        $table->char('code_hash', 64);
-        $table->unique(['user_id', 'code_hash'], 'wbcms_two_factor_code_unique');
-      });
-    }
-    if (! Schema::hasTable('wbcms_two_factor_account_states')) {
-      Schema::create('wbcms_two_factor_account_states', function (Blueprint $table): void {
-        $table->foreignId('user_id')->primary()->constrained('users')->cascadeOnDelete();
-        $table->uuid('session_version');
-        $table->boolean('enrollment_required')->default(true);
-        $table->timestamp('reset_at');
-      });
     }
     foreach (['source' => 16, 'reason' => 500] as $column => $length) {
       if (Schema::hasTable('wbcms_acl_events') && ! Schema::hasColumn('wbcms_acl_events', $column)) {

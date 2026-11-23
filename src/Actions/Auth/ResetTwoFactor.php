@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use WebBlocks\Cms\Actions\Access\WriteCmsAccess;
 use WebBlocks\Cms\Policies\TwoFactorPolicy;
-use WebBlocks\Cms\Support\Auth\EmailTwoFactorCodes;
+use WebBlocks\Cms\Support\Auth\Module\Credentials;
+use WebBlocks\Cms\Support\Auth\Module\EmailCodes;
 use WebBlocks\Cms\Support\Auth\TwoFactorAccountState;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
@@ -34,8 +35,8 @@ final class ResetTwoFactor
         || ! $this->validInput($target, $data['reason'], $data['recovery_email'] ?? null)) {
         return false;
       }
-      if (! app(ManageTwoFactor::class)->verify($actor, $data['code'] ?? '', $data['recovery_code'] ?? '',
-        (string) $request->session()->get(EmailTwoFactorCodes::SESSION.'.action', ''))) {
+      if (! app(Credentials::class)->verify($actor, $data['code'] ?? '', $data['recovery_code'] ?? '',
+        app(EmailCodes::class)->challengeId($request, 'action'))) {
         return false;
       }
       $this->perform($target, $actor, 'panel', $data['reason'], $data['recovery_email'] ?? null);
@@ -70,13 +71,7 @@ final class ResetTwoFactor
   private function perform(Authenticatable $target, ?Authenticatable $actor, string $source, string $reason, ?string $email): void
   {
     $id = $target->getAuthIdentifier();
-    $enabled = DB::table('wbcms_two_factor_credentials')->where('user_id', $id)->exists();
-    foreach (['recovery_codes', 'email_codes', 'enrollments', 'credentials'] as $table) {
-      DB::table('wbcms_two_factor_'.$table)->where('user_id', $id)->delete();
-    }
-    DB::table('wbcms_two_factor_account_states')->updateOrInsert(['user_id' => $id], [
-      'session_version' => (string) Str::uuid(), 'enrollment_required' => true, 'reset_at' => now(),
-    ]);
+    $enabled = app(Credentials::class)->reset($target);
     if ($target->getRememberTokenName() !== '') {
       // Honor the host provider's token column and model casts.
       Auth::guard('web')->getProvider()->updateRememberToken($target, Str::random(60));

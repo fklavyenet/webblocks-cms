@@ -13,13 +13,14 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
-use WebBlocks\Cms\Actions\Auth\ManageTwoFactor;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Models\CmsRole;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Notifications\System\TwoFactorEmail;
 use WebBlocks\Cms\Queries\PanelNotificationQuery;
 use WebBlocks\Cms\Support\Auth\EmailTwoFactorCodes;
+use WebBlocks\Cms\Support\Auth\Module\Credentials;
+use WebBlocks\Cms\Support\Auth\Module\EmailCodes;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
 use WebBlocks\Cms\Support\Auth\TwoFactorSchema;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
@@ -80,13 +81,13 @@ class TwoFactorAuthenticationTest extends TestCase
 
   private function enroll(TwoFactorTestUser $user): array
   {
-    $generation = app(ManageTwoFactor::class)->start($user);
+    $generation = app(Credentials::class)->start($user, $user->email);
     $request = Request::create('/');
     $request->setLaravelSession(app('session.store'));
     $this->assertSame('sent', app(EmailTwoFactorCodes::class)->send($request, $user, 'setup', $user->email, app(TwoFactorSession::class)->setupBinding($user, $generation)));
     $id = $request->session()->get(EmailTwoFactorCodes::SESSION.'.setup');
 
-    return app(ManageTwoFactor::class)->confirm($user, $generation, $this->code($user), $id);
+    return app(Credentials::class)->confirm($user, $generation, $this->code($user), $id);
   }
 
   private function signedIn(TwoFactorTestUser $user): void
@@ -162,7 +163,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->assertGuest('web');
     $this->post(route('webblocks.two-factor.verify'), ['code' => $codes[0]])->assertRedirect(route('admin.dashboard'));
     $this->assertAuthenticatedAs($user, 'web');
-    $this->assertFalse(app(ManageTwoFactor::class)->verify($user, '', $codes[0]));
+    $this->assertFalse(app(Credentials::class)->verify($user, '', $codes[0]));
   }
 
   #[Test]
@@ -226,7 +227,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertOk()->assertViewHas('recoveryCodes', fn ($codes) => count($codes) === 10);
     $this->assertNotNull(app(TwoFactorAuthentication::class)->credential($user)->confirmed_at);
     $this->get(route('webblocks.two-factor.show'))->assertOk()->assertDontSee($secret)->assertViewHas('recoveryCodes', []);
-    $this->assertFalse(app(ManageTwoFactor::class)->verify($user, $this->code($user)));
+    $this->assertFalse(app(Credentials::class)->verify($user, $this->code($user)));
   }
 
   #[Test]
@@ -246,7 +247,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->assertNotNull($user->fresh()->last_login_at);
     $this->assertNotEmpty($user->fresh()->remember_token);
     $this->get('/webadmin/two-factor-probe')->assertOk();
-    $this->assertFalse(app(ManageTwoFactor::class)->verify($user, '', $codes[0]));
+    $this->assertFalse(app(Credentials::class)->verify($user, '', $codes[0]));
   }
 
   #[Test]
@@ -262,24 +263,24 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->assertSame('sent', $service->send($request, $user, 'login', $user->email, $binding));
     $id = $request->session()->get(EmailTwoFactorCodes::SESSION.'.login');
     $code = $this->code($user);
-    $this->assertFalse($service->consume($user, 'action', $user->email, $binding, $id, $code));
-    $this->assertFalse($service->consume($user, 'login', $user->email, $binding, '', $code));
-    $this->assertTrue($service->consume($user, 'login', $user->email, $binding, $id, $code));
-    $this->assertFalse($service->consume($user, 'login', $user->email, $binding, $id, $code));
+    $this->assertFalse(app(EmailCodes::class)->consume($user, 'action', $user->email, $binding, $id, $code));
+    $this->assertFalse(app(EmailCodes::class)->consume($user, 'login', $user->email, $binding, '', $code));
+    $this->assertTrue(app(EmailCodes::class)->consume($user, 'login', $user->email, $binding, $id, $code));
+    $this->assertFalse(app(EmailCodes::class)->consume($user, 'login', $user->email, $binding, $id, $code));
     $this->travel(61)->seconds();
     $service->send($request, $user, 'login', $user->email, $binding);
     $id = $request->session()->get(EmailTwoFactorCodes::SESSION.'.login');
     $code = $this->code($user);
     $wrong = $code === '000000' ? '000001' : '000000';
     for ($i = 0; $i < 5; $i++) {
-      $this->assertFalse($service->consume($user, 'login', $user->email, $binding, $id, $wrong));
+      $this->assertFalse(app(EmailCodes::class)->consume($user, 'login', $user->email, $binding, $id, $wrong));
     }
-    $this->assertFalse($service->consume($user, 'login', $user->email, $binding, $id, $code));
+    $this->assertFalse(app(EmailCodes::class)->consume($user, 'login', $user->email, $binding, $id, $code));
     $this->travel(61)->seconds();
     $service->send($request, $user, 'login', $user->email, $binding);
     $id = $request->session()->get(EmailTwoFactorCodes::SESSION.'.login');
     $this->travel(5)->minutes();
-    $this->assertFalse($service->consume($user, 'login', $user->email, $binding, $id, $this->code($user)));
+    $this->assertFalse(app(EmailCodes::class)->consume($user, 'login', $user->email, $binding, $id, $this->code($user)));
   }
 
   #[Test]
@@ -328,7 +329,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $response = $this->post(route('webblocks.two-factor.regenerate'), ['current_password' => 'fixture-password', 'recovery_code' => $codes[0]])->assertOk();
     $newCodes = $response->viewData('recoveryCodes');
     $this->assertCount(10, $newCodes);
-    $this->assertFalse(app(ManageTwoFactor::class)->verify($user, '', $codes[1]));
+    $this->assertFalse(app(Credentials::class)->verify($user, '', $codes[1]));
     $this->assertDatabaseMissing('wbcms_two_factor_recovery_codes', ['code_hash' => $newCodes[0]]);
     $this->assertDatabaseHas('wbcms_two_factor_recovery_codes', ['user_id' => $user->id, 'code_hash' => hash('sha256', $newCodes[0])]);
     $this->delete(route('webblocks.two-factor.disable'), ['current_password' => 'fixture-password', 'recovery_code' => $newCodes[0]])->assertRedirect(route('webblocks.two-factor.show'));
@@ -376,7 +377,7 @@ class TwoFactorAuthenticationTest extends TestCase
   public function setup_expires_and_another_session_cannot_read_or_confirm_it(): void
   {
     $user = $this->actor();
-    app(ManageTwoFactor::class)->start($user);
+    app(Credentials::class)->start($user, $user->email);
     $row = app(TwoFactorAuthentication::class)->enrollment($user) ?? app(TwoFactorAuthentication::class)->credential($user);
     $this->actingAs($user)->get(route('webblocks.two-factor.show'))->assertOk()->assertViewHas('setupEmail', null);
     $this->post(route('webblocks.two-factor.confirm'), ['code' => '123456'])->assertSessionHasErrors('code');
@@ -427,7 +428,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->post(route('webblocks.two-factor.send'), ['purpose' => 'setup'])->assertSessionHasNoErrors();
     $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertOk();
     $this->assertNotSame($old->generation, app(TwoFactorAuthentication::class)->credential($user)->generation);
-    $this->assertFalse(app(ManageTwoFactor::class)->verify($user, '', $codes[1]));
+    $this->assertFalse(app(Credentials::class)->verify($user, '', $codes[1]));
     $this->withSession([TwoFactorSession::VERIFIED => app(TwoFactorSession::class)->fingerprint($user, $old)]);
     $this->get('/webadmin/two-factor-probe')->assertRedirect(route('webblocks.two-factor.challenge'));
   }
@@ -520,7 +521,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->travel(61)->seconds();
     $this->post(route('webblocks.two-factor.sendChallenge'))->assertSessionHasNoErrors();
     $binding = app(TwoFactorSession::class)->fingerprint($user, app(TwoFactorAuthentication::class)->credential($user));
-    $this->assertFalse(app(EmailTwoFactorCodes::class)->consume($user, 'login', $user->email, $binding, $oldId, $oldCode));
+    $this->assertFalse(app(EmailCodes::class)->consume($user, 'login', $user->email, $binding, $oldId, $oldCode));
     Auth::guard('web')->logout();
     $this->flushSession();
     $this->travel(61)->seconds();
@@ -567,7 +568,7 @@ class TwoFactorAuthenticationTest extends TestCase
     Notification::assertSentOnDemand(TwoFactorEmail::class, fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === $user->email);
     $this->post(route('webblocks.two-factor.confirm'), ['code' => $this->code($user)])->assertOk();
     $this->assertSame($user->email, app(TwoFactorAuthentication::class)->credential($user)->email);
-    $this->assertFalse(app(ManageTwoFactor::class)->verify($user, '', $codes[0]));
+    $this->assertFalse(app(Credentials::class)->verify($user, '', $codes[0]));
   }
 
   #[Test]
@@ -674,14 +675,14 @@ class TwoFactorAuthenticationTest extends TestCase
       $this->assertSame('sent', $delivery->send($request, $user, $purpose, $user->email, $binding));
       $this->travel(10)->seconds();
     }
-    $this->assertSame(30, $delivery->retryAfter($user, 'login'));
-    $this->assertSame(40, $delivery->retryAfter($user, 'setup'));
-    $this->assertSame(50, $delivery->retryAfter($user, 'action'));
+    $this->assertSame(30, app(EmailCodes::class)->retryAfter($user, 'login'));
+    $this->assertSame(40, app(EmailCodes::class)->retryAfter($user, 'setup'));
+    $this->assertSame(50, app(EmailCodes::class)->retryAfter($user, 'action'));
     $this->assertSame('send_throttled', $delivery->send($request, $user, 'login', $user->email, $binding));
     $this->travel(31)->seconds();
-    $this->assertSame(0, $delivery->retryAfter($user, 'login'));
+    $this->assertSame(0, app(EmailCodes::class)->retryAfter($user, 'login'));
     $this->assertSame('sent', $delivery->send($request, $user, 'login', $user->email, $binding));
-    $this->assertSame(9, $delivery->retryAfter($user, 'setup'));
+    $this->assertSame(9, app(EmailCodes::class)->retryAfter($user, 'setup'));
   }
 
   #[Test]
@@ -775,7 +776,7 @@ class TwoFactorAuthenticationTest extends TestCase
     $this->assertFalse(Schema::hasColumn('wbcms_two_factor_credentials', 'last_used_step'));
     $this->assertDatabaseCount('wbcms_two_factor_enrollments', 0);
     $this->assertTrue(app(TwoFactorAuthentication::class)->required($user));
-    $this->assertTrue(app(ManageTwoFactor::class)->verify($user, '', $codes[0]));
+    $this->assertTrue(app(Credentials::class)->verify($user, '', $codes[0]));
   }
 
   #[Test]

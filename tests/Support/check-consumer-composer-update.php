@@ -25,6 +25,7 @@ if (! is_string($consumer) || ! is_file($consumer.'/.webblocks-consumer-fixture'
   exit(2);
 }
 require $consumer.'/vendor/autoload.php';
+require __DIR__.'/Fixtures/ConsumerTwoFactorState.php';
 
 if ($mode === 'released-history') {
   $app = require $consumer.'/bootstrap/app.php';
@@ -39,6 +40,14 @@ if ($mode === 'released-history') {
       DB::table('migrations')->insert(['migration' => $name, 'batch' => $batch]);
     }
   }
+  ConsumerTwoFactorState::seed(dirname($source).'/two-factor-state');
+  exit(0);
+}
+
+if ($mode === 'verify-two-factor') {
+  $app = require $consumer.'/bootstrap/app.php';
+  $app->make(Kernel::class)->bootstrap();
+  ConsumerTwoFactorState::verify($source.'/two-factor-state');
   exit(0);
 }
 
@@ -246,11 +255,13 @@ try {
     throw new RuntimeException('A clean Composer install produced different CMS code.');
   }
   $run([PHP_BINARY, $consumer.'/artisan', 'webblocks:updates:finalize', '--force']);
+  $run([PHP_BINARY, $script, $consumer, $fixture, 'verify-two-factor']);
   // Exact pinning is intentional in this fixture. Keep schema/lock validation
   // strict while excluding Composer's constraint-style advice.
   $run([PHP_BINARY, $binary, 'validate', '--strict', '--no-check-all']);
   $run([PHP_BINARY, dirname($script).'/check-consumer-update-chain.php', $consumer, $fixture]);
   echo "Released 1.112.1 preparation, missing-dependency cutover, fresh-process automatic chain, rollback, clean reinstall and CLI completion passed.\n";
+  echo "Pre-update verified address, active challenge, session state, policy and single-use recovery code survived the package update.\n";
 } finally {
   $filesystem->deleteDirectory($fixture);
 }

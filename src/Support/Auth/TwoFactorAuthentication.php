@@ -4,24 +4,26 @@ namespace WebBlocks\Cms\Support\Auth;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
+use WebBlocks\Cms\Support\Auth\Module\Credentials;
 
 final class TwoFactorAuthentication
 {
+  public function __construct(private readonly Credentials $credentials) {}
+
   public function available(): bool
   {
-    return Schema::hasTable('wbcms_two_factor_credentials');
+    return $this->credentials->available();
   }
 
   public function credential(Authenticatable $user): ?object
   {
-    return $this->available() ? DB::table('wbcms_two_factor_credentials')->where('user_id', $user->getAuthIdentifier())->first() : null;
+    return $this->credentials->credential($user);
   }
 
   public function enrollment(Authenticatable $user): ?object
   {
-    return DB::table('wbcms_two_factor_enrollments')->where('user_id', $user->getAuthIdentifier())->first();
+    return $this->credentials->enrollment($user);
   }
 
   public function required(Authenticatable $user): bool

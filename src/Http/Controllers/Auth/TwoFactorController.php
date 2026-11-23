@@ -8,13 +8,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use WebBlocks\Cms\Actions\Auth\ManageTwoFactor;
 use WebBlocks\Cms\Actions\Auth\UpdateTwoFactorPolicy;
 use WebBlocks\Cms\Http\Requests\Auth\TwoFactorRequest;
 use WebBlocks\Cms\Policies\TwoFactorPolicy;
 use WebBlocks\Cms\Support\Auth\EmailTwoFactorCodes;
+use WebBlocks\Cms\Support\Auth\Module\Credentials;
+use WebBlocks\Cms\Support\Auth\Module\EmailCodes;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 use WebBlocks\Cms\Support\Plugins\PluginRecoveryMode;
@@ -24,7 +24,8 @@ final class TwoFactorController extends Controller
   public function __construct(
     private readonly TwoFactorAuthentication $auth,
     private readonly TwoFactorSession $sessions,
-    private readonly ManageTwoFactor $manage,
+    private readonly Credentials $credentials,
+    private readonly EmailCodes $codes,
   ) {}
 
   public function challenge(Request $request): View|RedirectResponse
@@ -43,7 +44,7 @@ final class TwoFactorController extends Controller
 
     return view('webblocks-cms::auth.two-factor-challenge', [
       'recipient' => $this->maskedEmail($credential->email),
-      'emailCodeActive' => app(EmailTwoFactorCodes::class)->hasActiveCode($request, $user, 'login', $credential->email, $this->sessions->fingerprint($user, $credential)),
+      'emailCodeActive' => $this->codes->hasActiveCode($request, $user, 'login', $credential->email, $this->sessions->fingerprint($user, $credential)),
     ]);
   }
 
@@ -53,7 +54,7 @@ final class TwoFactorController extends Controller
     if (! $user) {
       return to_route('webblocks.auth.login');
     }
-    if (! $this->manage->verify($user, $request->validated('code') ?? '', $request->validated('recovery_code') ?? '', $this->challengeId($request, 'login'), 'login')) {
+    if (! $this->credentials->verify($user, $request->validated('code') ?? '', $request->validated('recovery_code') ?? '', $this->challengeId($request, 'login'), 'login')) {
       return $this->invalid('webblocks.two-factor.challenge');
     }
     if (! $request->user('web')) {
@@ -85,7 +86,8 @@ final class TwoFactorController extends Controller
 
   public function start(TwoFactorRequest $request): RedirectResponse
   {
-    $generation = $this->manage->start($request->user('web'), $request->validated('code') ?? '', $request->validated('recovery_code') ?? '', $this->challengeId($request));
+    $user = $request->user('web');
+    $generation = $this->credentials->start($user, (string) $user->email, $request->validated('code') ?? '', $request->validated('recovery_code') ?? '', $this->challengeId($request));
     if ($generation === null) {
       return $this->invalid('webblocks.two-factor.show', ['tab' => 'replace']);
     }
@@ -100,7 +102,7 @@ final class TwoFactorController extends Controller
 
   public function confirm(TwoFactorRequest $request): View|RedirectResponse
   {
-    $codes = $this->manage->confirm($request->user('web'), (string) $request->session()->get(TwoFactorSession::SETUP, ''), $request->validated('code'), $this->challengeId($request, 'setup'));
+    $codes = $this->credentials->confirm($request->user('web'), (string) $request->session()->get(TwoFactorSession::SETUP, ''), $request->validated('code'), $this->challengeId($request, 'setup'));
     if ($codes === null) {
       return $this->invalid();
     }
@@ -111,7 +113,7 @@ final class TwoFactorController extends Controller
 
   public function regenerate(TwoFactorRequest $request): View|RedirectResponse
   {
-    $codes = $this->manage->regenerate($request->user('web'), $request->validated('code') ?? '', $request->validated('recovery_code') ?? '', $this->challengeId($request));
+    $codes = $this->credentials->regenerate($request->user('web'), $request->validated('code') ?? '', $request->validated('recovery_code') ?? '', $this->challengeId($request));
     if ($codes === null) {
       return $this->invalid();
     }
@@ -122,7 +124,7 @@ final class TwoFactorController extends Controller
 
   public function disable(TwoFactorRequest $request): RedirectResponse
   {
-    if (! $this->manage->disable($request->user('web'), $request->validated('code') ?? '', $request->validated('recovery_code') ?? '', $this->challengeId($request))) {
+    if (! $this->credentials->disable($request->user('web'), $this->auth->required(...), $request->validated('code') ?? '', $request->validated('recovery_code') ?? '', $this->challengeId($request))) {
       return $this->invalid('webblocks.two-factor.show', ['tab' => 'disable']);
     }
     $request->session()->forget([TwoFactorSession::VERIFIED, TwoFactorSession::SETUP, EmailTwoFactorCodes::SESSION]);
@@ -134,7 +136,7 @@ final class TwoFactorController extends Controller
   public function policy(TwoFactorRequest $request, UpdateTwoFactorPolicy $update): RedirectResponse
   {
     if ($this->auth->credential($request->user('web'))?->confirmed_at !== null
-      && ! $this->manage->verify($request->user('web'), $request->validated('code') ?? '', $request->validated('recovery_code') ?? '', $this->challengeId($request))) {
+      && ! $this->credentials->verify($request->user('web'), $request->validated('code') ?? '', $request->validated('recovery_code') ?? '', $this->challengeId($request))) {
       return $this->invalid('admin.system.settings.edit', ['tab' => 'security']);
     }
     if ($credential = $this->auth->credential($request->user('web'))) {
@@ -153,8 +155,8 @@ final class TwoFactorController extends Controller
     if ($user) {
       return app(TwoFactorPolicy::class)->manage($user) ? $user : null;
     }
-    $pending = $request->session()->get(TwoFactorSession::PENDING);
-    if (! is_array($pending) || ($pending['expires_at'] ?? 0) <= now()->timestamp) {
+    $pending = $this->sessions->pending($request);
+    if (! $pending) {
       $request->session()->forget([TwoFactorSession::PENDING, TwoFactorSession::RECOVERY]);
 
       return null;
@@ -191,9 +193,8 @@ final class TwoFactorController extends Controller
     $user = $request->user('web');
     $purpose = $request->validated('purpose') ?? 'setup';
     if ($purpose === 'setup') {
-      $enrollment = $this->auth->enrollment($user);
-      if (! $enrollment || strtotime($enrollment->expires_at) <= now()->timestamp
-        || ! hash_equals($enrollment->generation, (string) $request->session()->get(TwoFactorSession::SETUP, ''))) {
+      $enrollment = $this->credentials->activeEnrollment($user, (string) $request->session()->get(TwoFactorSession::SETUP, ''));
+      if (! $enrollment) {
         return $this->invalidDelivery($request);
       }
       $email = $enrollment->email;
@@ -213,7 +214,7 @@ final class TwoFactorController extends Controller
     }
     $status = app(EmailTwoFactorCodes::class)->send($request, $user, $purpose, $email, $binding);
     if ($request->expectsJson()) {
-      $retryAfter = app(EmailTwoFactorCodes::class)->retryAfter($user, $purpose);
+      $retryAfter = $this->codes->retryAfter($user, $purpose);
 
       return response()->json([
         'status' => $status,
@@ -250,7 +251,7 @@ final class TwoFactorController extends Controller
 
   private function challengeId(Request $request, string $purpose = 'action'): string
   {
-    return (string) $request->session()->get(EmailTwoFactorCodes::SESSION.'.'.$purpose, '');
+    return $this->codes->challengeId($request, $purpose);
   }
 
   private function maskedEmail(string $email): string
@@ -264,18 +265,16 @@ final class TwoFactorController extends Controller
   {
     $user = $request->user('web');
     $credential = $this->auth->credential($user);
-    $enrollment = $this->auth->enrollment($user);
-    $setup = $enrollment && strtotime($enrollment->expires_at) > now()->timestamp
-      && hash_equals($enrollment->generation, (string) $request->session()->get(TwoFactorSession::SETUP, ''));
+    $enrollment = $this->credentials->activeEnrollment($user, (string) $request->session()->get(TwoFactorSession::SETUP, ''));
     $panel = app(TwoFactorPolicy::class)->viewPanel($user, $request);
 
     return view('webblocks-cms::auth.two-factor', [
       'continueUrl' => route($request->session()->get(TwoFactorSession::RECOVERY, false) || app(PluginRecoveryMode::class)->active() ? 'admin.plugins.recovery.index' : 'admin.dashboard'),
       'layout' => $panel ? 'webblocks-cms::layouts.admin' : 'webblocks-cms::layouts.guest', 'inPanel' => $panel,
       'enabled' => $credential?->confirmed_at !== null, 'required' => $this->auth->required($user),
-      'setupEmail' => $setup ? $enrollment->email : null, 'recipient' => $credential?->email ?? $user->email,
+      'setupEmail' => $enrollment?->email, 'recipient' => $credential?->email ?? $user->email,
       'recoveryCodes' => $codes, 'canConfigurePolicy' => $panel && app(TwoFactorPolicy::class)->configure($user),
-      'recoveryCount' => DB::table('wbcms_two_factor_recovery_codes')->where('user_id', $user->getAuthIdentifier())->count(),
+      'recoveryCount' => $this->credentials->recoveryCount($user),
     ]);
   }
 

@@ -110,6 +110,7 @@ use WebBlocks\Cms\Support\Admin\PanelNotificationSources;
 use WebBlocks\Cms\Support\Admin\PluginAppearanceComposer;
 use WebBlocks\Cms\Support\Admin\PublicSiteMenuComposer;
 use WebBlocks\Cms\Support\Admin\QuickSettingsComposer;
+use WebBlocks\Cms\Support\Auth\Module\Storage as TwoFactorStorage;
 use WebBlocks\Cms\Support\Auth\TwoFactorAccountState;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
 use WebBlocks\Cms\Support\Blocks\BlockCopyCatalog;
@@ -1119,6 +1120,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
       }
     });
     $this->app->singleton(BackupOperations::class);
+    $this->app->instance(TwoFactorStorage::class, new TwoFactorStorage('wbcms_two_factor_', 'wbcms.two_factor'));
 
     $this->app->register(EmbeddedRuntimeServiceProvider::class);
 

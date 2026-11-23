@@ -16,13 +16,13 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use WebBlocks\Cms\Actions\Auth\ManageTwoFactor;
 use WebBlocks\Cms\Actions\Auth\ResetTwoFactor;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Notifications\System\TwoFactorEmail;
 use WebBlocks\Cms\Queries\PanelNotificationQuery;
 use WebBlocks\Cms\Support\Access\CmsAuthorization;
 use WebBlocks\Cms\Support\Auth\EmailTwoFactorCodes;
+use WebBlocks\Cms\Support\Auth\Module\Credentials;
 use WebBlocks\Cms\Support\Auth\TwoFactorAccountState;
 use WebBlocks\Cms\Support\Auth\TwoFactorAuthentication;
 use WebBlocks\Cms\Support\Auth\TwoFactorSession;
@@ -80,12 +80,12 @@ class TwoFactorRecoveryTest extends TestCase
 
   private function enroll(User $user): array
   {
-    $generation = app(ManageTwoFactor::class)->start($user);
+    $generation = app(Credentials::class)->start($user, $user->email);
     $request = Request::create('/');
     $request->setLaravelSession(app('session.store'));
     $this->assertSame('sent', app(EmailTwoFactorCodes::class)->send($request, $user, 'setup', $user->email, app(TwoFactorSession::class)->setupBinding($user, $generation)));
 
-    return app(ManageTwoFactor::class)->confirm($user, $generation, $this->latestCode(), $request->session()->get(EmailTwoFactorCodes::SESSION.'.setup'));
+    return app(Credentials::class)->confirm($user, $generation, $this->latestCode(), $request->session()->get(EmailTwoFactorCodes::SESSION.'.setup'));
   }
 
   private function signedIn(User $user): void
@@ -128,7 +128,7 @@ class TwoFactorRecoveryTest extends TestCase
       $this->assertDatabaseMissing('wbcms_two_factor_'.$table, ['user_id' => $target->id]);
     }
     $this->assertDatabaseHas('wbcms_acl_events', ['action' => 'user.two_factor.reset', 'actor_id' => $actor->id, 'user_id' => $target->id, 'source' => 'panel', 'reason' => 'Owner identity confirmed']);
-    $this->assertFalse(app(ManageTwoFactor::class)->verify($actor, '', $actorCodes[0]));
+    $this->assertFalse(app(Credentials::class)->verify($actor, '', $actorCodes[0]));
     $this->assertNotNull(app(TwoFactorAuthentication::class)->credential($actor));
   }
 

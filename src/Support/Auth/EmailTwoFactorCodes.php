@@ -4,108 +4,39 @@ namespace WebBlocks\Cms\Support\Auth;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Str;
 use WebBlocks\Cms\Notifications\System\TwoFactorEmail;
+use WebBlocks\Cms\Support\Auth\Module\EmailCodes;
 use WebBlocks\Cms\Support\Mail\CmsMailSettingsResolver;
 
 final class EmailTwoFactorCodes
 {
-  public const LIFETIME_MINUTES = 5;
+  public const LIFETIME_MINUTES = EmailCodes::LIFETIME_MINUTES;
 
   public const SESSION = 'wbcms.two_factor.email_codes';
 
+  public function __construct(private readonly EmailCodes $codes) {}
+
   public function send(Request $request, Authenticatable $user, string $purpose, string $email, string $binding): string
   {
-    if (! in_array($purpose, ['login', 'setup', 'action'], true) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-      return 'send_failed';
-    }
-    $id = (string) Str::uuid();
-    $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-    $created = DB::transaction(function () use ($user, $purpose, $email, $binding, $id, $code): bool {
-      DB::table('users')->where('id', $user->getAuthIdentifier())->lockForUpdate()->first();
-      // Limit resends across sessions, with a separate account-wide send ceiling.
-      $recent = DB::table('wbcms_two_factor_email_codes')->where('user_id', $user->getAuthIdentifier())->where('sent_at', '>', now()->subMinute());
-      if ((clone $recent)->count() >= 3 || (clone $recent)->where('purpose', $purpose)->exists()) {
-        return false;
-      }
-      DB::table('wbcms_two_factor_email_codes')->where('user_id', $user->getAuthIdentifier())->where('expires_at', '<=', now())->delete();
-      DB::table('wbcms_two_factor_email_codes')->insert([
-        'id' => $id, 'user_id' => $user->getAuthIdentifier(), 'purpose' => $purpose, 'email' => $email,
-        'binding' => $binding, 'code_hash' => $this->hash($id, $code), 'attempts' => 0,
-        'sent_at' => now(), 'expires_at' => now()->addMinutes(self::LIFETIME_MINUTES), 'consumed_at' => null,
-      ]);
+    return $this->codes->send($request, $user, $purpose, $email, $binding, $this->deliver(...));
+  }
 
-      return true;
-    });
-    if (! $created) {
-      return 'send_throttled';
-    }
+  private function deliver(string $email, #[\SensitiveParameter] string $code): bool
+  {
     try {
       $mailer = app(CmsMailSettingsResolver::class)->resolvedMailerName();
       $this->assertDeliverable($mailer);
       Notification::route('mail', $email)->notify((new TwoFactorEmail($code))->locale(app()->getLocale()));
     } catch (\Throwable $exception) {
-      DB::table('wbcms_two_factor_email_codes')->where('id', $id)->update(['consumed_at' => now()]);
       // SMTP exceptions can contain the entire message, including its verification code.
       Log::warning('CMS verification email could not be sent.', ['exception_class' => $exception::class]);
 
-      return 'send_failed';
-    }
-    $previous = $request->session()->get(self::SESSION.'.'.$purpose);
-    if (is_string($previous)) {
-      DB::table('wbcms_two_factor_email_codes')->where('id', $previous)->where('user_id', $user->getAuthIdentifier())->update(['consumed_at' => now()]);
-    }
-    $request->session()->put(self::SESSION.'.'.$purpose, $id);
-
-    return 'sent';
-  }
-
-  public function hasActiveCode(Request $request, Authenticatable $user, string $purpose, string $email, string $binding): bool
-  {
-    return DB::table('wbcms_two_factor_email_codes')
-      ->where('id', $request->session()->get(self::SESSION.'.'.$purpose, ''))
-      ->where('user_id', $user->getAuthIdentifier())->where('purpose', $purpose)
-      ->where('email', $email)->where('binding', $binding)
-      ->whereNull('consumed_at')->where('attempts', '<', 5)->where('expires_at', '>', now())->exists();
-  }
-
-  public function retryAfter(Authenticatable $user, string $purpose): int
-  {
-    $recent = DB::table('wbcms_two_factor_email_codes')->where('user_id', $user->getAuthIdentifier())
-      ->where('sent_at', '>', now()->subMinute())->orderByDesc('sent_at')->get(['purpose', 'sent_at']);
-    $until = 0;
-    foreach ($recent as $index => $row) {
-      if ($row->purpose === $purpose || $index === 2) {
-        $until = max($until, strtotime($row->sent_at) + 60);
-      }
+      return false;
     }
 
-    return max(0, $until - now()->timestamp);
-  }
-
-  public function consume(Authenticatable $user, string $purpose, string $email, string $binding, string $id, #[\SensitiveParameter] string $code): bool
-  {
-    return DB::transaction(function () use ($user, $purpose, $email, $binding, $id, $code): bool {
-      $row = DB::table('wbcms_two_factor_email_codes')->where('id', $id)->where('user_id', $user->getAuthIdentifier())->lockForUpdate()->first();
-      if (! $row || $row->purpose !== $purpose || $row->email !== $email || ! hash_equals($row->binding, $binding)
-        || $row->consumed_at !== null || $row->attempts >= 5 || strtotime($row->expires_at) <= now()->timestamp) {
-        return false;
-      }
-      $valid = hash_equals($row->code_hash, $this->hash($id, $code));
-      DB::table('wbcms_two_factor_email_codes')->where('id', $id)->update([
-        'attempts' => $row->attempts + 1, 'consumed_at' => $valid ? now() : null,
-      ]);
-
-      return $valid;
-    });
-  }
-
-  private function hash(string $id, #[\SensitiveParameter] string $code): string
-  {
-    return hash_hmac('sha256', $id.'|'.$code, (string) config('app.key'));
+    return true;
   }
 
   public function assertDeliverable(string $mailer, array $visited = []): void

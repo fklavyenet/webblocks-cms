@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.144.13
+
+- Package email two-step verification in WebBlocks Two-Factor, a shared Laravel module. Existing verified email addresses, active verification codes, recovery codes, and role policies carry over when updating.
+
 ## 1.144.12
 
 - Improve badge and status text contrast throughout Webadmin in dark mode, including when the panel follows the system appearance.

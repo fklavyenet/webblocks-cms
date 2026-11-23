@@ -204,6 +204,40 @@ Do not repeat immutable static headings after the editable Main content. Confirm
 fallback rendering on compatible older CMS and disabled/unconfigured designs.
 See the canonical plugin development guide for the recipe contract.
 
+## Embedding WebBlocks Two-Factor
+
+The WebBlocks Two-Factor source lives in `src/Support/Auth/Module`. Version
+1.0.0 uses email as its verification channel. `TwoFactor::VERSION` identifies
+the module independently of the CMS release.
+For a consumer update, select the CMS source revision containing the intended
+module version and export it to a new directory under the consumer's namespace.
+
+```sh
+php scripts/embed-two-factor.php 1.0.0 'App\Support\TwoFactor\Module' /tmp/two-factor-module
+```
+
+The export includes the license and a `module.json` manifest with the version,
+namespace and SHA-256 hashes of the source and generated files. Review the
+generated diff before replacing the consumer's embedded directory. To check
+its contents, export the same source revision and namespace to a new directory
+and compare it with the installed copy. Keep product adapters outside that
+directory. CMS builds include the source directly under the existing Composer
+autoload prefix.
+
+| Module API | Consumer integration |
+| --- | --- |
+| `Storage`, `Schema::migrate()` | Bind one product-specific storage instance. Choose stable SQL table and session prefixes. Run the schema from a product migration after creating the account table. The module uses Laravel's default database connection and an unsigned big-integer account key. |
+| `Credentials` | Start and confirm enrollment with the product's selected address, look up the verified address, verify factors and replace recovery codes. Display new recovery codes once. Pass the product's enforcement policy to `disable()` so it is checked under the account lock. |
+| `EmailCodes` | Use `setup`, `login` and `action` with the corresponding session binding. Pass a synchronous mail callback to `send()`. Return true on successful delivery and false on failure. The callback receives the destination and plaintext code. Keep transport, templates and locale in the product. |
+| `VerificationSession` | Begin a pending login after checking the password. Resolve the pending account through the product's guard and recheck eligibility and the credential fingerprint before accepting a factor. Mark the session after successful verification. Use `verified()` on protected requests. |
+| `AccountState`, `Credentials::reset()` | Stamp the session on sign-in and check its version on protected requests. When the host authorizes a reset, rotate the host's remember token and write its audit event in the same transaction as the module reset. |
+
+WebBlocks CMS binds the existing `wbcms_two_factor_` SQL tables and
+`wbcms.two_factor` session keys. The extraction uses the existing credential
+generation, hashes and application key. Deploying it over the email-based
+implementation requires no data migration. The historical TOTP conversion,
+role policy, middleware, routes and audit events live in the CMS integration.
+
 ## Runtime inventory review
 
 `resources/contracts/inventory.md` is the product-owned source of truth for AI authoring. Update it in the same product change as supported block fields, variants, enums, media, children, render behavior, editor behavior, API permissions, or plugin lifecycle changes. The copy in the documentation repository is a generated version snapshot; never fix product behavior by editing that copy first.
