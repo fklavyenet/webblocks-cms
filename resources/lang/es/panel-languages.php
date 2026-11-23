@@ -1,11 +1,8 @@
 <?php
 
 return [
-  'default_help' => 'Se aplica a las cuentas sin una preferencia de idioma guardada para el panel.',
   'language_packs' => 'Paquetes de idioma',
   'title' => 'Idiomas del panel',
-  'default' => 'Idioma predeterminado del panel',
-  'save_default' => 'Guardar idioma predeterminado',
   'language' => 'Idioma',
   'source_version' => 'Versión de origen del CMS',
   'status' => 'Estado',

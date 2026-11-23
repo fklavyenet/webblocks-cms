@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Process\Process;
 use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Models\Locale;
+use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
@@ -105,7 +106,10 @@ final class LanguagePackCatalogTest extends TestCase
       $this->assertSame('Восстановить установку', trans('webblocks-cms::update_schema.repair', [], 'ru'));
       $this->assertSame('{code} — ваш код подтверждения для CMS', app(VerificationEmailTemplates::class)->defaults('ru')['subject']);
       $this->assertSame('21 непрочитанное сообщение', trans_choice('webblocks-cms::notifications.panel_new_messages', 21, [], 'ru'));
-      $this->put(route('admin.system.panel-languages.default'), ['code' => 'ru'])->assertRedirect();
+      $token = app(CmsApiTokenIssuer::class)->issue('Manage language packs', auth()->user(), ['panel-languages.manage'])->plainToken;
+      $this->withToken($token)->putJson(route('internal-content-api.system.panel-languages.default'), ['code' => 'ru'])
+        ->assertOk()->assertJsonPath('ok', true);
+      $this->withoutHeader('Authorization');
       $this->get(route('admin.profile.edit'))->assertOk()->assertSee('lang="ru"', false)->assertSee('Язык интерфейса');
 
       $zip = new ZipArchive;

@@ -6,18 +6,16 @@ The native language pack covers the CMS panel, public system interface, validati
 
 Откройте **Extensions → Языковые пакеты** и загрузите полный ZIP-пакет для
 установленной версии CMS или выберите пакет через **Обзор языковых пакетов**.
-После установки выберите **Русский** в профиле или назначьте его языком панели
-по умолчанию.
+После установки выберите **Русский** в профиле.
 
 Для посетителей включите русский язык на нужном сайте и добавьте переводы
 страниц. При обновлении CMS устанавливайте пакет для новой версии.
 
 ## Install the language pack
 
-Open **Extensions → Language packs** and upload the complete ZIP under
-**Manual language pack install**, or install the matching release from
-**Browse language packs**. Select **Русский** in your profile or as the panel
-default.
+Open **Extensions → Language packs** and select **Upload** next to
+**Installed language packs**, or install the matching release from
+**Browse language packs**. Select **Русский** in your profile.
 
 The pack translates the public system interface when Russian is enabled for
 the site. Create Russian page content where required. Install the matching

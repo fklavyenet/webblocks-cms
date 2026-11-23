@@ -1,6 +1,5 @@
 @php
     $text = static fn (string $key) => __('webblocks-cms::panel-languages.'.$key);
-    $defaultErrors = $errors->getBag('panelLanguageDefault');
     $uploadError = $errors->has('package');
 @endphp
 
@@ -9,10 +8,6 @@
 @section('content')
     @component('webblocks-cms::admin.partials.page-header', ['title' => $text('language_packs')])
         @slot('actions')
-            <button type="button" class="wb-btn wb-btn-secondary" data-wb-toggle="modal" data-wb-target="#panel-language-default-modal"
-                    aria-controls="panel-language-default-modal" aria-haspopup="dialog">
-                <i class="wb-icon wb-icon-settings" aria-hidden="true"></i> {{ $text('default') }}
-            </button>
             @if ($extensionsAvailable)
                 <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.panel-languages.extensions.index') }}">
                     <i class="wb-icon wb-icon-search" aria-hidden="true"></i> {{ $text('extensions_browse') }}
@@ -22,28 +17,27 @@
     @endcomponent
     @include('webblocks-cms::admin.system.panel-languages.feedback', ['inlineErrors' => $uploadError && $manualInstallAvailable ? ['package'] : []])
 
-    @if ($manualInstallAvailable)
-        @include('webblocks-cms::admin.partials.extension-upload-card', [
-            'id' => 'panel-language-install',
-            'title' => $text('manual_install'),
-            'action' => route('admin.system.panel-languages.store'),
-            'fieldId' => 'panel-language-package',
-            'field' => 'package',
-            'fileLabel' => $text('package').' (.zip)',
-            'help' => $text('package_help'),
-            'error' => $errors->first('package'),
-        ])
-    @else
+    @unless ($manualInstallAvailable)
         <p class="wb-alert wb-alert-warning" role="status">{{ $text('storage_unavailable') }}</p>
-    @endif
+    @endunless
+    @include('webblocks-cms::admin.partials.extension-list-filter', [
+        'id' => 'panel-language-search',
+        'indexUrl' => route('admin.system.panel-languages.index'),
+        'term' => $search,
+    ])
 
     <section class="wb-card" aria-labelledby="installed-language-packs-title">
-        <div class="wb-card-header">
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <h2 id="installed-language-packs-title" class="wb-card-title">{{ $text('installed_packs') }}</h2>
+            @if ($manualInstallAvailable)
+                @include('webblocks-cms::admin.partials.extension-upload-button', ['target' => 'panel-language-install'])
+            @endif
         </div>
         <div class="wb-card-body">
             @if ($packages->isEmpty())
-                <div class="wb-empty"><div class="wb-empty-title">{{ $text('empty') }}</div></div>
+                <div class="wb-empty">
+                    <p class="wb-empty-title">{{ $search === '' ? $text('empty') : __('webblocks-cms::admin.extensions_ui.no_matches') }}</p>
+                </div>
             @else
                 <div class="wb-table-wrap">
                     <table class="wb-table">
@@ -57,13 +51,37 @@
                         </thead>
                         <tbody>
                             @foreach ($packages as $pack)
-                                @php($current = $pack['source_version'] === \WebBlocks\Cms\Support\WebBlocks::VERSION)
+                                @php
+                                    $current = $pack['source_version'] === \WebBlocks\Cms\Support\WebBlocks::VERSION;
+                                    $status = $text($current ? 'extensions_installed' : 'different_cms');
+                                    $detailsId = 'language-pack-details-'.$pack['code'];
+                                @endphp
                                 <tr>
-                                    <th scope="row" class="wb-table-break"><span lang="{{ $pack['code'] }}">{{ $pack['name'] }}</span> <code>{{ $pack['code'] }}</code></th>
+                                    <td class="wb-table-break">
+                                        @include('webblocks-cms::admin.partials.extension-row-name', [
+                                            'name' => $pack['name'],
+                                            'identifier' => $pack['code'],
+                                            'target' => $detailsId,
+                                            'language' => $pack['code'],
+                                        ])
+                                    </td>
                                     <td>{{ $pack['release_version'] ?? '—' }}</td>
-                                    <td><span class="wb-status-pill {{ $current ? 'wb-status-active' : 'wb-status-pending' }}">{{ $text($current ? 'extensions_installed' : 'different_cms') }}</span></td>
+                                    <td><span class="wb-status-pill {{ $current ? 'wb-status-active' : 'wb-status-pending' }}">{{ $status }}</span></td>
                                     <td>{{ $pack['source_version'] }}</td>
                                 </tr>
+                                @push('overlays')
+                                    @include('webblocks-cms::admin.partials.extension-details-modal', [
+                                        'id' => $detailsId,
+                                        'name' => $pack['name'],
+                                        'language' => $pack['code'],
+                                        'details' => [
+                                            __('webblocks-cms::admin.extensions_ui.identifier') => $pack['code'],
+                                            __('webblocks-cms::admin.system_plugins_index.version') => $pack['release_version'] ?? '—',
+                                            $text('source_version') => $pack['source_version'],
+                                            $text('status') => $status,
+                                        ],
+                                    ])
+                                @endpush
                             @endforeach
                         </tbody>
                     </table>
@@ -73,39 +91,17 @@
     </section>
 @endsection
 
-@push('overlays')
-    <dialog class="wb-modal" id="panel-language-default-modal" aria-labelledby="panel-language-default-title"
-            @if ($defaultErrors->any() || request()->query('tab') === 'settings') data-wb-admin-autoload-overlay @endif>
-        <form method="POST" action="{{ route('admin.system.panel-languages.default') }}" class="wb-modal-dialog">
-            @csrf
-            @method('PUT')
-            <div class="wb-modal-header">
-                <h2 id="panel-language-default-title" class="wb-modal-title">{{ $text('default') }}</h2>
-                <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ __('webblocks-cms::admin.common.close') }}">
-                    <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
-                </button>
-            </div>
-            <div class="wb-modal-body">
-                <div class="wb-field">
-                    <label class="wb-label" for="panel-language-default">{{ $text('language') }}</label>
-                    <select class="wb-select" id="panel-language-default" name="code"
-                            aria-describedby="panel-language-default-help{{ $defaultErrors->any() ? ' panel-language-default-error' : '' }}"
-                            @if ($defaultErrors->any()) aria-invalid="true" @endif required>
-                        @foreach ($options as $code => $label)
-                            <option value="{{ $code }}" @selected($code === $defaultLocale)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                    <p class="wb-text-sm wb-text-muted wb-m-0" id="panel-language-default-help">{{ $text('default_help') }}</p>
-                    @if ($defaultErrors->any())
-                        <p class="wb-alert wb-alert-danger" id="panel-language-default-error" role="alert">{{ $defaultErrors->first() }}</p>
-                    @endif
-                </div>
-            </div>
-            <div class="wb-modal-footer">
-                <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ __('webblocks-cms::admin.common.cancel') }}</button>
-                <button type="submit" class="wb-btn wb-btn-primary">{{ $text('save_default') }}</button>
-            </div>
-        </form>
-    </dialog>
-
-@endpush
+@if ($manualInstallAvailable)
+    @push('overlays')
+        @include('webblocks-cms::admin.partials.extension-upload-modal', [
+            'id' => 'panel-language-install',
+            'title' => $text('manual_install'),
+            'action' => route('admin.system.panel-languages.store'),
+            'fieldId' => 'panel-language-package',
+            'field' => 'package',
+            'fileLabel' => $text('package').' (.zip)',
+            'help' => $text('package_help'),
+            'error' => $errors->first('package'),
+        ])
+    @endpush
+@endif

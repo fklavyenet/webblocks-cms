@@ -1,13 +1,16 @@
-<section class="wb-card" aria-labelledby="{{ $id }}-title">
-    <div class="wb-card-header">
-        <h2 id="{{ $id }}-title" class="wb-card-title">{{ $title }}</h2>
-    </div>
-    <form method="POST" action="{{ $action }}" enctype="multipart/form-data">
+<dialog class="wb-modal" id="{{ $id }}" aria-labelledby="{{ $id }}-title" @if ($error) data-wb-admin-autoload-overlay @endif>
+    <form class="wb-modal-dialog" method="POST" action="{{ $action }}" enctype="multipart/form-data">
         @csrf
         @foreach ($hidden ?? [] as $name => $value)
             <input type="hidden" name="{{ $name }}" value="{{ $value }}">
         @endforeach
-        <div class="wb-card-body">
+        <div class="wb-modal-header">
+            <h2 id="{{ $id }}-title" class="wb-modal-title">{{ $title }}</h2>
+            <button type="button" class="wb-modal-close" data-wb-dismiss="modal" aria-label="{{ __('webblocks-cms::admin.common.close') }}">
+                <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="wb-modal-body">
             <div class="wb-field">
                 <label class="wb-label" for="{{ $fieldId }}">{{ $fileLabel }}</label>
                 <input id="{{ $fieldId }}" name="{{ $field }}" type="file" class="wb-file" accept=".zip,application/zip"
@@ -19,10 +22,11 @@
                 @endif
             </div>
         </div>
-        <div class="wb-card-footer wb-cluster wb-cluster-end wb-cluster-2 wb-flex-wrap">
+        <div class="wb-modal-footer">
+            <button type="button" class="wb-btn wb-btn-secondary" data-wb-dismiss="modal">{{ __('webblocks-cms::admin.common.cancel') }}</button>
             <button type="submit" class="wb-btn wb-btn-primary" data-wb-busy data-wb-busy-label="{{ __('webblocks-cms::modal-submit.uploading') }}">
                 <span data-wb-busy-text>{{ __('webblocks-cms::admin.extensions_ui.upload') }}</span>
             </button>
         </div>
     </form>
-</section>
+</dialog>

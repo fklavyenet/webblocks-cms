@@ -46,7 +46,8 @@ final class PublicThemes
         DB::table(self::CHANGES)->selectRaw('count(*)')->whereColumn('theme_version_id', 'versions.id'), 'uses'
       ))
       ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
-        ->whereLike('versions.name', '%'.$search.'%')->orWhereLike('versions.version', '%'.$search.'%')))
+        ->whereLike('versions.name', '%'.$search.'%')->orWhereLike('versions.handle', '%'.$search.'%')
+        ->orWhereLike('versions.version', '%'.$search.'%')))
       ->orderBy('handle')->orderByDesc('id')->paginate($perPage, ['*'], $packageManagement ? 'page' : 'version_page');
 
     return $versions->through(fn (object $version) => $this->describe($version));

@@ -1,5 +1,6 @@
 @php
     $flashErrors = $errors ?? new \Illuminate\Support\ViewErrorBag;
+    $genericError = collect($flashErrors->getBag('default')->getMessages())->except($flashInlineErrors ?? [])->flatten()->first();
     $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('flash.'.$key, $adminLocale, $replace);
@@ -79,11 +80,11 @@
     </div>
 @endif
 
-@if ($flashErrors->any() && ! $flashErrors->has('system_update') && ! $flashErrors->has('system_backup') && ! $flashErrors->has('site_delete') && ! $flashErrors->has('locale_lifecycle') && ! $flashErrors->has('user_lifecycle') && ! $flashErrors->has('system_restore'))
+@if ($genericError && ! $flashErrors->has('system_update') && ! $flashErrors->has('system_backup') && ! $flashErrors->has('site_delete') && ! $flashErrors->has('locale_lifecycle') && ! $flashErrors->has('user_lifecycle') && ! $flashErrors->has('system_restore'))
     <div class="wb-alert wb-alert-danger">
         <div>
             <div class="wb-alert-title">{{ $adminText('validation_error') }}</div>
-            <div>{{ $flashErrors->getBag('default')->first() }}</div>
+            <div>{{ $genericError }}</div>
         </div>
     </div>
 @endif

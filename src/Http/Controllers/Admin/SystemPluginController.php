@@ -14,6 +14,7 @@ use WebBlocks\Cms\Actions\Plugins\EnablePlugin;
 use WebBlocks\Cms\Actions\Plugins\UpdatePluginAppearance;
 use WebBlocks\Cms\Http\Requests\Admin\PluginAppearanceRequest;
 use WebBlocks\Cms\Policies\Plugins\PluginRecoveryPolicy;
+use WebBlocks\Cms\Queries\ExtensionListSearch;
 use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
@@ -51,18 +52,20 @@ class SystemPluginController extends Controller
     private readonly PluginRuntimeRefresher $runtimeRefresher,
   ) {}
 
-  public function index(): View
+  public function index(Request $request): View
   {
-    $user = request()->user();
+    $user = $request->user();
     $canInstallPlugins = (bool) $user?->isSuperAdmin();
     $canRestore = app(PluginRecoveryPolicy::class)->manage($user);
     $updateStatus = $canInstallPlugins ? $this->catalogUpdates->refreshIfDue() : null;
+    $search = ExtensionListSearch::term($request->query('search'));
 
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.index', [
       'title' => 'Plugins',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Plugins'),
-      'plugins' => $this->pluginSummaries($updateStatus['updates'] ?? [], $canRestore),
+      'plugins' => $this->pluginSummaries($updateStatus['updates'] ?? [], $canRestore, $search),
+      'search' => $search,
       'canInstallPlugins' => $canInstallPlugins,
       'pluginCatalogUpdateStatus' => $updateStatus,
     ]);
@@ -84,7 +87,9 @@ class SystemPluginController extends Controller
   {
     abort_unless($request->user()?->isSuperAdmin(), 403);
 
-    return redirect()->route('admin.system.plugins.index')
+    $search = ExtensionListSearch::term($request->query('search'));
+
+    return redirect()->route('admin.system.plugins.index', $search === '' ? [] : ['search' => $search])
       ->withFragment('registered-plugins')
       ->with('plugin_catalog_check_result', $this->catalogUpdates->checkNow());
   }
@@ -329,8 +334,12 @@ class SystemPluginController extends Controller
     return null;
   }
 
-  private function pluginSummaries(array $catalogUpdatesByHandle, bool $canRestore): array
+  private function pluginSummaries(array $catalogUpdatesByHandle, bool $canRestore, string $search): array
   {
+    $plugins = array_filter($this->plugins->summaries(), fn (array $plugin): bool => ExtensionListSearch::matches(
+      $search, $plugin['label'], $plugin['handle'], $plugin['version'] ?? '',
+    ));
+
     return array_map(function (array $plugin) use ($catalogUpdatesByHandle, $canRestore): array {
       $summary = $this->decorateSummary($plugin, $catalogUpdatesByHandle);
       $summary['restore_version'] = $canRestore && $summary['manual_upload']
@@ -338,7 +347,7 @@ class SystemPluginController extends Controller
         : null;
 
       return $summary;
-    }, $this->plugins->summaries());
+    }, $plugins);
   }
 
   private function restoreVersion(string $handle, ?string $currentVersion): ?string

@@ -49,11 +49,11 @@ final class PublicThemesTest extends TestCase
     [$other, $otherPage] = $this->sitePage('two');
     $content = DB::table('wbcms_page_translations')->orderBy('id')->get()->toArray();
     $packages = route('admin.system.themes.index');
-    $this->get($packages)->assertOk()->assertSeeInOrder(['Manual theme install', 'Upload', 'Installed theme versions', 'Filter'])
+    $this->get($packages)->assertOk()->assertSeeInOrder(['data-admin-listing-filters', 'Installed themes', 'data-wb-target="#theme-install"', '<dialog class="wb-modal" id="theme-install"', 'Manual theme install'], false)
       ->assertSee('data-wb-busy', false)->assertSee('id="theme-package"', false)->assertDontSee('id="upload-theme"', false);
     $this->from($packages)->post(route('admin.system.themes.store'), ['theme_operation' => 'upload'])
       ->assertRedirect($packages)->assertSessionHasErrors('package');
-    $this->get($packages)->assertSee('id="theme-package-error"', false)->assertSee('aria-invalid="true"', false);
+    $this->get($packages)->assertSeeInOrder(['id="theme-install" aria-labelledby="theme-install-title"', 'data-wb-admin-autoload-overlay', 'id="theme-package-error"'], false)->assertSee('aria-invalid="true"', false);
     $this->post(route('admin.system.themes.store'), ['package' => $this->archive()])->assertRedirect();
     $version = DB::table('wbcms_theme_versions')->value('id');
     $checksum = DB::table('wbcms_theme_versions')->value('checksum');
@@ -74,10 +74,11 @@ final class PublicThemesTest extends TestCase
     $workspace = $this->get(route('admin.sites.themes.comparison', [$site, $version, 'page' => $page->id, 'button_corners' => 'soft']))
       ->assertOk()->assertSee('Preview: Editorial 1.0.0')->assertSee('Apply')
       ->assertSee('Current appearance')->assertSee('Candidate appearance')->assertSee('Activate on this site');
-    $this->get($packages.'?search=1.0.0')->assertOk()->assertSee('scope="row" class="wb-table-break">Editorial</th>', false)
+    $this->get($packages.'?search=1.0.0')->assertOk()->assertSee('data-wb-target="#theme-details-'.$version.'"', false)
+      ->assertSee('aria-labelledby="theme-details-'.$version.'-title"', false)
       ->assertSee('<td>1.0.0</td>', false)->assertSee('Installed at')->assertSee('Reset')
       ->assertSee('wb-icon-trash')->assertSee('aria-label="Delete Editorial 1.0.0"', false)->assertDontSee('<details class="wb-collapse-panel"', false);
-    $this->get($packages.'?search=unmatched')->assertOk()->assertSee('No theme versions match your search.')
+    $this->get($packages.'?search=unmatched')->assertOk()->assertSee('No installed items match your search.')
       ->assertDontSee('Editorial · 1.0.0');
     preg_match('/name="confirmation" value="([^"]+)"/', $workspace->getContent(), $matches);
     $preview = route('admin.sites.themes.preview', [$site, 'version' => $version, 'page' => $page->id, 'mode' => 'dark']);
@@ -190,7 +191,7 @@ final class PublicThemesTest extends TestCase
       },
     ]);
 
-    $this->get($packages)->assertOk()->assertSee('Browse catalog');
+    $this->get($packages)->assertOk()->assertSee('Browse themes');
     Http::assertNothingSent();
     $this->get($catalog)->assertOk()->assertSee('Editorial')->assertSee('Update available')->assertSee('Install update')
       ->assertSee('wb-pagination wb-border-0', false)->assertSee($secondPage);

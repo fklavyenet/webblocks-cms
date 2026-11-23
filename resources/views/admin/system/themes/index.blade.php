@@ -12,44 +12,28 @@
         @slot('actions')
             @if (app(\WebBlocks\Cms\Support\Theme\ThemeCatalog::class)->enabled())
                 <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.themes.catalog.index') }}">
-                    <i class="wb-icon wb-icon-search" aria-hidden="true"></i> {{ __('webblocks-cms::admin.extensions_ui.browse_catalog') }}
+                    <i class="wb-icon wb-icon-search" aria-hidden="true"></i> {{ $text('browse_catalog') }}
                 </a>
             @endif
         @endslot
     @endcomponent
     @include('webblocks-cms::admin.system.themes.feedback', ['inlineErrors' => $uploadError ? ['package'] : []])
 
-    @include('webblocks-cms::admin.partials.extension-upload-card', [
-        'id' => 'theme-install',
-            'title' => __('webblocks-cms::themes.manual_install'),
-        'action' => route('admin.system.themes.store'),
-        'fieldId' => 'theme-package',
-        'field' => 'package',
-        'fileLabel' => $text('package').' (.zip)',
-        'help' => $text('upload_help'),
-        'error' => $uploadError ? $errors->first('package') : '',
-        'hidden' => ['theme_operation' => 'upload'],
+    @include('webblocks-cms::admin.partials.extension-list-filter', [
+        'id' => 'theme-search',
+        'indexUrl' => $indexUrl,
+        'term' => $search,
     ])
 
     <section class="wb-card" aria-labelledby="installed-themes-title">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <h2 id="installed-themes-title" class="wb-card-title">{{ $text('versions') }}</h2>
-            <form method="GET" action="{{ $indexUrl }}" class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <div class="wb-input-wrap">
-                    <label for="theme-search" class="wb-sr-only">{{ __('webblocks-cms::admin.common.search') }}</label>
-                    <i class="wb-icon wb-icon-search wb-input-icon" aria-hidden="true"></i>
-                    <input id="theme-search" name="search" class="wb-input" type="search" value="{{ $search }}" placeholder="{{ $text('search_placeholder') }}">
-                </div>
-                <button type="submit" class="wb-btn wb-btn-primary">{{ __('webblocks-cms::admin.common.filter') }}</button>
-                @if ($search !== '')
-                    <a href="{{ $indexUrl }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a>
-                @endif
-            </form>
+            <h2 id="installed-themes-title" class="wb-card-title">{{ $text('installed_themes') }}</h2>
+            @include('webblocks-cms::admin.partials.extension-upload-button', ['target' => 'theme-install'])
         </div>
         <div class="wb-card-body">
             @if ($versions->isEmpty())
                 <div class="wb-empty">
-                    <p class="wb-empty-title">{{ $text($search === '' ? 'empty' : 'no_matches') }}</p>
+                    <p class="wb-empty-title">{{ $search === '' ? $text('empty') : __('webblocks-cms::admin.extensions_ui.no_matches') }}</p>
                 </div>
             @else
                 <div class="wb-table-wrap">
@@ -68,10 +52,17 @@
                             @foreach ($versions as $version)
                                 @php
                                     $uploaded = \Illuminate\Support\Carbon::parse($version->created_at);
+                                    $detailsId = 'theme-details-'.$version->id;
                                     $deleteLabel = $text('delete_named', ['name' => $version->name, 'version' => $version->version]);
                                 @endphp
                                 <tr>
-                                    <th scope="row" class="wb-table-break">{{ $version->name }}</th>
+                                    <td class="wb-table-break">
+                                        @include('webblocks-cms::admin.partials.extension-row-name', [
+                                            'name' => $version->name,
+                                            'identifier' => $version->handle,
+                                            'target' => $detailsId,
+                                        ])
+                                    </td>
                                     <td>{{ $version->version }}</td>
                                     <td>
                                         <span class="wb-status-pill {{ $version->compatible ? 'wb-status-active' : 'wb-status-danger' }}">
@@ -95,17 +86,42 @@
                                         </div>
                                     </td>
                                 </tr>
+                                @push('overlays')
+                                    @include('webblocks-cms::admin.partials.extension-details-modal', [
+                                        'id' => $detailsId,
+                                        'name' => $version->name,
+                                        'details' => [
+                                            __('webblocks-cms::admin.extensions_ui.identifier') => $version->handle,
+                                            __('webblocks-cms::admin.system_plugins_index.version') => $version->version,
+                                            $text('compatibility') => $text($version->compatible ? 'compatible' : 'incompatible_short'),
+                                            $text('layouts') => implode(', ', $version->layouts),
+                                            $text('installed_at') => $uploaded->format('Y-m-d H:i'),
+                                        ],
+                                    ])
+                                @endpush
                             @endforeach
                         </tbody>
                     </table>
                 </div>
             @endif
         </div>
-        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $versions->appends($searchQuery), 'ariaLabel' => $text('versions'), 'compact' => true])
+        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $versions->appends($searchQuery), 'ariaLabel' => $text('installed_themes'), 'compact' => true])
     </section>
 @endsection
 
 @push('overlays')
+    @include('webblocks-cms::admin.partials.extension-upload-modal', [
+        'id' => 'theme-install',
+        'title' => $text('manual_install'),
+        'action' => route('admin.system.themes.store'),
+        'fieldId' => 'theme-package',
+        'field' => 'package',
+        'fileLabel' => $text('package').' (.zip)',
+        'help' => $text('upload_help'),
+        'error' => $uploadError ? $errors->first('package') : '',
+        'hidden' => ['theme_operation' => 'upload'],
+    ])
+
     @foreach ($versions as $version)
         @if (! $version->uses)
             @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [

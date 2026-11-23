@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.20
+
+- Use matching Installed and Browse labels across Plugins, Public themes, and Language packs. Package names open details.
+- Filter installed extensions from a separate card. Upload ZIP files from a dialog opened by the installed list’s Upload button.
+- Set the personal interface language in Profile or in the top bar. The Language packs page focuses on package management.
+
 ## 1.144.19
 
 - Install complete Full CMS language pack ZIPs from Extensions or by manual upload. The installed list shows the pack and its source CMS version. Retire panel-only JSON catalogs and their activation workflow.

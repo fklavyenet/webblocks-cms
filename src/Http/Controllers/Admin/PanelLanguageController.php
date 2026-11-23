@@ -9,6 +9,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\LanguagePackUploadRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PanelLanguageDefaultRequest;
+use WebBlocks\Cms\Queries\ExtensionListSearch;
 use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
@@ -21,16 +22,26 @@ final class PanelLanguageController
 
   public function index(Request $request, AdminLocaleResolver $resolver): JsonResponse|View
   {
-    $data = [
-      'packages' => $this->packs->installed()->values()->map(fn (object $pack): array => [
-        'code' => $pack->code, 'name' => $pack->name, 'source_version' => $pack->source_version,
-        'release_version' => $pack->release_version === '' ? null : $pack->release_version,
-      ]),
-      'options' => $resolver->options(),
-      'defaultLocale' => $resolver->defaultLocale(),
-    ];
+    $packages = $this->packs->installed()->values()->map(fn (object $pack): array => [
+      'code' => $pack->code, 'name' => $pack->name, 'source_version' => $pack->source_version,
+      'release_version' => $pack->release_version === '' ? null : $pack->release_version,
+    ]);
 
-    return $this->api($request) ? response()->json($data) : view('webblocks-cms::admin.system.panel-languages.index', $data + [
+    if ($this->api($request)) {
+      return response()->json([
+        'packages' => $packages,
+        'options' => $resolver->options(),
+        'defaultLocale' => $resolver->defaultLocale(),
+      ]);
+    }
+
+    $search = ExtensionListSearch::term($request->query('search'));
+
+    return view('webblocks-cms::admin.system.panel-languages.index', [
+      'packages' => $packages->filter(fn (array $pack): bool => ExtensionListSearch::matches(
+        $search, $pack['name'], $pack['code'], $pack['source_version'], $pack['release_version'] ?? '',
+      )),
+      'search' => $search,
       'extensionsAvailable' => app(LanguagePackCatalog::class)->enabled(),
       'manualInstallAvailable' => $this->packs->ready(),
     ]);
@@ -48,7 +59,7 @@ final class PanelLanguageController
       : redirect()->route('admin.system.panel-languages.index')->with('panel_language_status', 'extensions_native_installed');
   }
 
-  public function updateDefault(PanelLanguageDefaultRequest $request, AdminLocaleResolver $resolver, SystemSettings $settings): JsonResponse|RedirectResponse
+  public function updateDefault(PanelLanguageDefaultRequest $request, AdminLocaleResolver $resolver, SystemSettings $settings): JsonResponse
   {
     $code = $request->validated('code');
     if (! isset($resolver->options()[$code])) {
@@ -56,9 +67,7 @@ final class PanelLanguageController
     }
     $settings->save([SystemSettings::ADMIN_LOCALE => $code]);
 
-    return $this->api($request)
-      ? response()->json(['ok' => true])
-      : redirect()->route('admin.system.panel-languages.index')->with('panel_language_status', 'default_saved');
+    return response()->json(['ok' => true]);
   }
 
   private function api(Request $request): bool

@@ -7,6 +7,8 @@
     $systemPluginsIndexText = static fn (string $key, array $replace = []) => $systemPluginsIndexTranslator->admin('system_plugins_index.'.$key, $systemPluginsIndexLocale, $replace);
     $recoveryText = static fn (string $key, array $replace = []) => $systemPluginsIndexTranslator->admin('plugin_recovery.'.$key, $systemPluginsIndexLocale, $replace);
     $catalogCheckResult = session('plugin_catalog_check_result');
+    $searchQuery = $search !== '' ? ['search' => $search] : [];
+    $uploadError = $canInstallPlugins ? $errors->first('plugin_zip') : '';
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $systemPluginsIndexText('plugins'), 'heading' => $systemPluginsIndexText('plugins')])
@@ -15,23 +17,15 @@
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $systemPluginsIndexText('plugins'),
         'description' => $systemPluginsIndexText('description'),
-        'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary"><i class="wb-icon wb-icon-search" aria-hidden="true"></i> '.__('webblocks-cms::admin.extensions_ui.browse_catalog').'</a>',
+        'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary"><i class="wb-icon wb-icon-search" aria-hidden="true"></i> '.e($systemPluginsIndexText('browse_plugin_catalog')).'</a>',
     ])
 
-    @include('webblocks-cms::admin.partials.flash')
-
-    @if ($canInstallPlugins)
-        @include('webblocks-cms::admin.partials.extension-upload-card', [
-            'id' => 'plugin-install',
-            'title' => $systemPluginsIndexText('manual_plugin_install'),
-            'action' => route('admin.system.plugins.upload'),
-            'fieldId' => 'plugin_zip',
-            'field' => 'plugin_zip',
-            'fileLabel' => $systemPluginsIndexText('plugin_zip'),
-            'help' => $systemPluginsIndexText('manual_install_help'),
-            'error' => $errors->first('plugin_zip'),
-        ])
-    @endif
+    @include('webblocks-cms::admin.partials.flash', ['flashInlineErrors' => $uploadError ? ['plugin_zip'] : []])
+    @include('webblocks-cms::admin.partials.extension-list-filter', [
+        'id' => 'plugin-search',
+        'indexUrl' => route('admin.system.plugins.index'),
+        'term' => $search,
+    ])
 
     <section class="wb-card" id="registered-plugins" aria-labelledby="registered-plugins-title">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
@@ -44,13 +38,14 @@
                             'time' => \Illuminate\Support\Carbon::createFromTimestamp($pluginCatalogUpdateStatus['checked_at'], config('app.timezone'))->format('Y-m-d H:i'),
                         ]) }}</span>
                     @endif
-                    <form method="POST" action="{{ route('admin.system.plugins.check-catalog-updates') }}">
+                    <form method="POST" action="{{ route('admin.system.plugins.check-catalog-updates', $searchQuery) }}">
                         @csrf
                         <button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">
                             <i class="wb-icon wb-icon-rotate-cw" aria-hidden="true"></i>
                             {{ $systemPluginsIndexText('check_catalog_updates') }}
                         </button>
                     </form>
+                    @include('webblocks-cms::admin.partials.extension-upload-button', ['target' => 'plugin-install'])
                 </div>
             @endif
         </div>
@@ -68,8 +63,12 @@
 
             @if (count($plugins) === 0)
                 <div class="wb-empty">
-                    <div class="wb-empty-title">{{ $systemPluginsIndexText('empty_title') }}</div>
-                    <div class="wb-empty-text">{{ $systemPluginsIndexText('empty_text') }}</div>
+                    @if ($search === '')
+                        <div class="wb-empty-title">{{ $systemPluginsIndexText('empty_title') }}</div>
+                        <div class="wb-empty-text">{{ $systemPluginsIndexText('empty_text') }}</div>
+                    @else
+                        <div class="wb-empty-title">{{ __('webblocks-cms::admin.extensions_ui.no_matches') }}</div>
+                    @endif
                 </div>
             @else
                 <div class="wb-table-wrap">
@@ -100,8 +99,11 @@
                                 @endphp
                                 <tr>
                                     <td class="wb-plugins-cell-name">
-                                        <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}"><strong>{{ $plugin['label'] }}</strong></a>
-                                        <div class="wb-text-sm wb-text-muted"><code>{{ $plugin['handle'] }}</code></div>
+                                        @include('webblocks-cms::admin.partials.extension-row-name', [
+                                            'name' => $plugin['label'],
+                                            'identifier' => $plugin['handle'],
+                                            'href' => route('admin.system.plugins.show', $plugin['handle']),
+                                        ])
                                     </td>
                                     <td class="wb-plugins-cell-tight">
                                         {{ $plugin['version'] ?? $systemPluginsIndexText('not_declared') }}
@@ -285,3 +287,19 @@
         </div>
     </section>
 @endsection
+
+
+@if ($canInstallPlugins)
+    @push('overlays')
+        @include('webblocks-cms::admin.partials.extension-upload-modal', [
+            'id' => 'plugin-install',
+            'title' => $systemPluginsIndexText('manual_plugin_install'),
+            'action' => route('admin.system.plugins.upload'),
+            'fieldId' => 'plugin_zip',
+            'field' => 'plugin_zip',
+            'fileLabel' => $systemPluginsIndexText('plugin_zip'),
+            'help' => $systemPluginsIndexText('manual_install_help'),
+            'error' => $uploadError,
+        ])
+    @endpush
+@endif

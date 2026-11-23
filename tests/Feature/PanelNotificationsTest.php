@@ -243,8 +243,13 @@ class PanelNotificationsTest extends TestCase
       $this->actingAs($this->user([$site->id]))->get($list)->assertForbidden();
       $this->actingAs($this->user([$site->id], super: true));
       $repository->recordPrevious('restore-example', '1.0.0', '2.0.0', false);
-      $this->get($list)->assertOk()->assertSeeInOrder(['Manual plugin install', 'Upload', 'Installed plugins'])
+      $this->get($list)->assertOk()->assertSeeInOrder(['Browse plugins', 'data-admin-listing-filters', 'Installed plugins', 'data-wb-target="#plugin-install"', '<dialog class="wb-modal" id="plugin-install"'], false)
         ->assertDontSee('manual upload')->assertDontSee($trigger, false);
+      $this->from($list)->post(route('admin.system.plugins.upload'))->assertRedirect($list)->assertSessionHasErrors('plugin_zip');
+      $this->get($list)->assertOk()->assertSeeInOrder(['id="plugin-install" aria-labelledby="plugin-install-title"', 'data-wb-admin-autoload-overlay', 'id="plugin_zip-error"'], false);
+      $this->get($list.'?search=RESTORE-EXAMPLE')->assertOk()->assertSee('Restore Example')->assertSee('Reset');
+      $this->get($list.'?search=absent')->assertOk()->assertSee('No installed items match your search.')
+        ->assertDontSee('Restore Example');
       $this->get(route('admin.system.plugins.show', ['plugin' => 'restore-example']))
         ->assertOk()->assertSeeInOrder(['Installation type', 'CMS-managed package'])->assertDontSee('manual upload');
 

@@ -1,11 +1,8 @@
 <?php
 
 return [
-  'default_help' => 'Applies to accounts without a saved panel language preference.',
   'language_packs' => 'Language packs',
   'title' => 'Panel languages',
-  'default' => 'Default panel language',
-  'save_default' => 'Save panel default',
   'language' => 'Language',
   'source_version' => 'Source CMS version',
   'status' => 'Status',

@@ -33,8 +33,9 @@ Legacy renderer compatibility does not make an unpublished handle available for 
 ## Language Packs
 
 **Webadmin → Extensions → Language packs** allows a Super admin to install
-complete language packs. Choose a ZIP under **Manual language pack install**
-or select **Install** or **Update** under **Browse language packs**. The
+complete language packs. Select **Upload** in the **Installed language packs**
+header and choose a ZIP in the dialog. To install from the catalog, select
+**Install** or **Update** under **Browse language packs**. The
 Extensions catalog is queried for the running CMS version when opened. CMS
 rechecks the selected release identity, download size, and SHA-256 before
 installing a download.
@@ -47,11 +48,12 @@ messages are stored in SQL. Panel-only JSON import, templates, and activation
 were retired in CMS 1.144.19. Historical catalog records are retained for
 rollback and do not participate in language resolution.
 
-New packs appear under **Installed language packs**. The top bar and Profile
-set the personal interface language. **Default panel language** sets the
-installation default for accounts without a personal choice. Installing a pack
-does not change personal or default selections, site locales, or authored
-content. A previously selected language that is unavailable uses the usual
+New packs appear under **Installed language packs**. The separate filter card
+searches by name, language code, or version. Select a pack name to open its
+details. The top bar and Profile set the personal interface language. The
+installation default applies to accounts without a personal choice. Installing
+a pack does not change personal or default selections, site locales, or
+authored content. A previously selected language that is unavailable uses the usual
 fallback until it becomes available again. Visitors require an enabled site
 locale and translated content where applicable.
 
@@ -1408,6 +1410,12 @@ provider startup, commands, and routes in a fresh PHP process through `cms:plugi
 Validation is required even when no migration is pending. A failed or timed-out probe
 leaves the current package active; subprocess diagnostics are not exposed in responses.
 The default startup timeout is 30 seconds (`webblocks-plugins.install.boot_timeout_seconds`).
+
+**Extensions → Plugins** and **Extensions → Public themes** use a separate
+filter card to search installed packages by name, handle, or version. The
+**Upload** button in each installed list opens the ZIP form. An upload error
+reopens the form with the error beside the file field. Select a plugin name to
+open its management page, or select a theme name for its version details.
 
 Super admins see the number of installed plugins with a newer installable catalog
 release in the Webadmin notification bell. The entry opens Extensions → Plugins.

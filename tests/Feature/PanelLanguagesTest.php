@@ -353,12 +353,14 @@ class PanelLanguagesTest extends TestCase
     $this->actingAs($actor);
     $index = route('admin.system.panel-languages.index');
     $store = route('admin.system.panel-languages.store');
-    $this->get($index)->assertOk()->assertSeeInOrder(['Manual language pack install', 'Upload', 'Installed language packs'])
-      ->assertDontSee('Imported catalogs');
+    $this->get($index)->assertOk()->assertSeeInOrder(['data-admin-listing-filters', 'Installed language packs', 'data-wb-target="#panel-language-install"', '<dialog class="wb-modal" id="panel-language-install"'], false)
+      ->assertDontSee('panel-language-default-modal', false)->assertDontSee('Imported catalogs');
 
     $this->from($index)->post($store, [
       'package' => UploadedFile::fake()->createWithContent('ru.json', '{}'),
     ])->assertRedirect($index)->assertSessionHasErrors('package');
+
+    $this->get($index)->assertSeeInOrder(['id="panel-language-install" aria-labelledby="panel-language-install-title"', 'data-wb-admin-autoload-overlay', 'id="panel-language-package-error"'], false);
 
     $directory = sys_get_temp_dir().'/webblocks-language-'.bin2hex(random_bytes(8));
     File::makeDirectory($directory);
@@ -385,7 +387,9 @@ class PanelLanguagesTest extends TestCase
       $this->assertSame('ru', $actor->fresh()->admin_locale);
       $this->assertSame('en', app(AdminLocaleResolver::class)->defaultLocale());
       $this->assertSame(['en'], Locale::query()->pluck('code')->all());
-      $this->get($index)->assertOk()->assertSee('Русский');
+      $this->get($index.'?search=RU')->assertOk()->assertSee('Русский')->assertSee('data-wb-target="#language-pack-details-ru"', false)
+        ->assertSee('aria-labelledby="language-pack-details-ru-title"', false);
+      $this->get($index.'?search=absent')->assertOk()->assertDontSee('data-wb-target="#language-pack-details-ru"', false);
       $this->assertSame('Поиск', trans('webblocks-cms::public.search.title', [], 'ru'));
       $this->assertSame('Проверить обновления', trans('publisher-client::updates.check_button', [], 'ru'));
     } finally {

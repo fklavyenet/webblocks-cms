@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\ThemePackageRequest;
+use WebBlocks\Cms\Queries\ExtensionListSearch;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Theme\PublicThemes;
@@ -19,7 +20,7 @@ final class ThemePackageController
   {
     abort_unless($this->themes->ready(), 503);
     $api = $request->routeIs('internal-content-api.*');
-    $search = $api ? '' : $this->search($request);
+    $search = $api ? '' : ExtensionListSearch::term($request->query('search'));
     $versions = $this->themes->versions($api ? 25 : AdminPagination::perPage(), packageManagement: true, search: $search);
     if ($api) {
       return response()->json($versions);
@@ -45,15 +46,13 @@ final class ThemePackageController
     abort_unless($this->themes->ready(), 503);
     $this->themes->delete($version);
 
-    return $request->routeIs('internal-content-api.*')
-      ? response()->json(['ok' => true])
-      : redirect()->route('admin.system.themes.index', array_filter(['search' => $this->search($request)], fn ($value) => $value !== ''))->with('theme_status', 'deleted');
-  }
+    if ($request->routeIs('internal-content-api.*')) {
+      return response()->json(['ok' => true]);
+    }
 
-  private function search(Request $request): string
-  {
-    $search = $request->query('search');
+    $search = ExtensionListSearch::term($request->query('search'));
 
-    return is_string($search) ? mb_substr(trim($search), 0, 120) : '';
+    return redirect()->route('admin.system.themes.index', $search === '' ? [] : ['search' => $search])
+      ->with('theme_status', 'deleted');
   }
 }

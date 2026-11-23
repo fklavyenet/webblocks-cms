@@ -1,11 +1,8 @@
 <?php
 
 return [
-  'default_help' => 'Gilt für Konten ohne gespeicherte Spracheinstellung für die Verwaltung.',
   'language_packs' => 'Sprachpakete',
   'title' => 'Sprachen der Verwaltung',
-  'default' => 'Standardsprache der Verwaltung',
-  'save_default' => 'Standardsprache speichern',
   'language' => 'Sprache',
   'source_version' => 'CMS-Ausgangsversion',
   'status' => 'Status',

@@ -1,11 +1,8 @@
 <?php
 
 return [
-  'default_help' => 'S’applique aux comptes sans préférence de langue enregistrée pour le panneau.',
   'language_packs' => 'Packs de langue',
   'title' => 'Langues du panneau',
-  'default' => 'Langue par défaut du panneau',
-  'save_default' => 'Enregistrer la langue par défaut',
   'language' => 'Langue',
   'source_version' => 'Version source du CMS',
   'status' => 'État',

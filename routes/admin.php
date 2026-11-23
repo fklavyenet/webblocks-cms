@@ -594,7 +594,6 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
         Route::get('/extensions', [LanguagePackCatalogController::class, 'index'])->middleware('throttle:20,1')->name('extensions.index');
         Route::post('/extensions', [LanguagePackCatalogController::class, 'store'])->middleware('throttle:6,1')->name('extensions.store');
         Route::post('/packages', [PanelLanguageController::class, 'store'])->name('store');
-        Route::put('/default', [PanelLanguageController::class, 'updateDefault'])->name('default');
       });
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');
       Route::get('system/scheduler', [SystemHealthController::class, 'scheduler'])->name('system.scheduler.index');

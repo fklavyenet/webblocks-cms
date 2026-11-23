@@ -1,11 +1,8 @@
 <?php
 
 return [
-  'default_help' => 'Si applica agli account senza una lingua preferita salvata per il pannello.',
   'language_packs' => 'Pacchetti lingua',
   'title' => 'Lingue del pannello',
-  'default' => 'Lingua predefinita del pannello',
-  'save_default' => 'Salva lingua predefinita',
   'language' => 'Lingua',
   'source_version' => 'Versione di origine del CMS',
   'status' => 'Stato',

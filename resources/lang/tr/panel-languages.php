@@ -1,11 +1,8 @@
 <?php
 
 return [
-  'default_help' => 'Panel dili tercihi kaydetmemiş hesaplar için geçerlidir.',
   'language_packs' => 'Dil paketleri',
   'title' => 'Panel dilleri',
-  'default' => 'Varsayılan panel dili',
-  'save_default' => 'Varsayılan dili kaydet',
   'language' => 'Dil',
   'source_version' => 'Kaynak CMS sürümü',
   'status' => 'Durum',
