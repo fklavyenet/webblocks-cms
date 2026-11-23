@@ -183,6 +183,26 @@ The dirty-overlay fixture checks the real close guard on a rendered block form: 
 - Rich text: paste headings, paragraphs, nested lists and table cells; confirm readable copy and safe markup. Check keyboard and toolbar undo/redo after blur, code formatting and selection restoration, link create/edit/remove, grouped typing, redo branching and IME composition.
 - Rich-text focus mode: check word count, nested link dialogs, form submission values, Escape returning to the host modal, independent fields, mobile layout/overflow and browser errors.
 
+## Extension lifecycle acceptance
+
+Lifecycle feedback identifies the extension type, operation, stable handle or
+language code, display name and relevant versions when available. An
+unreadable package can be identified by its diagnostic reference. Use that
+same reference in the structured CMS log. Treat package metadata as untrusted,
+use localized native alerts and give the operator a next step. Keep exceptions,
+paths, credentials and process output out of feedback and the diagnostic event.
+Only report a preserved version after confirming the outcome.
+
+For executable plugins, test the release ZIP on a clean supported Laravel host,
+including installation, enabled startup, a real route or feature entry point,
+failed update, quarantine, recovery and inertness when disabled. State CMS,
+PHP, required plugins and Composer dependencies. Packages limited to a host
+must document its supported versions and required interfaces. Also test the
+registered application integration in a clean installation of that host.
+For themes and language packs, verify activation and fallback, and check that
+a rejected candidate leaves the active theme or translations usable. Review
+the canonical plugin system guide for the release acceptance checklist.
+
 ## Plugin public screen acceptance
 
 Visitor-facing plugin System Pages must start with meaningful, translated native CMS

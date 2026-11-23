@@ -1,6 +1,48 @@
 <?php
 
 $translations = [
+  'extension_errors' => [
+    'requirement' => 'WebBlocks CMS :constraint est requis. Version installée du CMS : :version.',
+    'failed' => 'Échec de l’opération pour :type (:operation) :identity',
+    'preserved' => 'La version installée :version a été conservée.',
+    'reference' => 'Référence de diagnostic :reference.',
+    'quarantined' => 'L’extension (:identity) a été mise en quarantaine après un échec au démarrage. Ouvrez la récupération des extensions.',
+    'type' => [
+      'plugin' => 'une extension',
+      'theme' => 'un thème',
+      'language_pack' => 'un paquet de langue',
+    ],
+    'operation' => [
+      'install' => 'installation',
+      'update' => 'mise à jour',
+      'enable' => 'activation',
+      'startup' => 'démarrage',
+      'restore' => 'restauration',
+      'disable' => 'désactivation',
+      'setup' => 'configuration de la base de données',
+      'preview' => 'aperçu',
+      'health' => 'contrôle de santé',
+    ],
+    'stage' => [
+      'rollback' => 'Consultez l’écran de récupération pour trouver une version pouvant être restaurée en toute sécurité.',
+      'package' => 'Vérifiez le format du paquet et réessayez.',
+      'manifest' => 'Vérifiez le manifeste ou demandez une archive corrigée.',
+      'compatibility' => 'Vérifiez les versions compatibles du CMS et de l’environnement d’exécution.',
+      'dependencies' => 'Vérifiez les dépendances requises.',
+      'download' => 'Vérifiez la disponibilité du catalogue et réessayez.',
+      'integrity' => 'Obtenez une copie vérifiée de la version.',
+      'startup' => 'La vérification au démarrage a échoué. Vérifiez les prérequis ou contactez le fournisseur du paquet.',
+      'database' => 'Vérifiez l’état de la configuration de la base de données.',
+      'activation' => 'Vérifiez la sélection actuelle et réessayez.',
+      'source' => 'Le code source de l’extension n’a pas pu être chargé.',
+      'provider' => 'Le fournisseur de services de l’extension n’a pas démarré.',
+      'routes' => 'Les routes de l’extension n’ont pas pu être enregistrées.',
+      'translation' => 'Vérifiez le format des traductions et la version compatible du CMS.',
+      'health' => 'Contactez le fournisseur du paquet.',
+      'busy' => 'Une autre opération est en cours. Actualisez la page.',
+      'runtime' => 'Vérifiez l’état actuel de l’extension.',
+    ],
+  ],
   'page_workflow' => [
     'submit_review' => 'Soumettre à la révision',
     'publish' => 'Publier',
@@ -73,7 +115,7 @@ $translations = [
   'plugin_recovery' => [
     'title' => 'Récupération des plugins',
     'description' => 'Cet écran ne charge aucun code de plugin. Désactivez un plugin défaillant ou restaurez la version précédente si aucune migration de base de données n’a été exécutée.',
-    'probe_failed' => 'Le plugin a échoué au contrôle de démarrage. La version actuelle a été conservée.',
+    'probe_failed' => 'L’extension a échoué à la vérification au démarrage.',
     'quarantined' => 'Désactivé automatiquement après une erreur de démarrage.',
     'enabled' => 'Activé',
     'disabled' => 'Désactivé',

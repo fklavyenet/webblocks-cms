@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Theme;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\ExtensionsCatalog;
 use WebBlocks\Cms\Support\ExtensionsCatalogHttp;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -71,8 +72,14 @@ final class ThemeCatalog
     return ['themes' => array_values($themes), 'hasMore' => ($result['next_page'] ?? null) === $page + 1];
   }
 
-  public function install(string $handle, string $version): void
+  public function install(string $handle, string $version, ?ExtensionOperation $operation = null): void
   {
+    if ($operation !== null) {
+      $installed = $this->themes->installedCatalogChecksums([$handle])[$handle] ?? [];
+      if ($installed !== [] && ! isset($installed[$version]) && ! collect(array_keys($installed))->contains(fn (string $existing): bool => version_compare($existing, $version, '>'))) {
+        $operation->operation('update');
+      }
+    }
     $result = $this->json('/api/themes/'.$handle.'/releases/'.$version, []);
     $release = $result['data'] ?? null;
     if (! is_array($release) || ! $this->validRelease($release, $handle) || $release['version'] !== $version) {
@@ -87,6 +94,7 @@ final class ThemeCatalog
       $path = '/themes/'.$handle.'/releases/'.$version.'/download';
       $this->download($path, $file, $release['size'], $release['sha256']);
       $filename = stream_get_meta_data($file)['uri'];
+      $operation?->during('manifest');
       $package = $this->packages->read($filename);
       $manifest = $package['version'];
       $archiveLayouts = $package['layouts'];
@@ -94,14 +102,17 @@ final class ThemeCatalog
       sort($archiveLayouts);
       sort($catalogLayouts);
 
+      $operation?->during('integrity');
       if ($manifest['handle'] !== $handle || $manifest['version'] !== $version || $archiveLayouts !== $catalogLayouts) {
         $this->invalid('catalog_download_failed');
       }
+      $operation?->identify($handle, $version, $manifest['name']);
+      $operation?->during('compatibility');
       if (! ThemePackage::compatible((object) $manifest)) {
         $this->invalid('incompatible');
       }
 
-      $this->themes->install($filename);
+      $this->themes->install($filename, $operation);
     } finally {
       fclose($file);
     }

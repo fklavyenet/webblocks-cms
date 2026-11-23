@@ -310,7 +310,7 @@ class InstalledPluginRepository
     return is_file($this->rootPath().'/'.$handle.'/disabled.json');
   }
 
-  public function quarantine(string $handle, string $version): void
+  public function quarantine(string $handle, string $version, ?string $reference = null): void
   {
     $this->assertValidCoordinates($handle, $version);
     $directory = $this->rootPath().'/'.$handle.'/'.$version;
@@ -318,8 +318,23 @@ class InstalledPluginRepository
     File::put($directory.'/.runtime-failure', now()->toIso8601String());
     $this->disable($handle, force: true);
     try {
-      $this->state($handle, $version)->forceFill(['failed_at' => now()->toIso8601String()])->save();
+      $state = $this->state($handle, $version);
+      $state->forceFill(['failed_at' => now()->toIso8601String()])->save();
+      if ($reference !== null) {
+        $state->forceFill(['failure_reference' => $reference])->save();
+      }
     } catch (\Throwable) {
+    } finally {
+      app(RequestMemo::class)->clear();
+    }
+  }
+
+  public function runtimeFailureReference(string $handle, string $version): ?string
+  {
+    try {
+      return $this->findState($handle, $version)?->failure_reference;
+    } catch (\Throwable) {
+      return null;
     }
   }
 

@@ -1455,8 +1455,23 @@ their manifest declarations. The CMS package update also backfills missing
 catalog rows for already installed plugins. Synchronization keeps existing row
 IDs, categories, sort orders and workflow status.
 Database setup failures leave the plugin disabled and preserve its tables and packages.
-Runtime source/route failures quarantine the plugin; an explicit disable overrides
-configuration-based enablement. Lifecycle JSON records use atomic replacement.
+Runtime source, provider and route failures quarantine the managed plugin. An
+explicit disable overrides configuration-based enablement.
+
+From 1.144.15, extension lifecycle errors use localized feedback with an
+operation, safe package identity and versions when available, plus a diagnostic
+reference shared with a structured CMS log event. Catalog plugin archives must
+match the selected handle and version. An update rejected before replacement
+identifies the preserved installed version. A later database failure makes no
+such claim. The recovery notice can read the last startup diagnostic reference
+from the relational plugin lifecycle record. Historical markers remain readable
+without a reference. Plugin lifecycle API errors can include an additive
+`diagnostic` object. Error codes, HTTP status, capabilities and rollback checks
+are unchanged. Feedback and the event omit exception text, command output,
+credentials and private paths. Theme installation, preview, activation and
+restoration, and language pack import, review, activation and catalog install
+use the same diagnostic reference and preserve their existing fallback and
+validation contracts.
 
 Panel and API uninstall share the installed-package check. A package must be
 disabled before either entry point removes its code and published assets.

@@ -9,7 +9,11 @@
         <section class="wb-card">
             <div class="wb-card-body wb-stack wb-stack-3">
                 <h2>{{ $plugin['label'] }} <small>{{ $plugin['version'] }}</small></h2>
-                <p>{{ __('webblocks-cms::admin.plugin_recovery.'.($plugin['failed'] ? 'quarantined' : ($plugin['enabled'] ? 'enabled' : 'disabled'))) }}</p>
+                @if($plugin['failed'])
+                    <p class="wb-alert wb-alert-warning" role="status">{{ \WebBlocks\Cms\Support\Extensions\ExtensionOperation::recoveryMessage($plugin['handle'], $plugin['version'], $plugin['label'], $plugin['failure_reference']) }}</p>
+                @else
+                    <p>{{ __('webblocks-cms::admin.plugin_recovery.'.($plugin['enabled'] ? 'enabled' : 'disabled')) }}</p>
+                @endif
                 <form method="POST" action="{{ route('admin.plugins.recovery.update', $plugin['handle']) }}" class="wb-cluster wb-cluster-2 wb-flex-wrap">
                     @csrf
                     <button type="submit" name="operation" value="disable" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.plugin_recovery.disable') }}</button>

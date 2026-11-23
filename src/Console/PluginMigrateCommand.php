@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginBlockTypeCatalogSyncer;
@@ -21,22 +22,32 @@ class PluginMigrateCommand extends Command
 
   public function handle(InstalledPluginRepository $plugins, InstalledPluginDefinitionFactory $factory, PluginMigrationRunner $migrations): int
   {
+    $operation = new ExtensionOperation('plugin', 'setup');
+    $handle = (string) $this->argument('handle');
+    $version = (string) $this->argument('version');
+    $operation->identify($handle, $version);
     try {
-      $installed = $plugins->findVersion((string) $this->argument('handle'), (string) $this->argument('version'));
+      $installed = $plugins->findVersion($handle, $version);
       if ($installed === null) {
+        $this->error($operation->fail());
+
         return self::FAILURE;
       }
       // Disabled installations also need their own classes for migrations.
       // Loading their definition here does not enable them in the host.
       $plugin = $factory->make($installed['manifest'], $installed['path'], false);
+      $operation->identify($handle, $version, $plugin->labelText());
+      $operation->during('compatibility');
       try {
         app(PluginCompatibility::class)->assertCompatible($plugin);
-      } catch (RuntimeException $exception) {
-        $this->error($exception->getMessage());
+      } catch (RuntimeException) {
+        $this->error(trim($operation->fail().' '.app(PluginCompatibility::class)->diagnosticRequirement($plugin)));
 
         return self::FAILURE;
       }
+      $operation->during('source');
       $plugin = $factory->make($installed['manifest'], $installed['path'], true);
+      $operation->during('database');
       $repair = (bool) $this->option('repair');
       $syncBlockCatalog = (bool) $this->option('sync-block-catalog');
       if ($repair || ! $syncBlockCatalog || $migrations->hasPendingMigrations($plugin)) {
@@ -44,6 +55,8 @@ class PluginMigrateCommand extends Command
       }
 
       if ($migrations->hasPendingMigrations($plugin)) {
+        $this->error($operation->fail());
+
         return self::FAILURE;
       }
       if ($syncBlockCatalog) {
@@ -53,7 +66,7 @@ class PluginMigrateCommand extends Command
 
       return self::SUCCESS;
     } catch (Throwable) {
-      $this->error(__('webblocks-cms::admin.system_plugins_show.database_update_failed'));
+      $this->error($operation->fail());
 
       return self::FAILURE;
     }

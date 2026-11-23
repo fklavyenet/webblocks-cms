@@ -933,6 +933,11 @@ class InternalApiDiscoveryController extends Controller
         ],
         'required_capabilities' => [
           'plugin_lifecycle' => [
+            'failure_diagnostic' => [
+              'description' => 'Lifecycle errors can include a diagnostic object with a reference shared by the CMS log and operator feedback.',
+              'fields' => ['reference', 'type', 'operation', 'stage', 'identifier', 'version', 'preserved_version'],
+              'optional_fields' => ['identifier', 'version', 'preserved_version'],
+            ],
             CmsApiTokenCapabilities::PLUGINS_READ,
             CmsApiTokenCapabilities::PLUGINS_INSTALL,
             CmsApiTokenCapabilities::PLUGINS_MANAGE,

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Throwable;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use ZipArchive;
 
@@ -21,24 +22,25 @@ class PluginZipInstaller
   /**
    * @return array<string, mixed>
    */
-  public function install(string $zipPath): array
+  public function install(string $zipPath, ?ExtensionOperation $operation = null, ?string $expectedHandle = null, ?string $expectedVersion = null): array
   {
-    return $this->installPackage($zipPath);
+    return $this->installPackage($zipPath, $expectedHandle, operation: $operation, expectedVersion: $expectedVersion);
   }
 
   /**
    * @return array<string, mixed>
    */
-  public function update(string $zipPath, string $expectedHandle, string $currentVersion): array
+  public function update(string $zipPath, string $expectedHandle, string $currentVersion, ?ExtensionOperation $operation = null, ?string $expectedVersion = null): array
   {
-    return $this->installPackage($zipPath, $expectedHandle, $currentVersion);
+    return $this->installPackage($zipPath, $expectedHandle, $currentVersion, $operation, $expectedVersion);
   }
 
   /**
    * @return array<string, mixed>
    */
-  private function installPackage(string $zipPath, ?string $expectedHandle = null, ?string $currentVersion = null): array
+  private function installPackage(string $zipPath, ?string $expectedHandle = null, ?string $currentVersion = null, ?ExtensionOperation $operation = null, ?string $expectedVersion = null): array
   {
+    $operation?->during('package');
     $zip = new ZipArchive;
     $installLock = null;
 
@@ -48,35 +50,45 @@ class PluginZipInstaller
 
     try {
       $entries = $this->safeEntries($zip);
+      $operation?->during('manifest');
       [$manifestPath, $stripPrefix] = $this->locateManifest($entries);
       $manifest = $this->manifest($zip, $manifestPath);
-      $this->validateManifest($manifest);
+      $manifestHandle = is_string($manifest['handle'] ?? null) ? $manifest['handle'] : null;
+      $manifestVersion = is_string($manifest['version'] ?? null) ? $manifest['version'] : null;
+      if (($expectedHandle !== null && $manifestHandle !== $expectedHandle) || ($expectedVersion !== null && $manifestVersion !== $expectedVersion)) {
+        $operation?->during('integrity');
+        throw new RuntimeException('The catalog artifact does not match the selected plugin release.');
+      }
+      $operation?->identify($manifestHandle, $manifestVersion, is_string($manifest['label'] ?? null) ? $manifest['label'] : null);
+      $this->validateManifest($manifest, $operation);
+      $operation?->during('dependencies');
       PluginDependencies::normalize($manifest['dependencies'] ?? [], (string) $manifest['handle']);
+      $operation?->during('manifest');
       app(PluginIconDeclaration::class)->validate($manifest);
+      $operation?->during('translation');
       $this->validateAdminTranslations($entries, $stripPrefix);
 
       $handle = (string) $manifest['handle'];
       $version = (string) $manifest['version'];
       $installLock = Cache::lock('webblocks-plugin-install-'.hash('sha256', $this->plugins->rootPath().'/'.$handle), max(1, (int) config('webblocks-plugins.install.database_timeout_seconds', 120)) + 60);
+      $operation?->during('busy');
       if (! $installLock->get()) {
         throw new RuntimeException(__('webblocks-cms::admin.system_plugins_show.database_update_busy'));
       }
 
-      if ($expectedHandle !== null && $handle !== $expectedHandle) {
-        throw new RuntimeException('The catalog artifact does not match the installed plugin handle.');
-      }
-
+      $operation?->during('package');
       if ($currentVersion !== null && version_compare($version, $currentVersion, '<=')) {
         throw new RuntimeException('The catalog artifact is not newer than the installed plugin version.');
       }
 
-      if ($expectedHandle === null && $this->plugins->hasHandle($handle)) {
+      if ($currentVersion === null && $this->plugins->hasHandle($handle)) {
         throw new RuntimeException('A plugin with this handle is already installed.');
       }
 
       if ($expectedHandle !== null && $currentVersion !== null) {
         $current = collect($this->plugins->installed())->first(fn (array $installed): bool => ($installed['manifest']['handle'] ?? null) === $expectedHandle);
         if (($current['manifest']['version'] ?? null) !== $currentVersion) {
+          $operation?->during('busy');
           throw new RuntimeException(__('webblocks-cms::admin.system_plugins_show.database_update_busy'));
         }
       }
@@ -88,15 +100,21 @@ class PluginZipInstaller
       }
 
       if ($currentVersion !== null) {
+        $operation?->during('dependencies');
         app(PluginDependencyManager::class)->assertReplacement($manifest);
       }
+      $operation?->during('package');
       $this->extract($zip, $entries, $stripPrefix, $target);
 
       $wasEnabled = $currentVersion !== null && ($this->plugins->enabledVersion($handle) === $currentVersion || (! $this->plugins->isDisabled($handle) && (bool) config("webblocks-plugins.enabled.{$handle}", false)));
       $setupStarted = false;
+      $probePassed = false;
       try {
+        $operation?->during('startup');
         $definition = app(InstalledPluginDefinitionFactory::class)->make($manifest, $target, false);
         app(PluginBootProbe::class)->check($definition);
+        $probePassed = true;
+        $operation?->during('database');
         if ($expectedHandle !== null && $currentVersion !== null) {
           $this->plugins->recordPrevious($handle, $currentVersion, $version, false);
           $this->plugins->disable($handle, force: true);
@@ -113,6 +131,9 @@ class PluginZipInstaller
         }
       } catch (Throwable $exception) {
         if (! $setupStarted) {
+          if (! $probePassed) {
+            $operation?->preserved($currentVersion);
+          }
           File::deleteDirectory($target);
         }
         throw $exception;
@@ -201,7 +222,7 @@ class PluginZipInstaller
   /**
    * @param  array<string, mixed>  $manifest
    */
-  private function validateManifest(array $manifest): void
+  private function validateManifest(array $manifest, ?ExtensionOperation $operation): void
   {
     $handle = $manifest['handle'] ?? null;
 
@@ -227,6 +248,7 @@ class PluginZipInstaller
       ->provider((string) $manifest['provider'])
       ->requiresCms($manifest['required_cms_version'] ?? null);
 
+    $operation?->during('compatibility');
     if ($definition->requiredCmsVersion() === null || ! $this->compatibility->isCompatible($definition)) {
       throw new RuntimeException(__('webblocks-cms::admin-feedback.panel_validation.plugin_zip_incompatible'));
     }

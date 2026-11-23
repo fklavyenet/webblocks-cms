@@ -213,7 +213,11 @@ class PluginCmsCompatibilityGateTest extends TestCase
       $this->from('/webadmin/system/plugins/compatibility-example')
         ->post('/webadmin/system/plugins/compatibility-example/'.$operation)
         ->assertRedirect('/webadmin/system/plugins/compatibility-example')
-        ->assertSessionHasErrors(['plugin' => 'Requires WebBlocks CMS >=99.0.0; installed CMS is '.WebBlocks::version().'.']);
+        ->assertSessionHasErrors('plugin');
+      $message = session('errors')->first('plugin');
+      $this->assertStringContainsString('Compatibility Fixture · compatibility-example · 1.0.0', $message);
+      $this->assertStringContainsString('Requires WebBlocks CMS >=99.0.0; installed CMS is '.WebBlocks::version().'.', $message);
+      $this->assertStringContainsString('Diagnostic reference', $message);
     }
 
     $this->assertFileDoesNotExist($this->pluginPath().'/setup.json');

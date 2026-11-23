@@ -2,6 +2,7 @@
 
 namespace WebBlocks\Cms\Actions\Plugins;
 
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
@@ -15,8 +16,9 @@ final class EnablePlugin
     private readonly PluginDependencyManager $dependencies,
   ) {}
 
-  public function execute(PluginDefinition $plugin, string $version, bool $repairRecordedMigrations = false): void
+  public function execute(PluginDefinition $plugin, string $version, bool $repairRecordedMigrations = false, ?ExtensionOperation $operation = null): void
   {
+    $operation?->during('dependencies');
     $this->dependencies->assertEnable([
       'handle' => $plugin->handle(),
       'label' => $plugin->labelText(),
@@ -24,7 +26,8 @@ final class EnablePlugin
       'required_cms_version' => $plugin->requiredCmsVersion(),
       'dependencies' => $plugin->dependencyDefinitions(),
     ]);
-    $this->database->run($plugin, repairRecordedMigrations: $repairRecordedMigrations);
+    $this->database->run($plugin, repairRecordedMigrations: $repairRecordedMigrations, operation: $operation);
+    $operation?->during('activation');
     $this->installed->enable($plugin->handle(), $version);
   }
 }

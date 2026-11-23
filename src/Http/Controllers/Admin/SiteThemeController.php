@@ -12,6 +12,7 @@ use WebBlocks\Cms\Http\Requests\Admin\SiteThemeRequest;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
 use WebBlocks\Cms\Policies\PublicThemePolicy;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Theme\PublicThemes;
 
@@ -77,7 +78,9 @@ final class SiteThemeController
     if ($side === 'candidate') {
       $report = $this->themes->report($site, $candidate);
       if (! $report['compatible'] || ! $report['intact'] || ! in_array($page->publicShellPreset(), $candidate->layouts, true)) {
-        throw ValidationException::withMessages(['version' => __('webblocks-cms::themes.incompatible_page')]);
+        $operation = new ExtensionOperation('theme', 'preview', ! $report['compatible'] ? 'compatibility' : (! $report['intact'] ? 'integrity' : 'activation'));
+        $operation->identify($candidate->handle, $candidate->version, $candidate->name);
+        throw ValidationException::withMessages(['version' => __('webblocks-cms::themes.incompatible_page').' '.$operation->fail()]);
       }
       $theme = $this->themes->appearance($candidate, $options['button_corners']);
       if ($request->routeIs('internal-content-api.*') && $this->canActivate($report)) {
@@ -110,7 +113,8 @@ final class SiteThemeController
   public function activate(SiteThemeRequest $request, Site $site): RedirectResponse|JsonResponse
   {
     $this->authorize($request, $site);
-    $id = $this->themes->activate($site, $request->validated('confirmation'));
+    $operation = new ExtensionOperation('theme', 'enable', 'activation');
+    $id = $operation->validate(fn () => $this->themes->activate($site, $request->validated('confirmation'), $operation), 'version');
 
     return $this->result($request, $site, $id, 'activated');
   }
@@ -118,7 +122,8 @@ final class SiteThemeController
   public function restore(SiteThemeRequest $request, Site $site): RedirectResponse|JsonResponse
   {
     $this->authorize($request, $site);
-    $id = $this->themes->restore($site, $request->integer('expected'), $request->integer('revision') ?: null);
+    $operation = new ExtensionOperation('theme', 'restore', 'activation');
+    $id = $operation->validate(fn () => $this->themes->restore($site, $request->integer('expected'), $request->integer('revision') ?: null, $operation), 'version');
 
     return $this->result($request, $site, $id, 'restored');
   }

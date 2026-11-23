@@ -6,6 +6,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Plugins\PluginZipInstaller;
 
 class CatalogPluginInstallBridge
@@ -19,31 +20,34 @@ class CatalogPluginInstallBridge
   /**
    * @return array<string, mixed>
    */
-  public function install(CatalogPlugin $plugin): array
+  public function install(CatalogPlugin $plugin, ?ExtensionOperation $operation = null): array
   {
-    return $this->installFromCatalog($plugin);
+    return $this->installFromCatalog($plugin, operation: $operation);
   }
 
   /**
    * @return array<string, mixed>
    */
-  public function update(CatalogPlugin $plugin, string $installedVersion): array
+  public function update(CatalogPlugin $plugin, string $installedVersion, ?ExtensionOperation $operation = null): array
   {
+    $operation?->during('compatibility');
     $releaseVersion = $plugin->latestCompatibleRelease?->version;
 
     if ($releaseVersion === null || version_compare($releaseVersion, $installedVersion, '<=')) {
       throw new RuntimeException('No newer compatible catalog release is available for this plugin.');
     }
 
-    return $this->installFromCatalog($plugin, $installedVersion);
+    return $this->installFromCatalog($plugin, $installedVersion, $operation);
   }
 
   /**
    * @return array<string, mixed>
    */
-  private function installFromCatalog(CatalogPlugin $plugin, ?string $installedVersion = null): array
+  private function installFromCatalog(CatalogPlugin $plugin, ?string $installedVersion = null, ?ExtensionOperation $operation = null): array
   {
     $release = $plugin->latestCompatibleRelease;
+    $operation?->identify($plugin->handle, $release?->version, $plugin->label);
+    $operation?->during('compatibility');
 
     if (! $plugin->isCompatible()) {
       throw new RuntimeException('This catalog plugin is not compatible with this CMS installation.');
@@ -53,6 +57,7 @@ class CatalogPluginInstallBridge
       throw new RuntimeException('No compatible catalog release is available for this plugin.');
     }
 
+    $operation?->during('download');
     $downloadUrl = $release->downloadUrl;
     $checksum = $release->checksumSha256;
     $filename = $release->artifactFilename;
@@ -75,11 +80,12 @@ class CatalogPluginInstallBridge
       if ($lease === false || ! flock($lease, LOCK_SH)) {
         throw new RuntimeException('The catalog artifact could not be locked for installation.');
       }
+      $operation?->during('integrity');
       $this->verifyChecksum($tempPath, $checksum);
 
       return $installedVersion === null
-        ? $this->installer->install($tempPath)
-        : $this->installer->update($tempPath, $plugin->handle, $installedVersion);
+        ? $this->installer->install($tempPath, $operation, $plugin->handle, $release->version)
+        : $this->installer->update($tempPath, $plugin->handle, $installedVersion, $operation, $release->version);
     } finally {
       if (is_resource($lease)) {
         fclose($lease);

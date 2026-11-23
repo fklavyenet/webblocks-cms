@@ -6,7 +6,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
-use RuntimeException;
+use Throwable;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -56,21 +57,20 @@ class PluginCatalogController extends Controller
   {
     abort_unless(request()->user()?->isSuperAdmin(), 403);
 
-    $result = $this->catalog->show($handle);
-
-    if (! $result->available || $result->plugin === null) {
-      return back()->withErrors([
-        'catalog_install' => $result->message ?? 'The catalog plugin could not be loaded for installation.',
-      ]);
-    }
-
+    $operation = new ExtensionOperation('plugin', 'install', 'download');
+    $operation->identify($handle);
     try {
-      $installed = $this->installBridge->install($result->plugin);
-    } catch (RuntimeException $exception) {
-      return back()->withErrors(['catalog_install' => $this->controlledError($exception)]);
-    }
+      $result = $this->catalog->show($handle);
+      if (! $result->available || $result->plugin === null) {
+        return back()->withErrors(['catalog_install' => $operation->fail()]);
+      }
 
-    $this->runtimeRefresher->refresh();
+      $installed = $this->installBridge->install($result->plugin, $operation);
+      $operation->during('runtime');
+      $this->runtimeRefresher->refresh();
+    } catch (Throwable) {
+      return back()->withErrors(['catalog_install' => $operation->fail()]);
+    }
 
     return redirect()
       ->route('admin.system.plugins.index')
@@ -98,14 +98,5 @@ class PluginCatalogController extends Controller
       'version' => is_string($summary['version'] ?? null) ? $summary['version'] : null,
       'enabled' => (bool) ($summary['enabled'] ?? false),
     ];
-  }
-
-  private function controlledError(RuntimeException $exception): string
-  {
-    $message = $exception->getMessage();
-
-    return $message !== ''
-      ? $message
-      : 'The catalog plugin could not be installed. Review the catalog metadata and try again.';
   }
 }

@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Support\Plugins;
 
 use Throwable;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Jobs\JobAutomation;
 
 class PluginHealthMonitor
@@ -46,8 +47,10 @@ class PluginHealthMonitor
 
     try {
       $result = $this->resolveReporter($reporter)($plugin);
-    } catch (Throwable $exception) {
-      return PluginHealthResult::warning($exception->getMessage());
+    } catch (Throwable) {
+      $operation = ExtensionOperation::plugin('health', $plugin, 'health');
+
+      return PluginHealthResult::warning($operation->fail());
     }
 
     if ($result instanceof PluginHealthResult) {

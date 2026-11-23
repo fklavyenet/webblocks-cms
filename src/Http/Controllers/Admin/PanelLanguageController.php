@@ -10,6 +10,7 @@ use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\PanelLanguageCatalogRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PanelLanguageDefaultRequest;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\LanguagePackCatalog;
 use WebBlocks\Cms\Support\Translations\PanelLanguages;
@@ -51,7 +52,8 @@ final class PanelLanguageController
 
   public function store(PanelLanguageCatalogRequest $request): JsonResponse|RedirectResponse
   {
-    $id = $this->languages->import($request->catalogContents());
+    $operation = new ExtensionOperation('language_pack', 'install');
+    $id = $operation->validate(fn () => $this->languages->import($request->catalogContents(), operation: $operation), 'catalog');
     if ($this->api($request)) {
       return response()->json($this->languages->preview($id), 201);
     }
@@ -62,7 +64,8 @@ final class PanelLanguageController
 
   public function show(Request $request, int $catalog): JsonResponse|View
   {
-    $data = $this->languages->preview($catalog);
+    $operation = new ExtensionOperation('language_pack', 'preview', 'translation');
+    $data = $operation->validate(fn () => $this->languages->preview($catalog), 'catalog');
 
     if ($this->api($request)) {
       return response()->json($data);
@@ -89,7 +92,8 @@ final class PanelLanguageController
 
   public function activate(Request $request, int $catalog): JsonResponse|RedirectResponse
   {
-    $this->languages->activate($catalog);
+    $operation = new ExtensionOperation('language_pack', 'enable', 'activation');
+    $operation->validate(fn () => $this->languages->activate($catalog, $operation), 'catalog');
 
     return $this->result($request, 'activated');
   }

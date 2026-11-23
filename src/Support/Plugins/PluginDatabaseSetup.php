@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Process;
 use RuntimeException;
 use Throwable;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Updates\Client\Updates\UpdateCommandRunner;
 
 class PluginDatabaseSetup
@@ -18,8 +19,9 @@ class PluginDatabaseSetup
   ) {}
 
   /** @return array{status: string, ran: bool, paths_count: int} */
-  public function run(PluginDefinition $plugin, bool $repairRecordedMigrations = false, bool $verifyBoot = true, bool $syncBlockCatalog = false): array
+  public function run(PluginDefinition $plugin, bool $repairRecordedMigrations = false, bool $verifyBoot = true, bool $syncBlockCatalog = false, ?ExtensionOperation $operation = null): array
   {
+    $operation?->during('compatibility');
     app(PluginCompatibility::class)->assertCompatible($plugin);
 
     $version = $plugin->versionText();
@@ -28,14 +30,17 @@ class PluginDatabaseSetup
     }
 
     if ($verifyBoot) {
+      $operation?->during('startup');
       app(PluginBootProbe::class)->check($plugin);
     }
 
     $timeout = max(1, (int) config('webblocks-plugins.install.database_timeout_seconds', 120));
     $lock = Cache::lock('webblocks-plugin-database-'.hash('sha256', $this->plugins->rootPath().'/'.$plugin->handle()), $timeout + 30);
+    $operation?->during('busy');
     if (! $lock->get()) {
       throw new RuntimeException(__('webblocks-cms::admin.system_plugins_show.database_update_busy'));
     }
+    $operation?->during('database');
     try {
       $this->plugins->recordSetupResult($plugin->handle(), $version, ['status' => 'running']);
       $pending = $repairRecordedMigrations || $this->migrations->hasPendingMigrations($plugin);

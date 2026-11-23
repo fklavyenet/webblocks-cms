@@ -198,6 +198,8 @@ final class PublicThemesTest extends TestCase
       ->assertSeeInOrder(['wb-breadcrumb-current">Extensions', 'wb-breadcrumb-link" href="'.$packages.'">Public themes', 'aria-current="page">Theme catalog'], false);
     $params = ['handle' => 'editorial', 'version' => '1.1.0'];
     $this->post($install, $params)->assertRedirect($secondPage)->assertSessionHasErrors('catalog');
+    $this->assertStringContainsString('(update) (editorial · 1.1.0)', session('errors')->first('catalog'));
+    $this->assertStringContainsString('Diagnostic reference', session('errors')->first('catalog'));
     $this->assertDatabaseCount('wbcms_theme_versions', 1);
 
     $bytes = $file;

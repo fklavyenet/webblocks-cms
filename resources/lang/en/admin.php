@@ -1,6 +1,48 @@
 <?php
 
 return [
+  'extension_errors' => [
+    'requirement' => 'Requires WebBlocks CMS :constraint; installed CMS is :version.',
+    'failed' => 'The :type operation failed (:operation) :identity.',
+    'preserved' => 'Installed version :version was kept.',
+    'reference' => 'Diagnostic reference :reference.',
+    'quarantined' => 'Plugin (:identity) was quarantined after a startup failure. Open Plugin recovery.',
+    'type' => [
+      'plugin' => 'plugin',
+      'theme' => 'theme',
+      'language_pack' => 'language pack',
+    ],
+    'operation' => [
+      'install' => 'install',
+      'update' => 'update',
+      'enable' => 'activate',
+      'startup' => 'startup',
+      'restore' => 'restore',
+      'disable' => 'disable',
+      'setup' => 'database setup',
+      'preview' => 'preview',
+      'health' => 'health check',
+    ],
+    'stage' => [
+      'rollback' => 'Review the recovery screen for a retained version that can be restored safely.',
+      'package' => 'Check the package format and try again.',
+      'manifest' => 'Check the package manifest or request a corrected archive.',
+      'compatibility' => 'Check the supported CMS and runtime versions.',
+      'dependencies' => 'Review the required dependencies before trying again.',
+      'download' => 'Check catalog availability and try again.',
+      'integrity' => 'Obtain a verified copy of the release.',
+      'startup' => 'The startup check failed. Check the declared requirements or contact the package provider.',
+      'database' => 'Review the database setup status before retrying.',
+      'activation' => 'Review the current selection and try the operation again.',
+      'source' => 'The plugin source could not load.',
+      'provider' => 'The plugin provider could not start.',
+      'routes' => 'Plugin routes could not be registered.',
+      'translation' => 'Review the translation format and supported CMS version.',
+      'health' => 'Contact the package provider.',
+      'busy' => 'Another operation is in progress. Refresh the page before retrying.',
+      'runtime' => 'Review the current extension status before retrying.',
+    ],
+  ],
   'page_workflow' => [
     'submit_review' => 'Submit for Review',
     'publish' => 'Publish',
@@ -73,7 +115,7 @@ return [
     'plugin_recovery' => [
         'title' => 'Plugin recovery',
         'description' => 'This screen opens without loading plugin code. Disable a failing plugin or restore its last working version when no database migration was applied.',
-        'probe_failed' => 'The plugin failed its startup check. The current version was kept.',
+        'probe_failed' => 'The plugin failed its startup check.',
         'quarantined' => 'Automatically disabled after a startup error.',
         'enabled' => 'Enabled',
         'disabled' => 'Disabled',

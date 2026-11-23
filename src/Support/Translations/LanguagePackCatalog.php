@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Support\Translations;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\ExtensionsCatalog;
 use WebBlocks\Cms\Support\ExtensionsCatalogHttp;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -58,13 +59,18 @@ final class LanguagePackCatalog
     return $releases;
   }
 
-  public function install(string $code, string $version, string $format, string $checksum): ?int
+  public function install(string $code, string $version, string $format, string $checksum, ?ExtensionOperation $operation = null): ?int
   {
+    if ($operation !== null && $format === 'native' && $this->nativePacks->installed()->has($code)) {
+      $operation->operation('update');
+    }
     $release = $this->browse()[$code][$format] ?? null;
     if ($release === null || $release['version'] !== $version || ! hash_equals($release['sha256'], $checksum)) {
+      $operation?->during('integrity');
       $this->invalid('extensions_release_changed');
     }
 
+    $operation?->identify($code, $version, $release['name']);
     $file = tmpfile();
     if ($file === false) {
       $this->invalid('extensions_download_failed');
@@ -80,10 +86,13 @@ final class LanguagePackCatalog
           $this->invalid('extensions_download_failed');
         }
 
-        return $this->panel->import($json, $code);
+        return $this->panel->import($json, $code, $operation);
       }
 
+      $operation?->during('translation');
       $package = $this->nativeArchive->read(stream_get_meta_data($file)['uri'], $code);
+      $operation?->identify($code, $version, $package['name']);
+      $operation?->during('database');
       $this->nativePacks->install([
         'code' => $code,
         'name' => $package['name'],

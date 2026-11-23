@@ -8,6 +8,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\InstallCatalogThemeRequest;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Theme\PublicThemes;
 use WebBlocks\Cms\Support\Theme\ThemeCatalog;
 
@@ -40,8 +41,10 @@ final class ThemeCatalogController
     abort_unless($this->catalog->enabled(), 404);
     $page = $this->page($request);
     $return = redirect()->route('admin.system.themes.catalog.index', $page > 1 ? ['page' => $page] : []);
+    $operation = new ExtensionOperation('theme', 'install', 'download');
+    $operation->identify($request->validated('handle'), $request->validated('version'));
     try {
-      $this->catalog->install($request->validated('handle'), $request->validated('version'));
+      $operation->validate(fn () => $this->catalog->install($request->validated('handle'), $request->validated('version'), $operation), 'catalog');
     } catch (ValidationException $exception) {
       return $return->withErrors($exception->errors());
     }

@@ -1,6 +1,48 @@
 <?php
 
 $translations = [
+  'extension_errors' => [
+    'requirement' => 'Requiere WebBlocks CMS :constraint. Versión de CMS instalada: :version.',
+    'failed' => 'Falló la operación de :type (:operation) :identity',
+    'preserved' => 'Se conservó la versión instalada :version.',
+    'reference' => 'Referencia de diagnóstico :reference.',
+    'quarantined' => 'El plugin (:identity) quedó en cuarentena tras un fallo de inicio. Abra la recuperación de plugins.',
+    'type' => [
+      'plugin' => 'plugin',
+      'theme' => 'tema',
+      'language_pack' => 'paquete de idioma',
+    ],
+    'operation' => [
+      'install' => 'instalar',
+      'update' => 'actualizar',
+      'enable' => 'activar',
+      'startup' => 'iniciar',
+      'restore' => 'restaurar',
+      'disable' => 'desactivar',
+      'setup' => 'configurar la base de datos',
+      'preview' => 'previsualizar',
+      'health' => 'comprobar el estado',
+    ],
+    'stage' => [
+      'rollback' => 'Revise la pantalla de recuperación para encontrar una versión que pueda restaurarse con seguridad.',
+      'package' => 'Compruebe el formato del paquete e inténtelo de nuevo.',
+      'manifest' => 'Revise el manifiesto o solicite un archivo corregido.',
+      'compatibility' => 'Compruebe las versiones compatibles del CMS y del entorno de ejecución.',
+      'dependencies' => 'Revise las dependencias requeridas.',
+      'download' => 'Compruebe la disponibilidad del catálogo e inténtelo de nuevo.',
+      'integrity' => 'Obtenga una copia verificada de la versión.',
+      'startup' => 'Falló la comprobación de inicio. Revise los requisitos o contacte con el proveedor del paquete.',
+      'database' => 'Revise el estado de la configuración de la base de datos.',
+      'activation' => 'Revise la selección actual e inténtelo de nuevo.',
+      'source' => 'No se pudo cargar el código del plugin.',
+      'provider' => 'No se pudo iniciar el proveedor del plugin.',
+      'routes' => 'No se pudieron registrar las rutas del plugin.',
+      'translation' => 'Revise el formato de traducción y la versión compatible del CMS.',
+      'health' => 'Contacte con el proveedor del paquete.',
+      'busy' => 'Hay otra operación en curso. Actualice la página.',
+      'runtime' => 'Revise el estado actual de la extensión.',
+    ],
+  ],
   'page_workflow' => [
     'submit_review' => 'Enviar a revisión',
     'publish' => 'Publicar',
@@ -73,7 +115,7 @@ $translations = [
   'plugin_recovery' => [
     'title' => 'Recuperación de plugins',
     'description' => 'Esta pantalla no carga código de plugins. Desactive un plugin defectuoso o restaure la versión anterior si no se ejecutó una migración de base de datos.',
-    'probe_failed' => 'El plugin no superó la comprobación de inicio. Se conservó la versión actual.',
+    'probe_failed' => 'El plugin no superó la comprobación de inicio.',
     'quarantined' => 'Desactivado automáticamente tras un error de inicio.',
     'enabled' => 'Activado',
     'disabled' => 'Desactivado',

@@ -9,9 +9,11 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 use RuntimeException;
+use Throwable;
 use WebBlocks\Cms\Actions\Plugins\EnablePlugin;
 use WebBlocks\Cms\Actions\Plugins\UpdatePluginAppearance;
 use WebBlocks\Cms\Http\Requests\Admin\PluginAppearanceRequest;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogClient;
@@ -101,23 +103,22 @@ class SystemPluginController extends Controller
   {
     abort_unless($request->user()?->isSuperAdmin(), 403);
 
-    $request->validate([
+    $operation = new ExtensionOperation('plugin', 'install');
+    $operation->validate(fn () => $request->validate([
       'plugin_zip' => ['required', 'file', 'mimes:zip', 'max:20480'],
     ], [
       'plugin_zip.required' => __('webblocks-cms::admin-feedback.panel_copy.plugin_zip_required'),
       'plugin_zip.mimes' => __('webblocks-cms::admin-feedback.panel_validation.plugin_zip_type'),
       'plugin_zip.max' => __('webblocks-cms::admin-feedback.panel_validation.plugin_zip_size'),
-    ]);
+    ]), 'plugin_zip');
 
     try {
-      $installed = $this->installer->install($request->file('plugin_zip')->getRealPath());
-    } catch (RuntimeException $exception) {
-      return back()
-        ->withErrors(['plugin_zip' => $exception->getMessage()])
-        ->withInput();
+      $installed = $this->installer->install($request->file('plugin_zip')->getRealPath(), $operation);
+      $operation->during('runtime');
+      $this->runtimeRefresher->refresh();
+    } catch (Throwable) {
+      return back()->withErrors(['plugin_zip' => $operation->fail()])->withInput();
     }
-
-    $this->runtimeRefresher->refresh();
 
     return redirect()
       ->route('admin.system.plugins.index')
@@ -132,11 +133,12 @@ class SystemPluginController extends Controller
 
     abort_if($definition === null || $definition->installPathValue() === null, 404);
 
+    $operation = ExtensionOperation::plugin('enable', $definition, 'package');
     if (! is_dir($definition->installPathValue())) {
-      return back()->withErrors(['plugin' => __('webblocks-cms::admin-feedback.plugins.files_missing')]);
+      return back()->withErrors(['plugin' => $operation->fail()]);
     }
 
-    if ($error = $this->cmsCompatibilityError($definition)) {
+    if ($error = $this->cmsCompatibilityError($definition, $operation)) {
       return $error;
     }
 
@@ -145,11 +147,12 @@ class SystemPluginController extends Controller
     abort_if($version === null, 422);
 
     try {
-      app(EnablePlugin::class)->execute($definition, $version, repairRecordedMigrations: $this->setupRequired($definition));
-    } catch (RuntimeException $exception) {
-      return back()->withErrors(['plugin' => $exception->getMessage()]);
+      app(EnablePlugin::class)->execute($definition, $version, repairRecordedMigrations: $this->setupRequired($definition), operation: $operation);
+      $operation->during('runtime');
+      $this->runtimeRefresher->refresh();
+    } catch (Throwable) {
+      return back()->withErrors(['plugin' => $operation->fail()]);
     }
-    $this->runtimeRefresher->refresh();
 
     return redirect()
       ->route('admin.system.plugins.show', $plugin)
@@ -199,25 +202,22 @@ class SystemPluginController extends Controller
 
     abort_if($definition === null || $definition->installPathValue() === null, 404);
 
-    if ($error = $this->cmsCompatibilityError($definition)) {
+    $operation = ExtensionOperation::plugin('setup', $definition, 'activation');
+    if ($error = $this->cmsCompatibilityError($definition, $operation)) {
       return $error;
     }
 
     if (! $this->plugins->isConfiguredEnabled($plugin)) {
-      return back()->withErrors(['plugin' => __('webblocks-cms::admin-feedback.plugins.enable_before_setup')]);
+      return back()->withErrors(['plugin' => __('webblocks-cms::admin-feedback.plugins.enable_before_setup').' '.$operation->fail()]);
     }
-
-    $version = $definition->versionText();
-
-    abort_if($version === null, 422);
 
     try {
-      app(PluginDatabaseSetup::class)->run($definition, repairRecordedMigrations: $this->setupRequired($definition));
-    } catch (RuntimeException $exception) {
-      return back()->withErrors(['plugin' => $exception->getMessage()]);
+      app(PluginDatabaseSetup::class)->run($definition, repairRecordedMigrations: $this->setupRequired($definition), operation: $operation);
+      $operation->during('runtime');
+      $this->runtimeRefresher->refresh();
+    } catch (Throwable) {
+      return back()->withErrors(['plugin' => $operation->fail()]);
     }
-
-    $this->runtimeRefresher->refresh();
 
     return redirect()
       ->route('admin.system.plugins.show', $plugin)
@@ -265,26 +265,30 @@ class SystemPluginController extends Controller
 
     abort_if($installedVersion === null, 422);
 
-    $result = $this->catalog->show($plugin);
-
-    if (! $result->available || $result->plugin === null) {
-      return back()->withErrors(['plugin' => __('webblocks-cms::admin-feedback.plugins.no_update')]);
-    }
-
-    if (! $this->catalogPluginIsUpdateFor($result->plugin, $installedVersion)) {
-      return back()->withErrors(['plugin' => __('webblocks-cms::admin-feedback.plugins.no_compatible_update')]);
-    }
-
+    $operation = new ExtensionOperation('plugin', 'update', 'download');
+    $operation->identify($definition->handle(), label: $definition->labelText());
     try {
-      $installed = $this->catalogInstallBridge->update($result->plugin, $installedVersion);
+      $result = $this->catalog->show($plugin);
+      if (! $result->available || $result->plugin === null) {
+        return back()->withErrors(['plugin' => $operation->fail()]);
+      }
+
+      $operation->identify($definition->handle(), $result->plugin->latestCompatibleRelease?->version);
+      $operation->during('compatibility');
+      if (! $this->catalogPluginIsUpdateFor($result->plugin, $installedVersion)) {
+        return back()->withErrors(['plugin' => $operation->fail()]);
+      }
+
+      $installed = $this->catalogInstallBridge->update($result->plugin, $installedVersion, $operation);
+      $operation->during('runtime');
       $this->runtimeRefresher->refreshInstalledPackageAssets(
         (string) $installed['handle'],
         (string) $installed['version'],
         (string) $installed['path'],
       );
       $this->runtimeRefresher->clearCompiledViews();
-    } catch (RuntimeException $exception) {
-      return back()->withErrors(['plugin' => $this->controlledCatalogUpdateError($exception)]);
+    } catch (Throwable) {
+      return back()->withErrors(['plugin' => $operation->fail()]);
     }
 
     /*
@@ -306,12 +310,16 @@ class SystemPluginController extends Controller
   /**
    * @return array<int, array<string, mixed>>
    */
-  private function cmsCompatibilityError(PluginDefinition $plugin): ?RedirectResponse
+  private function cmsCompatibilityError(PluginDefinition $plugin, ExtensionOperation $operation): ?RedirectResponse
   {
     try {
       app(PluginCompatibility::class)->assertCompatible($plugin);
-    } catch (RuntimeException $exception) {
-      return back()->withErrors(['plugin' => $exception->getMessage()]);
+    } catch (RuntimeException) {
+      $operation->during('compatibility');
+
+      $requirement = app(PluginCompatibility::class)->diagnosticRequirement($plugin);
+
+      return back()->withErrors(['plugin' => trim($operation->fail().' '.$requirement)]);
     }
 
     return null;
@@ -422,15 +430,6 @@ class SystemPluginController extends Controller
     return $plugin->hasInstallableArtifact()
       && $release?->version !== null
       && version_compare($release->version, $installedVersion, '>');
-  }
-
-  private function controlledCatalogUpdateError(RuntimeException $exception): string
-  {
-    $message = $exception->getMessage();
-
-    return $message !== ''
-      ? $message
-      : 'The catalog plugin update could not be installed. Review the catalog metadata and try again.';
   }
 
   private function settingsUrl(PluginDefinition $definition, string $settingsRoute): string

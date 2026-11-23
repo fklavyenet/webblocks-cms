@@ -19,6 +19,7 @@ final class OperationalSchema
         $table->string('enabled_at', 80)->nullable();
         $table->string('disabled_at', 80)->nullable();
         $table->string('failed_at', 80)->nullable();
+        $table->uuid('failure_reference')->nullable();
         $table->unique(['root_hash', 'handle', 'version'], 'plugin_lifecycle_identity');
       });
     }

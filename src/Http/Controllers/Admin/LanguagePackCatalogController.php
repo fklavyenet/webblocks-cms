@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\InstallCatalogLanguageRequest;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Translations\LanguagePackCatalog;
 use WebBlocks\Cms\Support\Translations\NativeLanguagePacks;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -51,9 +52,12 @@ final class LanguagePackCatalogController
   {
     abort_unless($this->catalog->enabled(), 404);
 
+    $data = $request->validated();
+    $operation = new ExtensionOperation('language_pack', 'install', 'download');
+    $operation->identify($data['code'], $data['version']);
+    $operation->targetCms(WebBlocks::VERSION);
     try {
-      $data = $request->validated();
-      $id = $this->catalog->install($data['code'], $data['version'], $data['format'], $data['checksum']);
+      $id = $operation->validate(fn () => $this->catalog->install($data['code'], $data['version'], $data['format'], $data['checksum'], $operation), 'catalog');
     } catch (ValidationException $exception) {
       return redirect()->route('admin.system.panel-languages.extensions.index')->withErrors($exception->errors());
     }

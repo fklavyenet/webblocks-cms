@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use WebBlocks\Cms\Http\Requests\Admin\ThemePackageRequest;
 use WebBlocks\Cms\Support\Admin\AdminPagination;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Theme\PublicThemes;
 
 final class ThemePackageController
@@ -31,7 +32,8 @@ final class ThemePackageController
   public function store(ThemePackageRequest $request): RedirectResponse|JsonResponse
   {
     abort_unless($this->themes->ready(), 503);
-    $version = $this->themes->install($request->file('package')->getPathname());
+    $operation = new ExtensionOperation('theme', 'install');
+    $version = $operation->validate(fn () => $this->themes->install($request->file('package')->getPathname(), $operation));
 
     return $request->routeIs('internal-content-api.*')
       ? response()->json(['version' => $version], 201)

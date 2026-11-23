@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Schema;
 use Monolog\Handler\NullHandler;
@@ -183,6 +184,45 @@ class AutomaticPluginDatabaseSetupTest extends TestCase
     ]);
     $this->assertSame(['name' => 'Message', 'category' => 'form', 'sort_order' => 21, 'status' => 'draft'],
       $existing->fresh()->only(['name', 'category', 'sort_order', 'status']));
+  }
+
+  public function test_failed_catalog_probe_reports_candidate_and_preserved_version(): void
+  {
+    $this->mock(PluginBootProbe::class)->shouldReceive('check')->once();
+    $repository = app(InstalledPluginRepository::class);
+    app(PluginZipInstaller::class)->install($this->zip('1.0.0', migrations: false));
+    $repository->enable('example-auto', '1.0.0');
+
+    $zip = $this->zip('2.0.0', migrations: false);
+    $download = 'https://catalog.example.test/example-auto-2.0.0.zip';
+    $catalog = CatalogPlugin::fromArray([
+      'handle' => 'example-auto', 'label' => 'Example Auto', 'compatibility_status' => 'compatible',
+      'latest_compatible_release' => [
+        'version' => '2.0.0', 'status' => 'published', 'channel' => 'stable',
+        'artifact' => ['download_url' => $download, 'file_name' => basename($download), 'checksum_sha256' => hash_file('sha256', $zip)],
+      ],
+    ]);
+    $this->mock(PluginCatalogClient::class)->shouldReceive('show')->once()->with('example-auto')
+      ->andReturn(new PluginCatalogDetailResult(true, $catalog, 'https://catalog.example.test', WebBlocks::version()));
+    $this->mock(PluginBootProbe::class)->shouldReceive('check')->once()->andThrow(new RuntimeException('synthetic-secret /private/host'));
+    Http::fake([$download => Http::response(File::get($zip))]);
+    Log::spy();
+    $this->app->forgetInstance(PluginRegistry::class);
+    $this->withoutMiddleware();
+
+    $response = $this->postJson('/webadmin/api/plugins/catalog/example-auto/update')
+      ->assertUnprocessable()
+      ->assertJsonPath('code', 'catalog_plugin_update_failed')
+      ->assertJsonPath('diagnostic.operation', 'update')
+      ->assertJsonPath('diagnostic.identifier', 'example-auto')
+      ->assertJsonPath('diagnostic.stage', 'startup')
+      ->assertJsonPath('diagnostic.version', '2.0.0')
+      ->assertJsonPath('diagnostic.preserved_version', '1.0.0')
+      ->assertSee('Installed version 1.0.0 was kept')
+      ->assertDontSee('synthetic-secret')->assertDontSee('private/host');
+    Log::shouldHaveReceived('warning')->once()->with('CMS extension operation failed', $response->json('diagnostic'));
+    $this->assertSame('1.0.0', $repository->enabledVersion('example-auto'));
+    $this->assertNull($repository->findVersion('example-auto', '2.0.0'));
   }
 
   public function test_successful_process_with_pending_migrations_is_still_a_failure(): void

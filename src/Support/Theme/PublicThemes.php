@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use WebBlocks\Cms\Models\Page;
 use WebBlocks\Cms\Models\Site;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\PublicRendering\SiteAssetResolver;
 
@@ -87,9 +88,10 @@ final class PublicThemes
       ->groupBy('handle')->map(fn ($versions) => $versions->pluck('checksum', 'version')->all())->all();
   }
 
-  public function install(string $file): object
+  public function install(string $file, ?ExtensionOperation $operation = null): object
   {
-    $package = $this->packages->read($file);
+    $package = $this->packages->read($file, $operation);
+    $operation?->during('database');
     try {
       $id = DB::transaction(function () use ($package): int {
         $id = DB::table(self::VERSIONS)->insertGetId($package['version'] + ['created_at' => now()]);
@@ -253,7 +255,7 @@ final class PublicThemes
     ]);
   }
 
-  public function activate(Site $site, string $confirmation): int
+  public function activate(Site $site, string $confirmation, ?ExtensionOperation $operation = null): int
   {
     try {
       $preview = Crypt::decrypt($confirmation);
@@ -264,16 +266,21 @@ final class PublicThemes
       $this->invalid('confirmation', 'stale_preview');
     }
 
-    return $this->change($site, function (Site $locked, int $current) use ($preview): array {
+    return $this->change($site, function (Site $locked, int $current) use ($preview, $operation): array {
+      if ($operation !== null) {
+        $candidate = DB::table(self::VERSIONS)->find($preview['version'], ['handle', 'version', 'name']);
+        $operation->identify($candidate?->handle, $candidate?->version, $candidate?->name);
+      }
+
       if ($this->state($locked, $current) !== $preview['state']) {
         $this->invalid('confirmation', 'stale_preview');
       }
 
       return [$preview['version'], $preview['corners']];
-    });
+    }, $operation);
   }
 
-  public function restore(Site $site, int $expected, ?int $revision): int
+  public function restore(Site $site, int $expected, ?int $revision, ?ExtensionOperation $operation = null): int
   {
     return $this->change($site, function (Site $locked, int $current) use ($expected, $revision): array {
       if ($expected !== $current) {
@@ -289,17 +296,19 @@ final class PublicThemes
     });
   }
 
-  private function change(Site $site, callable $select): int
+  private function change(Site $site, callable $select, ?ExtensionOperation $operation = null): int
   {
-    $id = DB::transaction(function () use ($site, $select): int {
+    $id = DB::transaction(function () use ($site, $select, $operation): int {
       $locked = Site::query()->lockForUpdate()->findOrFail($site->id);
       $current = $this->current($locked);
       [$versionId, $corners] = $select($locked, (int) ($current?->id ?? 0));
       if ($versionId !== null) {
         $version = $this->version($versionId, lock: true);
+        $operation?->identify($version->handle, $version->version, $version->name);
         $this->appearance($version, $corners);
         $report = $this->report($locked, $version);
         if (! $report['compatible'] || ! $report['intact'] || $report['affected_pages'] !== []) {
+          $operation?->during(! $report['compatible'] ? 'compatibility' : (! $report['intact'] ? 'integrity' : 'activation'));
           $this->invalid('version', 'incompatible_site');
         }
       }

@@ -1,6 +1,48 @@
 <?php
 
 $translations = [
+  'extension_errors' => [
+    'requirement' => 'WebBlocks CMS :constraint gerekiyor. Kurulu CMS sürümü :version.',
+    'failed' => ':type işlemi başarısız oldu (:operation) :identity',
+    'preserved' => 'Kurulu :version sürümü korundu.',
+    'reference' => 'Tanı referansı :reference.',
+    'quarantined' => 'Eklenti (:identity) başlangıç hatasından sonra karantinaya alındı. Eklenti kurtarmayı açın.',
+    'type' => [
+      'plugin' => 'Eklenti',
+      'theme' => 'Tema',
+      'language_pack' => 'Dil paketi',
+    ],
+    'operation' => [
+      'install' => 'kurulum',
+      'update' => 'güncelleme',
+      'enable' => 'etkinleştirme',
+      'startup' => 'başlangıç',
+      'restore' => 'geri yükleme',
+      'disable' => 'devre dışı bırakma',
+      'setup' => 'veritabanı hazırlığı',
+      'preview' => 'önizleme',
+      'health' => 'sağlık kontrolü',
+    ],
+    'stage' => [
+      'rollback' => 'Güvenle geri yüklenebilecek bir sürüm için kurtarma ekranını inceleyin.',
+      'package' => 'Paket biçimini kontrol edip tekrar deneyin.',
+      'manifest' => 'Paket manifestini kontrol edin veya düzeltilmiş bir arşiv isteyin.',
+      'compatibility' => 'Desteklenen CMS ve çalışma ortamı sürümlerini kontrol edin.',
+      'dependencies' => 'Gerekli bağımlılıkları kontrol edin.',
+      'download' => 'Kataloğun erişilebilirliğini kontrol edip tekrar deneyin.',
+      'integrity' => 'Sürümün doğrulanmış bir kopyasını edinin.',
+      'startup' => 'Başlangıç kontrolü başarısız oldu. Gereksinimleri kontrol edin veya paket sağlayıcısına başvurun.',
+      'database' => 'Veritabanı hazırlık durumunu inceleyin.',
+      'activation' => 'Geçerli seçimi kontrol edip işlemi yeniden deneyin.',
+      'source' => 'Eklenti kaynağı yüklenemedi.',
+      'provider' => 'Eklenti sağlayıcısı başlatılamadı.',
+      'routes' => 'Eklenti rotaları kaydedilemedi.',
+      'translation' => 'Çeviri biçimini ve desteklenen CMS sürümünü kontrol edin.',
+      'health' => 'Paket sağlayıcısına başvurun.',
+      'busy' => 'Başka bir işlem sürüyor. Sayfayı yenileyin.',
+      'runtime' => 'Uzantının geçerli durumunu inceleyin.',
+    ],
+  ],
   'page_workflow' => [
     'submit_review' => 'İncelemeye gönder',
     'publish' => 'Yayınla',
@@ -73,7 +115,7 @@ $translations = [
   'plugin_recovery' => [
     'title' => 'Eklenti kurtarma',
     'description' => 'Bu ekran eklenti kodlarını yüklemez. Sorunlu eklentiyi kapatın veya veritabanı değişikliği uygulanmadıysa önceki sürümünü geri yükleyin.',
-    'probe_failed' => 'Eklenti açılış kontrolünü geçemedi. Mevcut sürüm korundu.',
+    'probe_failed' => 'Eklenti başlangıç kontrolünü geçemedi.',
     'quarantined' => 'Açılış hatası nedeniyle otomatik olarak devre dışı bırakıldı.',
     'enabled' => 'Etkin',
     'disabled' => 'Devre dışı',

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.15
+
+- Identify failed extension operations with the package name, handle or language code, available versions, and a diagnostic reference shared with the CMS log.
+- Distinguish rejected plugin updates from startup quarantine and database setup failures. Preserve recovery checks and report the installed version when a candidate is rejected before replacement.
+- Add the same diagnostic references to public theme and language pack operations, and verify that catalog plugin ZIPs match the selected release.
+
 ## 1.144.14
 
 - Embed WebBlocks Two-Factor 1.0.0 from its dedicated repository and record the exact source revision in the CMS package.

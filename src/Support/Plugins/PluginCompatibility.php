@@ -45,6 +45,16 @@ class PluginCompatibility
     return 'Requires WebBlocks CMS '.$plugin->requiredCmsVersion().'; installed CMS is '.$this->cmsVersion().'.';
   }
 
+  public function diagnosticRequirement(PluginDefinition $plugin): ?string
+  {
+    $constraint = $plugin->requiredCmsVersion();
+    if ($constraint === null || strlen($constraint) > 100 || ! preg_match('/\A[0-9v<>=~^ .+*|-]+\z/', $constraint)) {
+      return null;
+    }
+
+    return __('webblocks-cms::admin.extension_errors.requirement', ['constraint' => $constraint, 'version' => $this->cmsVersion()]);
+  }
+
   /**
    * Whether a version satisfies a constraint, without throwing.
    *

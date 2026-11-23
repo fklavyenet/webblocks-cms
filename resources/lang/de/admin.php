@@ -1,6 +1,48 @@
 <?php
 
 $translations = [
+  'extension_errors' => [
+    'requirement' => 'Erfordert WebBlocks CMS :constraint. Installierte CMS-Version: :version.',
+    'failed' => 'Der Vorgang für :type ist fehlgeschlagen (:operation) :identity',
+    'preserved' => 'Die installierte Version :version wurde beibehalten.',
+    'reference' => 'Diagnosereferenz :reference.',
+    'quarantined' => 'Das Plugin (:identity) wurde nach einem Startfehler isoliert. Öffnen Sie die Plugin-Wiederherstellung.',
+    'type' => [
+      'plugin' => 'Plugin',
+      'theme' => 'Theme',
+      'language_pack' => 'Sprachpaket',
+    ],
+    'operation' => [
+      'install' => 'Installation',
+      'update' => 'Aktualisierung',
+      'enable' => 'Aktivierung',
+      'startup' => 'Start',
+      'restore' => 'Wiederherstellung',
+      'disable' => 'Deaktivierung',
+      'setup' => 'Datenbankeinrichtung',
+      'preview' => 'Vorschau',
+      'health' => 'Zustandsprüfung',
+    ],
+    'stage' => [
+      'rollback' => 'Prüfen Sie auf der Wiederherstellungsseite, ob eine Version sicher wiederhergestellt werden kann.',
+      'package' => 'Prüfen Sie das Paketformat und versuchen Sie es erneut.',
+      'manifest' => 'Prüfen Sie das Paketmanifest oder fordern Sie ein korrigiertes Archiv an.',
+      'compatibility' => 'Prüfen Sie die unterstützten CMS- und Laufzeitversionen.',
+      'dependencies' => 'Prüfen Sie die erforderlichen Abhängigkeiten.',
+      'download' => 'Prüfen Sie die Verfügbarkeit des Katalogs und versuchen Sie es erneut.',
+      'integrity' => 'Beschaffen Sie eine geprüfte Kopie der Version.',
+      'startup' => 'Die Startprüfung ist fehlgeschlagen. Prüfen Sie die Anforderungen oder wenden Sie sich an den Paketanbieter.',
+      'database' => 'Prüfen Sie den Status der Datenbankeinrichtung.',
+      'activation' => 'Prüfen Sie die aktuelle Auswahl und versuchen Sie es erneut.',
+      'source' => 'Der Plugin-Quellcode konnte nicht geladen werden.',
+      'provider' => 'Der Plugin-Anbieter konnte nicht gestartet werden.',
+      'routes' => 'Die Plugin-Routen konnten nicht registriert werden.',
+      'translation' => 'Prüfen Sie das Übersetzungsformat und die unterstützte CMS-Version.',
+      'health' => 'Wenden Sie sich an den Paketanbieter.',
+      'busy' => 'Ein anderer Vorgang läuft. Laden Sie die Seite neu.',
+      'runtime' => 'Prüfen Sie den aktuellen Status der Erweiterung.',
+    ],
+  ],
   'page_workflow' => [
     'submit_review' => 'Zur Prüfung einreichen',
     'publish' => 'Veröffentlichen',
@@ -73,7 +115,7 @@ $translations = [
   'plugin_recovery' => [
     'title' => 'Plugin-Wiederherstellung',
     'description' => 'Diese Ansicht lädt keinen Plugin-Code. Deaktivieren Sie ein fehlerhaftes Plugin oder stellen Sie die vorherige Version wieder her, wenn keine Datenbankmigration ausgeführt wurde.',
-    'probe_failed' => 'Das Plugin hat die Startprüfung nicht bestanden. Die aktuelle Version wurde beibehalten.',
+    'probe_failed' => 'Die Startprüfung des Plugins ist fehlgeschlagen.',
     'quarantined' => 'Nach einem Startfehler automatisch deaktiviert.',
     'enabled' => 'Aktiviert',
     'disabled' => 'Deaktiviert',

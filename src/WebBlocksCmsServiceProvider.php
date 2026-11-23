@@ -146,6 +146,7 @@ use WebBlocks\Cms\Support\Plugins\PluginRecoveryMode;
 use WebBlocks\Cms\Support\Plugins\PluginRecoveryNoticeComposer;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\Plugins\PluginRouteRegistrar;
+use WebBlocks\Cms\Support\Plugins\PluginRuntimeGuard;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 use WebBlocks\Cms\Support\Plugins\PluginRuntimeRegistrar;
 use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
@@ -1412,17 +1413,13 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
         try {
           $registry->register($factory->make($installed['manifest'], $installed['path'], $shouldLoad));
         } catch (Throwable) {
-          try {
-            $repository->quarantine($handle, (string) $installed['manifest']['version']);
-          } catch (Throwable) {
-            // Read-only installations still suppress the plugin for this request.
-          }
-          $registry->suppress($handle);
-          $registry->register(PluginDefinition::make($handle)
+          $fallback = PluginDefinition::make($handle)
             ->label((string) ($installed['manifest']['label'] ?? $handle))
             ->version((string) $installed['manifest']['version'])
             ->requiresCms($installed['manifest']['required_cms_version'] ?? null)
-            ->source('manual upload')->installPath($installed['path']));
+            ->source('manual upload')->installPath($installed['path']);
+          app(PluginRuntimeGuard::class)->quarantineIn($registry, $fallback, 'source');
+          $registry->register($fallback);
         }
       }
 

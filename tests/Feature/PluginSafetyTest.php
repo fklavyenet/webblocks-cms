@@ -3,10 +3,13 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Monolog\Handler\NullHandler;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
@@ -108,6 +111,54 @@ class PluginSafetyTest extends TestCase
     app(PluginBootProbe::class)->check($plugin);
   }
 
+  public function test_install_diagnostics_use_safe_identity_and_do_not_claim_a_previous_version(): void
+  {
+    $this->withoutMiddleware();
+    Log::spy();
+    Process::fake(['*' => Process::result(output: 'synthetic-secret /private/host/path', errorOutput: 'another-secret', exitCode: 1)]);
+    $zip = $this->zip('1.0.0');
+    $archive = new ZipArchive;
+    $archive->open($zip);
+    $manifest = json_decode($archive->getFromName('webblocks-plugin.json'), true, flags: JSON_THROW_ON_ERROR);
+    $manifest['label'] = '<b>synthetic-secret</b>';
+    $archive->addFromString('webblocks-plugin.json', json_encode($manifest, JSON_THROW_ON_ERROR));
+    $archive->close();
+
+    $response = $this->postJson('/webadmin/api/plugins/install', ['plugin_zip' => new UploadedFile($zip, 'fixture.zip', 'application/zip', test: true)])
+      ->assertUnprocessable()
+      ->assertJsonPath('code', 'invalid_plugin_package')
+      ->assertJsonPath('diagnostic.operation', 'install')
+      ->assertJsonPath('diagnostic.stage', 'startup')
+      ->assertJsonPath('diagnostic.identifier', 'safety-example')
+      ->assertJsonPath('diagnostic.version', '1.0.0')
+      ->assertJsonMissingPath('diagnostic.preserved_version')
+      ->assertDontSee('synthetic-secret')
+      ->assertDontSee('another-secret')
+      ->assertDontSee('host/path')
+      ->assertDontSee('was kept');
+    $reference = $response->json('diagnostic.reference');
+    $this->assertTrue(Str::isUuid($reference));
+    $response->assertSee($reference);
+    Log::shouldHaveReceived('warning')->once()->with('CMS extension operation failed', [
+      'reference' => $reference,
+      'type' => 'plugin',
+      'operation' => 'install',
+      'stage' => 'startup',
+      'identifier' => 'safety-example',
+      'version' => '1.0.0',
+    ]);
+    $this->assertFileDoesNotExist($this->fixtureRoot.'/plugins/safety-example/1.0.0/src/Provider.php');
+
+    $archive->open($zip);
+    $archive->addFromString('webblocks-plugin.json', '{broken manifest synthetic-secret');
+    $archive->close();
+    $this->postJson('/webadmin/api/plugins/install', ['plugin_zip' => new UploadedFile($zip, 'fixture.zip', 'application/zip', test: true)])
+      ->assertUnprocessable()
+      ->assertJsonPath('diagnostic.stage', 'manifest')
+      ->assertJsonMissingPath('diagnostic.identifier')
+      ->assertDontSee('synthetic-secret');
+  }
+
   public function test_runtime_missing_class_quarantines_only_that_plugin_and_blocks_config_override(): void
   {
     $path = $this->extract('1.0.0', '<?php namespace RuntimeBrokenSafety; class Provider extends AbsentParent {}');
@@ -115,9 +166,24 @@ class PluginSafetyTest extends TestCase
     $repository->enable('safety-example', '1.0.0');
     config(['webblocks-plugins.enabled.safety-example' => true]);
     $this->app->forgetInstance(PluginRegistry::class);
+    Log::spy();
     $registry = app(PluginRegistry::class);
     $this->assertFalse($registry->isEnabled('safety-example'));
     $this->assertTrue($repository->runtimeFailed('safety-example', '1.0.0'));
+    $reference = $repository->runtimeFailureReference('safety-example', '1.0.0');
+    $this->assertTrue(Str::isUuid($reference));
+    Log::shouldHaveReceived('warning')->with('CMS extension operation failed', [
+      'reference' => $reference,
+      'type' => 'plugin',
+      'operation' => 'startup',
+      'stage' => 'source',
+      'identifier' => 'safety-example',
+      'version' => '1.0.0',
+    ])->once();
+    $this->actingAs($this->user(true))
+      ->get('/webadmin/plugin-recovery')
+      ->assertOk()->assertSee($reference)->assertSee('safety-example')->assertSee('1.0.0')
+      ->assertDontSee('AbsentParent');
     $this->assertTrue($repository->isDisabled('safety-example'));
     $this->assertNull($repository->enabledVersion('safety-example'));
     $this->assertNotNull($registry->get('safety-example'));

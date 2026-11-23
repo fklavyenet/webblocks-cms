@@ -6,6 +6,7 @@ use Composer\Semver\Semver;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use JsonException;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Pages\PageLayoutCatalog;
 use WebBlocks\Cms\Support\WebBlocks;
 use ZipArchive;
@@ -27,7 +28,7 @@ final class ThemePackage
     'avif' => 'image/avif',
   ];
 
-  public function read(string $path): array
+  public function read(string $path, ?ExtensionOperation $operation = null): array
   {
     $zip = new ZipArchive;
     if ($zip->open($path, ZipArchive::RDONLY | ZipArchive::CHECKCONS) !== true) {
@@ -35,8 +36,12 @@ final class ThemePackage
     }
 
     try {
+      $operation?->during('package');
       $entries = $this->entries($zip);
+      $operation?->during('manifest');
       $manifest = $this->manifest($entries[self::MANIFEST] ?? '');
+      $operation?->identify($manifest['handle'], $manifest['version'], $manifest['name']);
+      $operation?->during('package');
       unset($entries[self::MANIFEST]);
 
       if (! isset($entries[self::STYLESHEET])) {

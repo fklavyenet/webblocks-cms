@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use JsonException;
 use WebBlocks\Cms\Models\SystemSetting;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\WebBlocks;
@@ -61,8 +62,9 @@ final class PanelLanguages
       ->orderByDesc('catalogs.id')->paginate($perPage);
   }
 
-  public function import(string $json, ?string $catalogCode = null): int
+  public function import(string $json, ?string $catalogCode = null, ?ExtensionOperation $operation = null): int
   {
+    $operation?->during('manifest');
     try {
       $catalog = json_decode($json, true, 8, JSON_THROW_ON_ERROR);
     } catch (JsonException) {
@@ -72,6 +74,11 @@ final class PanelLanguages
     $code = $catalog['code'] ?? null;
     $name = $catalog['name'] ?? null;
     $translations = $catalog['translations'] ?? null;
+    $operation?->identify(is_string($code) ? $code : null, label: is_string($name) ? $name : null);
+    if ($catalogCode === null) {
+      $sourceVersion = $catalog['source_version'] ?? null;
+      $operation?->targetCms(is_string($sourceVersion) ? $sourceVersion : null);
+    }
     if (($catalog['format_version'] ?? null) !== 1 || ($catalog['source_version'] ?? null) !== WebBlocks::VERSION
       || ! is_string($code) || ! $this->source->validCode($code) || in_array($code, AdminLocaleResolver::SUPPORTED_LOCALES, true)
       || ($catalogCode !== null && $code !== $catalogCode)
@@ -80,6 +87,7 @@ final class PanelLanguages
       $this->invalid('invalid_catalog');
     }
 
+    $operation?->during('translation');
     $source = $this->source->messages();
     $lines = [];
     foreach ($translations as $row) {
@@ -95,6 +103,8 @@ final class PanelLanguages
     }
 
     $checksum = $catalogCode === null ? null : hash('sha256', $json);
+
+    $operation?->during('database');
 
     return DB::transaction(function () use ($code, $name, $lines, $checksum): int {
       DB::table(self::LANGUAGES)->insertOrIgnore(['code' => $code]);
@@ -139,11 +149,17 @@ final class PanelLanguages
     ];
   }
 
-  public function activate(int $id): void
+  public function activate(int $id, ?ExtensionOperation $operation = null): void
   {
-    DB::transaction(function () use ($id): void {
+    DB::transaction(function () use ($id, $operation): void {
       $language = $this->lockCatalogLanguage($id);
+      if ($operation !== null) {
+        $catalog = $this->catalog($id);
+        $operation->identify($language->code, label: $catalog->name);
+        $operation->targetCms($catalog->source_version);
+      }
       if ($this->compatibleLines($id, $this->source->messages()) === []) {
+        $operation?->during('translation');
         $this->invalid('stale_catalog');
       }
 

@@ -1,6 +1,48 @@
 <?php
 
 $translations = [
+  'extension_errors' => [
+    'requirement' => 'Richiede WebBlocks CMS :constraint. Versione CMS installata: :version.',
+    'failed' => 'Operazione non riuscita per :type (:operation) :identity',
+    'preserved' => 'La versione installata :version è stata mantenuta.',
+    'reference' => 'Riferimento diagnostico :reference.',
+    'quarantined' => 'Il plugin (:identity) è stato messo in quarantena dopo un errore di avvio. Apri il ripristino dei plugin.',
+    'type' => [
+      'plugin' => 'plugin',
+      'theme' => 'tema',
+      'language_pack' => 'pacchetto lingua',
+    ],
+    'operation' => [
+      'install' => 'installazione',
+      'update' => 'aggiornamento',
+      'enable' => 'attivazione',
+      'startup' => 'avvio',
+      'restore' => 'ripristino',
+      'disable' => 'disattivazione',
+      'setup' => 'configurazione del database',
+      'preview' => 'anteprima',
+      'health' => 'controllo di integrità',
+    ],
+    'stage' => [
+      'rollback' => 'Controlla nella schermata di ripristino se è disponibile una versione ripristinabile in sicurezza.',
+      'package' => 'Controlla il formato del pacchetto e riprova.',
+      'manifest' => 'Controlla il manifesto o richiedi un archivio corretto.',
+      'compatibility' => 'Controlla le versioni supportate di CMS e ambiente di esecuzione.',
+      'dependencies' => 'Controlla le dipendenze richieste.',
+      'download' => 'Controlla la disponibilità del catalogo e riprova.',
+      'integrity' => 'Procurati una copia verificata della versione.',
+      'startup' => 'Il controllo di avvio non è riuscito. Controlla i requisiti o contatta il fornitore del pacchetto.',
+      'database' => 'Controlla lo stato della configurazione del database.',
+      'activation' => 'Controlla la selezione corrente e riprova.',
+      'source' => 'Non è stato possibile caricare il codice sorgente del plugin.',
+      'provider' => 'Il provider del plugin non si è avviato.',
+      'routes' => 'Non è stato possibile registrare le route del plugin.',
+      'translation' => 'Controlla il formato delle traduzioni e la versione CMS supportata.',
+      'health' => 'Contatta il fornitore del pacchetto.',
+      'busy' => 'Un’altra operazione è in corso. Aggiorna la pagina.',
+      'runtime' => 'Controlla lo stato corrente dell’estensione.',
+    ],
+  ],
   'page_workflow' => [
     'submit_review' => 'Invia per la revisione',
     'publish' => 'Pubblica',
@@ -73,7 +115,7 @@ $translations = [
   'plugin_recovery' => [
     'title' => 'Ripristino dei plugin',
     'description' => 'Questa schermata non carica codice dei plugin. Disattiva un plugin difettoso o ripristina la versione precedente se non è stata eseguita una migrazione del database.',
-    'probe_failed' => 'Il plugin non ha superato il controllo di avvio. La versione attuale è stata mantenuta.',
+    'probe_failed' => 'Il plugin non ha superato il controllo di avvio.',
     'quarantined' => 'Disattivato automaticamente dopo un errore di avvio.',
     'enabled' => 'Attivato',
     'disabled' => 'Disattivato',

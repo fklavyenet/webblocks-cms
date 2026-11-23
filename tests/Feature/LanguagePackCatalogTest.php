@@ -164,11 +164,17 @@ final class LanguagePackCatalogTest extends TestCase
       ->assertRedirect($this->browseUrl())->assertSessionHasErrors('catalog');
     Http::assertNotSent(fn ($request) => str_contains($request->url(), '/download'));
     $this->post($this->browseUrl(), $this->selection($release))
-      ->assertRedirect($this->browseUrl())->assertSessionHasErrors(['catalog' => 'The file is invalid or does not match this CMS version.']);
+      ->assertRedirect($this->browseUrl())->assertSessionHasErrors('catalog');
+    $this->assertStringContainsString('The file is invalid or does not match this CMS version.', session('errors')->first('catalog'));
+    $this->assertStringContainsString('Русский · ru · 1.0.0 · CMS '.WebBlocks::VERSION, session('errors')->first('catalog'));
+    $this->assertStringContainsString('Diagnostic reference', session('errors')->first('catalog'));
 
     $this->serve($release, 'other zip');
     $this->post($this->browseUrl(), $this->selection($release))
-      ->assertRedirect($this->browseUrl())->assertSessionHasErrors(['catalog' => 'The download failed or could not be verified.']);
+      ->assertRedirect($this->browseUrl())->assertSessionHasErrors('catalog');
+    $this->assertStringContainsString('The download failed or could not be verified.', session('errors')->first('catalog'));
+    $this->assertStringContainsString('Русский · ru · 1.0.0 · CMS '.WebBlocks::VERSION, session('errors')->first('catalog'));
+    $this->assertStringContainsString('Diagnostic reference', session('errors')->first('catalog'));
     $this->assertDatabaseCount('wbcms_native_language_packs', 0);
     $this->assertDatabaseCount('wbcms_native_language_lines', 0);
   }

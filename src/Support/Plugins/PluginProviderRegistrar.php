@@ -18,13 +18,12 @@ class PluginProviderRegistrar
           continue;
         }
         $provider = $plugin->providerClass();
-        if (! $provider || ! is_subclass_of($provider, ServiceProvider::class)) {
-          continue;
-        }
         try {
-          app()->register($provider);
+          if ($provider && is_subclass_of($provider, ServiceProvider::class)) {
+            app()->register($provider);
+          }
         } catch (Throwable) {
-          app(PluginRuntimeGuard::class)->quarantine($plugin);
+          app(PluginRuntimeGuard::class)->quarantine($plugin, 'provider');
         }
       }
     });

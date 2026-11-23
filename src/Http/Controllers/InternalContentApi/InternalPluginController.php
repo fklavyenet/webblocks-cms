@@ -6,7 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use RuntimeException;
+use Throwable;
 use WebBlocks\Cms\Actions\Plugins\EnablePlugin;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogRelease;
@@ -47,15 +49,17 @@ class InternalPluginController extends Controller
 
   public function install(Request $request): JsonResponse
   {
-    $validated = $request->validate([
+    $operation = new ExtensionOperation('plugin', 'install');
+    $validated = $operation->validate(fn () => $request->validate([
       'plugin_zip' => ['required', 'file', 'mimes:zip', 'max:20480'],
-    ]);
+    ]), 'plugin_zip');
 
     try {
-      $result = $this->installer->install($validated['plugin_zip']->getRealPath());
+      $result = $this->installer->install($validated['plugin_zip']->getRealPath(), $operation);
+      $operation->during('runtime');
       $this->runtime->refresh(registerRoutes: true);
-    } catch (RuntimeException $exception) {
-      return $this->apiError('invalid_plugin_package', $exception->getMessage());
+    } catch (Throwable) {
+      return $this->diagnosticError('invalid_plugin_package', $operation);
     }
 
     $summary = $this->freshPluginSummary((string) $result['handle']);
@@ -109,23 +113,21 @@ class InternalPluginController extends Controller
 
   public function catalogInstall(string $plugin): JsonResponse
   {
-    $result = $this->catalog->show($plugin);
-
-    if (! $result->available || $result->plugin === null) {
-      $status = str_contains(strtolower((string) $result->message), 'not found') ? 404 : 503;
-
-      return $this->apiError(
-        $status === 404 ? 'catalog_plugin_not_found' : 'plugin_catalog_unavailable',
-        $result->message ?? 'The requested catalog plugin could not be loaded for installation.',
-        $status,
-      );
-    }
-
+    $operation = new ExtensionOperation('plugin', 'install', 'download');
+    $operation->identify($plugin);
     try {
-      $installed = $this->catalogInstaller->install($result->plugin);
+      $result = $this->catalog->show($plugin);
+      if (! $result->available || $result->plugin === null) {
+        $status = str_contains(strtolower((string) $result->message), 'not found') ? 404 : 503;
+
+        return $this->diagnosticError($status === 404 ? 'catalog_plugin_not_found' : 'plugin_catalog_unavailable', $operation, $status);
+      }
+
+      $installed = $this->catalogInstaller->install($result->plugin, $operation);
+      $operation->during('runtime');
       $this->runtime->refresh(registerRoutes: true);
-    } catch (RuntimeException $exception) {
-      return $this->apiError('catalog_plugin_install_failed', $exception->getMessage(), 422);
+    } catch (Throwable) {
+      return $this->diagnosticError('catalog_plugin_install_failed', $operation);
     }
 
     return response()->json([
@@ -156,28 +158,26 @@ class InternalPluginController extends Controller
       return $this->apiError('plugin_version_missing', 'The plugin does not declare an installed version.');
     }
 
-    $result = $this->catalog->show($plugin);
-
-    if (! $result->available || $result->plugin === null) {
-      $status = str_contains(strtolower((string) $result->message), 'not found') ? 404 : 503;
-
-      return $this->apiError(
-        $status === 404 ? 'catalog_plugin_not_found' : 'plugin_catalog_unavailable',
-        $result->message ?? 'The requested catalog plugin could not be loaded for update.',
-        $status,
-      );
-    }
-
+    $operation = new ExtensionOperation('plugin', 'update', 'download');
+    $operation->identify($plugin, label: $definition->labelText());
     try {
-      $installed = $this->catalogInstaller->update($result->plugin, $installedVersion);
+      $result = $this->catalog->show($plugin);
+      if (! $result->available || $result->plugin === null) {
+        $status = str_contains(strtolower((string) $result->message), 'not found') ? 404 : 503;
+
+        return $this->diagnosticError($status === 404 ? 'catalog_plugin_not_found' : 'plugin_catalog_unavailable', $operation, $status);
+      }
+
+      $installed = $this->catalogInstaller->update($result->plugin, $installedVersion, $operation);
+      $operation->during('runtime');
       $this->runtime->refreshInstalledPackageAssets(
         (string) $installed['handle'],
         (string) $installed['version'],
         (string) $installed['path'],
       );
       $this->runtime->clearCompiledViews();
-    } catch (RuntimeException $exception) {
-      return $this->apiError('catalog_plugin_update_failed', $exception->getMessage(), 422);
+    } catch (Throwable) {
+      return $this->diagnosticError('catalog_plugin_update_failed', $operation);
     }
 
     return $this->ok([
@@ -202,21 +202,23 @@ class InternalPluginController extends Controller
       return $definition;
     }
 
-    if ($error = $this->cmsCompatibilityError($definition)) {
+    $operation = ExtensionOperation::plugin('enable', $definition);
+    if ($error = $this->cmsCompatibilityError($definition, $operation)) {
       return $error;
     }
 
     $version = $definition->versionText();
 
     if ($version === null) {
-      return $this->apiError('plugin_version_missing', 'The plugin does not declare an installable version.');
+      return $this->diagnosticError('plugin_version_missing', $operation);
     }
 
     try {
-      app(EnablePlugin::class)->execute($definition, $version);
+      app(EnablePlugin::class)->execute($definition, $version, operation: $operation);
+      $operation->during('runtime');
       $this->runtime->refresh(registerRoutes: true);
-    } catch (RuntimeException $exception) {
-      return $this->apiError('plugin_enable_failed', $exception->getMessage());
+    } catch (Throwable) {
+      return $this->diagnosticError('plugin_enable_failed', $operation);
     }
 
     return $this->ok([
@@ -232,25 +234,27 @@ class InternalPluginController extends Controller
       return $definition;
     }
 
-    if ($error = $this->cmsCompatibilityError($definition)) {
+    $operation = ExtensionOperation::plugin('setup', $definition);
+    if ($error = $this->cmsCompatibilityError($definition, $operation)) {
       return $error;
     }
 
     if (! $this->registry->isConfiguredEnabled($definition->handle())) {
-      return $this->apiError('plugin_not_enabled', 'Enable the plugin before running setup.', 409);
+      return $this->diagnosticError('plugin_not_enabled', $operation, 409);
     }
 
     $version = $definition->versionText();
 
     if ($version === null) {
-      return $this->apiError('plugin_version_missing', 'The plugin does not declare an installable version.');
+      return $this->diagnosticError('plugin_version_missing', $operation);
     }
 
     try {
-      $result = app(PluginDatabaseSetup::class)->run($definition);
+      $result = app(PluginDatabaseSetup::class)->run($definition, operation: $operation);
+      $operation->during('runtime');
       $this->runtime->refresh(registerRoutes: true);
-    } catch (RuntimeException $exception) {
-      return $this->apiError('plugin_setup_failed', $exception->getMessage());
+    } catch (Throwable) {
+      return $this->diagnosticError('plugin_setup_failed', $operation);
     }
 
     return $this->ok([
@@ -316,12 +320,20 @@ class InternalPluginController extends Controller
     ]);
   }
 
-  private function cmsCompatibilityError(PluginDefinition $plugin): ?JsonResponse
+  private function cmsCompatibilityError(PluginDefinition $plugin, ExtensionOperation $operation): ?JsonResponse
   {
     try {
       app(PluginCompatibility::class)->assertCompatible($plugin);
-    } catch (RuntimeException $exception) {
-      return $this->apiError('plugin_incompatible', $exception->getMessage(), 409);
+    } catch (RuntimeException) {
+      $operation->during('compatibility');
+      $requirement = app(PluginCompatibility::class)->diagnosticRequirement($plugin);
+      if ($requirement !== null) {
+        $operation->record();
+
+        return $this->apiError('plugin_incompatible', $requirement, 409, $operation->context());
+      }
+
+      return $this->diagnosticError('plugin_incompatible', $operation, 409);
     }
 
     return null;
@@ -466,12 +478,18 @@ class InternalPluginController extends Controller
     ]);
   }
 
-  private function apiError(string $code, string $message, int $status = 422): JsonResponse
+  private function diagnosticError(string $code, ExtensionOperation $operation, int $status = 422): JsonResponse
+  {
+    return $this->apiError($code, $operation->fail(), $status, $operation->context());
+  }
+
+  private function apiError(string $code, string $message, int $status = 422, array $diagnostic = []): JsonResponse
   {
     return response()->json([
       'ok' => false,
       'code' => $code,
       'message' => $message,
+      ...($diagnostic !== [] ? ['diagnostic' => $diagnostic] : []),
       'warnings' => [],
       'errors' => [
         [
