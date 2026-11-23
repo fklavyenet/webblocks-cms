@@ -8,6 +8,13 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PHP_BIN="${PHP_BIN:-php}"
 ARCHIVE_PATH="${1:?Usage: build-package.sh OUTPUT.zip [TREE]}"
 TREE="${2:-HEAD}"
+if SOURCE_COMMIT="$(git -C "${ROOT_DIR}" rev-parse --verify "${TREE}^{commit}" 2>/dev/null)"; then
+  TREE="${SOURCE_COMMIT}"
+else
+  # Compatibility fixtures build from a disposable index tree without a commit.
+  SOURCE_COMMIT=''
+  TREE="$(git -C "${ROOT_DIR}" rev-parse --verify "${TREE}^{tree}")"
+fi
 case "${ARCHIVE_PATH}" in
   /*) ;;
   *) ARCHIVE_PATH="${PWD}/${ARCHIVE_PATH}" ;;
@@ -99,8 +106,14 @@ foreach ($required as $entry => $present) {
   }
 }
 
-$zip->close();
-' "${ARCHIVE_PATH}" "${PACKAGE_DIR}"
+if ($argv[3] !== "") {
+  $zip->setArchiveComment(json_encode([
+    "product" => "webblocks-cms",
+    "source_commit" => $argv[3],
+  ], JSON_THROW_ON_ERROR)) || throw new RuntimeException("Unable to attach the package source commit.");
+}
+$zip->close() || throw new RuntimeException("Unable to finalize the release ZIP.");
+' "${ARCHIVE_PATH}" "${PACKAGE_DIR}" "${SOURCE_COMMIT}"
 
 
 mv "${ARCHIVE_PATH}" "${OUTPUT_PATH}"

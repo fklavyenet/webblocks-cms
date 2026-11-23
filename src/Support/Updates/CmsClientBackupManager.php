@@ -7,6 +7,7 @@ use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Support\System\SystemBackupManager;
 use WebBlocks\Cms\Support\System\SystemBackupRestoreManager;
 use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
+use WebBlocks\Cms\Support\System\Updates\CmsPublisherArtifact;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
 use WebBlocks\Cms\Support\System\Updates\UpdateInstaller;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\BackupManager;
@@ -30,13 +31,17 @@ final class CmsClientBackupManager implements BackupManager
 
   public function restore(string $handle): bool
   {
+    $artifact = app(CmsPublisherArtifact::class);
+    if ($artifact->transactional && ! $artifact->applicationChanged) {
+      return true;
+    }
     $backup = SystemBackup::query()->find($handle);
 
     if (! $backup) {
       return false;
     }
 
-    app(CmsUpdateProgress::class)->restorePreservingProgress(function () use ($backup): void {
+    app(CmsUpdateProgress::class)->restorePreservingProgress(function () use ($backup, $artifact): void {
       app(CmsPackageRollback::class)->restore();
       // A dump drops/recreates its own tables. Remove tables introduced by this
       // failed migration before importing it, including their conflicting indexes.
@@ -48,8 +53,10 @@ final class CmsClientBackupManager implements BackupManager
         });
       }
       $this->restores->restoreFromBackup($backup, $backup->triggered_by_user_id);
-      $output = [];
-      app(UpdateInstaller::class)->syncRuntimeAssets($output);
+      if (! $artifact->transactional) {
+        $output = [];
+        app(UpdateInstaller::class)->syncRuntimeAssets($output);
+      }
     });
 
     return true;

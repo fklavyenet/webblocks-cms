@@ -33,7 +33,7 @@ class CmsPackageRollback
       return false;
     }
     $displaced = $this->target.'.cms-failed-'.Str::uuid();
-    if (! @rename($this->target, $displaced)) {
+    if (File::exists($this->target) && ! @rename($this->target, $displaced)) {
       throw new RuntimeException('The failed update package could not be moved for restoration.');
     }
     if (! @rename($this->snapshot, $this->target)) {

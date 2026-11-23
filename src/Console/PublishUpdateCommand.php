@@ -10,6 +10,8 @@ final class PublishUpdateCommand extends Command
 {
   protected $signature = 'webblocks:publish-update
     {--release-version= : Release version to publish, for example 1.32.90}
+    {--channel=stable : Publisher channel, stable or test}
+    {--source-commit= : Expected stable source commit}
     {--artifact= : Path to the prepared WebBlocks CMS package zip}
     {--payload= : Path to the update-server publisher payload JSON}
     {--dry-run : Validate artifact, checksum, metadata, endpoint, and token configuration without publishing}';
@@ -21,6 +23,8 @@ final class PublishUpdateCommand extends Command
     try {
       $result = $publisher->publish([
         'version' => $this->option('release-version'),
+        'channel' => $this->option('channel'),
+        'source_commit' => $this->option('source-commit'),
         'artifact' => $this->option('artifact'),
         'payload' => $this->option('payload'),
         'dry_run' => (bool) $this->option('dry-run'),
@@ -43,9 +47,12 @@ final class PublishUpdateCommand extends Command
         ['SHA-256', $result->checksumSha256],
         ['Token configured', $result->tokenConfigured ? 'yes' : 'no'],
         ['Published', $result->published ? 'yes' : 'no'],
-        ['Latest verified', $result->verified ? 'yes' : 'no'],
+        [$result->channel === 'test' ? 'Private upload verified' : 'Latest verified', $result->verified ? 'yes' : 'no'],
       ], $this->publisherConfigurationRows($result->configuredKeys))
     );
+    if ($result->channel === 'test' && $result->published) {
+      $this->line('Publisher test release ID: '.$result->publishResponse['data']['release_id']);
+    }
 
     if ($result->status === 'skipped') {
       $this->warn($result->message);

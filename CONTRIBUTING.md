@@ -142,6 +142,39 @@ Progress GET requests are passive and authorized independently.
 
 Release push runs the same pre-push gates once for explicitly named branch/tag refs and verifies both remotes. Its Composer alias disables only the outer 300-second Composer timeout; a PHP runner bounds the complete push/verification flow to 900 seconds. Default SSH transport uses keepalive while the full suite runs; explicit operator `GIT_SSH_COMMAND` or `GIT_SSH` settings are preserved. This does not skip checks or change global Composer/SSH configuration.
 
+### Private Publisher candidates
+
+Prepare a clean, reviewed release commit with its CMS version and changelog
+entry. Use `composer release:prepare -- --test` and
+`composer release:publish-update -- --channel=test`. The private preparation
+retains the ZIP, SHA-256 and payload under `storage/app/private`. It records
+the commit in the ZIP before signing and needs no public tag, GitHub Release
+or Packagist version. Retain the candidate bytes for retries and promotion.
+
+Install the updated client on an isolated Composer-managed CMS host before
+using the private channel. Supply `WEBBLOCKS_CMS_TEST_INSTALLATION_ID` and
+`WEBBLOCKS_CMS_TEST_INSTALLATION_KEY` using the host's secret configuration.
+Use a UUID and 32 random bytes encoded as unpadded base64url. A Console
+administrator enrolls that UUID for `webblocks-cms`. Enter the one-time code
+at the prompt from `php artisan webblocks:updates:pair-test`, then select
+`WEBBLOCKS_UPDATE_CHANNEL=test` and reload cached host configuration if used.
+Use the Maintenance update flow on the enrolled host.
+
+For a clean Composer install of a private candidate, supply a fresh Console
+download grant for the locked release as Composer bearer authentication via
+the process environment. The lock stores the protected release URL, the ZIP
+SHA-1 used by Composer and the source commit. Grant values stay out of the
+lock and repository. The stable lock uses the public GitHub archive for the
+same immutable commit. The first direct-package release must remain installable
+through public Composer by the preceding update client.
+
+After explicit stable approval, verify that the public tag, Composer source
+and Composer dist all resolve to the full commit retained in the pilot payload.
+Use the Publisher operator's promotion action on the confirmed healthy
+receipt. Promote the retained signed candidate instead of building and
+uploading a second ZIP for that version. Existing new-install instructions
+continue to use Composer.
+
 The package compatibility fixture uses a disposable Git index and object directory with the checkout's immutable objects as read-only alternates. It includes reviewed untracked runtime sources and tracked edits/deletions, builds the real archive and exercises the installed bridge updater. It does not copy the entire checkout or change its index, object store, branches or tags. Distinct Composer and Git export checks are retained.
 
 ## Optional browser fixtures

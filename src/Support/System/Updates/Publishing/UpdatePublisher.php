@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Symfony\Component\Finder\Finder;
 use WebBlocks\Cms\Support\Updates\ReleaseDefaults;
+use ZipArchive;
 
 final class UpdatePublisher
 {
@@ -41,14 +42,25 @@ final class UpdatePublisher
     $checksum = $this->verifyChecksum($artifactPath, $payload);
     $configuration = $this->publisherConfiguration();
     $product = ReleaseDefaults::PRODUCT_KEY;
-    $channel = ReleaseDefaults::CHANNEL;
+    $channel = $this->stringOption($options, 'channel') ?? ReleaseDefaults::CHANNEL;
+    if (! in_array($channel, ['stable', 'test'], true) || $channel !== ($payload['channel'] ?? 'stable')) {
+      throw new RuntimeException('Publication channel must match the prepared release payload.');
+    }
     $version = $this->stringOption($options, 'version')
       ?? $this->payloadString($payload, 'version')
       ?? throw new RuntimeException('Publisher payload is missing a release version.');
     $token = $configuration['token'];
-    $publisherUrl = $configuration['url'];
+    $publisherUrl = $channel === 'test' ? (string) config('webblocks-updates.publisher.test_url') : $configuration['url'];
     $configuredKeys = $this->configuredKeyStatuses($configuration);
-    $this->signChecksum($checksum);
+    $signature = $this->signChecksum($checksum);
+    if ($channel === 'test') {
+      if ($signature === null || parse_url($publisherUrl, PHP_URL_SCHEME) !== 'https') {
+        throw new RuntimeException('Private test publication requires HTTPS and a configured maintainer signing key.');
+      }
+      $this->verifySource($artifactPath, $payload, $version, $this->payloadString($payload, 'source_reference'), required: true);
+    } elseif (($source = $this->stringOption($options, 'source_commit')) !== null) {
+      $this->verifySource($artifactPath, $payload, $version, $source, required: false);
+    }
 
     if (($options['dry_run'] ?? false) === true) {
       return new UpdatePublishResult(
@@ -85,11 +97,15 @@ final class UpdatePublisher
     }
 
     $publishResponse = $this->sendPublishRequest($publisherUrl, $token, $artifactPath, $payload, $product, $channel, $version, $checksum);
-    $latestResponse = $this->verifyLatestRelease($this->apiBaseUrl($publisherUrl), $product, $channel, $version, $checksum);
+    $latestResponse = $channel === 'test'
+      ? $this->verifyPrivatePublication($publishResponse, $publisherUrl, $product, $version, $checksum)
+      : $this->verifyLatestRelease($this->apiBaseUrl($publisherUrl), $product, $channel, $version, $checksum);
 
     return new UpdatePublishResult(
       status: 'published',
-      message: 'Update publisher accepted the artifact and latest verification matched the published release metadata.',
+      message: $channel === 'test'
+        ? 'Publisher accepted the private candidate and confirmed its version and checksum.'
+        : 'Update publisher accepted the artifact and latest verification matched the published release metadata.',
       product: $product,
       channel: $channel,
       version: $version,
@@ -103,6 +119,41 @@ final class UpdatePublisher
       latestResponse: $latestResponse,
       configuredKeys: $configuredKeys,
     );
+  }
+
+  private function verifySource(string $path, array $payload, string $version, ?string $expected, bool $required): void
+  {
+    $archive = new ZipArchive;
+    if ($archive->open($path, ZipArchive::RDONLY) !== true) {
+      throw new RuntimeException('The release artifact is not a readable ZIP.');
+    }
+    $comment = $archive->getArchiveComment() ?: '';
+    $versionSource = $archive->getFromName('src/Support/WebBlocks.php') ?: '';
+    $archive->close();
+    if ($comment === '' && ! $required) {
+      return;
+    }
+    $source = json_decode($comment, true);
+    if (($source['product'] ?? null) !== ReleaseDefaults::PRODUCT_KEY
+      || ! is_string($source['source_commit'] ?? null) || preg_match('/\A[a-f0-9]{40}\z/', $source['source_commit']) !== 1
+      || $source['source_commit'] !== $expected
+      || preg_match("/VERSION = '([^']+)'/", $versionSource, $match) !== 1 || $match[1] !== $version
+      || ($payload['version'] ?? null) !== $version) {
+      throw new RuntimeException('The release ZIP must describe the selected CMS version and source commit.');
+    }
+  }
+
+  private function verifyPrivatePublication(array $response, string $url, string $product, string $version, string $checksum): array
+  {
+    $data = $response['data'] ?? [];
+    $id = $data['release_id'] ?? null;
+    if (! is_int($id) || $id < 1 || ($data['product'] ?? null) !== $product || ($data['channel'] ?? null) !== 'test'
+      || ($data['version'] ?? null) !== $version || ($data['checksum_sha256'] ?? null) !== $checksum
+      || ($data['artifact_url'] ?? null) !== $this->apiBaseUrl($url).'/test-downloads/'.$id) {
+      throw new RuntimeException('Publisher did not confirm the expected private release identity.');
+    }
+
+    return $response;
   }
 
   private function resolvePayloadPath(array $options): string
@@ -252,6 +303,7 @@ final class UpdatePublisher
     try {
       $response = Http::acceptJson()
         ->asMultipart()
+        ->withoutRedirecting()
         ->timeout((int) config('webblocks-updates.publisher.timeout_seconds', 120))
         ->connectTimeout((int) config('webblocks-updates.publisher.connect_timeout_seconds', 5))
         ->withToken($token, 'Bearer')

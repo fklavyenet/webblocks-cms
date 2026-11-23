@@ -4861,6 +4861,10 @@ $translations = [
     'secondary' => 'Sekundäre Schaltfläche',
   ],
   'update_cli' => [
+    'publisher_composer_incompatible' => 'Die signierte CMS-Version ist mit der vorhandenen Composer-Installation nicht kompatibel. Prüfen Sie das Aktualisierungsprotokoll auf Abhängigkeits- oder Metadatenfehler.',
+    'publisher_test_unavailable' => 'Für Publisher-Testzugriff sind eine aktive Console-Registrierung und ein autorisierter Publisher-Endpunkt erforderlich.',
+    'publisher_test_pairing_code' => 'Console-Kopplungscode',
+    'publisher_test_paired' => 'Diese Installation ist für Publisher-Testupdates gekoppelt.',
     'run_description' => 'Vollständiges CMS-Update mit Publisher und Composer ausführen',
     'finalize_description' => 'CMS-Einrichtung nach einem manuellen Composer-Update abschließen',
     'inconsistent' => 'CMS-Code und Composer-Einträge sind inkonsistent. Lösen Sie die gewünschte Version vor dem Abschluss mit Composer auf.',

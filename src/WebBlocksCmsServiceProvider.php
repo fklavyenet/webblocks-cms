@@ -43,6 +43,7 @@ use WebBlocks\Cms\Console\InstallWebBlocksCmsCommand;
 use WebBlocks\Cms\Console\MaintenanceCleanupCommand;
 use WebBlocks\Cms\Console\MediaVariantsCommand;
 use WebBlocks\Cms\Console\PackageStatusCommand;
+use WebBlocks\Cms\Console\PairPublisherTestCommand;
 use WebBlocks\Cms\Console\PluginMigrateCommand;
 use WebBlocks\Cms\Console\PluginProbeCommand;
 use WebBlocks\Cms\Console\PruneEditorRecoveriesCommand;
@@ -170,6 +171,7 @@ use WebBlocks\Cms\Support\System\SystemMaintenanceReports;
 use WebBlocks\Cms\Support\System\Updates\CmsChainAdmission;
 use WebBlocks\Cms\Support\System\Updates\CmsChainContext;
 use WebBlocks\Cms\Support\System\Updates\CmsPackageRollback;
+use WebBlocks\Cms\Support\System\Updates\CmsPublisherArtifact;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateAdmissionContext;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateDownloader;
@@ -916,6 +918,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     PluginProbeCommand::class,
     PackageStatusCommand::class,
     PublishUpdateCommand::class,
+    PairPublisherTestCommand::class,
     PrunePromotedStagedUpdatesCommand::class,
     GenerateUpdateSigningKeyCommand::class,
     ContactMailDiagnoseCommand::class,
@@ -1142,6 +1145,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     $this->app->singleton(CmsUpdateProgress::class);
     $this->app->singleton(ProgressReporter::class, CmsProgressReporter::class);
     $this->app->singleton(CmsPackageRollback::class);
+    $this->app->singleton(CmsPublisherArtifact::class);
     $this->app->singleton(CmsChainContext::class);
     $this->app->singleton(CmsUpdateAdmissionContext::class);
     $this->app->bind(UpdateAdmission::class, CmsChainAdmission::class);

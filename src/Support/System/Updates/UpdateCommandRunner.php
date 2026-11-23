@@ -12,9 +12,23 @@ class UpdateCommandRunner
 {
   public function run(array $command, string $workingDirectory, array &$output): void
   {
+    $this->runWithEnvironment($command, $workingDirectory, $output, []);
+  }
+
+  public function runOffline(array $command, string $workingDirectory, array &$output): void
+  {
+    $this->runWithEnvironment($command, $workingDirectory, $output, [
+      'COMPOSER_DISABLE_NETWORK' => '1',
+      'COMPOSER_IGNORE_PLATFORM_REQ' => false,
+      'COMPOSER_IGNORE_PLATFORM_REQS' => false,
+      'COMPOSER_NO_DEV' => false,
+    ]);
+  }
+
+  private function runWithEnvironment(array $command, string $workingDirectory, array &$output, array $environment): void
+  {
     $output[] = '$ '.$this->formatCommand($command);
 
-    $environment = [];
     // PHP-FPM may clear both variables Composer requires, including for dump-autoload.
     if (! getenv('HOME') && ! getenv('COMPOSER_HOME')) {
       $directory = storage_path('app/private/system-updates/composer-home');

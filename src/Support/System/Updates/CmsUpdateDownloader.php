@@ -9,6 +9,7 @@ class CmsUpdateDownloader extends UpdatePackageDownloader
   public function download(string $url, string $destinationPath): void
   {
     app(CmsUpdateProgress::class)->stage('download');
+    app(CmsPublisherArtifact::class)->start($url);
     parent::download($url, $destinationPath);
   }
 }

@@ -28,7 +28,7 @@ for path in resources/contracts/inventory.md composer.json src config database p
   test -e "${TEMP_DIR}/${path}" || { printf 'Missing distribution path: %s\n' "${path}" >&2; exit 1; }
 done
 
-for path in docs storage AGENTS.md .DS_Store .claude .github .publisher-client.json tests scripts vendor composer.lock phpunit.xml.dist pint.json CONTRIBUTING.md CODE_OF_CONDUCT.md SUPPORT.md; do
+for path in docs storage AGENTS.md .DS_Store .claude .github .publisher-client.json tests scripts vendor composer.lock phpunit.xml.dist pint.json testbench.yaml CONTRIBUTING.md CODE_OF_CONDUCT.md SUPPORT.md; do
   test ! -e "${TEMP_DIR}/${path}" || { printf 'Source-only path entered distribution: %s\n' "${path}" >&2; exit 1; }
 done
 

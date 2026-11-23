@@ -30,7 +30,22 @@ if [ -f "${ENV_FILE}" ]; then
 fi
 
 VERSION="$("${PHP_BIN}" -r '$source = file_get_contents($argv[1]); if (! preg_match("/VERSION = '\''([^'\'']+)'\''/", $source, $matches)) { fwrite(STDERR, "Unable to read WebBlocks CMS version.\n"); exit(1); } echo $matches[1];' "${ROOT_DIR}/src/Support/WebBlocks.php")"
-RELEASE_ROOT="${WEBBLOCKS_CMS_RELEASE_ARTIFACT_DIR:-${ROOT_DIR}/storage/app/webblocks-cms-release/${VERSION}}"
+CHANNEL=stable
+for arg in "$@"; do
+  case "${arg}" in
+    --channel=test) CHANNEL=test ;;
+    --channel=stable) CHANNEL=stable ;;
+    --channel|--channel=*)
+      printf '[webblocks-publish-update] Use --channel=test or --channel=stable.\n' >&2
+      exit 1
+      ;;
+  esac
+done
+DEFAULT_RELEASE_ROOT="${ROOT_DIR}/storage/app/webblocks-cms-release/${VERSION}"
+if [ "${CHANNEL}" = test ]; then
+  DEFAULT_RELEASE_ROOT="${ROOT_DIR}/storage/app/private/webblocks-cms-release/${VERSION}"
+fi
+RELEASE_ROOT="${WEBBLOCKS_CMS_RELEASE_ARTIFACT_DIR:-${DEFAULT_RELEASE_ROOT}}"
 ARGS=(
   "--release-version=${VERSION}"
   "--artifact=${RELEASE_ROOT}/webblocks-cms-${VERSION}.zip"
@@ -70,7 +85,7 @@ done
 # Check GitHub access before the irreversible Publisher write. This prevents a
 # release from reaching the stable update channel while the repository sidebar
 # remains pinned to an older GitHub Release.
-if [ "${DRY_RUN}" = false ]; then
+if [ "${DRY_RUN}" = false ] && [ "${CHANNEL}" = stable ]; then
   if ! command -v gh >/dev/null 2>&1 || ! gh auth status >/dev/null 2>&1; then
     printf '[webblocks-publish-update] GitHub CLI authentication is required before publishing. Run gh auth login.\n' >&2
     exit 1
@@ -101,10 +116,11 @@ if [ "${DRY_RUN}" = false ]; then
     exit 1
   fi
   printf '[webblocks-publish-update] Packagist verified %s at %s.\n' "${TAG}" "${TAG_COMMIT}"
+  ARGS+=("--source-commit=${TAG_COMMIT}")
 fi
 
 "${PHP_BIN}" vendor/bin/testbench webblocks:publish-update "${ARGS[@]}"
 
-if [ "${DRY_RUN}" = false ]; then
+if [ "${DRY_RUN}" = false ] && [ "${CHANNEL}" = stable ]; then
   "${ROOT_DIR}/scripts/release/publish-github.sh"
 fi

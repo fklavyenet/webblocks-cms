@@ -6,9 +6,14 @@ use WebBlocks\Cms\Support\WebBlocks;
 return [
     'chains' => ['enabled' => true],
     'enabled' => env('WEBBLOCKS_UPDATES_ENABLED', true),
-    'server_url' => ReleaseDefaults::SERVER_URL,
+    'server_url' => env('WEBBLOCKS_UPDATE_SERVER_URL', ReleaseDefaults::SERVER_URL),
     'latest_path' => ReleaseDefaults::LATEST_PATH,
-    'channel' => ReleaseDefaults::CHANNEL,
+    'channel' => env('WEBBLOCKS_UPDATE_CHANNEL', ReleaseDefaults::CHANNEL),
+    'test' => [
+        'console_url' => env('WEBBLOCKS_CMS_TEST_CONSOLE_URL', 'https://console.fklavye.net'),
+        'installation_id' => env('WEBBLOCKS_CMS_TEST_INSTALLATION_ID'),
+        'installation_key' => env('WEBBLOCKS_CMS_TEST_INSTALLATION_KEY'),
+    ],
     'api_version' => '1',
     'product' => ReleaseDefaults::PRODUCT_KEY,
     'current_version' => WebBlocks::VERSION,
@@ -28,6 +33,7 @@ return [
     ],
     'publisher' => [
         'url' => ReleaseDefaults::publishUrl(),
+        'test_url' => env('WEBBLOCKS_CMS_TEST_PUBLISHER_URL', ReleaseDefaults::publishUrl()),
         'token' => env('WEBBLOCKS_PUBLISHER_TOKEN'),
         'product' => ReleaseDefaults::PRODUCT_KEY,
         'channel' => ReleaseDefaults::CHANNEL,

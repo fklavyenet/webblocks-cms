@@ -5143,6 +5143,10 @@ return [
     'secondary' => 'Secondary button',
   ],
   'update_cli' => [
+    'publisher_composer_incompatible' => 'The signed CMS release is incompatible with the existing Composer installation. Review the update log for the dependency or metadata error.',
+    'publisher_test_unavailable' => 'Publisher test access requires an eligible Console enrollment and an authorized Publisher endpoint.',
+    'publisher_test_pairing_code' => 'Console pairing code',
+    'publisher_test_paired' => 'This installation is paired for Publisher test updates.',
     'run_description' => 'Run the complete CMS update with Publisher and Composer',
     'finalize_description' => 'Complete CMS setup after a manual Composer update',
     'inconsistent' => 'The CMS runtime and Composer records are inconsistent. Resolve the intended version with Composer before finalizing.',

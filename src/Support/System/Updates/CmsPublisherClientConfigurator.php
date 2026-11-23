@@ -4,8 +4,10 @@ namespace WebBlocks\Cms\Support\System\Updates;
 
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Arr;
+use WebBlocks\Cms\Support\Updates\Client\Apply\ComposerPackageApplyStrategy;
 use WebBlocks\Cms\Support\Updates\Client\Apply\PackageApplyStrategy;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\TelemetryProvider;
+use WebBlocks\Cms\Support\Updates\Client\Contracts\UpdateRequestAuthorizer;
 use WebBlocks\Cms\Support\Updates\Client\Support\Version\ConfigVersionResolver;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\WebBlocksCmsServiceProvider;
@@ -18,6 +20,8 @@ final class CmsPublisherClientConfigurator
   {
     $this->configureTranslations();
     $this->app->bind(PackageApplyStrategy::class, CmsPackageApplyStrategy::class);
+    $this->app->bind(ComposerPackageApplyStrategy::class, CmsPublisherPackageApplyStrategy::class);
+    $this->app->bind(UpdateRequestAuthorizer::class, CmsPublisherTestAccess::class);
     $this->app->bind(TelemetryProvider::class, InstallationTelemetry::class);
     $config = $this->app['config'];
     $runtimeRoot = dirname(__DIR__, 4);
@@ -36,6 +40,8 @@ final class CmsPublisherClientConfigurator
     $config->set('publisher-client.apply.enforce_active_runtime_target', true);
     $config->set('publisher-client.apply.composer_install', false);
     $config->set('publisher-client.apply.sync_composer_metadata', false);
+    $config->set('publisher-client.signature.required', true);
+    $config->set('publisher-client.checksum_required', true);
     $config->set('publisher-client.apply.composer_advance_exact_pin', true);
     $config->set('publisher-client.apply.composer_update_dependencies', true);
     $config->set('publisher-client.apply.composer_lock_only', false);

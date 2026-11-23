@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.22
+
+- Install panel updates from signed Publisher packages and keep Composer’s version pin, lock file, and installed package records aligned with the source commit.
+- Check the existing dependencies before changing application files. Restore the previous package and Composer records if the updated installation fails its health check.
+- Let enrolled installations receive private Publisher test updates and report the installation result.
+
 ## 1.144.21
 
 - Browse public themes and language packs using the same card layout as the Plugin catalog. Find release information and installation actions on each card.

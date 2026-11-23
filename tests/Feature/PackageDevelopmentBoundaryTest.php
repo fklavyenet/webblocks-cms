@@ -46,7 +46,7 @@ class PackageDevelopmentBoundaryTest extends TestCase
 
     $this->assertIsString($attributes);
 
-    foreach (['/AGENTS.md', '.DS_Store', '/.claude', '/.editorconfig', '/.github', '/.gitignore', '/.publisher-client.json', '/CODE_OF_CONDUCT.md', '/CONTRIBUTING.md', '/SECURITY.md', '/SUPPORT.md', '/composer.lock', '/docs', '/coverage', '/phpunit.xml.dist', '/pint.json', '/scripts', '/storage', '/tests', '/vendor'] as $path) {
+    foreach (['/AGENTS.md', '.DS_Store', '/.claude', '/.editorconfig', '/.github', '/.gitignore', '/.publisher-client.json', '/CODE_OF_CONDUCT.md', '/CONTRIBUTING.md', '/SECURITY.md', '/SUPPORT.md', '/composer.lock', '/docs', '/coverage', '/phpunit.xml.dist', '/pint.json', '/scripts', '/storage', '/testbench.yaml', '/tests', '/vendor'] as $path) {
       $this->assertStringContainsString($path.' export-ignore', $attributes);
     }
   }
@@ -59,6 +59,7 @@ class PackageDevelopmentBoundaryTest extends TestCase
       $packageRoot.'/composer.json',
       $packageRoot.'/phpunit.xml.dist',
       $packageRoot.'/pint.json',
+      $packageRoot.'/testbench.yaml',
       $packageRoot.'/tests/TestCase.php',
     ];
     $forbidden = [
@@ -85,7 +86,7 @@ class PackageDevelopmentBoundaryTest extends TestCase
   public function repository_has_the_exact_reviewed_top_level_tree(): void
   {
     $root = dirname(__DIR__, 2);
-    $expected = ['.editorconfig', '.gitattributes', '.github', '.gitignore', '.publisher-client.json', 'CHANGELOG.md', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'SECURITY.md', 'SUPPORT.md', 'UPGRADING.md', 'composer.json', 'config', 'database', 'phpunit.xml.dist', 'pint.json', 'public', 'resources', 'routes', 'scripts', 'src', 'stubs', 'tests'];
+    $expected = ['.editorconfig', '.gitattributes', '.github', '.gitignore', '.publisher-client.json', 'CHANGELOG.md', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'SECURITY.md', 'SUPPORT.md', 'UPGRADING.md', 'composer.json', 'config', 'database', 'phpunit.xml.dist', 'pint.json', 'public', 'resources', 'routes', 'scripts', 'src', 'stubs', 'testbench.yaml', 'tests'];
     // Exclude gitignored local/runtime artifacts so the assertion reflects the
     // committed tree, not whatever a developer's checkout happens to contain
     // (e.g. a stray storage/ from a local artisan run, coverage/, .DS_Store, or

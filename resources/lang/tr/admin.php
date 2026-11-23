@@ -4911,6 +4911,10 @@ $translations = [
     'secondary' => 'İkincil düğme',
   ],
   'update_cli' => [
+    'publisher_composer_incompatible' => 'İmzalı CMS sürümü mevcut Composer kurulumuyla uyumlu değil. Bağımlılık veya kayıt hatası için güncelleme günlüğünü inceleyin.',
+    'publisher_test_unavailable' => 'Publisher test erişimi için etkin bir Console kaydı ve yetkili bir Publisher uç noktası gerekir.',
+    'publisher_test_pairing_code' => 'Console eşleştirme kodu',
+    'publisher_test_paired' => 'Bu kurulum Publisher test güncellemeleri için eşleştirildi.',
     'run_description' => 'Publisher ve Composer ile tam CMS güncellemesini çalıştır',
     'finalize_description' => 'Elle yapılan Composer güncellemesinden sonra CMS kurulumunu tamamla',
     'inconsistent' => 'CMS kodu ve Composer kayıtları tutarsız. Tamamlamadan önce hedef sürümü Composer ile çözümleyin.',

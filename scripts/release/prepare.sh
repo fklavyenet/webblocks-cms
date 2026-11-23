@@ -4,14 +4,32 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PHP_BIN="${PHP_BIN:-php}"
+CHANNEL=stable
+if [ "${1:-}" = "--test" ]; then
+  CHANNEL=test
+  umask 077
+  shift
+fi
+if [ "$#" -ne 0 ]; then
+  printf '[webblocks-release-prepare] Usage: composer release:prepare [-- --test]\n' >&2
+  exit 1
+fi
 VERSION="$("${PHP_BIN}" -r '$source = file_get_contents($argv[1]); if (! preg_match("/VERSION = '\''([^'\'']+)'\''/", $source, $matches)) { fwrite(STDERR, "Unable to read WebBlocks CMS version.\n"); exit(1); } echo $matches[1];' "${ROOT_DIR}/src/Support/WebBlocks.php")"
 HEAD_VERSION="$(git -C "${ROOT_DIR}" show HEAD:src/Support/WebBlocks.php | "${PHP_BIN}" -r '$source = stream_get_contents(STDIN); if (! preg_match("/VERSION = '\''([^'\'']+)'\''/", $source, $matches)) { fwrite(STDERR, "Unable to read committed WebBlocks CMS version.\n"); exit(1); } echo $matches[1];')"
-RELEASE_ROOT="${WEBBLOCKS_CMS_RELEASE_ARTIFACT_DIR:-${ROOT_DIR}/storage/app/webblocks-cms-release/${VERSION}}"
+DEFAULT_RELEASE_ROOT="${ROOT_DIR}/storage/app/webblocks-cms-release/${VERSION}"
+if [ "${CHANNEL}" = test ]; then
+  DEFAULT_RELEASE_ROOT="${ROOT_DIR}/storage/app/private/webblocks-cms-release/${VERSION}"
+fi
+RELEASE_ROOT="${WEBBLOCKS_CMS_RELEASE_ARTIFACT_DIR:-${DEFAULT_RELEASE_ROOT}}"
 ARCHIVE_PATH="${RELEASE_ROOT}/webblocks-cms-${VERSION}.zip"
 PAYLOAD_PATH="${RELEASE_ROOT}/webblocks-cms-${VERSION}-update-server-payload.json"
 CHANGELOG_PATH="${ROOT_DIR}/CHANGELOG.md"
 
 mkdir -p "${RELEASE_ROOT}"
+if [ "${CHANNEL}" = test ] && { [ -e "${ARCHIVE_PATH}" ] || [ -e "${PAYLOAD_PATH}" ]; }; then
+  printf '[webblocks-release-prepare] The private candidate already exists. Retain its original ZIP for retries and promotion.\n' >&2
+  exit 1
+fi
 rm -f "${ARCHIVE_PATH}" "${ARCHIVE_PATH}.sha256" "${PAYLOAD_PATH}"
 
 cd "${ROOT_DIR}"
@@ -47,52 +65,54 @@ fi
 # is not.
 TAG_NAME="v${VERSION}"
 
-if ! git rev-parse -q --verify "refs/tags/${TAG_NAME}" >/dev/null; then
-  printf '[webblocks-release-prepare] No %s tag for this release.\n' "${TAG_NAME}" >&2
-  printf '[webblocks-release-prepare] Tag it before building the artifact:\n' >&2
-  printf '[webblocks-release-prepare]   git tag -a %s -m "webblocks-cms %s"\n' "${TAG_NAME}" "${VERSION}" >&2
-  exit 1
-fi
-
-if [ "$(git cat-file -t "refs/tags/${TAG_NAME}")" != "tag" ]; then
-  printf '[webblocks-release-prepare] %s is a lightweight tag; the release flow uses annotated tags.\n' "${TAG_NAME}" >&2
-  printf '[webblocks-release-prepare]   git tag -f -a %s -m "webblocks-cms %s"\n' "${TAG_NAME}" "${VERSION}" >&2
-  exit 1
-fi
-
-# A published version's source reference is immutable, so moving a tag a remote
-# already carries is not a fix — Packagist rejects the update and every consumer
-# that resolved the old reference disagrees with the new one. It happened to
-# v1.58.1: a correction landed after tagging, and moving the tag was the only
-# route the two checks above left open. Bumping the version is the route.
-# Unreachable remotes are not fatal here, for the same reason the icon manifest
-# check tolerates them: a release must not hinge on the network being up.
-TAG_COMMIT="$(git -C "${ROOT_DIR}" rev-list -1 "${TAG_NAME}")"
-
-for REMOTE in $(git -C "${ROOT_DIR}" remote); do
-  if ! REMOTE_TAG="$(git -C "${ROOT_DIR}" ls-remote "${REMOTE}" "refs/tags/${TAG_NAME}^{}" "refs/tags/${TAG_NAME}" 2>/dev/null)"; then
-    printf '[webblocks-release-prepare] Could not reach %s to compare %s; moved-tag check skipped for that remote.\n' "${REMOTE}" "${TAG_NAME}" >&2
-
-    continue
-  fi
-
-  # An annotated tag answers twice: the tag object, then the commit it peels to.
-  # The peeled line is the one to compare, and the bare line is the fallback for
-  # a lightweight tag on the remote.
-  REMOTE_COMMIT="$(printf '%s\n' "${REMOTE_TAG}" | awk -v peeled="refs/tags/${TAG_NAME}^{}" '$2 == peeled { print $1 }')"
-
-  if [ -z "${REMOTE_COMMIT}" ]; then
-    REMOTE_COMMIT="$(printf '%s\n' "${REMOTE_TAG}" | awk -v bare="refs/tags/${TAG_NAME}" '$2 == bare { print $1 }')"
-  fi
-
-  if [ -n "${REMOTE_COMMIT}" ] && [ "${REMOTE_COMMIT}" != "${TAG_COMMIT}" ]; then
-    printf '[webblocks-release-prepare] %s already exists on %s at a different commit.\n' "${TAG_NAME}" "${REMOTE}" >&2
-    printf '[webblocks-release-prepare]   published: %s\n' "${REMOTE_COMMIT}" >&2
-    printf '[webblocks-release-prepare]   local:     %s\n' "${TAG_COMMIT}" >&2
-    printf '[webblocks-release-prepare] A released version cannot change its contents. Bump the version and tag the fix as a new release.\n' >&2
+if [ "${CHANNEL}" = stable ]; then
+  if ! git rev-parse -q --verify "refs/tags/${TAG_NAME}" >/dev/null; then
+    printf '[webblocks-release-prepare] No %s tag for this release.\n' "${TAG_NAME}" >&2
+    printf '[webblocks-release-prepare] Tag it before building the artifact:\n' >&2
+    printf '[webblocks-release-prepare]   git tag -a %s -m "webblocks-cms %s"\n' "${TAG_NAME}" "${VERSION}" >&2
     exit 1
   fi
-done
+
+  if [ "$(git cat-file -t "refs/tags/${TAG_NAME}")" != "tag" ]; then
+    printf '[webblocks-release-prepare] %s is a lightweight tag; the release flow uses annotated tags.\n' "${TAG_NAME}" >&2
+    printf '[webblocks-release-prepare]   git tag -f -a %s -m "webblocks-cms %s"\n' "${TAG_NAME}" "${VERSION}" >&2
+    exit 1
+  fi
+
+  # A published version's source reference is immutable, so moving a tag a remote
+  # already carries is not a fix — Packagist rejects the update and every consumer
+  # that resolved the old reference disagrees with the new one. It happened to
+  # v1.58.1: a correction landed after tagging, and moving the tag was the only
+  # route the two checks above left open. Bumping the version is the route.
+  # Unreachable remotes are not fatal here, for the same reason the icon manifest
+  # check tolerates them: a release must not hinge on the network being up.
+  TAG_COMMIT="$(git -C "${ROOT_DIR}" rev-list -1 "${TAG_NAME}")"
+
+  for REMOTE in $(git -C "${ROOT_DIR}" remote); do
+    if ! REMOTE_TAG="$(git -C "${ROOT_DIR}" ls-remote "${REMOTE}" "refs/tags/${TAG_NAME}^{}" "refs/tags/${TAG_NAME}" 2>/dev/null)"; then
+      printf '[webblocks-release-prepare] Could not reach %s to compare %s; moved-tag check skipped for that remote.\n' "${REMOTE}" "${TAG_NAME}" >&2
+
+      continue
+    fi
+
+    # An annotated tag answers twice: the tag object, then the commit it peels to.
+    # The peeled line is the one to compare, and the bare line is the fallback for
+    # a lightweight tag on the remote.
+    REMOTE_COMMIT="$(printf '%s\n' "${REMOTE_TAG}" | awk -v peeled="refs/tags/${TAG_NAME}^{}" '$2 == peeled { print $1 }')"
+
+    if [ -z "${REMOTE_COMMIT}" ]; then
+      REMOTE_COMMIT="$(printf '%s\n' "${REMOTE_TAG}" | awk -v bare="refs/tags/${TAG_NAME}" '$2 == bare { print $1 }')"
+    fi
+
+    if [ -n "${REMOTE_COMMIT}" ] && [ "${REMOTE_COMMIT}" != "${TAG_COMMIT}" ]; then
+      printf '[webblocks-release-prepare] %s already exists on %s at a different commit.\n' "${TAG_NAME}" "${REMOTE}" >&2
+      printf '[webblocks-release-prepare]   published: %s\n' "${REMOTE_COMMIT}" >&2
+      printf '[webblocks-release-prepare]   local:     %s\n' "${TAG_COMMIT}" >&2
+      printf '[webblocks-release-prepare] A released version cannot change its contents. Bump the version and tag the fix as a new release.\n' >&2
+      exit 1
+    fi
+  done
+fi
 
 # The icon catalog ships with the package; a release that carries a manifest
 # for some other UI version would install a catalog that does not match the CSS
@@ -126,13 +146,15 @@ fi
 
 rm -f "${ICON_MANIFEST_TEMP}"
 
-TAG_COMMIT="$(git rev-list -n1 "refs/tags/${TAG_NAME}")"
 HEAD_COMMIT="$(git rev-parse HEAD)"
+if [ "${CHANNEL}" = stable ]; then
+  TAG_COMMIT="$(git rev-list -n1 "refs/tags/${TAG_NAME}")"
 
-if [ "${TAG_COMMIT}" != "${HEAD_COMMIT}" ]; then
-  printf '[webblocks-release-prepare] %s points at %s, but the artifact is built from HEAD at %s.\n' "${TAG_NAME}" "${TAG_COMMIT}" "${HEAD_COMMIT}" >&2
-  printf '[webblocks-release-prepare] Move the tag to the commit being released, or release the commit it names.\n' >&2
-  exit 1
+  if [ "${TAG_COMMIT}" != "${HEAD_COMMIT}" ]; then
+    printf '[webblocks-release-prepare] %s points at %s, but the artifact is built from HEAD at %s.\n' "${TAG_NAME}" "${TAG_COMMIT}" "${HEAD_COMMIT}" >&2
+    printf '[webblocks-release-prepare] Move the tag to the commit being released, or release the commit it names.\n' >&2
+    exit 1
+  fi
 fi
 
 bash "${ROOT_DIR}/scripts/release/build-package.sh" "${ARCHIVE_PATH}" HEAD
@@ -192,6 +214,8 @@ $payloadPath = $argv[3];
 $changelogPath = $argv[4];
 $checksum = trim(file_get_contents($archivePath.".sha256"));
 $minimumUpdater = require $argv[5];
+$channel = $argv[6];
+$sourceReference = $channel === "test" ? $argv[7] : "v".$version;
 $minimumClientVersion = $minimumUpdater($version, getenv("WEBBLOCKS_UPDATE_MINIMUM_CLIENT_VERSION") ?: null);
 $notes = releaseNoteItemsForVersion($changelogPath, $version);
 // The first note is the headline (rendered as the summary/trigger); the rest
@@ -202,10 +226,10 @@ $highlights = array_slice($notes, 1);
 
 $payload = [
   "product" => "webblocks-cms",
-  "channel" => "stable",
+  "channel" => $channel,
   "version" => $version,
   "minimum_client_version" => $minimumClientVersion,
-  "source_reference" => "v".$version,
+  "source_reference" => $sourceReference,
   "artifact_filename" => basename($archivePath),
   "artifact_path" => $archivePath,
   "checksum_sha256" => $checksum,
@@ -217,16 +241,20 @@ $payload = [
     "compatibility_notes" => [],
     "operator_notes" => [],
     "technical_notes" => [
-      "Source reference: v".$version,
+      "Source reference: ".$sourceReference,
       "Artifact checksum: ".$checksum,
       "Minimum update client version: ".$minimumClientVersion,
     ],
   ],
 ];
 file_put_contents($payloadPath, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
-' "${VERSION}" "${ARCHIVE_PATH}" "${PAYLOAD_PATH}" "${CHANGELOG_PATH}" "${ROOT_DIR}/scripts/release/minimum-updater.php"
+' "${VERSION}" "${ARCHIVE_PATH}" "${PAYLOAD_PATH}" "${CHANGELOG_PATH}" "${ROOT_DIR}/scripts/release/minimum-updater.php" "${CHANNEL}" "${HEAD_COMMIT}"
 
 printf '[webblocks-release-prepare] Retained artifact root: %s\n' "${RELEASE_ROOT}"
 printf '[webblocks-release-prepare] Artifact: %s\n' "${ARCHIVE_PATH}"
 printf '[webblocks-release-prepare] Payload: %s\n' "${PAYLOAD_PATH}"
-printf '[webblocks-release-prepare] Publish with: composer release:publish-update\n'
+if [ "${CHANNEL}" = test ]; then
+  printf '[webblocks-release-prepare] Publish with: composer release:publish-update -- --channel=test\n'
+else
+  printf '[webblocks-release-prepare] Publish with: composer release:publish-update\n'
+fi
