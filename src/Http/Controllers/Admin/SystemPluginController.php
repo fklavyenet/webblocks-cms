@@ -13,6 +13,7 @@ use Throwable;
 use WebBlocks\Cms\Actions\Plugins\EnablePlugin;
 use WebBlocks\Cms\Actions\Plugins\UpdatePluginAppearance;
 use WebBlocks\Cms\Http\Requests\Admin\PluginAppearanceRequest;
+use WebBlocks\Cms\Policies\Plugins\PluginRecoveryPolicy;
 use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPlugin;
 use WebBlocks\Cms\Support\Plugins\Catalog\CatalogPluginInstallBridge;
@@ -23,6 +24,7 @@ use WebBlocks\Cms\Support\Plugins\PluginAppearance;
 use WebBlocks\Cms\Support\Plugins\PluginCompatibility;
 use WebBlocks\Cms\Support\Plugins\PluginDatabaseSetup;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
+use WebBlocks\Cms\Support\Plugins\PluginException;
 use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginMigrationRunner;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
@@ -51,14 +53,16 @@ class SystemPluginController extends Controller
 
   public function index(): View
   {
-    $canInstallPlugins = (bool) request()->user()?->isSuperAdmin();
+    $user = request()->user();
+    $canInstallPlugins = (bool) $user?->isSuperAdmin();
+    $canRestore = app(PluginRecoveryPolicy::class)->manage($user);
     $updateStatus = $canInstallPlugins ? $this->catalogUpdates->refreshIfDue() : null;
 
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.index', [
       'title' => 'Plugins',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
       'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Plugins'),
-      'plugins' => $this->pluginSummaries($updateStatus['updates'] ?? []),
+      'plugins' => $this->pluginSummaries($updateStatus['updates'] ?? [], $canRestore),
       'canInstallPlugins' => $canInstallPlugins,
       'pluginCatalogUpdateStatus' => $updateStatus,
     ]);
@@ -325,12 +329,33 @@ class SystemPluginController extends Controller
     return null;
   }
 
-  private function pluginSummaries(array $catalogUpdatesByHandle = []): array
+  private function pluginSummaries(array $catalogUpdatesByHandle, bool $canRestore): array
   {
-    return array_map(
-      fn (array $plugin): array => $this->decorateSummary($plugin, $catalogUpdatesByHandle),
-      $this->plugins->summaries()
-    );
+    return array_map(function (array $plugin) use ($catalogUpdatesByHandle, $canRestore): array {
+      $summary = $this->decorateSummary($plugin, $catalogUpdatesByHandle);
+      $summary['restore_version'] = $canRestore && $summary['manual_upload']
+        ? $this->restoreVersion($summary['handle'], $summary['version'])
+        : null;
+
+      return $summary;
+    }, $this->plugins->summaries());
+  }
+
+  private function restoreVersion(string $handle, ?string $currentVersion): ?string
+  {
+    $previous = $this->installedPlugins->previous($handle);
+    $version = $previous['version'] ?? null;
+
+    if (($previous['rollback_safe'] ?? false) !== true || ! is_string($version) || $version === $currentVersion
+      || ! is_dir($this->installedPlugins->rootPath())) {
+      return null;
+    }
+
+    try {
+      return $this->installedPlugins->findVersion($handle, $version) === null ? null : $version;
+    } catch (PluginException|RuntimeException) {
+      return null;
+    }
   }
 
   /**

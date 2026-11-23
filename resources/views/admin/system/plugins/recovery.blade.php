@@ -95,6 +95,7 @@
                                                 'id' => $modalId,
                                                 'action' => route('admin.plugins.recovery.update', $plugin['handle']),
                                                 'operation' => $operation,
+                                                'expectedVersion' => $operation === 'restore' ? $previous['version'] : null,
                                                 'title' => $label,
                                                 'description' => $recoveryText('confirm_'.$operation, $identity),
                                                 'cancelLabel' => $recoveryTranslator->admin('common.cancel', $recoveryLocale),

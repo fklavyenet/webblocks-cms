@@ -15,6 +15,9 @@ class PluginRecoveryRequest extends FormRequest
 
   public function rules(): array
   {
-    return ['operation' => ['required', Rule::in(['disable', 'restore'])]];
+    return [
+      'operation' => ['required', Rule::in(['disable', 'restore'])],
+      'expected_version' => ['sometimes', 'required', 'string'],
+    ];
   }
 }

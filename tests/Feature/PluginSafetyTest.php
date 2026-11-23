@@ -13,7 +13,6 @@ use Illuminate\Support\Str;
 use Monolog\Handler\NullHandler;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
-use WebBlocks\Cms\Actions\Plugins\RecoverPlugin;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginDefinitionFactory;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginBootProbe;
@@ -98,7 +97,15 @@ class PluginSafetyTest extends TestCase
       ->assertSee('Restore 1.0.0')
       ->assertSee('aria-controls="extension-recovery-restore-safety-example"', false)
       ->assertSee('name="operation" value="restore"', false);
-    app(RecoverPlugin::class)->handle('safety-example', 'restore');
+    Route::get('/webadmin/system/plugins', fn () => 'Plugins')->name('admin.system.plugins.index');
+    $restore = '/webadmin/plugin-recovery/safety-example?return_to=plugins';
+
+    $this->post($restore, ['operation' => 'restore', 'expected_version' => '0.9.0'])
+      ->assertRedirect('/webadmin/system/plugins')->assertSessionHasErrors('plugin');
+    $this->assertSame('2.0.0', $repository->enabledVersion('safety-example'));
+
+    $this->post($restore, ['operation' => 'restore', 'expected_version' => '1.0.0'])
+      ->assertRedirect('/webadmin/system/plugins')->assertSessionHas('status', 'Recovery action completed.');
     $this->assertSame('1.0.0', $repository->enabledVersion('safety-example'));
     $this->assertSame('1.0.0', $repository->installed()[0]['manifest']['version']);
     $repository->uninstall('safety-example', '1.0.0');

@@ -5,6 +5,7 @@ namespace WebBlocks\Cms\Tests\Feature;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,7 @@ use WebBlocks\Cms\Support\Admin\PanelNotificationSource;
 use WebBlocks\Cms\Support\Admin\PanelNotificationSources;
 use WebBlocks\Cms\Support\ContactMessages\ContactMessageIndexState;
 use WebBlocks\Cms\Support\Plugins\Catalog\PluginCatalogUpdates;
+use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
 use WebBlocks\Cms\Support\Plugins\PluginAccessResolver;
 use WebBlocks\Cms\Support\Plugins\PluginDefinition;
 use WebBlocks\Cms\Support\Plugins\PluginPermission;
@@ -215,6 +217,45 @@ class PanelNotificationsTest extends TestCase
     $query->shouldReceive('pendingCommentsForUser')->once()->andReturn(0);
     $query->shouldReceive('pluginItemsForUser')->once()->andReturn([]);
     (new PanelNotificationsComposer($query, app(PluginCatalogUpdates::class)))->compose($view);
+  }
+
+  #[Test]
+  public function plugins_list_offers_restore_when_a_safe_previous_package_is_available(): void
+  {
+    $this->withoutMiddleware(RedirectIfNotInstalled::class);
+    $site = $this->site('plugin-restore');
+    $root = sys_get_temp_dir().'/wb-plugin-restore-list-'.bin2hex(random_bytes(8));
+    $previous = $root.'/restore-example/1.0.0';
+    File::ensureDirectoryExists($previous);
+    try {
+      File::put($previous.'/webblocks-plugin.json', json_encode(['handle' => 'restore-example', 'version' => '1.0.0']));
+      config([
+        'webblocks-plugins.install.root' => $root,
+        'webblocks-plugins.catalog.base_url' => 'https://catalog.example.test',
+      ]);
+      Http::fake(['https://catalog.example.test/api/plugins/restore-example/latest*' => Http::response(status: 404)]);
+      app(PluginRegistry::class)->register(PluginDefinition::make('restore-example')->label('Restore Example')->version('2.0.0')
+        ->source(PluginDefinition::MANUAL_UPLOAD_SOURCE)->installPath($root.'/restore-example/2.0.0'));
+      $repository = app(InstalledPluginRepository::class);
+      $list = route('admin.system.plugins.index');
+      $trigger = 'data-wb-target="#plugin-restore-restore-example"';
+
+      $this->actingAs($this->user([$site->id]))->get($list)->assertForbidden();
+      $this->actingAs($this->user([$site->id], super: true));
+      $repository->recordPrevious('restore-example', '1.0.0', '2.0.0', false);
+      $this->get($list)->assertOk()->assertDontSee($trigger, false);
+
+      $repository->recordPrevious('restore-example', '1.0.0', '2.0.0', true);
+      $this->get($list)->assertOk()->assertSee($trigger, false)
+        ->assertSee('aria-label="Restore 1.0.0 · Restore Example"', false)
+        ->assertSee('name="expected_version" value="1.0.0"', false)
+        ->assertSee('action="'.route('admin.plugins.recovery.update', ['plugin' => 'restore-example', 'return_to' => 'plugins']).'"', false);
+
+      File::delete($previous.'/webblocks-plugin.json');
+      $this->get($list)->assertOk()->assertDontSee($trigger, false);
+    } finally {
+      File::deleteDirectory($root);
+    }
   }
 
   #[Test]

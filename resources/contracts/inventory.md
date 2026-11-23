@@ -1478,15 +1478,20 @@ disabled before either entry point removes its code and published assets.
 The panel requires Super admin access and the API requires `plugins.uninstall`.
 Plugin-owned database tables are preserved.
 
+From 1.144.17, Super admins can use **Restore** in the **Extensions → Plugins**
+list when a different retained version is available and marked safe to restore. The
+confirmation identifies the plugin and target version. The restore request
+uses the isolated recovery route and returns its result to the regular list.
+If the retained version changes before submission, the requested restore stops.
+
 `/webadmin/plugin-recovery` and its login form load without installed plugin source,
-routes, or commands. From 1.144.16, Super admins can open it through
-Extensions → Extensions Recovery. The screen uses CMS-owned panel components,
-lists quarantined plugins first, shows available diagnostic references, and
-uses confirmation dialogs for disable and safe restore. The direct URL stays
-available independently of normal panel pages. Existing CMS login controls,
-active admin-access and Super admin authorization, and CSRF
-protection apply. Recovery can disable a plugin or restore the retained package when
-no migration ran, after another startup probe. A restore also republishes its assets.
+routes, or commands. The direct URL provides emergency access independently of
+normal panel pages. It lists quarantined plugins first, shows available
+diagnostic references, and uses confirmation dialogs for disable and safe
+restore. Existing CMS login controls, active admin-access and Super admin
+authorization, and CSRF protection apply. Recovery can disable a plugin or
+restore the retained package when no migration ran, after another startup
+probe. A restore also republishes its assets.
 This is recovery for CMS-managed packages; it does not isolate arbitrary host providers
 or sandbox executable PHP. Uncatchable process termination still requires the separate
 recovery request rather than an in-process error handler.

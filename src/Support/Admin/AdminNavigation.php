@@ -4,7 +4,6 @@ namespace WebBlocks\Cms\Support\Admin;
 
 use WebBlocks\Cms\Policies\CmsNavigationPolicy;
 use WebBlocks\Cms\Policies\JobPolicy;
-use WebBlocks\Cms\Policies\Plugins\PluginRecoveryPolicy;
 use WebBlocks\Cms\Support\Plugins\PluginSidebarGroups;
 use WebBlocks\Cms\Support\Theme\PublicThemes;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
@@ -112,12 +111,6 @@ final class AdminNavigation
                         ...($user->can('manage-panel-languages') ? [[
                             'label' => $adminTranslator->get('panel-languages.language_packs', $adminLocale), 'route' => 'admin.system.panel-languages.index',
                             'active' => ['admin.system.panel-languages.*'], 'icon' => 'wb-icon-languages',
-                        ]] : []),
-                        ...(app(PluginRecoveryPolicy::class)->manage($user) ? [[
-                            'label' => $adminText('plugin_recovery.title'),
-                            'route' => 'admin.plugins.recovery.index',
-                            'active' => ['admin.plugins.recovery.*'],
-                            'icon' => 'wb-icon-shield-check',
                         ]] : []),
                     ],
                 ];

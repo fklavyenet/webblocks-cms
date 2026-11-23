@@ -1,7 +1,10 @@
 <dialog class="wb-modal" id="{{ $id }}" aria-labelledby="{{ $id }}-title" aria-describedby="{{ $id }}-description">
-    <form class="wb-modal-dialog" method="POST" action="{{ $action }}">
+    <form class="wb-modal-dialog" method="POST" action="{{ $action }}" @if ($operation === 'restore') data-wb-modal-submit-progress="restoring" @endif>
         @csrf
         <input type="hidden" name="operation" value="{{ $operation }}">
+        @isset($expectedVersion)
+            <input type="hidden" name="expected_version" value="{{ $expectedVersion }}">
+        @endisset
 
         <div class="wb-modal-header">
             <h2 class="wb-modal-title" id="{{ $id }}-title">{{ $title }}</h2>

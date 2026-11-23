@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Http\Controllers\Admin;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
@@ -30,18 +31,22 @@ class PluginRecoveryController
 
   public function update(PluginRecoveryRequest $request, string $plugin, RecoverPlugin $recover): RedirectResponse
   {
-    $operation = new ExtensionOperation('plugin', $request->validated('operation'), 'activation');
+    $operationName = $request->validated('operation');
+    $fromPlugins = $operationName === 'restore' && $request->query('return_to') === 'plugins'
+      && Route::has('admin.system.plugins.index');
+    $destination = $fromPlugins ? 'admin.system.plugins.index' : 'admin.plugins.recovery.index';
+    $operation = new ExtensionOperation('plugin', $operationName, 'activation');
     $operation->identify($plugin);
     try {
       $installed = collect(app(InstalledPluginRepository::class)->installed())->firstWhere('manifest.handle', $plugin);
       $operation->identify($plugin, $installed['manifest']['version'] ?? null, $installed['manifest']['label'] ?? null);
-      $recover->handle($plugin, $request->validated('operation'), $operation);
+      $recover->handle($plugin, $operationName, $operation, $request->validated('expected_version'));
     } catch (HttpExceptionInterface $exception) {
       throw $exception;
     } catch (Throwable) {
-      return back()->withErrors(['plugin' => $operation->fail()]);
+      return ($fromPlugins ? to_route($destination) : back())->withErrors(['plugin' => $operation->fail()]);
     }
 
-    return to_route('admin.plugins.recovery.index')->with('status', __('webblocks-cms::admin.plugin_recovery.saved'));
+    return to_route($destination)->with('status', __('webblocks-cms::admin.plugin_recovery.saved'));
   }
 }

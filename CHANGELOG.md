@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.17
+
+- Restore a retained plugin version from the Actions column in **Extensions → Plugins**. The confirmation shows the target version, and the result appears in the same list.
+- Keep emergency plugin recovery available at `/webadmin/plugin-recovery` when the regular panel cannot open.
+
 ## 1.144.16
 
 - Open Extensions Recovery under Extensions in Webadmin. See quarantined plugins first in a compact list and confirm before disabling a plugin or restoring its previous version. The recovery screen still opens without loading installed plugin code.

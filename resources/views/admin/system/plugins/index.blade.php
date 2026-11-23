@@ -5,6 +5,7 @@
     $systemPluginsIndexLocale = app(AdminLocaleResolver::class)->locale();
     $systemPluginsIndexTranslator = app(CmsTranslator::class);
     $systemPluginsIndexText = static fn (string $key, array $replace = []) => $systemPluginsIndexTranslator->admin('system_plugins_index.'.$key, $systemPluginsIndexLocale, $replace);
+    $recoveryText = static fn (string $key, array $replace = []) => $systemPluginsIndexTranslator->admin('plugin_recovery.'.$key, $systemPluginsIndexLocale, $replace);
     $catalogCheckResult = session('plugin_catalog_check_result');
 @endphp
 
@@ -159,6 +160,29 @@
                                                 <button type="button" class="wb-action-btn" title="{{ $systemPluginsIndexText('update_from_catalog') }}" aria-label="{{ $systemPluginsIndexText('update_from_catalog') }}" data-wb-toggle="modal" data-wb-target="#{{ $updateModalId }}">
                                                     <i class="wb-icon wb-icon-rotate-cw" aria-hidden="true"></i>
                                                 </button>
+                                            @endif
+
+                                            @if ($plugin['restore_version'] !== null)
+                                                @php
+                                                    $restoreModalId = 'plugin-restore-'.$plugin['handle'];
+                                                    $restoreLabel = $recoveryText('restore', ['version' => $plugin['restore_version']]);
+                                                @endphp
+                                                <button type="button" class="wb-action-btn" data-wb-toggle="modal" data-wb-target="#{{ $restoreModalId }}"
+                                                        aria-controls="{{ $restoreModalId }}" aria-haspopup="dialog" data-wb-tooltip="{{ $restoreLabel }}"
+                                                        aria-label="{{ $restoreLabel }} · {{ $plugin['label'] }}">
+                                                    <i class="wb-icon wb-icon-rotate-ccw" aria-hidden="true"></i>
+                                                </button>
+                                                @push('overlays')
+                                                    @include('webblocks-cms::admin.system.plugins.partials.recovery-confirmation', [
+                                                        'id' => $restoreModalId,
+                                                        'action' => route('admin.plugins.recovery.update', ['plugin' => $plugin['handle'], 'return_to' => 'plugins']),
+                                                        'operation' => 'restore',
+                                                        'expectedVersion' => $plugin['restore_version'],
+                                                        'title' => $restoreLabel,
+                                                        'description' => $recoveryText('confirm_restore', ['plugin' => $plugin['label'], 'version' => $plugin['restore_version']]),
+                                                        'cancelLabel' => $systemPluginsIndexTranslator->admin('common.cancel', $systemPluginsIndexLocale),
+                                                    ])
+                                                @endpush
                                             @endif
 
                                             @if ($plugin['can_enable'])

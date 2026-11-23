@@ -12,7 +12,7 @@ use WebBlocks\Cms\Support\Plugins\PluginRuntimeRefresher;
 
 class RecoverPlugin
 {
-  public function handle(string $handle, string $operation, ?ExtensionOperation $diagnostic = null): void
+  public function handle(string $handle, string $operation, ?ExtensionOperation $diagnostic = null, ?string $expectedVersion = null): void
   {
     $plugins = app(InstalledPluginRepository::class);
     $lock = Cache::lock('webblocks-plugin-install-'.hash('sha256', $plugins->rootPath().'/'.$handle), 180);
@@ -32,7 +32,7 @@ class RecoverPlugin
       $previous = $plugins->previous($handle);
       $version = is_string($previous['version'] ?? null) ? $previous['version'] : null;
       $diagnostic?->identify($handle, $version);
-      if (($previous['rollback_safe'] ?? false) !== true || $version === null) {
+      if (($previous['rollback_safe'] ?? false) !== true || $version === null || ($expectedVersion !== null && $version !== $expectedVersion)) {
         throw new RuntimeException(__('webblocks-cms::admin.plugin_recovery.restore_unsafe'));
       }
       $installed = $plugins->findVersion($handle, $version);
