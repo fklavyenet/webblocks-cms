@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.144.14
+
+- Embed WebBlocks Two-Factor 1.0.0 from its dedicated repository and record the exact source revision in the CMS package.
+
 ## 1.144.13
 
 - Package email two-step verification in WebBlocks Two-Factor, a shared Laravel module. Existing verified email addresses, active verification codes, recovery codes, and role policies carry over when updating.

@@ -206,23 +206,23 @@ See the canonical plugin development guide for the recipe contract.
 
 ## Embedding WebBlocks Two-Factor
 
-The WebBlocks Two-Factor source lives in `src/Support/Auth/Module`. Version
-1.0.0 uses email as its verification channel. `TwoFactor::VERSION` identifies
-the module independently of the CMS release.
-For a consumer update, select the CMS source revision containing the intended
-module version and export it to a new directory under the consumer's namespace.
+The independent `webblocks-two-factor` Git repository is the source of the
+runtime. CMS ships a generated copy in `src/Support/Auth/Module` under its
+existing Composer autoload prefix. `TwoFactor::VERSION` identifies the
+module independently of the CMS release.
+
+From the module repository, select an annotated release tag and point the
+exporter at the CMS module directory.
 
 ```sh
-php scripts/embed-two-factor.php 1.0.0 'App\Support\TwoFactor\Module' /tmp/two-factor-module
+composer embed:sync -- v1.0.0 /path/to/webblocks-cms/src/Support/Auth/Module 'WebBlocks\Cms\Support\Auth\Module'
+composer embed:check -- v1.0.0 /path/to/webblocks-cms/src/Support/Auth/Module 'WebBlocks\Cms\Support\Auth\Module'
 ```
 
-The export includes the license and a `module.json` manifest with the version,
-namespace and SHA-256 hashes of the source and generated files. Review the
-generated diff before replacing the consumer's embedded directory. To check
-its contents, export the same source revision and namespace to a new directory
-and compare it with the installed copy. Keep product adapters outside that
-directory. CMS builds include the source directly under the existing Composer
-autoload prefix.
+The embedded `module.json` records the source tag, commit, namespace and
+SHA-256 hashes. Review the generated diff and run the CMS authentication and
+inventory checks before committing a synchronization. Keep CMS adapters
+outside the generated directory. Package builds use the committed copy.
 
 | Module API | Consumer integration |
 | --- | --- |

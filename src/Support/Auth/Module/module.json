@@ -1,0 +1,30 @@
+{
+    "schema": 2,
+    "source_package": "fklavyenet/webblocks-two-factor",
+    "source_tag": "v1.0.0",
+    "source_commit": "bc1c1b997a00f2009eca035a6ac89449c69e426f",
+    "module": "two-factor",
+    "name": "WebBlocks Two-Factor",
+    "version": "1.0.0",
+    "namespace": "WebBlocks\\Cms\\Support\\Auth\\Module",
+    "aggregate_sha256": "6f4a8a56f81f9d9bf71cb25b4a294fb5d4c53bbc5ff52c8ccba20f66654dec79",
+    "source_files": {
+        "AccountState.php": "6fcce5c27b489ff7e95a0fe94fd1b774978ec6382b9d79f2e9abecae015abae4",
+        "Credentials.php": "464d9f4cbd46ae197f519408385bd53a6a6c5dbdb8f5b13ae1d43c84a3a3df33",
+        "EmailCodes.php": "c4c7ae0f78288f0cc81ac26b6bbe489f8d62d1d83f93abdb31c24b57a1a40147",
+        "Schema.php": "ceb9a2e7e4d5d71e6c3d0def7860fabfdfa58a923543e1c1f56f0f79b455ee05",
+        "Storage.php": "f48bfa319a091bba9cfb55dd4fe8ed6d3f6a1dd40b9ccfe2f257d49343730aa5",
+        "TwoFactor.php": "e2bbcf838e3646d0ca4a50b63285f715740c985bb0428224a09a8ea6c13fc0f3",
+        "VerificationSession.php": "079b0d61735b94f0151f0278dafd8be0a7e660b32c1dff1b61f580a6a43fbaea"
+    },
+    "files": {
+        "AccountState.php": "3e00c138339f1f18e6b0b719a45a1f7625c3b32d6c5ad635fca45e77c6a7b348",
+        "Credentials.php": "9c32483f491357ab46a4f46da8c0aa507d5e8af6607e0107ec730249c538c8de",
+        "EmailCodes.php": "572740efb708dc468e4b282d643611dbfe5adf835f7f9372fbf4d78a77bd419f",
+        "LICENSE": "e7cd6ec67675f49c073c3ff48c80c3456056d8ea4d443d3c766320f0e0688db9",
+        "Schema.php": "84a52aef03248d61e4c3344f9691f99dc9ef17f265d5a96c4845de40f4ec07a3",
+        "Storage.php": "3c4f2c36d6e48c9168137bf7d1660d49ffd6281836cd506f09db57321970e43f",
+        "TwoFactor.php": "e48bffef36b5ded4a90f824c26e50562f0baccbc09408ccfa52a6334d317bb7f",
+        "VerificationSession.php": "13393d2fea04bfed35f90f45332cd7007d96fc0c628a80b802e418c355d21912"
+    }
+}
