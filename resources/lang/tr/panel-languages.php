@@ -9,6 +9,7 @@ return [
   'actions' => 'İşlemler',
   'unavailable' => 'Kaydedilen panel dili şu anda kullanılamıyor. Sistemin varsayılan dili kullanılıyor.',
   'token_scope' => 'Panel dillerini yönetmek için bir Super admine ait, kurulum genelinde geçerli bir sistem tokenı gerekir.',
+  'catalog_title' => 'Dil paketi kataloğu',
   'extensions_browse' => 'Dil paketlerine göz at',
   'extensions_for_cms' => 'CMS :version için dil paketleri',
   'extensions_empty' => 'Bu CMS sürümüyle uyumlu dil paketi bulunamadı.',

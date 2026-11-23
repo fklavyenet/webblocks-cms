@@ -245,7 +245,8 @@ final class PublicThemesTest extends TestCase
 
     $this->post(route('admin.system.themes.store'), ['package' => $local])->assertRedirect();
     $localChecksum = hash_file('sha256', $local->getPathname());
-    $this->get($catalog)->assertOk()->assertSee('Catalog layouts')->assertSee('columns, default')
+    $this->get($catalog)->assertOk()->assertSee('wb-cms-catalog-card', false)->assertSee('wb-icon-palette', false)
+      ->assertSee('aria-label="Catalog layouts"', false)->assertSee('>columns</span>', false)->assertSee('>default</span>', false)
       ->assertSee('Different package installed')->assertDontSee('>Installed</span>', false)
       ->assertDontSee('aria-label="Install Editorial"', false);
 

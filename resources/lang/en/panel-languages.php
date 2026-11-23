@@ -9,6 +9,7 @@ return [
   'actions' => 'Actions',
   'unavailable' => 'The saved panel language is currently unavailable. The system default is in use.',
   'token_scope' => 'Panel languages require an installation-wide system token owned by a Super admin.',
+  'catalog_title' => 'Language pack catalog',
   'extensions_browse' => 'Browse language packs',
   'extensions_for_cms' => 'Language packs for CMS :version',
   'extensions_empty' => 'No compatible language packs are available for this CMS version.',

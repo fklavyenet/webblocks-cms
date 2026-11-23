@@ -9,6 +9,7 @@ return [
   'actions' => 'Actions',
   'unavailable' => 'La langue enregistrée pour le panneau est indisponible. La langue par défaut du système est utilisée.',
   'token_scope' => 'Les langues du panneau nécessitent un jeton système valable pour toute l’installation et appartenant à un super administrateur.',
+  'catalog_title' => 'Catalogue des packs de langue',
   'extensions_browse' => 'Parcourir les packs de langue',
   'extensions_for_cms' => 'Packs de langue pour CMS :version',
   'extensions_empty' => 'Aucun pack de langue compatible avec cette version du CMS.',

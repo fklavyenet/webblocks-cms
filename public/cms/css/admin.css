@@ -4,18 +4,18 @@
  |--------------------------------------------------------------------------
  */
 
-.wb-cms-plugin-catalog-grid {
+.wb-cms-catalog-grid {
     /* Keep cards at least 280px wide when possible. A fifth track would exceed 100%. */
     grid-template-columns: repeat(auto-fill, minmax(min(100%, max(17.5rem, 21%)), 1fr));
     gap: var(--wb-s4);
 }
 
-.wb-cms-plugin-catalog-card {
+.wb-cms-catalog-card {
     min-inline-size: 0;
     overflow-wrap: anywhere;
 }
 
-.wb-cms-plugin-catalog-card > .wb-card-media {
+.wb-cms-catalog-card > .wb-card-media {
     inline-size: auto;
     margin: var(--wb-s4) var(--wb-s4) 0;
     border-radius: var(--wb-r-md);
@@ -23,51 +23,62 @@
     overflow: hidden;
 }
 
-.wb-cms-plugin-catalog-card > .wb-card-media img {
+.wb-cms-catalog-card > .wb-card-media img {
     object-fit: cover;
 }
 
-.wb-cms-plugin-catalog-card > .wb-card-body {
+.wb-cms-catalog-card > .wb-cms-catalog-cover {
+    display: grid;
+    place-items: center;
+    color: var(--wb-accent-text);
+}
+
+.wb-cms-catalog-cover > .wb-icon {
+    inline-size: 3rem;
+    block-size: 3rem;
+}
+
+.wb-cms-catalog-card > .wb-card-body {
     padding: var(--wb-s3) var(--wb-s4) var(--wb-s4);
 }
 
-.wb-cms-plugin-catalog-card > .wb-card-footer {
+.wb-cms-catalog-card > .wb-card-footer {
     padding: var(--wb-s3) var(--wb-s4);
 }
 
-.wb-cms-plugin-catalog-heading {
+.wb-cms-catalog-heading {
     align-items: start;
 }
 
-.wb-cms-plugin-catalog-heading > .wb-card-title {
+.wb-cms-catalog-heading > .wb-card-title {
     flex: 1 1 10rem;
     font-size: var(--wb-font-size-lg);
     font-weight: 700;
 }
 
-.wb-cms-plugin-catalog-heading > .wb-card-title a {
+.wb-cms-catalog-heading > .wb-card-title a {
     color: var(--wb-text);
 }
 
-.wb-cms-plugin-catalog-heading > .wb-card-title a:hover,
-.wb-cms-plugin-catalog-heading > .wb-card-title a:focus-visible {
+.wb-cms-catalog-heading > .wb-card-title a:hover,
+.wb-cms-catalog-heading > .wb-card-title a:focus-visible {
     color: var(--wb-primary);
     text-decoration: underline;
 }
 
-.wb-cms-plugin-catalog-card .wb-badge {
+.wb-cms-catalog-card .wb-badge {
     max-inline-size: 100%;
     white-space: normal;
 }
 
-.wb-cms-plugin-catalog-card .wb-cms-plugin-catalog-meta {
+.wb-cms-catalog-card .wb-cms-catalog-meta {
     margin-block-start: auto;
     padding-block-start: var(--wb-s2);
     row-gap: var(--wb-s1);
     column-gap: var(--wb-s3);
 }
 
-.wb-cms-plugin-catalog-meta > :first-child {
+.wb-cms-catalog-meta > :first-child:not(.wb-status-pill) {
     background: transparent;
 }
 

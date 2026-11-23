@@ -9,6 +9,7 @@ return [
   'actions' => 'Aktionen',
   'unavailable' => 'Die gespeicherte Sprache der Verwaltung ist derzeit nicht verfügbar. Die Standardsprache des Systems wird verwendet.',
   'token_scope' => 'Für die Verwaltung der Sprachen ist ein installationsweiter System-Token erforderlich, der einem Superadministrator gehört.',
+  'catalog_title' => 'Sprachpaket-Katalog',
   'extensions_browse' => 'Sprachpakete durchsuchen',
   'extensions_for_cms' => 'Sprachpakete für CMS :version',
   'extensions_empty' => 'Für diese CMS-Version sind keine kompatiblen Sprachpakete verfügbar.',

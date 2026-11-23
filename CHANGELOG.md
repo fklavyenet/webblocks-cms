@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.144.21
+
+- Browse public themes and language packs using the same card layout as the Plugin catalog. Find release information and installation actions on each card.
+
 ## 1.144.20
 
 - Use matching Installed and Browse labels across Plugins, Public themes, and Language packs. Package names open details.

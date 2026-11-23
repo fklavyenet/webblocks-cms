@@ -54,6 +54,29 @@ final class ExtensionsCatalogTest extends TestCase
     Http::assertSentCount($themeUrl === null ? 1 : 2);
   }
 
+  public function test_plugin_catalog_cards_keep_artwork_and_the_detail_action(): void
+  {
+    $catalog = 'https://catalog.example.test';
+    $cover = $catalog.'/storage/catalog-media/example/cover.jpg';
+    config(['webblocks-plugins.catalog.base_url' => $catalog]);
+    Http::fake([
+      $catalog.'/api/plugins?*' => Http::response(['data' => [[
+        'handle' => 'example',
+        'label' => 'Example plugin',
+        'summary' => 'Support site visitors.',
+        'artwork' => ['card_url' => $cover, 'alt' => 'Plugin artwork'],
+      ]]]),
+    ]);
+    $this->withoutMiddleware();
+    view()->share('errors', new ViewErrorBag);
+
+    $this->get(route('admin.plugins.catalog.index'))->assertOk()
+      ->assertSee('wb-cms-catalog-grid', false)
+      ->assertSeeInOrder(['src="'.$cover.'"', 'Example plugin', 'Support site visitors.', 'View plugin'], false)
+      ->assertSee('alt="Plugin artwork"', false)
+      ->assertSee('href="'.route('admin.plugins.catalog.show', 'example').'"', false);
+  }
+
   public function test_plugin_details_show_installation_information_beside_the_catalog_slider(): void
   {
     $catalog = 'https://catalog.example.test';

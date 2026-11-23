@@ -9,6 +9,7 @@ return [
   'actions' => 'Acciones',
   'unavailable' => 'El idioma del panel guardado no está disponible en este momento. Se usa el idioma predeterminado del sistema.',
   'token_scope' => 'Los idiomas del panel requieren un token de sistema válido para toda la instalación y perteneciente a un superadministrador.',
+  'catalog_title' => 'Catálogo de paquetes de idioma',
   'extensions_browse' => 'Explorar paquetes de idioma',
   'extensions_for_cms' => 'Paquetes de idioma para CMS :version',
   'extensions_empty' => 'No hay paquetes de idioma compatibles con esta versión de CMS.',

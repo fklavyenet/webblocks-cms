@@ -90,7 +90,9 @@ final class LanguagePackCatalogTest extends TestCase
       $release = $this->release('native', $archive);
       $this->serve($release, $archive);
 
-      $this->get($this->browseUrl())->assertOk()->assertSee('Русский')->assertSee('Install');
+      $this->get($this->browseUrl())->assertOk()->assertSee('Language pack catalog')
+        ->assertSee('wb-cms-catalog-card', false)->assertSee('wb-icon-languages', false)
+        ->assertSeeInOrder(['Русский', 'Latest release: 1.0.0', 'aria-label="Install · Русский"'], false);
       $this->post($this->browseUrl(), $this->selection($release))
         ->assertRedirect(route('admin.system.panel-languages.index'));
       $this->get(route('admin.system.panel-languages.index'))

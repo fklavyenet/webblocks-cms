@@ -29,7 +29,7 @@
             </div>
         </div>
     @else
-        <div class="wb-grid wb-cms-plugin-catalog-grid">
+        <div class="wb-grid wb-cms-catalog-grid">
             @foreach ($catalog->plugins as $plugin)
                 @php
                     $compatibility = $plugin->compatibilityStatus ?? ($plugin->latestCompatibleRelease ? 'compatible' : 'unknown');
@@ -43,35 +43,30 @@
                         : $pluginCatalogText('free');
                     $detailUrl = route('admin.plugins.catalog.show', $plugin->handle);
                 @endphp
-                <article class="wb-card wb-cms-plugin-catalog-card">
-                    @if ($plugin->artworkUrl)
-                        <a href="{{ $detailUrl }}" class="wb-card-media wb-card-media--aspect-wide">
-                            <img src="{{ $plugin->artworkUrl }}" alt="{{ $plugin->artworkAlt ?: $plugin->label }}" loading="lazy">
-                        </a>
+                @component('webblocks-cms::admin.partials.extension-catalog-card', [
+                    'name' => $plugin->label,
+                    'detailUrl' => $detailUrl,
+                    'artworkUrl' => $plugin->artworkUrl,
+                    'artworkAlt' => $plugin->artworkAlt ?: $plugin->label,
+                    'titleBadge' => $price,
+                ])
+                    <p class="wb-m-0">{{ $plugin->summary ?? $pluginCatalogText('not_listed') }}</p>
+                    @if (count($plugin->categories) > 0)
+                        <div class="wb-cluster wb-cluster-2">
+                            @foreach ($plugin->categories as $category)
+                                <span class="wb-badge">{{ $category['name'] }}</span>
+                            @endforeach
+                        </div>
                     @endif
-                    <div class="wb-card-body wb-stack wb-stack-2">
-                        <div class="wb-cluster wb-cluster-between wb-cluster-2 wb-cms-plugin-catalog-heading">
-                            <h2 class="wb-card-title"><a href="{{ $detailUrl }}">{{ $plugin->label }}</a></h2>
-                            <span class="wb-badge">{{ $price }}</span>
-                        </div>
-                        <p class="wb-m-0">{{ $plugin->summary ?? $pluginCatalogText('not_listed') }}</p>
-                        @if (count($plugin->categories) > 0)
-                            <div class="wb-cluster wb-cluster-2">
-                                @foreach ($plugin->categories as $category)
-                                    <span class="wb-badge">{{ $category['name'] }}</span>
-                                @endforeach
-                            </div>
-                        @endif
-                        <div class="wb-cluster wb-cluster-2 wb-text-sm wb-text-muted wb-cms-plugin-catalog-meta">
-                            <span>{{ $pluginCatalogText('latest_release', ['version' => $plugin->latestCompatibleRelease?->version ?? $pluginCatalogText('not_listed')]) }}</span>
-                            <span class="{{ $compatibilityClass }}">{{ ucfirst($compatibility) }}</span>
-                            <span>{{ $pluginCatalogText('downloads_count', ['count' => number_format($plugin->downloadsTotal)]) }}</span>
-                        </div>
-                    </div>
-                    <div class="wb-card-footer">
+                    @slot('metadata')
+                        <span>{{ $pluginCatalogText('latest_release', ['version' => $plugin->latestCompatibleRelease?->version ?? $pluginCatalogText('not_listed')]) }}</span>
+                        <span class="{{ $compatibilityClass }}">{{ ucfirst($compatibility) }}</span>
+                        <span>{{ $pluginCatalogText('downloads_count', ['count' => number_format($plugin->downloadsTotal)]) }}</span>
+                    @endslot
+                    @slot('actions')
                         <a href="{{ $detailUrl }}" class="wb-btn wb-btn-secondary wb-w-full">{{ $pluginCatalogText('view_plugin') }}</a>
-                    </div>
-                </article>
+                    @endslot
+                @endcomponent
             @endforeach
         </div>
     @endif

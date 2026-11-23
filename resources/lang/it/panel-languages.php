@@ -9,6 +9,7 @@ return [
   'actions' => 'Azioni',
   'unavailable' => 'La lingua salvata per il pannello non è disponibile. È in uso quella predefinita del sistema.',
   'token_scope' => 'Le lingue del pannello richiedono un token di sistema valido per l’intera installazione e appartenente a un super amministratore.',
+  'catalog_title' => 'Catalogo dei pacchetti di lingua',
   'extensions_browse' => 'Sfoglia i pacchetti lingua',
   'extensions_for_cms' => 'Pacchetti lingua per CMS :version',
   'extensions_empty' => 'Non ci sono pacchetti lingua compatibili con questa versione del CMS.',

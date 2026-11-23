@@ -36,8 +36,10 @@ Legacy renderer compatibility does not make an unpublished handle available for 
 complete language packs. Select **Upload** in the **Installed language packs**
 header and choose a ZIP in the dialog. To install from the catalog, select
 **Install** or **Update** under **Browse language packs**. The
-Extensions catalog is queried for the running CMS version when opened. CMS
-rechecks the selected release identity, download size, and SHA-256 before
+Extensions catalog is queried for the running CMS version when opened. From
+CMS 1.144.21, the language pack catalog shows compatible releases in cards
+with their language code, release version, status and installation action.
+CMS rechecks the selected release identity, download size and SHA-256 before
 installing a download.
 
 All installation paths require a Full CMS ZIP for the exact CMS version. The
@@ -1416,6 +1418,8 @@ filter card to search installed packages by name, handle, or version. The
 **Upload** button in each installed list opens the ZIP form. An upload error
 reopens the form with the error beside the file field. Select a plugin name to
 open its management page, or select a theme name for its version details.
+The theme catalog uses the plugin catalog card layout and shows the release
+version, supported layouts, status and available installation action.
 
 Super admins see the number of installed plugins with a newer installable catalog
 release in the Webadmin notification bell. The entry opens Extensions → Plugins.
