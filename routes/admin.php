@@ -184,11 +184,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::post('/system/backup-cleanup/run', [InternalBackupCleanupController::class, 'run'])->middleware('internal-api.capability:backups.delete')->name('system.backup-cleanup.run');
     Route::prefix('system/panel-languages')->name('system.panel-languages.')->middleware('internal-api.capability:panel-languages.manage')->group(function () {
       Route::get('/', [PanelLanguageController::class, 'index'])->name('index');
-      Route::get('/template', [PanelLanguageController::class, 'template'])->name('template');
-      Route::post('/catalogs', [PanelLanguageController::class, 'store'])->name('store');
-      Route::get('/catalogs/{catalog}', [PanelLanguageController::class, 'show'])->where('catalog', '[1-9][0-9]{0,17}')->name('show');
-      Route::post('/catalogs/{catalog}/activate', [PanelLanguageController::class, 'activate'])->where('catalog', '[1-9][0-9]{0,17}')->name('activate');
-      Route::post('/{code}/deactivate', [PanelLanguageController::class, 'deactivate'])->name('deactivate');
+      Route::post('/packages', [PanelLanguageController::class, 'store'])->name('store');
       Route::put('/default', [PanelLanguageController::class, 'updateDefault'])->name('default');
     });
     Route::get('/system/health', [InternalSystemHealthController::class, 'show'])->middleware('internal-api.capability:system-health.read')->name('system.health.show');
@@ -597,12 +593,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
         Route::get('/', [PanelLanguageController::class, 'index'])->name('index');
         Route::get('/extensions', [LanguagePackCatalogController::class, 'index'])->middleware('throttle:20,1')->name('extensions.index');
         Route::post('/extensions', [LanguagePackCatalogController::class, 'store'])->middleware('throttle:6,1')->name('extensions.store');
-        Route::get('/template', [PanelLanguageController::class, 'template'])->name('template');
-        Route::post('/catalogs', [PanelLanguageController::class, 'store'])->name('store');
-        Route::get('/catalogs/{catalog}', [PanelLanguageController::class, 'show'])->where('catalog', '[1-9][0-9]{0,17}')->name('show');
-        Route::post('/catalogs/{catalog}/activate', [PanelLanguageController::class, 'activate'])->where('catalog', '[1-9][0-9]{0,17}')->name('activate');
-        Route::delete('/catalogs/{catalog}', [PanelLanguageController::class, 'destroy'])->where('catalog', '[1-9][0-9]{0,17}')->name('destroy');
-        Route::post('/{code}/deactivate', [PanelLanguageController::class, 'deactivate'])->name('deactivate');
+        Route::post('/packages', [PanelLanguageController::class, 'store'])->name('store');
         Route::put('/default', [PanelLanguageController::class, 'updateDefault'])->name('default');
       });
       Route::get('system/settings', [SystemSettingsController::class, 'edit'])->name('system.settings.edit');

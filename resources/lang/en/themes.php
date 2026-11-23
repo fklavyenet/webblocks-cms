@@ -41,7 +41,7 @@ return [
   'package' => 'Theme package',
   'upload' => 'Upload theme',
   'upload_help' => 'Upload a ZIP package up to 8 MB. Choose and activate the theme separately for each site.',
-  'versions' => 'Installed versions',
+  'versions' => 'Installed theme versions',
   'empty' => 'No theme packages have been installed.',
   'theme' => 'Theme',
   'compatibility' => 'Compatibility',

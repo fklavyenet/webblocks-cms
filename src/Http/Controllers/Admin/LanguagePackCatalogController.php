@@ -32,13 +32,16 @@ final class LanguagePackCatalogController
 
     $installed = $this->native->installed();
     $rows = [];
-    foreach ($releases as $code => $formats) {
-      foreach ($formats as $format => $release) {
-        $current = $format === 'native' ? $installed->get($code) : null;
-        $state = $current === null ? 'install'
-          : (version_compare($release['version'], $current->release_version, '>') ? 'update' : 'installed');
-        $rows[] = ['state' => $state] + $release;
-      }
+    foreach ($releases as $code => $release) {
+      $current = $installed->get($code);
+      $state = match (true) {
+        $current === null => 'install',
+        $current->source_version !== $release['cms'] => 'update',
+        hash_equals($current->checksum, $release['sha256']) => 'installed',
+        $current->release_version === '', version_compare($release['version'], $current->release_version, '>') => 'update',
+        default => 'installed',
+      };
+      $rows[] = ['state' => $state] + $release;
     }
 
     return view('webblocks-cms::admin.system.panel-languages.extensions', [
@@ -57,13 +60,11 @@ final class LanguagePackCatalogController
     $operation->identify($data['code'], $data['version']);
     $operation->targetCms(WebBlocks::VERSION);
     try {
-      $id = $operation->validate(fn () => $this->catalog->install($data['code'], $data['version'], $data['format'], $data['checksum'], $operation), 'catalog');
+      $operation->validate(fn () => $this->catalog->install($data['code'], $data['version'], $data['checksum'], $operation));
     } catch (ValidationException $exception) {
-      return redirect()->route('admin.system.panel-languages.extensions.index')->withErrors($exception->errors());
+      return redirect()->route('admin.system.panel-languages.extensions.index')->withErrors(['catalog' => $exception->getMessage()]);
     }
 
-    return $id === null
-      ? redirect()->route('admin.system.panel-languages.index')->with('panel_language_status', 'extensions_native_installed')
-      : redirect()->route('admin.system.panel-languages.show', $id)->with('panel_language_status', 'uploaded');
+    return redirect()->route('admin.system.panel-languages.index')->with('panel_language_status', 'extensions_native_installed');
   }
 }

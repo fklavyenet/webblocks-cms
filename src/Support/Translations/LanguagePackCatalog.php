@@ -14,12 +14,10 @@ final class LanguagePackCatalog
 {
   public const VERSION_PATTERN = '(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)';
 
-  public const FORMATS = ['panel', 'native'];
+  public const FORMAT = 'native';
 
   public function __construct(
     private readonly PanelLanguageSource $source,
-    private readonly PanelLanguages $panel,
-    private readonly NativeLanguageArchive $nativeArchive,
     private readonly NativeLanguagePacks $nativePacks,
     private readonly ExtensionsCatalogHttp $http,
   ) {}
@@ -44,27 +42,30 @@ final class LanguagePackCatalog
 
     $releases = [];
     foreach ($data as $row) {
+      // Older catalog servers can include retired panel-only artifacts.
+      if (is_array($row) && ($row['format'] ?? null) === 'panel') {
+        continue;
+      }
       if (! is_array($row) || ! $this->validRelease($row)) {
         $this->invalid('extensions_unavailable');
       }
 
       $code = $row['code'];
-      $format = $row['format'];
       if (! in_array($code, AdminLocaleResolver::SUPPORTED_LOCALES, true)
-        && (! isset($releases[$code][$format]) || version_compare($row['version'], $releases[$code][$format]['version'], '>'))) {
-        $releases[$code][$format] = $row;
+        && (! isset($releases[$code]) || version_compare($row['version'], $releases[$code]['version'], '>'))) {
+        $releases[$code] = $row;
       }
     }
 
     return $releases;
   }
 
-  public function install(string $code, string $version, string $format, string $checksum, ?ExtensionOperation $operation = null): ?int
+  public function install(string $code, string $version, string $checksum, ?ExtensionOperation $operation = null): void
   {
-    if ($operation !== null && $format === 'native' && $this->nativePacks->installed()->has($code)) {
+    if ($operation !== null && $this->nativePacks->installed()->has($code)) {
       $operation->operation('update');
     }
-    $release = $this->browse()[$code][$format] ?? null;
+    $release = $this->browse()[$code] ?? null;
     if ($release === null || $release['version'] !== $version || ! hash_equals($release['sha256'], $checksum)) {
       $operation?->during('integrity');
       $this->invalid('extensions_release_changed');
@@ -77,31 +78,8 @@ final class LanguagePackCatalog
     }
 
     try {
-      $this->download('/language-packs/'.$code.'/releases/'.$version.'/'.$format.'/download', $file, $release);
-      rewind($file);
-
-      if ($format === 'panel') {
-        $json = stream_get_contents($file);
-        if (! is_string($json)) {
-          $this->invalid('extensions_download_failed');
-        }
-
-        return $this->panel->import($json, $code, $operation);
-      }
-
-      $operation?->during('translation');
-      $package = $this->nativeArchive->read(stream_get_meta_data($file)['uri'], $code);
-      $operation?->identify($code, $version, $package['name']);
-      $operation?->during('database');
-      $this->nativePacks->install([
-        'code' => $code,
-        'name' => $package['name'],
-        'source_version' => $release['cms'],
-        'release_version' => $version,
-        'checksum' => $checksum,
-      ], $package['lines']);
-
-      return null;
+      $this->download('/language-packs/'.$code.'/releases/'.$version.'/'.self::FORMAT.'/download', $file, $release);
+      $this->nativePacks->installArchive(stream_get_meta_data($file)['uri'], $operation, $code, $version);
     } finally {
       fclose($file);
     }
@@ -118,19 +96,17 @@ final class LanguagePackCatalog
 
   private function validRelease(array $row): bool
   {
-    $format = $row['format'] ?? null;
-
-    return is_string($row['code'] ?? null) && $this->source->validCode($row['code'])
+    return ($row['format'] ?? null) === self::FORMAT && is_string($row['code'] ?? null) && $this->source->validCode($row['code'])
       && is_string($row['name'] ?? null) && trim($row['name']) !== '' && mb_strlen($row['name']) <= 100 && $this->source->plainText($row['name'])
       && is_string($row['version'] ?? null) && strlen($row['version']) <= 32 && preg_match('/\A'.self::VERSION_PATTERN.'\z/', $row['version'])
-      && ($row['cms'] ?? null) === WebBlocks::VERSION && in_array($format, self::FORMATS, true)
+      && ($row['cms'] ?? null) === WebBlocks::VERSION
       && is_string($row['sha256'] ?? null) && preg_match('/\A[a-f0-9]{64}\z/', $row['sha256'])
       && is_int($row['size'] ?? null) && $row['size'] > 0
-      && $row['size'] <= ($format === 'panel' ? PanelLanguages::MAX_KILOBYTES * 1024 : NativeLanguageArchive::MAX_BYTES);
+      && $row['size'] <= NativeLanguageArchive::MAX_BYTES;
   }
 
   private function invalid(string $key): never
   {
-    throw ValidationException::withMessages(['catalog' => __('webblocks-cms::panel-languages.'.$key)]);
+    throw ValidationException::withMessages(['package' => __('webblocks-cms::panel-languages.'.$key)]);
   }
 }

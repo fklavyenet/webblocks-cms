@@ -1,7 +1,7 @@
 @php
     $text = static fn (string $key) => __('webblocks-cms::panel-languages.'.$key);
     $defaultErrors = $errors->getBag('panelLanguageDefault');
-    $importError = old('panel_language_operation') === 'import' && $errors->has('catalog');
+    $uploadError = $errors->has('package');
 @endphp
 
 @extends('webblocks-cms::layouts.admin', ['title' => $text('language_packs'), 'heading' => $text('language_packs')])
@@ -20,50 +20,56 @@
             @endif
         @endslot
     @endcomponent
-    @include('webblocks-cms::admin.system.panel-languages.feedback', ['inlineErrors' => $importError ? ['catalog'] : []])
+    @include('webblocks-cms::admin.system.panel-languages.feedback', ['inlineErrors' => $uploadError && $manualInstallAvailable ? ['package'] : []])
 
-    <section class="wb-card" aria-labelledby="panel-languages-import-title">
-        <div class="wb-card-header">
-            <h2 id="panel-languages-import-title" class="wb-card-title">{{ $text('manual_import') }}</h2>
-        </div>
-        <form method="POST" action="{{ route('admin.system.panel-languages.store') }}" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="panel_language_operation" value="import">
-            <div class="wb-card-body">
-                <div class="wb-field">
-                    <label class="wb-label" for="panel-language-catalog">{{ $text('file') }} (.json)</label>
-                    <input class="wb-file" type="file" id="panel-language-catalog" name="catalog" accept=".json,application/json"
-                        aria-describedby="panel-language-file-help{{ $importError ? ' panel-language-file-error' : '' }}"
-                        @if ($importError) aria-invalid="true" @endif required>
-                    <p class="wb-text-sm wb-text-muted wb-m-0" id="panel-language-file-help">{{ $text('help') }}</p>
-                    @if ($importError)
-                        <p class="wb-alert wb-alert-danger" id="panel-language-file-error" role="alert">{{ $errors->first('catalog') }}</p>
-                    @endif
-                </div>
-            </div>
-            <div class="wb-card-footer wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.panel-languages.template') }}">
-                    <i class="wb-icon wb-icon-download" aria-hidden="true"></i> {{ $text('template') }}
-                </a>
-                <button type="submit" class="wb-btn wb-btn-primary" data-wb-busy data-wb-busy-label="{{ __('webblocks-cms::modal-submit.uploading') }}">
-                    <span data-wb-busy-text>{{ $text('upload') }}</span>
-                </button>
-            </div>
-        </form>
-    </section>
+    @if ($manualInstallAvailable)
+        @include('webblocks-cms::admin.partials.extension-upload-card', [
+            'id' => 'panel-language-install',
+            'title' => $text('manual_install'),
+            'action' => route('admin.system.panel-languages.store'),
+            'fieldId' => 'panel-language-package',
+            'field' => 'package',
+            'fileLabel' => $text('package').' (.zip)',
+            'help' => $text('package_help'),
+            'error' => $errors->first('package'),
+        ])
+    @else
+        <p class="wb-alert wb-alert-warning" role="status">{{ $text('storage_unavailable') }}</p>
+    @endif
 
-    <section class="wb-card" aria-labelledby="panel-languages-catalogs-title">
+    <section class="wb-card" aria-labelledby="installed-language-packs-title">
         <div class="wb-card-header">
-            <h2 id="panel-languages-catalogs-title" class="wb-card-title">{{ $text('imported_catalogs') }}</h2>
+            <h2 id="installed-language-packs-title" class="wb-card-title">{{ $text('installed_packs') }}</h2>
         </div>
         <div class="wb-card-body">
-            @if ($catalogs->isEmpty())
+            @if ($packages->isEmpty())
                 <div class="wb-empty"><div class="wb-empty-title">{{ $text('empty') }}</div></div>
             @else
-                @include('webblocks-cms::admin.system.panel-languages.catalogs')
+                <div class="wb-table-wrap">
+                    <table class="wb-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">{{ __('webblocks-cms::admin.extensions_ui.name') }}</th>
+                                <th scope="col">{{ __('webblocks-cms::admin.system_plugins_index.version') }}</th>
+                                <th scope="col">{{ $text('status') }}</th>
+                                <th scope="col">{{ $text('source_version') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($packages as $pack)
+                                @php($current = $pack['source_version'] === \WebBlocks\Cms\Support\WebBlocks::VERSION)
+                                <tr>
+                                    <th scope="row" class="wb-table-break"><span lang="{{ $pack['code'] }}">{{ $pack['name'] }}</span> <code>{{ $pack['code'] }}</code></th>
+                                    <td>{{ $pack['release_version'] ?? '—' }}</td>
+                                    <td><span class="wb-status-pill {{ $current ? 'wb-status-active' : 'wb-status-pending' }}">{{ $text($current ? 'extensions_installed' : 'different_cms') }}</span></td>
+                                    <td>{{ $pack['source_version'] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             @endif
         </div>
-        @include('webblocks-cms::admin.partials.pagination', ['paginator' => $catalogs, 'ariaLabel' => $text('imported_catalogs'), 'compact' => true])
     </section>
 @endsection
 
@@ -102,18 +108,4 @@
         </form>
     </dialog>
 
-    @foreach ($catalogs as $catalog)
-        @if ((int) $catalog->active_catalog_id !== (int) $catalog->id)
-            @component('webblocks-cms::admin.partials.destructive-confirmation-modal', [
-                'id' => 'delete-panel-catalog-'.$catalog->id,
-                'title' => $text('delete'),
-                'description' => $text('delete_description'),
-                'action' => route('admin.system.panel-languages.destroy', $catalog->id),
-                'submitLabel' => $text('delete'),
-                'nativeDialog' => true,
-            ])
-                <p><strong lang="{{ $catalog->language_code }}">{{ $catalog->name }}</strong> <code>{{ $catalog->language_code }}</code></p>
-            @endcomponent
-        @endif
-    @endforeach
 @endpush

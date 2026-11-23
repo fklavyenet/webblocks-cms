@@ -15,33 +15,22 @@
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $systemPluginsIndexText('plugins'),
         'description' => $systemPluginsIndexText('description'),
-        'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary"><i class="wb-icon wb-icon-search" aria-hidden="true"></i> '.$systemPluginsIndexText('browse_plugin_catalog').'</a>',
+        'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary"><i class="wb-icon wb-icon-search" aria-hidden="true"></i> '.__('webblocks-cms::admin.extensions_ui.browse_catalog').'</a>',
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     @if ($canInstallPlugins)
-        <div class="wb-card wb-mb-4">
-            <div class="wb-card-header">
-                <strong>{{ $systemPluginsIndexText('manual_plugin_install') }}</strong>
-            </div>
-            <form method="POST" action="{{ route('admin.system.plugins.upload') }}" enctype="multipart/form-data">
-                <div class="wb-card-body">
-                    @csrf
-                    <div>
-                        <label for="plugin_zip">{{ $systemPluginsIndexText('plugin_zip') }}</label>
-                        <input id="plugin_zip" class="wb-file" type="file" name="plugin_zip" accept=".zip,application/zip" required>
-                        @error('plugin_zip')
-                            <div class="wb-text-sm wb-text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-                <div class="wb-card-footer wb-cluster wb-cluster-between wb-cluster-2">
-                    <span class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('manual_install_help') }}</span>
-                    <button type="submit" class="wb-btn wb-btn-primary">{{ $systemPluginsIndexText('upload_plugin_zip') }}</button>
-                </div>
-            </form>
-        </div>
+        @include('webblocks-cms::admin.partials.extension-upload-card', [
+            'id' => 'plugin-install',
+            'title' => $systemPluginsIndexText('manual_plugin_install'),
+            'action' => route('admin.system.plugins.upload'),
+            'fieldId' => 'plugin_zip',
+            'field' => 'plugin_zip',
+            'fileLabel' => $systemPluginsIndexText('plugin_zip'),
+            'help' => $systemPluginsIndexText('manual_install_help'),
+            'error' => $errors->first('plugin_zip'),
+        ])
     @endif
 
     <section class="wb-card" id="registered-plugins" aria-labelledby="registered-plugins-title">
@@ -87,12 +76,11 @@
                     <table class="wb-table wb-plugins-table">
                         <thead>
                             <tr>
-                                <th class="wb-plugins-cell-name">{{ $systemPluginsIndexText('plugin') }}</th>
-                                <th class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('version') }}</th>
-                                <th class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('source') }}</th>
-                                <th class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('status') }}</th>
-                                <th class="wb-plugins-cell-health">{{ $systemPluginsIndexText('health') }}</th>
-                                <th class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('actions') }}</th>
+                                <th scope="col" class="wb-plugins-cell-name">{{ __('webblocks-cms::admin.extensions_ui.name') }}</th>
+                                <th scope="col" class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('version') }}</th>
+                                <th scope="col" class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('status') }}</th>
+                                <th scope="col" class="wb-plugins-cell-health">{{ $systemPluginsIndexText('health') }}</th>
+                                <th scope="col" class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -121,9 +109,8 @@
                                             <div class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('update_available', ['version' => $plugin['catalog_update']['version']]) }}</div>
                                         @endif
                                     </td>
-                                    <td class="wb-plugins-cell-tight">{{ $plugin['source'] }}</td>
                                     <td class="wb-plugins-cell-tight">
-                                        <span class="wb-status {{ $statusClass }}">
+                                        <span class="wb-status-pill {{ $statusClass }}">
                                             {{ $plugin['database_setup_failed'] ? $systemPluginsIndexText('database_update_failed') : ($plugin['migrations_pending'] ? $systemPluginsIndexText('database_update_required') : $plugin['lifecycle_label']) }}
                                         </span>
                                         @if (! $plugin['compatible'])
@@ -139,7 +126,7 @@
                                         @endif
                                     </td>
                                     <td class="wb-plugins-cell-health">
-                                        <span class="wb-status {{ $healthClass }}">
+                                        <span class="wb-status-pill {{ $healthClass }}">
                                             {{ $plugin['health']['status'] === 'inactive' ? $systemPluginsIndexText('inactive') : ucfirst($plugin['health']['status']) }}
                                         </span>
                                         @if ($plugin['health']['message'] !== '')

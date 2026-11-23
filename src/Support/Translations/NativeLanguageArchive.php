@@ -18,9 +18,10 @@ final class NativeLanguageArchive
   public function __construct(
     private readonly NativeLanguageSource $source,
     private readonly LanguageArrayLiteral $literal,
+    private readonly PanelLanguageSource $languages,
   ) {}
 
-  public function read(string $file, string $code): array
+  public function read(string $file, ?string $expectedCode = null): array
   {
     $zip = new ZipArchive;
     if ($zip->open($file, ZipArchive::RDONLY | ZipArchive::CHECKCONS) !== true) {
@@ -28,14 +29,25 @@ final class NativeLanguageArchive
     }
 
     try {
+      $size = $zip->statName(self::MANIFEST)['size'] ?? 0;
+      if ($size < 1 || $size > 8192) {
+        $this->invalid();
+      }
+      $meta = json_decode($zip->getFromName(self::MANIFEST, 8193) ?: '', true, 4, JSON_THROW_ON_ERROR);
+      if (! is_array($meta)) {
+        $this->invalid();
+      }
+      $name = $meta['name'] ?? null;
+      $code = $meta['locale'] ?? null;
+      if (($meta['format_version'] ?? null) !== 1 || ! is_string($code) || ! $this->languages->validCode($code)
+        || in_array($code, AdminLocaleResolver::SUPPORTED_LOCALES, true) || ($expectedCode !== null && $code !== $expectedCode)
+        || ($meta['source_version'] ?? null) !== WebBlocks::VERSION || ($meta['requires_native_language_packs'] ?? null) !== true
+        || ! is_string($name) || ! preg_match('/\A[\p{L}\p{N}][\p{L}\p{N}\p{M} ._()\x{2019}\x{0027}-]{0,99}\z/u', $name)) {
+        $this->invalid();
+      }
       $source = $this->source->groups();
       $entries = $this->entries($zip, $code, array_keys($source));
-      $meta = json_decode($entries[self::MANIFEST] ?? '', true, 4, JSON_THROW_ON_ERROR);
-      $name = is_array($meta) ? ($meta['name'] ?? null) : null;
-      if (($meta['format_version'] ?? null) !== 1 || ($meta['locale'] ?? null) !== $code
-        || ($meta['source_version'] ?? null) !== WebBlocks::VERSION || ($meta['requires_native_language_packs'] ?? null) !== true
-        || ! is_string($name) || ! preg_match('/\A[\p{L}\p{N}][\p{L}\p{N}\p{M} ._()\x{2019}\x{0027}-]{0,99}\z/u', $name)
-        || trim($entries['lang/vendor/webblocks-cms/'.$code.'/webblocks-language.txt'] ?? '') !== $name) {
+      if (trim($entries['lang/vendor/webblocks-cms/'.$code.'/webblocks-language.txt'] ?? '') !== $name) {
         $this->invalid();
       }
 
@@ -61,7 +73,7 @@ final class NativeLanguageArchive
         $this->invalid();
       }
 
-      return ['name' => $name, 'lines' => $lines];
+      return ['code' => $code, 'name' => $name, 'lines' => $lines];
     } catch (JsonException|UnexpectedValueException) {
       $this->invalid();
     } finally {
@@ -114,6 +126,6 @@ final class NativeLanguageArchive
 
   private function invalid(): never
   {
-    throw ValidationException::withMessages(['catalog' => __('webblocks-cms::panel-languages.extensions_invalid_package')]);
+    throw ValidationException::withMessages(['package' => __('webblocks-cms::panel-languages.extensions_invalid_package')]);
   }
 }

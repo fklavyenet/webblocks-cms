@@ -8,7 +8,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
+use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
 use WebBlocks\Cms\Support\PublicRendering\RequestMemo;
+use WebBlocks\Cms\Support\WebBlocks;
 
 final class NativeLanguagePacks
 {
@@ -19,6 +21,7 @@ final class NativeLanguagePacks
   public function __construct(
     private readonly RequestMemo $memo,
     private readonly NativeLanguageSource $source,
+    private readonly NativeLanguageArchive $archive,
   ) {}
 
   public function ready(): bool
@@ -67,20 +70,49 @@ final class NativeLanguagePacks
     });
   }
 
-  public function install(array $metadata, array $lines): void
+  public function installArchive(string $path, ?ExtensionOperation $operation = null, ?string $code = null, string $releaseVersion = ''): array
+  {
+    $operation?->during('translation');
+    $package = $this->archive->read($path, $code);
+    $checksum = hash_file('sha256', $path);
+    if ($checksum === false) {
+      throw ValidationException::withMessages(['package' => __('webblocks-cms::panel-languages.extensions_invalid_package')]);
+    }
+    $operation?->identify($package['code'], $releaseVersion !== '' ? $releaseVersion : null, $package['name']);
+    $operation?->targetCms(WebBlocks::VERSION);
+    $operation?->during('database');
+    $metadata = [
+      'code' => $package['code'],
+      'name' => $package['name'],
+      'source_version' => WebBlocks::VERSION,
+      // Only the catalog supplies an independent release version.
+      'release_version' => $releaseVersion,
+      'checksum' => $checksum,
+    ];
+    $this->install($metadata, $package['lines']);
+
+    return Arr::only((array) $this->installed()->get($package['code']), ['code', 'name', 'source_version', 'release_version']);
+  }
+
+  private function install(array $metadata, array $lines): void
   {
     DB::transaction(function () use ($metadata, $lines): void {
       $code = $metadata['code'];
       $created = DB::table(self::PACKS)->insertOrIgnore($metadata);
       $installed = DB::table(self::PACKS)->where('code', $code)->lockForUpdate()->first();
       if (! $created) {
-        $order = version_compare($metadata['release_version'], $installed->release_version);
-        if ($order === 0 && hash_equals($installed->checksum, $metadata['checksum'])) {
+        if (hash_equals($installed->checksum, $metadata['checksum'])) {
+          if ($installed->release_version === '' && $metadata['release_version'] !== '') {
+            DB::table(self::PACKS)->where('code', $code)->update(['release_version' => $metadata['release_version']]);
+          }
+
           return;
         }
 
-        if ($order <= 0) {
-          throw ValidationException::withMessages(['catalog' => __('webblocks-cms::panel-languages.extensions_release_conflict')]);
+        $sourceOrder = version_compare($metadata['source_version'], $installed->source_version);
+        if ($sourceOrder < 0 || ($sourceOrder === 0 && $metadata['release_version'] !== ''
+          && $installed->release_version !== '' && version_compare($metadata['release_version'], $installed->release_version, '<='))) {
+          throw ValidationException::withMessages(['package' => __('webblocks-cms::panel-languages.extensions_release_conflict')]);
         }
 
         DB::table(self::PACKS)->where('code', $code)->update($metadata);

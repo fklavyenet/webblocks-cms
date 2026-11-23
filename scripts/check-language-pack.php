@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use Illuminate\Support\Arr;
 use WebBlocks\Cms\Support\Translations\NativeLanguageSource;
-use WebBlocks\Cms\Support\Translations\PanelLanguages;
 use WebBlocks\Cms\Support\Translations\PanelLanguageSource;
 use WebBlocks\Cms\Support\WebBlocks;
 
@@ -49,24 +48,7 @@ foreach (array_keys(array_diff_key($catalog, $source)) as $group) {
   $errors[] = 'Remove obsolete group '.$group;
 }
 
-$panel = $panelSource->template();
-$panel['code'] = 'ru';
-$panel['name'] = 'Русский';
-foreach ($panel['translations'] as &$row) {
-  [$group, $key] = explode('.', $row['key'], 2);
-  $text = $catalog['webblocks-cms::'.$group][$key][1] ?? '';
-  if (trim($text) !== '' && mb_strlen($text) <= 4000 && $panelSource->plainText($text)) {
-    $row['text'] = $text;
-  } else {
-    $errors[] = 'Invalid panel catalog line '.$row['key'];
-  }
-}
-unset($row);
 $json = static fn (array $value): string => json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n";
-$panelJson = $json($panel);
-if (strlen($panelJson) > PanelLanguages::MAX_KILOBYTES * 1024) {
-  $errors[] = 'Panel catalog exceeds the CMS import limit.';
-}
 
 if ($errors !== []) {
   fwrite(STDERR, implode(PHP_EOL, $errors).PHP_EOL);
@@ -74,7 +56,7 @@ if ($errors !== []) {
   exit(1);
 }
 
-printf("Russian locale: %d native messages across %d groups, %d panel catalog messages.\n", $total, count($native), count($panel['translations']));
+printf("Russian Full CMS pack: %d messages across %d groups.\n", $total, count($native));
 
 if ($argc === 1) {
   exit(0);
@@ -88,7 +70,6 @@ if ($argc !== 3 || $argv[1] !== '--build' || ! is_dir($argv[2])) {
 $dir = rtrim($argv[2], '/');
 $version = WebBlocks::VERSION;
 $zipPath = $dir.'/webblocks-cms-ru-'.$version.'.zip';
-$panelPath = $dir.'/webblocks-cms-ru-panel-'.$version.'.json';
 $zip = new ZipArchive;
 if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
   throw new RuntimeException('Cannot create '.$zipPath);
@@ -118,11 +99,11 @@ foreach ($files as $file => $content) {
     throw new RuntimeException('Cannot write '.$file);
   }
 }
-if (! $zip->close() || file_put_contents($panelPath, $panelJson) === false) {
+if (! $zip->close()) {
   throw new RuntimeException('Cannot write language artifacts');
 }
 
-foreach ([$zipPath, $panelPath] as $path) {
+foreach ([$zipPath] as $path) {
   $sum = hash_file('sha256', $path);
   if ($sum === false || file_put_contents($path.'.sha256', $sum.'  '.basename($path)."\n") === false) {
     throw new RuntimeException('Cannot write checksum for '.$path);

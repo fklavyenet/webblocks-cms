@@ -14,7 +14,6 @@ use WebBlocks\Cms\Models\Locale;
 use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
-use WebBlocks\Cms\Support\Translations\PanelLanguages;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
@@ -60,29 +59,19 @@ final class LanguagePackCatalogTest extends TestCase
     Http::assertNothingSent();
   }
 
-  public function test_panel_catalog_download_opens_the_normal_preview_and_is_repeatable(): void
+  public function test_panel_only_catalog_releases_are_hidden_and_rejected(): void
   {
     $this->actingAs($this->actor());
-    $json = json_encode([
-      'format_version' => 1,
-      'source_version' => WebBlocks::VERSION,
-      'code' => 'ru',
-      'name' => 'Русский',
-      'translations' => [['key' => 'admin.profile.interface_language', 'text' => 'Язык интерфейса']],
-    ], JSON_THROW_ON_ERROR);
-    $release = $this->release('panel', $json);
-    $this->serve($release, $json);
+    $release = $this->release('panel', '{}');
+    $this->serve($release, '{}');
 
-    $this->get($this->browseUrl())->assertOk()->assertSee('Русский')->assertSee('Panel only')->assertSee('Download for review');
+    $this->get($this->browseUrl())->assertOk()->assertSee('No compatible language packs')
+      ->assertDontSee('Русский')->assertDontSee('Download for review');
     Http::assertSent(fn ($request) => $request->url() === self::CATALOG.'/api/language-packs?cms='.WebBlocks::VERSION);
-    $result = $this->post($this->browseUrl(), $this->selection($release));
-    $id = DB::table('wbcms_panel_language_catalogs')->value('id');
-    $result->assertRedirect(route('admin.system.panel-languages.show', $id));
-    $this->get(route('admin.system.panel-languages.show', $id))->assertOk()->assertSee('Язык интерфейса')->assertSee('Activate catalog');
-    $this->post($this->browseUrl(), $this->selection($release))->assertRedirect(route('admin.system.panel-languages.show', $id));
-    $this->assertDatabaseCount('wbcms_panel_language_catalogs', 1);
-    $this->assertDatabaseHas('wbcms_panel_languages', ['code' => 'ru', 'active_catalog_id' => null]);
-    $this->assertObjectNotHasProperty('artifact_checksum', app(PanelLanguages::class)->preview($id)['catalog']);
+    $this->from($this->browseUrl())->post($this->browseUrl(), $this->selection($release))
+      ->assertRedirect($this->browseUrl())->assertSessionHasErrors('format');
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), '/download'));
+    $this->assertDatabaseCount('wbcms_native_language_packs', 0);
   }
 
   public function test_native_archive_installs_and_updates_the_full_locale_from_sql(): void
@@ -100,11 +89,11 @@ final class LanguagePackCatalogTest extends TestCase
       $release = $this->release('native', $archive);
       $this->serve($release, $archive);
 
-      $this->get($this->browseUrl())->assertOk()->assertSee('Full CMS')->assertSee('Install');
+      $this->get($this->browseUrl())->assertOk()->assertSee('Русский')->assertSee('Install');
       $this->post($this->browseUrl(), $this->selection($release))
         ->assertRedirect(route('admin.system.panel-languages.index'));
       $this->get(route('admin.system.panel-languages.index'))
-        ->assertOk()->assertSee('Language pack installed.')->assertSee('RU - Русский');
+        ->assertOk()->assertSee('Language pack installed.')->assertSee('Русский');
       $this->assertFileDoesNotExist(lang_path('vendor/webblocks-cms/ru/admin.php'));
       $this->assertDatabaseHas('wbcms_native_language_packs', ['code' => 'ru', 'release_version' => '1.0.0']);
       $this->assertDatabaseCount('wbcms_native_language_packs', 1);
@@ -165,7 +154,7 @@ final class LanguagePackCatalogTest extends TestCase
     Http::assertNotSent(fn ($request) => str_contains($request->url(), '/download'));
     $this->post($this->browseUrl(), $this->selection($release))
       ->assertRedirect($this->browseUrl())->assertSessionHasErrors('catalog');
-    $this->assertStringContainsString('The file is invalid or does not match this CMS version.', session('errors')->first('catalog'));
+    $this->assertStringContainsString('Upload a valid Full CMS language pack ZIP for this CMS version.', session('errors')->first('catalog'));
     $this->assertStringContainsString('Русский · ru · 1.0.0 · CMS '.WebBlocks::VERSION, session('errors')->first('catalog'));
     $this->assertStringContainsString('Diagnostic reference', session('errors')->first('catalog'));
 
@@ -182,32 +171,35 @@ final class LanguagePackCatalogTest extends TestCase
   public function test_catalog_unavailable_and_incompatible_cms_version_are_handled(): void
   {
     $this->actingAs($this->actor());
-    $this->serve(['cms' => '1.0.0'] + $this->release('panel', '{}'), '{}');
+    $this->serve(['cms' => '1.0.0'] + $this->release('native', '{}'), '{}');
     $this->get($this->browseUrl())->assertOk()->assertSee('The Extensions language catalog is temporarily unavailable.');
     Http::assertNotSent(fn ($request) => str_contains($request->url(), '/download'));
   }
 
-  public function test_update_migration_keeps_existing_uploaded_catalogs_and_enables_the_extensions_entry(): void
+  public function test_update_migration_preserves_legacy_data_without_loading_panel_only_languages(): void
   {
     $migration = require dirname(__DIR__, 2).'/database/migrations/updates/2026_11_20_180000_create_native_language_packs.php';
     $migration->down();
     $this->assertFalse(Schema::hasTable('wbcms_native_language_packs'));
-    $this->actingAs($this->actor());
-    $id = app(PanelLanguages::class)->import(json_encode([
-      'format_version' => 1,
-      'source_version' => WebBlocks::VERSION,
-      'code' => 'ru',
+    DB::table('wbcms_panel_languages')->insert(['code' => 'ru']);
+    $id = DB::table('wbcms_panel_language_catalogs')->insertGetId([
+      'language_code' => 'ru',
       'name' => 'Русский',
-      'translations' => [['key' => 'admin.profile.interface_language', 'text' => 'Язык интерфейса']],
-    ], JSON_THROW_ON_ERROR));
-    app(PanelLanguages::class)->activate($id);
+      'source_version' => WebBlocks::VERSION,
+      'created_at' => now(),
+    ]);
+    DB::table('wbcms_panel_languages')->where('code', 'ru')->update(['active_catalog_id' => $id]);
+    app(SystemSettings::class)->save([SystemSettings::ADMIN_LOCALE => 'ru']);
+    $this->actingAs($this->actor());
     $url = route('admin.system.panel-languages.index');
     $this->get($url)->assertOk()->assertDontSee('Browse language packs');
 
     $migration->up();
     $this->assertTrue(Schema::hasTable('wbcms_native_language_packs'));
-    $this->get($url)->assertOk()->assertSee('Browse language packs')->assertSee('Русский');
+    $this->get($url)->assertOk()->assertSee('Browse language packs')->assertDontSee('Русский');
+    $this->get(route('admin.profile.edit'))->assertOk()->assertSee('lang="en"', false);
     $this->assertDatabaseHas('wbcms_panel_languages', ['code' => 'ru', 'active_catalog_id' => $id]);
+    $this->assertSame('ru', app(SystemSettings::class)->get(SystemSettings::ADMIN_LOCALE));
   }
 
   private function actor(string $role = 'super_admin'): User

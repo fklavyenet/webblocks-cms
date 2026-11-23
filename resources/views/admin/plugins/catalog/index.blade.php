@@ -9,7 +9,7 @@
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pluginCatalogText('title'),
         'description' => $pluginCatalogText('description'),
-        'actions' => '<a href="'.e(route('admin.system.plugins.index')).'" class="wb-btn wb-btn-secondary">'.e($pluginCatalogText('back_to_plugins')).'</a>',
+        'actions' => '<a href="'.e(route('admin.system.plugins.index')).'" class="wb-btn wb-btn-secondary"><i class="wb-icon wb-icon-arrow-left" aria-hidden="true"></i> '.e($pluginCatalogText('back_to_plugins')).'</a>',
         'context' => '<span class="wb-text-sm wb-text-muted">'.e($pluginCatalogText('context')).'</span>',
     ])
 
@@ -63,8 +63,8 @@
                             </div>
                         @endif
                         <div class="wb-cluster wb-cluster-2 wb-text-sm wb-text-muted wb-cms-plugin-catalog-meta">
-                            <span class="{{ $compatibilityClass }}">{{ ucfirst($compatibility) }}</span>
                             <span>{{ $pluginCatalogText('latest_release', ['version' => $plugin->latestCompatibleRelease?->version ?? $pluginCatalogText('not_listed')]) }}</span>
+                            <span class="{{ $compatibilityClass }}">{{ ucfirst($compatibility) }}</span>
                             <span>{{ $pluginCatalogText('downloads_count', ['count' => number_format($plugin->downloadsTotal)]) }}</span>
                         </div>
                     </div>

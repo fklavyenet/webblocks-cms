@@ -3,14 +3,11 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
-use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
 use WebBlocks\Cms\Models\BlockType;
 use WebBlocks\Cms\Models\EmbeddedApplication;
 use WebBlocks\Cms\Models\Locale;
@@ -22,12 +19,7 @@ use WebBlocks\Cms\Models\SlotType;
 use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
-use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
-use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
-use WebBlocks\Cms\Support\Translations\CmsTranslator;
-use WebBlocks\Cms\Support\Translations\PanelLanguages;
-use WebBlocks\Cms\Support\Translations\PanelLanguageSource;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
@@ -354,65 +346,54 @@ class PanelLanguagesTest extends TestCase
     }
   }
 
-  public function test_super_admin_can_preview_activate_and_select_russian_without_changing_content_languages(): void
+  public function test_manual_upload_requires_a_complete_current_cms_pack_and_preserves_locale_preferences(): void
   {
-    $this->actingAs($actor = $this->actor());
-    $locales = Locale::query()->orderBy('id')->get()->toArray();
-    $publicationDefault = app(SystemSettings::class)->get(SystemSettings::DEFAULT_LOCALE);
+    $actor = $this->actor();
+    $actor->forceFill(['admin_locale' => 'ru'])->save();
+    $this->actingAs($actor);
     $index = route('admin.system.panel-languages.index');
-    $this->get($index)->assertOk()->assertSeeInOrder(['Manual catalog import', 'Download English template', 'Imported catalogs'])
-      ->assertSee('class="wb-page-header-title">Language packs</h1>', false)
-      ->assertSee('class="wb-file" type="file"', false)
-      ->assertSee('data-wb-target="#panel-language-default-modal"', false)
-      ->assertDontSee('id="panel-languages-tab-import"', false);
-    $this->get(route('admin.system.panel-languages.index', ['tab' => 'settings']))
-      ->assertSee('data-wb-admin-autoload-overlay', false);
-    $this->followRedirects($this->from($index)->post(route('admin.system.panel-languages.store'), ['panel_language_operation' => 'import']))
-      ->assertOk()->assertSee('id="panel-language-file-error"', false)->assertDontSee('data-wb-admin-autoload-overlay', false);
-    $this->post(route('admin.system.panel-languages.store'), ['catalog' => $this->upload()])->assertRedirect();
-    $id = DB::table('wbcms_panel_language_catalogs')->value('id');
+    $store = route('admin.system.panel-languages.store');
+    $this->get($index)->assertOk()->assertSeeInOrder(['Manual language pack install', 'Upload', 'Installed language packs'])
+      ->assertDontSee('Imported catalogs');
 
-    $this->get(route('admin.system.panel-languages.show', $id))
-      ->assertOk()->assertSee('class="wb-page-header-title">Catalog preview</h1>', false)
-      ->assertSee('Язык интерфейса')->assertSee('Interface language')->assertSee('Activate catalog')
-      ->assertSee('Catalog uploaded. Review the preview before activating it.');
-    $this->get(route('admin.system.panel-languages.show', ['catalog' => $id, 'missing_page' => 2]))
-      ->assertOk()->assertViewHas('missing', fn ($missing) => $missing->currentPage() === 2 && $missing->count() === 50);
-    $this->assertArrayNotHasKey('ru', app(AdminLocaleResolver::class)->options());
-    $this->post(route('admin.system.panel-languages.activate', $id))->assertRedirect();
+    $this->from($index)->post($store, [
+      'package' => UploadedFile::fake()->createWithContent('ru.json', '{}'),
+    ])->assertRedirect($index)->assertSessionHasErrors('package');
 
-    $this->from(route('admin.profile.edit'))->patch(route('admin.profile.locale.update'), ['admin_locale' => 'ru'])->assertRedirect();
-    $this->assertSame('ru', $actor->fresh()->admin_locale);
-    $this->get(route('admin.profile.edit'))->assertOk()->assertSee('lang="ru"', false)->assertSee('Язык интерфейса')->assertSee('Русский');
-    $this->put(route('admin.system.panel-languages.default'), ['code' => 'ru'])
-      ->assertRedirect($index);
-    $this->followRedirects($this->from($index)->put(route('admin.system.panel-languages.default'), ['code' => 'zz']))
-      ->assertOk()->assertSee('data-wb-admin-autoload-overlay', false)
-      ->assertSee('id="panel-language-default-error"', false)
-      ->assertDontSee('id="panel-language-file-error"', false);
-    $this->assertSame('ru', app(AdminLocaleResolver::class)->defaultLocale());
-    $this->assertSame($locales, Locale::query()->orderBy('id')->get()->toArray());
-    $this->assertSame($publicationDefault, app(SystemSettings::class)->get(SystemSettings::DEFAULT_LOCALE));
-    $this->assertSame('en', app()->getLocale());
-    $this->assertSame(['en', 'de', 'tr', 'es', 'it', 'fr'], AdminLocaleResolver::SUPPORTED_LOCALES);
+    $directory = sys_get_temp_dir().'/webblocks-language-'.bin2hex(random_bytes(8));
+    File::makeDirectory($directory);
 
-    $request = Request::create('/webadmin');
-    $request->setUserResolver(fn () => $actor);
-    app(UseAdminLocale::class)->handle($request, function () {
-      foreach ([1 => '1 сообщение', 2 => '2 сообщения', 5 => '5 сообщений', 21 => '21 сообщение'] as $count => $expected) {
-        $this->assertSame($expected, trans_choice('webblocks-cms::notifications.panel_new_messages', $count));
-      }
-      $this->assertSame(
-        app(VerificationEmailTemplates::class)->defaults('en'),
-        app(VerificationEmailTemplates::class)->defaults('ru'),
-      );
+    try {
+      (new Process([PHP_BINARY, 'scripts/check-language-pack.php', '--build', $directory], dirname(__DIR__, 2)))->mustRun();
+      $filename = 'webblocks-cms-ru-'.WebBlocks::VERSION.'.zip';
+      $path = $directory.'/'.$filename;
+      $archive = File::get($path);
+      $zip = new ZipArchive;
+      $this->assertTrue($zip->open($path));
+      $this->assertTrue($zip->deleteName('lang/vendor/webblocks-cms/ru/public.php'));
+      $zip->close();
 
-      return response('ok');
-    });
-    $this->assertSame('Interface language', __('webblocks-cms::admin.profile.interface_language'));
+      $this->from($index)->post($store, [
+        'package' => UploadedFile::fake()->createWithContent($filename, File::get($path)),
+      ])->assertRedirect($index)->assertSessionHasErrors('package');
+      $this->assertDatabaseCount('wbcms_native_language_packs', 0);
+      $this->assertDatabaseCount('wbcms_native_language_lines', 0);
+
+      $this->post($store, ['package' => UploadedFile::fake()->createWithContent($filename, $archive)])
+        ->assertRedirect($index);
+      $this->assertDatabaseHas('wbcms_native_language_packs', ['code' => 'ru', 'source_version' => WebBlocks::VERSION]);
+      $this->assertSame('ru', $actor->fresh()->admin_locale);
+      $this->assertSame('en', app(AdminLocaleResolver::class)->defaultLocale());
+      $this->assertSame(['en'], Locale::query()->pluck('code')->all());
+      $this->get($index)->assertOk()->assertSee('Русский');
+      $this->assertSame('Поиск', trans('webblocks-cms::public.search.title', [], 'ru'));
+      $this->assertSame('Проверить обновления', trans('publisher-client::updates.check_button', [], 'ru'));
+    } finally {
+      File::deleteDirectory($directory);
+    }
   }
 
-  public function test_api_requires_super_admin_system_capability_and_keeps_uploaded_catalog_inactive(): void
+  public function test_api_requires_a_super_admin_system_token_and_drops_the_panel_catalog_endpoints(): void
   {
     $issuer = app(CmsApiTokenIssuer::class);
     $ordinary = $issuer->issue('Content only')->plainToken;
@@ -422,131 +403,17 @@ class PanelLanguagesTest extends TestCase
     $root = $this->actor();
     $this->actingAs($root);
     $token = $issuer->issue('Manage languages', $root, ['panel-languages.manage'])->plainToken;
-    $this->withToken($token)->getJson(self::API.'/template')->assertOk()->assertJsonPath('source_version', WebBlocks::VERSION);
-    $response = $this->withHeader('Accept', 'application/json')->post(self::API.'/catalogs', ['catalog' => $this->upload()]);
-    $response->assertCreated()->assertJsonPath('catalog.language_code', 'ru')->assertJsonPath('translated', 2);
-    $id = $response->json('catalog.id');
-    $this->getJson(self::API.'/catalogs/'.$id)->assertOk()->assertJsonPath('catalog.active_catalog_id', null);
+    $this->withToken($token)->getJson(self::API)->assertOk()
+      ->assertJsonPath('packages', [])->assertJsonPath('defaultLocale', 'en');
+    $this->withHeader('Accept', 'application/json')->post(self::API.'/packages', [
+      'package' => UploadedFile::fake()->createWithContent('ru.json', '{}'),
+    ])->assertUnprocessable()->assertJsonValidationErrors('package');
+    $this->getJson(self::API.'/template')->assertNotFound();
+    $this->postJson(self::API.'/catalogs')->assertNotFound();
     $this->putJson(self::API.'/default', ['code' => 'ru'])->assertUnprocessable();
-    $this->postJson(self::API.'/catalogs/'.$id.'/activate')->assertOk();
-    $this->putJson(self::API.'/default', ['code' => 'ru'])->assertOk();
-    $this->postJson(self::API.'/ru/deactivate')->assertUnprocessable();
 
     $root->forceFill(['is_active' => false])->save();
     $this->getJson(self::API)->assertForbidden();
-  }
-
-  public function test_generated_russian_pack_uses_the_native_cms_locale_and_accepts_the_panel_overlay(): void
-  {
-    $directory = sys_get_temp_dir().'/webblocks-language-'.bin2hex(random_bytes(8));
-    File::makeDirectory($directory);
-
-    try {
-      (new Process([PHP_BINARY, 'scripts/check-language-pack.php', '--build', $directory], dirname(__DIR__, 2)))->mustRun();
-      $zip = new ZipArchive;
-      $this->assertTrue($zip->open($directory.'/webblocks-cms-ru-'.WebBlocks::VERSION.'.zip'));
-      $this->assertTrue($zip->extractTo($directory));
-      $zip->close();
-      $this->app->useLangPath($directory.'/lang');
-      app('translator')->addPath($this->app->langPath());
-
-      $languages = app(PanelLanguages::class);
-      $this->assertSame('RU - Русский', $languages->options()['ru']);
-      $languages->saveDefault('ru');
-      $this->actingAs($actor = $this->actor());
-      $this->get(route('admin.profile.edit'))->assertOk()
-        ->assertSee('lang="ru"', false)
-        ->assertSee('Язык интерфейса')
-        ->assertSee('data-wb-password-label-show="Показать пароль"', false)
-        ->assertSee('data-wb-password-label-hide="Скрыть пароль"', false);
-      $this->assertSame('ru', app(AdminLocaleResolver::class)->packagedLocale($actor));
-      $this->assertSame('ru', $this->app->getLocale());
-      $this->assertSame('Введите своё имя.', __('webblocks-cms::validation.contact_form.name_required'));
-      $this->assertSame('Поиск', app(CmsTranslator::class)->public('search.title', 'ru'));
-      $this->assertSame('Проверить обновления', __('publisher-client::updates.check_button'));
-      $this->assertStringContainsString('{code}', app(VerificationEmailTemplates::class)->defaults('ru')['subject']);
-      $this->assertNotSame(app(VerificationEmailTemplates::class)->defaults('en'), app(VerificationEmailTemplates::class)->defaults('ru'));
-      $this->assertSame('21 непрочитанное сообщение', trans_choice('webblocks-cms::notifications.panel_new_messages', 21));
-
-      $candidate = $languages->import(File::get($directory.'/webblocks-cms-ru-panel-'.WebBlocks::VERSION.'.json'));
-      $this->assertSame([], $languages->preview($candidate)['missing']);
-      $overlay = $languages->import($this->upload([['key' => 'admin.profile.interface_language', 'text' => 'Язык панели']])->getContent());
-      $languages->activate($overlay);
-      $this->get(route('admin.profile.edit'))->assertOk()->assertSee('Язык панели');
-      $this->assertSame('ru', $this->app->getLocale());
-      $languages->deactivate('ru');
-      $this->get(route('admin.profile.edit'))->assertOk()->assertSee('Язык интерфейса');
-    } finally {
-      File::deleteDirectory($directory);
-    }
-  }
-
-  public function test_package_collision_keeps_the_catalog_and_uses_package_then_english_for_missing_keys(): void
-  {
-    $languages = app(PanelLanguages::class);
-    $id = $languages->import($this->upload()->getContent());
-    $languages->activate($id);
-    $languages->saveDefault('ru');
-
-    // Simulate a later package advertising a Russian admin catalog.
-    $source = $this->partialMock(PanelLanguageSource::class);
-    $source->shouldReceive('packagedOptions')->andReturn(AdminLocaleResolver::PACKAGED_OPTIONS + ['ru' => 'RU - Русский']);
-    app('translator')->addLines(['admin.navigation.dashboard' => 'Панель управления'], 'ru', 'webblocks-cms');
-
-    app(UseAdminLocale::class)->handle(Request::create('/webadmin'), function () {
-      $this->assertSame('Язык интерфейса', __('webblocks-cms::admin.profile.interface_language'));
-      $this->assertSame('Панель управления', __('webblocks-cms::admin.navigation.dashboard'));
-      $this->assertSame('Panel languages', __('webblocks-cms::panel-languages.title'));
-      $this->assertSame('en', app()->getLocale());
-
-      return response('ok');
-    });
-    $this->assertSame('RU - Русский', app(AdminLocaleResolver::class)->options()['ru']);
-    app(PanelLanguages::class)->deactivate('ru');
-    $this->assertSame('ru', app(AdminLocaleResolver::class)->defaultLocale());
-    $this->assertDatabaseHas('wbcms_panel_language_catalogs', ['id' => $id]);
-    $this->assertSame([], app(PanelLanguages::class)->translations('ru'));
-    app(PanelLanguages::class)->activate($id);
-    $this->assertSame('Язык интерфейса', app(PanelLanguages::class)->translations('ru')['admin.profile.interface_language']);
-  }
-
-  public function test_import_rejects_public_keys_duplicate_rows_and_wrong_placeholders(): void
-  {
-    $this->actingAs($this->actor());
-    foreach ([
-      [['key' => 'public.search.title', 'text' => 'Поиск']],
-      array_fill(0, 2, ['key' => 'admin.profile.interface_language', 'text' => 'Язык']),
-      [['key' => 'notifications.panel_new_messages', 'text' => 'Сообщение|Сообщения|Сообщений']],
-      [['key' => 'admin.profile.interface_language', 'text' => '<b>Язык</b>']],
-    ] as $lines) {
-      $this->post(route('admin.system.panel-languages.store'), ['catalog' => $this->upload($lines)])
-        ->assertSessionHasErrors('catalog');
-    }
-    $this->assertDatabaseCount('wbcms_panel_language_catalogs', 0);
-  }
-
-  public function test_only_inactive_catalogs_can_be_deleted_by_a_super_admin(): void
-  {
-    $languages = app(PanelLanguages::class);
-    $first = $languages->import($this->upload()->getContent());
-    $second = $languages->import($this->upload()->getContent());
-    $index = route('admin.system.panel-languages.index');
-    $deleteFirst = route('admin.system.panel-languages.destroy', $first);
-    $deleteSecond = route('admin.system.panel-languages.destroy', $second);
-
-    $this->actingAs($this->actor('editor'))->delete($deleteSecond)->assertForbidden();
-    $this->actingAs($this->actor())->get($index)->assertOk()
-      ->assertSee('data-wb-target="#delete-panel-catalog-'.$second.'"', false)
-      ->assertSee('Activate catalog');
-    $this->post(route('admin.system.panel-languages.activate', $first))->assertRedirect($index);
-    $this->from($index)->delete($deleteFirst)->assertSessionHasErrors('catalog');
-    $this->assertDatabaseHas('wbcms_panel_language_catalogs', ['id' => $first]);
-
-    $this->delete($deleteSecond)->assertRedirect($index);
-    $this->get($index)->assertSee('Catalog deleted.');
-    $this->assertDatabaseMissing('wbcms_panel_language_catalogs', ['id' => $second]);
-    $this->assertDatabaseMissing('wbcms_panel_language_lines', ['catalog_id' => $second]);
-    $this->assertDatabaseHas('wbcms_panel_languages', ['code' => 'ru', 'active_catalog_id' => $first]);
   }
 
   private function actor(string $role = 'super_admin'): User
@@ -554,19 +421,5 @@ class PanelLanguagesTest extends TestCase
     $actor = $this->cmsActor((new User)->forceFill(['role' => $role]));
 
     return User::query()->findOrFail($actor->id);
-  }
-
-  private function upload(?array $translations = null): UploadedFile
-  {
-    return UploadedFile::fake()->createWithContent('ru.json', json_encode([
-      'format_version' => 1,
-      'source_version' => WebBlocks::VERSION,
-      'code' => 'ru',
-      'name' => 'Русский',
-      'translations' => $translations ?? [
-        ['key' => 'admin.profile.interface_language', 'text' => 'Язык интерфейса'],
-        ['key' => 'notifications.panel_new_messages', 'text' => ':count сообщение|:count сообщения|:count сообщений'],
-      ],
-    ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
   }
 }

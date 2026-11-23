@@ -95,7 +95,7 @@
                     <tbody>
                     <tr><th scope="row" class="wb-table-key">{{ $adminText('handle') }}</th><td><code>{{ $plugin['handle'] }}</code></td></tr>
                     <tr><th scope="row" class="wb-table-key">{{ $adminText('version') }}</th><td>{{ $plugin['version'] ?? $adminText('not_declared') }}</td></tr>
-                    <tr><th scope="row" class="wb-table-key">{{ $adminText('source') }}</th><td>{{ $plugin['source'] }}</td></tr>
+                    <tr><th scope="row" class="wb-table-key">{{ __('webblocks-cms::admin.extensions_ui.installation_type') }}</th><td>{{ $plugin['manual_upload'] ? __('webblocks-cms::admin.extensions_ui.cms_managed_package') : $plugin['source'] }}</td></tr>
                     <tr>
                         <th scope="row" class="wb-table-key">{{ $adminText('lifecycle') }}</th>
                         <td>

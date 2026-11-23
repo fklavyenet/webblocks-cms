@@ -12,39 +12,24 @@
         @slot('actions')
             @if (app(\WebBlocks\Cms\Support\Theme\ThemeCatalog::class)->enabled())
                 <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.themes.catalog.index') }}">
-                    <i class="wb-icon wb-icon-search" aria-hidden="true"></i> {{ $text('browse_catalog') }}
+                    <i class="wb-icon wb-icon-search" aria-hidden="true"></i> {{ __('webblocks-cms::admin.extensions_ui.browse_catalog') }}
                 </a>
             @endif
         @endslot
     @endcomponent
     @include('webblocks-cms::admin.system.themes.feedback', ['inlineErrors' => $uploadError ? ['package'] : []])
 
-    <section class="wb-card" aria-labelledby="theme-install-title">
-        <div class="wb-card-header">
-            <h2 id="theme-install-title" class="wb-card-title">{{ $text('manual_install') }}</h2>
-        </div>
-        <form method="POST" action="{{ route('admin.system.themes.store') }}" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="theme_operation" value="upload">
-            <div class="wb-card-body">
-                <div class="wb-field">
-                    <label class="wb-label" for="theme-package">{{ $text('package') }} (.zip)</label>
-                    <input id="theme-package" name="package" type="file" class="wb-file" accept=".zip,application/zip"
-                        aria-describedby="theme-package-help{{ $uploadError ? ' theme-package-error' : '' }}"
-                        @if ($uploadError) aria-invalid="true" @endif required>
-                    <p id="theme-package-help" class="wb-text-sm wb-text-muted wb-m-0">{{ $text('upload_help') }}</p>
-                    @if ($uploadError)
-                        <p id="theme-package-error" class="wb-alert wb-alert-danger" role="alert">{{ $errors->first('package') }}</p>
-                    @endif
-                </div>
-            </div>
-            <div class="wb-card-footer wb-cluster wb-cluster-end">
-                <button type="submit" class="wb-btn wb-btn-primary" data-wb-busy data-wb-busy-label="{{ __('webblocks-cms::modal-submit.uploading') }}">
-                    <span data-wb-busy-text>{{ $text('upload') }}</span>
-                </button>
-            </div>
-        </form>
-    </section>
+    @include('webblocks-cms::admin.partials.extension-upload-card', [
+        'id' => 'theme-install',
+            'title' => __('webblocks-cms::themes.manual_install'),
+        'action' => route('admin.system.themes.store'),
+        'fieldId' => 'theme-package',
+        'field' => 'package',
+        'fileLabel' => $text('package').' (.zip)',
+        'help' => $text('upload_help'),
+        'error' => $uploadError ? $errors->first('package') : '',
+        'hidden' => ['theme_operation' => 'upload'],
+    ])
 
     <section class="wb-card" aria-labelledby="installed-themes-title">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
@@ -71,9 +56,9 @@
                     <table class="wb-table">
                         <thead>
                             <tr>
-                                <th scope="col">{{ $text('theme') }}</th>
+                                <th scope="col">{{ __('webblocks-cms::admin.extensions_ui.name') }}</th>
                                 <th scope="col">{{ __('webblocks-cms::admin.system_plugins_index.version') }}</th>
-                                <th scope="col">{{ $text('compatibility') }}</th>
+                                <th scope="col">{{ $text('status') }}</th>
                                 <th scope="col">{{ $text('layouts') }}</th>
                                 <th scope="col">{{ $text('installed_at') }}</th>
                                 <th scope="col" class="wb-table-actions">{{ $text('actions') }}</th>

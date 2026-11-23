@@ -41,7 +41,7 @@ return [
   'package' => 'Tema paketi',
   'upload' => 'Tema yükle',
   'upload_help' => 'En fazla 8 MB boyutunda ZIP yükleyin. Temayı her site için ayrıca seçip etkinleştirin.',
-  'versions' => 'Kurulu sürümler',
+  'versions' => 'Kurulu tema sürümleri',
   'empty' => 'Henüz tema paketi kurulmadı.',
   'theme' => 'Tema',
   'compatibility' => 'Uyumluluk',

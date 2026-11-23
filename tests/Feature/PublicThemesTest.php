@@ -49,7 +49,7 @@ final class PublicThemesTest extends TestCase
     [$other, $otherPage] = $this->sitePage('two');
     $content = DB::table('wbcms_page_translations')->orderBy('id')->get()->toArray();
     $packages = route('admin.system.themes.index');
-    $this->get($packages)->assertOk()->assertSeeInOrder(['Manual theme install', 'Upload theme', 'Installed versions', 'Filter'])
+    $this->get($packages)->assertOk()->assertSeeInOrder(['Manual theme install', 'Upload', 'Installed theme versions', 'Filter'])
       ->assertSee('data-wb-busy', false)->assertSee('id="theme-package"', false)->assertDontSee('id="upload-theme"', false);
     $this->from($packages)->post(route('admin.system.themes.store'), ['theme_operation' => 'upload'])
       ->assertRedirect($packages)->assertSessionHasErrors('package');
@@ -190,7 +190,7 @@ final class PublicThemesTest extends TestCase
       },
     ]);
 
-    $this->get($packages)->assertOk()->assertSee('Browse theme catalog');
+    $this->get($packages)->assertOk()->assertSee('Browse catalog');
     Http::assertNothingSent();
     $this->get($catalog)->assertOk()->assertSee('Editorial')->assertSee('Update available')->assertSee('Install update')
       ->assertSee('wb-pagination wb-border-0', false)->assertSee($secondPage);

@@ -41,7 +41,7 @@ return [
   'package' => 'Pacchetto del tema',
   'upload' => 'Carica tema',
   'upload_help' => 'Carica uno ZIP fino a 8 MB. Scegli e attiva il tema per ogni sito.',
-  'versions' => 'Versioni installate',
+  'versions' => 'Versioni dei temi installate',
   'empty' => 'Nessun pacchetto di temi installato.',
   'theme' => 'Tema',
   'compatibility' => 'Compatibilità',

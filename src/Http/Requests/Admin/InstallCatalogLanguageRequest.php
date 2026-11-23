@@ -19,7 +19,7 @@ final class InstallCatalogLanguageRequest extends FormRequest
     return [
       'code' => ['required', 'string', 'max:12', 'regex:/\A'.PanelLanguageSource::CODE_PATTERN.'\z/'],
       'version' => ['required', 'string', 'max:32', 'regex:/\A'.LanguagePackCatalog::VERSION_PATTERN.'\z/'],
-      'format' => ['required', 'string', Rule::in(LanguagePackCatalog::FORMATS)],
+      'format' => ['required', 'string', Rule::in([LanguagePackCatalog::FORMAT])],
       'checksum' => ['required', 'string', 'regex:/\A[a-f0-9]{64}\z/'],
     ];
   }

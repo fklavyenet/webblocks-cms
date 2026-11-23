@@ -4,9 +4,8 @@ use Illuminate\Support\Facades\Route;
 use WebBlocks\Cms\Http\Controllers\Auth\LoginController;
 use WebBlocks\Cms\Http\Controllers\Auth\NewPasswordController;
 use WebBlocks\Cms\Http\Controllers\Auth\PasswordResetLinkController;
-use WebBlocks\Cms\Http\Middleware\UseAdminLocale;
 
-Route::middleware(['web', 'guest', UseAdminLocale::class.':custom-only'])->group(function () {
+Route::middleware(['web', 'guest'])->group(function () {
   Route::get('/webadmin/login', [LoginController::class, 'create'])->name('webblocks.auth.login');
   Route::post('/webadmin/login', [LoginController::class, 'store'])
     ->middleware('throttle:webblocks-auth')

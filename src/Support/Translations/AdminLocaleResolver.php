@@ -52,7 +52,7 @@ class AdminLocaleResolver
 
   public function options(): array
   {
-    return app(PanelLanguages::class)->options();
+    return $this->nativeOptions();
   }
 
   private function configuredLocale(array $options): string

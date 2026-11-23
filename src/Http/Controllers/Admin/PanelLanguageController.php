@@ -5,130 +5,60 @@ namespace WebBlocks\Cms\Http\Controllers\Admin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use WebBlocks\Cms\Http\Requests\Admin\PanelLanguageCatalogRequest;
+use WebBlocks\Cms\Http\Requests\Admin\LanguagePackUploadRequest;
 use WebBlocks\Cms\Http\Requests\Admin\PanelLanguageDefaultRequest;
-use WebBlocks\Cms\Support\Admin\AdminPagination;
 use WebBlocks\Cms\Support\Extensions\ExtensionOperation;
+use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
 use WebBlocks\Cms\Support\Translations\LanguagePackCatalog;
-use WebBlocks\Cms\Support\Translations\PanelLanguages;
-use WebBlocks\Cms\Support\Translations\PanelLanguageSource;
+use WebBlocks\Cms\Support\Translations\NativeLanguagePacks;
 
 final class PanelLanguageController
 {
-  public function __construct(
-    private readonly PanelLanguages $languages,
-    private readonly PanelLanguageSource $source,
-  ) {}
+  public function __construct(private readonly NativeLanguagePacks $packs) {}
 
   public function index(Request $request, AdminLocaleResolver $resolver): JsonResponse|View
   {
-    $api = $this->api($request);
-    $catalogs = $api ? $this->languages->catalogs() : $this->languages->catalogs(AdminPagination::perPage());
-    if (! $api) {
-      AdminPagination::redirectOutOfRange($catalogs, $request);
-    }
-
     $data = [
-      'catalogs' => $catalogs,
-      'options' => $this->languages->options(),
+      'packages' => $this->packs->installed()->values()->map(fn (object $pack): array => [
+        'code' => $pack->code, 'name' => $pack->name, 'source_version' => $pack->source_version,
+        'release_version' => $pack->release_version === '' ? null : $pack->release_version,
+      ]),
+      'options' => $resolver->options(),
       'defaultLocale' => $resolver->defaultLocale(),
-      'packaged' => array_keys($this->source->packagedOptions()),
     ];
 
-    return $api ? response()->json($data) : view('webblocks-cms::admin.system.panel-languages.index', $data + [
+    return $this->api($request) ? response()->json($data) : view('webblocks-cms::admin.system.panel-languages.index', $data + [
       'extensionsAvailable' => app(LanguagePackCatalog::class)->enabled(),
+      'manualInstallAvailable' => $this->packs->ready(),
     ]);
   }
 
-  public function template(): JsonResponse
+  public function store(LanguagePackUploadRequest $request): JsonResponse|RedirectResponse
   {
-    return response()->json($this->source->template(), 200, [
-      'Content-Disposition' => 'attachment; filename="webblocks-panel-language.json"',
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    abort_unless($this->packs->ready(), 503);
+    $operation = new ExtensionOperation('language_pack', 'install', 'package');
+    $package = $operation->validate(fn () => $this->packs->installArchive($request->file('package')->getPathname(), $operation));
+    $package['release_version'] = $package['release_version'] ?: null;
+
+    return $this->api($request)
+      ? response()->json(['package' => $package], 201)
+      : redirect()->route('admin.system.panel-languages.index')->with('panel_language_status', 'extensions_native_installed');
   }
 
-  public function store(PanelLanguageCatalogRequest $request): JsonResponse|RedirectResponse
+  public function updateDefault(PanelLanguageDefaultRequest $request, AdminLocaleResolver $resolver, SystemSettings $settings): JsonResponse|RedirectResponse
   {
-    $operation = new ExtensionOperation('language_pack', 'install');
-    $id = $operation->validate(fn () => $this->languages->import($request->catalogContents(), operation: $operation), 'catalog');
-    if ($this->api($request)) {
-      return response()->json($this->languages->preview($id), 201);
+    $code = $request->validated('code');
+    if (! isset($resolver->options()[$code])) {
+      throw ValidationException::withMessages(['code' => __('webblocks-cms::panel-languages.unavailable')])->errorBag('panelLanguageDefault');
     }
+    $settings->save([SystemSettings::ADMIN_LOCALE => $code]);
 
-    return redirect()->route('admin.system.panel-languages.show', $id)
-      ->with('panel_language_status', 'uploaded');
-  }
-
-  public function show(Request $request, int $catalog): JsonResponse|View
-  {
-    $operation = new ExtensionOperation('language_pack', 'preview', 'translation');
-    $data = $operation->validate(fn () => $this->languages->preview($catalog), 'catalog');
-
-    if ($this->api($request)) {
-      return response()->json($data);
-    }
-
-    $data['sampleSource'] = array_intersect_key($this->source->messages(), $data['sample']);
-    $page = LengthAwarePaginator::resolveCurrentPage('missing_page');
-    $pageSize = 50;
-    $missingCount = count($data['missing']);
-    $pageItems = $page <= max(1, (int) ceil($missingCount / $pageSize))
-      ? array_slice($data['missing'], ($page - 1) * $pageSize, $pageSize)
-      : [];
-    $data['missing'] = new LengthAwarePaginator(
-      $pageItems,
-      $missingCount,
-      $pageSize,
-      $page,
-      ['path' => $request->url(), 'pageName' => 'missing_page', 'fragment' => 'panel-language-missing'],
-    );
-    AdminPagination::redirectOutOfRange($data['missing'], $request, 'missing_page');
-
-    return view('webblocks-cms::admin.system.panel-languages.show', $data);
-  }
-
-  public function activate(Request $request, int $catalog): JsonResponse|RedirectResponse
-  {
-    $operation = new ExtensionOperation('language_pack', 'enable', 'activation');
-    $operation->validate(fn () => $this->languages->activate($catalog, $operation), 'catalog');
-
-    return $this->result($request, 'activated');
-  }
-
-  public function deactivate(Request $request, string $code): JsonResponse|RedirectResponse
-  {
-    $this->languages->deactivate($code);
-
-    return $this->result($request, 'deactivated');
-  }
-
-  public function destroy(int $catalog): RedirectResponse
-  {
-    $this->languages->delete($catalog);
-
-    return redirect()->route('admin.system.panel-languages.index')->with('panel_language_status', 'deleted');
-  }
-
-  public function updateDefault(PanelLanguageDefaultRequest $request): JsonResponse|RedirectResponse
-  {
-    try {
-      $this->languages->saveDefault($request->validated('code'));
-    } catch (ValidationException $exception) {
-      throw $exception->errorBag('panelLanguageDefault');
-    }
-
-    return $this->result($request, 'default_saved');
-  }
-
-  private function result(Request $request, string $status): JsonResponse|RedirectResponse
-  {
     return $this->api($request)
       ? response()->json(['ok' => true])
-      : redirect()->route('admin.system.panel-languages.index')->with('panel_language_status', $status);
+      : redirect()->route('admin.system.panel-languages.index')->with('panel_language_status', 'default_saved');
   }
 
   private function api(Request $request): bool

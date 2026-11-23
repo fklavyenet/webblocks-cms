@@ -41,7 +41,7 @@ return [
   'package' => 'Paquet de thème',
   'upload' => 'Téléverser un thème',
   'upload_help' => 'Téléversez un ZIP de 8 Mo maximum. Choisissez et activez le thème séparément pour chaque site.',
-  'versions' => 'Versions installées',
+  'versions' => 'Versions de thèmes installées',
   'empty' => 'Aucun paquet de thème installé.',
   'theme' => 'Thème',
   'compatibility' => 'Compatibilité',

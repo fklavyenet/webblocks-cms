@@ -4,10 +4,8 @@ namespace WebBlocks\Cms\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Facade;
 use Symfony\Component\HttpFoundation\Response;
 use WebBlocks\Cms\Support\Translations\AdminLocaleResolver;
-use WebBlocks\Cms\Support\Translations\PanelLanguages;
 
 class UseAdminLocale
 {
@@ -15,48 +13,10 @@ class UseAdminLocale
     private readonly AdminLocaleResolver $localeResolver,
   ) {}
 
-  public function handle(Request $request, Closure $next, ?string $mode = null): Response
+  public function handle(Request $request, Closure $next): Response
   {
-    $locale = $this->localeResolver->locale($request->user());
-    $bundled = in_array($locale, AdminLocaleResolver::SUPPORTED_LOCALES, true);
-    $lines = $bundled ? [] : app(PanelLanguages::class)->translations($locale);
-    if ($bundled || ($lines === [] && isset($this->localeResolver->nativeOptions()[$locale]))) {
-      if ($mode !== 'custom-only') {
-        app()->setLocale($locale);
-      }
+    app()->setLocale($this->localeResolver->locale($request->user()));
 
-      return $next($request);
-    }
-
-    $application = app();
-    $previousLocale = $application->getLocale();
-    $original = $application->make('translator');
-
-    try {
-      // Content and mail use the native locale independently of the panel overlay.
-      if ($mode !== 'custom-only') {
-        $application->setLocale($this->localeResolver->packagedLocale($request->user()));
-      }
-
-      $translator = clone $original;
-      foreach (array_unique(array_map(fn (string $key) => strstr($key, '.', true), array_keys($lines))) as $group) {
-        $translator->load('webblocks-cms', $group, $locale);
-      }
-      $translator->addLines($lines, $locale, 'webblocks-cms');
-      $translator->setLocale($locale);
-      $translator->setFallback('en');
-      $application->instance('translator', $translator);
-      Facade::clearResolvedInstance('translator');
-      $request->attributes->set('cms_panel_catalog_locale', $locale);
-
-      return $next($request);
-    } finally {
-      $application->instance('translator', $original);
-      Facade::clearResolvedInstance('translator');
-      $request->attributes->remove('cms_panel_catalog_locale');
-      if ($application->getLocale() !== $previousLocale) {
-        $application->setLocale($previousLocale);
-      }
-    }
+    return $next($request);
   }
 }

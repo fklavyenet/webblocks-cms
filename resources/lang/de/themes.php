@@ -41,7 +41,7 @@ return [
   'package' => 'Theme-Paket',
   'upload' => 'Theme hochladen',
   'upload_help' => 'Laden Sie eine ZIP-Datei bis 8 MB hoch. Wählen und aktivieren Sie das Theme für jede Website einzeln.',
-  'versions' => 'Installierte Versionen',
+  'versions' => 'Installierte Theme-Versionen',
   'empty' => 'Es wurden keine Theme-Pakete installiert.',
   'theme' => 'Theme',
   'compatibility' => 'Kompatibilität',

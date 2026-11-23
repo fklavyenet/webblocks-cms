@@ -8,7 +8,7 @@
 @section('content')
     @component('webblocks-cms::admin.partials.page-header', ['title' => $text('catalog_title')])
         @slot('actions')
-            <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.themes.index') }}">{{ $text('catalog_back') }}</a>
+            <a class="wb-btn wb-btn-secondary" href="{{ route('admin.system.themes.index') }}"><i class="wb-icon wb-icon-arrow-left" aria-hidden="true"></i> {{ $text('catalog_back') }}</a>
         @endslot
     @endcomponent
     @include('webblocks-cms::admin.system.themes.feedback')
@@ -29,10 +29,10 @@
                         <table class="wb-table">
                             <thead>
                                 <tr>
-                                    <th scope="col">{{ $text('theme') }}</th>
-                                    <th scope="col">{{ $text('catalog_version') }}</th>
-                                    <th scope="col">{{ $text('catalog_layouts') }}</th>
+                                    <th scope="col">{{ __('webblocks-cms::admin.extensions_ui.name') }}</th>
+                                    <th scope="col">{{ __('webblocks-cms::admin.system_plugins_index.version') }}</th>
                                     <th scope="col">{{ $text('status') }}</th>
+                                    <th scope="col">{{ $text('catalog_layouts') }}</th>
                                     <th scope="col" class="wb-table-actions">{{ $text('actions') }}</th>
                                 </tr>
                             </thead>
@@ -57,13 +57,13 @@
                                             @endif
                                         </th>
                                         <td>{{ $theme['release']['version'] ?? '—' }}</td>
-                                        <td>{{ $theme['release'] ? implode(', ', $theme['release']['layouts']) : '—' }}</td>
                                         <td>
                                             <span class="wb-status-pill {{ $statusClass }}">{{ $text($status) }}</span>
                                             @if ($state === 'conflict')
                                                 <p class="wb-text-sm wb-text-muted wb-m-0">{{ $text('catalog_conflict_help') }}</p>
                                             @endif
                                         </td>
+                                        <td>{{ $theme['release'] ? implode(', ', $theme['release']['layouts']) : '—' }}</td>
                                         <td class="wb-table-actions">
                                             @if (in_array($state, ['install', 'update'], true))
                                                 <div class="wb-action-group">

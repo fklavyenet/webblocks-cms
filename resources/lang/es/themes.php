@@ -41,7 +41,7 @@ return [
   'package' => 'Paquete de tema',
   'upload' => 'Subir tema',
   'upload_help' => 'Sube un ZIP de hasta 8 MB. Elige y activa el tema por separado para cada sitio.',
-  'versions' => 'Versiones instaladas',
+  'versions' => 'Versiones de temas instaladas',
   'empty' => 'No hay paquetes de temas instalados.',
   'theme' => 'Tema',
   'compatibility' => 'Compatibilidad',

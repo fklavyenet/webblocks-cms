@@ -30,64 +30,41 @@ This contract describes the supported authoring surface of the reviewed package 
 
 Legacy renderer compatibility does not make an unpublished handle available for new authoring. Use the current catalog and field contracts rather than historical counts or implementation milestones.
 
-## Panel Languages
+## Language Packs
 
-**Webadmin → System → Panel Languages** lets a Super admin download the
-current English template, upload a UTF-8 JSON catalog, and review coverage and
-sample translations next to the English source. The Catalogs tab has row
-actions to preview, activate, deactivate, and delete uploaded catalogs. Only
-inactive catalogs can be deleted, after confirmation. The Import tab contains
-the upload form and the Settings tab contains the default panel language.
-The panel language picker also recognizes host-installed language packs.
-A host language directory at `lang/vendor/webblocks-cms/<code>/` with
-`admin.php` and a `webblocks-language.txt` display name registers a native
-locale. Native packs use Laravel translation overrides, so their CMS validation,
-public interface and email strings can take part in normal locale resolution.
-The package does not enable a public site locale or change authored content
-when a host installs the files. An active uploaded panel catalog can overlay the
-native panel strings.
+**Webadmin → Extensions → Language packs** allows a Super admin to install
+complete language packs. Choose a ZIP under **Manual language pack install**
+or select **Install** or **Update** under **Browse language packs**. The
+Extensions catalog is queried for the running CMS version when opened. CMS
+rechecks the selected release identity, download size, and SHA-256 before
+installing a download.
 
-**Browse Extensions** queries the public language catalog for the installed
-CMS version only when a Super admin opens it. The catalog lists compatible
-panel-only and full CMS releases. An explicit POST rechecks the selected
-release and verifies the download against its catalog size and SHA-256.
-Downloaded panel JSON uses the existing preview and activation workflow.
-Repeating a download of the same panel catalog opens the existing preview.
-Full ZIPs require a complete catalog for the running CMS version. CMS reads
-the translation arrays as data and stores the installed release and its
-messages in SQL without extracting PHP files to the host. Installing or
-updating a full pack leaves the panel default, user preferences, and public
-site locale settings as they are. A user may choose the installed locale in
-their profile, and a Super admin may set it as the panel default.
+All installation paths require a Full CMS ZIP for the exact CMS version. The
+pack covers the CMS interface, public system messages, validation, emails, MCP
+messages, and the Publisher updater. CMS validates completeness against the
+English source and reads the PHP translation arrays as data. The pack and its
+messages are stored in SQL. Panel-only JSON import, templates, and activation
+were retired in CMS 1.144.19. Historical catalog records are retained for
+rollback and do not participate in language resolution.
 
-Host Laravel overrides take precedence over the matching installed strings.
-An active uploaded panel catalog still overlays eligible panel messages.
-After a CMS upgrade, unchanged source messages in an installed pack remain
-usable. Added or changed messages fall back through normal locale resolution
-until the matching language pack is installed.
+New packs appear under **Installed language packs**. The top bar and Profile
+set the personal interface language. **Default panel language** sets the
+installation default for accounts without a personal choice. Installing a pack
+does not change personal or default selections, site locales, or authored
+content. A previously selected language that is unavailable uses the usual
+fallback until it becomes available again. Visitors require an enabled site
+locale and translated content where applicable.
 
-The template has `format_version`, `source_version`, `code`, `name` and a list
-of `translations` rows with `key` and `text`.
-Retain the listed keys and their placeholders. Catalogs can be partial.
-The enabled language is available in the profile and toolbar, and can be
-saved as the default panel language. From 1.144.18, **Extensions → Language packs**
-shows manual catalog import, the English template, and imported catalogs on one
-page. The **Default panel language** dialog sets the installation default for
-accounts without a saved panel language. Existing bundled language files stay
-intact. If a later release bundles the same code, the active custom catalog
-keeps precedence. Missing or outdated messages use matching package strings
-when available, then English.
+Existing host Laravel translation overrides retain precedence over matching
+installed strings. When a CMS upgrade changes the English source, installed
+strings with matching fingerprints remain usable. New or changed messages use
+normal locale fallback until the corresponding pack is installed.
 
-The `/webadmin/api/system/panel-languages` endpoints expose catalog import,
-preview, activation, deactivation and the default language setting to an
+The Internal Content API at `/webadmin/api/system/panel-languages` requires an
 installation-wide system token with `panel-languages.manage` owned by an
-active Super admin. Upload to `POST /catalogs` with a multipart `catalog`
-file and review `GET /catalogs/{catalog}` before calling
-`POST /catalogs/{catalog}/activate`. `GET /template` returns the source
-template. `PUT /default` accepts a JSON `code`. `POST /{code}/deactivate`
-keeps the custom catalog available for reactivation. Panel catalogs never
-register site locales or translate page content, and do not expand the
-required plugin or content provider language sets.
+active Super admin. `GET /` lists installed packs and available panel
+languages. `POST /packages` accepts a multipart ZIP in the `package` field.
+`PUT /default` accepts the selected language `code`.
 
 ## CMS Notes
 
@@ -1436,7 +1413,7 @@ Super admins see the number of installed plugins with a newer installable catalo
 release in the Webadmin notification bell. The entry opens Extensions → Plugins.
 The panel checks installed plugins in a background request. The bell and Plugins
 list share the last successful result for one hour. Super admins can use
-**Check for updates** in the Registered plugins header to query the catalog
+**Check for updates** in the Installed plugins header to query the catalog
 immediately. Both paths share the same refresh lock and results. A successful
 check refreshes the timestamp and row actions. A failed check preserves the last
 successful timestamp and results and displays a warning. Applying an update
@@ -1472,7 +1449,7 @@ without a reference. Plugin lifecycle API errors can include an additive
 `diagnostic` object. Error codes, HTTP status, capabilities and rollback checks
 are unchanged. Feedback and the event omit exception text, command output,
 credentials and private paths. Theme installation, preview, activation and
-restoration, and language pack import, review, activation and catalog install
+restoration, and manual and catalog language pack installation
 use the same diagnostic reference and preserve their existing fallback and
 validation contracts.
 

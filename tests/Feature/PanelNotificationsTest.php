@@ -243,7 +243,10 @@ class PanelNotificationsTest extends TestCase
       $this->actingAs($this->user([$site->id]))->get($list)->assertForbidden();
       $this->actingAs($this->user([$site->id], super: true));
       $repository->recordPrevious('restore-example', '1.0.0', '2.0.0', false);
-      $this->get($list)->assertOk()->assertDontSee($trigger, false);
+      $this->get($list)->assertOk()->assertSeeInOrder(['Manual plugin install', 'Upload', 'Installed plugins'])
+        ->assertDontSee('manual upload')->assertDontSee($trigger, false);
+      $this->get(route('admin.system.plugins.show', ['plugin' => 'restore-example']))
+        ->assertOk()->assertSeeInOrder(['Installation type', 'CMS-managed package'])->assertDontSee('manual upload');
 
       $repository->recordPrevious('restore-example', '1.0.0', '2.0.0', true);
       $this->get($list)->assertOk()->assertSee($trigger, false)

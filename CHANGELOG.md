@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.19
+
+- Install complete Full CMS language pack ZIPs from Extensions or by manual upload. The installed list shows the pack and its source CMS version. Retire panel-only JSON catalogs and their activation workflow.
+- Standardize upload cards, action placement, and installed lists across Plugins, Public themes, and Language packs.
+- Remove the misleading plugin Source column. Plugin details describe the installation type.
+
 ## 1.144.18
 
 - Identify plugin Restore actions by an archive icon and see the target version in its tooltip.
