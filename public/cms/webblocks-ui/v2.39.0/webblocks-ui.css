@@ -1,6 +1,6 @@
 @charset "UTF-8";
 /*!
- * WebBlocks UI v2.38.0 (https://webblocksui.com/)
+ * WebBlocks UI v2.39.0 (https://webblocksui.com/)
  * Copyright 2026 WebBlocks UI
  * Licensed under MIT
  */
@@ -2448,7 +2448,8 @@ font-size: clamp(1.6rem, 8vw, 2.4rem);
 font-size: var(--wb-font-size-md);
 }
 }
-.wb-label {
+.wb-label,
+fieldset.wb-fieldset > legend {
 display: flex;
 flex-direction: column;
 gap: var(--wb-s1);
@@ -2893,6 +2894,27 @@ grid-template-columns: 1fr;
 .wb-form-group {
 display: grid;
 gap: var(--wb-s4);
+}
+fieldset.wb-fieldset {
+min-inline-size: 0;
+margin: 0;
+padding: 0;
+border: 0;
+}
+fieldset.wb-fieldset > legend {
+display: block;
+max-inline-size: 100%;
+margin-block-end: var(--wb-s2);
+padding: 0;
+overflow-wrap: anywhere;
+}
+.wb-fieldset-body {
+display: grid;
+gap: var(--wb-s2);
+}
+fieldset.wb-fieldset:disabled :is(.wb-check, .wb-radio) {
+color: var(--wb-muted);
+cursor: default;
 }
 .wb-input-group {
 display: flex;
@@ -3516,6 +3538,38 @@ text-decoration: none;
 .wb-dropdown-item:focus-visible {
 background: var(--wb-primary-soft);
 outline: none;
+}
+.wb-dropdown-menu--cascade {
+min-inline-size: min(200px, calc(100vi - 16px));
+max-inline-size: calc(100vi - 16px);
+max-block-size: calc(100dvb - 16px);
+overflow: auto;
+animation: none;
+}
+.wb-dropdown-menu--cascade .wb-dropdown-item[data-wb-toggle="submenu"]::after {
+content: "";
+flex: none;
+inline-size: 0.42em;
+block-size: 0.42em;
+margin-inline-start: auto;
+border-block-start: 1.5px solid currentColor;
+border-inline-end: 1.5px solid currentColor;
+transform: rotate(45deg);
+}
+.wb-dropdown-menu--cascade .wb-dropdown-item[data-wb-toggle="submenu"]:dir(rtl)::after {
+transform: rotate(-45deg);
+}
+.wb-dropdown-menu--cascade .wb-dropdown-item[data-wb-toggle="submenu"][aria-expanded="true"] {
+background: var(--wb-surface-2);
+}
+.wb-dropdown-menu--cascade .wb-dropdown-item:where(:disabled, [aria-disabled="true"]) {
+color: var(--wb-muted);
+cursor: default;
+}
+@media (pointer: coarse) {
+.wb-dropdown-menu--cascade .wb-dropdown-item {
+min-block-size: 44px;
+}
 }
 .wb-dropdown-item.is-active {
 color: var(--wb-accent-text);

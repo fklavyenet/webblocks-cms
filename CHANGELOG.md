@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.144.27
+
+- Bundle WebBlocks UI 2.39.0, including the shared styles for checkbox and radio field groups.
+
 ## 1.144.26
 
 - Read summaries and report details in compact HTML tables across Webadmin, with row and column headings and wrapping for long values.
