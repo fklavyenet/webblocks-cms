@@ -84,12 +84,12 @@
                                         <td><span class="wb-status-pill {{ $siteExport->statusBadgeClass() }}">{{ $transferStatusLabel($siteExport->status) }}</span></td>
                                         <td class="wb-table-actions">
                                             <div class="wb-action-group">
-                                                <a href="{{ route('admin.site-transfers.exports.show', $siteExport) }}" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('site_transfers.export_details') }}" aria-label="{{ $adminText('site_transfers.export_details') }}">
+                                                <a href="{{ route('admin.site-transfers.exports.show', $siteExport) }}" class="wb-action-btn wb-action-btn-view" data-wb-tooltip="{{ $adminText('site_transfers.export_details') }}" aria-label="{{ $adminText('site_transfers.export_details') }}">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
 
                                                 @if ($siteExport->isCompleted() && $siteExport->archive_path)
-                                                    <a href="{{ route('admin.site-transfers.exports.download', $siteExport) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('site_transfers.download_export_package') }}" aria-label="{{ $adminText('site_transfers.download_export_package') }}">
+                                                    <a href="{{ route('admin.site-transfers.exports.download', $siteExport) }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $adminText('site_transfers.download_export_package') }}" aria-label="{{ $adminText('site_transfers.download_export_package') }}">
                                                         <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                                     </a>
                                                 @endif
@@ -97,7 +97,7 @@
                                                 <button
                                                     type="button"
                                                     class="wb-action-btn wb-action-btn-delete"
-                                                    title="{{ $adminText('site_transfers.delete_export') }}"
+                                                    data-wb-tooltip="{{ $adminText('site_transfers.delete_export') }}"
                                                     aria-label="{{ $adminText('site_transfers.delete_export') }}"
                                                     data-wb-toggle="modal"
                                                     data-wb-target="#delete-site-export-{{ $siteExport->id }}-modal"
@@ -235,14 +235,14 @@
                                         <td><span class="wb-status-pill {{ $siteImport->statusBadgeClass() }}">{{ $transferStatusLabel($siteImport->status) }}</span></td>
                                         <td class="wb-table-actions">
                                             <div class="wb-action-group">
-                                                <a href="{{ route('admin.site-transfers.imports.show', $siteImport) }}" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('site_transfers.import_details') }}" aria-label="{{ $adminText('site_transfers.import_details') }}">
+                                                <a href="{{ route('admin.site-transfers.imports.show', $siteImport) }}" class="wb-action-btn wb-action-btn-view" data-wb-tooltip="{{ $adminText('site_transfers.import_details') }}" aria-label="{{ $adminText('site_transfers.import_details') }}">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
 
                                                 <button
                                                     type="button"
                                                     class="wb-action-btn wb-action-btn-delete"
-                                                    title="{{ $adminText('site_transfers.delete_import_log') }}"
+                                                    data-wb-tooltip="{{ $adminText('site_transfers.delete_import_log') }}"
                                                     aria-label="{{ $adminText('site_transfers.delete_import_log') }}"
                                                     data-wb-toggle="modal"
                                                     data-wb-target="#delete-site-import-{{ $siteImport->id }}-modal"

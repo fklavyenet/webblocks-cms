@@ -118,7 +118,7 @@
         return '<button type="button" class="wb-action-btn" data-wb-table-action="' + action + '"'
             + attributes
             + (disabled ? ' disabled' : '')
-            + ' title="' + escapeHtml(text) + '" aria-label="' + escapeHtml(text) + '">'
+            + ' data-wb-tooltip="' + escapeHtml(text) + '" aria-label="' + escapeHtml(text) + '">'
             + '<i class="wb-icon wb-icon-' + (ACTION_ICONS[action] || 'plus') + '" aria-hidden="true"></i>'
             + '</button>';
     }

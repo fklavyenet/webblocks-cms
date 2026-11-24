@@ -250,7 +250,7 @@
                                                 class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon"
                                                 data-wb-copy-url="{{ $publicUrl }}"
                                                 aria-label="{{ $adminText('copy_public_url') }}"
-                                                title="{{ $adminText('copy_public_url') }}"
+                                                data-wb-tooltip="{{ $adminText('copy_public_url') }}"
                                             >
                                                 <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                                             </button>

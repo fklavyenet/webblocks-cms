@@ -137,11 +137,11 @@
                                     </td>
                                     <td class="wb-table-actions">
                                         <div class="wb-action-group" aria-label="{{ $systemPluginsIndexText('plugin_actions_for', ['label' => $plugin['label']]) }}">
-                                            <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}" class="wb-action-btn" title="{{ $systemPluginsIndexText('view_details') }}" aria-label="{{ $systemPluginsIndexText('view_details') }}">
+                                            <a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}" class="wb-action-btn" data-wb-tooltip="{{ $systemPluginsIndexText('view_details') }}" aria-label="{{ $systemPluginsIndexText('view_details') }}">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>
 
-                                            <button type="button" class="wb-action-btn" title="{{ $systemPluginsIndexText('view_health_details') }}" aria-label="{{ $systemPluginsIndexText('view_health_details_for', ['label' => $plugin['label']]) }}" data-wb-toggle="modal" data-wb-target="#{{ $healthModalId }}">
+                                            <button type="button" class="wb-action-btn" data-wb-tooltip="{{ $systemPluginsIndexText('view_health_details') }}" aria-label="{{ $systemPluginsIndexText('view_health_details_for', ['label' => $plugin['label']]) }}" data-wb-toggle="modal" data-wb-target="#{{ $healthModalId }}">
                                                 <i class="wb-icon wb-icon-activity" aria-hidden="true"></i>
                                             </button>
 
@@ -179,7 +179,7 @@
                                             @if ($plugin['can_enable'])
                                                 <form method="POST" action="{{ route('admin.system.plugins.enable', $plugin['handle']) }}">
                                                     @csrf
-                                                    <button type="submit" class="wb-action-btn" title="{{ $systemPluginsIndexText('enable_plugin') }}" aria-label="{{ $systemPluginsIndexText('enable_plugin') }}">
+                                                    <button type="submit" class="wb-action-btn" data-wb-tooltip="{{ $systemPluginsIndexText('enable_plugin') }}" aria-label="{{ $systemPluginsIndexText('enable_plugin') }}">
                                                         <i class="wb-icon wb-icon-play" aria-hidden="true"></i>
                                                     </button>
                                                 </form>
@@ -188,14 +188,14 @@
                                             @if ($plugin['can_disable'])
                                                 <form method="POST" action="{{ route('admin.system.plugins.disable', $plugin['handle']) }}">
                                                     @csrf
-                                                    <button type="submit" class="wb-action-btn" title="{{ $systemPluginsIndexText('disable_plugin') }}" aria-label="{{ $systemPluginsIndexText('disable_plugin') }}">
+                                                    <button type="submit" class="wb-action-btn" data-wb-tooltip="{{ $systemPluginsIndexText('disable_plugin') }}" aria-label="{{ $systemPluginsIndexText('disable_plugin') }}">
                                                         <i class="wb-icon wb-icon-pause" aria-hidden="true"></i>
                                                     </button>
                                                 </form>
                                             @endif
 
                                             @if ($plugin['can_uninstall'])
-                                                <button type="button" class="wb-action-btn wb-action-btn-delete" title="{{ $systemPluginsIndexText('uninstall_plugin') }}" aria-label="{{ $systemPluginsIndexText('uninstall_plugin') }}" data-wb-toggle="modal" data-wb-target="#{{ $uninstallModalId }}">
+                                                <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-tooltip="{{ $systemPluginsIndexText('uninstall_plugin') }}" aria-label="{{ $systemPluginsIndexText('uninstall_plugin') }}" data-wb-toggle="modal" data-wb-target="#{{ $uninstallModalId }}">
                                                     <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                 </button>
                                             @endif

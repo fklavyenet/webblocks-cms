@@ -150,7 +150,7 @@
                                                 <a
                                                     href="{{ route('admin.block-types.index', array_filter(array_merge($baseQuery, ['modal' => 'block-type-contract', 'contract_block_type' => $blockType->id]))) }}"
                                                     class="wb-action-btn wb-action-btn-view"
-                                                    title="{{ $blockTypesIndexText('view_contract') }}"
+                                                    data-wb-tooltip="{{ $blockTypesIndexText('view_contract') }}"
                                                     aria-label="{{ $blockTypesIndexText('view_contract') }}"
                                                     aria-haspopup="dialog"
                                                     aria-controls="blockTypeContractModal-{{ $blockType->id }}"
@@ -160,13 +160,13 @@
                                                 </a>
 
                                                 @if (! $blockType->is_system)
-                                                    <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $blockTypesIndexText('edit_block_type') }}" aria-label="{{ $blockTypesIndexText('edit_block_type') }}" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">
+                                                    <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $blockTypesIndexText('edit_block_type') }}" aria-label="{{ $blockTypesIndexText('edit_block_type') }}" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">
                                                         <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                                     </a>
                                                     <form method="POST" action="{{ route('admin.block-types.destroy', $blockType) }}">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $blockTypesIndexText('delete_block_type') }}" aria-label="{{ $blockTypesIndexText('delete_block_type') }}">
+                                                        <button type="submit" class="wb-action-btn wb-action-btn-delete" data-wb-tooltip="{{ $blockTypesIndexText('delete_block_type') }}" aria-label="{{ $blockTypesIndexText('delete_block_type') }}">
                                                             <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                         </button>
                                                     </form>

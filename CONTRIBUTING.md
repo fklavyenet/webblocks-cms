@@ -122,6 +122,11 @@ localized accessible name. Omit `title` on these triggers to avoid a second
 browser tooltip. Use a WebBlocks UI popover with a button when users need to
 open the help by pressing a key or tapping the icon.
 
+Use `data-wb-tooltip` for the localized labels of icon-only actions in lists,
+the editor and the top bar. Active actions retain the pointer cursor when
+they have a tooltip. Drag handles retain grab and grabbing cursors, and
+disabled controls retain their disabled state.
+
 Use the shared **Filter** and **Reset** labels for submitted list filters.
 Reset returns the list to its default filters. Live search uses the search
 input's built-in clear control.

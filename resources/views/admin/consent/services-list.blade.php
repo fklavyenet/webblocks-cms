@@ -14,7 +14,7 @@
             <td><span class="wb-status-pill {{ $service['enabled'] ? 'wb-status-active' : 'wb-status-inactive' }}">{{ $t($service['enabled'] ? 'enabled' : 'disabled') }}</span></td>
             <td><span class="wb-status-pill {{ $service['used'] ? 'wb-status-info' : 'wb-status-inactive' }}">{{ $t($service['used'] ? 'used' : 'unused') }}</span></td>
             <td class="wb-table-actions"><div class="wb-action-group">
-                <a href="{{ $editUrl }}" class="wb-action-btn {{ $canWrite ? 'wb-action-btn-edit' : '' }}" title="{{ $actionLabel }}" aria-label="{{ $actionLabel }}: {{ $service['name'] }}" aria-haspopup="dialog"><i class="wb-icon wb-icon-{{ $canEditIcon }}" aria-hidden="true"></i></a>
+                <a href="{{ $editUrl }}" class="wb-action-btn {{ $canWrite ? 'wb-action-btn-edit' : '' }}" data-wb-tooltip="{{ $actionLabel }}" aria-label="{{ $actionLabel }}: {{ $service['name'] }}" aria-haspopup="dialog"><i class="wb-icon wb-icon-{{ $canEditIcon }}" aria-hidden="true"></i></a>
             </div></td>
         </tr>
     @endforeach

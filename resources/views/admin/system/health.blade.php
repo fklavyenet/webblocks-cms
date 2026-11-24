@@ -58,7 +58,7 @@
                                 <tr>
                                     <td><strong>{{ $text('categories.'.$issue['category']) }}</strong>@if (isset($issue['site_name']))<br><span class="wb-text-sm wb-text-muted">{{ $issue['site_name'] }}</span>@endif</td>
                                     <td><div class="wb-stack wb-stack-2"><div class="wb-cluster wb-cluster-2"><span class="wb-status-pill {{ $badge($issue['status']) }}">{{ $text('statuses.'.$issue['status']) }}</span></div><span>{{ $message($issue) }}</span></div></td>
-                                    <td class="wb-table-actions"><div class="wb-action-group"><a href="{{ $link($issue) }}" class="wb-action-btn wb-action-btn-view" title="{{ $text('review') }}" aria-label="{{ $text('review') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a></div></td>
+                                    <td class="wb-table-actions"><div class="wb-action-group"><a href="{{ $link($issue) }}" class="wb-action-btn wb-action-btn-view" data-wb-tooltip="{{ $text('review') }}" aria-label="{{ $text('review') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a></div></td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -110,7 +110,7 @@
                     <tbody>
                         @foreach ($health['sites'] as $site)
                             @php($lead = $site['lead'])
-                            <tr><th scope="row">{{ $site['name'] }}</th><td><span class="wb-status-pill {{ $badge($site['status']) }}">{{ $text('statuses.'.$site['status']) }}</span></td><td>{{ $text('page_count', ['published' => $site['published_pages'], 'total' => $site['pages']]) }}<br><span class="wb-text-sm wb-text-muted">{{ $text('history_size', ['size' => number_format($site['history_bytes'] / 1048576, 1).' MB']) }}</span></td><td>{{ $site['status'] === 'healthy' ? $text('site_ready') : $message($lead) }}</td><td class="wb-table-actions"><div class="wb-action-group"><a class="wb-action-btn wb-action-btn-view" href="{{ $link($lead) }}" title="{{ $text('review') }}" aria-label="{{ $text('review') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a></div></td></tr>
+                            <tr><th scope="row">{{ $site['name'] }}</th><td><span class="wb-status-pill {{ $badge($site['status']) }}">{{ $text('statuses.'.$site['status']) }}</span></td><td>{{ $text('page_count', ['published' => $site['published_pages'], 'total' => $site['pages']]) }}<br><span class="wb-text-sm wb-text-muted">{{ $text('history_size', ['size' => number_format($site['history_bytes'] / 1048576, 1).' MB']) }}</span></td><td>{{ $site['status'] === 'healthy' ? $text('site_ready') : $message($lead) }}</td><td class="wb-table-actions"><div class="wb-action-group"><a class="wb-action-btn wb-action-btn-view" href="{{ $link($lead) }}" data-wb-tooltip="{{ $text('review') }}" aria-label="{{ $text('review') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a></div></td></tr>
                         @endforeach
                     </tbody>
                 </table></div></div>
@@ -127,7 +127,7 @@
                         @else
                             <div class="wb-table-wrap"><table class="wb-table"><thead><tr><th scope="col">{{ $text('operation') }}</th><th scope="col">{{ $text('status') }}</th><th scope="col">{{ $text('date') }}</th><th scope="col" class="wb-table-actions">{{ $translator->admin('common.actions', $locale) }}</th></tr></thead><tbody>
                                 @foreach ($health['operations'] as $operation)
-                                    <tr><td>{{ $text('operations.'.$operation['type']) }}</td><td><span class="wb-status-pill {{ $badge($operation['status']) }}">{{ $text('outcomes.'.$operation['outcome']) }}</span></td><td>{{ $date($operation['at']) }}</td><td class="wb-table-actions"><div class="wb-action-group"><a href="{{ route($operation['route']) }}" class="wb-action-btn wb-action-btn-view" title="{{ $text('review') }}" aria-label="{{ $text('review') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a></div></td></tr>
+                                    <tr><td>{{ $text('operations.'.$operation['type']) }}</td><td><span class="wb-status-pill {{ $badge($operation['status']) }}">{{ $text('outcomes.'.$operation['outcome']) }}</span></td><td>{{ $date($operation['at']) }}</td><td class="wb-table-actions"><div class="wb-action-group"><a href="{{ route($operation['route']) }}" class="wb-action-btn wb-action-btn-view" data-wb-tooltip="{{ $text('review') }}" aria-label="{{ $text('review') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a></div></td></tr>
                                 @endforeach
                             </tbody></table></div>
                         @endif

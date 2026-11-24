@@ -84,7 +84,7 @@
         button.type = 'button';
         button.className = 'wb-action-btn wb-action-btn-' + (action === 'edit' ? 'edit' : 'delete');
         button.setAttribute('data-wb-setting-' + action, '');
-        button.title = actionLabel;
+        button.setAttribute('data-wb-tooltip', actionLabel);
         button.setAttribute('aria-label', actionLabel);
         if (action === 'edit') {
             button.setAttribute('data-wb-toggle', 'modal');

@@ -138,7 +138,7 @@
                   <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="{{ $asset->id }}">
                     <td>
                       <div class="wb-cluster wb-cluster-2">
-                        <button type="button" class="wb-action-btn" data-admin-sortable-handle title="{{ $adminText('drag_to_reorder') }}" aria-label="{{ $adminText('drag_to_reorder') }}">
+                        <button type="button" class="wb-action-btn" data-admin-sortable-handle data-wb-tooltip="{{ $adminText('drag_to_reorder') }}" aria-label="{{ $adminText('drag_to_reorder') }}">
                           <span aria-hidden="true">::</span>
                         </button>
                         <span>{{ $galleryIndex + 1 }}</span>
@@ -170,10 +170,10 @@
                     </td>
                     <td>
                       <div class="wb-action-group">
-                        <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" data-wb-gallery-edit-item title="{{ $adminText('edit_item_metadata') }}" aria-label="{{ $adminText('edit_item_metadata') }}">
+                        <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" data-wb-gallery-edit-item data-wb-tooltip="{{ $adminText('edit_item_metadata') }}" aria-label="{{ $adminText('edit_item_metadata') }}">
                           <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                         </button>
-                        <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" title="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}">
+                        <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" data-wb-tooltip="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}">
                           <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                         </button>
                       </div>
@@ -296,7 +296,7 @@
               <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="{{ $asset->id }}">
                 <td>
                   <div class="wb-cluster wb-cluster-2">
-                    <button type="button" class="wb-action-btn" data-admin-sortable-handle title="{{ $adminText('drag_to_reorder') }}" aria-label="{{ $adminText('drag_to_reorder') }}">
+                    <button type="button" class="wb-action-btn" data-admin-sortable-handle data-wb-tooltip="{{ $adminText('drag_to_reorder') }}" aria-label="{{ $adminText('drag_to_reorder') }}">
                       <span aria-hidden="true">::</span>
                     </button>
                     <span>{{ $galleryIndex + 1 }}</span>
@@ -328,10 +328,10 @@
                 </td>
                 <td>
                   <div class="wb-action-group">
-                    <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" data-wb-gallery-edit-item title="{{ $adminText('edit_item_metadata') }}" aria-label="{{ $adminText('edit_item_metadata') }}">
+                    <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#{{ $modalId }}" data-wb-gallery-edit-item data-wb-tooltip="{{ $adminText('edit_item_metadata') }}" aria-label="{{ $adminText('edit_item_metadata') }}">
                       <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                     </button>
-                    <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" title="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}">
+                    <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="{{ $asset->id }}" data-wb-tooltip="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}">
                       <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                     </button>
                   </div>
@@ -397,7 +397,7 @@
     <tr data-admin-sortable-item draggable="true" data-wb-gallery-item-row data-media-id="__MEDIA_ID__">
       <td>
         <div class="wb-cluster wb-cluster-2">
-          <button type="button" class="wb-action-btn" data-admin-sortable-handle title="{{ $adminText('drag_to_reorder') }}" aria-label="{{ $adminText('drag_to_reorder') }}">
+          <button type="button" class="wb-action-btn" data-admin-sortable-handle data-wb-tooltip="{{ $adminText('drag_to_reorder') }}" aria-label="{{ $adminText('drag_to_reorder') }}">
             <span aria-hidden="true">::</span>
           </button>
           <span data-wb-gallery-item-index>__INDEX_LABEL__</span>
@@ -425,10 +425,10 @@
       </td>
       <td>
         <div class="wb-action-group">
-          <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#__MODAL_ID__" data-wb-gallery-edit-item title="{{ $adminText('edit_item_metadata') }}" aria-label="{{ $adminText('edit_item_metadata') }}">
+          <button type="button" class="wb-action-btn wb-action-btn-edit" data-wb-toggle="modal" data-wb-target="#__MODAL_ID__" data-wb-gallery-edit-item data-wb-tooltip="{{ $adminText('edit_item_metadata') }}" aria-label="{{ $adminText('edit_item_metadata') }}">
             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
           </button>
-          <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="__MEDIA_ID__" title="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}">
+          <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-gallery-item-remove data-asset-id="__MEDIA_ID__" data-wb-tooltip="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}">
             <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
           </button>
         </div>

@@ -65,7 +65,7 @@
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         class="wb-action-btn wb-action-btn-view"
-                                        title="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
+                                        data-wb-tooltip="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
                                         aria-label="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
                                     >
                                         <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
@@ -109,7 +109,7 @@
                                             class="wb-action-btn"
                                             aria-haspopup="dialog"
                                             aria-controls="siteDetailsModal"
-                                            title="{{ $adminText('sites.view_details') }}"
+                                            data-wb-tooltip="{{ $adminText('sites.view_details') }}"
                                             aria-label="{{ $adminText('sites.view_details') }}"
                                         >
                                             <i class="wb-icon wb-icon-panel-right" aria-hidden="true"></i>
@@ -118,7 +118,7 @@
                                         <a
                                             href="{{ $editUrl }}"
                                             class="wb-action-btn wb-action-btn-edit"
-                                            title="{{ $adminText('sites.edit_site') }}"
+                                            data-wb-tooltip="{{ $adminText('sites.edit_site') }}"
                                             aria-label="{{ $adminText('sites.edit_site') }}"
                                         >
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>

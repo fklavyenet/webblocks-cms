@@ -33,7 +33,7 @@
                     </div>
                     <button class="wb-btn wb-btn-ghost wb-btn-icon wb-btn-sm wb-visible-mobile" type="button"
                             data-wb-toggle="sidebar" data-wb-target="#admin-sidebar" aria-controls="admin-sidebar"
-                            aria-expanded="false" aria-label="{{ $text('navigation.close') }}">
+                            aria-expanded="false" data-wb-tooltip="{{ $text('navigation.close') }}" aria-label="{{ $text('navigation.close') }}">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -63,7 +63,7 @@
             <div class="wb-dashboard-body">
                 <header class="wb-navbar wb-admin-navbar">
                     <button class="wb-navbar-toggle" type="button" data-wb-toggle="sidebar" data-wb-target="#admin-sidebar"
-                            aria-controls="admin-sidebar" aria-expanded="false" aria-label="{{ $text('navigation.toggle') }}">
+                            aria-controls="admin-sidebar" aria-expanded="false" data-wb-tooltip="{{ $text('navigation.toggle') }}" aria-label="{{ $text('navigation.toggle') }}">
                         <i class="wb-icon wb-icon-menu wb-icon-lg" aria-hidden="true"></i>
                     </button>
                     <div class="wb-navbar-identity">

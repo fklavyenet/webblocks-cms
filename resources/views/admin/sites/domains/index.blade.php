@@ -98,7 +98,7 @@
                                                 <a
                                                     href="{{ $editUrl }}"
                                                     class="wb-action-btn wb-action-btn-edit"
-                                                    title="{{ $adminText('domain_manage_settings') }}"
+                                                    data-wb-tooltip="{{ $adminText('domain_manage_settings') }}"
                                                     aria-label="{{ $adminText('domain_manage_settings') }}"
                                                     aria-haspopup="dialog"
                                                     aria-controls="siteDomainManageModal-{{ $domain->id }}"
@@ -108,7 +108,7 @@
                                                 <a
                                                     href="{{ route('admin.sites.domains.index', ['site' => $site, 'modal' => 'remove-domain', 'site_domain' => $domain->id]) }}"
                                                     class="wb-action-btn wb-action-btn-delete"
-                                                    title="{{ $adminText('domain_remove') }}"
+                                                    data-wb-tooltip="{{ $adminText('domain_remove') }}"
                                                     aria-label="{{ $adminText('domain_remove') }}"
                                                     aria-haspopup="dialog"
                                                     aria-controls="siteDomainRemoveModal-{{ $domain->id }}"

@@ -207,5 +207,10 @@
         }
 
         body.hidden = !body.hidden;
+        var builder = toggleBlock.closest('[data-wb-inline-builder]');
+        var label = builder.getAttribute(body.hidden ? 'data-expand-label' : 'data-collapse-label');
+        toggleButton.setAttribute('aria-expanded', body.hidden ? 'false' : 'true');
+        toggleButton.setAttribute('aria-label', label);
+        toggleButton.setAttribute('data-wb-tooltip', label);
     });
 }());

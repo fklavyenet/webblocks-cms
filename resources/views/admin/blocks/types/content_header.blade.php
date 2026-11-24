@@ -49,9 +49,9 @@
                         <div class="wb-card-header wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                             <strong data-wb-builder-item-label="content-header-meta-items">{{ trim((string) $metaItem) !== '' ? $metaItem : $adminText('new_item') }}</strong>
                             <div class="wb-flex wb-items-center wb-gap-2">
-                                <button type="button" class="wb-action-btn" data-wb-builder-item-move="up" title="{{ $adminText('move_up') }}" aria-label="{{ $adminText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
-                                <button type="button" class="wb-action-btn" data-wb-builder-item-move="down" title="{{ $adminText('move_down') }}" aria-label="{{ $adminText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-                                <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-builder-item-remove title="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                                <button type="button" class="wb-action-btn" data-wb-builder-item-move="up" data-wb-tooltip="{{ $adminText('move_up') }}" aria-label="{{ $adminText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
+                                <button type="button" class="wb-action-btn" data-wb-builder-item-move="down" data-wb-tooltip="{{ $adminText('move_down') }}" aria-label="{{ $adminText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+                                <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-builder-item-remove data-wb-tooltip="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                             </div>
                         </div>
                         <div class="wb-card-body wb-stack wb-gap-3" data-wb-builder-item-body="content-header-meta-items">
@@ -79,9 +79,9 @@
                 <div class="wb-card-header wb-flex wb-items-center wb-justify-between wb-gap-3 wb-flex-wrap">
                     <strong data-wb-builder-item-label="content-header-meta-items">{{ $adminText('new_item') }}</strong>
                     <div class="wb-flex wb-items-center wb-gap-2">
-                        <button type="button" class="wb-action-btn" data-wb-builder-item-move="up" title="{{ $adminText('move_up') }}" aria-label="{{ $adminText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
-                        <button type="button" class="wb-action-btn" data-wb-builder-item-move="down" title="{{ $adminText('move_down') }}" aria-label="{{ $adminText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-                        <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-builder-item-remove title="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                        <button type="button" class="wb-action-btn" data-wb-builder-item-move="up" data-wb-tooltip="{{ $adminText('move_up') }}" aria-label="{{ $adminText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
+                        <button type="button" class="wb-action-btn" data-wb-builder-item-move="down" data-wb-tooltip="{{ $adminText('move_down') }}" aria-label="{{ $adminText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+                        <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-builder-item-remove data-wb-tooltip="{{ $adminText('remove_item') }}" aria-label="{{ $adminText('remove_item') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                     </div>
                 </div>
                 <div class="wb-card-body wb-stack wb-gap-3" data-wb-builder-item-body="content-header-meta-items">

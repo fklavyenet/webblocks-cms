@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -373,8 +375,14 @@ class PanelNotificationsTest extends TestCase
       $secondCheck = $firstCheck->copy()->addMinutes(2);
       $this->travelTo($secondCheck);
       $this->post($check)->assertRedirect($plugins.'#registered-plugins');
-      $this->get($plugins)->assertOk()->assertSee('Plugin update check complete.')
+      $pluginList = $this->get($plugins)->assertOk()->assertSee('Plugin update check complete.')
         ->assertSee($secondCheck->format('Y-m-d H:i'))->assertSee('Update from catalog');
+      $document = new DOMDocument;
+      $document->loadHTML($pluginList->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+      $xpath = new DOMXPath($document);
+      $rowActions = '//*[@id="registered-plugins"]//tbody//*[contains(concat(" ", normalize-space(@class), " "), " wb-action-btn ")]';
+      $this->assertGreaterThan(0, $xpath->query($rowActions)->length);
+      $this->assertSame(0, $xpath->query($rowActions.'[not(normalize-space(@data-wb-tooltip)) or not(normalize-space(@aria-label)) or @title]')->length);
       $this->postJson($indicator)->assertOk()->assertJsonPath('count', 1);
       Http::assertSentCount(2);
 

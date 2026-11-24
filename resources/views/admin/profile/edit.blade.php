@@ -139,7 +139,7 @@
                                 data-wb-target="#profile_current_password"
                                 data-wb-password-label-show="{{ $adminText('show_password') }}"
                                 data-wb-password-label-hide="{{ $adminTranslator->admin('auth.hide_password', $adminLocale) }}"
-                                aria-label="{{ $adminText('show_password') }}"
+                                data-wb-tooltip="{{ $adminText('show_password') }}" aria-label="{{ $adminText('show_password') }}"
                                 aria-pressed="false"
                             >
                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
@@ -169,7 +169,7 @@
                                 data-wb-target="#profile_new_password"
                                 data-wb-password-label-show="{{ $adminText('show_password') }}"
                                 data-wb-password-label-hide="{{ $adminTranslator->admin('auth.hide_password', $adminLocale) }}"
-                                aria-label="{{ $adminText('show_password') }}"
+                                data-wb-tooltip="{{ $adminText('show_password') }}" aria-label="{{ $adminText('show_password') }}"
                                 aria-pressed="false"
                             >
                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
@@ -199,7 +199,7 @@
                                 data-wb-target="#profile_new_password_confirmation"
                                 data-wb-password-label-show="{{ $adminText('show_password') }}"
                                 data-wb-password-label-hide="{{ $adminTranslator->admin('auth.hide_password', $adminLocale) }}"
-                                aria-label="{{ $adminText('show_password') }}"
+                                data-wb-tooltip="{{ $adminText('show_password') }}" aria-label="{{ $adminText('show_password') }}"
                                 aria-pressed="false"
                             >
                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>

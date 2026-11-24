@@ -9,7 +9,7 @@
         @php($editUrl = route('admin.navigation.index', ['site_id' => $item->site_id, 'menu_key' => $item->menu_key, 'modal' => 'edit-item', 'navigation' => $item->id]))
         <li class="wb-navigation-tree-item" data-navigation-item data-item-id="{{ $item->id }}" data-depth="{{ $depth }}" data-item-link-type="{{ $item->link_type }}">
             <div class="wb-navigation-row">
-                <button type="button" class="wb-navigation-handle" data-navigation-handle title="{{ $navigationItemsText('drag_to_reorder') }}" aria-label="{{ $navigationItemsText('drag_to_reorder') }}" aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight">
+                <button type="button" class="wb-navigation-handle" data-navigation-handle data-wb-tooltip="{{ $navigationItemsText('drag_to_reorder') }}" aria-label="{{ $navigationItemsText('drag_to_reorder') }}" aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight">
                     <span aria-hidden="true">⋮⋮</span>
                 </button>
 
@@ -39,7 +39,7 @@
                         class="wb-action-btn wb-action-btn-edit"
                         aria-haspopup="dialog"
                         aria-controls="navigationEditModal-{{ $item->id }}"
-                        title="{{ $navigationItemsText('edit_item') }}"
+                        data-wb-tooltip="{{ $navigationItemsText('edit_item') }}"
                         aria-label="{{ $navigationItemsText('edit_item') }}"
                     ><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
 
@@ -47,7 +47,7 @@
                         @csrf
                         @method('PATCH')
                         <input type="hidden" name="site_id" value="{{ $item->site_id }}">
-                        <button type="submit" class="wb-action-btn" title="{{ $item->isVisible() ? $navigationItemsText('hide_item') : $navigationItemsText('show_item') }}" aria-label="{{ $item->isVisible() ? $navigationItemsText('hide_item') : $navigationItemsText('show_item') }}"><i class="wb-icon {{ $item->isVisible() ? 'wb-icon-eye-off' : 'wb-icon-eye' }}" aria-hidden="true"></i></button>
+                        <button type="submit" class="wb-action-btn" data-wb-tooltip="{{ $item->isVisible() ? $navigationItemsText('hide_item') : $navigationItemsText('show_item') }}" aria-label="{{ $item->isVisible() ? $navigationItemsText('hide_item') : $navigationItemsText('show_item') }}"><i class="wb-icon {{ $item->isVisible() ? 'wb-icon-eye-off' : 'wb-icon-eye' }}" aria-hidden="true"></i></button>
                     </form>
 
                     <button
@@ -55,7 +55,7 @@
                         class="wb-action-btn wb-action-btn-delete"
                         data-wb-toggle="modal"
                         data-wb-target="#delete-navigation-item-{{ $item->id }}"
-                        title="{{ $navigationItemsText('delete_item') }}"
+                        data-wb-tooltip="{{ $navigationItemsText('delete_item') }}"
                         aria-label="{{ $navigationItemsText('delete_item') }}"
                         aria-haspopup="dialog"
                     ><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>

@@ -82,13 +82,13 @@
                                     <td class="wb-table-actions">
                                         <div class="wb-action-group">
                                             @if ($role->is_protected)
-                                                <button type="button" class="wb-action-btn" data-wb-toggle="modal" data-wb-target="#acl-role-{{ $role->id }}" title="{{ __('webblocks-cms::acl.view_role') }}" aria-label="{{ __('webblocks-cms::acl.view_role') }}">
+                                                <button type="button" class="wb-action-btn" data-wb-toggle="modal" data-wb-target="#acl-role-{{ $role->id }}" data-wb-tooltip="{{ __('webblocks-cms::acl.view_role') }}" aria-label="{{ __('webblocks-cms::acl.view_role') }}">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </button>
                                             @else
-                                                <a class="wb-action-btn wb-action-btn-edit" href="{{ route('admin.access.roles.edit', $role) }}" title="{{ __('webblocks-cms::acl.edit') }}" aria-label="{{ __('webblocks-cms::acl.edit') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                                <a class="wb-action-btn wb-action-btn-edit" href="{{ route('admin.access.roles.edit', $role) }}" data-wb-tooltip="{{ __('webblocks-cms::acl.edit') }}" aria-label="{{ __('webblocks-cms::acl.edit') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                             @endif
-                                            <a class="wb-action-btn" href="{{ route('admin.access.roles.create', ['copy' => $role->id]) }}" title="{{ __('webblocks-cms::acl.copy') }}" aria-label="{{ __('webblocks-cms::acl.copy') }}"><i class="wb-icon wb-icon-copy" aria-hidden="true"></i></a>
+                                            <a class="wb-action-btn" href="{{ route('admin.access.roles.create', ['copy' => $role->id]) }}" data-wb-tooltip="{{ __('webblocks-cms::acl.copy') }}" aria-label="{{ __('webblocks-cms::acl.copy') }}"><i class="wb-icon wb-icon-copy" aria-hidden="true"></i></a>
                                         </div>
                                     </td>
                                 </tr>
@@ -162,7 +162,7 @@
                                     </div></td>
                                     <td class="wb-text-sm">{{ $eventContext ?: __('webblocks-cms::acl.no_context') }}@if ($event->reason ?? null)<p>{{ $event->reason }}</p>@endif</td>
                                     <td class="wb-table-actions"><div class="wb-action-group">
-                                        <button type="button" class="wb-action-btn" data-wb-toggle="modal" data-wb-target="#acl-event-{{ $event->id }}" title="{{ __('webblocks-cms::acl.history_view') }}" aria-label="{{ __('webblocks-cms::acl.history_view') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></button>
+                                        <button type="button" class="wb-action-btn" data-wb-toggle="modal" data-wb-target="#acl-event-{{ $event->id }}" data-wb-tooltip="{{ __('webblocks-cms::acl.history_view') }}" aria-label="{{ __('webblocks-cms::acl.history_view') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></button>
                                     </div></td>
                                 </tr>
                                 @push('overlays')

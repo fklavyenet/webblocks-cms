@@ -937,6 +937,7 @@ $translations = [
     'move_up' => 'Déplacer le bloc vers le haut',
     'move_down' => 'Déplacer le bloc vers le bas',
     'collapse' => 'Replier le bloc',
+    'expand' => 'Déplier le bloc',
     'remove' => 'Retirer le bloc',
     'no_title' => 'Pas encore de titre',
     'block_type' => 'Type de bloc',

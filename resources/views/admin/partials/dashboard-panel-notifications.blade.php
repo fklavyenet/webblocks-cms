@@ -40,7 +40,7 @@
                                     <td class="wb-table-actions">
                                         <div class="wb-action-group">
                                             <a class="wb-action-btn wb-action-btn-view" href="{{ $inbox['url'] }}"
-                                                title="{{ __('webblocks-cms::notifications.panel_review_awaiting') }}"
+                                                data-wb-tooltip="{{ __('webblocks-cms::notifications.panel_review_awaiting') }}"
                                                 aria-label="{{ __('webblocks-cms::notifications.panel_review_awaiting') }}">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>

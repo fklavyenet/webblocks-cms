@@ -26,7 +26,7 @@
                         <td><div class="wb-stack wb-gap-1"><span>{{ $rating->page?->title ?: '—' }}</span><span class="wb-text-sm wb-text-muted">{{ $rating->site?->name }}</span>@if (! $rating->block_id)<span class="wb-text-sm wb-text-muted">{{ $adminText('previous_block') }}</span>@endif</div></td>
                         <td><span class="wb-status-pill {{ $rating->status === 'active' ? 'wb-status-active' : 'wb-status-pending' }}">{{ $rating->status === 'active' ? $adminText('status_active') : $adminText('status_inactive') }}</span></td>
                         <td>{{ $rating->created_at?->format('Y-m-d H:i') }}</td><td>{{ $rating->updated_at?->format('Y-m-d H:i') }}</td>
-                        <td class="wb-table-actions">@if ($rating->page?->status === 'published')<div class="wb-action-group"><a class="wb-action-btn wb-action-btn-view" href="{{ $rating->page->publicUrl() }}" target="_blank" rel="noopener" title="{{ $adminText('open_page') }}" aria-label="{{ $adminText('open_page') }}"><i class="wb-icon wb-icon-external-link" aria-hidden="true"></i></a></div>@endif</td>
+                        <td class="wb-table-actions">@if ($rating->page?->status === 'published')<div class="wb-action-group"><a class="wb-action-btn wb-action-btn-view" href="{{ $rating->page->publicUrl() }}" target="_blank" rel="noopener" data-wb-tooltip="{{ $adminText('open_page') }}" aria-label="{{ $adminText('open_page') }}"><i class="wb-icon wb-icon-external-link" aria-hidden="true"></i></a></div>@endif</td>
                     </tr>
                 @empty
                     <tr><td colspan="6"><div class="wb-empty">

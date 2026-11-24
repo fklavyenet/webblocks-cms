@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.25
+
+- See consistent tooltips on action icons across Webadmin, including the Plugins list, when you hover or navigate with the keyboard.
+- Use the hand cursor on clickable actions. Drag handles still show the grab cursor.
+
 ## 1.144.24
 
 - Read Dashboard Overview counts in a compact table, with publication totals alongside the page count.

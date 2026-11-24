@@ -2959,6 +2959,12 @@ and design, System, Maintenance and plugin groups keep their existing organizati
 SEO audits remains under Contact/analytics and Jobs and automation under Maintenance.
 This changes navigation placement, not permissions or route ownership.
 
+Icon-only actions in administration lists, editors and the top bar display
+localized WebBlocks UI tooltips on hover and keyboard focus. Active actions
+use the pointer cursor. Drag handles retain grab and grabbing cursors. Editor
+controls that expand or collapse content update their labels to match the
+current state.
+
 
 ## Native disclosure ownership
 

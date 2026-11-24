@@ -124,18 +124,18 @@
                                             @if ($permissions[$note->id]['view'])
                                                 <form method="POST" action="{{ route('admin.notes.open', $row) }}">
                                                     @csrf
-                                                    <button type="submit" id="notes-read-trigger-{{ $note->id }}" class="wb-action-btn wb-action-btn-view" aria-haspopup="dialog" title="{{ $text('read_note') }}" aria-label="{{ $text('read_note') }} — {{ $label }}">
+                                                    <button type="submit" id="notes-read-trigger-{{ $note->id }}" class="wb-action-btn wb-action-btn-view" aria-haspopup="dialog" data-wb-tooltip="{{ $text('read_note') }}" aria-label="{{ $text('read_note') }} — {{ $label }}">
                                                         <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                     </button>
                                                 </form>
                                             @endif
                                             @if ($permissions[$note->id]['update'])
-                                                <a href="{{ $editUrl }}" id="notes-edit-trigger-{{ $note->id }}" class="wb-action-btn" aria-haspopup="dialog" title="{{ $text('edit') }}" aria-label="{{ $text('edit') }} — {{ $label }}">
+                                                <a href="{{ $editUrl }}" id="notes-edit-trigger-{{ $note->id }}" class="wb-action-btn" aria-haspopup="dialog" data-wb-tooltip="{{ $text('edit') }}" aria-label="{{ $text('edit') }} — {{ $label }}">
                                                     <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                                 </a>
                                             @endif
                                             @if ($permissions[$note->id]['delete'])
-                                                <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#note-delete-{{ $note->id }}" aria-haspopup="dialog" title="{{ $text('delete') }}" aria-label="{{ $text('delete') }} — {{ $label }}">
+                                                <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#note-delete-{{ $note->id }}" aria-haspopup="dialog" data-wb-tooltip="{{ $text('delete') }}" aria-label="{{ $text('delete') }} — {{ $label }}">
                                                     <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                 </button>
                                             @endif

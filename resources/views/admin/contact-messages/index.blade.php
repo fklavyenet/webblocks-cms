@@ -199,11 +199,11 @@
                                     <td>{{ $message->created_at?->format('Y-m-d H:i') }}</td>
                                     <td class="wb-table-actions">
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.contact-messages.show', $message) }}" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('view_message') }}" aria-label="{{ $adminText('view_message') }}">
+                                            <a href="{{ route('admin.contact-messages.show', $message) }}" class="wb-action-btn wb-action-btn-view" data-wb-tooltip="{{ $adminText('view_message') }}" aria-label="{{ $adminText('view_message') }}">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </a>
 
-                                            <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#delete-contact-message-modal-{{ $message->id }}" title="{{ $adminText('delete_message') }}" aria-label="{{ $adminText('delete_message') }}" aria-haspopup="dialog">
+                                            <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#delete-contact-message-modal-{{ $message->id }}" data-wb-tooltip="{{ $adminText('delete_message') }}" aria-label="{{ $adminText('delete_message') }}" aria-haspopup="dialog">
                                                 <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                             </button>
                                         </div>

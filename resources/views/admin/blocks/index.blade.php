@@ -145,8 +145,8 @@
                                     </td>
                                      <td>
                                          <div class="wb-action-group">
-                                             <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $blocksIndexText('edit_block') }}" aria-label="{{ $blocksIndexText('edit_block') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                              <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#delete-block-{{ $block->id }}" title="{{ $blocksIndexText('delete_block') }}" aria-label="{{ $blocksIndexText('delete_block') }}" aria-haspopup="dialog"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                                             <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $blocksIndexText('edit_block') }}" aria-label="{{ $blocksIndexText('edit_block') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                              <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-toggle="modal" data-wb-target="#delete-block-{{ $block->id }}" data-wb-tooltip="{{ $blocksIndexText('delete_block') }}" aria-label="{{ $blocksIndexText('delete_block') }}" aria-haspopup="dialog"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                           </div>
                                       </td>
                                 </tr>

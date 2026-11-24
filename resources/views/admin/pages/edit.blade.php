@@ -368,12 +368,12 @@
                 <td>{{ $translationStatus['public_path'] ?? $adminText('missing') }}</td>
                 <td>
                   @if ($translation)
-                    <a href="{{ route('admin.pages.preview', ['page' => $page, 'locale' => $locale->code]) }}" target="_blank" rel="noopener noreferrer" class="wb-action-btn" title="{{ $adminText('preview') }}" aria-label="{{ $adminText('preview') }}">
+                    <a href="{{ route('admin.pages.preview', ['page' => $page, 'locale' => $locale->code]) }}" target="_blank" rel="noopener noreferrer" class="wb-action-btn" data-wb-tooltip="{{ $adminText('preview') }}" aria-label="{{ $adminText('preview') }}">
                       <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                     </a>
                   @endif
                   @if ($page->isPublished() && $translationStatus['public_url'])
-                    <a href="{{ $translationStatus['public_url'] }}" target="_blank" rel="noopener noreferrer" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('open_translation') }}" aria-label="{{ $adminText('open_translation') }}">
+                    <a href="{{ $translationStatus['public_url'] }}" target="_blank" rel="noopener noreferrer" class="wb-action-btn wb-action-btn-view" data-wb-tooltip="{{ $adminText('open_translation') }}" aria-label="{{ $adminText('open_translation') }}">
                       <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
                     </a>
                   @else
@@ -383,14 +383,14 @@
                 <td>
                   <div class="wb-action-group">
                     @if ($translation)
-                      <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'seo', 'seo_locale' => $locale->code, 'return_url' => $pageReturnUrl]) }}#page-management" class="wb-action-btn" title="{{ $adminTranslator->get('seo.title', $adminLocale) }}: {{ $locale->name }}" aria-label="{{ $adminTranslator->get('seo.title', $adminLocale) }}: {{ $locale->name }}"><i class="wb-icon wb-icon-search" aria-hidden="true"></i></a>
+                      <a href="{{ route('admin.pages.edit', ['page' => $page, 'tab' => 'seo', 'seo_locale' => $locale->code, 'return_url' => $pageReturnUrl]) }}#page-management" class="wb-action-btn" data-wb-tooltip="{{ $adminTranslator->get('seo.title', $adminLocale) }}: {{ $locale->name }}" aria-label="{{ $adminTranslator->get('seo.title', $adminLocale) }}: {{ $locale->name }}"><i class="wb-icon wb-icon-search" aria-hidden="true"></i></a>
                     @endif
                     @if (! $canEditContent)
                       <span class="wb-text-sm wb-text-muted">{{ $adminText('locked_by_workflow') }}</span>
                     @elseif ($translation)
-                      <a href="{{ $editTranslationUrl }}" class="wb-action-btn" title="{{ $adminText('edit_translation') }}: {{ $locale->name }}" aria-label="{{ $adminText('edit_translation') }}: {{ $locale->name }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                      <a href="{{ $editTranslationUrl }}" class="wb-action-btn" data-wb-tooltip="{{ $adminText('edit_translation') }}: {{ $locale->name }}" aria-label="{{ $adminText('edit_translation') }}: {{ $locale->name }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                     @else
-                      <a href="{{ route('admin.pages.translations.create', ['page' => $page, 'locale' => $locale, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn" title="{{ $adminText('add_translation') }}: {{ $locale->name }}" aria-label="{{ $adminText('add_translation') }}: {{ $locale->name }}"><i class="wb-icon wb-icon-plus" aria-hidden="true"></i></a>
+                      <a href="{{ route('admin.pages.translations.create', ['page' => $page, 'locale' => $locale, 'return_url' => $pageReturnUrl]) }}" class="wb-action-btn" data-wb-tooltip="{{ $adminText('add_translation') }}: {{ $locale->name }}" aria-label="{{ $adminText('add_translation') }}: {{ $locale->name }}"><i class="wb-icon wb-icon-plus" aria-hidden="true"></i></a>
                     @endif
                   </div>
                 </td>

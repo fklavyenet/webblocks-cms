@@ -1140,6 +1140,7 @@ return [
     'move_up' => 'Move block up',
     'move_down' => 'Move block down',
     'collapse' => 'Collapse block',
+    'expand' => 'Expand block',
     'remove' => 'Remove block',
     'no_title' => 'No title yet',
     'block_type' => 'Block type',

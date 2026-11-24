@@ -33,7 +33,7 @@
         <div class="wb-stack wb-gap-1">
             <div class="wb-cluster wb-cluster-2">
                 @if ($enableAdminSortable)
-                    <button type="button" class="wb-action-btn" data-admin-sortable-handle aria-label="{{ $columnItemRowText('drag_to_reorder') }}" title="{{ $columnItemRowText('drag_to_reorder') }}">
+                    <button type="button" class="wb-action-btn" data-admin-sortable-handle aria-label="{{ $columnItemRowText('drag_to_reorder') }}" data-wb-tooltip="{{ $columnItemRowText('drag_to_reorder') }}">
                         <i class="wb-icon wb-icon-grip-vertical" aria-hidden="true"></i>
                     </button>
                 @endif
@@ -43,10 +43,10 @@
         </div>
 
         <div class="wb-action-group">
-            <button type="button" class="wb-action-btn" data-wb-builder-item-move="up" title="{{ $columnItemRowText('move_up') }}" aria-label="{{ $columnItemRowText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn" data-wb-builder-item-move="down" title="{{ $columnItemRowText('move_down') }}" aria-label="{{ $columnItemRowText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn" data-wb-builder-item-toggle data-wb-collapse="{{ $collapseId }}" aria-controls="{{ $collapseId }}" title="{{ $columnItemRowText('collapse_item') }}" aria-label="{{ $columnItemRowText('collapse_item') }}" aria-expanded="true"><i class="wb-icon wb-icon-minus" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-builder-item-remove title="{{ $columnItemRowText('remove_item') }}" aria-label="{{ $columnItemRowText('remove_item') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-builder-item-move="up" data-wb-tooltip="{{ $columnItemRowText('move_up') }}" aria-label="{{ $columnItemRowText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-builder-item-move="down" data-wb-tooltip="{{ $columnItemRowText('move_down') }}" aria-label="{{ $columnItemRowText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-builder-item-toggle data-wb-collapse="{{ $collapseId }}" aria-controls="{{ $collapseId }}" data-wb-tooltip="{{ $columnItemRowText('collapse_item') }}" aria-label="{{ $columnItemRowText('collapse_item') }}" aria-expanded="true"><i class="wb-icon wb-icon-minus" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-builder-item-remove data-wb-tooltip="{{ $columnItemRowText('remove_item') }}" aria-label="{{ $columnItemRowText('remove_item') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
         </div>
     </div>
 

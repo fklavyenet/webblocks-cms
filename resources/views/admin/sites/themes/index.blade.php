@@ -66,7 +66,7 @@
                                                     <div class="wb-action-group">
                                                         <a class="wb-action-btn wb-action-btn-view"
                                                             href="{{ route('admin.sites.themes.comparison', ['site' => $site, 'version' => $version->id]) }}"
-                                                            title="{{ $text('preview') }}" aria-label="{{ $text('preview') }}">
+                                                            data-wb-tooltip="{{ $text('preview') }}" aria-label="{{ $text('preview') }}">
                                                             <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                         </a>
                                                     </div>

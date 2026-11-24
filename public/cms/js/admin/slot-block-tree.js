@@ -129,7 +129,6 @@
 
         button.setAttribute('aria-pressed', allExpanded ? 'true' : 'false');
         button.setAttribute('aria-label', label);
-        button.setAttribute('title', label);
 
         if (labelNode) {
             labelNode.textContent = label;
@@ -182,9 +181,10 @@
     }
 
     function setToggleExpanded(button, expanded) {
+        var label = i18n(expanded ? 'collapse-children' : 'expand-children');
         button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        button.setAttribute('aria-label', expanded ? i18n('collapse-children') : i18n('expand-children'));
-        button.setAttribute('title', expanded ? i18n('collapse-children') : i18n('expand-children'));
+        button.setAttribute('aria-label', label);
+        button.setAttribute('data-wb-tooltip', label);
     }
 
     function rowVisible(root, row) {

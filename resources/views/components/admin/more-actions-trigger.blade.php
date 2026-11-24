@@ -8,7 +8,7 @@
     aria-controls="{{ $menuId }}"
     aria-expanded="false"
     aria-label="{{ $label }}"
-    title="{{ $label }}"
+    data-wb-tooltip="{{ $label }}"
 >
     <span aria-hidden="true">⋯</span>
     <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>

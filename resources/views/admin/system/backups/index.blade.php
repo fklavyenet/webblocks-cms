@@ -273,17 +273,17 @@
                                         <td>{{ $backup->triggeredBy?->name ?? '-' }}</td>
                                         <td class="wb-table-actions">
                                             <div class="wb-action-group">
-                                                <a href="{{ route('admin.system.backups.show', $backup) }}#backup-retention" class="wb-action-btn wb-action-btn-edit" title="{{ $retentionText('manage') }}" aria-label="{{ $retentionText('manage') }}"><i class="wb-icon {{ $backup->is_protected ? 'wb-icon-lock' : 'wb-icon-settings' }}" aria-hidden="true"></i></a>
-                                                <a href="{{ route('admin.system.backups.show', $backup) }}" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('backups.details') }}" aria-label="{{ $adminText('backups.details') }}">
+                                                <a href="{{ route('admin.system.backups.show', $backup) }}#backup-retention" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $retentionText('manage') }}" aria-label="{{ $retentionText('manage') }}"><i class="wb-icon {{ $backup->is_protected ? 'wb-icon-lock' : 'wb-icon-settings' }}" aria-hidden="true"></i></a>
+                                                <a href="{{ route('admin.system.backups.show', $backup) }}" class="wb-action-btn wb-action-btn-view" data-wb-tooltip="{{ $adminText('backups.details') }}" aria-label="{{ $adminText('backups.details') }}">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </a>
 
                                                 @if ($archiveResolution?->isAvailable())
-                                                    <a href="{{ route('admin.system.backups.download', $backup) }}" class="wb-action-btn wb-action-btn-download" title="{{ $adminText('backups.download_backup') }}" aria-label="{{ $adminText('backups.download_backup') }}">
+                                                    <a href="{{ route('admin.system.backups.download', $backup) }}" class="wb-action-btn wb-action-btn-download" data-wb-tooltip="{{ $adminText('backups.download_backup') }}" aria-label="{{ $adminText('backups.download_backup') }}">
                                                         <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                                     </a>
                                                 @elseif ($backup->isSuccessful() && $backup->archive_path)
-                                                    <button type="button" class="wb-action-btn wb-action-btn-download" title="{{ $archiveFeedback($archiveResolution) }}" aria-label="{{ $archiveFeedback($archiveResolution) }}" disabled>
+                                                    <button type="button" class="wb-action-btn wb-action-btn-download" data-wb-tooltip="{{ $archiveFeedback($archiveResolution) }}" aria-label="{{ $archiveFeedback($archiveResolution) }}" disabled>
                                                         <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                                     </button>
                                                 @endif
@@ -291,7 +291,7 @@
                                                 <button
                                                     type="button"
                                                     class="wb-action-btn wb-action-btn-delete"
-                                                    title="{{ $backup->is_protected ? $retentionText('protected_error') : ($backup->isRunning() ? $adminText('backups.delete_stuck_running') : $adminText('backups.delete_backup')) }}"
+                                                    data-wb-tooltip="{{ $backup->is_protected ? $retentionText('protected_error') : ($backup->isRunning() ? $adminText('backups.delete_stuck_running') : $adminText('backups.delete_backup')) }}"
                                                     aria-label="{{ $backup->is_protected ? $retentionText('protected_error') : ($backup->isRunning() ? $adminText('backups.delete_stuck_running') : $adminText('backups.delete_backup')) }}"
                                                     data-wb-toggle="modal"
                                                     data-wb-target="#delete-backup-{{ $backup->id }}-modal"

@@ -139,7 +139,7 @@
                     </a>
                     <button class="wb-btn wb-btn-ghost wb-btn-icon wb-btn-sm wb-visible-mobile wb-flex-shrink-0" type="button"
                             data-wb-toggle="sidebar" data-wb-target="#admin-sidebar" aria-controls="admin-sidebar"
-                            aria-expanded="false" aria-label="{{ $adminText('navigation.close') }}">
+                            aria-expanded="false" data-wb-tooltip="{{ $adminText('navigation.close') }}" aria-label="{{ $adminText('navigation.close') }}">
                         <i class="wb-icon wb-icon-x" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -209,7 +209,7 @@
                         data-wb-target="#admin-sidebar"
                         aria-expanded="false"
                         aria-controls="admin-sidebar"
-                        aria-label="{{ $adminText('navigation.toggle') }}"
+                        data-wb-tooltip="{{ $adminText('navigation.toggle') }}" aria-label="{{ $adminText('navigation.toggle') }}"
                     >
                         <i class="wb-icon wb-icon-menu wb-icon-lg" aria-hidden="true"></i>
                     </button>
@@ -230,7 +230,7 @@
                                     data-wb-update-indicator-url="{{ route('admin.system.updates.indicator') }}"
                                     data-wb-update-indicator-state="unknown"
                                     aria-label="{{ $adminText('topbar.system_updates') }}"
-                                    title="{{ $adminText('topbar.system_updates') }}"
+                                    data-wb-tooltip="{{ $adminText('topbar.system_updates') }}"
                                     hidden
                                 >
                                     <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
@@ -243,7 +243,7 @@
                                 data-wb-mode-label-light="{{ $adminText('topbar.mode_light') }}"
                                 data-wb-mode-label-dark="{{ $adminText('topbar.mode_dark') }}"
                                 data-wb-mode-label-auto="{{ $adminText('topbar.mode_auto') }}"
-                                aria-label="{{ $adminText('topbar.color_mode') }}" title="{{ $adminText('topbar.color_mode') }}">
+                                aria-label="{{ $adminText('topbar.color_mode') }}" data-wb-tooltip="{{ $adminText('topbar.color_mode') }}">
                                 <i class="wb-icon wb-icon-sun-moon" aria-hidden="true"></i>
                             </button>
 
@@ -256,6 +256,7 @@
                                         type="button"
                                         data-wb-toggle="dropdown"
                                         data-wb-target="#admin-language-menu"
+                                        data-wb-tooltip="{{ $adminText('topbar.choose_language') }}"
                                         aria-label="{{ $adminText('topbar.choose_language') }}"
                                         aria-expanded="false"
                                     >
@@ -287,7 +288,7 @@
                         </div>
 
                         <div class="wb-user-menu wb-dropdown wb-dropdown-end">
-                            <button class="wb-btn wb-btn-ghost wb-user-menu-trigger wb-gap-1" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-controls="admin-user-menu" aria-expanded="false" aria-label="{{ $adminText('topbar.user_menu') }}">
+                            <button class="wb-btn wb-btn-ghost wb-user-menu-trigger wb-gap-1" type="button" data-wb-toggle="dropdown" data-wb-target="#admin-user-menu" aria-controls="admin-user-menu" aria-expanded="false" data-wb-tooltip="{{ $adminText('topbar.user_menu') }}" aria-label="{{ $adminText('topbar.user_menu') }}">
                                 <span class="wb-avatar wb-avatar-sm" aria-hidden="true">{{ $userInitials }}</span>
                                 <i class="wb-icon wb-icon-chevron-down wb-user-menu-chevron" aria-hidden="true"></i>
                             </button>

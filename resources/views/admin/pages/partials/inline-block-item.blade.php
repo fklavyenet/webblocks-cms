@@ -12,10 +12,10 @@
         </div>
 
         <div class="wb-action-group">
-            <button type="button" class="wb-action-btn" data-wb-inline-move="up" title="{{ $inlineBlocksText('move_up') }}" aria-label="{{ $inlineBlocksText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn" data-wb-inline-move="down" title="{{ $inlineBlocksText('move_down') }}" aria-label="{{ $inlineBlocksText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn" data-wb-inline-toggle title="{{ $inlineBlocksText('collapse') }}" aria-label="{{ $inlineBlocksText('collapse') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
-            <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-inline-remove title="{{ $inlineBlocksText('remove') }}" aria-label="{{ $inlineBlocksText('remove') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-inline-move="up" data-wb-tooltip="{{ $inlineBlocksText('move_up') }}" aria-label="{{ $inlineBlocksText('move_up') }}"><i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-inline-move="down" data-wb-tooltip="{{ $inlineBlocksText('move_down') }}" aria-label="{{ $inlineBlocksText('move_down') }}"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn" data-wb-inline-toggle data-wb-tooltip="{{ $inlineBlocksText('collapse') }}" aria-label="{{ $inlineBlocksText('collapse') }}" aria-expanded="true"><i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i></button>
+            <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-inline-remove data-wb-tooltip="{{ $inlineBlocksText('remove') }}" aria-label="{{ $inlineBlocksText('remove') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
         </div>
     </div>
 

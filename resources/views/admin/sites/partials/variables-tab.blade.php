@@ -81,11 +81,11 @@
                                     <td>
                                         @if ($canManageSiteSettings)
                                             <div class="wb-action-group">
-                                                <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_variable') }}" aria-label="{{ $adminText('edit_variable') }}" aria-haspopup="dialog">
+                                                <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $adminText('edit_variable') }}" aria-label="{{ $adminText('edit_variable') }}" aria-haspopup="dialog">
                                                     <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                                 </a>
 
-                                                <a href="{{ route('admin.sites.edit', ['site' => $site, 'tab' => 'variables', 'modal' => 'delete-variable', 'site_variable' => $siteVariable->id]) }}" class="wb-action-btn wb-action-btn-delete" title="{{ $adminText('delete_variable') }}" aria-label="{{ $adminText('delete_variable') }}" aria-haspopup="dialog">
+                                                <a href="{{ route('admin.sites.edit', ['site' => $site, 'tab' => 'variables', 'modal' => 'delete-variable', 'site_variable' => $siteVariable->id]) }}" class="wb-action-btn wb-action-btn-delete" data-wb-tooltip="{{ $adminText('delete_variable') }}" aria-label="{{ $adminText('delete_variable') }}" aria-haspopup="dialog">
                                                     <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                 </a>
                                             </div>

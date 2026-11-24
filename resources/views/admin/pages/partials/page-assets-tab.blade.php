@@ -88,11 +88,11 @@
                                 <td>
                                     @if ($canManagePageAssets)
                                         <div class="wb-action-group">
-                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $pageAssetsText('edit_asset') }}" aria-label="{{ $pageAssetsText('edit_asset') }}" aria-haspopup="dialog">
+                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $pageAssetsText('edit_asset') }}" aria-label="{{ $pageAssetsText('edit_asset') }}" aria-haspopup="dialog">
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                             </a>
 
-                                            <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'delete-page-asset', 'page_asset' => $pageAsset->id, 'return_url' => $pageReturnUrl])) }}" class="wb-action-btn wb-action-btn-delete" title="{{ $pageAssetsText('delete_asset') }}" aria-label="{{ $pageAssetsText('delete_asset') }}" aria-haspopup="dialog">
+                                            <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'delete-page-asset', 'page_asset' => $pageAsset->id, 'return_url' => $pageReturnUrl])) }}" class="wb-action-btn wb-action-btn-delete" data-wb-tooltip="{{ $pageAssetsText('delete_asset') }}" aria-label="{{ $pageAssetsText('delete_asset') }}" aria-haspopup="dialog">
                                                 <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                             </a>
                                         </div>

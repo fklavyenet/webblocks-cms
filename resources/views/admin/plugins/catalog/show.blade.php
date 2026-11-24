@@ -171,10 +171,10 @@
 
                             @if (count($slides) > 1)
                                 <div class="wb-slider-controls">
-                                    <button type="button" class="wb-btn wb-btn-icon wb-btn-sm wb-slider-arrow wb-slider-prev" data-wb-slider-prev aria-label="{{ $sliderText('previous_slide') }}">
+                                    <button type="button" class="wb-btn wb-btn-icon wb-btn-sm wb-slider-arrow wb-slider-prev" data-wb-slider-prev data-wb-tooltip="{{ $sliderText('previous_slide') }}" aria-label="{{ $sliderText('previous_slide') }}">
                                         <i class="wb-icon wb-icon-chevron-left" aria-hidden="true"></i>
                                     </button>
-                                    <button type="button" class="wb-btn wb-btn-icon wb-btn-sm wb-slider-arrow wb-slider-next" data-wb-slider-next aria-label="{{ $sliderText('next_slide') }}">
+                                    <button type="button" class="wb-btn wb-btn-icon wb-btn-sm wb-slider-arrow wb-slider-next" data-wb-slider-next data-wb-tooltip="{{ $sliderText('next_slide') }}" aria-label="{{ $sliderText('next_slide') }}">
                                         <i class="wb-icon wb-icon-chevron-right" aria-hidden="true"></i>
                                     </button>
                                 </div>

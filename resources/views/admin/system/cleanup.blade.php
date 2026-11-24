@@ -185,7 +185,7 @@
                             <td>{{ $formatBytes($overview['page_revision_bytes']) }}</td>
                             <td class="wb-table-actions">
                                 <div class="wb-action-group">
-                                    <a href="{{ route('admin.system.cleanup.index', ['tab' => 'settings']) }}#cleanup-page-revisions-policy" class="wb-action-btn wb-action-btn-edit" title="{{ $storageText('configure_policy', ['category' => $text('page_revisions')]) }}" aria-label="{{ $storageText('configure_policy', ['category' => $text('page_revisions')]) }}"><i class="wb-icon wb-icon-settings" aria-hidden="true"></i></a>
+                                    <a href="{{ route('admin.system.cleanup.index', ['tab' => 'settings']) }}#cleanup-page-revisions-policy" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $storageText('configure_policy', ['category' => $text('page_revisions')]) }}" aria-label="{{ $storageText('configure_policy', ['category' => $text('page_revisions')]) }}"><i class="wb-icon wb-icon-settings" aria-hidden="true"></i></a>
                                 </div>
                             </td>
                         </tr>
@@ -195,7 +195,7 @@
                             <td>{{ $formatBytes($overview['shared_slot_revision_bytes']) }}</td>
                             <td class="wb-table-actions">
                                 <div class="wb-action-group">
-                                    <a href="{{ route('admin.system.cleanup.index', ['tab' => 'settings']) }}#cleanup-shared-slot-revisions-policy" class="wb-action-btn wb-action-btn-edit" title="{{ $storageText('configure_policy', ['category' => $text('shared_slot_revisions')]) }}" aria-label="{{ $storageText('configure_policy', ['category' => $text('shared_slot_revisions')]) }}"><i class="wb-icon wb-icon-settings" aria-hidden="true"></i></a>
+                                    <a href="{{ route('admin.system.cleanup.index', ['tab' => 'settings']) }}#cleanup-shared-slot-revisions-policy" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $storageText('configure_policy', ['category' => $text('shared_slot_revisions')]) }}" aria-label="{{ $storageText('configure_policy', ['category' => $text('shared_slot_revisions')]) }}"><i class="wb-icon wb-icon-settings" aria-hidden="true"></i></a>
                                 </div>
                             </td>
                         </tr>
@@ -205,7 +205,7 @@
                             <td>—</td>
                             <td class="wb-table-actions">
                                 <div class="wb-action-group">
-                                    <a class="wb-action-btn wb-action-btn-view" href="{{ route('admin.site-transfers.exports.index') }}" title="{{ $storageText('manage_transfers') }}" aria-label="{{ $storageText('manage_transfers') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
+                                    <a class="wb-action-btn wb-action-btn-view" href="{{ route('admin.site-transfers.exports.index') }}" data-wb-tooltip="{{ $storageText('manage_transfers') }}" aria-label="{{ $storageText('manage_transfers') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
                                 </div>
                             </td>
                         </tr>

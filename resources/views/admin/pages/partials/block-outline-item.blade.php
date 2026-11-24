@@ -27,23 +27,23 @@
                 <div class="wb-action-group">
                     <form method="POST" action="{{ route('admin.blocks.move-up', $item['block']) }}">
                         @csrf
-                        <button type="submit" class="wb-action-btn" title="{{ $inlineBlocksText('move_up') }}" aria-label="{{ $inlineBlocksText('move_up') }}">
+                        <button type="submit" class="wb-action-btn" data-wb-tooltip="{{ $inlineBlocksText('move_up') }}" aria-label="{{ $inlineBlocksText('move_up') }}">
                             <i class="wb-icon wb-icon-chevron-up" aria-hidden="true"></i>
                         </button>
                     </form>
 
                     <form method="POST" action="{{ route('admin.blocks.move-down', $item['block']) }}">
                         @csrf
-                        <button type="submit" class="wb-action-btn" title="{{ $inlineBlocksText('move_down') }}" aria-label="{{ $inlineBlocksText('move_down') }}">
+                        <button type="submit" class="wb-action-btn" data-wb-tooltip="{{ $inlineBlocksText('move_down') }}" aria-label="{{ $inlineBlocksText('move_down') }}">
                             <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>
                         </button>
                     </form>
 
-                    <a href="{{ $slotRouteId ? route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $slotRouteId, 'edit' => $item['block']->id]) : route('admin.blocks.edit', $item['block']) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $inlineBlocksText('edit') }}" aria-label="{{ $inlineBlocksText('edit') }}">
+                    <a href="{{ $slotRouteId ? route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $slotRouteId, 'edit' => $item['block']->id]) : route('admin.blocks.edit', $item['block']) }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $inlineBlocksText('edit') }}" aria-label="{{ $inlineBlocksText('edit') }}">
                         <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                     </a>
 
-                    <a href="{{ $slotRouteId ? route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $slotRouteId, 'picker' => 1]) : route('admin.pages.edit', $page) }}" class="wb-action-btn" title="{{ $inlineBlocksText('add_in_slot') }}" aria-label="{{ $inlineBlocksText('add_in_slot') }}">
+                    <a href="{{ $slotRouteId ? route('admin.pages.slots.blocks', ['page' => $page, 'slot' => $slotRouteId, 'picker' => 1]) : route('admin.pages.edit', $page) }}" class="wb-action-btn" data-wb-tooltip="{{ $inlineBlocksText('add_in_slot') }}" aria-label="{{ $inlineBlocksText('add_in_slot') }}">
                         <i class="wb-icon wb-icon-plus" aria-hidden="true"></i>
                     </a>
 
@@ -52,7 +52,7 @@
                         class="wb-action-btn wb-action-btn-delete"
                         data-wb-toggle="modal"
                         data-wb-target="#delete-outline-block-{{ $item['block']->id }}"
-                        title="{{ $inlineBlocksText('delete') }}"
+                        data-wb-tooltip="{{ $inlineBlocksText('delete') }}"
                         aria-label="{{ $inlineBlocksText('delete') }}"
                         aria-haspopup="dialog"
                     >

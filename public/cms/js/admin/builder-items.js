@@ -81,10 +81,11 @@
         }
 
         var expanded = body.open;
+        var label = i18n(expanded ? 'collapse-item' : 'expand-item');
 
         toggleButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        toggleButton.setAttribute('title', expanded ? i18n('collapse-item') : i18n('expand-item'));
-        toggleButton.setAttribute('aria-label', expanded ? i18n('collapse-item') : i18n('expand-item'));
+        toggleButton.setAttribute('data-wb-tooltip', label);
+        toggleButton.setAttribute('aria-label', label);
         icon.classList.toggle('wb-icon-minus', expanded);
         icon.classList.toggle('wb-icon-plus', !expanded);
     }

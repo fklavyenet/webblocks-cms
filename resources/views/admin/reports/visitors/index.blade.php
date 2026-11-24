@@ -603,7 +603,7 @@
                                         <td>{{ number_format($row['page_views']) }}</td>
                                         <td>{{ $trackedMetric($row['unique_visitors'], $row['unique_visitors_state']) }}</td>
                                         <td class="wb-table-actions"><div class="wb-action-group">
-                                            <button type="button" class="wb-icon-btn" data-wb-toggle="modal" data-wb-target="#visitor-page-{{ $loop->index }}" aria-label="{{ $insightText('details') }}">
+                                            <button type="button" class="wb-icon-btn" data-wb-toggle="modal" data-wb-target="#visitor-page-{{ $loop->index }}" data-wb-tooltip="{{ $insightText('details') }}" aria-label="{{ $insightText('details') }}">
                                                 <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                             </button>
                                         </div></td>

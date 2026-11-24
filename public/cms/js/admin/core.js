@@ -79,6 +79,24 @@
         });
     }
 
+    function bindComponentTooltips() {
+        // These WebBlocks UI controls own their changing labels and can write a native title.
+        function syncTooltip(control) {
+            control.setAttribute('data-wb-tooltip', control.getAttribute('aria-label'));
+            if (control.hasAttribute('title')) control.removeAttribute('title');
+        }
+
+        var observer = new MutationObserver(function (changes) {
+            changes.forEach(function (change) {
+                syncTooltip(change.target);
+            });
+        });
+        document.querySelectorAll('[data-wb-tooltip]:is([data-wb-mode-cycle], [data-wb-password-toggle], [data-wb-update-indicator])').forEach(function (control) {
+            syncTooltip(control);
+            observer.observe(control, { attributeFilter: ['aria-label', 'title'] });
+        });
+    }
+
     function bindDiagnosticConsent() {
         var form = document.querySelector('[data-wb-diagnostic-form]');
         if (!form) return;
@@ -704,7 +722,6 @@
                 indicator.hidden = false;
                 indicator.setAttribute('data-wb-update-indicator-state', state);
                 indicator.setAttribute('aria-label', label);
-                indicator.setAttribute('title', label);
 
                 if (targetUrl) {
                     indicator.setAttribute('href', targetUrl);
@@ -747,7 +764,7 @@
             link.hidden = data.count === 0;
             link.textContent = data.label;
             button.setAttribute('aria-label', label);
-            button.setAttribute('title', label);
+            button.setAttribute('data-wb-tooltip', label);
             button.querySelector('.wb-btn-badge').textContent = total > 99 ? '99+' : String(total);
             bell.hidden = total === 0;
         }).catch(function () {});
@@ -977,6 +994,7 @@
     bindMailMode();
     bindVerificationEmail();
     bindAdminTransientUiReset();
+    bindComponentTooltips();
     bindAdminHistoryModalLinks();
     bindSiteHandleAutosuggest();
     bootstrapAdminAutoloadOverlays();

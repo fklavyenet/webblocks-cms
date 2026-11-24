@@ -203,7 +203,8 @@
                                     <span class="wb-sr-only">{{ $adminText('select_media', ['title' => $asset->displayTitle()]) }}</span>
                                 </label>
 
-                                <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-media-grid-preview wb-no-decoration" title="{{ $adminText('preview_media') }}">
+                                <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-media-grid-preview wb-no-decoration"
+                                   data-wb-tooltip="{{ $adminText('preview_media') }}" aria-label="{{ $adminText('preview_media') }} · {{ $asset->thumbnailLabel() }}">
                                     @if ($asset->canPreview() && $asset->url())
                                         <img src="{{ $asset->url() }}" alt="{{ $asset->thumbnailLabel() }}">
                                     @else
@@ -229,12 +230,12 @@
                                 </div>
 
                                 <div class="wb-action-group wb-media-grid-actions">
-                                    <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('preview_media') }}" aria-label="{{ $adminText('preview_media') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
-                                    <a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_media') }}" aria-label="{{ $adminText('edit_media') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                    <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-action-btn wb-action-btn-view" data-wb-tooltip="{{ $adminText('preview_media') }}" aria-label="{{ $adminText('preview_media') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
+                                    <a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $adminText('edit_media') }}" aria-label="{{ $adminText('edit_media') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                     @if ($assetUsages->isNotEmpty())
-                                        <button type="button" class="wb-action-btn wb-action-btn-delete" title="{{ $adminText('delete_media') }}" aria-label="{{ $adminText('delete_media') }}" disabled><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                                        <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-tooltip="{{ $adminText('delete_media') }}" aria-label="{{ $adminText('delete_media') }}" disabled><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                     @else
-                                        <a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl, 'modal' => 'delete-media']) }}" class="wb-action-btn wb-action-btn-delete" title="{{ $adminText('delete_media') }}" aria-label="{{ $adminText('delete_media') }}" aria-haspopup="dialog"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></a>
+                                        <a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl, 'modal' => 'delete-media']) }}" class="wb-action-btn wb-action-btn-delete" data-wb-tooltip="{{ $adminText('delete_media') }}" aria-label="{{ $adminText('delete_media') }}" aria-haspopup="dialog"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></a>
                                     @endif
                                 </div>
                             </div>
@@ -281,12 +282,12 @@
                                     @endforeach
                                     <td>
                                         <div class="wb-action-group">
-                                            <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-action-btn wb-action-btn-view" title="{{ $adminText('preview_media') }}" aria-label="{{ $adminText('preview_media') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
-                                            <a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_media') }}" aria-label="{{ $adminText('edit_media') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            <a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" class="wb-action-btn wb-action-btn-view" data-wb-tooltip="{{ $adminText('preview_media') }}" aria-label="{{ $adminText('preview_media') }}"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i></a>
+                                            <a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $adminText('edit_media') }}" aria-label="{{ $adminText('edit_media') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                             @if ($assetUsages->isNotEmpty())
-                                                <button type="button" class="wb-action-btn wb-action-btn-delete" title="{{ $adminText('delete_media') }}" aria-label="{{ $adminText('delete_media') }}" disabled><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                                                <button type="button" class="wb-action-btn wb-action-btn-delete" data-wb-tooltip="{{ $adminText('delete_media') }}" aria-label="{{ $adminText('delete_media') }}" disabled><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                             @else
-                                                <a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl, 'modal' => 'delete-media']) }}" class="wb-action-btn wb-action-btn-delete" title="{{ $adminText('delete_media') }}" aria-label="{{ $adminText('delete_media') }}" aria-haspopup="dialog"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></a>
+                                                <a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl, 'modal' => 'delete-media']) }}" class="wb-action-btn wb-action-btn-delete" data-wb-tooltip="{{ $adminText('delete_media') }}" aria-label="{{ $adminText('delete_media') }}" aria-haspopup="dialog"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></a>
                                             @endif
                                         </div>
                                     </td>
@@ -366,7 +367,7 @@
                         <div class="wb-cluster wb-cluster-between wb-cluster-2">
                             <div class="wb-text-sm wb-text-muted">{{ $previewAsset->folder?->name ?? $adminText('no_folder') }}</div>
                             <div class="wb-action-group">
-                                <a href="{{ route('admin.media.edit', ['media' => $previewAsset, 'return_url' => $currentReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_media') }}" aria-label="{{ $adminText('edit_media') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                <a href="{{ route('admin.media.edit', ['media' => $previewAsset, 'return_url' => $currentReturnUrl]) }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $adminText('edit_media') }}" aria-label="{{ $adminText('edit_media') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                             </div>
                         </div>
                     </div>

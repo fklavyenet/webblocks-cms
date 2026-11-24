@@ -59,7 +59,7 @@
                                 <td class="wb-nowrap">{{ $pageLayout->sort_order }}</td>
                                 <td class="wb-nowrap">
                                     <div class="wb-action-group">
-                                        <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $pageLayoutsText('edit_page_layout') }}" aria-label="{{ $pageLayoutsText('edit_page_layout') }}">
+                                        <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $pageLayoutsText('edit_page_layout') }}" aria-label="{{ $pageLayoutsText('edit_page_layout') }}">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>
                                     </div>

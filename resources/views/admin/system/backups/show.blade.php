@@ -214,7 +214,7 @@
                                                     class="wb-action-btn wb-action-btn-delete"
                                                     data-wb-toggle="modal"
                                                     data-wb-target="#delete-restore-run-{{ $restoreRun->id }}"
-                                                    title="{{ $adminText('backups.delete_restore_history') }}"
+                                                    data-wb-tooltip="{{ $adminText('backups.delete_restore_history') }}"
                                                     aria-label="{{ $adminText('backups.delete_restore_history') }}"
                                                     aria-haspopup="dialog"
                                                 >

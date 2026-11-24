@@ -165,14 +165,14 @@
                                     <td>{{ $managedUser->lastLoginLabel() }}</td>
                                     <td class="wb-table-actions">
                                         <div class="wb-action-group">
-                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_user') }}" aria-label="{{ $adminText('edit_user') }}">
+                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $adminText('edit_user') }}" aria-label="{{ $adminText('edit_user') }}">
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                             </a>
 
                                             <button
                                                 type="button"
                                                 class="wb-action-btn wb-action-btn-delete"
-                                                title="{{ $deleteBlockedMessage ?: $adminText('delete_user') }}"
+                                                data-wb-tooltip="{{ $deleteBlockedMessage ?: $adminText('delete_user') }}"
                                                 aria-label="{{ $adminText('delete_user') }}"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#delete-user-{{ $managedUser->id }}-modal"

@@ -39,7 +39,7 @@
                 <div class="wb-stack wb-gap-2">
                     <div class="wb-cluster wb-gap-2">
                         <label class="wb-label" for="created_cms_api_token">{{ $adminText('full_token') }}</label>
-                        <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon" data-wb-copy data-wb-target="#created_cms_api_token" data-wb-copy-status="#created_cms_api_token_copy_status" data-wb-copy-success="{{ $adminText('copied') }}" data-wb-copy-error="{{ $adminText('copy_failed') }}" aria-label="{{ $adminText('copy_full_token') }}" title="{{ $adminText('copy_full_token') }}">
+                        <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon" data-wb-copy data-wb-target="#created_cms_api_token" data-wb-copy-status="#created_cms_api_token_copy_status" data-wb-copy-success="{{ $adminText('copied') }}" data-wb-copy-error="{{ $adminText('copy_failed') }}" aria-label="{{ $adminText('copy_full_token') }}" data-wb-tooltip="{{ $adminText('copy_full_token') }}">
                             <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                         </button>
                         <span id="created_cms_api_token_copy_status" class="wb-text-sm" role="status" aria-live="polite" aria-atomic="true"></span>
@@ -50,7 +50,7 @@
                 <div class="wb-stack wb-gap-2">
                     <div class="wb-cluster wb-gap-2">
                         <label class="wb-label" for="created_cms_api_token_env">{{ $adminText('env_example') }}</label>
-                        <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon" data-wb-copy data-wb-target="#created_cms_api_token_env" data-wb-copy-status="#created_cms_api_token_env_copy_status" data-wb-copy-success="{{ $adminText('copied') }}" data-wb-copy-error="{{ $adminText('copy_failed') }}" aria-label="{{ $adminText('copy_env_example') }}" title="{{ $adminText('copy_env_example') }}">
+                        <button type="button" class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon" data-wb-copy data-wb-target="#created_cms_api_token_env" data-wb-copy-status="#created_cms_api_token_env_copy_status" data-wb-copy-success="{{ $adminText('copied') }}" data-wb-copy-error="{{ $adminText('copy_failed') }}" aria-label="{{ $adminText('copy_env_example') }}" data-wb-tooltip="{{ $adminText('copy_env_example') }}">
                             <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                         </button>
                         <span id="created_cms_api_token_env_copy_status" class="wb-text-sm" role="status" aria-live="polite" aria-atomic="true"></span>
@@ -206,7 +206,7 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                                                 class="wb-action-btn wb-action-btn-edit"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#edit-cms-api-token-{{ $token->id }}"
-                                                title="{{ $adminText('edit_token') }}"
+                                                data-wb-tooltip="{{ $adminText('edit_token') }}"
                                                 aria-label="{{ $adminText('edit_token') }}"
                                                 aria-haspopup="dialog"
                                             >
@@ -217,7 +217,7 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                                                 class="wb-action-btn wb-action-btn-view"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#activity-cms-api-token-{{ $token->id }}"
-                                                title="{{ $adminText('view_activity') }}"
+                                                data-wb-tooltip="{{ $adminText('view_activity') }}"
                                                 aria-label="{{ $adminText('view_activity') }}"
                                                 aria-haspopup="dialog"
                                                 @disabled(! $activitySchemaReady)
@@ -229,7 +229,7 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                                                 class="wb-action-btn wb-action-btn-delete"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#revoke-cms-api-token-{{ $token->id }}"
-                                                title="{{ $token->isRevoked() ? $adminText('already_revoked') : $adminText('revoke_token') }}"
+                                                data-wb-tooltip="{{ $token->isRevoked() ? $adminText('already_revoked') : $adminText('revoke_token') }}"
                                                 aria-label="{{ $adminText('revoke_token') }}"
                                                 @disabled($token->isRevoked())
                                             >
@@ -240,7 +240,7 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                                                 class="wb-action-btn wb-action-btn-delete"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#delete-cms-api-token-{{ $token->id }}"
-                                                title="{{ $adminText('delete_token') }}"
+                                                data-wb-tooltip="{{ $adminText('delete_token') }}"
                                                 aria-label="{{ $adminText('delete_token') }}"
                                                 aria-haspopup="dialog"
                                             >

@@ -218,7 +218,7 @@
                                                 <a
                                                     href="{{ route('admin.pages.edit', ['page' => $page, 'modal' => 'delete-page-slot', 'slot' => $pageSlot->id, 'return_url' => $pageReturnUrl]) }}"
                                                     class="wb-action-btn wb-action-btn-delete"
-                                                    title="{{ $adminText('delete_slot') }}"
+                                                    data-wb-tooltip="{{ $adminText('delete_slot') }}"
                                                     aria-label="{{ $adminText('delete_slot') }}"
                                                     aria-haspopup="dialog"
                                                 >

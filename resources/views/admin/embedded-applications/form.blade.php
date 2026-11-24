@@ -92,8 +92,8 @@
                                             <td data-wb-setting-summary="constraints">{{ $constraints ?: $text('no_constraints') }}</td>
                                             <td class="wb-table-actions">
                                                 <div class="wb-flex wb-items-center wb-gap-2">
-                                                    <button class="wb-action-btn wb-action-btn-edit" type="button" data-wb-setting-edit data-wb-toggle="modal" data-wb-target="#embedded-application-setting-modal" title="{{ $text('edit_setting') }}" aria-label="{{ $text('edit_setting') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></button>
-                                                    <button class="wb-action-btn wb-action-btn-delete" type="button" data-wb-setting-delete title="{{ $text('delete_setting') }}" aria-label="{{ $text('delete_setting') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
+                                                    <button class="wb-action-btn wb-action-btn-edit" type="button" data-wb-setting-edit data-wb-toggle="modal" data-wb-target="#embedded-application-setting-modal" data-wb-tooltip="{{ $text('edit_setting') }}" aria-label="{{ $text('edit_setting') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></button>
+                                                    <button class="wb-action-btn wb-action-btn-delete" type="button" data-wb-setting-delete data-wb-tooltip="{{ $text('delete_setting') }}" aria-label="{{ $text('delete_setting') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button>
                                                 </div>
                                                 @foreach(['key','type','default','values','min','max','max_length'] as $field)<input type="hidden" data-wb-setting-field="{{ $field }}" name="settings[{{ $index }}][{{ $field }}]" value="{{ $field === 'default' ? $default : ($setting[$field] ?? '') }}">@endforeach
                                             </td>

@@ -133,7 +133,7 @@
                                     <td>{{ $icon->sort_order }}</td>
                                     <td>
                                         <div class="wb-action-group">
-                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_icon') }}" aria-label="{{ $adminText('edit_icon') }}" aria-haspopup="dialog" aria-controls="iconEditModal-{{ $icon->id }}">
+                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $adminText('edit_icon') }}" aria-label="{{ $adminText('edit_icon') }}" aria-haspopup="dialog" aria-controls="iconEditModal-{{ $icon->id }}">
                                                 <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                             </a>
                                         </div>

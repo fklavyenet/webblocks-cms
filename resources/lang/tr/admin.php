@@ -937,6 +937,7 @@ $translations = [
     'move_up' => 'Bloğu yukarı taşı',
     'move_down' => 'Bloğu asaği taşı',
     'collapse' => 'Bloğu daralt',
+    'expand' => 'Bloğu genişlet',
     'remove' => 'Bloğu kaldır',
     'no_title' => 'Henüz başlık yok',
     'block_type' => 'Blok türü',

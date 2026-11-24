@@ -189,14 +189,14 @@
                                     <td>{{ $sharedSlot->updated_at?->format('Y-m-d H:i') }}</td>
                                     <td>
                                         <div class="wb-action-group">
-                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('edit_shared_slot') }}" aria-label="{{ $adminText('edit_shared_slot') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
-                                            <a href="{{ route('admin.shared-slots.blocks.edit', $sharedSlot) }}" class="wb-action-btn" title="{{ $adminText('edit_shared_slot_blocks') }}" aria-label="{{ $adminText('edit_shared_slot_blocks') }}"><i class="wb-icon wb-icon-layout" aria-hidden="true"></i></a>
+                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $adminText('edit_shared_slot') }}" aria-label="{{ $adminText('edit_shared_slot') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            <a href="{{ route('admin.shared-slots.blocks.edit', $sharedSlot) }}" class="wb-action-btn" data-wb-tooltip="{{ $adminText('edit_shared_slot_blocks') }}" aria-label="{{ $adminText('edit_shared_slot_blocks') }}"><i class="wb-icon wb-icon-layout" aria-hidden="true"></i></a>
                                             <button
                                                 type="button"
                                                 class="wb-action-btn"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#usage-shared-slot-{{ $sharedSlot->id }}"
-                                                title="{{ $adminText('view_usage') }}"
+                                                data-wb-tooltip="{{ $adminText('view_usage') }}"
                                                 aria-label="{{ $adminText('view_usage') }}"
                                                 aria-haspopup="dialog"
                                                 @disabled($usageCount === 0)
@@ -208,7 +208,7 @@
                                                 class="wb-action-btn wb-action-btn-delete"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#delete-shared-slot-{{ $sharedSlot->id }}"
-                                                title="{{ $adminText('delete_shared_slot') }}"
+                                                data-wb-tooltip="{{ $adminText('delete_shared_slot') }}"
                                                 aria-label="{{ $adminText('delete_shared_slot') }}"
                                                 aria-haspopup="dialog"
                                             >

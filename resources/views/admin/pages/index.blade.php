@@ -249,18 +249,18 @@
                                                 class="wb-action-btn"
                                                 aria-haspopup="dialog"
                                                 aria-controls="pageDetailsModal-{{ $page->id }}"
-                                                title="{{ $adminText('pages.details') }}"
+                                                data-wb-tooltip="{{ $adminText('pages.details') }}"
                                                 aria-label="{{ $adminText('pages.open_details') }}"
                                             >
                                                 <i class="wb-icon wb-icon-panel-right" aria-hidden="true"></i>
                                             </a>
 
-                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $adminText('pages.edit_page') }}" aria-label="{{ $adminText('pages.edit_page') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
+                                            <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $adminText('pages.edit_page') }}" aria-label="{{ $adminText('pages.edit_page') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>
                                             @if (in_array($page->id, $deletablePageIds, true))
                                             <button
                                                 type="button"
                                                 class="wb-action-btn wb-action-btn-delete"
-                                                title="{{ $adminText('pages.delete_page') }}"
+                                                data-wb-tooltip="{{ $adminText('pages.delete_page') }}"
                                                 aria-label="{{ $adminText('pages.delete_page') }}"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#delete-page-{{ $page->id }}-modal"

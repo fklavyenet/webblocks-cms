@@ -277,13 +277,16 @@ class StorageMaintenanceTest extends TestCase
         $action = $xpath->query('//td[contains(@class,"wb-table-actions")]/div[contains(@class,"wb-action-group")]/a[@href="'.route('admin.system.cleanup.index', ['tab' => 'settings']).'#cleanup-'.$category.'-policy"]')->item(0);
         $this->assertNotNull($action);
         $this->assertNotSame('', $action->getAttribute('aria-label'));
-        $this->assertSame($action->getAttribute('aria-label'), $action->getAttribute('title'));
+        $this->assertSame($action->getAttribute('aria-label'), $action->getAttribute('data-wb-tooltip'));
+        $this->assertFalse($action->hasAttribute('title'));
         $this->assertSame(1, $xpath->query('.//i[contains(@class,"wb-icon-settings") and @aria-hidden="true"]', $action)->length);
         $this->assertSame('', trim($action->textContent));
       }
       $transfer = $xpath->query('//td[contains(@class,"wb-table-actions")]/div[contains(@class,"wb-action-group")]/a[@href="'.route('admin.site-transfers.exports.index').'"]')->item(0);
       $this->assertNotNull($transfer);
       $this->assertNotSame('', $transfer->getAttribute('aria-label'));
+      $this->assertSame($transfer->getAttribute('aria-label'), $transfer->getAttribute('data-wb-tooltip'));
+      $this->assertFalse($transfer->hasAttribute('title'));
       $this->assertSame(1, $xpath->query('.//i[contains(@class,"wb-icon-eye")]', $transfer)->length);
       $this->assertSame(0, $xpath->query('//button[@data-wb-toggle="modal" and starts-with(@data-wb-target,"#cleanup-")]')->length);
       $this->assertStringContainsString($locale === 'en' ? 'Nothing to clean' : 'Temizlenecek kayıt yok', $html);

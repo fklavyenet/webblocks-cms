@@ -58,7 +58,7 @@
                     <div class="wb-cluster wb-gap-1">
                         <label for="{{ $extraSearch['id'] }}" class="wb-label">{{ $extraSearch['label'] }}</label>
                         <div class="wb-popover" data-wb-popover>
-                            <button type="button" class="wb-action-btn" data-wb-toggle="popover" aria-controls="{{ $hintId }}" aria-expanded="false" aria-label="{{ $extraSearch['hintLabel'] }}">
+                            <button type="button" class="wb-action-btn" data-wb-toggle="popover" aria-controls="{{ $hintId }}" aria-expanded="false" data-wb-tooltip="{{ $extraSearch['hintLabel'] }}" aria-label="{{ $extraSearch['hintLabel'] }}">
                                 <i class="wb-icon wb-icon-info" aria-hidden="true"></i>
                             </button>
                             <div id="{{ $hintId }}" class="wb-popover-panel" popover="manual">

@@ -4,6 +4,14 @@
  |--------------------------------------------------------------------------
  */
 
+:where(a[href], button, summary, [role="button"])[data-wb-tooltip] {
+    cursor: pointer;
+}
+
+[data-wb-tooltip]:where(:disabled, [aria-disabled="true"]) {
+    cursor: not-allowed;
+}
+
 .wb-cms-catalog-grid {
     /* Keep cards at least 280px wide when possible. A fifth track would exceed 100%. */
     grid-template-columns: repeat(auto-fill, minmax(min(100%, max(17.5rem, 21%)), 1fr));

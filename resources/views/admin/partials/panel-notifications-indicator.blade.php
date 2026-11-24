@@ -19,7 +19,7 @@
         @endif>
         <button type="button" class="wb-btn wb-btn-ghost wb-btn-icon" data-wb-panel-notifications
             data-wb-toggle="dropdown" data-wb-target="#admin-panel-notifications" aria-controls="admin-panel-notifications" aria-expanded="false"
-            aria-label="{{ $notificationLabel('panel_pending_items', $total) }}" title="{{ $notificationLabel('panel_pending_items', $total) }}">
+            aria-label="{{ $notificationLabel('panel_pending_items', $total) }}" data-wb-tooltip="{{ $notificationLabel('panel_pending_items', $total) }}">
             <i class="wb-icon wb-icon-bell" aria-hidden="true"></i>
             <span class="wb-btn-badge" aria-hidden="true">{{ $total > 99 ? '99+' : $total }}</span>
         </button>

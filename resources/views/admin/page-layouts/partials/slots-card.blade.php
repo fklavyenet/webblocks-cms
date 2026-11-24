@@ -76,14 +76,14 @@
                                 </td>
                                 <td class="wb-nowrap">
                                     <div class="wb-action-group">
-                                        <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $pageLayoutsText('edit_slot') }}" aria-label="{{ $pageLayoutsText('edit_slot') }}">
+                                        <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $pageLayoutsText('edit_slot') }}" aria-label="{{ $pageLayoutsText('edit_slot') }}">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>
                                         @if (! $layoutSlot->is_system && ! $layoutSlot->is_required)
                                             <form method="POST" action="{{ route('admin.page-layouts.slots.destroy', [$pageLayout, $layoutSlot]) }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" title="{{ $pageLayoutsText('delete_slot') }}" aria-label="{{ $pageLayoutsText('delete_slot') }}">
+                                                <button type="submit" class="wb-action-btn wb-action-btn-delete" data-wb-tooltip="{{ $pageLayoutsText('delete_slot') }}" aria-label="{{ $pageLayoutsText('delete_slot') }}">
                                                     <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                                 </button>
                                             </form>

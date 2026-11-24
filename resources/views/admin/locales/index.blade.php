@@ -81,26 +81,27 @@
                                 </td>
                                 <td>
                                     <div class="wb-cluster wb-cluster-2">
-                                        <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" title="{{ $localesIndexText('edit_locale') }}" aria-label="{{ $localesIndexText('edit_locale') }}">
+                                        <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $localesIndexText('edit_locale') }}" aria-label="{{ $localesIndexText('edit_locale') }}">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>
 
                                         @if ($report?->canEnable())
                                             <form method="POST" action="{{ route('admin.locales.enable', $locale) }}">
                                                 @csrf
-                                                <button type="submit" class="wb-action-btn" title="{{ $localesIndexText('enable_locale') }}" aria-label="{{ $localesIndexText('enable_locale') }}">
+                                                <button type="submit" class="wb-action-btn" data-wb-tooltip="{{ $localesIndexText('enable_locale') }}" aria-label="{{ $localesIndexText('enable_locale') }}">
                                                     <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
                                                 </button>
                                             </form>
                                         @elseif ($report?->canDisable())
                                             <form method="POST" action="{{ route('admin.locales.disable', $locale) }}">
                                                 @csrf
-                                                <button type="submit" class="wb-action-btn" title="{{ $localesIndexText('disable_locale') }}" aria-label="{{ $localesIndexText('disable_locale') }}">
+                                                <button type="submit" class="wb-action-btn" data-wb-tooltip="{{ $localesIndexText('disable_locale') }}" aria-label="{{ $localesIndexText('disable_locale') }}">
                                                     <i class="wb-icon wb-icon-eye-off" aria-hidden="true"></i>
                                                 </button>
                                             </form>
                                         @else
-                                            <span class="wb-action-btn" aria-disabled="true" title="{{ $report?->disableBlockedReason() ?? $localesIndexText('toggle_blocked') }}">
+                                            @php($blockedReason = $report?->disableBlockedReason() ?? $localesIndexText('toggle_blocked'))
+                                            <span class="wb-action-btn" role="button" tabindex="0" aria-disabled="true" aria-label="{{ $blockedReason }}" data-wb-tooltip="{{ $blockedReason }}" data-wb-tooltip-wrap>
                                                 <i class="wb-icon {{ $locale->is_enabled ? 'wb-icon-eye-off' : 'wb-icon-eye' }}" aria-hidden="true"></i>
                                             </span>
                                         @endif
@@ -111,14 +112,15 @@
                                                 class="wb-action-btn wb-action-btn-delete"
                                                 data-wb-toggle="modal"
                                                 data-wb-target="#delete-locale-{{ $locale->id }}"
-                                                title="{{ $localesIndexText('delete_locale') }}"
+                                                data-wb-tooltip="{{ $localesIndexText('delete_locale') }}"
                                                 aria-label="{{ $localesIndexText('delete_locale') }}"
                                                 aria-haspopup="dialog"
                                             >
                                                 <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                             </button>
                                         @else
-                                            <span class="wb-action-btn wb-action-btn-delete" aria-disabled="true" title="{{ $report?->deleteBlockedReason() ?? $localesIndexText('delete_blocked') }}">
+                                            @php($blockedReason = $report?->deleteBlockedReason() ?? $localesIndexText('delete_blocked'))
+                                            <span class="wb-action-btn wb-action-btn-delete" role="button" tabindex="0" aria-disabled="true" aria-label="{{ $blockedReason }}" data-wb-tooltip="{{ $blockedReason }}" data-wb-tooltip-wrap>
                                                 <i class="wb-icon wb-icon-trash" aria-hidden="true"></i>
                                             </span>
                                         @endif

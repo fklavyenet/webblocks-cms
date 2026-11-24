@@ -57,7 +57,7 @@
                                         data-wb-password-generated="{{ $adminText('password_generated') }}"
                                         data-wb-password-generate-error="{{ $adminText('password_generate_failed') }}"
                                         aria-label="{{ $adminText('generate_password') }}"
-                                        title="{{ $adminText('generate_password') }}"
+                                        data-wb-tooltip="{{ $adminText('generate_password') }}"
                                     >
                                         <i class="wb-icon wb-icon-key-round" aria-hidden="true"></i>
                                     </button>
@@ -70,7 +70,7 @@
                                         data-wb-copy-success="{{ $adminText('password_copied') }}"
                                         data-wb-copy-error="{{ $adminText('password_copy_failed') }}"
                                         aria-label="{{ $adminText('copy_password') }}"
-                                        title="{{ $adminText('copy_password') }}"
+                                        data-wb-tooltip="{{ $adminText('copy_password') }}"
                                     >
                                         <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
                                     </button>
@@ -81,7 +81,7 @@
                                         data-wb-target="#password"
                                         data-wb-password-label-show="{{ $adminText('show_password') }}"
                                         data-wb-password-label-hide="{{ $adminTranslator->admin('auth.hide_password', $adminLocale) }}"
-                                        aria-label="{{ $adminText('show_password') }}"
+                                        data-wb-tooltip="{{ $adminText('show_password') }}" aria-label="{{ $adminText('show_password') }}"
                                         aria-pressed="false"
                                     >
                                         <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
@@ -117,7 +117,7 @@
                                         data-wb-target="#password_confirmation"
                                         data-wb-password-label-show="{{ $adminText('show_password') }}"
                                         data-wb-password-label-hide="{{ $adminTranslator->admin('auth.hide_password', $adminLocale) }}"
-                                        aria-label="{{ $adminText('show_password') }}"
+                                        data-wb-tooltip="{{ $adminText('show_password') }}" aria-label="{{ $adminText('show_password') }}"
                                         aria-pressed="false"
                                     >
                                         <i class="wb-icon wb-icon-eye" aria-hidden="true"></i>
