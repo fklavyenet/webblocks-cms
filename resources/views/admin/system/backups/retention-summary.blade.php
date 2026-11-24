@@ -16,10 +16,14 @@
         <div class="wb-card-header"><strong>{{ $retentionText('title') }}</strong></div>
         <div class="wb-card-body wb-stack wb-gap-3">
             @unless ($plan['ready'])<div class="wb-alert wb-alert-warning"><div>{{ $retentionText('schema_missing') }}</div></div>@endunless
-            <div class="wb-grid wb-grid-2 wb-gap-3">
-                @foreach (['total_bytes', 'protected_bytes', 'eligible_bytes', 'after_cleanup_bytes'] as $metric)
-                    <div>{{ $retentionText($metric) }}: <strong>{{ in_array($budget['status'], ['available', 'missing'], true) ? $retentionBytes($budget[$metric]) : '—' }}</strong></div>
-                @endforeach
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $retentionText('title') }}">
+                    <tbody>
+                        @foreach (['total_bytes', 'protected_bytes', 'eligible_bytes', 'after_cleanup_bytes'] as $metric)
+                            <tr><th scope="row">{{ $retentionText($metric) }}</th><td>{{ in_array($budget['status'], ['available', 'missing'], true) ? $retentionBytes($budget[$metric]) : '—' }}</td></tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
             <p @if (in_array($budget['budget_status'], ['warning', 'exceeded', 'unavailable'], true)) class="wb-alert wb-alert-warning" @endif>{{ $retentionText('budget_'.$budget['budget_status']) }}@if ($budget['budget_bytes']) · {{ $retentionBytes($budget['budget_bytes']) }}@endif</p>
             @if ($budget['remaining_over_budget_bytes'] > 0 && in_array($budget['status'], ['available', 'missing'], true))
@@ -62,8 +66,17 @@
                 <p class="wb-text-sm wb-text-muted">{{ $retentionText('summary_rule_help') }}</p>
             @endif
             @if ($plan['last_run'] ?? null)
-                <p class="wb-text-sm">{{ $retentionTranslator->get('storage.last_run', $retentionLocale) }}: {{ $plan['last_run']['finished_at'] ?? $plan['last_run']['started_at'] }} · {{ $retentionTranslator->get('storage.'.$plan['last_run']['status'], $retentionLocale) }}</p>
-                <p class="wb-text-sm">{{ $retentionTranslator->get('storage.deleted', $retentionLocale, ['count' => $plan['last_run']['deleted_count'], 'bytes' => number_format($plan['last_run']['deleted_bytes']), 'failures' => $plan['last_run']['failure_count']]) }}</p>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $retentionTranslator->get('storage.last_run', $retentionLocale) }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $retentionTranslator->get('storage.last_run', $retentionLocale) }}</th><td>{{ $plan['last_run']['finished_at'] ?? $plan['last_run']['started_at'] }}</td></tr>
+                            <tr><th scope="row">{{ $retentionTranslator->admin('common.status', $retentionLocale) }}</th><td>{{ $retentionTranslator->get('storage.'.$plan['last_run']['status'], $retentionLocale) }}</td></tr>
+                            <tr><th scope="row">{{ $retentionTranslator->admin('record_tables.removed_items', $retentionLocale) }}</th><td>{{ $plan['last_run']['deleted_count'] }}</td></tr>
+                            <tr><th scope="row">{{ $retentionTranslator->admin('record_tables.freed_space', $retentionLocale) }}</th><td>{{ $retentionBytes($plan['last_run']['deleted_bytes']) }}</td></tr>
+                            <tr><th scope="row">{{ $retentionTranslator->admin('record_tables.failures', $retentionLocale) }}</th><td>{{ $plan['last_run']['failure_count'] }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             @endif
         </div>
     </div>

@@ -25,10 +25,14 @@
                     <div class="wb-text-sm wb-text-muted">{{ $pageMoveSiteText('current_site', ['site' => $siteName]) }}</div>
                 </div>
 
-                <div class="wb-stack wb-gap-2 wb-text-sm">
-                    <div><strong>{{ $pageMoveSiteText('current_public_path') }}</strong> {{ $page->publicPath() ?? $pageMoveSiteText('not_routable') }}</div>
-                    <div><strong>{{ $pageMoveSiteText('workflow') }}</strong> {{ $page->workflowLabel() }}</div>
-                    <div><strong>{{ $pageMoveSiteText('translations') }}</strong> {{ $page->translations->pluck('locale.code')->filter()->implode(', ') ?: $pageMoveSiteText('none') }}</div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $page->title }}">
+                        <tbody>
+                            <tr><th scope="row">{{ rtrim($pageMoveSiteText('current_public_path'), ': ') }}</th><td>{{ $page->publicPath() ?? $pageMoveSiteText('not_routable') }}</td></tr>
+                            <tr><th scope="row">{{ rtrim($pageMoveSiteText('workflow'), ': ') }}</th><td>{{ $page->workflowLabel() }}</td></tr>
+                            <tr><th scope="row">{{ rtrim($pageMoveSiteText('translations'), ': ') }}</th><td>{{ $page->translations->pluck('locale.code')->filter()->implode(', ') ?: $pageMoveSiteText('none') }}</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <div class="wb-alert wb-alert-warning">

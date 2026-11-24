@@ -155,52 +155,26 @@
             <div class="wb-alert wb-alert-info" role="status">{{ $insightText('cleanup_disabled') }}</div>
         @endif
 
-        <div class="wb-grid wb-grid-4">
-            <div class="wb-card">
-                <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">{{ $adminText('total_page_views') }}</div>
-                    <div class="wb-text-xs wb-text-muted">{{ $insightText('aggregate') }}</div>
-                    <strong>{{ number_format($summary['total_page_views']) }}</strong>
-                </div>
-            </div>
-
-            <div class="wb-card">
-                <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">{{ $adminText('human_page_views') }}</div>
-                    <div class="wb-text-xs wb-text-muted">{{ $adminText('bot_flag_excluded') }}</div>
-                    <strong>{{ number_format($summary['human_page_views']) }}</strong>
-                </div>
-            </div>
-
-            <div class="wb-card">
-                <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">{{ $adminText('bot_page_views') }}</div>
-                    <div class="wb-text-xs wb-text-muted">{{ $adminText('shown_separately') }}</div>
-                    <strong>{{ number_format($summary['bot_page_views']) }}</strong>
-                </div>
-            </div>
-
-            <div class="wb-card">
-                <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">{{ $adminText('unique_visitors') }}</div>
-                    <div class="wb-text-xs wb-text-muted">{{ $adminText('requires_session_consent') }}</div>
-                    <strong>{{ $trackedMetric($summary['unique_visitors'], $metricStates['unique_visitors']) }}</strong>
-                </div>
-            </div>
-
-            <div class="wb-card">
-                <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">{{ $adminText('total_sessions') }}</div>
-                    <div class="wb-text-xs wb-text-muted">{{ $adminText('requires_session_consent') }}</div>
-                    <strong>{{ $trackedMetric($summary['total_sessions'], $metricStates['total_sessions']) }}</strong>
-                </div>
-            </div>
-
-            <div class="wb-card">
-                <div class="wb-card-body wb-stack wb-gap-1">
-                    <div class="wb-text-sm wb-text-muted">{{ $adminText('average_pages_per_session') }}</div>
-                    <div class="wb-text-xs wb-text-muted">{{ $adminText('tracked_page_views_only') }}</div>
-                    <strong>{{ $trackedMetric($summary['average_pages_per_session'], $metricStates['average_pages_per_session'], 1) }}</strong>
+        <div class="wb-card">
+            <div class="wb-card-body">
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('title') }}">
+                        <tbody>
+                            @foreach ([
+                                'total_page_views' => [$insightText('aggregate'), number_format($summary['total_page_views'])],
+                                'human_page_views' => [$adminText('bot_flag_excluded'), number_format($summary['human_page_views'])],
+                                'bot_page_views' => [$adminText('shown_separately'), number_format($summary['bot_page_views'])],
+                                'unique_visitors' => [$adminText('requires_session_consent'), $trackedMetric($summary['unique_visitors'], $metricStates['unique_visitors'])],
+                                'total_sessions' => [$adminText('requires_session_consent'), $trackedMetric($summary['total_sessions'], $metricStates['total_sessions'])],
+                                'average_pages_per_session' => [$adminText('tracked_page_views_only'), $trackedMetric($summary['average_pages_per_session'], $metricStates['average_pages_per_session'], 1)],
+                            ] as $metric => [$note, $value])
+                                <tr>
+                                    <th scope="row">{{ $adminText($metric) }} <span class="wb-block wb-text-xs wb-text-muted">{{ $note }}</span></th>
+                                    <td class="wb-text-end">{{ $value }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

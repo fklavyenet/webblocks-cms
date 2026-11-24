@@ -396,18 +396,31 @@
                             <div class="wb-empty-text">{{ $adminText('unused_media_help') }}</div>
                         </div>
                     @else
-                        <div class="wb-stack wb-gap-2 wb-media-usage-list">
-                            @foreach ($usageAsset->resolvedUsages as $usageItem)
-                                <div class="wb-card wb-card-muted">
-                                    <div class="wb-card-body wb-stack wb-gap-1">
-                                        <strong>{{ $usageItem['page_title'] ?: $adminText('shared_content') }}</strong>
-                                        <div class="wb-text-sm wb-text-muted">{{ $usageItem['context'] }} • {{ $usageItem['label'] }}</div>
-                                        @if (! empty($usageItem['admin_url']))
-                                            <a href="{{ $usageItem['admin_url'] }}" class="wb-btn wb-btn-secondary">{{ $adminText('open_usage') }}</a>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endforeach
+                        <div class="wb-table-wrap wb-media-usage-list">
+                            <table class="wb-table wb-table-sm wb-table-striped wb-table-break" aria-label="{{ $adminText('media_usage') }}">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ $adminTranslator->admin('record_tables.page', $adminLocale) }}</th>
+                                        <th scope="col">{{ $adminTranslator->admin('record_tables.context', $adminLocale) }}</th>
+                                        <th scope="col">{{ $adminText('usage') }}</th>
+                                        <th scope="col">{{ $adminTranslator->admin('common.actions', $adminLocale) }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($usageAsset->resolvedUsages as $usageItem)
+                                        <tr>
+                                            <th scope="row">{{ $usageItem['page_title'] ?: $adminText('shared_content') }}</th>
+                                            <td>{{ $usageItem['context'] }}</td>
+                                            <td>{{ $usageItem['label'] }}</td>
+                                            <td>
+                                                @if (! empty($usageItem['admin_url']))
+                                                    <a href="{{ $usageItem['admin_url'] }}" class="wb-btn wb-btn-secondary wb-btn-sm">{{ $adminText('open_usage') }}</a>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     @endif
                 </div>

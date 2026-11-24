@@ -282,11 +282,15 @@
         <div class="wb-collapse-body">
             <div class="wb-stack wb-stack-2">
                 <p class="wb-text-sm wb-text-muted">{{ $adminText('protection_history_help') }}</p>
-                <div class="wb-cluster wb-cluster-4 wb-flex-wrap">
-                    <span>{{ $adminText('protection_total') }}: <strong>{{ $protectionSummary['total'] }}</strong></span>
-                    <span>{{ $adminText('protection_allowed') }}: <strong>{{ $protectionSummary['allowed'] }}</strong></span>
-                    <span>{{ $adminText('protection_quarantined') }}: <strong>{{ $protectionSummary['quarantined'] }}</strong></span>
-                    <span>{{ $adminText('protection_spam') }}: <strong>{{ $protectionSummary['spam'] }}</strong></span>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('protection_summary', ['days' => $protectionSummary['days']]) }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $adminText('protection_total') }}</th><td>{{ $protectionSummary['total'] }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('protection_allowed') }}</th><td>{{ $protectionSummary['allowed'] }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('protection_quarantined') }}</th><td>{{ $protectionSummary['quarantined'] }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('protection_spam') }}</th><td>{{ $protectionSummary['spam'] }}</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

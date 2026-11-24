@@ -33,11 +33,17 @@
                 </div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>{{ $adminText('site_transfers.site') }}:</strong> {{ $siteExport->site?->name ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.includes_media') }}:</strong> {{ $yesNoLabel((bool) $siteExport->includes_media) }}</div>
-                    <div><strong>{{ $adminText('site_transfers.archive') }}:</strong> {{ $siteExport->archive_name ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.size') }}:</strong> {{ $siteExport->humanArchiveSize() }}</div>
-                    <div><strong>{{ $adminText('site_transfers.triggered_by') }}:</strong> {{ $siteExport->user?->name ?? '-' }}</div>
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('site_transfers.run_status') }}">
+                            <tbody>
+                                <tr><th scope="row">{{ $adminText('site_transfers.site') }}</th><td>{{ $siteExport->site?->name ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.includes_media') }}</th><td>{{ $yesNoLabel((bool) $siteExport->includes_media) }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.archive') }}</th><td>{{ $siteExport->archive_name ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.size') }}</th><td>{{ $siteExport->humanArchiveSize() }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.triggered_by') }}</th><td>{{ $siteExport->user?->name ?? '-' }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                     @if ($siteExport->failure_message)
                         <div class="wb-alert wb-alert-danger">
@@ -54,13 +60,19 @@
                 <div class="wb-card-header"><strong>{{ $adminText('site_transfers.manifest_metadata') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>{{ $adminText('site_transfers.product') }}:</strong> {{ $manifest['product'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.feature_version') }}:</strong> {{ $manifest['feature_version'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.format_version') }}:</strong> {{ $manifest['format_version'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.exported_at') }}:</strong> {{ $manifest['exported_at'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.source_app_version') }}:</strong> {{ $manifest['source_app_version'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.source_handle') }}:</strong> {{ $manifest['source_site_handle'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.source_domain') }}:</strong> {{ $manifest['source_site_domain'] ?? '-' }}</div>
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('site_transfers.manifest_metadata') }}">
+                            <tbody>
+                                <tr><th scope="row">{{ $adminText('site_transfers.product') }}</th><td>{{ $manifest['product'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.feature_version') }}</th><td>{{ $manifest['feature_version'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.format_version') }}</th><td>{{ $manifest['format_version'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.exported_at') }}</th><td>{{ $manifest['exported_at'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.source_app_version') }}</th><td>{{ $manifest['source_app_version'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.source_handle') }}</th><td>{{ $manifest['source_site_handle'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.source_domain') }}</th><td>{{ $manifest['source_site_domain'] ?? '-' }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -69,20 +81,21 @@
             <div class="wb-card-header"><strong>{{ $adminText('site_transfers.counts') }}</strong></div>
 
             <div class="wb-card-body">
-                <div class="wb-grid wb-grid-3">
-                    @forelse ($counts as $label => $value)
-                        <div class="wb-card wb-card-muted">
-                            <div class="wb-card-body wb-stack wb-gap-1">
-                                <div class="wb-text-sm wb-text-muted">{{ str($label)->replace('_', ' ')->title() }}</div>
-                                <strong>{{ $value }}</strong>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="wb-empty wb-empty-sm">
-                            <div class="wb-empty-title">{{ $adminText('site_transfers.no_count_summary') }}</div>
-                        </div>
-                    @endforelse
-                </div>
+                @if (count($counts) > 0)
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('site_transfers.counts') }}">
+                            <tbody>
+                                @foreach ($counts as $label => $value)
+                                    <tr><th scope="row">{{ str($label)->replace('_', ' ')->title() }}</th><td>{{ $value }}</td></tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="wb-empty wb-empty-sm">
+                        <div class="wb-empty-title">{{ $adminText('site_transfers.no_count_summary') }}</div>
+                    </div>
+                @endif
             </div>
         </div>
 

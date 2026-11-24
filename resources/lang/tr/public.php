@@ -1,6 +1,16 @@
 <?php
 
 return [
+  'page_metadata' => [
+    'summary' => 'Sayfa Özeti',
+    'metadata' => 'Sayfa Bilgileri',
+    'title' => 'Başlık',
+    'path' => 'Yol',
+    'type' => 'Tür',
+    'slug' => 'Kısa ad',
+    'status' => 'Durum',
+    'page_type' => 'Sayfa türü',
+  ],
   'toc' => [
     'title' => 'Bu sayfada',
   ],

@@ -14,8 +14,14 @@
             @endforeach
             <p>{{ $localeRestoreText('preserved') }}</p>
             <p>{{ $localeRestoreText('preview_languages') }}</p>
-            <p>{{ $localeRestoreText('proposed_url') }}: {{ $localeRestoreReview['proposed_url'] ?? '—' }}</p>
-            <p>{{ $localeRestoreText('proposed_path') }}: {{ $localeRestoreTranslation['path'] ?? '—' }}</p>
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $localeRestoreText('proposed_url') }}">
+                    <tbody>
+                        <tr><th scope="row">{{ $localeRestoreText('proposed_url') }}</th><td>{{ $localeRestoreReview['proposed_url'] ?? '—' }}</td></tr>
+                        <tr><th scope="row">{{ rtrim($localeRestoreText('proposed_path'), ': ') }}</th><td>{{ $localeRestoreTranslation['path'] ?? '—' }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
             <p>{{ $localeRestoreText('excluded') }}</p>
         </div>
     </div>

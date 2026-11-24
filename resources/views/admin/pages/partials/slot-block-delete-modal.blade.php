@@ -150,9 +150,15 @@
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-body wb-stack wb-gap-2">
                                 <div><strong>{{ $deleteAllContext }}</strong></div>
-                                <div><strong>{{ $slotBlockDeleteText('slot') }}</strong> {{ $slot->slotType?->name ?? $slotBlockDeleteText('slot_fallback') }}</div>
-                                <div><strong>{{ $slotBlockDeleteText('top_level_blocks') }}</strong> {{ $deleteAllMeta['top_level_count'] }}</div>
-                                <div><strong>{{ $slotBlockDeleteText('nested_descendants') }}</strong> {{ $deleteAllMeta['descendant_count'] }}</div>
+                                <div class="wb-table-wrap">
+                                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $deleteAllContext }}">
+                                        <tbody>
+                                            <tr><th scope="row">{{ rtrim($slotBlockDeleteText('slot'), ': ') }}</th><td>{{ $slot->slotType?->name ?? $slotBlockDeleteText('slot_fallback') }}</td></tr>
+                                            <tr><th scope="row">{{ rtrim($slotBlockDeleteText('top_level_blocks'), ': ') }}</th><td>{{ $deleteAllMeta['top_level_count'] }}</td></tr>
+                                            <tr><th scope="row">{{ rtrim($slotBlockDeleteText('nested_descendants'), ': ') }}</th><td>{{ $deleteAllMeta['descendant_count'] }}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 

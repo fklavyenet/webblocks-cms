@@ -40,10 +40,16 @@
                 <div class="wb-card wb-card-muted">
                     <div class="wb-card-header"><strong>{{ $pageLayoutsText('usage') }}</strong></div>
                     <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                        <div><strong>{{ $pageLayoutsText('handle_label') }}</strong> <code>{{ $pageLayout->handle }}</code></div>
-                        <div><strong>{{ $pageLayoutsText('status_label') }}</strong> <span class="wb-status-pill {{ $pageLayout->statusBadgeClass() }}">{{ $pageLayout->is_active ? $pageLayoutsText('active') : $pageLayoutsText('inactive') }}</span></div>
-                        <div><strong>{{ $pageLayoutsText('ownership_label') }}</strong> {{ $pageLayout->is_system ? $pageLayoutsText('system') : $pageLayoutsText('custom') }}</div>
-                        <div><strong>{{ $pageLayoutsText('body_class_label') }}</strong> <code>{{ $pageLayout->body_class ?: '-' }}</code></div>
+                        <div class="wb-table-wrap">
+                            <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $pageLayoutsText('usage') }}">
+                                <tbody>
+                                    <tr><th scope="row">{{ rtrim($pageLayoutsText('handle_label'), ': ') }}</th><td><code>{{ $pageLayout->handle }}</code></td></tr>
+                                    <tr><th scope="row">{{ rtrim($pageLayoutsText('status_label'), ': ') }}</th><td><span class="wb-status-pill {{ $pageLayout->statusBadgeClass() }}">{{ $pageLayout->is_active ? $pageLayoutsText('active') : $pageLayoutsText('inactive') }}</span></td></tr>
+                                    <tr><th scope="row">{{ rtrim($pageLayoutsText('ownership_label'), ': ') }}</th><td>{{ $pageLayout->is_system ? $pageLayoutsText('system') : $pageLayoutsText('custom') }}</td></tr>
+                                    <tr><th scope="row">{{ rtrim($pageLayoutsText('body_class_label'), ': ') }}</th><td><code>{{ $pageLayout->body_class ?: '-' }}</code></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 

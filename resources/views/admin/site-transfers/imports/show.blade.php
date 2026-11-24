@@ -56,9 +56,15 @@
                 </div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>{{ $adminText('site_transfers.source_package') }}:</strong> {{ $siteImport->source_archive_name ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.imported_site_handle') }}:</strong> {{ $siteImport->imported_site_handle ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.imported_site_domain') }}:</strong> {{ $siteImport->imported_site_domain ?? '-' }}</div>
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('site_transfers.import_status') }}">
+                            <tbody>
+                                <tr><th scope="row">{{ $adminText('site_transfers.source_package') }}</th><td>{{ $siteImport->source_archive_name ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.imported_site_handle') }}</th><td>{{ $siteImport->imported_site_handle ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.imported_site_domain') }}</th><td>{{ $siteImport->imported_site_domain ?? '-' }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                     @if ($siteImport->failure_message)
                         <div class="wb-alert wb-alert-danger">
@@ -75,13 +81,19 @@
                 <div class="wb-card-header"><strong>{{ $adminText('site_transfers.manifest_preview') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>{{ $adminText('site_transfers.product') }}:</strong> {{ $manifest['product'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.format_version') }}:</strong> {{ $manifest['format_version'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.source_site') }}:</strong> {{ $manifest['source_site_name'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.source_handle') }}:</strong> {{ $manifest['source_site_handle'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.source_domain') }}:</strong> {{ $manifest['source_site_domain'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.locales') }}:</strong> {{ collect($manifest['locales'] ?? [])->implode(', ') ?: '-' }}</div>
-                    <div><strong>{{ $adminText('site_transfers.includes_media') }}:</strong> {{ $yesNoLabel((bool) ($manifest['includes_media'] ?? false)) }}</div>
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('site_transfers.manifest_preview') }}">
+                            <tbody>
+                                <tr><th scope="row">{{ $adminText('site_transfers.product') }}</th><td>{{ $manifest['product'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.format_version') }}</th><td>{{ $manifest['format_version'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.source_site') }}</th><td>{{ $manifest['source_site_name'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.source_handle') }}</th><td>{{ $manifest['source_site_handle'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.source_domain') }}</th><td>{{ $manifest['source_site_domain'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.locales') }}</th><td>{{ collect($manifest['locales'] ?? [])->implode(', ') ?: '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('site_transfers.includes_media') }}</th><td>{{ $yesNoLabel((bool) ($manifest['includes_media'] ?? false)) }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

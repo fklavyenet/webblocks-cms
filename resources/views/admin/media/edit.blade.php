@@ -66,22 +66,33 @@
                             <div class="wb-empty-text">{{ $adminText('edit_unused_help') }}</div>
                         </div>
                     @else
-                        <div class="wb-stack wb-gap-2">
-                            @foreach ($usages as $usage)
-                                <div class="wb-card wb-card-muted">
-                                    <div class="wb-card-body">
-                                        <div class="wb-cluster wb-cluster-between wb-cluster-2">
-                                            <div class="wb-stack wb-gap-1">
-                                                <strong>{{ $usage['label'] }}</strong>
-                                                <div class="wb-text-sm wb-text-muted">{{ $usage['type'] }} | {{ $usage['context'] }}@if($usage['page_title']) | {{ $usage['page_title'] }}@endif</div>
-                                            </div>
-                                            @if (! empty($usage['admin_url']))
-                                                <a href="{{ $usage['admin_url'] }}" class="wb-btn wb-btn-secondary">{{ $adminText('open') }}</a>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                        <div class="wb-table-wrap">
+                            <table class="wb-table wb-table-sm wb-table-striped wb-table-break" aria-label="{{ $adminText('media_usage') }}">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">{{ $adminText('usage') }}</th>
+                                        <th scope="col">{{ $adminTranslator->admin('record_tables.type', $adminLocale) }}</th>
+                                        <th scope="col">{{ $adminTranslator->admin('record_tables.context', $adminLocale) }}</th>
+                                        <th scope="col">{{ $adminTranslator->admin('record_tables.page', $adminLocale) }}</th>
+                                        <th scope="col">{{ $adminTranslator->admin('common.actions', $adminLocale) }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($usages as $usage)
+                                        <tr>
+                                            <th scope="row">{{ $usage['label'] }}</th>
+                                            <td>{{ $usage['type'] }}</td>
+                                            <td>{{ $usage['context'] }}</td>
+                                            <td>{{ $usage['page_title'] ?: '—' }}</td>
+                                            <td>
+                                                @if (! empty($usage['admin_url']))
+                                                    <a href="{{ $usage['admin_url'] }}" class="wb-btn wb-btn-secondary wb-btn-sm">{{ $adminText('open') }}</a>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     @endif
                 </div>
@@ -216,51 +227,52 @@
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-header"><strong>{{ $adminText('file') }}</strong></div>
                             <div class="wb-card-body wb-stack wb-gap-3">
-                                <div><strong>{{ $adminText('filename_label') }}</strong> {{ $asset->filename }}</div>
-                                <div><strong>{{ $adminText('original_name_label') }}</strong> {{ $asset->original_name }}</div>
-                                <div><strong>{{ $adminText('mime_type_label') }}</strong> {{ $asset->mime_type ?? '-' }}</div>
-                                <div><strong>{{ $adminText('extension_label') }}</strong> {{ $asset->extension ?? '-' }}</div>
-                                <div><strong>{{ $adminText('size_label') }}</strong> {{ $asset->humanSize() }}</div>
-                                <div><strong>{{ $adminText('kind_label') }}</strong> <span class="wb-status-pill wb-status-info">{{ ucfirst($asset->kind) }}</span></div>
-                                <div><strong>{{ $adminText('disk_label') }}</strong> {{ $asset->disk }}</div>
-                            </div>
-                        </div>
-
-                        <div class="wb-card wb-card-muted">
-                            <div class="wb-card-header"><strong>{{ $adminText('image') }}</strong></div>
-                            <div class="wb-card-body wb-stack wb-gap-3">
-                                <div><strong>{{ $adminText('dimensions_label') }}</strong> {{ $dimensions }}</div>
+                                <div class="wb-table-wrap">
+                                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('file') }}">
+                                        <tbody>
+                                            <tr><th scope="row">{{ rtrim($adminText('filename_label'), ': ') }}</th><td>{{ $asset->filename }}</td></tr>
+                                            <tr><th scope="row">{{ rtrim($adminText('original_name_label'), ': ') }}</th><td>{{ $asset->original_name }}</td></tr>
+                                            <tr><th scope="row">{{ rtrim($adminText('mime_type_label'), ': ') }}</th><td>{{ $asset->mime_type ?? '-' }}</td></tr>
+                                            <tr><th scope="row">{{ rtrim($adminText('extension_label'), ': ') }}</th><td>{{ $asset->extension ?? '-' }}</td></tr>
+                                            <tr><th scope="row">{{ rtrim($adminText('size_label'), ': ') }}</th><td>{{ $asset->humanSize() }}</td></tr>
+                                            <tr><th scope="row">{{ rtrim($adminText('kind_label'), ': ') }}</th><td><span class="wb-status-pill wb-status-info">{{ ucfirst($asset->kind) }}</span></td></tr>
+                                            <tr><th scope="row">{{ rtrim($adminText('disk_label'), ': ') }}</th><td>{{ $asset->disk }}</td></tr>
+                                            <tr><th scope="row">{{ rtrim($adminText('dimensions_label'), ': ') }}</th><td>{{ $dimensions }}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 
                         <div class="wb-card wb-card-muted">
                             <div class="wb-card-header"><strong>{{ $adminText('storage') }}</strong></div>
-                            <div class="wb-card-body wb-stack wb-gap-3">
-                                <div class="wb-stack wb-gap-1">
-                                    <strong>{{ $adminText('path') }}</strong>
-                                    <code class="wb-admin-code-wrap">{{ $asset->path }}</code>
+                            <div class="wb-card-body">
+                                <div class="wb-table-wrap">
+                                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('storage') }}">
+                                        <tbody>
+                                            <tr><th scope="row">{{ $adminText('path') }}</th><td><code class="wb-admin-code-wrap">{{ $asset->path }}</code></td></tr>
+                                            <tr>
+                                                <th scope="row">{{ $adminText('public_url') }}</th>
+                                                <td>
+                                                    <code class="wb-admin-code-wrap">{{ $publicUrl ?: '-' }}</code>
+                                                    @if ($publicUrl)
+                                                        <button
+                                                            type="button"
+                                                            class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon"
+                                                            data-wb-copy-url="{{ $publicUrl }}"
+                                                            aria-label="{{ $adminText('copy_public_url') }}"
+                                                            data-wb-tooltip="{{ $adminText('copy_public_url') }}"
+                                                        >
+                                                            <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
+                                                        </button>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                            <tr><th scope="row">{{ rtrim($adminText('created_label'), ': ') }}</th><td>{{ $asset->created_at?->format('Y-m-d H:i') ?? '-' }}</td></tr>
+                                            <tr><th scope="row">{{ rtrim($adminText('updated_label'), ': ') }}</th><td>{{ $asset->updated_at?->format('Y-m-d H:i') ?? '-' }}</td></tr>
+                                        </tbody>
+                                    </table>
                                 </div>
-
-                                <div class="wb-stack wb-gap-1">
-                                    <div class="wb-cluster wb-gap-2 wb-flex-wrap">
-                                        <strong>{{ $adminText('public_url') }}</strong>
-                                        @if ($publicUrl)
-                                            <button
-                                                type="button"
-                                                class="wb-btn wb-btn-ghost wb-btn-sm wb-btn-icon"
-                                                data-wb-copy-url="{{ $publicUrl }}"
-                                                aria-label="{{ $adminText('copy_public_url') }}"
-                                                data-wb-tooltip="{{ $adminText('copy_public_url') }}"
-                                            >
-                                                <i class="wb-icon wb-icon-copy" aria-hidden="true"></i>
-                                            </button>
-                                        @endif
-                                    </div>
-                                    <code class="wb-admin-code-wrap">{{ $publicUrl ?: '-' }}</code>
-                                </div>
-
-                                <div><strong>{{ $adminText('created_label') }}</strong> {{ $asset->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
-                                <div><strong>{{ $adminText('updated_label') }}</strong> {{ $asset->updated_at?->format('Y-m-d H:i') ?? '-' }}</div>
                             </div>
                         </div>
                     </div>

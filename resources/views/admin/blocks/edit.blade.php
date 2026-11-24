@@ -31,11 +31,19 @@
         'blockTypes' => $blockTypes,
     ])
 
-    <div class="wb-grid wb-grid-4">
-        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">{{ $blockFormText('block_type') }}</div><div class="wb-stat-value">{{ $block->typeName() }}</div></div></div></div>
-        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">{{ $blockFormText('slot_type') }}</div><div class="wb-stat-value">{{ $block->slotName() }}</div></div></div></div>
-        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">{{ $blockFormText('page') }}</div><div class="wb-stat-value">{{ $block->page?->title ?? '-' }}</div></div></div></div>
-        <div class="wb-card wb-card-muted"><div class="wb-card-body"><div class="wb-stat"><div class="wb-stat-label">{{ $blockFormText('status') }}</div><div class="wb-stat-value">{{ $block->status }}</div></div></div></div>
+    <div class="wb-card wb-card-muted">
+        <div class="wb-card-body">
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $pageTitle }}">
+                    <tbody>
+                        <tr><th scope="row">{{ $blockFormText('block_type') }}</th><td>{{ $block->typeName() }}</td></tr>
+                        <tr><th scope="row">{{ $blockFormText('slot_type') }}</th><td>{{ $block->slotName() }}</td></tr>
+                        <tr><th scope="row">{{ $blockFormText('page') }}</th><td>{{ $block->page?->title ?? '-' }}</td></tr>
+                        <tr><th scope="row">{{ $blockFormText('status') }}</th><td>{{ $block->status }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div class="wb-card">

@@ -197,6 +197,34 @@ class AdminTableSortingTest extends TestCase
   }
 
   #[Test]
+  public function both_token_activity_views_show_the_full_escaped_user_agent(): void
+  {
+    $userAgent = 'Synthetic client '.str_repeat('a', 150).' <span>trailing value</span>';
+    foreach (['system' => 'admin.system.api-tokens.index', 'personal' => 'admin.profile.api-tokens.index'] as $type => $route) {
+      $token = Models\CmsApiToken::where('token_type', $type)->firstOrFail();
+      $token->activityLogs()->create([
+        'occurred_at' => now(),
+        'status' => 'allowed',
+        'method' => 'GET',
+        'path' => '/webadmin/api/pages',
+        'ip' => '192.0.2.10',
+        'user_agent' => $userAgent,
+      ]);
+
+      $response = $this->get(route($route))->assertOk();
+      $dom = new DOMDocument;
+      $dom->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+      $xpath = new DOMXPath($dom);
+      $activity = '//article[contains(@class, "wb-api-token-activity-item")]';
+      $value = $xpath->query($activity.'//tr[th[@scope="row" and normalize-space(.)="User agent"]]/td/details/div')->item(0);
+      $this->assertNotNull($value);
+      $this->assertSame($userAgent, trim($value->textContent));
+      $this->assertSame(0, $value->getElementsByTagName('span')->length);
+      $response->assertDontSee('user_agent }}">', false);
+    }
+  }
+
+  #[Test]
   public function a_direction_only_request_and_equal_sort_keys_have_truthful_stable_results(): void
   {
     $this->get(route('admin.page-layouts.index', ['direction' => 'desc']))->assertOk()

@@ -27,21 +27,30 @@
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-header"><strong>{{ $adminText('site') }}</strong></div>
                         <div class="wb-card-body wb-stack wb-gap-2">
-                            <div><strong>{{ $adminText('name') }}:</strong> {{ $site->name }}</div>
-                            <div><strong>{{ $adminText('handle_label') }}</strong> <code>{{ $site->handle }}</code></div>
-                            <div><strong>{{ $adminText('status_label') }}</strong> {{ $site->is_primary ? $adminText('primary') : $adminText('standard') }}</div>
-                            <div><strong>{{ $adminText('pages_label') }}</strong> {{ $site->pages_count }}</div>
+                            <div class="wb-table-wrap">
+                                <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('site') }}">
+                                    <tbody>
+                                        <tr><th scope="row">{{ $adminText('name') }}</th><td>{{ $site->name }}</td></tr>
+                                        <tr><th scope="row">{{ rtrim($adminText('handle_label'), ': ') }}</th><td><code>{{ $site->handle }}</code></td></tr>
+                                        <tr><th scope="row">{{ rtrim($adminText('status_label'), ': ') }}</th><td>{{ $site->is_primary ? $adminText('primary') : $adminText('standard') }}</td></tr>
+                                        <tr><th scope="row">{{ rtrim($adminText('pages_label'), ': ') }}</th><td>{{ $site->pages_count }}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
                     <div class="wb-card wb-card-muted">
                         <div class="wb-card-header"><strong>{{ $adminText('domains_and_locales') }}</strong></div>
                         <div class="wb-card-body wb-stack wb-gap-2">
-                            <div><strong>{{ $adminText('primary_domain_label') }}</strong> {{ $site->canonicalDomain() ?: $adminText('not_set') }}</div>
-                            <div><strong>{{ $adminText('alias_domains_label') }}</strong> {{ $aliasCount }}</div>
-                            <div>
-                                <strong>{{ $adminText('locales_label') }}</strong>
-                                {{ $site->locales->pluck('code')->implode(', ') ?: $adminText('none_assigned') }}
+                            <div class="wb-table-wrap">
+                                <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('domains_and_locales') }}">
+                                    <tbody>
+                                        <tr><th scope="row">{{ rtrim($adminText('primary_domain_label'), ': ') }}</th><td>{{ $site->canonicalDomain() ?: $adminText('not_set') }}</td></tr>
+                                        <tr><th scope="row">{{ rtrim($adminText('alias_domains_label'), ': ') }}</th><td>{{ $aliasCount }}</td></tr>
+                                        <tr><th scope="row">{{ rtrim($adminText('locales_label'), ': ') }}</th><td>{{ $site->locales->pluck('code')->implode(', ') ?: $adminText('none_assigned') }}</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>

@@ -11,8 +11,14 @@
         <section class="wb-card" aria-labelledby="scheduler-evidence-title">
             <div class="wb-card-header"><h2 class="wb-card-title" id="scheduler-evidence-title">{{ $text('evidence') }}</h2></div>
             <div class="wb-card-body wb-stack wb-gap-3">
-                <p>{{ $text('scheduler_status') }}: <strong>{{ $text('health_'.$setup['health']['scheduler_status']) }}</strong></p>
-                <p>{{ $text('last_seen') }}: {{ $setup['health']['last_seen_at'] ?? $text('no_record') }}</p>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $text('evidence') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $text('scheduler_status') }}</th><td>{{ $text('health_'.$setup['health']['scheduler_status']) }}</td></tr>
+                            <tr><th scope="row">{{ $text('last_seen') }}</th><td>{{ $setup['health']['last_seen_at'] ?? $text('no_record') }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <p>{{ $text('runtime_help') }}</p>
                 <a class="wb-link" href="{{ route('admin.system.scheduler.index') }}">{{ $text('refresh') }}</a>
             </div>

@@ -364,12 +364,20 @@
         @break
 
     @case('page-content')
+        @php($pageMetaText = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
+            ->public('page_metadata.'.$key, $block->renderLocaleCode() ?? app()->getLocale()))
         <div class="wb-card wb-card-muted">
-            <div class="wb-card-header"><strong>{{ $block->title ?: 'Page Summary' }}</strong></div>
+            <div class="wb-card-header"><strong>{{ $block->title ?: $pageMetaText('summary') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-1">
-                <div><strong>Title:</strong> {{ $page?->title }}</div>
-                <div><strong>Path:</strong> {{ $page?->publicPath() }}</div>
-                <div><strong>Type:</strong> {{ $page?->page_type ?: 'page' }}</div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break" aria-label="{{ $block->title ?: $pageMetaText('summary') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $pageMetaText('title') }}</th><td>{{ $page?->title }}</td></tr>
+                            <tr><th scope="row">{{ $pageMetaText('path') }}</th><td>{{ $page?->publicPath() }}</td></tr>
+                            <tr><th scope="row">{{ $pageMetaText('type') }}</th><td>{{ $page?->page_type ?: 'page' }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 @if ($block->content)
                     <p>{{ $block->content }}</p>
                 @endif
@@ -378,14 +386,22 @@
         @break
 
     @case('page-meta')
+        @php($pageMetaText = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
+            ->public('page_metadata.'.$key, $block->renderLocaleCode() ?? app()->getLocale()))
         <div class="wb-card wb-card-muted">
-            <div class="wb-card-header"><strong>{{ $block->title ?: 'Page Meta' }}</strong></div>
+            <div class="wb-card-header"><strong>{{ $block->title ?: $pageMetaText('metadata') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-1">
-                <div><strong>Title:</strong> {{ $page?->title }}</div>
-                <div><strong>Slug:</strong> {{ $page?->slug }}</div>
-                <div><strong>Path:</strong> {{ $page?->publicPath() }}</div>
-                <div><strong>Status:</strong> {{ $page?->status }}</div>
-                <div><strong>Page Type:</strong> {{ $page?->page_type }}</div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break" aria-label="{{ $block->title ?: $pageMetaText('metadata') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $pageMetaText('title') }}</th><td>{{ $page?->title }}</td></tr>
+                            <tr><th scope="row">{{ $pageMetaText('slug') }}</th><td>{{ $page?->slug }}</td></tr>
+                            <tr><th scope="row">{{ $pageMetaText('path') }}</th><td>{{ $page?->publicPath() }}</td></tr>
+                            <tr><th scope="row">{{ $pageMetaText('status') }}</th><td>{{ $page?->status }}</td></tr>
+                            <tr><th scope="row">{{ $pageMetaText('page_type') }}</th><td>{{ $page?->page_type }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         @break

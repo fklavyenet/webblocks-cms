@@ -68,7 +68,14 @@
               @foreach ($seoReport[$seoCategory] as $seoFinding)
                 <li data-wb-seo-code="{{ $seoFinding['code'] }}">
                   <p>{{ $seoFinding['message'] }}</p>
-                  <p class="wb-text-sm wb-text-muted">{{ $seoText('target') }}: <code>{{ $seoFinding['target'] }}</code> · {{ $seoText('count') }}: {{ $seoFinding['count'] }}</p>
+                  <div class="wb-table-wrap">
+                      <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $seoFinding['message'] }}">
+                          <tbody>
+                              <tr><th scope="row">{{ $seoText('target') }}</th><td><code>{{ $seoFinding['target'] }}</code></td></tr>
+                              <tr><th scope="row">{{ $seoText('count') }}</th><td>{{ $seoFinding['count'] }}</td></tr>
+                          </tbody>
+                      </table>
+                  </div>
                   @foreach ($seoFinding['examples'] as $seoExample)
                     @if ($seoExample['example'] !== '')<p class="wb-text-sm">{{ $seoText('example') }}: {{ $seoExample['example'] }} <a class="wb-link" href="{{ $seoExample['action']['href'] }}">{{ $seoText('open_target') }}</a></p>@endif
                   @endforeach

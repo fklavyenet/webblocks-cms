@@ -43,10 +43,16 @@
             <div class="wb-card wb-card-muted">
                 <div class="wb-card-header"><strong>{{ $adminText('usage') }}</strong></div>
                 <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                    <div><strong>{{ $adminText('handle') }}:</strong> <code>{{ $sharedSlot->handle }}</code></div>
-                    <div><strong>{{ $adminText('slot') }}:</strong> {{ $sharedSlot->slotLabel() }}</div>
-                    <div><strong>{{ $adminText('page_layout') }}:</strong> {{ $sharedSlot->publicShellLabel() }}</div>
-                    <div><strong>{{ $adminText('status') }}:</strong> <span class="wb-status-pill {{ $sharedSlot->statusBadgeClass() }}">{{ $sharedSlot->statusLabel() }}</span></div>
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('usage') }}">
+                            <tbody>
+                                <tr><th scope="row">{{ $adminText('handle') }}</th><td><code>{{ $sharedSlot->handle }}</code></td></tr>
+                                <tr><th scope="row">{{ rtrim($adminText('slot'), ': ') }}</th><td>{{ $sharedSlot->slotLabel() }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('page_layout') }}</th><td>{{ $sharedSlot->publicShellLabel() }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('status') }}</th><td><span class="wb-status-pill {{ $sharedSlot->statusBadgeClass() }}">{{ $sharedSlot->statusLabel() }}</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 

@@ -80,9 +80,23 @@
               @forelse ($findings as $finding)
                 <article class="wb-card"><div class="wb-card-body wb-stack wb-gap-2">
                   <p>{{ $finding->message }}</p>
-                  <p class="wb-text-sm wb-text-muted">#{{ $finding->page_id }} · {{ $finding->locale }} · {{ $workspaceText('page_states.'.$finding->page_status) }} · <code>{{ $finding->code }}</code> · {{ $seoText('count') }}: {{ $finding->occurrences }}</p>
-                  @if ($finding->target)<code>{{ $finding->target }}</code>@endif
-                  @if ($finding->example)<p>{{ $seoText('example') }}: {{ $finding->example }}</p>@endif
+                  <div class="wb-table-wrap">
+                      <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $workspaceText('findings') }}">
+                          <tbody>
+                              <tr><th scope="row">{{ $workspaceText('page_id') }}</th><td>#{{ $finding->page_id }}</td></tr>
+                              <tr><th scope="row">{{ $seoText('language') }}</th><td>{{ $finding->locale }}</td></tr>
+                              <tr><th scope="row">{{ $seoText('page_status') }}</th><td>{{ $workspaceText('page_states.'.$finding->page_status) }}</td></tr>
+                              <tr><th scope="row">{{ $workspaceText('code') }}</th><td><code>{{ $finding->code }}</code></td></tr>
+                              <tr><th scope="row">{{ $seoText('count') }}</th><td>{{ $finding->occurrences }}</td></tr>
+                              @if ($finding->target)
+                                  <tr><th scope="row">{{ $seoText('target') }}</th><td><code>{{ $finding->target }}</code></td></tr>
+                              @endif
+                              @if ($finding->example)
+                                  <tr><th scope="row">{{ $seoText('example') }}</th><td>{{ $finding->example }}</td></tr>
+                              @endif
+                          </tbody>
+                      </table>
+                  </div>
                   @if ($finding->action)<a class="wb-link" href="{{ $finding->action['href'] }}">{{ $seoText('open_target') }}</a>@endif
                 </div></article>
               @empty<p>{{ $workspaceText('empty') }}</p>@endforelse
@@ -115,11 +129,30 @@
             <p class="wb-alert wb-alert-info">{{ $workspaceText('links_scope') }}</p>
             <div class="wb-stack wb-gap-3">
               @forelse ($links as $link)<article class="wb-card"><div class="wb-card-body wb-stack wb-gap-2">
-                <p>{{ $link->message }}</p><p>#{{ $link->page_id }} · {{ $link->locale }} · {{ $workspaceText($link->source === 'rendered' ? 'rendered' : 'navigation_definition') }}</p>
-                @if (! $link->is_public_source)<p class="wb-text-sm wb-text-muted">{{ $workspaceText('saved_only') }}</p>@endif<p>{{ $link->text }}</p><code>{{ $link->href }}</code>
-                @if ($link->target_page_id)<p>{{ $workspaceText('target_page') }}: #{{ $link->target_page_id }} · {{ $link->target_locale }}</p>@endif
-                @if ($link->suggested_url)<p>{{ $workspaceText('suggested_url') }}: <code>{{ $link->suggested_url }}</code></p>@endif
-                @if ($link->location)<code>{{ $link->location }}</code>@endif
+                <p>{{ $link->message }}</p>
+                @unless ($link->is_public_source)
+                  <p class="wb-text-sm wb-text-muted">{{ $workspaceText('saved_only') }}</p>
+                @endunless
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $workspaceText('links') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $workspaceText('page_id') }}</th><td>#{{ $link->page_id }}</td></tr>
+                            <tr><th scope="row">{{ $seoText('language') }}</th><td>{{ $link->locale }}</td></tr>
+                            <tr><th scope="row">{{ $adminTranslator->admin('record_tables.source', $adminLocale) }}</th><td>{{ $workspaceText($link->source === 'rendered' ? 'rendered' : 'navigation_definition') }}</td></tr>
+                            <tr><th scope="row">{{ $adminTranslator->admin('record_tables.link_text', $adminLocale) }}</th><td>{{ $link->text }}</td></tr>
+                            <tr><th scope="row">{{ $adminTranslator->admin('record_tables.url', $adminLocale) }}</th><td><code>{{ $link->href }}</code></td></tr>
+                            @if ($link->target_page_id)
+                                <tr><th scope="row">{{ $workspaceText('target_page') }}</th><td>#{{ $link->target_page_id }} · {{ $link->target_locale }}</td></tr>
+                            @endif
+                            @if ($link->suggested_url)
+                                <tr><th scope="row">{{ $workspaceText('suggested_url') }}</th><td><code>{{ $link->suggested_url }}</code></td></tr>
+                            @endif
+                            @if ($link->location)
+                                <tr><th scope="row">{{ $seoText('target') }}</th><td><code>{{ $link->location }}</code></td></tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
                 @if ($link->source_href)<a class="wb-link" href="{{ $link->source_href }}">{{ $seoText('open_target') }}</a>@endif
               </div></article>@empty<p>{{ $workspaceText('empty') }}</p>@endforelse
               @include('webblocks-cms::admin.partials.pagination', ['paginator' => $links->appends(['tab' => 'links'])])

@@ -1,6 +1,16 @@
 <?php
 
 return [
+  'page_metadata' => [
+    'summary' => 'Resumen de la página',
+    'metadata' => 'Metadatos de la página',
+    'title' => 'Título',
+    'path' => 'Ruta',
+    'type' => 'Tipo',
+    'slug' => 'Slug',
+    'status' => 'Estado',
+    'page_type' => 'Tipo de página',
+  ],
   'toc' => [
     'title' => 'En esta página',
   ],

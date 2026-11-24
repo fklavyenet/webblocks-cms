@@ -35,11 +35,15 @@
                     <div class="wb-text-sm wb-text-muted">{{ $pageDuplicateText('source_site', ['site' => $siteName]) }}</div>
                 </div>
 
-                <div class="wb-stack wb-gap-2 wb-text-sm">
-                    <div><strong>{{ $pageDuplicateText('workflow') }}</strong> {{ $page->workflowLabel() }}</div>
-                    <div><strong>{{ $pageDuplicateText('translations') }}</strong> {{ $page->translations->pluck('locale.code')->filter()->implode(', ') ?: $pageDuplicateText('none') }}</div>
-                    <div><strong>{{ $pageDuplicateText('revision_history') }}</strong> {{ $pageDuplicateText('revision_history_help') }}</div>
-                    <div><strong>{{ $pageDuplicateText('navigation') }}</strong> {{ $pageDuplicateText('navigation_help') }}</div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $page->title }}">
+                        <tbody>
+                            <tr><th scope="row">{{ rtrim($pageDuplicateText('workflow'), ': ') }}</th><td>{{ $page->workflowLabel() }}</td></tr>
+                            <tr><th scope="row">{{ rtrim($pageDuplicateText('translations'), ': ') }}</th><td>{{ $page->translations->pluck('locale.code')->filter()->implode(', ') ?: $pageDuplicateText('none') }}</td></tr>
+                            <tr><th scope="row">{{ rtrim($pageDuplicateText('revision_history'), ': ') }}</th><td>{{ $pageDuplicateText('revision_history_help') }}</td></tr>
+                            <tr><th scope="row">{{ rtrim($pageDuplicateText('navigation'), ': ') }}</th><td>{{ $pageDuplicateText('navigation_help') }}</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <div class="wb-alert wb-alert-warning">
@@ -77,16 +81,25 @@
                                     </div>
                                 </div>
 
-                                <div class="wb-stack wb-gap-2">
-                                    @foreach ($sharedSlotIssues as $sharedSlotIssue)
-                                        <div class="wb-card wb-card-muted">
-                                            <div class="wb-card-body wb-stack wb-gap-1">
-                                                <div><strong>{{ $pageDuplicateText('slot') }}</strong> {{ $sharedSlotIssue['slot_name'] ?: $pageDuplicateText('unknown') }}</div>
-                                                <div><strong>{{ $pageDuplicateText('shared_slot') }}</strong> {{ $sharedSlotIssue['shared_slot_handle'] ?? $pageDuplicateText('missing_source_shared_slot') }}</div>
-                                                <div class="wb-text-muted">{{ $sharedSlotIssue['message'] }}</div>
-                                            </div>
-                                        </div>
-                                    @endforeach
+                                <div class="wb-table-wrap">
+                                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break" aria-label="{{ $pageDuplicateText('shared_slot_compatibility') }}">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">{{ rtrim($pageDuplicateText('slot'), ': ') }}</th>
+                                                <th scope="col">{{ rtrim($pageDuplicateText('shared_slot'), ': ') }}</th>
+                                                <th scope="col">{{ $pageDuplicateTranslator->admin('record_tables.details', $pageDuplicateLocale) }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($sharedSlotIssues as $sharedSlotIssue)
+                                                <tr>
+                                                    <th scope="row">{{ $sharedSlotIssue['slot_name'] ?: $pageDuplicateText('unknown') }}</th>
+                                                    <td>{{ $sharedSlotIssue['shared_slot_handle'] ?? $pageDuplicateText('missing_source_shared_slot') }}</td>
+                                                    <td>{{ $sharedSlotIssue['message'] }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
                             @else
                                 <div class="wb-alert wb-alert-info">

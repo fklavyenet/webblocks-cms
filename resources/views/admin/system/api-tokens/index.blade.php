@@ -66,15 +66,13 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                 <strong>{{ $adminText('usage_title') }}</strong>
             </div>
             <div class="wb-card-body wb-stack wb-gap-3">
-                <div class="wb-grid wb-grid-2 wb-gap-3">
-                    <div class="wb-stack wb-gap-1">
-                        <span class="wb-text-sm wb-text-muted">{{ $adminText('api_base_url') }}</span>
-                        <code>{{ $apiBaseUrl }}</code>
-                    </div>
-                    <div class="wb-stack wb-gap-1">
-                        <span class="wb-text-sm wb-text-muted">{{ $adminText('start_here') }}</span>
-                        <code>{{ $adminText('discovery_request') }}</code>
-                    </div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('usage_title') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $adminText('api_base_url') }}</th><td><code>{{ $apiBaseUrl }}</code></td></tr>
+                            <tr><th scope="row">{{ $adminText('start_here') }}</th><td><code>{{ $adminText('discovery_request') }}</code></td></tr>
+                        </tbody>
+                    </table>
                 </div>
                 <div class="wb-stack wb-gap-2">
                     <label class="wb-label" for="cms_api_token_headers">{{ $adminText('headers') }}</label>
@@ -108,15 +106,13 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
             @csrf
             <div class="wb-card-body wb-stack wb-gap-4">
                 <div class="wb-stack wb-gap-3">
-                    <div class="wb-grid wb-grid-2 wb-gap-3">
-                        <div class="wb-stack wb-gap-1">
-                            <span class="wb-text-sm wb-text-muted">{{ $adminText('api_base_url') }}</span>
-                            <code>/webadmin/api</code>
-                        </div>
-                        <div class="wb-stack wb-gap-1">
-                            <span class="wb-text-sm wb-text-muted">{{ $adminText('first_request') }}</span>
-                            <code>{{ $adminText('discovery_request') }}</code>
-                        </div>
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('create_token') }}">
+                            <tbody>
+                                <tr><th scope="row">{{ $adminText('api_base_url') }}</th><td><code>/webadmin/api</code></td></tr>
+                                <tr><th scope="row">{{ $adminText('first_request') }}</th><td><code>{{ $adminText('discovery_request') }}</code></td></tr>
+                            </tbody>
+                        </table>
                     </div>
                     <div class="wb-text-sm wb-text-muted">{{ $adminText('quick_start_help') }}</div>
                 </div>
@@ -339,52 +335,7 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
                     @else
                         <div class="wb-api-token-activity-list" role="list" aria-label="{{ $adminText('activity_entries') }}">
                             @foreach ($token->activityLogs as $activity)
-                                <article class="wb-card wb-card-muted wb-api-token-activity-item" role="listitem">
-                                    <div class="wb-card-body wb-stack wb-gap-3">
-                                        <div class="wb-api-token-activity-header">
-                                            <div class="wb-stack wb-gap-2">
-                                                <div class="wb-cluster wb-gap-2 wb-flex-wrap">
-                                                    <span class="wb-status-pill {{ $activity->statusBadgeClass() }}">{{ $activity->statusLabel() }}</span>
-                                                    <span class="wb-text-sm wb-text-muted">{{ $activity->occurredAtLabel() }}</span>
-                                                </div>
-
-                                                <code class="wb-api-token-activity-request">
-                                                    <span class="wb-api-token-activity-method">{{ $activity->method }}</span>
-                                                    <span>{{ $activity->path }}</span>
-                                                </code>
-
-                                                @if ($activity->route_name)
-                                                    <span class="wb-text-sm wb-text-muted wb-api-token-activity-route">{{ $activity->route_name }}</span>
-                                                @endif
-                                            </div>
-
-                                            <div class="wb-api-token-activity-client">
-                                                <span class="wb-text-xs wb-text-muted">{{ $adminText('client') }}</span>
-                                                <strong>{{ $activity->ip ?? $adminText('unknown_ip') }}</strong>
-                                            </div>
-                                        </div>
-
-                                        <div class="wb-table-wrap"><table class="wb-table"><tbody>
-
-                                                <tr><th scope="row">{{ $adminText('capability') }}</th>
-                                                <td>
-                                                    @if ($activity->required_capability)
-                                                        <code>{{ $activity->required_capability }}</code>
-                                                    @else
-                                                        <span class="wb-text-muted">{{ $adminText('none') }}</span>
-                                                    @endif
-                                                </td></tr>
-
-
-                                            @if ($activity->user_agent)
-
-                                                    <tr><th scope="row">{{ $adminText('user_agent') }}</th>
-                                                    <td>user_agent }}">{{ Str::limit($activity->user_agent, 140) }}</td></tr>
-
-                                            @endif
-                                        </tbody></table></div>
-                                    </div>
-                                </article>
+                                @include('webblocks-cms::admin.system.api-tokens.partials.activity-entry', ['activityText' => $adminText])
                             @endforeach
                         </div>
                     @endif

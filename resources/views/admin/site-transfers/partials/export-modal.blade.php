@@ -55,15 +55,14 @@
                         <input type="hidden" name="{{ $siteFieldName }}" value="{{ $selectedSite->id }}">
 
                         <div class="wb-card wb-card-muted">
-                            <div class="wb-card-body wb-grid wb-grid-2">
-                                <div class="wb-stack wb-gap-1">
-                                    <span class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.site_name') }}</span>
-                                    <strong>{{ $selectedSite->name }}</strong>
-                                </div>
-
-                                <div class="wb-stack wb-gap-1">
-                                    <span class="wb-text-sm wb-text-muted">{{ $adminText('site_transfers.site_handle') }}</span>
-                                    <code>{{ $selectedSite->handle }}</code>
+                            <div class="wb-card-body">
+                                <div class="wb-table-wrap">
+                                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('site_transfers.site') }}">
+                                        <tbody>
+                                            <tr><th scope="row">{{ $adminText('site_transfers.site_name') }}</th><td>{{ $selectedSite->name }}</td></tr>
+                                            <tr><th scope="row">{{ $adminText('site_transfers.site_handle') }}</th><td><code>{{ $selectedSite->handle }}</code></td></tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>

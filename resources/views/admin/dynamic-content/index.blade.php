@@ -31,11 +31,20 @@
     <div class="wb-card-header"><strong>{{ $selected['label'] }}</strong> <code>{{ $selected['handle'] }}</code></div>
     <div class="wb-card-body wb-stack wb-stack-3">
         <p>{{ $selected['contract']['description'] ?? $dc('legacy_help') }}</p>
-        <p><strong>{{ $dc('provider') }}:</strong> {{ $selected['provider_label'] ?: $dc('unknown') }} · <strong>{{ $dc('state') }}:</strong> {{ $dc('state_'.$selected['state']) }}</p>
-        <p><strong>{{ $dc('origin') }}:</strong> {{ $selected['contract']['origin'] ?? $dc('unknown') }}</p>
-        <p><strong>{{ $dc('languages') }}:</strong> {{ isset($selected['contract']['locales']) ? strtoupper(implode(' · ', $selected['contract']['locales'])) : $dc('unknown') }} · {{ $dc('declared_only') }}</p>
-        <p><strong>{{ $dc('record_key') }}:</strong> {{ $selected['contract']['record_key'] ?? $dc('unknown') }}</p>
-        @if ($selected['capabilities']['collection'] ?? false)<p><strong>{{ $dc('query_execution') }}:</strong> {{ $dc('execution_'.$selected['capabilities']['query_execution']) }}</p>@endif
+        <div class="wb-table-wrap">
+            <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $selected['label'] }}">
+                <tbody>
+                    <tr><th scope="row">{{ $dc('provider') }}</th><td>{{ $selected['provider_label'] ?: $dc('unknown') }}</td></tr>
+                    <tr><th scope="row">{{ $dc('state') }}</th><td>{{ $dc('state_'.$selected['state']) }}</td></tr>
+                    <tr><th scope="row">{{ $dc('origin') }}</th><td>{{ $selected['contract']['origin'] ?? $dc('unknown') }}</td></tr>
+                    <tr><th scope="row">{{ $dc('languages') }}</th><td>{{ isset($selected['contract']['locales']) ? strtoupper(implode(' · ', $selected['contract']['locales'])) : $dc('unknown') }} <span class="wb-text-muted">{{ $dc('declared_only') }}</span></td></tr>
+                    <tr><th scope="row">{{ $dc('record_key') }}</th><td><code>{{ $selected['contract']['record_key'] ?? $dc('unknown') }}</code></td></tr>
+                    @if ($selected['capabilities']['collection'] ?? false)
+                        <tr><th scope="row">{{ $dc('query_execution') }}</th><td>{{ $dc('execution_'.$selected['capabilities']['query_execution']) }}</td></tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
         <div class="wb-table-wrap"><table class="wb-table"><thead><tr><th>{{ $dc('field') }}</th><th>{{ $dc('key') }}</th><th>{{ $dc('type') }}</th></tr></thead><tbody>@forelse ($selected['fields'] as $key => $field)<tr><td>{{ $field['label'] }}</td><td><code>{{ $key }}</code></td><td>{{ $dc('type_'.$field['type']) }}</td></tr>@empty<tr><td colspan="3">{{ $dc('no_fields') }}</td></tr>@endforelse</tbody></table></div>
         <p class="wb-text-sm wb-text-muted">{{ $dc('passive_inventory') }}</p>
         @if ($selected['publication'] ?? null)<a class="wb-btn wb-btn-secondary" href="{{ route('admin.automatic-pages.create', ['site' => $siteId, 'source' => $selected['handle']]) }}">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('automatic-pages.create', $dcLocale) }}</a>@endif

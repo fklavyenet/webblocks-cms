@@ -12,6 +12,15 @@
     cursor: not-allowed;
 }
 
+.wb-cms-detail-table > tbody > tr > th[scope="row"] {
+    width: 40%;
+    overflow-wrap: anywhere;
+}
+
+.wb-cms-detail-table > tbody > tr > :is(th, td) {
+    text-align: start;
+}
+
 .wb-cms-catalog-grid {
     /* Keep cards at least 280px wide when possible. A fifth track would exceed 100%. */
     grid-template-columns: repeat(auto-fill, minmax(min(100%, max(17.5rem, 21%)), 1fr));
@@ -1488,13 +1497,6 @@ input.wb-admin-table-grid-input:focus {
     gap: var(--wb-s3, 1rem);
 }
 
-.wb-api-token-activity-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(9rem, auto);
-    gap: var(--wb-s3, 1rem);
-    align-items: start;
-}
-
 .wb-api-token-activity-request {
     display: flex;
     flex-wrap: wrap;
@@ -1518,62 +1520,9 @@ input.wb-admin-table-grid-input:focus {
     overflow-wrap: anywhere;
 }
 
-.wb-api-token-activity-client {
-    display: grid;
-    gap: 0.15rem;
-    justify-items: end;
-    text-align: end;
-    min-inline-size: 0;
-}
-
-.wb-api-token-activity-client strong,
-.wb-api-token-activity-meta dd {
-    overflow-wrap: anywhere;
-}
-
-.wb-api-token-activity-meta {
-    display: grid;
-    grid-template-columns: minmax(10rem, 0.6fr) minmax(0, 1fr);
-    gap: var(--wb-s3, 1rem);
-    margin: 0;
-}
-
-.wb-api-token-activity-meta div {
-    display: grid;
-    gap: 0.2rem;
-    min-inline-size: 0;
-}
-
-.wb-api-token-activity-meta dt {
-    color: var(--wb-muted);
-    font-size: var(--wb-font-size-xs, 0.75rem);
-    font-weight: 700;
-}
-
-.wb-api-token-activity-meta dd {
-    margin: 0;
-}
-
-.wb-api-token-activity-user-agent dd {
-    display: -webkit-box;
-    overflow: hidden;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-}
-
 @media (max-width: 860px) {
     .wb-api-token-capability-groups {
         grid-template-columns: 1fr;
-    }
-
-    .wb-api-token-activity-header,
-    .wb-api-token-activity-meta {
-        grid-template-columns: 1fr;
-    }
-
-    .wb-api-token-activity-client {
-        justify-items: start;
-        text-align: start;
     }
 }
 

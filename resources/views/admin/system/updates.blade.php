@@ -97,15 +97,26 @@
         <div class="wb-callout wb-callout-warning wb-stack wb-stack-2" data-webblocks-updates-preflight>
           <strong class="wb-callout-title">{{ $adminText('updates.preflight_title') }}</strong>
           <span class="wb-text-sm">{{ $adminText('updates.preflight_help') }}</span>
-          @foreach ($failingChecks as $failingCheck)
-            <div class="wb-list-item wb-cluster wb-cluster-2">
-              <span class="wb-status-pill {{ $failingCheck['badge_class'] ?? 'wb-status-danger' }}">{{ $failingCheck['status'] ?? 'fail' }}</span>
-              <div class="wb-stack wb-stack-1">
-                <strong class="wb-text-sm">{{ $failingCheck['label'] ?? '' }}</strong>
-                <span class="wb-text-sm wb-text-muted">{{ $failingCheck['message'] ?? '' }}</span>
-              </div>
-            </div>
-          @endforeach
+          <div class="wb-table-wrap">
+            <table class="wb-table wb-table-sm wb-table-break" aria-label="{{ $adminText('updates.preflight_title') }}">
+              <thead>
+                <tr>
+                  <th scope="col">{{ $adminTranslator->admin('record_tables.check', $adminLocale) }}</th>
+                  <th scope="col">{{ $adminTranslator->admin('common.status', $adminLocale) }}</th>
+                  <th scope="col">{{ $adminTranslator->admin('record_tables.details', $adminLocale) }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach ($failingChecks as $failingCheck)
+                  <tr>
+                    <th scope="row">{{ $failingCheck['label'] ?? '' }}</th>
+                    <td><span class="wb-status-pill {{ $failingCheck['badge_class'] ?? 'wb-status-danger' }}">{{ $failingCheck['status'] ?? 'fail' }}</span></td>
+                    <td>{{ $failingCheck['message'] ?? '' }}</td>
+                  </tr>
+                @endforeach
+              </tbody>
+            </table>
+          </div>
         </div>
       @endif
 

@@ -22,13 +22,13 @@
       <div class="wb-card-body">
         <div class="wb-stack wb-gap-3">
           <p class="wb-m-0">{{ $adminText('availability') }}</p>
-          <div class="wb-cluster wb-cluster-between wb-cluster-2">
-            <span>{{ $adminText('named_route') }}</span>
-            <code>{{ $packageRouteName }}</code>
-          </div>
-          <div class="wb-cluster wb-cluster-between wb-cluster-2">
-            <span>{{ $adminText('reserved_path') }}</span>
-            <code>{{ $packageRoutePath }}</code>
+          <div class="wb-table-wrap">
+              <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('slice_title') }}">
+                  <tbody>
+                      <tr><th scope="row">{{ $adminText('named_route') }}</th><td><code>{{ $packageRouteName }}</code></td></tr>
+                      <tr><th scope="row">{{ $adminText('reserved_path') }}</th><td><code>{{ $packageRoutePath }}</code></td></tr>
+                  </tbody>
+              </table>
           </div>
           <div class="wb-text-sm wb-text-muted">{{ $adminText('boundary_help') }}</div>
         </div>

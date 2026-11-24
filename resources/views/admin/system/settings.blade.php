@@ -295,34 +295,38 @@
             <div class="wb-card-header"><strong>{{ $systemText('runtime_information') }}</strong></div>
 
             <div class="wb-card-body wb-stack wb-gap-3">
-                <div class="wb-settings-row">
-                    <div class="wb-settings-row-label">
-                        <strong>{{ $systemText('application_version') }}</strong>
-                        <span>{{ $systemText('application_version_help') }}</span>
-                    </div>
-                    <div class="wb-settings-row-control">
-                        <span>{{ $installedVersionDisplay }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-settings-row">
-                    <div class="wb-settings-row-label">
-                        <strong>{{ $systemText('environment') }}</strong>
-                        <span>{{ $systemText('environment_help') }}</span>
-                    </div>
-                    <div class="wb-settings-row-control">
-                        <span>{{ $environment }}</span>
-                    </div>
-                </div>
-
-                <div class="wb-settings-row">
-                    <div class="wb-settings-row-label">
-                        <strong>{{ $systemText('config_cached') }}</strong>
-                        <span>{{ $systemText('config_cached_help') }}</span>
-                    </div>
-                    <div class="wb-settings-row-control">
-                        <span>{{ $mailDiagnostics['config_cached'] ? $systemText('yes') : $systemText('no') }}</span>
-                    </div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $systemText('runtime_information') }}">
+                        <tbody>
+                            <tr>
+                                <th scope="row">
+                                    {{ $systemText('application_version') }}
+                                    <span class="wb-block wb-text-sm wb-text-muted">{{ $systemText('application_version_help') }}</span>
+                                </th>
+                                <td>
+                                    <span>{{ $installedVersionDisplay }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">
+                                    {{ $systemText('environment') }}
+                                    <span class="wb-block wb-text-sm wb-text-muted">{{ $systemText('environment_help') }}</span>
+                                </th>
+                                <td>
+                                    <span>{{ $environment }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">
+                                    {{ $systemText('config_cached') }}
+                                    <span class="wb-block wb-text-sm wb-text-muted">{{ $systemText('config_cached_help') }}</span>
+                                </th>
+                                <td>
+                                    <span>{{ $mailDiagnostics['config_cached'] ? $systemText('yes') : $systemText('no') }}</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

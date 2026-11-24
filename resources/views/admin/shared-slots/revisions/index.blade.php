@@ -22,9 +22,15 @@
 
     <div class="wb-card wb-card-muted">
         <div class="wb-card-body wb-stack wb-gap-1 wb-text-sm wb-text-muted">
-            <span>{{ $adminText('site_label') }}: <strong>{{ $sharedSlot->site?->name ?? $adminText('fallback_site') }}</strong></span>
-            <span>{{ $adminText('handle_label') }}: <strong><code>{{ $sharedSlot->handle }}</code></strong></span>
-            <span>{{ $adminText('total_revisions') }}: <strong>{{ $revisions->total() }}</strong></span>
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $pageTitle }}">
+                    <tbody>
+                        <tr><th scope="row">{{ rtrim($adminText('site_label'), ': ') }}</th><td>{{ $sharedSlot->site?->name ?? $adminText('fallback_site') }}</td></tr>
+                        <tr><th scope="row">{{ rtrim($adminText('handle_label'), ': ') }}</th><td><code>{{ $sharedSlot->handle }}</code></td></tr>
+                        <tr><th scope="row">{{ $adminText('total_revisions') }}</th><td>{{ $revisions->total() }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
             <span class="wb-text-danger">{{ $adminText('restore_warning') }}</span>
         </div>
     </div>

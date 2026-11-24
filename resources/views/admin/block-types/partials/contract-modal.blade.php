@@ -56,28 +56,27 @@
           </div>
 
           <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-            <div class="wb-settings-row">
-              <div class="wb-settings-row-label"><strong>{{ $contractModalText('slug') }}</strong></div>
-              <div class="wb-settings-row-control"><span><code>{{ $contract?->slug ?? $blockType->slug }}</code></span></div>
-            </div>
-            <div class="wb-settings-row">
-              <div class="wb-settings-row-label"><strong>{{ $contractModalText('category') }}</strong></div>
-              <div class="wb-settings-row-control"><span>{{ $contract?->category ?: $contractModalText('none_documented') }}</span></div>
-            </div>
-            <div class="wb-settings-row">
-              <div class="wb-settings-row-label"><strong>{{ $contractModalText('source_type') }}</strong></div>
-              <div class="wb-settings-row-control"><span><code>{{ $contract?->sourceType ?: ($blockType->source_type ?: 'static') }}</code></span></div>
-            </div>
-            <div class="wb-settings-row">
-              <div class="wb-settings-row-label"><strong>{{ $contractModalText('support_flags') }}</strong></div>
-              <div class="wb-settings-row-control">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                  <span class="wb-status-pill wb-status-info">{{ ($contract?->isSystem ?? $blockType->is_system) ? $contractModalText('system') : $contractModalText('install_specific') }}</span>
-                  <span class="wb-status-pill wb-status-info">{{ ($contract?->isContainer ?? $blockType->is_container) ? $contractModalText('container_capable') : $contractModalText('non_container') }}</span>
-                  <span class="wb-status-pill wb-status-info">{{ ($contract?->adminFormSource ?? null) ? $contractModalText('admin_form_documented') : $contractModalText('admin_form_undocumented') }}</span>
-                  <span class="wb-status-pill wb-status-info">{{ ($contract?->publicRendererSource ?? null) ? $contractModalText('renderer_documented') : $contractModalText('renderer_undocumented') }}</span>
-                </div>
-              </div>
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $contractModalText('catalog') }}">
+                    <tbody>
+                        <tr><th scope="row">{{ $contractModalText('slug') }}</th><td><span><code>{{ $contract?->slug ?? $blockType->slug }}</code></span></td></tr>
+                        <tr><th scope="row">{{ $contractModalText('category') }}</th><td><span>{{ $contract?->category ?: $contractModalText('none_documented') }}</span></td></tr>
+                        <tr><th scope="row">{{ $contractModalText('source_type') }}</th><td><span><code>{{ $contract?->sourceType ?: ($blockType->source_type ?: 'static') }}</code></span></td></tr>
+                        <tr>
+                            <th scope="row">
+                                {{ $contractModalText('support_flags') }}
+                            </th>
+                            <td>
+                                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                                    <span class="wb-status-pill wb-status-info">{{ ($contract?->isSystem ?? $blockType->is_system) ? $contractModalText('system') : $contractModalText('install_specific') }}</span>
+                                    <span class="wb-status-pill wb-status-info">{{ ($contract?->isContainer ?? $blockType->is_container) ? $contractModalText('container_capable') : $contractModalText('non_container') }}</span>
+                                    <span class="wb-status-pill wb-status-info">{{ ($contract?->adminFormSource ?? null) ? $contractModalText('admin_form_documented') : $contractModalText('admin_form_undocumented') }}</span>
+                                    <span class="wb-status-pill wb-status-info">{{ ($contract?->publicRendererSource ?? null) ? $contractModalText('renderer_documented') : $contractModalText('renderer_undocumented') }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
           </div>
         </div>
@@ -86,25 +85,38 @@
           <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $contractModalText('admin_form') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-              <div class="wb-settings-row">
-                <div class="wb-settings-row-label"><strong>{{ $contractModalText('admin_form_source') }}</strong></div>
-                <div class="wb-settings-row-control">
-                  @if ($contract?->adminFormSource)
-                    <span><code>{{ $contract->adminFormSource }}</code></span>
-                  @else
-                    <span class="wb-text-sm wb-text-muted">{{ $contractModalText('none_documented_sentence') }}</span>
-                  @endif
-                </div>
-              </div>
-              <div class="wb-settings-row">
-                <div class="wb-settings-row-label"><strong>{{ $contractModalText('visible_fields') }}</strong></div>
-                <div class="wb-settings-row-control">
-                  @include('webblocks-cms::admin.block-types.partials.contract-items', [
-                    'items' => $contract?->adminFormFields ?? [],
-                    'empty' => $contractModalText('none_documented_sentence'),
-                    'code' => true,
-                  ])
-                </div>
+              <div class="wb-table-wrap">
+                  <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $contractModalText('admin_form') }}">
+                      <tbody>
+                          <tr>
+                              <th scope="row">
+                                  {{ $contractModalText('admin_form_source') }}
+                              </th>
+                              <td>
+                                  @if ($contract?->adminFormSource)
+                                      <details class="wb-collapse-panel">
+                                        <summary class="wb-collapse-trigger">{{ $contractModalTranslator->admin('record_tables.full_value', $contractModalLocale) }}</summary>
+                                        <div class="wb-collapse-body"><code>{{ $contract->adminFormSource }}</code></div>
+                                      </details>
+                                  @else
+                                      <span class="wb-text-sm wb-text-muted">{{ $contractModalText('none_documented_sentence') }}</span>
+                                  @endif
+                              </td>
+                          </tr>
+                          <tr>
+                              <th scope="row">
+                                  {{ $contractModalText('visible_fields') }}
+                              </th>
+                              <td>
+                                  @include('webblocks-cms::admin.block-types.partials.contract-items', [
+                                      'items' => $contract?->adminFormFields ?? [],
+                                      'empty' => $contractModalText('none_documented_sentence'),
+                                      'code' => true,
+                                  ])
+                              </td>
+                          </tr>
+                      </tbody>
+                  </table>
               </div>
             </div>
           </div>
@@ -112,24 +124,34 @@
           <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $contractModalText('storage') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-              <div class="wb-settings-row">
-                <div class="wb-settings-row-label"><strong>{{ $contractModalText('storage_ownership') }}</strong></div>
-                <div class="wb-settings-row-control">
-                  @include('webblocks-cms::admin.block-types.partials.contract-items', [
-                    'items' => $contract?->storageFields ?? [],
-                    'empty' => $contractModalText('none_documented_sentence'),
-                  ])
-                </div>
-              </div>
-              <div class="wb-settings-row">
-                <div class="wb-settings-row-label"><strong>{{ $contractModalText('shared_settings_fields') }}</strong></div>
-                <div class="wb-settings-row-control">
-                  @include('webblocks-cms::admin.block-types.partials.contract-items', [
-                    'items' => $contract?->sharedSettingsFields ?? [],
-                    'empty' => $contractModalText('not_applicable_sentence'),
-                    'code' => true,
-                  ])
-                </div>
+              <div class="wb-table-wrap">
+                  <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $contractModalText('storage') }}">
+                      <tbody>
+                          <tr>
+                              <th scope="row">
+                                  {{ $contractModalText('storage_ownership') }}
+                              </th>
+                              <td>
+                                  @include('webblocks-cms::admin.block-types.partials.contract-items', [
+                                      'items' => $contract?->storageFields ?? [],
+                                      'empty' => $contractModalText('none_documented_sentence'),
+                                  ])
+                              </td>
+                          </tr>
+                          <tr>
+                              <th scope="row">
+                                  {{ $contractModalText('shared_settings_fields') }}
+                              </th>
+                              <td>
+                                  @include('webblocks-cms::admin.block-types.partials.contract-items', [
+                                      'items' => $contract?->sharedSettingsFields ?? [],
+                                      'empty' => $contractModalText('not_applicable_sentence'),
+                                      'code' => true,
+                                  ])
+                              </td>
+                          </tr>
+                      </tbody>
+                  </table>
               </div>
             </div>
           </div>
@@ -139,19 +161,24 @@
           <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $contractModalText('translation') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-              <div class="wb-settings-row">
-                <div class="wb-settings-row-label"><strong>{{ $contractModalText('translation_family') }}</strong></div>
-                <div class="wb-settings-row-control"><span>{{ $contract?->translationFamily ? strtoupper($contract->translationFamily) : $contractModalText('not_applicable') }}</span></div>
-              </div>
-              <div class="wb-settings-row">
-                <div class="wb-settings-row-label"><strong>{{ $contractModalText('translatable_fields') }}</strong></div>
-                <div class="wb-settings-row-control">
-                  @include('webblocks-cms::admin.block-types.partials.contract-items', [
-                    'items' => $contract?->translatableFields ?? [],
-                    'empty' => $contractModalText('not_applicable_sentence'),
-                    'code' => true,
-                  ])
-                </div>
+              <div class="wb-table-wrap">
+                  <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $contractModalText('translation') }}">
+                      <tbody>
+                          <tr><th scope="row">{{ $contractModalText('translation_family') }}</th><td><span>{{ $contract?->translationFamily ? strtoupper($contract->translationFamily) : $contractModalText('not_applicable') }}</span></td></tr>
+                          <tr>
+                              <th scope="row">
+                                  {{ $contractModalText('translatable_fields') }}
+                              </th>
+                              <td>
+                                  @include('webblocks-cms::admin.block-types.partials.contract-items', [
+                                      'items' => $contract?->translatableFields ?? [],
+                                      'empty' => $contractModalText('not_applicable_sentence'),
+                                      'code' => true,
+                                  ])
+                              </td>
+                          </tr>
+                      </tbody>
+                  </table>
               </div>
             </div>
           </div>
@@ -160,8 +187,8 @@
             <div class="wb-card-header"><strong>{{ $contractModalText('media_relationships') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
               @include('webblocks-cms::admin.block-types.partials.contract-items', [
-                'items' => $contract?->mediaRelationshipFields ?? [],
-                'empty' => $contractModalText('not_applicable_sentence'),
+                  'items' => $contract?->mediaRelationshipFields ?? [],
+                  'empty' => $contractModalText('not_applicable_sentence'),
               ])
             </div>
           </div>
@@ -172,20 +199,28 @@
             <div class="wb-card-header"><strong>{{ $contractModalText('children_container_rules') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
               @include('webblocks-cms::admin.block-types.partials.contract-items', [
-                'items' => $contract?->childContainerBehavior ?? [],
-                'empty' => $contractModalText('not_applicable_sentence'),
+                  'items' => $contract?->childContainerBehavior ?? [],
+                  'empty' => $contractModalText('not_applicable_sentence'),
               ])
 
               @if ($contract?->allowedChildTypeSlugs)
-                <div class="wb-settings-row">
-                  <div class="wb-settings-row-label"><strong>{{ $contractModalText('helper_child_whitelist') }}</strong></div>
-                  <div class="wb-settings-row-control">
-                    @include('webblocks-cms::admin.block-types.partials.contract-items', [
-                      'items' => $contract->allowedChildTypeSlugs,
-                      'empty' => $contractModalText('not_applicable_sentence'),
-                      'code' => true,
-                    ])
-                  </div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $contractModalText('children_container_rules') }}">
+                        <tbody>
+                            <tr>
+                                <th scope="row">
+                                    {{ $contractModalText('helper_child_whitelist') }}
+                                </th>
+                                <td>
+                                    @include('webblocks-cms::admin.block-types.partials.contract-items', [
+                                        'items' => $contract->allowedChildTypeSlugs,
+                                        'empty' => $contractModalText('not_applicable_sentence'),
+                                        'code' => true,
+                                    ])
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
               @endif
             </div>
@@ -194,19 +229,27 @@
           <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $contractModalText('public_renderer') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-              <div class="wb-settings-row">
-                <div class="wb-settings-row-label"><strong>{{ $contractModalText('public_renderer_source') }}</strong></div>
-                <div class="wb-settings-row-control">
-                  @if ($contract?->publicRendererSource)
-                    <span><code>{{ $contract->publicRendererSource }}</code></span>
-                  @else
-                    <span class="wb-text-sm wb-text-muted">{{ $contractModalText('none_documented_sentence') }}</span>
-                  @endif
-                </div>
-              </div>
-              <div class="wb-settings-row">
-                <div class="wb-settings-row-label"><strong>{{ $contractModalText('renderer_root_contract') }}</strong></div>
-                <div class="wb-settings-row-control"><span>{{ $contract?->rendererRootContract ?? $contractModalText('none_documented_sentence') }}</span></div>
+              <div class="wb-table-wrap">
+                  <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $contractModalText('public_renderer') }}">
+                      <tbody>
+                          <tr>
+                              <th scope="row">
+                                  {{ $contractModalText('public_renderer_source') }}
+                              </th>
+                              <td>
+                                  @if ($contract?->publicRendererSource)
+                                      <details class="wb-collapse-panel">
+                                        <summary class="wb-collapse-trigger">{{ $contractModalTranslator->admin('record_tables.full_value', $contractModalLocale) }}</summary>
+                                        <div class="wb-collapse-body"><code>{{ $contract->publicRendererSource }}</code></div>
+                                      </details>
+                                  @else
+                                      <span class="wb-text-sm wb-text-muted">{{ $contractModalText('none_documented_sentence') }}</span>
+                                  @endif
+                              </td>
+                          </tr>
+                          <tr><th scope="row">{{ $contractModalText('renderer_root_contract') }}</th><td><span>{{ $contract?->rendererRootContract ?? $contractModalText('none_documented_sentence') }}</span></td></tr>
+                      </tbody>
+                  </table>
               </div>
             </div>
           </div>
@@ -222,8 +265,8 @@
               <div class="wb-alert wb-alert-warning">
                 <div>
                   @include('webblocks-cms::admin.block-types.partials.contract-items', [
-                    'items' => $contract->knownGaps,
-                    'empty' => $contractModalText('no_documented_gaps_sentence'),
+                      'items' => $contract->knownGaps,
+                      'empty' => $contractModalText('no_documented_gaps_sentence'),
                   ])
                 </div>
               </div>

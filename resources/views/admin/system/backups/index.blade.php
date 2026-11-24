@@ -80,12 +80,20 @@
                 <div class="wb-card-body wb-stack wb-gap-2">
                     @if ($latestBackup)
                         <div><strong>{{ $latestBackup->panelSummary($adminLocale) ?? $adminText('backups.record_available') }}</strong></div>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.started') }} {{ $latestBackup->started_at?->format('Y-m-d H:i:s') ?? '-' }} | {{ $adminText('backups.finished') }} {{ $latestBackup->finished_at?->format('Y-m-d H:i:s') ?? '-' }}</div>
-                        <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.contents_label') }} {{ $backupContentsLabel($latestBackup) }} | {{ $adminText('backups.size') }} {{ $latestBackup->humanArchiveSize() }} | {{ $adminText('backups.duration') }} {{ $latestBackup->durationLabel() }}</div>
-
-                        @if ($latestBackup->triggeredBy)
-                            <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.triggered_by') }} {{ $latestBackup->triggeredBy->name }}</div>
-                        @endif
+                        <div class="wb-table-wrap">
+                            <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('backups.latest_status') }}">
+                                <tbody>
+                                    <tr><th scope="row">{{ $adminText('backups.started') }}</th><td>{{ $latestBackup->started_at?->format('Y-m-d H:i:s') ?? '-' }}</td></tr>
+                                    <tr><th scope="row">{{ $adminText('backups.finished') }}</th><td>{{ $latestBackup->finished_at?->format('Y-m-d H:i:s') ?? '-' }}</td></tr>
+                                    <tr><th scope="row">{{ $adminText('backups.contents_label') }}</th><td>{{ $backupContentsLabel($latestBackup) }}</td></tr>
+                                    <tr><th scope="row">{{ $adminText('backups.size') }}</th><td>{{ $latestBackup->humanArchiveSize() }}</td></tr>
+                                    <tr><th scope="row">{{ $adminText('backups.duration') }}</th><td>{{ $latestBackup->durationLabel() }}</td></tr>
+                                    @if ($latestBackup->triggeredBy)
+                                        <tr><th scope="row">{{ $adminText('backups.triggered_by') }}</th><td>{{ $latestBackup->triggeredBy->name }}</td></tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
 
                         @if ($latestBackup->error_message)
                             <div class="wb-alert wb-alert-danger">

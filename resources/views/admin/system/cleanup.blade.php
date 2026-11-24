@@ -124,16 +124,28 @@
         <div class="wb-card">
             <div class="wb-card-header"><strong>{{ $text('block_growth') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2">
-                <div>{{ $text('live_blocks') }}: <strong>{{ number_format($overview['block_storage']['live_count']) }}</strong></div>
-                <div>{{ $text('highest_block_id') }}: <strong>{{ number_format($overview['block_storage']['highest_id']) }}</strong></div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $text('block_growth') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $text('live_blocks') }}</th><td>{{ number_format($overview['block_storage']['live_count']) }}</td></tr>
+                            <tr><th scope="row">{{ $text('highest_block_id') }}</th><td>{{ number_format($overview['block_storage']['highest_id']) }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <p class="wb-text-sm wb-text-muted">{{ $text('block_growth_help', ['count' => number_format($overview['block_storage']['id_gap'])]) }}</p>
             </div>
         </div>
         <div class="wb-card">
             <div class="wb-card-header"><strong>{{ $text('media_storage') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2">
-                <div>{{ $text('media_originals') }}: <strong>{{ number_format($overview['media_storage']['items']) }} · {{ $formatBytes($overview['media_storage']['original_bytes']) }}</strong></div>
-                <div>{{ $text('media_generated') }}: <strong>{{ number_format($overview['media_storage']['variant_files']) }} · {{ $formatBytes($overview['media_storage']['variant_bytes']) }}</strong></div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $text('media_storage') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $text('media_originals') }}</th><td>{{ number_format($overview['media_storage']['items']) }} · {{ $formatBytes($overview['media_storage']['original_bytes']) }}</td></tr>
+                            <tr><th scope="row">{{ $text('media_generated') }}</th><td>{{ number_format($overview['media_storage']['variant_files']) }} · {{ $formatBytes($overview['media_storage']['variant_bytes']) }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 @if (($overview['media_storage']['variant_measurement_status'] ?? 'available') !== 'available')
                     <p class="wb-text-sm wb-text-muted">{{ $storageText('partial') }}</p>
                 @endif
@@ -318,9 +330,19 @@
                     @if ($category !== 'backups')
                         @php($execution = $automation['categories'][$category] ?? null)
                         @if ($execution)
-                            <p class="wb-text-sm">{{ $storageText('last_run') }}: {{ $execution['finished_at'] ?? $execution['started_at'] }} · {{ $storageText($execution['status']) }} · {{ $storageText($execution['source']) }}</p>
-                            <p class="wb-text-sm">{{ $storageText('deleted', ['count' => $execution['deleted_count'], 'bytes' => number_format($execution['deleted_bytes']), 'failures' => $execution['failure_count']]) }}</p>
-                            <p class="wb-text-sm">{{ $storageText('last_success') }}: {{ $execution['last_success_at'] ?? '—' }}</p>
+                            <div class="wb-table-wrap">
+                                <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $storageText('last_run') }}">
+                                    <tbody>
+                                        <tr><th scope="row">{{ $storageText('last_run') }}</th><td>{{ $execution['finished_at'] ?? $execution['started_at'] }}</td></tr>
+                                        <tr><th scope="row">{{ $translator->admin('common.status', $adminLocale) }}</th><td>{{ $storageText($execution['status']) }}</td></tr>
+                                        <tr><th scope="row">{{ $translator->admin('record_tables.source', $adminLocale) }}</th><td>{{ $storageText($execution['source']) }}</td></tr>
+                                        <tr><th scope="row">{{ $translator->admin('record_tables.removed_items', $adminLocale) }}</th><td>{{ $execution['deleted_count'] }}</td></tr>
+                                        <tr><th scope="row">{{ $translator->admin('record_tables.freed_space', $adminLocale) }}</th><td>{{ $formatBytes($execution['deleted_bytes']) }}</td></tr>
+                                        <tr><th scope="row">{{ $translator->admin('record_tables.failures', $adminLocale) }}</th><td>{{ $execution['failure_count'] }}</td></tr>
+                                        <tr><th scope="row">{{ $storageText('last_success') }}</th><td>{{ $execution['last_success_at'] ?? '—' }}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         @else
                             <p class="wb-text-sm wb-text-muted">{{ $storageText('never') }}</p>
                         @endif

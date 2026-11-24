@@ -82,61 +82,43 @@
                 <strong>{{ $adminText('overview') }}</strong>
                 <span class="wb-text-sm wb-text-muted">{{ $adminText('overview_help') }}</span>
               </div>
-              <div class="wb-card-body">
-                <div class="wb-grid wb-grid-2">
-                  <div class="wb-stack wb-gap-3">
-                    <div class="wb-stack wb-gap-1">
-                      <span class="wb-text-sm wb-text-muted">{{ $adminText('site') }}</span>
-                      <strong>{{ $siteName }}</strong>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                      <span class="wb-text-sm wb-text-muted">{{ $adminText('domain') }}</span>
-                      <span>{{ $domainName }}</span>
-                    </div>
-                  </div>
-
-                  <div class="wb-stack wb-gap-3">
-                    <div class="wb-stack wb-gap-1">
-                      <span class="wb-text-sm wb-text-muted">{{ $adminText('status') }}</span>
-                      <div>
-                        <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span>
-                      </div>
-                    </div>
-
-                    <div class="wb-stack wb-gap-1">
-                      <span class="wb-text-sm wb-text-muted">{{ $adminText('published') }}</span>
-                      <span>{{ $page->published_at ? $page->published_at->format('Y-m-d H:i') : $adminText('not_published') }}</span>
-                    </div>
-
-                    @if ($page->review_requested_at)
-                      <div class="wb-stack wb-gap-1">
-                        <span class="wb-text-sm wb-text-muted">{{ $adminText('review_requested') }}</span>
-                        <span>{{ $page->review_requested_at->format('Y-m-d H:i') }}</span>
-                      </div>
-                    @endif
-
-                    @if ($workflowActions !== [])
-                      <div class="wb-stack wb-gap-2">
-                        <span class="wb-text-sm wb-text-muted">{{ $adminText('actions') }}</span>
-                        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                          @foreach ($workflowActions as $workflowAction)
-                            @if ($workflowAction['value'] === \WebBlocks\Cms\Support\Pages\PageWorkflowManager::ACTION_PUBLISH && $hasUnpublishedPageOwnedBlocks)
-                              <button type="button" class="{{ $workflowAction['class'] }}" data-wb-toggle="modal" data-wb-target="#publish-page-modal" aria-haspopup="dialog">{{ $workflowAction['label'] }}</button>
-                            @else
-                              <form method="POST" action="{{ route('admin.pages.workflow', $page) }}">
-                                @csrf
-                                <input type="hidden" name="action" value="{{ $workflowAction['value'] }}">
-                                <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
-                                <button type="submit" class="{{ $workflowAction['class'] }}">{{ $workflowAction['label'] }}</button>
-                              </form>
-                            @endif
-                          @endforeach
-                        </div>
-                      </div>
-                    @endif
-                  </div>
+              <div class="wb-card-body wb-stack wb-gap-3">
+                <div class="wb-table-wrap">
+                  <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('overview') }}">
+                    <tbody>
+                      <tr><th scope="row">{{ $adminText('site') }}</th><td>{{ $siteName }}</td></tr>
+                      <tr><th scope="row">{{ $adminText('domain') }}</th><td>{{ $domainName }}</td></tr>
+                      <tr>
+                        <th scope="row">{{ $adminText('status') }}</th>
+                        <td><span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span></td>
+                      </tr>
+                      <tr><th scope="row">{{ $adminText('published') }}</th><td>{{ $page->published_at ? $page->published_at->format('Y-m-d H:i') : $adminText('not_published') }}</td></tr>
+                      @if ($page->review_requested_at)
+                        <tr><th scope="row">{{ $adminText('review_requested') }}</th><td>{{ $page->review_requested_at->format('Y-m-d H:i') }}</td></tr>
+                      @endif
+                    </tbody>
+                  </table>
                 </div>
+
+                @if ($workflowActions !== [])
+                  <div class="wb-stack wb-gap-2">
+                    <span class="wb-text-sm wb-text-muted">{{ $adminText('actions') }}</span>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                      @foreach ($workflowActions as $workflowAction)
+                        @if ($workflowAction['value'] === \WebBlocks\Cms\Support\Pages\PageWorkflowManager::ACTION_PUBLISH && $hasUnpublishedPageOwnedBlocks)
+                          <button type="button" class="{{ $workflowAction['class'] }}" data-wb-toggle="modal" data-wb-target="#publish-page-modal" aria-haspopup="dialog">{{ $workflowAction['label'] }}</button>
+                        @else
+                          <form method="POST" action="{{ route('admin.pages.workflow', $page) }}">
+                            @csrf
+                            <input type="hidden" name="action" value="{{ $workflowAction['value'] }}">
+                            <input type="hidden" name="return_url" value="{{ $pageReturnUrl }}">
+                            <button type="submit" class="{{ $workflowAction['class'] }}">{{ $workflowAction['label'] }}</button>
+                          </form>
+                        @endif
+                      @endforeach
+                    </div>
+                  </div>
+                @endif
               </div>
             </div>
 

@@ -18,11 +18,24 @@
         <section class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between"><strong>{{ $adminText('comments') }}</strong><span class="wb-badge">{{ $commentsCount }}</span></div>
             <div class="wb-card-body wb-stack wb-gap-3">
-                <p>{{ $adminText('pending_comments', ['count' => $pendingCommentsCount]) }}</p>
-                @if ($oldestPending)<p>{{ $adminText('oldest_pending', ['date' => $oldestPending.' ('.\Illuminate\Support\Carbon::parse($oldestPending)->locale($adminLocaleCode)->diffForHumans().')']) }}</p>@endif
-                <p>{{ $adminText('recent_activity', ['seven' => $comments7, 'thirty' => $comments30]) }}</p>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('comments') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $adminText('comments') }}</th><td>{{ $commentsCount }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('status_pending') }}</th><td>{{ $pendingCommentsCount }}</td></tr>
+                            @if ($oldestPending)
+                                <tr><th scope="row">{{ $adminTranslator->admin('record_tables.oldest_pending', $adminLocaleCode) }}</th><td>{{ $oldestPending }} ({{ \Illuminate\Support\Carbon::parse($oldestPending)->locale($adminLocaleCode)->diffForHumans() }})</td></tr>
+                            @endif
+                            <tr><th scope="row">{{ $adminTranslator->admin('record_tables.last_7_days', $adminLocaleCode) }}</th><td>{{ $comments7 }}</td></tr>
+                            <tr><th scope="row">{{ $adminTranslator->admin('record_tables.last_30_days', $adminLocaleCode) }}</th><td>{{ $comments30 }}</td></tr>
+                            @foreach ($commentStatuses as $status => $count)
+                                @continue($status === 'pending')
+                                <tr><th scope="row">{{ $adminText('status_'.$status) }}</th><td>{{ $count }}</td></tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
                 <p class="wb-text-sm wb-text-muted">{{ $adminText('queue_help') }}</p>
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">@foreach ($commentStatuses as $status => $count)<span>{{ $adminText('status_'.$status) }}: {{ $count }}</span>@endforeach</div>
             </div>
             <div class="wb-card-footer wb-cluster wb-cluster-2">
                 <a class="wb-btn wb-btn-primary" href="{{ route('admin.engagement.comments.index', ['site' => $filters['site'], 'status' => 'pending']) }}">{{ $adminText('review_pending') }}</a>
@@ -32,8 +45,17 @@
         <section class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between"><strong>{{ $adminText('ratings') }}</strong><span class="wb-badge">{{ $ratingsCount }}</span></div>
             <div class="wb-card-body wb-stack wb-gap-3">
-                <p>{{ is_null($averageRating) ? $adminText('no_ratings') : $adminText('rating_sample', ['value' => $averageRating, 'count' => $activeRatingsCount]) }}</p>
-                <p>{{ $adminText('recent_activity', ['seven' => $ratings7, 'thirty' => $ratings30]) }}</p>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('ratings') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $adminText('ratings') }}</th><td>{{ $ratingsCount }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('sort_average') }}</th><td>{{ $averageRating === null ? $adminText('no_ratings') : $averageRating.' / 5' }}</td></tr>
+                            <tr><th scope="row">{{ $adminTranslator->admin('record_tables.active_votes', $adminLocaleCode) }}</th><td>{{ $activeRatingsCount }}</td></tr>
+                            <tr><th scope="row">{{ $adminTranslator->admin('record_tables.last_7_days', $adminLocaleCode) }}</th><td>{{ $ratings7 }}</td></tr>
+                            <tr><th scope="row">{{ $adminTranslator->admin('record_tables.last_30_days', $adminLocaleCode) }}</th><td>{{ $ratings30 }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <p class="wb-text-sm wb-text-muted">{{ $adminText('rating_summary_help') }}</p>
             </div>
             <div class="wb-card-footer"><a class="wb-btn wb-btn-primary" href="{{ route('admin.engagement.ratings.index', ['site' => $filters['site']]) }}">{{ $adminText('view_ratings') }}</a></div>

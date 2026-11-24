@@ -92,20 +92,32 @@
                             <div class="wb-card wb-card-muted">
                                 <div class="wb-card-header"><strong>{{ $adminText('summary') }}</strong></div>
                                 <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                                    <div><strong>{{ $adminText('source_label') }}</strong> {{ $plan->sourceSite['name'] ?? '-' }} ({{ $plan->sourceSite['handle'] ?? '-' }})</div>
-                                    <div><strong>{{ $adminText('target_label') }}</strong> {{ $plan->targetSite['name'] ?? '-' }} ({{ $plan->targetSite['handle'] ?? '-' }})</div>
-                                    <div><strong>{{ $adminText('strategy_label') }}</strong> {{ str($plan->strategy())->replace('_', ' ')->title() }}</div>
-                                    <div><strong>{{ $adminText('apply_assets_label') }}</strong> {{ $plan->applyAssets() ? $adminText('yes') : $adminText('no') }}</div>
-                                    <div><strong>{{ $adminText('dry_run_token_label') }}</strong> <code>{{ $plan->token }}</code></div>
+                                    <div class="wb-table-wrap">
+                                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('summary') }}">
+                                            <tbody>
+                                                <tr><th scope="row">{{ rtrim($adminText('source_label'), ': ') }}</th><td>{{ $plan->sourceSite['name'] ?? '-' }} ({{ $plan->sourceSite['handle'] ?? '-' }})</td></tr>
+                                                <tr><th scope="row">{{ rtrim($adminText('target_label'), ': ') }}</th><td>{{ $plan->targetSite['name'] ?? '-' }} ({{ $plan->targetSite['handle'] ?? '-' }})</td></tr>
+                                                <tr><th scope="row">{{ rtrim($adminText('strategy_label'), ': ') }}</th><td>{{ str($plan->strategy())->replace('_', ' ')->title() }}</td></tr>
+                                                <tr><th scope="row">{{ rtrim($adminText('apply_assets_label'), ': ') }}</th><td>{{ $plan->applyAssets() ? $adminText('yes') : $adminText('no') }}</td></tr>
+                                                <tr><th scope="row">{{ rtrim($adminText('dry_run_token_label'), ': ') }}</th><td><details class="wb-collapse-panel"><summary class="wb-collapse-trigger">{{ $adminTranslator->admin('record_tables.full_value', $adminLocale) }}</summary><div class="wb-collapse-body"><code>{{ $plan->token }}</code></div></details></td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="wb-card wb-card-muted">
                                 <div class="wb-card-header"><strong>{{ $adminText('locales') }}</strong></div>
                                 <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                                    <div><strong>{{ $adminText('compatible_label') }}</strong> {{ implode(', ', $plan->localeSummary['compatible'] ?? []) ?: $adminText('none') }}</div>
-                                    <div><strong>{{ $adminText('missing_label') }}</strong> {{ implode(', ', $plan->localeSummary['missing'] ?? []) ?: $adminText('none') }}</div>
-                                    <div><strong>{{ $adminText('behavior_label') }}</strong> {{ ! empty($plan->localeSummary['will_create_missing']) ? $adminText('missing_locales_created') : $adminText('no_locale_creation') }}</div>
+                                    <div class="wb-table-wrap">
+                                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('locales') }}">
+                                            <tbody>
+                                                <tr><th scope="row">{{ rtrim($adminText('compatible_label'), ': ') }}</th><td>{{ implode(', ', $plan->localeSummary['compatible'] ?? []) ?: $adminText('none') }}</td></tr>
+                                                <tr><th scope="row">{{ rtrim($adminText('missing_label'), ': ') }}</th><td>{{ implode(', ', $plan->localeSummary['missing'] ?? []) ?: $adminText('none') }}</td></tr>
+                                                <tr><th scope="row">{{ rtrim($adminText('behavior_label'), ': ') }}</th><td>{{ ! empty($plan->localeSummary['will_create_missing']) ? $adminText('missing_locales_created') : $adminText('no_locale_creation') }}</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -132,60 +144,62 @@
                             </div>
                         @endif
 
-                        <div class="wb-grid wb-grid-2">
-                            <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>{{ $adminText('pages') }}</strong></div>
-                                <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>{{ $adminText('create_count', ['count' => count($plan->operations['pages']['create'] ?? [])]) }}</div>
-                                    <div>{{ $adminText('update_count', ['count' => count($plan->operations['pages']['update'] ?? [])]) }}</div>
-                                    <div>{{ $adminText('archive_count', ['count' => count($plan->operations['pages']['archive'] ?? [])]) }}</div>
+                        @php
+                            $operationTypes = ['create', 'update', 'archive', 'deactivate', 'remove'];
+                            $operationGroups = [
+                                'pages' => ['create', 'update', 'archive'],
+                                'shared_slots' => ['create', 'update', 'deactivate'],
+                                'navigation' => ['create', 'update', 'remove'],
+                                'site_variables' => ['create', 'update', 'remove'],
+                                'page_assets' => ['create', 'update', 'remove'],
+                            ];
+                            $mediaOperations = [
+                                'asset_files_to_add' => 'media_files_to_add',
+                                'asset_files_to_overwrite' => 'media_files_to_overwrite',
+                                'page_asset_files_to_add' => 'page_files_to_add',
+                                'page_asset_files_to_overwrite' => 'page_files_to_overwrite',
+                                'files_skipped' => 'files_skipped',
+                            ];
+                        @endphp
+                        <div class="wb-card wb-card-muted">
+                            <div class="wb-card-header"><strong>{{ $adminText('summary') }}</strong></div>
+                            <div class="wb-card-body">
+                                <div class="wb-table-wrap">
+                                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break" aria-label="{{ $adminText('summary') }}">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">{{ $adminTranslator->admin('record_tables.area', $adminLocale) }}</th>
+                                                @foreach ($operationTypes as $operation)
+                                                    <th scope="col" class="wb-text-end">{{ $adminTranslator->admin('record_tables.'.$operation, $adminLocale) }}</th>
+                                                @endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($operationGroups as $group => $operations)
+                                                <tr>
+                                                    <th scope="row">{{ $adminText($group) }}</th>
+                                                    @foreach ($operationTypes as $operation)
+                                                        <td class="wb-text-end">{{ in_array($operation, $operations, true) ? count($plan->operations[$group][$operation] ?? []) : '—' }}</td>
+                                                    @endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>{{ $adminText('shared_slots') }}</strong></div>
-                                <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>{{ $adminText('create_count', ['count' => count($plan->operations['shared_slots']['create'] ?? [])]) }}</div>
-                                    <div>{{ $adminText('update_count', ['count' => count($plan->operations['shared_slots']['update'] ?? [])]) }}</div>
-                                    <div>{{ $adminText('deactivate_count', ['count' => count($plan->operations['shared_slots']['deactivate'] ?? [])]) }}</div>
-                                </div>
-                            </div>
-
-                            <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>{{ $adminText('navigation') }}</strong></div>
-                                <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>{{ $adminText('create_count', ['count' => count($plan->operations['navigation']['create'] ?? [])]) }}</div>
-                                    <div>{{ $adminText('update_count', ['count' => count($plan->operations['navigation']['update'] ?? [])]) }}</div>
-                                    <div>{{ $adminText('remove_count', ['count' => count($plan->operations['navigation']['remove'] ?? [])]) }}</div>
-                                </div>
-                            </div>
-
-                            <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>{{ $adminText('site_variables') }}</strong></div>
-                                <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>{{ $adminText('create_count', ['count' => count($plan->operations['site_variables']['create'] ?? [])]) }}</div>
-                                    <div>{{ $adminText('update_count', ['count' => count($plan->operations['site_variables']['update'] ?? [])]) }}</div>
-                                    <div>{{ $adminText('remove_count', ['count' => count($plan->operations['site_variables']['remove'] ?? [])]) }}</div>
-                                </div>
-                            </div>
-
-                            <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>{{ $adminText('page_assets') }}</strong></div>
-                                <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>{{ $adminText('create_count', ['count' => count($plan->operations['page_assets']['create'] ?? [])]) }}</div>
-                                    <div>{{ $adminText('update_count', ['count' => count($plan->operations['page_assets']['update'] ?? [])]) }}</div>
-                                    <div>{{ $adminText('remove_count', ['count' => count($plan->operations['page_assets']['remove'] ?? [])]) }}</div>
-                                </div>
-                            </div>
-
-                            <div class="wb-card wb-card-muted">
-                                <div class="wb-card-header"><strong>{{ $adminText('media_public_files') }}</strong></div>
-                                <div class="wb-card-body wb-text-sm wb-stack wb-gap-2">
-                                    <div>{{ $adminText('files_add_count', ['count' => $plan->operations['media']['asset_files_to_add'] ?? 0]) }}</div>
-                                    <div>{{ $adminText('files_overwrite_count', ['count' => $plan->operations['media']['asset_files_to_overwrite'] ?? 0]) }}</div>
-                                    <div>{{ $adminText('page_asset_files_add_count', ['count' => $plan->operations['media']['page_asset_files_to_add'] ?? 0]) }}</div>
-                                    <div>{{ $adminText('page_asset_files_overwrite_count', ['count' => $plan->operations['media']['page_asset_files_to_overwrite'] ?? 0]) }}</div>
-                                    <div>{{ $adminText('files_skipped_count', ['count' => $plan->operations['media']['files_skipped'] ?? 0]) }}</div>
+                        <div class="wb-card wb-card-muted">
+                            <div class="wb-card-header"><strong>{{ $adminText('media_public_files') }}</strong></div>
+                            <div class="wb-card-body">
+                                <div class="wb-table-wrap">
+                                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('media_public_files') }}">
+                                        <tbody>
+                                            @foreach ($mediaOperations as $field => $label)
+                                                <tr><th scope="row">{{ $adminTranslator->admin('record_tables.'.$label, $adminLocale) }}</th><td>{{ $plan->operations['media'][$field] ?? 0 }}</td></tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>

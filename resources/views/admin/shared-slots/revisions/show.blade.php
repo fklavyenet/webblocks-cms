@@ -40,26 +40,38 @@
         <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $adminText('revision_metadata') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                <div><strong>{{ $adminText('shared_slot') }}:</strong> {{ $sharedSlot->name }}</div>
-                <div><strong>{{ $adminText('created') }}:</strong> {{ $revision->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
-                <div><strong>{{ $adminText('source') }}:</strong> {{ $revision->sourceText() }}</div>
-                <div><strong>{{ $adminText('event') }}:</strong> {{ $revision->eventText() }}</div>
-                <div><strong>{{ $adminText('user') }}:</strong> @include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</div>
-                <div><strong>{{ $adminText('summary') }}:</strong> {{ $revision->summary ?? $adminText('none') }}</div>
-                @if ($revision->restoredFrom)
-                    <div><strong>{{ $adminText('restored_from') }}:</strong> {{ $adminText('revision_title', ['id' => $revision->restoredFrom->id]) }}</div>
-                @endif
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('revision_metadata') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ rtrim($adminText('shared_slot'), ': ') }}</th><td>{{ $sharedSlot->name }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('created') }}</th><td>{{ $revision->created_at?->format('Y-m-d H:i') ?? '-' }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('source') }}</th><td>{{ $revision->sourceText() }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('event') }}</th><td>{{ $revision->eventText() }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('user') }}</th><td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</td></tr>
+                            <tr><th scope="row">{{ $adminText('summary') }}</th><td>{{ $revision->summary ?? $adminText('none') }}</td></tr>
+                            @if ($revision->restoredFrom)
+                                <tr><th scope="row">{{ $adminText('restored_from') }}</th><td>{{ $adminText('revision_title', ['id' => $revision->restoredFrom->id]) }}</td></tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $adminText('snapshot_metadata') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                <div><strong>{{ $adminText('name') }}:</strong> {{ $snapshotMetadata['name'] ?? '-' }}</div>
-                <div><strong>{{ $adminText('handle') }}:</strong> <code>{{ $snapshotMetadata['handle'] ?? '-' }}</code></div>
-                <div><strong>{{ $adminText('slot') }}:</strong> {{ $snapshotMetadata['slot_name'] ?? $adminText('any') }}</div>
-                <div><strong>{{ $adminText('page_layout') }}:</strong> {{ $snapshotMetadata['public_shell'] ?? $adminText('any_page_layout') }}</div>
-                <div><strong>{{ $adminText('status') }}:</strong> {{ array_key_exists('is_active', $snapshotMetadata) ? ((bool) $snapshotMetadata['is_active'] ? $adminText('active') : $adminText('inactive')) : '-' }}</div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('snapshot_metadata') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $adminText('name') }}</th><td>{{ $snapshotMetadata['name'] ?? '-' }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('handle') }}</th><td><code>{{ $snapshotMetadata['handle'] ?? '-' }}</code></td></tr>
+                            <tr><th scope="row">{{ rtrim($adminText('slot'), ': ') }}</th><td>{{ $snapshotMetadata['slot_name'] ?? $adminText('any') }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('page_layout') }}</th><td>{{ $snapshotMetadata['public_shell'] ?? $adminText('any_page_layout') }}</td></tr>
+                            <tr><th scope="row">{{ $adminText('status') }}</th><td>{{ array_key_exists('is_active', $snapshotMetadata) ? ((bool) $snapshotMetadata['is_active'] ? $adminText('active') : $adminText('inactive')) : '-' }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <div class="wb-text-danger">{{ $adminText('snapshot_restore_warning') }}</div>
             </div>
         </div>

@@ -2965,6 +2965,14 @@ use the pointer cursor. Drag handles retain grab and grabbing cursors. Editor
 controls that expand or collapse content update their labels to match the
 current state.
 
+Read-only summary cards and dialogs use compact native tables with row headings
+for a single record and column headings for repeated records. This includes
+page and block editors, revision records, media details and usage, content
+source metadata, site transfers, operational summaries and report details.
+System and personal API token activity show the complete stored user agent in
+an expandable table cell. The legacy public Page Summary and Page Meta blocks
+show page properties in native tables with labels in the content language.
+
 
 ## Native disclosure ownership
 

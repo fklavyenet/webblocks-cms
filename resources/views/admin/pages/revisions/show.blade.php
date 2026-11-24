@@ -23,12 +23,18 @@
         <div class="wb-card wb-card-muted">
             <div class="wb-card-header"><strong>{{ $text('version_details') }}</strong></div>
             <div class="wb-card-body wb-stack wb-gap-2 wb-text-sm">
-                <div><strong>{{ $text('saved_at') }}:</strong> {{ $revision->created_at?->format('Y-m-d H:i:s') ?? '—' }}</div>
-                <div><strong>{{ $text('saved_by') }}:</strong> @include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</div>
-                <div><strong>{{ $text('source') }}:</strong> {{ $revision->sourceText() }}</div>
-                <div><strong>{{ $text('event') }}:</strong> {{ $revision->eventText() }}</div>
-                <div><strong>{{ $text('summary') }}:</strong> {{ $revision->reason ?: $revision->labelText() }}</div>
-                <div><strong>{{ $text('snapshot_schema') }}:</strong> {{ $inspection['snapshot']['schema_version'] ?? '—' }}</div>
+                <div class="wb-table-wrap">
+                    <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $text('version_details') }}">
+                        <tbody>
+                            <tr><th scope="row">{{ $text('saved_at') }}</th><td>{{ $revision->created_at?->format('Y-m-d H:i:s') ?? '—' }}</td></tr>
+                            <tr><th scope="row">{{ $text('saved_by') }}</th><td>@include('webblocks-cms::admin.partials.audit-actor', ['actor' => $revision->createdByUser])</td></tr>
+                            <tr><th scope="row">{{ $text('source') }}</th><td>{{ $revision->sourceText() }}</td></tr>
+                            <tr><th scope="row">{{ $text('event') }}</th><td>{{ $revision->eventText() }}</td></tr>
+                            <tr><th scope="row">{{ $text('summary') }}</th><td>{{ $revision->reason ?: $revision->labelText() }}</td></tr>
+                            <tr><th scope="row">{{ $text('snapshot_schema') }}</th><td>{{ $inspection['snapshot']['schema_version'] ?? '—' }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 

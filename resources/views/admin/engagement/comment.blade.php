@@ -14,9 +14,15 @@
         <div class="wb-card-header wb-cluster wb-cluster-between"><strong>{{ $comment->author_name ?: $adminText('anonymous') }}</strong><span class="wb-status-pill {{ $comment->statusClass() }}">{{ $adminText('status_'.$comment->status) }}</span></div>
         <div class="wb-card-body wb-stack wb-gap-3">
             @foreach (preg_split('/\R/', $comment->body) as $line)<p>{{ $line }}</p>@endforeach
-            <p>{{ $adminText('source') }}: {{ $comment->sourceLabel() }} · {{ $comment->site?->name }}</p>
-            <p>{{ $adminText('submitted') }}: {{ $comment->created_at?->format('Y-m-d H:i') }}</p>
-            <p>{{ $adminText('spam') }}: {{ $comment->spam_score }}</p>
+            <div class="wb-table-wrap">
+                <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('source') }}">
+                    <tbody>
+                        <tr><th scope="row">{{ $adminText('source') }}</th><td>{{ $comment->sourceLabel() }} · {{ $comment->site?->name }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('submitted') }}</th><td>{{ $comment->created_at?->format('Y-m-d H:i') }}</td></tr>
+                        <tr><th scope="row">{{ $adminText('spam') }}</th><td>{{ $comment->spam_score }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
             @foreach ($comment->spamReasonLabels() as $reason)<p class="wb-text-sm wb-text-muted">{{ $reason }}</p>@endforeach
             <p class="wb-text-sm wb-text-muted">{{ $adminText('spam_help') }}</p>
             <p class="wb-text-sm wb-text-muted">{{ $comment->status === 'approved' ? $adminText('public_approved') : $adminText('public_not_approved') }}</p>

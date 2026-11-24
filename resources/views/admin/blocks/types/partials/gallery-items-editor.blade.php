@@ -164,9 +164,15 @@
                       <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                     </td>
                     <td>
-                      <div class="wb-text-sm"><strong>{{ $adminText('alt_summary') }}</strong> <span data-wb-gallery-alt-summary>{{ $altSummary }}</span></div>
-                      <div class="wb-text-sm"><strong>{{ $adminText('caption_summary') }}</strong> <span data-wb-gallery-caption-summary>{{ $captionSummary }}</span></div>
-                      <div class="wb-text-sm"><strong>{{ $adminText('overlay_summary') }}</strong> <span data-wb-gallery-overlay-summary>{{ $overlaySummary }}</span></div>
+                      <div class="wb-table-wrap">
+                          <table class="wb-table wb-table-sm wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('edit_item_metadata') }}">
+                            <tbody>
+                              <tr><th scope="row">{{ rtrim($adminText('alt_summary'), ': ') }}</th><td data-wb-gallery-alt-summary>{{ $altSummary }}</td></tr>
+                              <tr><th scope="row">{{ rtrim($adminText('caption_summary'), ': ') }}</th><td data-wb-gallery-caption-summary>{{ $captionSummary }}</td></tr>
+                              <tr><th scope="row">{{ rtrim($adminText('overlay_summary'), ': ') }}</th><td data-wb-gallery-overlay-summary>{{ $overlaySummary }}</td></tr>
+                            </tbody>
+                          </table>
+                      </div>
                     </td>
                     <td>
                       <div class="wb-action-group">
@@ -322,9 +328,15 @@
                   <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                 </td>
                 <td>
-                  <div class="wb-text-sm"><strong>{{ $adminText('alt_summary') }}</strong> <span data-wb-gallery-alt-summary>{{ $altSummary }}</span></div>
-                  <div class="wb-text-sm"><strong>{{ $adminText('caption_summary') }}</strong> <span data-wb-gallery-caption-summary>{{ $captionSummary }}</span></div>
-                  <div class="wb-text-sm"><strong>{{ $adminText('overlay_summary') }}</strong> <span data-wb-gallery-overlay-summary>{{ $overlaySummary }}</span></div>
+                  <div class="wb-table-wrap">
+                      <table class="wb-table wb-table-sm wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('edit_item_metadata') }}">
+                        <tbody>
+                          <tr><th scope="row">{{ rtrim($adminText('alt_summary'), ': ') }}</th><td data-wb-gallery-alt-summary>{{ $altSummary }}</td></tr>
+                          <tr><th scope="row">{{ rtrim($adminText('caption_summary'), ': ') }}</th><td data-wb-gallery-caption-summary>{{ $captionSummary }}</td></tr>
+                          <tr><th scope="row">{{ rtrim($adminText('overlay_summary'), ': ') }}</th><td data-wb-gallery-overlay-summary>{{ $overlaySummary }}</td></tr>
+                        </tbody>
+                      </table>
+                  </div>
                 </td>
                 <td>
                   <div class="wb-action-group">
@@ -419,9 +431,15 @@
         <div class="wb-text-sm wb-text-muted">__ITEM_META__</div>
       </td>
       <td>
-        <div class="wb-text-sm"><strong>{{ $adminText('alt_summary') }}</strong> <span data-wb-gallery-alt-summary>{{ $adminText('no_alt_text') }}</span></div>
-        <div class="wb-text-sm"><strong>{{ $adminText('caption_summary') }}</strong> <span data-wb-gallery-caption-summary>{{ $adminText('no_caption') }}</span></div>
-        <div class="wb-text-sm"><strong>{{ $adminText('overlay_summary') }}</strong> <span data-wb-gallery-overlay-summary>{{ $adminText('no_overlay_title') }}</span></div>
+        <div class="wb-table-wrap">
+            <table class="wb-table wb-table-sm wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('edit_item_metadata') }}">
+              <tbody>
+                <tr><th scope="row">{{ rtrim($adminText('alt_summary'), ': ') }}</th><td data-wb-gallery-alt-summary>{{ $adminText('no_alt_text') }}</td></tr>
+                <tr><th scope="row">{{ rtrim($adminText('caption_summary'), ': ') }}</th><td data-wb-gallery-caption-summary>{{ $adminText('no_caption') }}</td></tr>
+                <tr><th scope="row">{{ rtrim($adminText('overlay_summary'), ': ') }}</th><td data-wb-gallery-overlay-summary>{{ $adminText('no_overlay_title') }}</td></tr>
+              </tbody>
+            </table>
+        </div>
       </td>
       <td>
         <div class="wb-action-group">

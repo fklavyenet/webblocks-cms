@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.26
+
+- Read summaries and report details in compact HTML tables across Webadmin, with row and column headings and wrapping for long values.
+- Open the User agent row in system and personal API token activity to see the complete recorded value.
+
 ## 1.144.25
 
 - See consistent tooltips on action icons across Webadmin, including the Plugins list, when you hover or navigate with the keyboard.

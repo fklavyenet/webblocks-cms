@@ -96,19 +96,37 @@
                 <div class="wb-card-header"><strong>{{ $adminText('backups.archive_metadata') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>{{ $adminText('backups.type') }}:</strong> {{ $adminText('backups.types.'.$backup->type) }}</div>
-                    <div><strong>{{ $adminText('backups.contents_label') }}:</strong> {{ $backupContentsLabel($backup) }}</div>
-                    <div><strong>{{ $adminText('backups.source_filename') }}:</strong> {{ $backup->label ?? $backup->archive_filename ?? '-' }}</div>
-                    <div><strong>{{ $adminText('backups.archive_disk') }}:</strong> {{ $backup->archive_disk }}</div>
-                    <div><strong>{{ $adminText('backups.archive_file') }}:</strong> {{ $backup->archive_filename ?? '-' }}</div>
-                    <div><strong>{{ $adminText('backups.archive_path') }}:</strong> <code>{{ $displayArchivePath }}</code></div>
-                    @if ($archiveResolution && ! $archiveResolution->isAvailable())
-                        <div><strong>{{ $adminText('backups.archive_status') }}:</strong> <span class="wb-status-pill {{ $archiveResolution->uiBadgeClass() }}">{{ $archiveStatusLabel($archiveResolution) }}</span></div>
-                    @endif
-                    <div><strong>{{ $adminText('backups.archive_size') }}:</strong> {{ $backup->humanArchiveSize() }}</div>
-                    <div><strong>{{ $adminText('backups.manifest_app') }}:</strong> {{ $manifest['app_name'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('backups.manifest_version') }}:</strong> {{ $manifest['app_version'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('backups.manifest_created_at') }}:</strong> {{ $manifest['created_at'] ?? '-' }}</div>
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('backups.archive_metadata') }}">
+                            <tbody>
+                                <tr><th scope="row">{{ $adminText('backups.type') }}</th><td>{{ $adminText('backups.types.'.$backup->type) }}</td></tr>
+                                <tr><th scope="row">{{ rtrim($adminText('backups.contents_label'), ': ') }}</th><td>{{ $backupContentsLabel($backup) }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('backups.source_filename') }}</th><td>{{ $backup->label ?? $backup->archive_filename ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('backups.archive_disk') }}</th><td>{{ $backup->archive_disk }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('backups.archive_file') }}</th><td>{{ $backup->archive_filename ?? '-' }}</td></tr>
+                                <tr>
+                                    <th scope="row">{{ $adminText('backups.archive_path') }}</th>
+                                    <td>
+                                        @if ($isAbsoluteArchivePath || $displayArchivePath === '-')
+                                            {{ $displayArchivePath }}
+                                        @else
+                                            <details class="wb-collapse-panel">
+                                                <summary class="wb-collapse-trigger">{{ $adminTranslator->admin('record_tables.full_value', $adminLocale) }}</summary>
+                                                <div class="wb-collapse-body"><code>{{ $displayArchivePath }}</code></div>
+                                            </details>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @if ($archiveResolution && ! $archiveResolution->isAvailable())
+                                    <tr><th scope="row">{{ $adminText('backups.archive_status') }}</th><td><span class="wb-status-pill {{ $archiveResolution->uiBadgeClass() }}">{{ $archiveStatusLabel($archiveResolution) }}</span></td></tr>
+                                @endif
+                                <tr><th scope="row">{{ $adminText('backups.archive_size') }}</th><td>{{ $backup->humanArchiveSize() }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('backups.manifest_app') }}</th><td>{{ $manifest['app_name'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('backups.manifest_version') }}</th><td>{{ $manifest['app_version'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('backups.manifest_created_at') }}</th><td>{{ $manifest['created_at'] ?? '-' }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,10 +136,16 @@
                 <div class="wb-card-header"><strong>{{ $adminText('backups.manifest_preview') }}</strong></div>
 
                 <div class="wb-card-body wb-stack wb-gap-2">
-                    <div><strong>{{ $adminText('updates.product') }}:</strong> {{ $manifest['product'] ?? $adminText('backups.legacy_manifest') }}</div>
-                    <div><strong>{{ $adminText('backups.package_type') }}:</strong> {{ $manifest['package_type'] ?? 'legacy_backup' }}</div>
-                    <div><strong>{{ $adminText('backups.format_version') }}:</strong> {{ $manifest['format_version'] ?? '-' }}</div>
-                    <div><strong>{{ $adminText('backups.contents_label') }}:</strong> {{ $adminText('backups.contents.database') }}{{ $inspection->includesUploads ? ' + '.$adminText('backups.contents.uploads') : '' }}</div>
+                    <div class="wb-table-wrap">
+                        <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $adminText('backups.manifest_preview') }}">
+                            <tbody>
+                                <tr><th scope="row">{{ $adminText('updates.product') }}</th><td>{{ $manifest['product'] ?? $adminText('backups.legacy_manifest') }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('backups.package_type') }}</th><td>{{ $manifest['package_type'] ?? 'legacy_backup' }}</td></tr>
+                                <tr><th scope="row">{{ $adminText('backups.format_version') }}</th><td>{{ $manifest['format_version'] ?? '-' }}</td></tr>
+                                <tr><th scope="row">{{ rtrim($adminText('backups.contents_label'), ': ') }}</th><td>{{ $adminText('backups.contents.database') }}{{ $inspection->includesUploads ? ' + '.$adminText('backups.contents.uploads') : '' }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         @endif
