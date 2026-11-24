@@ -1,9 +1,9 @@
 @php
     $showRecentPages = $dashboardAccess['pages'];
     $showRecentMedia = $dashboardAccess['media'];
+    $hasContentTabs = $showRecentPages && $showRecentMedia;
 @endphp
 @if ($showRecentPages || $showRecentMedia)
-    @php($hasContentTabs = $showRecentPages && $showRecentMedia)
     <section class="wb-card wb-tabs wb-tabs-pills wb-cms-dashboard-content" @if ($hasContentTabs) data-wb-tabs @endif aria-labelledby="dashboard-content-title">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
             <h2 class="wb-card-title" id="dashboard-content-title">{{ $adminText('dashboard.recent_content') }}</h2>
@@ -22,8 +22,22 @@
                     @else
                         <div class="wb-link-list">
                             @foreach ($recentPages as $page)
+                                @php
+                                    $pageTitle = trim((string) $page->title);
+                                    $pageSlug = trim((string) $page->slug);
+                                    if ($pageTitle === '') {
+                                        $translation = $page->translations->sortBy('id')->first(fn ($translation) => filled($translation->name));
+                                        $pageTitle = $translation?->name ?? '#'.$page->id;
+                                        $pageSlug = $translation?->slug ?? $pageSlug;
+                                    }
+                                @endphp
                                 <a href="{{ route('admin.pages.edit', $page) }}" class="wb-link-list-item wb-cms-dashboard-recent-page">
-                                    <div class="wb-link-list-main"><div class="wb-link-list-title" title="{{ $page->title }}">{{ $page->title }}</div><div class="wb-link-list-meta" title="{{ $page->slug }}">{{ $page->slug }}</div></div>
+                                    <div class="wb-link-list-main">
+                                        <div class="wb-link-list-title" title="{{ $pageTitle }}">{{ $pageTitle }}</div>
+                                        @if ($pageSlug !== '')
+                                            <div class="wb-link-list-meta" title="{{ $pageSlug }}">{{ $pageSlug }}</div>
+                                        @endif
+                                    </div>
                                     <span class="wb-status-pill {{ $page->workflowBadgeClass() }}">{{ $page->workflowLabel() }}</span>
                                 </a>
                             @endforeach

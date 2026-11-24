@@ -1346,10 +1346,12 @@ header. On wide screens one column groups scoped content counts and page views.
 The other groups installation health or the authorized scheduler summary with
 recent content. Narrow screens stack the columns. Recent pages and media share
 one card and use tabs when both are authorized. Each collection contains at
-most three records. Page views retain the accessible source table and WebBlocks
-UI chart keyboard behavior. A separate contact strip shows unread and
-awaiting-reply totals. Summary plugin widgets remain grouped below the core
-dashboard.
+most three records. When a recent page lacks its default title, the card shows
+the title and slug of its earliest saved translation with a title, or the page
+ID when no title is available. Page views retain the accessible source table
+and WebBlocks UI chart keyboard behavior. A separate contact strip shows
+unread and awaiting-reply totals. Summary plugin widgets remain grouped below
+the core dashboard.
 
 View checks expands the health categories inside the dashboard card. Category
 rows link to their full checks and expose the lead finding on hover and focus.
@@ -1695,8 +1697,8 @@ package/backup/export formats and API serialization remain protocol contracts.
 
 ## Reliable System Update Tracking (1.98.9)
 
-From CMS 1.112.2, Publisher-managed CMS updates select the shared Client's
-`composer-package` strategy. Composer resolves and installs the selected release;
+CMS 1.112.2 introduced the shared Client's `composer-package` strategy for
+Publisher-managed CMS updates. In that flow, Composer resolves and installs the selected release;
 the installed product file boundary must match the verified signed artifact.
 Publisher retains backup, migration, asset/catalog synchronization and final
 verification. Composer generates the lock and installed registries; CMS does not
@@ -1707,6 +1709,15 @@ unsupported layouts, dependency conflicts and unavailable or mismatching release
 are refused. A complete vendor and Composer recovery copy is kept until success;
 dependencies restore before database recovery and incomplete recovery retains
 maintenance. Existing other-product strategies are not automatically changed.
+
+CMS 1.144.23 can install the verified Publisher ZIP through Composer when the
+package records its immutable source commit. The preflight checks the existing
+lock before application files change. On success the runtime, Composer lock
+and installed package metadata represent the same version and commit. Recovery
+restores the previous CMS package and Composer metadata after a failed health
+check. Stable is the default channel. Installations enrolled through Console
+can opt into the private test channel, verify signed packages and report the
+installation result to Publisher after runtime verification.
 
 `webblocks:updates:run` uses the same CMS-configured Publisher engine as the panel.
 After a separately managed Composer deployment, `webblocks:updates:finalize`

@@ -1,10 +1,15 @@
 # Changelog
 
-## 1.144.22
+## 1.144.23
 
+- Show a saved translation’s title and slug in Recent content when the default title is missing. Show the page ID when no title is available.
 - Install panel updates from signed Publisher packages and keep Composer’s version pin, lock file, and installed package records aligned with the source commit.
 - Check the existing dependencies before changing application files. Restore the previous package and Composer records if the updated installation fails its health check.
 - Let enrolled installations receive private Publisher test updates and report the installation result.
+
+## 1.144.22
+
+- Private test candidate for the Publisher update workflow.
 
 ## 1.144.21
 
