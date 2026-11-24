@@ -11,7 +11,8 @@ class AdminDashboardTablePresentationTest extends TestCase
     $dashboard = (string) file_get_contents(dirname(__DIR__, 2).'/resources/views/admin/dashboard.blade.php');
 
     $this->assertStringContainsString('wb-cms-dashboard-grid', $dashboard);
-    $this->assertStringContainsString('<dl class="wb-cms-dashboard-metrics">', $dashboard);
+    $this->assertStringContainsString('<table class="wb-table wb-table-sm wb-cms-dashboard-overview" aria-labelledby="dashboard-overview-title">', $dashboard);
+    $this->assertStringNotContainsString('<dl', $dashboard);
     $this->assertStringContainsString('dashboard.pages', $dashboard);
     $this->assertStringContainsString('dashboard.page_views', $dashboard);
     $this->assertStringNotContainsString('dashboard.visitor_summary', $dashboard);

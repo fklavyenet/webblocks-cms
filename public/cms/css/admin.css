@@ -188,32 +188,12 @@ html[data-mode="dark"] .wb-admin-dashboard-page {
     min-inline-size: 0;
 }
 
-.wb-cms-dashboard-metrics {
-    display: grid;
-    grid-template-columns: minmax(0, 1.55fr) repeat(2, minmax(0, 1fr));
-    gap: var(--wb-s2);
-    margin: 0;
-}
-
-.wb-cms-dashboard-metrics > div + div {
-    border-inline-start: 1px solid var(--wb-border);
-    padding-inline-start: var(--wb-s2);
-}
-
-.wb-cms-dashboard-metrics strong {
+.wb-cms-dashboard-overview td {
+    width: 1%;
     font-size: var(--wb-font-size-xl);
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
-}
-
-.wb-cms-dashboard-metrics dd,
-.wb-cms-dashboard-catalog,
-.wb-cms-dashboard-catalog dd {
-    margin: 0;
-}
-
-.wb-cms-dashboard-catalog {
-    border-block-start: 1px solid var(--wb-border);
-    padding-block-start: var(--wb-s1);
+    white-space: nowrap;
 }
 
 [data-wb-system-health-summary] .wb-card-title {

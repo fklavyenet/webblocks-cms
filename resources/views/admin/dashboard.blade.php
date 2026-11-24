@@ -28,21 +28,37 @@
                 <section class="wb-card" aria-labelledby="dashboard-overview-title">
                     <div class="wb-card-header"><h2 class="wb-card-title" id="dashboard-overview-title">{{ $adminText('dashboard.overview') }}</h2></div>
                     <div class="wb-card-body wb-stack wb-stack-2">
-                        <dl class="wb-cms-dashboard-metrics">
-                            <div>
-                                <dt class="wb-text-xs wb-text-muted">{{ $adminText('dashboard.pages') }}</dt>
-                                <dd><strong>{{ number_format($stats['pages']) }}</strong></dd>
-                                <dd class="wb-text-xs wb-text-muted">{{ $adminText('dashboard.published_drafts', ['published' => $stats['publishedPages'], 'drafts' => $stats['draftPages']]) }}</dd>
-                            </div>
-                            <div><dt class="wb-text-xs wb-text-muted">{{ $adminText('dashboard.blocks') }}</dt><dd><strong>{{ number_format($stats['blocks']) }}</strong></dd></div>
-                            <div><dt class="wb-text-xs wb-text-muted">{{ $adminText('dashboard.media') }}</dt><dd><strong>{{ number_format($stats['media']) }}</strong></dd></div>
-                        </dl>
-                        @if ($canAccessDashboardSystem)
-                            <dl class="wb-cluster wb-cluster-2 wb-flex-wrap wb-text-xs wb-cms-dashboard-catalog">
-                                <div class="wb-cluster wb-cluster-2"><dt class="wb-text-muted">{{ $adminText('dashboard.slot_types') }}</dt><dd>{{ number_format($stats['slotTypes']) }}</dd></div>
-                                <div class="wb-cluster wb-cluster-2"><dt class="wb-text-muted">{{ $adminText('dashboard.block_types') }}</dt><dd>{{ number_format($stats['blockTypes']) }}</dd></div>
-                            </dl>
-                        @endif
+                        <table class="wb-table wb-table-sm wb-cms-dashboard-overview" aria-labelledby="dashboard-overview-title">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">
+                                        {{ $adminText('dashboard.pages') }}
+                                        <div class="wb-text-xs wb-text-muted wb-font-normal">{{ $adminText('dashboard.published_drafts', ['published' => $stats['publishedPages'], 'drafts' => $stats['draftPages']]) }}</div>
+                                    </th>
+                                    <td class="wb-text-end">{{ number_format($stats['pages']) }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">{{ $adminText('dashboard.blocks') }}</th>
+                                    <td class="wb-text-end">{{ number_format($stats['blocks']) }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">{{ $adminText('dashboard.media') }}</th>
+                                    <td class="wb-text-end">{{ number_format($stats['media']) }}</td>
+                                </tr>
+                            </tbody>
+                            @if ($canAccessDashboardSystem)
+                                <tbody class="wb-bg-surface-2">
+                                    <tr>
+                                        <th scope="row">{{ $adminText('dashboard.slot_types') }}</th>
+                                        <td class="wb-text-end">{{ number_format($stats['slotTypes']) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">{{ $adminText('dashboard.block_types') }}</th>
+                                        <td class="wb-text-end">{{ number_format($stats['blockTypes']) }}</td>
+                                    </tr>
+                                </tbody>
+                            @endif
+                        </table>
                     </div>
                 </section>
                 @if ($canViewVisitorReports)
@@ -81,7 +97,7 @@
             @endif
         </div>
 
-        @if ($panelNotifications !== null)
+        @if ($panelNotifications !== null && (! $panelNotifications['inbox_available'] || $panelNotifications['unread'] > 0 || $panelNotifications['awaiting'] > 0))
             <div id="panel-notifications" class="wb-card">
                 <div class="wb-card-body">
                     @include('webblocks-cms::admin.partials.dashboard-panel-notifications', ['compact' => true])

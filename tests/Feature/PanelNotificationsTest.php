@@ -172,14 +172,21 @@ class PanelNotificationsTest extends TestCase
     $message = $this->message($site);
     $query = app(PanelNotificationQuery::class);
     $user = $this->user([$site->id]);
+    $this->actingAs($user)->withoutMiddleware(RedirectIfNotInstalled::class);
+    $dashboard = route('admin.dashboard');
     $this->assertSame(1, $query->forUser($user)['unread']);
+    $this->get($dashboard)->assertOk()->assertSee('data-wb-panel-notification-summary', false)
+      ->assertSee('Unread: 1');
     $message->update(['status' => 'read']);
     $data = $query->forUser($user);
     $this->assertSame(0, $data['unread']);
     $this->assertSame(1, $data['awaiting']);
+    $this->get($dashboard)->assertOk()->assertSee('data-wb-panel-notification-summary', false)
+      ->assertSee('Awaiting reply: 1');
     $message->update(['status' => 'replied']);
     $data = $query->forUser($user);
     $this->assertSame(0, $data['awaiting']);
+    $this->get($dashboard)->assertOk()->assertDontSee('data-wb-panel-notification-summary', false);
     $this->view('webblocks-cms::admin.partials.panel-notifications-indicator', ['panelNotifications' => $data])
       ->assertDontSee('data-wb-panel-notifications')->assertDontSee('wb-icon-bell');
     $this->view('webblocks-cms::admin.partials.dashboard-panel-notifications', ['panelNotifications' => $data])
@@ -199,6 +206,8 @@ class PanelNotificationsTest extends TestCase
     $data = $query->forUser($user);
     $this->assertFalse($data['inbox_available']);
     $this->assertSame(1, $data['warnings']);
+    $this->actingAs($user)->withoutMiddleware(RedirectIfNotInstalled::class);
+    $this->get(route('admin.dashboard'))->assertOk()->assertSee('data-wb-panel-notification-summary', false);
     $this->view('webblocks-cms::admin.partials.dashboard-panel-notifications', ['panelNotifications' => $data])
       ->assertSee('Apply the CMS database migrations')->assertDontSee('No contact messages await a reply.');
   }

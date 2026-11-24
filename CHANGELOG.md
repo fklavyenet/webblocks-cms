@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.24
+
+- Read Dashboard Overview counts in a compact table, with publication totals alongside the page count.
+- Show the Contact messages summary only when messages are unread, await a reply, or the inbox needs attention.
+
 ## 1.144.23
 
 - Show a saved translation’s title and slug in Recent content when the default title is missing. Show the page ID when no title is available.

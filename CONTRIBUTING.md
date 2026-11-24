@@ -71,16 +71,16 @@ or a `role="group"` container with a visible heading referenced by
 where useful. Validation and action redirects must retain the relevant panel;
 links to settings must open the panel containing their destination.
 
-Admin status, progress and metadata summaries must not use a full-width vertical
-stack that places each label and value on separate lines with large gaps. This
-includes unstyled or widely spaced `dl` / `dt` / `dd` lists and equivalent card,
-paragraph or grid compositions. Short records must remain compact and easy to
-scan. Prefer native WebBlocks UI tables: row headings and values for one record,
-column headings for repeated records. A compact status/action strip, progress
-indicator or aligned label/value rows may be used when they better fit the task.
+Administration panel tables must use native WebBlocks UI table markup
+(`table`, `tr`, `th` and `td`). Use row headings for a single record and
+column headings for repeated records. Do not build tables with `dl`, `dt`
+or `dd`. Use those elements for genuine description lists.
+Keep status, progress and metadata summaries compact. Avoid full-width stacks
+that place each label and value on separate lines with large gaps. Compact
+status/action strips and progress indicators are suitable where appropriate.
 Cards may group a section; do not turn every property into a separate card.
 On narrow screens, keep each label adjacent to its value and preserve semantic
-headings. This is a presentation rule, not a blanket ban on semantic `dl` markup.
+headings.
 Put long technical identifiers in an optional details area; preserve access to
 the full value without forcing horizontal page overflow. Review existing
 summaries against this rule whenever their screen is changed.

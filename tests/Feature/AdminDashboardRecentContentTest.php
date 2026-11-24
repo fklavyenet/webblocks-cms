@@ -56,6 +56,11 @@ class AdminDashboardRecentContentTest extends TestCase
     $dom = new DOMDocument;
     @$dom->loadHTML($response->getContent(), LIBXML_NONET);
     $xpath = new DOMXPath($dom);
+    $overview = '//table[@aria-labelledby="dashboard-overview-title"]';
+    $this->assertSame(3.0, $xpath->evaluate('count('.$overview.'/tbody[1]/tr/th[@scope="row"])'));
+    $this->assertSame(2.0, $xpath->evaluate('count('.$overview.'/tbody[2]/tr/th[@scope="row"])'));
+    $this->assertSame('3', $xpath->evaluate('normalize-space('.$overview.'/tbody[1]/tr[1]/td)'));
+    $this->assertStringContainsString('1 published', $xpath->evaluate('normalize-space('.$overview.'/tbody[1]/tr[1]/th)'));
     foreach ([
       [$translatedPage, 'Startseite', 'startseite'],
       [$defaultPage, 'About us', 'about-us'],
