@@ -10,35 +10,23 @@
     'none' => 'wb-navbar-nav--active-none',
     default => 'wb-navbar-nav--active-underline',
   };
-  $items = app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)
-    ->buildPublicMenuTree($menuKey, $site?->id)
-    ->filter(fn ($item) => $item->isVisible() && (! $item->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($item->page)))
-    ->map(function ($item) use ($block) {
-      $item->setRelation('children', $item->children
-        ->filter(fn ($child) => $child->isVisible() && (! $child->page || ! app(\WebBlocks\Cms\Support\Pages\PublicPageAccess::class)->protected($child->page)))
-        ->filter(function ($child) use ($block) {
-          if ($child->link_type !== \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) {
-            return $child->resolvedUrlForBlock($block) !== null;
-          }
+  $renderableItems = function ($items) use (&$renderableItems, $block) {
+    return $items->filter(function ($item) use (&$renderableItems, $block) {
+      if (! $item->isVisible()) {
+        return false;
+      }
 
-          return $child->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $child->resolvedUrlForBlock($block) !== null;
-        })
-        ->values());
-
-      return $item;
-    })
-    ->filter(function ($item) use ($block) {
       if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
+        $item->setRelation('children', $renderableItems($item->children));
+
         return $item->children->isNotEmpty();
       }
 
-      if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_PAGE) {
-        return $item->page?->status === \WebBlocks\Cms\Models\Page::STATUS_PUBLISHED && $item->resolvedUrlForBlock($block) !== null;
-      }
-
-      return $item->resolvedUrlForBlock($block) !== null;
-    })
-    ->values();
+      return (bool) $item->resolvedUrlForBlock($block);
+    })->values();
+  };
+  $items = $renderableItems(app(\WebBlocks\Cms\Support\Navigation\NavigationTree::class)
+    ->buildPublicMenuTree($menuKey, $site?->id));
   $a11y = fn (string $key) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)
     ->get('blocks.a11y.'.$key, strtolower((string) ($block->renderLocaleCode() ?? app()->getLocale())));
   $label = $block->stringValueOrNull($block->title) ?? $block->translatedTextFieldValue('title') ?? $a11y('menu.primary');
@@ -75,25 +63,34 @@
       .'<span>'.$title.'</span>';
   };
 
-  $renderDrawerItems = function ($items) use (&$renderDrawerItems, $isItemActive, $renderItemContent, $block) {
+  $renderDrawerItems = function ($items, bool $insideGroup = false) use (&$renderDrawerItems, $isItemActive, $renderItemContent, $block) {
     $html = '';
 
     foreach ($items as $item) {
-      $isActive = $isItemActive($item);
-      $url = $item->resolvedUrlForBlock($block);
-      $children = $item->children;
+      if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
+        $title = e($item->resolvedTitleForBlock($block));
 
-      if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP && $children->isNotEmpty()) {
-        $html .= '<span class="wb-text-sm wb-text-muted">'.e($item->resolvedTitleForBlock($block)).'</span>';
-        $html .= $renderDrawerItems($children);
+        if ($insideGroup) {
+          $labelId = 'navbar-navigation-drawer-group-'.$block->id.'-'.$item->id;
+          $html .= '<div class="wb-stack wb-stack-1 wb-px-4" role="group" aria-labelledby="'.$labelId.'">';
+          $html .= '<span class="wb-text-sm wb-text-muted" id="'.$labelId.'">'.$title.'</span>';
+          $html .= $renderDrawerItems($item->children, true);
+          $html .= '</div>';
+        } else {
+          $html .= '<span class="wb-text-sm wb-text-muted">'.$title.'</span>';
+          $html .= $renderDrawerItems($item->children, true);
+        }
 
         continue;
       }
+
+      $url = $item->resolvedUrlForBlock($block);
 
       if (! $url) {
         continue;
       }
 
+      $isActive = $isItemActive($item);
       $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
       $html .= '<a href="'.e($url).'" class="wb-navbar-link'.($isActive ? ' is-active' : '').'"'.($isActive ? ' aria-current="page"' : '').$target.\WebBlocks\Cms\Support\Seo\SeoHtmlEvidence::navigationAttribute((int) $item->id, $block).'>'.$renderItemContent($item).'</a>';
     }
@@ -101,7 +98,33 @@
     return $html;
   };
 
-  $renderItems = function ($items) use (&$renderItems, $block, $isItemActive, $renderItemContent) {
+  $renderDropdownItems = function ($items) use (&$renderDropdownItems, $block, $isItemActive) {
+    $html = '';
+
+    foreach ($items as $item) {
+      $isActive = $isItemActive($item);
+      $title = e($item->resolvedTitleForBlock($block));
+
+      if ($item->link_type === \WebBlocks\Cms\Models\NavigationItem::LINK_GROUP) {
+        $menuId = 'navbar-navigation-group-'.$block->id.'-'.$item->id;
+        $html .= '<button type="button" class="wb-dropdown-item'.($isActive ? ' is-active' : '').'" data-wb-toggle="submenu" aria-controls="'.$menuId.'" aria-expanded="false">'.$title.'</button>';
+        $html .= '<div class="wb-dropdown-menu" id="'.$menuId.'">'.$renderDropdownItems($item->children).'</div>';
+
+        continue;
+      }
+
+      $url = $item->resolvedUrlForBlock($block);
+      $target = $item->target ? ' target="'.e($item->target).'" rel="noopener noreferrer"' : '';
+
+      if ($url) {
+        $html .= '<a class="wb-dropdown-item'.($isActive ? ' is-active' : '').'" href="'.e($url).'"'.($isActive ? ' aria-current="page"' : '').$target.\WebBlocks\Cms\Support\Seo\SeoHtmlEvidence::navigationAttribute((int) $item->id, $block).'>'.$title.'</a>';
+      }
+    }
+
+    return $html;
+  };
+
+  $renderItems = function ($items) use ($block, $isItemActive, $renderItemContent, $renderDropdownItems) {
     $html = '';
 
     foreach ($items as $item) {
@@ -116,19 +139,7 @@
         $html .= e($item->resolvedTitleForBlock($block));
         $html .= ' <i class="wb-icon wb-icon-chevron-down" aria-hidden="true"></i>';
         $html .= '</button>';
-        $html .= '<div class="wb-dropdown-menu" id="'.$groupMenuId.'">';
-
-        foreach ($children as $child) {
-          $childActive = $isItemActive($child);
-          $childUrl = $child->resolvedUrlForBlock($block);
-          $childTarget = $child->target ? ' target="'.e($child->target).'" rel="noopener noreferrer"' : '';
-
-          if ($childUrl) {
-            $html .= '<a class="wb-dropdown-item'.($childActive ? ' is-active' : '').'" href="'.e($childUrl).'"'.($childActive ? ' aria-current="page"' : '').$childTarget.\WebBlocks\Cms\Support\Seo\SeoHtmlEvidence::navigationAttribute((int) $child->id, $block).'>'.e($child->resolvedTitleForBlock($block)).'</a>';
-          }
-        }
-
-        $html .= '</div></li>';
+        $html .= '<div class="wb-dropdown-menu" id="'.$groupMenuId.'">'.$renderDropdownItems($children).'</div></li>';
 
         continue;
       }

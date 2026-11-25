@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.29
+
+- Display nested navigation groups as cascading submenus in desktop Navbar Navigation.
+- Show the same subgroups and links together in the mobile navigation drawer.
+
 ## 1.144.28
 
 - The Page views chart highlights the selected date and count when you point to a day or navigate with the keyboard.
