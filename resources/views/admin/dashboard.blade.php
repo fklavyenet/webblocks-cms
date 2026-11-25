@@ -9,6 +9,7 @@
     $canViewVisitorReports = $canViewVisitorReports ?? false;
     $visitorSummary = $visitorSummary ?? ['is_enabled' => false, 'table_exists' => false, 'buckets' => [], 'total_page_views' => 0];
     $summaryWidgets = array_filter($pluginDashboardWidgets, fn ($widget) => $widget->isSummary());
+    $showContactSummary = $panelNotifications !== null && (! $panelNotifications['inbox_available'] || $panelNotifications['unread'] > 0 || $panelNotifications['awaiting'] > 0);
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $adminText('dashboard.title'), 'heading' => $adminText('dashboard.title')])
 @section('content')
@@ -47,7 +48,7 @@
                                 </tr>
                             </tbody>
                             @if ($canAccessDashboardSystem)
-                                <tbody class="wb-bg-surface-2">
+                                <tbody>
                                     <tr>
                                         <th scope="row">{{ $adminText('dashboard.slot_types') }}</th>
                                         <td class="wb-text-end">{{ number_format($stats['slotTypes']) }}</td>
@@ -97,15 +98,15 @@
             @endif
         </div>
 
-        @if ($panelNotifications !== null && (! $panelNotifications['inbox_available'] || $panelNotifications['unread'] > 0 || $panelNotifications['awaiting'] > 0))
-            <div id="panel-notifications" class="wb-card">
-                <div class="wb-card-body">
-                    @include('webblocks-cms::admin.partials.dashboard-panel-notifications', ['compact' => true])
-                </div>
-            </div>
-        @endif
-        @if ($summaryWidgets !== [])
-            <div class="wb-grid wb-grid-2 wb-cms-dashboard-grid">
+        @if ($showContactSummary || $summaryWidgets !== [])
+            <div class="wb-grid wb-grid-2 wb-cms-dashboard-grid wb-cms-dashboard-summaries">
+                @if ($showContactSummary)
+                    <div id="panel-notifications" class="wb-card">
+                        <div class="wb-card-body">
+                            @include('webblocks-cms::admin.partials.dashboard-panel-notifications', ['compact' => true])
+                        </div>
+                    </div>
+                @endif
                 @foreach ($summaryWidgets as $widget)
                     @include('webblocks-cms::admin.partials.dashboard-plugin-widget')
                 @endforeach

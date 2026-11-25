@@ -191,8 +191,13 @@ html[data-mode="dark"] .wb-admin-dashboard-page {
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
 }
 
-.wb-cms-dashboard-grid > :only-child {
+.wb-cms-dashboard-grid > .wb-stack:only-child {
     grid-column: 1 / -1;
+}
+
+.wb-cms-dashboard-summaries > .wb-card {
+    align-self: start;
+    height: auto;
 }
 
 .wb-cms-dashboard .wb-card-header {
@@ -298,9 +303,22 @@ html[data-mode="dark"] .wb-admin-dashboard-page {
 }
 
 .wb-cms-dashboard .wb-chart-readout {
-    font-size: .75rem;
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    padding: var(--wb-s1) var(--wb-s2);
+    border-inline-start: 3px solid transparent;
+    border-radius: var(--wb-radius-sm);
+    font-size: var(--wb-font-size-md);
+    font-variant-numeric: tabular-nums;
     line-height: 1.35;
     margin-block: var(--wb-s2) 0;
+}
+
+.wb-cms-dashboard .wb-chart:has(.wb-chart-mark.is-active) .wb-chart-readout {
+    border-color: var(--wb-chart-color-1);
+    background: var(--wb-surface-2);
+    color: var(--wb-text);
+    font-weight: 700;
 }
 
 #admin-quick-settings {

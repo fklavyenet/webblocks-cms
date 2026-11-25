@@ -1379,7 +1379,9 @@ users of active plugins; returning null hides an entry without site context.
 Two-factor authentication and plugin recovery requests do not resolve or render
 plugin quick settings because plugin runtime providers remain isolated there.
 `PluginDashboardWidget` supports the same view/data resolution and `summary()`
-placement. Existing title/value/description/link widgets remain supported.
+placement. The dashboard places the visible Contact messages card first in the
+summary widget grid. The grid has two columns on wide screens and one on narrow
+screens. Existing title/value/description/link widgets remain supported.
 Plugin views must enforce resource/site scope in their data providers and write
 endpoints; visibility never grants permission. These are trusted executable
 extensions, not content-authored HTML or persisted configuration.

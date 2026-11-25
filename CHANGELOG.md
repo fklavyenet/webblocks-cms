@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.28
+
+- The Page views chart highlights the selected date and count when you point to a day or navigate with the keyboard.
+- Contact messages and Live Chat share a row on wide dashboards and stack on narrow screens.
+- All rows in the dashboard Overview now use the same background.
+
 ## 1.144.27
 
 - Bundle WebBlocks UI 2.39.0, including the shared styles for checkbox and radio field groups.
