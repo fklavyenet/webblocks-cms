@@ -1,5 +1,11 @@
+@php
+    $installLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale();
+    $installTitle = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('auth.install_title', $installLocale);
+@endphp
+
 @extends('webblocks-cms::layouts.guest', [
-    'title' => 'Install WebBlocks CMS',
+    'title' => $installTitle,
+    'guestLocaleCode' => $installLocale,
     'metaDescription' => 'Install WebBlocks CMS before accessing the admin and public runtime.',
 ])
 
@@ -8,7 +14,7 @@
         <div class="wb-auth-shell-panel">
             <div class="wb-stack wb-stack-4">
                 <div class="wb-stack wb-gap-1">
-                    <h1 class="wb-text-2xl wb-font-semibold">Install WebBlocks CMS</h1>
+                    <h1 class="wb-text-2xl wb-font-semibold">{{ $installTitle }}</h1>
                     <p class="wb-text-muted">Run the package installer before opening the admin or public site.</p>
                 </div>
 

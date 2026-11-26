@@ -17,10 +17,8 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{ $maintenanceText('title') }}</title>
-        <link rel="icon" type="image/svg+xml" href="{{ \WebBlocks\Cms\Support\WebBlocks::faviconUrl('favicon.svg', rootRelative: true) }}">
-        <link rel="icon" type="image/png" sizes="16x16" href="{{ \WebBlocks\Cms\Support\WebBlocks::faviconUrl('favicon-16x16.png', rootRelative: true) }}">
-        <link rel="icon" type="image/png" sizes="32x32" href="{{ \WebBlocks\Cms\Support\WebBlocks::faviconUrl('favicon-32x32.png', rootRelative: true) }}">
+        <title>{{ \WebBlocks\Cms\Support\WebBlocks::browserTitle($maintenanceText('title')) }}</title>
+        @include('webblocks-cms::partials.product-favicons', ['rootRelative' => true])
         <link rel="stylesheet" href="{{ \WebBlocks\Cms\Support\WebBlocks::uiCssUrl() }}">
         <link rel="stylesheet" href="/cms/css/public.css">
     </head>

@@ -1,5 +1,3 @@
-@extends('webblocks-cms::layouts.admin', ['title' => $title, 'heading' => $title])
-
 @php
     $adminLocale = app(\WebBlocks\Cms\Support\Translations\AdminLocaleResolver::class)->locale(request()->user());
     $adminTranslator = app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class);
@@ -36,7 +34,10 @@
         ]);
     }
     $sliderText = fn (string $key) => $adminTranslator->get('blocks.a11y.'.$key, $adminLocale);
+    $screenTitle = $catalog->available && $plugin !== null ? $plugin->label : $adminText('title');
 @endphp
+
+@extends('webblocks-cms::layouts.admin', ['title' => $screenTitle, 'heading' => $screenTitle])
 
 @section('content')
     @if (! $catalog->available || $plugin === null)

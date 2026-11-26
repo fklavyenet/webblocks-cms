@@ -44,7 +44,7 @@
                     <form method="POST" action="{{ route('admin.system.plugins.check-catalog-updates', $searchQuery) }}">
                         @csrf
                         <button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">
-                            <i class="wb-icon wb-icon-rotate-cw" aria-hidden="true"></i>
+                            <i class="wb-icon wb-icon-refresh-cw" aria-hidden="true"></i>
                             {{ $systemPluginsIndexText('check_catalog_updates') }}
                         </button>
                     </form>
@@ -152,7 +152,7 @@
                                                 <button type="button" class="wb-action-btn" data-wb-tooltip="{{ $systemPluginsIndexText('update_from_catalog') }}"
                                                         aria-label="{{ $systemPluginsIndexText('update_from_catalog') }} · {{ $plugin['label'] }}"
                                                         aria-haspopup="dialog" data-wb-toggle="modal" data-wb-target="#{{ $updateModalId }}">
-                                                    <i class="wb-icon wb-icon-rotate-cw" aria-hidden="true"></i>
+                                                    <i class="wb-icon wb-icon-download" aria-hidden="true"></i>
                                                 </button>
                                             @endif
 

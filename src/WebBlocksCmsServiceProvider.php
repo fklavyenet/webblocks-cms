@@ -300,6 +300,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
     'diagnostics/package-status.blade.php',
     'layouts/admin.blade.php',
     'layouts/public.blade.php',
+    'partials/product-favicons.blade.php',
     'pages/show.blade.php',
     'pages/partials/block.blade.php',
     'pages/partials/slot.blade.php',
@@ -607,6 +608,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const PACKAGE_PUBLIC_ASSET_FILES = [
     'cms/brand/apple-touch-icon.png',
     'cms/brand/favicon.svg',
+    'cms/brand/favicon.ico',
     'cms/brand/favicon-16x16.png',
     'cms/brand/favicon-32x32.png',
     'cms/brand/logo-mark-dark.svg',
@@ -643,6 +645,7 @@ class WebBlocksCmsServiceProvider extends ServiceProvider
   public const ROOT_PUBLIC_ASSET_COMPATIBILITY_FILES = [
     'cms/brand/apple-touch-icon.png',
     'cms/brand/favicon.svg',
+    'cms/brand/favicon.ico',
     'cms/brand/favicon-16x16.png',
     'cms/brand/favicon-32x32.png',
     'cms/brand/logo-mark-dark.svg',

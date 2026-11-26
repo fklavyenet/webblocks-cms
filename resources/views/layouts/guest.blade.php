@@ -20,7 +20,9 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         @include('webblocks-cms::partials.head-meta', [
-            'title' => $title ?? config('app.name'),
+            'title' => WebBlocks::browserTitle($title ?? null),
+            'brandName' => WebBlocks::name(),
+            'faviconUrl' => '',
             'metaDescription' => $metaDescription ?? config('app.slogan'),
         ])
 

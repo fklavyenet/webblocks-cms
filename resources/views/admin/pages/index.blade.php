@@ -28,7 +28,7 @@
     $closeImportUrl = route('admin.pages.index', $detailsBaseQuery);
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $adminText('pages.title'), 'heading' => $adminText('pages.title')])
+@extends('webblocks-cms::layouts.admin', ['title' => $adminText('pages.list_heading', ['site' => $siteContext]), 'heading' => $adminText('pages.list_heading', ['site' => $siteContext])])
 
 @section('content')
 @php

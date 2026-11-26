@@ -51,7 +51,6 @@ class SystemSettingsController extends Controller
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.settings', [
       'title' => 'System Settings',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
-      'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('System Settings'),
       'settings' => [
         'log_format' => old('log_format', app(LogFormatSettings::class)->mode()),
         'project_name' => old('project_name', $this->systemSettings->projectName()),

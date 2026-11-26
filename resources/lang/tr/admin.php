@@ -538,6 +538,7 @@ $translations = [
     'showing' => ':first-:last / :total gösteriliyor',
   ],
   'profile' => [
+    'edit_title' => 'Profili düzenle: :name',
     'title' => 'Profil',
     'description' => 'Hesap bilgilerini ve şifreni yönet.',
     'information_title' => 'Profil bilgileri',
@@ -3013,6 +3014,7 @@ $translations = [
     'og_image_help' => 'Seçilen görselin public URL’si varsa bu dil için site seviyesi sosyal görseli geçersiz kılar.',
   ],
   'auth' => [
+    'install_title' => 'Kurulum',
     'login_title' => 'Giriş yap',
     'login_meta' => 'WebBlocks CMS oturumunu açın ve içerik çalışma alanınızı yönetin.',
     'welcome_back' => 'Tekrar hoş geldiniz',

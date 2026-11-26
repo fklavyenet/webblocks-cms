@@ -3,7 +3,7 @@
     $pluginSetupText = fn (string $key, array $replace = []) => app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->admin('plugin_setup.'.$key, $pluginSetupLocale, $replace);
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $title, 'heading' => $pluginSetupText('heading')])
+@extends('webblocks-cms::layouts.admin', ['title' => $pluginSetupText('title'), 'heading' => $pluginSetupText('title')])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [

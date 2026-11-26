@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.144.32
+
+- Use localized screen titles with a single WebBlocks CMS suffix across the panel, authentication, installation, recovery and panel errors.
+- Identify profile editing by the authenticated account’s current name and preserve product-name text in authored record titles.
+- Serve the existing CMS favicon mark through one content-versioned asset set, including 16/32/48 px ICO fallbacks, without changing public site branding.
+- Use consistent profile, users, Extensions and update-action icons while preserving native WebBlocks UI sizing and accessible action labels.
+
 ## 1.144.31
 
 - Align admin resource-list columns around record identity and status while preserving sorting, filters, permissions and saved-view visibility.

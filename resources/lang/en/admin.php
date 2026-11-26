@@ -662,6 +662,7 @@ return [
     'showing' => 'Showing :first-:last of :total',
   ],
   'profile' => [
+    'edit_title' => 'Edit profile: :name',
     'title' => 'Profile',
     'description' => 'Manage your account details and password.',
     'information_title' => 'Profile information',
@@ -3230,6 +3231,7 @@ return [
     'og_image_help' => 'Overrides the site-level social image for this locale when the selected image has a public URL.',
   ],
   'auth' => [
+    'install_title' => 'Installation',
     'login_title' => 'Sign in',
     'login_meta' => 'Sign in to WebBlocks CMS and manage your content workspace.',
     'welcome_back' => 'Welcome back',

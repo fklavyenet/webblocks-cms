@@ -21,7 +21,7 @@
         ->all();
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $adminText('site_transfers.import_details'), 'heading' => $adminText('site_transfers.import_details')])
+@extends('webblocks-cms::layouts.admin', ['title' => $siteImport->source_archive_name ?? $adminText('site_transfers.import_number', ['id' => $siteImport->id]), 'heading' => $siteImport->source_archive_name ?? $adminText('site_transfers.import_number', ['id' => $siteImport->id])])
 
 @section('content')
     @php

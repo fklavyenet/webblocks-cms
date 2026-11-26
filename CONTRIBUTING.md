@@ -62,6 +62,75 @@ trailing period. Use the shared `wb-breadcrumb` component with equal CSS
 spacing on both sides of the decorative slash. Keep separators and spacing
 characters out of translated breadcrumb labels.
 
+## Product browser identity and interface icons
+
+Pass raw localized screen titles to the admin, guest and recovery layouts.
+`WebBlocks::browserTitle()` composes `Page title - WebBlocks CMS`, or just
+`WebBlocks CMS` for an empty title. The admin compatibility method
+`SystemSettings::adminBrowserTitle()` delegates to it. Compose the suffix only
+at the layout boundary; do not supply a precomposed `adminBrowserTitle` from a
+controller. Keep the visible heading and current breadcrumb about the same
+screen/record, with no product suffix. Preserve authored record names verbatim,
+including names containing or ending with the product name.
+Profile editing uses localized `Edit profile: :name` from the authenticated
+account, including its current name after an update.
+
+`partials.product-favicons` declares the approved CMS mark, independently of
+theme/accent settings. The retained favicon files under `public/cms/brand/` are
+`favicon.svg`, `favicon-16x16.png`, `favicon-32x32.png`, `favicon.ico` (16/32/48)
+and `apple-touch-icon.png` (180). Their URLs carry a content hash. The SVG is
+standalone artwork; shell brand SVGs remain separate. There is no CMS PWA
+manifest, so this contract adds no installable-app icons. Assets stay under
+`cms/brand`; publishing/synchronizing package assets must not replace a host's
+root favicon. Existing standalone logo files remain for installed consumers.
+
+These product rules cover panel, auth, installation, MCP consent, recovery and panel errors.
+Public SEO titles, public preview titles, configured site favicons, host error
+overrides and saved site-specific system/maintenance pages retain their own
+identity. Public fallback errors keep site titles; only their existing packaged
+favicon fallback uses the shared partial. The database-independent maintenance
+fallback uses the CMS title helper and root-relative favicon URLs.
+
+Shared icon concepts use these `wb-icon-` suffixes:
+
+| Concept | Icon |
+| --- | --- |
+| Dashboard | `layout-dashboard` |
+| Profile / users | `user-round` / `users` |
+| Settings / security | `settings` / `shield-check` |
+| Languages / pages and documents | `languages` / `file-text` |
+| Extensions / history | `plug` / `history` |
+| View / edit / delete | `eye` / `pencil` / `trash` |
+| Add / save | `plus` / `save` |
+| Search / copy | `search` / `copy` |
+| Refresh and check for updates | `refresh-cw` |
+| Download and install an update | `download` |
+| External destination | `external-link` |
+
+Validate static and selected icons against the bundled UI registry and CSS at
+`public/cms/webblocks-ui/v2.39.0`. In this pin, `refresh-cw` is a shipped CSS
+alias of registry icon `rotate-cw`, with the same mask; it is deliberately
+absent as a separate registry entry. Do not patch the bundled runtime or seed
+an extra catalog icon to disguise that distinction. Redo retains `rotate-cw`.
+Plugin-owned icons and authored icon choices retain their catalog validation.
+
+CMS domain icons remain distinct: sites/domains `globe`, blocks `blocks`,
+shared slots `component`, navigation `network`, media `image`, code assets
+`code`, notes `sticky-note`, dynamic sources `database`, jobs `clock`,
+health `activity`, reports `bar-chart`, engagement `mouse-pointer-click`,
+contact messages `mail`, tokens `key-round`, themes `palette`, layouts
+`layout`, slot types `columns2`, block types `box`, embedded applications
+`square-terminal`, icon catalog `sparkles`, backups `database-backup`,
+cleanup `trash2`, and transfers `arrow-up-down`. System grouping keeps
+`palette` and maintenance grouping keeps `file`; these headings describe
+collections rather than Settings or Documents. Initial package installation
+keeps `package`; update availability keeps `arrow-up-circle`.
+
+Decorative icons use `aria-hidden="true"`. Icon-only native controls need a
+localized accessible action name. Sidebar icons stay direct children at
+18 by 18 px with the existing single 18 px child indent. Other controls keep
+native WebBlocks UI dimensions. No new icon runtime or global CSS is needed.
+
 ## Admin form composition
 
 Admin templates must not use HTML `fieldset` or `legend`. Use WebBlocks UI cards

@@ -47,7 +47,6 @@ class DashboardController extends Controller
       'dashboardSchedulerHealth' => $schedulerDashboard['health'],
       'title' => 'Admin Dashboard',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
-      'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Admin Dashboard'),
       'stats' => [
         'pages' => $this->authorization->scopePagesForUser(Page::query(), $request->user())->count(),
         'media' => $this->authorization->scopeMediaForUser(Media::query(), $request->user())->count(),

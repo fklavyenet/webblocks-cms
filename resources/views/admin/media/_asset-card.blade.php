@@ -15,7 +15,7 @@
                 @if ($asset->canPreview())
                     <img src="{{ $asset->transformUrl('thumbnail') }}" alt="{{ $asset->alt_text ?: $assetLabel }}" width="56" height="40" loading="lazy" decoding="async">
                 @else
-                    <span class="wb-action-btn"><i class="wb-icon {{ $asset->kind === \WebBlocks\Cms\Models\Media::KIND_DOCUMENT ? 'wb-icon-file-text' : 'wb-icon-file' }}"></i></span>
+                    <span class="wb-action-btn"><i class="wb-icon {{ $asset->kind === \WebBlocks\Cms\Models\Media::KIND_DOCUMENT ? 'wb-icon-file-text' : 'wb-icon-file' }}" aria-hidden="true"></i></span>
                 @endif
             </div>
 
@@ -46,7 +46,7 @@
                     <img src="{{ $asset->transformUrl('thumbnail') }}" alt="{{ $asset->alt_text ?: $assetLabel }}" width="160" height="112" loading="lazy" decoding="async">
                 @else
                     <div class="wb-cluster wb-cluster-2">
-                        <span class="wb-action-btn" aria-hidden="true"><i class="wb-icon {{ $asset->kind === \WebBlocks\Cms\Models\Media::KIND_DOCUMENT ? 'wb-icon-file-text' : 'wb-icon-file' }}"></i></span>
+                        <span class="wb-action-btn" aria-hidden="true"><i class="wb-icon {{ $asset->kind === \WebBlocks\Cms\Models\Media::KIND_DOCUMENT ? 'wb-icon-file-text' : 'wb-icon-file' }}" aria-hidden="true"></i></span>
                         <span class="wb-text-sm wb-text-muted">{{ ucfirst($asset->kind) }}</span>
                     </div>
                 @endif

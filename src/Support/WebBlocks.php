@@ -10,7 +10,7 @@ final class WebBlocks
 
   public const HANDLE = 'webblocks-cms';
 
-  public const VERSION = '1.144.31';
+  public const VERSION = '1.144.32';
 
   public const UI_VERSION = 'v2.39.0';
 
@@ -47,6 +47,16 @@ final class WebBlocks
   public static function uiVersion(): string
   {
     return self::UI_VERSION;
+  }
+
+  /** Compose a raw, localized screen title; authored record names stay intact. */
+  public static function browserTitle(?string $screenTitle = null): string
+  {
+    $screenTitle = trim((string) $screenTitle);
+
+    return $screenTitle === '' || $screenTitle === self::name()
+      ? self::name()
+      : $screenTitle.' - '.self::name();
   }
 
   public static function faviconUrl(string $filename, bool $rootRelative = false): string

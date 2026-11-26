@@ -63,7 +63,6 @@ class SystemPluginController extends Controller
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.index', [
       'title' => 'Plugins',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
-      'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Plugins'),
       'plugins' => $this->pluginSummaries($updateStatus['updates'] ?? [], $canRestore, $search),
       'search' => $search,
       'canInstallPlugins' => $canInstallPlugins,
@@ -103,7 +102,6 @@ class SystemPluginController extends Controller
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.show', [
       'title' => $definition->labelText(),
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
-      'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle($definition->labelText()),
       'plugin' => $this->pluginSummary($definition->handle()),
     ]);
   }

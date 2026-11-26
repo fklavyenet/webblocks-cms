@@ -27,7 +27,6 @@ class PluginSettingsController extends Controller
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.settings', [
       'title' => $plugin->labelText().' Settings',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
-      'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle($plugin->labelText().' Settings'),
       'plugin' => $plugin,
       'settings' => $plugin->settingsDefinition(),
     ]);

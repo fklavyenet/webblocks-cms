@@ -77,7 +77,7 @@ final class AdminNavigation
 
             if ($user?->can('access-system')) {
                 $coreGroups[2]['items'] = [
-                    ['label' => $adminText('navigation.users'), 'route' => 'admin.users.index', 'active' => ['admin.users.*'], 'icon' => 'wb-icon-user-round'],
+                    ['label' => $adminText('navigation.users'), 'route' => 'admin.users.index', 'active' => ['admin.users.*'], 'icon' => 'wb-icon-users'],
                     ...$coreGroups[2]['items'],
                     ['label' => $adminText('navigation.api_tokens'), 'route' => 'admin.system.api-tokens.index', 'active' => ['admin.system.api-tokens.*'], 'icon' => 'wb-icon-key-round'],
                 ];
@@ -101,7 +101,7 @@ final class AdminNavigation
                 $sidebarGroups[] = [
                     'key' => 'extensions',
                     'label' => $adminText('navigation.extensions'),
-                    'icon' => 'wb-icon-package',
+                    'icon' => 'wb-icon-plug',
                     'items' => [
                         ['label' => $adminText('navigation.plugins'), 'route' => 'admin.system.plugins.index', 'active' => ['admin.system.plugins.*', 'admin.plugins.catalog.*'], 'icon' => 'wb-icon-plug'],
                         ...($user->can('manage-public-themes') && app(PublicThemes::class)->ready() ? [[

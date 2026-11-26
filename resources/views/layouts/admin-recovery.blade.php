@@ -14,7 +14,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        @include('webblocks-cms::partials.head-meta', ['title' => $title.' | '.WebBlocks::name()])
+        @include('webblocks-cms::partials.head-meta', ['title' => WebBlocks::browserTitle($title ?? null), 'brandName' => WebBlocks::name(), 'faviconUrl' => ''])
         <link rel="stylesheet" href="{{ WebBlocks::uiCssUrl() }}">
         <link rel="stylesheet" href="{{ WebBlocks::iconsCssUrl() }}">
         @if (is_file($adminCssPath))
@@ -40,7 +40,7 @@
                 <nav class="wb-sidebar-nav" aria-label="{{ $text('navigation.aria') }}">
                     <details class="wb-nav-group" data-wb-nav-group open>
                         <summary class="wb-nav-group-toggle is-active">
-                            <i class="wb-icon wb-icon-package wb-nav-group-icon" aria-hidden="true"></i>
+                            <i class="wb-icon wb-icon-plug wb-nav-group-icon" aria-hidden="true"></i>
                             <span class="wb-nav-group-label">{{ $text('navigation.extensions') }}</span>
                             <span class="wb-nav-group-arrow" aria-hidden="true"></span>
                         </summary>

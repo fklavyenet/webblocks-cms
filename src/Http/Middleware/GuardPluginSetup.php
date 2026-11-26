@@ -28,7 +28,6 @@ class GuardPluginSetup
       return response()->view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.system.plugins.setup-required', [
         'title' => 'Plugin Setup Required',
         'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
-        'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Plugin Setup Required'),
         'message' => 'Setup required. Plugin migrations pending. Release tables are missing.',
         'pluginDetailUrl' => route('admin.system.plugins.show', $plugin),
       ]);

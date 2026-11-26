@@ -18,7 +18,7 @@
     $archiveFeedback = static fn ($resolution) => $resolution ? $adminText('backups.archive_feedback.'.$resolution->status) : $adminText('backups.archive_unavailable');
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $adminText('backups.details'), 'heading' => $adminText('backups.details')])
+@extends('webblocks-cms::layouts.admin', ['title' => $backup->archive_filename ?? $adminText('backups.backup_number', ['id' => $backup->id]), 'heading' => $backup->archive_filename ?? $adminText('backups.backup_number', ['id' => $backup->id])])
 
 @section('content')
     @php($archiveResolution = $archiveResolution ?? null)

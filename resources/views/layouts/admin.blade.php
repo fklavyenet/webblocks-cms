@@ -13,7 +13,7 @@
 @endphp
 <html lang="{{ str_replace('_', '-', $adminLocale) }}">
     @php
-        $resolvedAdminBrowserTitle = app(SystemSettings::class)->adminBrowserTitle($adminBrowserTitle ?? $title ?? null);
+        $resolvedAdminBrowserTitle = app(SystemSettings::class)->adminBrowserTitle($title ?? $heading ?? null);
         $adminCssPath = public_path('cms/css/admin.css');
         $publicCssPath = public_path('cms/css/public.css');
         $adminJsAssets = [
@@ -30,6 +30,8 @@
 
         @include('webblocks-cms::partials.head-meta', [
             'title' => $resolvedAdminBrowserTitle,
+            'brandName' => WebBlocks::name(),
+            'faviconUrl' => '',
             'metaDescription' => $metaDescription ?? $adminSlogan,
         ])
 
@@ -73,7 +75,7 @@
                     })
                     ->filter()
                     ->first();
-                $currentTitle = $heading ?? $title ?? $activeGroup['item']['label'] ?? $activeTopItem['label'] ?? $adminText('navigation.dashboard');
+                $currentTitle = $title ?? $heading ?? $activeGroup['item']['label'] ?? $activeTopItem['label'] ?? $adminText('navigation.dashboard');
 
                 if ($currentTitle === 'Dashboard') {
                     $currentTitle = $adminText('navigation.dashboard');
@@ -295,7 +297,7 @@
 
                             <div class="wb-dropdown-menu" id="admin-user-menu">
                                 @if (Route::has('admin.profile.edit'))
-                                    <a href="{{ route('admin.profile.edit') }}" class="wb-dropdown-item"><i class="wb-icon wb-icon-user" aria-hidden="true"></i>{{ $adminText('topbar.profile') }}</a>
+                                    <a href="{{ route('admin.profile.edit') }}" class="wb-dropdown-item"><i class="wb-icon wb-icon-user-round" aria-hidden="true"></i>{{ $adminText('topbar.profile') }}</a>
                                     <hr class="wb-dropdown-divider">
                                 @endif
                                 <form class="wb-user-menu-form" method="POST" action="{{ route('webblocks.auth.logout') }}">

@@ -32,7 +32,6 @@ class PluginCatalogController extends Controller
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.plugins.catalog.index', [
       'title' => 'Plugin Catalog',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
-      'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('Plugin Catalog'),
       'catalog' => $result,
     ]);
   }
@@ -45,7 +44,6 @@ class PluginCatalogController extends Controller
     return view(WebBlocksCmsServiceProvider::VIEW_NAMESPACE.'::admin.plugins.catalog.show', [
       'title' => $title,
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
-      'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle($title),
       'catalog' => $result,
       'handle' => $handle,
       'installedState' => $this->installedState($handle),

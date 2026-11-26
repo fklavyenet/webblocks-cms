@@ -57,12 +57,7 @@
     <link rel="shortcut icon" href="{{ $faviconUrl }}">
     <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
 @else
-    @php($faviconPng32Url = \WebBlocks\Cms\Support\WebBlocks::faviconUrl('favicon-32x32.png'))
-    <link rel="icon" type="image/svg+xml" href="{{ \WebBlocks\Cms\Support\WebBlocks::faviconUrl('favicon.svg') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ \WebBlocks\Cms\Support\WebBlocks::faviconUrl('favicon-16x16.png') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ $faviconPng32Url }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ \WebBlocks\Cms\Support\WebBlocks::faviconUrl('apple-touch-icon.png') }}">
-    <link rel="shortcut icon" href="{{ $faviconPng32Url }}">
+    @include('webblocks-cms::partials.product-favicons')
 @endif
 @if ($ogTitle !== '')
     <meta property="og:title" content="{{ $ogTitle }}">

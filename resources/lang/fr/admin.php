@@ -538,6 +538,7 @@ $translations = [
     'showing' => 'Affichage de :first-:last sur :total',
   ],
   'profile' => [
+    'edit_title' => 'Modifier le profil : :name',
     'title' => 'Profil',
     'description' => 'Gérez les informations de votre compte et votre mot de passe.',
     'information_title' => 'Informations du profil',
@@ -2998,6 +2999,7 @@ $translations = [
     'og_image_help' => 'Remplace l\'image de partage du site pour cette langue lorsque l\'image sélectionnée possède une URL publique.',
   ],
   'auth' => [
+    'install_title' => 'Installation',
     'login_title' => 'Connexion',
     'login_meta' => 'Connectez-vous à WebBlocks CMS et gérez votre espace de contenu.',
     'welcome_back' => 'Bon retour',

@@ -5,13 +5,14 @@
     $adminLocale = app(AdminLocaleResolver::class)->locale();
     $adminTranslator = app(CmsTranslator::class);
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin('profile.'.$key, $adminLocale, $replace);
+    $profileTitle = $adminText('edit_title', ['name' => request()->user()->name]);
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $adminText('title'), 'heading' => $adminText('title')])
+@extends('webblocks-cms::layouts.admin', ['title' => $profileTitle, 'heading' => $profileTitle])
 
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
-        'title' => $adminText('title'),
+        'title' => $profileTitle,
         'description' => $adminText('description'),
         'actions' => '<a href="'.e(route('admin.profile.api-tokens.index')).'" class="wb-btn wb-btn-secondary">'.e($adminText('api_tokens.manage')).'</a> <a href="'.e(route('admin.profile.mcp-connections.index')).'" class="wb-btn wb-btn-secondary">'.e(__('webblocks-cms::mcp.connections')).'</a>',
     ])

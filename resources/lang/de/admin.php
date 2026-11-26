@@ -539,6 +539,7 @@ $translations = [
     'showing' => ':first-:last von :total',
   ],
   'profile' => [
+    'edit_title' => 'Profil bearbeiten: :name',
     'title' => 'Profil',
     'description' => 'Verwalte deine Kontodaten und dein Passwort.',
     'information_title' => 'Profilinformationen',
@@ -3000,6 +3001,7 @@ $translations = [
     'og_image_help' => 'Überschreibt das Site-weite Social-Bild für diese Sprache, wenn das ausgewählte Bild eine öffentliche URL hat.',
   ],
   'auth' => [
+    'install_title' => 'Installation',
     'login_title' => 'Anmelden',
     'login_meta' => 'Melden Sie sich bei WebBlocks CMS an und verwalten Sie Ihren Content-Arbeitsbereich.',
     'welcome_back' => 'Willkommen zurück',

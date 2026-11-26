@@ -10,7 +10,7 @@
     $yesNoLabel = static fn (bool $value) => $value ? $adminText('common.yes') : $adminText('common.no');
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $adminText('site_transfers.export_details'), 'heading' => $adminText('site_transfers.export_details')])
+@extends('webblocks-cms::layouts.admin', ['title' => $siteExport->archive_name ?? $adminText('site_transfers.export_number', ['id' => $siteExport->id]), 'heading' => $siteExport->archive_name ?? $adminText('site_transfers.export_number', ['id' => $siteExport->id])])
 
 @section('content')
     @php($manifest = $siteExport->manifest_json ?? [])

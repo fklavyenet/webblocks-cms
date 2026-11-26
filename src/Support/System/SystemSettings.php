@@ -319,43 +319,7 @@ class SystemSettings
 
   public function adminBrowserTitle(?string $screenTitle = null): string
   {
-    $productName = WebBlocks::name();
-    $screenTitle = $this->normalizedAdminScreenTitle($screenTitle, $productName);
-
-    if ($screenTitle === null || $screenTitle === $productName) {
-      return $productName;
-    }
-
-    if (str_contains($screenTitle, $productName)) {
-      return $screenTitle;
-    }
-
-    return $screenTitle.' - '.$productName;
-  }
-
-  private function normalizedAdminScreenTitle(?string $screenTitle, string $productName): ?string
-  {
-    $screenTitle = $this->trimmed($screenTitle);
-
-    if ($screenTitle === null) {
-      return null;
-    }
-
-    $screenTitle = preg_replace('/\s+/', ' ', $screenTitle) ?: $screenTitle;
-
-    if ($screenTitle === 'Admin Dashboard') {
-      return 'Dashboard';
-    }
-
-    foreach ([' - ', ' · '] as $separator) {
-      $suffix = $separator.$productName;
-
-      if (str_ends_with($screenTitle, $suffix)) {
-        return $this->trimmed(substr($screenTitle, 0, -strlen($suffix))) ?? $productName;
-      }
-    }
-
-    return $screenTitle;
+    return WebBlocks::browserTitle($screenTitle);
   }
 
   public function visitorConsentBannerEnabled(): bool

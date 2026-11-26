@@ -71,7 +71,6 @@ class CmsApiTokenController extends Controller
       })->all(),
       'title' => 'CMS API Tokens',
       'adminProjectIdentity' => $this->systemSettings->adminProjectIdentity(),
-      'adminBrowserTitle' => $this->systemSettings->adminBrowserTitle('CMS API Tokens'),
       'tokens' => $tokens,
       'totalCount' => $totalCount,
       'apiBaseUrl' => url('/webadmin/api'),

@@ -2952,6 +2952,33 @@ Public HTML 404s use the site's published error design while retaining status 40
 Site exports carry `system_page_key` for bound designs and omit unbound System Page staging/revision copies. The page API exposes `system_page_key`, including the source identity for staged copies. Site imports retain this identity in SQL and keep imported system designs in draft; they never activate a feature or publish a screen merely by importing. Full backups include the relational binding table. Search and cookie preferences remain current-page modal tools, not System Page definitions. Authentication, installer and recovery screens remain operational surfaces outside the public System Pages catalogue.
 
 The existing path-based Site Promotion flow refuses packages containing System Pages rather than creating unbound designs or archiving target screen records. Transfer those designs with Site Import; export only ordinary pages when preparing a content promotion package. Automatic page templates and navigation destinations cannot select a System Page.
+
+## Product browser identity
+
+Panel, auth, installation, MCP consent, recovery and panel errors compose a raw localized
+screen title as `Page title - WebBlocks CMS` through the common server-side
+helper; an empty screen title displays the product name once. Visible headings
+and current breadcrumbs identify the same screen/record without a product
+suffix. Authored record names retain any product-name text. Public SEO titles,
+site-specific favicons and system-page designs, public previews and host-owned
+error views retain their own identity.
+Profile editing uses localized `Edit profile: :name` from the authenticated
+account, including its current name after an update.
+
+The shared product favicon partial serves content-versioned namespaced SVG,
+16/32 PNG, 16/32/48 ICO and 180 Apple touch assets. The existing CMS mark is
+independent of accent settings. No PWA is introduced. The defensive maintenance
+fallback uses the same helper and root-relative icons without database access;
+compiled site-specific maintenance designs retain their site title.
+
+Shared functional icons follow CONTRIBUTING.md's semantic dictionary. Profile
+uses `user-round`, users `users`, Extensions `plug`, update checks `refresh-cw`
+and update installation `download`. In the pinned UI, `refresh-cw` is a shipped
+CSS alias of registry icon `rotate-cw`. Domain-specific icons remain documented
+separately. Decorative icons are hidden from assistive technology and icon-only
+controls have localized action names. Existing sidebar direct-child icons,
+18 by 18 sizing and single 18 px indentation remain; other UI sizes stay native.
+
 ## Administration navigation placement
 
 Dashboard, Sites, Pages, Media and Assets are direct sidebar destinations in that

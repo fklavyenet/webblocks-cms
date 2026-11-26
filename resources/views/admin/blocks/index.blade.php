@@ -8,7 +8,7 @@
     $blocksIndexTitle = $currentPage ? $blocksIndexText('blocks_for_page', ['title' => $currentPage->title]) : $blocksIndexText('blocks');
 @endphp
 
-@extends('webblocks-cms::layouts.admin', ['title' => $blocksIndexText('blocks'), 'heading' => $blocksIndexText('blocks')])
+@extends('webblocks-cms::layouts.admin', ['title' => $blocksIndexTitle, 'heading' => $blocksIndexTitle])
 
 @section('content')
 @php

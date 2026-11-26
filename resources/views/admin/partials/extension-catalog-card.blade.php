@@ -5,7 +5,7 @@
         </a>
     @elseif (isset($coverIcon))
         <div class="wb-card-media wb-card-media--aspect-wide wb-cms-catalog-cover" aria-hidden="true">
-            <i class="wb-icon wb-icon-{{ $coverIcon }}"></i>
+            <i class="wb-icon wb-icon-{{ $coverIcon }}" aria-hidden="true"></i>
         </div>
     @endif
 
