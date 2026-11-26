@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.33
+
+- Keep the Media File details dialog scrollable through the complete File and Storage tables, including long filenames and storage paths.
+- Allow keyboard focus and scrolling within the details body while retaining the existing dialog layout and close controls.
+
 ## 1.144.32
 
 - Use localized screen titles with a single WebBlocks CMS suffix across the panel, authentication, installation, recovery and panel errors.

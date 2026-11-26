@@ -223,8 +223,8 @@
                         </a>
                     </div>
 
-                    <div class="wb-modal-body wb-stack wb-gap-4 wb-text-sm">
-                        <div class="wb-card wb-card-muted">
+                    <div class="wb-modal-body wb-stack wb-gap-4 wb-text-sm" role="region" aria-labelledby="{{ $fileDetailsModalTitleId }}" tabindex="0">
+                        <div class="wb-card wb-card-muted wb-flex-shrink-0">
                             <div class="wb-card-header"><strong>{{ $adminText('file') }}</strong></div>
                             <div class="wb-card-body wb-stack wb-gap-3">
                                 <div class="wb-table-wrap">
@@ -244,7 +244,7 @@
                             </div>
                         </div>
 
-                        <div class="wb-card wb-card-muted">
+                        <div class="wb-card wb-card-muted wb-flex-shrink-0">
                             <div class="wb-card-header"><strong>{{ $adminText('storage') }}</strong></div>
                             <div class="wb-card-body">
                                 <div class="wb-table-wrap">

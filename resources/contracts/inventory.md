@@ -3018,6 +3018,8 @@ Read-only summary cards and dialogs use compact native tables with row headings
 for a single record and column headings for repeated records. This includes
 page and block editors, revision records, media details and usage, content
 source metadata, site transfers, operational summaries and report details.
+In Media File details, the dialog body scrolls through the complete File and
+Storage tables and can receive keyboard focus.
 System and personal API token activity show the complete stored user agent in
 an expandable table cell. The legacy public Page Summary and Page Meta blocks
 show page properties in native tables with labels in the content language.
