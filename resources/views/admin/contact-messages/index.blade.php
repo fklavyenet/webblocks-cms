@@ -18,7 +18,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('title'),
-        'description' => $adminText('description'),
+        'description' => null,
         'count' => $totalCount,
     ])
 
@@ -109,9 +109,12 @@
     @else
         <div class="wb-card" data-wb-admin-bulk-listing>
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $adminText('title') }}</strong>
-                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $messages->total() }}</span>
+                <div>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>{{ $adminText('title') }}</strong>
+                        <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $messages->total() }}</span>
+                    </div>
+                    <p class="wb-card-description">{{ $adminText('description') }}</p>
                 </div>
             </div>
             <div class="wb-card-body">
@@ -144,9 +147,9 @@
                                     </label>
                                 </th>
                                 <th>{{ $adminText('name') }}</th>
+                                <th>{{ $adminText('editorial_status') }}</th>
                                 <th>{{ $adminText('email') }}</th>
                                 <th>{{ $adminText('subject') }}</th>
-                                <th>{{ $adminText('editorial_status') }}</th>
                                 <th>{{ $adminText('email_notification') }}</th>
                                 <th>{{ $adminText('received') }}</th>
                                 <th>{{ $adminText('actions') }}</th>
@@ -166,7 +169,13 @@
                                         </label>
                                     </td>
                                     <td class="wb-contact-message-cell">
-                                        <strong>{{ $message->name ?? '—' }}</strong>
+                                        <strong><a href="{{ route('admin.contact-messages.show', $message) }}" class="wb-link">{{ $message->name ?? '—' }}</a></strong>
+                                    </td>
+                                    <td>
+                                        <span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span>
+                                        @if ($message->spam_score > 0)
+                                            <div class="wb-text-sm wb-text-muted">{{ $adminText('spam_score', ['score' => $message->spam_score]) }}</div>
+                                        @endif
                                     </td>
                                     <td class="wb-contact-message-cell"><a href="mailto:{{ $message->email }}" class="wb-link">{{ $message->email }}</a></td>
                                     <td class="wb-contact-message-cell">
@@ -174,12 +183,6 @@
                                             {{ $message->subject }}
                                         @else
                                             <span class="wb-text-sm wb-text-muted">&mdash;</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <span class="wb-status-pill {{ $message->statusClass() }}">{{ $message->status }}</span>
-                                        @if ($message->spam_score > 0)
-                                            <div class="wb-text-sm wb-text-muted">{{ $adminText('spam_score', ['score' => $message->spam_score]) }}</div>
                                         @endif
                                     </td>
                                     <td>

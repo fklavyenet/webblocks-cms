@@ -11,6 +11,7 @@ use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Models;
 use WebBlocks\Cms\Queries\AdminTableSort;
 use WebBlocks\Cms\Support\System\SystemSettings;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Tests\CmsSqlTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -122,11 +123,79 @@ class AdminTableSortingTest extends TestCase
       $xpath = new DOMXPath($dom);
       $header = $xpath->query('//table[@data-wb-sort-param="'.$sort->sortParam().'"]//th[@data-wb-sort="'.$key.'"]')->item(0);
       $this->assertNotNull($header);
+      $expectedHeadings = [
+        'pages' => ['title', 'status', 'blocks_count', 'updated_at'],
+        'media' => ['title', 'folder', 'usage', 'updated_at'],
+        'sites' => ['name', 'is_primary', 'handle', 'pages_count'],
+        'shared-slots' => ['name', 'handle', 'slot_name', 'public_shell', 'updated_at'],
+        'blocks' => ['id', 'status', 'sort_order'],
+        'automatic-pages' => ['name', 'status', 'source_handle', 'base_path'],
+        'site-domains' => ['domain', 'status', 'is_primary', 'redirect_to_primary'],
+        'page-layouts' => ['name', 'is_active', 'handle', 'body_class', 'sort_order'],
+        'slot-types' => ['name', 'status', 'slug', 'axis', 'sort_order'],
+        'block-types' => ['name', 'status', 'category'],
+        'icons' => ['label', 'is_active', 'source', 'sort_order'],
+        'embedded-applications' => ['name', 'is_enabled', 'handle', 'render_mode'],
+        'users' => ['name', 'is_active', 'email', 'last_login_at'],
+        'backups' => ['archive_filename', 'status', 'archive_size_bytes', 'created_at'],
+      ];
+      if (isset($expectedHeadings[$listing])) {
+        $actual = [];
+        foreach ($xpath->query('//table[@data-wb-sort-param="'.$sort->sortParam().'"]/thead/tr/th[@data-wb-sort]') as $heading) {
+          $actual[] = $heading->getAttribute('data-wb-sort');
+        }
+        $this->assertSame($expectedHeadings[$listing], $actual);
+      }
+      if ($listing !== 'engagement') {
+        $this->assertGreaterThan(0, $xpath->query('//div[contains(@class, "wb-card-header")]//p[contains(@class, "wb-card-description")]')->length);
+      }
+
       $this->assertSame($direction === 'asc' ? 'ascending' : 'descending', $header->getAttribute('aria-sort'));
       $link = $xpath->query('.//a', $header)->item(0);
       parse_str(parse_url($link->getAttribute('href'), PHP_URL_QUERY), $query);
       $this->assertSame($direction === 'asc' ? 'desc' : 'asc', $query[$sort->directionParam()]);
       $this->assertSame('1', $query[$sort->pageParam()]);
+    }
+  }
+
+  #[Test]
+  public function filtered_empty_lists_keep_their_explanation_and_reset_action(): void
+  {
+    foreach (['admin.pages.index', 'admin.media.index', 'admin.users.index', 'admin.shared-slots.index', 'admin.blocks.index', 'admin.system.icons.index'] as $route) {
+      $parameters = $route === 'admin.blocks.index' ? ['status' => 'published'] : ['site' => 'all', 'search' => 'No synthetic record matches this', 'q' => 'No synthetic record matches this'];
+      $response = $this->get(route($route, $parameters))->assertOk();
+      $dom = new DOMDocument;
+      @$dom->loadHTML($response->getContent());
+      $xpath = new DOMXPath($dom);
+      $this->assertGreaterThan(0, $xpath->query('//div[contains(@class, "wb-card-header")]//p[contains(@class, "wb-card-description")]')->length, $route);
+      $this->assertGreaterThan(0, $xpath->query('//div[contains(@class, "wb-empty")]')->length, $route);
+    }
+  }
+
+  #[Test]
+  public function record_names_use_the_existing_read_target_instead_of_mutating_or_editing(): void
+  {
+    foreach ([
+      ['admin.pages.index', 'wb-admin-pages-table', 'pageDetailsModal-'],
+      ['admin.sites.index', '', 'siteDetailsModal'],
+      ['admin.block-types.index', '', 'blockTypeContractModal-'],
+      ['admin.media.index', '', ''],
+    ] as [$route, $tableClass, $controls]) {
+      $response = $this->get(route($route))->assertOk();
+      $dom = new DOMDocument;
+      @$dom->loadHTML($response->getContent());
+      $xpath = new DOMXPath($dom);
+      $table = $tableClass ? '//table[contains(@class, "'.$tableClass.'")]' : '//table[@data-wb-table-sort]';
+      $row = $table.'/tbody/tr[1]';
+      $name = $xpath->query($row.'/td//strong/a')->item(0);
+      $this->assertNotNull($name, $route);
+      $target = $controls
+        ? $xpath->query($row.'//a[contains(@class, "wb-action-btn") and starts-with(@aria-controls, "'.$controls.'")]')->item(0)
+        : $xpath->query($row.'//a[contains(@class, "wb-action-btn-view")]')->item(0);
+      $this->assertNotNull($target, $route);
+      $this->assertSame($target->getAttribute('href'), $name->getAttribute('href'), $route);
+      $this->assertSame($target->getAttribute('target'), $name->getAttribute('target'), $route);
+      $this->assertSame(0, $xpath->query('ancestor::form', $name)->length);
     }
   }
 
@@ -292,9 +361,9 @@ class AdminTableSortingTest extends TestCase
       $this->assertSame(0, $xpath->query('//select[@id="listing_column_0"]/option[@value="id"]')->length);
       foreach (['view' => null, 'blocks' => 'blocks_count', 'status' => 'status', 'updated' => 'updated_at'] as $column => $sortKey) {
         $heading = $sortKey === null
-          ? $xpath->query('//table[contains(@class, "wb-admin-pages-table")]/thead/tr/th[2]')->item(0)
+          ? null
           : $xpath->query('//th[@data-wb-sort="'.$sortKey.'"]')->item(0);
-        $this->assertSame(trim($heading->textContent), trim($xpath->query('//select[@id="listing_column_0"]/option[@value="'.$column.'"]')->item(0)->textContent));
+        $this->assertSame($heading ? trim($heading->textContent) : app(CmsTranslator::class)->admin('pages.columns.view', $locale), trim($xpath->query('//select[@id="listing_column_0"]/option[@value="'.$column.'"]')->item(0)->textContent));
       }
     }
   }

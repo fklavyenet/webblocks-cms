@@ -16,7 +16,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $systemPluginsIndexText('plugins'),
-        'description' => $systemPluginsIndexText('description'),
+        'description' => null,
         'actions' => '<a href="'.e(route('admin.plugins.catalog.index')).'" class="wb-btn wb-btn-secondary"><i class="wb-icon wb-icon-search" aria-hidden="true"></i> '.e($systemPluginsIndexText('browse_plugin_catalog')).'</a>',
     ])
 
@@ -28,11 +28,14 @@
     ])
 
     <section class="wb-card" id="registered-plugins" aria-labelledby="registered-plugins-title">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <h2 class="wb-card-title" id="registered-plugins-title">{{ $systemPluginsIndexText('registered_plugins') }}</h2>
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+            <div>
+                <h2 class="wb-card-title" id="registered-plugins-title">{{ $systemPluginsIndexText('registered_plugins') }}</h2>
+                <p class="wb-card-description">{{ $systemPluginsIndexText('description') }}</p>
+            </div>
 
             @if ($canInstallPlugins)
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-flex-wrap">
                     @if ($pluginCatalogUpdateStatus['checked_at'] ?? null)
                         <span class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('catalog_checked_at', [
                             'time' => \Illuminate\Support\Carbon::createFromTimestamp($pluginCatalogUpdateStatus['checked_at'], config('app.timezone'))->format('Y-m-d H:i'),
@@ -76,8 +79,8 @@
                         <thead>
                             <tr>
                                 <th scope="col" class="wb-plugins-cell-name">{{ __('webblocks-cms::admin.extensions_ui.name') }}</th>
-                                <th scope="col" class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('version') }}</th>
                                 <th scope="col" class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('status') }}</th>
+                                <th scope="col" class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('version') }}</th>
                                 <th scope="col" class="wb-plugins-cell-health">{{ $systemPluginsIndexText('health') }}</th>
                                 <th scope="col" class="wb-plugins-cell-tight">{{ $systemPluginsIndexText('actions') }}</th>
                             </tr>
@@ -106,12 +109,6 @@
                                         ])
                                     </td>
                                     <td class="wb-plugins-cell-tight">
-                                        {{ $plugin['version'] ?? $systemPluginsIndexText('not_declared') }}
-                                        @if ($plugin['catalog_update'])
-                                            <div class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('update_available', ['version' => $plugin['catalog_update']['version']]) }}</div>
-                                        @endif
-                                    </td>
-                                    <td class="wb-plugins-cell-tight">
                                         <span class="wb-status-pill {{ $statusClass }}">
                                             {{ $plugin['database_setup_failed'] ? $systemPluginsIndexText('database_update_failed') : ($plugin['migrations_pending'] ? $systemPluginsIndexText('database_update_required') : $plugin['lifecycle_label']) }}
                                         </span>
@@ -125,6 +122,12 @@
                                         @endif
                                         @if ($plugin['database_setup_failed'])
                                             <div class="wb-text-sm"><a href="{{ route('admin.system.plugins.show', $plugin['handle']) }}">{{ $systemPluginsIndexText('retry_database_update') }}</a></div>
+                                        @endif
+                                    </td>
+                                    <td class="wb-plugins-cell-tight">
+                                        {{ $plugin['version'] ?? $systemPluginsIndexText('not_declared') }}
+                                        @if ($plugin['catalog_update'])
+                                            <div class="wb-text-sm wb-text-muted">{{ $systemPluginsIndexText('update_available', ['version' => $plugin['catalog_update']['version']]) }}</div>
                                         @endif
                                     </td>
                                     <td class="wb-plugins-cell-health">

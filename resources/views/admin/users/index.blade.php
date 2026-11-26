@@ -16,7 +16,7 @@
 
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('title'),
-        'description' => $adminText('description'),
+        'description' => null,
         'count' => $totalCount,
     ])
 
@@ -66,10 +66,13 @@
 
     @if ($users->isEmpty())
         <div class="wb-card">
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $adminText('title') }}</strong>
-                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+                <div>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>{{ $adminText('title') }}</strong>
+                        <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                    </div>
+                    <p class="wb-card-description">{{ $adminText('description') }}</p>
                 </div>
 
                 <a href="{{ route('admin.users.create') }}" class="wb-btn wb-btn-primary">{{ $adminText('add_user') }}</a>
@@ -92,10 +95,13 @@
         </div>
     @else
         <div class="wb-card" data-wb-admin-bulk-listing>
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $adminText('title') }}</strong>
-                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+                <div>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>{{ $adminText('title') }}</strong>
+                        <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                    </div>
+                    <p class="wb-card-description">{{ $adminText('description') }}</p>
                 </div>
 
                 <a href="{{ route('admin.users.create') }}" class="wb-btn wb-btn-primary">{{ $adminText('add_user') }}</a>
@@ -119,10 +125,10 @@
                                     </label>
                                 </th>
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $adminText('name')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_active', 'label' => $adminText('status')])
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'email', 'label' => $adminText('email')])
                                 <th>{{ $adminText('role') }}</th>
                                 <th>{{ $adminText('site_access') }}</th>
-                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_active', 'label' => $adminText('status')])
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'last_login_at', 'label' => $adminText('last_login')])
                                 <th>{{ $adminText('actions') }}</th>
                             </tr>
@@ -158,10 +164,10 @@
                                             </div>
                                         </div>
                                     </td>
+                                    <td><span class="wb-status-pill {{ $managedUser->statusBadgeClass() }}">{{ $managedUser->statusLabel() }}</span></td>
                                     <td><a href="mailto:{{ $managedUser->email }}" class="wb-link">{{ $managedUser->email }}</a></td>
                                     <td><span class="wb-status-pill {{ $managedUser->roleBadgeClass() }}">{{ $managedUser->roleLabel() }}</span></td>
                                     <td>{{ $managedUser->siteAccessSummary() }}</td>
-                                    <td><span class="wb-status-pill {{ $managedUser->statusBadgeClass() }}">{{ $managedUser->statusLabel() }}</span></td>
                                     <td>{{ $managedUser->lastLoginLabel() }}</td>
                                     <td class="wb-table-actions">
                                         <div class="wb-action-group">

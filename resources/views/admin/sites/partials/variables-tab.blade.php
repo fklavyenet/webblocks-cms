@@ -4,10 +4,10 @@
 @endphp
 
 <div class="wb-card wb-card-muted">
-    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+    <div class="wb-card-header wb-cluster wb-cluster-between">
         <div class="wb-stack wb-gap-1">
             <strong>{{ $adminText('variables') }}</strong>
-            <span class="wb-text-sm wb-text-muted">{!! $adminText('variables_help', ['token' => '<code>'.e($exampleToken).'</code>']) !!}</span>
+            <p class="wb-card-description">{!! $adminText('variables_help', ['token' => '<code>'.e($exampleToken).'</code>']) !!}</p>
         </div>
 
         @if ($site->exists && $canManageSiteSettings)
@@ -44,9 +44,9 @@
                         <thead>
                             <tr>
                                 <th>{{ $adminText('label') }}</th>
+                                <th>{{ $adminText('status') }}</th>
                                 <th>{{ $adminText('token') }}</th>
                                 <th>{{ $adminText('value') }}</th>
-                                <th>{{ $adminText('status') }}</th>
                                 <th>{{ $adminText('sort') }}</th>
                                 <th>{{ $adminText('actions') }}</th>
                             </tr>
@@ -70,12 +70,12 @@
                                             @endif
                                         </div>
                                     </td>
+                                    <td>
+                                        <span class="wb-status-pill {{ $siteVariable->is_enabled ? 'wb-status-active' : 'wb-status-pending' }}">{{ $siteVariable->is_enabled ? $adminText('enabled') : $adminText('disabled') }}</span>
+                                    </td>
                                     <td><code>{{ $token }}</code></td>
                                     <td>
                                         <span title="{{ $siteVariable->value }}">{{ str($siteVariable->value ?? '')->limit(80) }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="wb-status-pill {{ $siteVariable->is_enabled ? 'wb-status-active' : 'wb-status-pending' }}">{{ $siteVariable->is_enabled ? $adminText('enabled') : $adminText('disabled') }}</span>
                                     </td>
                                     <td>{{ $siteVariable->sort_order }}</td>
                                     <td>

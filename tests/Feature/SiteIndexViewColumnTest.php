@@ -44,8 +44,8 @@ class SiteIndexViewColumnTest extends TestCase
 
     $html = $this->renderIndex();
 
-    $this->assertStringContainsString('<th>View</th>', $html);
-    $this->assertStringContainsString('data-column="view"', $html);
+    $this->assertStringNotContainsString('<th>View</th>', $html);
+    $this->assertStringNotContainsString('data-column="view"', $html);
     $this->assertStringContainsString('href="https://shop.example.test/"', $html);
     $this->assertStringContainsString('target="_blank"', $html);
     $this->assertStringContainsString('rel="noopener noreferrer"', $html);
@@ -54,38 +54,35 @@ class SiteIndexViewColumnTest extends TestCase
   }
 
   #[Test]
-  public function the_view_column_leads_the_row(): void
+  public function identity_and_status_lead_the_row_and_public_view_is_a_final_action(): void
   {
     $site = $this->makeSite('shop.example.test');
-
-    $html = $this->renderIndex([$site->id]);
-
     $document = new \DOMDocument;
-    @$document->loadHTML($html);
+    @$document->loadHTML($this->renderIndex([$site->id]));
     $xpath = new \DOMXPath($document);
     $headers = $xpath->query('//table/thead/tr/th');
-    $this->assertSame('View', trim($headers->item(0)->textContent));
-    $this->assertSame('Name', trim($headers->item(1)->textContent));
-    $this->assertFalse($headers->item(0)->hasAttribute('data-wb-sort'));
+    $this->assertSame('Name', trim($headers->item(0)->textContent));
+    $this->assertSame('Status', trim($headers->item(1)->textContent));
     $cells = $xpath->query('//table/tbody/tr[@data-site-id="'.$site->id.'"]/td');
-    $this->assertSame('view', $cells->item(0)->getAttribute('data-column'));
-    $titleLink = $xpath->query('.//a', $cells->item(1))->item(0);
+    $titleLink = $xpath->query('.//a', $cells->item(0))->item(0);
     $this->assertSame('Shop', $titleLink->textContent);
-    $this->assertSame(route('admin.sites.edit', $site), $titleLink->getAttribute('href'));
+    $details = $xpath->query('//td[contains(@class, "wb-table-actions")]//a[@aria-controls="siteDetailsModal"]')->item(0);
+    $this->assertSame($details->getAttribute('href'), $titleLink->getAttribute('href'));
+    $this->assertSame('dialog', $titleLink->getAttribute('aria-haspopup'));
+    $public = $xpath->query('//td[contains(@class, "wb-table-actions")]//a[@target="_blank"]')->item(0);
+    $this->assertSame($site->publicHomeUrl(), $public->getAttribute('href'));
   }
 
   #[Test]
-  public function the_view_column_carries_the_globe_alone(): void
+  public function the_public_view_action_carries_the_globe_and_preserves_its_window(): void
   {
     $this->makeSite('shop.example.test');
-
-    $html = $this->renderIndex();
-
-    $viewCell = $this->cellAfter($html, 'data-column="view"');
-
-    $this->assertStringContainsString('wb-icon-globe', $viewCell);
-    $this->assertStringNotContainsString('wb-icon-panel-right', $viewCell);
-    $this->assertStringNotContainsString('wb-icon-pencil', $viewCell);
+    $document = new \DOMDocument;
+    @$document->loadHTML($this->renderIndex());
+    $xpath = new \DOMXPath($document);
+    $public = $xpath->query('//td[contains(@class, "wb-table-actions")]//a[@target="_blank"]')->item(0);
+    $this->assertSame('noopener noreferrer', $public->getAttribute('rel'));
+    $this->assertSame(1, $xpath->query('.//i[contains(@class, "wb-icon-globe")]', $public)->length);
   }
 
   #[Test]

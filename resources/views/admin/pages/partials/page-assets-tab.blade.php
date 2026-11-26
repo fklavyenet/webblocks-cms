@@ -10,14 +10,14 @@
 @endphp
 
 <div class="wb-card wb-card-muted">
-    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
+    <div class="wb-card-header wb-cluster wb-cluster-between">
         <div class="wb-stack wb-gap-1">
             <strong>{{ $pageAssetsText('title') }}</strong>
-            <span class="wb-text-sm wb-text-muted">{!! $pageAssetsText('description') !!}</span>
+            <p class="wb-card-description">{!! $pageAssetsText('description') !!}</p>
         </div>
 
         @if ($canManagePageAssets)
-            <div class="wb-cluster wb-cluster-2">
+            <div class="wb-cluster">
                 <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'css', 'return_url' => $pageReturnUrl])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">{{ $pageAssetsText('add_css') }}</a>
                 <a href="{{ route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'create-page-asset', 'asset_type' => 'js', 'return_url' => $pageReturnUrl])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">{{ $pageAssetsText('add_js') }}</a>
             </div>
@@ -41,10 +41,10 @@
                 <table class="wb-table wb-table-striped wb-table-hover">
                     <thead>
                         <tr>
-                            <th>{{ $pageAssetsText('type') }}</th>
                             <th>{{ $pageAssetsText('path') }}</th>
-                            <th>{{ $pageAssetsText('loading') }}</th>
                             <th>{{ $pageAssetsText('status') }}</th>
+                            <th>{{ $pageAssetsText('type') }}</th>
+                            <th>{{ $pageAssetsText('loading') }}</th>
                             <th>{{ $pageAssetsText('sort') }}</th>
                             <th>{{ $pageAssetsText('actions') }}</th>
                         </tr>
@@ -53,9 +53,6 @@
                         @foreach ($pageAssets as $pageAsset)
                             @php($editUrl = route('admin.pages.edit', array_filter(['page' => $page, 'tab' => 'page-assets', 'modal' => 'edit-page-asset', 'page_asset' => $pageAsset->id, 'return_url' => $pageReturnUrl])))
                             <tr>
-                                <td>
-                                    <span class="wb-status-pill {{ $pageAsset->type === 'js' ? 'wb-status-pending' : 'wb-status-info' }}">{{ strtoupper($pageAsset->type) }}</span>
-                                </td>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
                                         <span title="{{ $pageAsset->path }}"><code>
@@ -66,6 +63,12 @@
                                             @endif
                                         </code></span>
                                     </div>
+                                </td>
+                                <td>
+                                    <span class="wb-status-pill {{ $pageAsset->is_enabled ? 'wb-status-active' : 'wb-status-danger' }}">{{ $pageAsset->is_enabled ? $pageAssetsText('enabled') : $pageAssetsText('disabled') }}</span>
+                                </td>
+                                <td>
+                                    <span class="wb-status-pill {{ $pageAsset->type === 'js' ? 'wb-status-pending' : 'wb-status-info' }}">{{ strtoupper($pageAsset->type) }}</span>
                                 </td>
                                 <td>
                                     <div class="wb-cluster wb-cluster-2 wb-text-sm">
@@ -80,9 +83,6 @@
                                             <span class="wb-status-pill wb-status-active">{{ $pageAssetsText('module') }}</span>
                                         @endif
                                     </div>
-                                </td>
-                                <td>
-                                    <span class="wb-status-pill {{ $pageAsset->is_enabled ? 'wb-status-active' : 'wb-status-danger' }}">{{ $pageAsset->is_enabled ? $pageAssetsText('enabled') : $pageAssetsText('disabled') }}</span>
                                 </td>
                                 <td>{{ $pageAsset->sort_order }}</td>
                                 <td>

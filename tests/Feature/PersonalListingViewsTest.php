@@ -112,7 +112,7 @@ class PersonalListingViewsTest extends TestCase
   }
 
   #[Test]
-  public function page_list_shows_the_combined_edit_link_and_keeps_legacy_views_usable(): void
+  public function page_list_shows_the_combined_details_link_and_keeps_legacy_views_usable(): void
   {
     $page = Page::create(['site_id' => $this->site->id, 'title' => 'Synthetic page', 'slug' => 'synthetic-page', 'status' => 'draft']);
     $id = $this->createView('pages', $this->payload('pages', ['sort' => 'id'], 'status,view,blocks,updated'));
@@ -133,21 +133,21 @@ class PersonalListingViewsTest extends TestCase
     $this->assertSame('1', trim($xpath->evaluate('string('.$heading.'//*[@data-admin-page-count])')));
     $this->assertSame(1, $xpath->query($table.'/thead/tr/th[1]//input[@data-wb-admin-select-all-visible]')->length);
     $this->assertSame(1, $xpath->query($row.'/td[1]//input[@data-wb-admin-row-select]')->length);
-    $this->assertSame('View', trim($xpath->evaluate('string('.$table.'/thead/tr/th[2])')));
-    $this->assertSame(route('admin.pages.preview', $page), $xpath->evaluate('string('.$row.'/td[2]/a/@href)'));
+    $this->assertSame('Title – ID', trim($xpath->evaluate('string('.$table.'/thead/tr/th[2])')));
+    $this->assertSame(route('admin.pages.preview', $page), $xpath->evaluate('string('.$row.'/td[last()]//a[@target="_blank"]/@href)'));
     $this->assertSame('Title – ID', trim($xpath->evaluate('string('.$table.'/thead//th[@data-wb-sort="title"]/a)')));
     $this->assertSame('Blocks', trim($xpath->evaluate('string('.$table.'/thead//th[@data-wb-sort="blocks_count"]/a)')));
     $this->assertSame(0, $xpath->query($table.'/thead//th[@data-wb-sort="id"]')->length);
     $title = $xpath->query($row.'//div[contains(@class, "wb-admin-pages-title-row")]/strong/a')->item(0);
     $this->assertSame('Synthetic page – '.$page->id, $title->textContent);
     $editUrl = route('admin.pages.edit', ['page' => $page, 'return_url' => $response->viewData('pageReturnUrl')]);
-    $this->assertSame($editUrl, $title->getAttribute('href'));
+    $this->assertSame($xpath->evaluate('string('.$row.'//a[@aria-controls="pageDetailsModal-'.$page->id.'" and contains(@class, "wb-action-btn")]/@href)'), $title->getAttribute('href'));
     $this->assertSame($editUrl, $xpath->evaluate('string('.$row.'//a[contains(@class, "wb-action-btn-edit")]/@href)'));
-    $this->assertSame(3, $xpath->query('//div[contains(@class, "wb-card-header") and contains(@class, "wb-justify-end")]/a')->length);
+    $this->assertSame(3, $xpath->query('//div[contains(@class, "wb-card-header")]/div[@class="wb-cluster"]/a')->length);
 
     $this->index(['site' => $this->site->id, 'search' => 'Missing'])->assertOk()
       ->assertSee('No pages found')
-      ->assertSee('wb-card-header wb-flex-wrap wb-gap-2 wb-justify-end', false);
+      ->assertSee('wb-card-description', false);
   }
 
   #[Test]

@@ -28,7 +28,10 @@
 
     <section class="wb-card" aria-labelledby="installed-language-packs-title">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <h2 id="installed-language-packs-title" class="wb-card-title">{{ $text('installed_packs') }}</h2>
+            <div>
+                <h2 id="installed-language-packs-title" class="wb-card-title">{{ $text('installed_packs') }}</h2>
+                <p class="wb-card-description">{{ __('webblocks-cms::admin_lists.languages') }}</p>
+            </div>
             @if ($manualInstallAvailable)
                 @include('webblocks-cms::admin.partials.extension-upload-button', ['target' => 'panel-language-install'])
             @endif
@@ -44,8 +47,8 @@
                         <thead>
                             <tr>
                                 <th scope="col">{{ __('webblocks-cms::admin.extensions_ui.name') }}</th>
-                                <th scope="col">{{ __('webblocks-cms::admin.system_plugins_index.version') }}</th>
                                 <th scope="col">{{ $text('status') }}</th>
+                                <th scope="col">{{ __('webblocks-cms::admin.system_plugins_index.version') }}</th>
                                 <th scope="col">{{ $text('source_version') }}</th>
                             </tr>
                         </thead>
@@ -65,8 +68,8 @@
                                             'language' => $pack['code'],
                                         ])
                                     </td>
-                                    <td>{{ $pack['release_version'] ?? '—' }}</td>
                                     <td><span class="wb-status-pill {{ $current ? 'wb-status-active' : 'wb-status-pending' }}">{{ $status }}</span></td>
+                                    <td>{{ $pack['release_version'] ?? '—' }}</td>
                                     <td>{{ $pack['source_version'] }}</td>
                                 </tr>
                                 @push('overlays')

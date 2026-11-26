@@ -27,7 +27,10 @@
 
     <section class="wb-card" aria-labelledby="installed-themes-title">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <h2 id="installed-themes-title" class="wb-card-title">{{ $text('installed_themes') }}</h2>
+            <div>
+                <h2 id="installed-themes-title" class="wb-card-title">{{ $text('installed_themes') }}</h2>
+                <p class="wb-card-description">{{ __('webblocks-cms::admin_lists.themes') }}</p>
+            </div>
             @include('webblocks-cms::admin.partials.extension-upload-button', ['target' => 'theme-install'])
         </div>
         <div class="wb-card-body">
@@ -41,8 +44,8 @@
                         <thead>
                             <tr>
                                 <th scope="col">{{ __('webblocks-cms::admin.extensions_ui.name') }}</th>
-                                <th scope="col">{{ __('webblocks-cms::admin.system_plugins_index.version') }}</th>
                                 <th scope="col">{{ $text('status') }}</th>
+                                <th scope="col">{{ __('webblocks-cms::admin.system_plugins_index.version') }}</th>
                                 <th scope="col">{{ $text('layouts') }}</th>
                                 <th scope="col">{{ $text('installed_at') }}</th>
                                 <th scope="col" class="wb-table-actions">{{ $text('actions') }}</th>
@@ -63,7 +66,6 @@
                                             'target' => $detailsId,
                                         ])
                                     </td>
-                                    <td>{{ $version->version }}</td>
                                     <td>
                                         <span class="wb-status-pill {{ $version->compatible ? 'wb-status-active' : 'wb-status-danger' }}">
                                             {{ $text($version->compatible ? 'compatible' : 'incompatible_short') }}
@@ -72,6 +74,7 @@
                                             <p class="wb-text-sm wb-text-muted wb-m-0">{{ $text('incompatible') }}</p>
                                         @endunless
                                     </td>
+                                    <td>{{ $version->version }}</td>
                                     <td>{{ implode(', ', $version->layouts) }}</td>
                                     <td><time datetime="{{ $uploaded->toIso8601String() }}">{{ $uploaded->format('Y-m-d H:i') }}</time></td>
                                     <td class="wb-table-actions">

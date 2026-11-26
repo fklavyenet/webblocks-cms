@@ -6,10 +6,10 @@
 @endphp
 
 <div class="wb-card">
-    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+    <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
         <div class="wb-stack wb-gap-1">
             <strong>{{ $pageLayoutsText('slots_title') }}</strong>
-            <span class="wb-text-sm wb-text-muted">{{ $pageLayoutsText('slots_description') }}</span>
+            <p class="wb-card-description">{{ $pageLayoutsText('slots_description') }}</p>
         </div>
 
         <a href="{{ route('admin.page-layouts.slots.create', $pageLayout) }}" class="wb-btn wb-btn-primary wb-btn-sm">{{ $pageLayoutsText('add_slot') }}</a>
@@ -38,10 +38,10 @@
                 <table class="wb-table wb-table-striped wb-table-hover">
                     <thead>
                         <tr>
-                            <th>{{ $pageLayoutsText('order') }}</th>
                             <th>{{ $pageLayoutsText('slot') }}</th>
-                            <th>{{ $pageLayoutsText('wrapper') }}</th>
                             <th>{{ $pageLayoutsText('status') }}</th>
+                            <th>{{ $pageLayoutsText('wrapper') }}</th>
+                            <th>{{ $pageLayoutsText('order') }}</th>
                             <th>{{ $pageLayoutsText('actions') }}</th>
                         </tr>
                     </thead>
@@ -49,7 +49,6 @@
                         @foreach ($layoutSlots as $layoutSlot)
                             @php($editUrl = route('admin.page-layouts.slots.edit', [$pageLayout, $layoutSlot]))
                             <tr>
-                                <td class="wb-nowrap">{{ $layoutSlot->sort_order }}</td>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
                                         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
@@ -60,13 +59,6 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="wb-stack wb-gap-1 wb-text-sm">
-                                        <div><strong>{{ $pageLayoutsText('element_label') }}</strong> <code>{{ $layoutSlot->html_element }}</code></div>
-                                        <div><strong>{{ $pageLayoutsText('id_label') }}</strong> <span title="{{ $layoutSlot->html_id ?: '-' }}">{{ $layoutSlot->html_id ?: '-' }}</span></div>
-                                        <div title="{{ $layoutSlot->css_classes ?: '-' }}"><strong>{{ $pageLayoutsText('classes_label') }}</strong> {{ \Illuminate\Support\Str::limit($layoutSlot->css_classes ?: '-', 48) }}</div>
-                                    </div>
-                                </td>
-                                <td>
                                     <div class="wb-stack wb-gap-1">
                                         <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
                                             <span class="wb-status-pill {{ $layoutSlot->is_required ? 'wb-status-info' : 'wb-status-pending' }}">{{ $layoutSlot->is_required ? $pageLayoutsText('required') : $pageLayoutsText('optional') }}</span>
@@ -74,6 +66,14 @@
                                         </div>
                                     </div>
                                 </td>
+                                <td>
+                                    <div class="wb-stack wb-gap-1 wb-text-sm">
+                                        <div><strong>{{ $pageLayoutsText('element_label') }}</strong> <code>{{ $layoutSlot->html_element }}</code></div>
+                                        <div><strong>{{ $pageLayoutsText('id_label') }}</strong> <span title="{{ $layoutSlot->html_id ?: '-' }}">{{ $layoutSlot->html_id ?: '-' }}</span></div>
+                                        <div title="{{ $layoutSlot->css_classes ?: '-' }}"><strong>{{ $pageLayoutsText('classes_label') }}</strong> {{ \Illuminate\Support\Str::limit($layoutSlot->css_classes ?: '-', 48) }}</div>
+                                    </div>
+                                </td>
+                                <td class="wb-nowrap">{{ $layoutSlot->sort_order }}</td>
                                 <td class="wb-nowrap">
                                     <div class="wb-action-group">
                                         <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $pageLayoutsText('edit_slot') }}" aria-label="{{ $pageLayoutsText('edit_slot') }}">

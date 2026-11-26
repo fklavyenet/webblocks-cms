@@ -16,20 +16,23 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('site_transfers.title'),
-        'description' => $adminText('site_transfers.description'),
+        'description' => null,
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-stack wb-gap-4">
         <div class="wb-card" data-wb-admin-bulk-listing>
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $adminText('site_transfers.exports') }}</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $exports->total() }}</span>
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+                <div>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>{{ $adminText('site_transfers.exports') }}</strong>
+                        <span class="wb-status-pill wb-status-info">{{ $exports->total() }}</span>
+                    </div>
+                    <p class="wb-card-description">{{ __('webblocks-cms::admin_lists.exports') }}</p>
                 </div>
 
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-flex-wrap">
                     <a href="{{ route('admin.site-transfers.exports.index', ['modal' => 'create-export']) }}" class="wb-btn wb-btn-primary" aria-haspopup="dialog" aria-controls="siteTransferExportModal">{{ $adminText('site_transfers.run_export') }}</a>
                 </div>
             </div>
@@ -78,7 +81,7 @@
                                             </label>
                                         </td>
                                         <td>{{ $siteExport->created_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
-                                        <td>{{ $siteExport->site?->name ?? '-' }}</td>
+                                        <td><a class="wb-link" href="{{ route('admin.site-transfers.exports.show', $siteExport) }}">{{ $siteExport->site?->name ?? $adminText('site_transfers.export_number', ['id' => $siteExport->id]) }}</a></td>
                                         <td>{{ $yesNoLabel((bool) $siteExport->includes_media) }}</td>
                                         <td>{{ $siteExport->humanArchiveSize() }}</td>
                                         <td><span class="wb-status-pill {{ $siteExport->statusBadgeClass() }}">{{ $transferStatusLabel($siteExport->status) }}</span></td>
@@ -170,13 +173,16 @@
         @endif
 
         <div class="wb-card" data-wb-admin-bulk-listing>
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $adminText('site_transfers.imports') }}</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $imports->total() }}</span>
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+                <div>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>{{ $adminText('site_transfers.imports') }}</strong>
+                        <span class="wb-status-pill wb-status-info">{{ $imports->total() }}</span>
+                    </div>
+                    <p class="wb-card-description">{{ __('webblocks-cms::admin_lists.imports') }}</p>
                 </div>
 
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                <div class="wb-cluster wb-flex-wrap">
                     <a href="{{ route('admin.site-transfers.imports.create') }}" class="wb-btn wb-btn-primary">{{ $adminText('site_transfers.run_import') }}</a>
                 </div>
             </div>
@@ -231,7 +237,7 @@
                                                 {{ $siteImport->imported_site_handle ?? $adminText('site_transfers.pending_failed') }}
                                             @endif
                                         </td>
-                                        <td>{{ $siteImport->source_archive_name ?? '-' }}</td>
+                                        <td><a class="wb-link" href="{{ route('admin.site-transfers.imports.show', $siteImport) }}">{{ $siteImport->source_archive_name ?? $adminText('site_transfers.import_number', ['id' => $siteImport->id]) }}</a></td>
                                         <td><span class="wb-status-pill {{ $siteImport->statusBadgeClass() }}">{{ $transferStatusLabel($siteImport->status) }}</span></td>
                                         <td class="wb-table-actions">
                                             <div class="wb-action-group">

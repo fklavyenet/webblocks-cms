@@ -230,7 +230,7 @@ namespace WebBlocks\Cms\Tests\Feature {
       $xpath = $this->formXPath($response);
       $table = '//table[@data-wb-slot-block-table]';
       $row = $table.'//tr[@id="slot-block-row-'.$block->id.'"]';
-      $columns = ['wb-admin-slot-block-type-cell', 'wb-admin-slot-block-summary-cell', 'wb-cms-block-children-cell', 'wb-admin-slot-block-status-cell', 'wb-admin-slot-block-actions-cell'];
+      $columns = ['wb-admin-slot-block-summary-cell', 'wb-admin-slot-block-status-cell', 'wb-admin-slot-block-type-cell', 'wb-cms-block-children-cell', 'wb-admin-slot-block-actions-cell'];
 
       foreach ($columns as $index => $column) {
         $position = $index + 1;
@@ -252,7 +252,7 @@ namespace WebBlocks\Cms\Tests\Feature {
       $this->assertInstanceOf(DOMElement::class, $panel);
       $this->assertSame($help->getAttribute('data-wb-tooltip'), trim($panel->textContent));
 
-      $summary = $xpath->query($row.'/td[2]/a[@data-wb-slot-block-link]')->item(0);
+      $summary = $xpath->query($row.'/td[contains(@class, "wb-admin-slot-block-summary-cell")]/a[@data-wb-slot-block-link]')->item(0);
       $edit = $xpath->query($row.'//a[contains(@class, "wb-action-btn-edit")]')->item(0);
       $this->assertInstanceOf(DOMElement::class, $summary);
       $this->assertInstanceOf(DOMElement::class, $edit);
@@ -295,7 +295,7 @@ namespace WebBlocks\Cms\Tests\Feature {
         [$system, 'system', 'System block'],
       ] as [$block, $role, $label]) {
         $row = $prefix.'[@id="slot-block-row-'.$block->id.'"]';
-        $badge = $xpath->query($row.'/td[1]//span[@data-wb-block-role="'.$role.'"]')->item(0);
+        $badge = $xpath->query($row.'/td[contains(@class, "wb-admin-slot-block-type-cell")]//span[@data-wb-block-role="'.$role.'"]')->item(0);
         $this->assertInstanceOf(DOMElement::class, $badge);
         $this->assertSame($label, trim($badge->textContent));
         $this->assertSame(1, $xpath->query('.//i[@aria-hidden="true"]', $badge)->length);
@@ -304,7 +304,7 @@ namespace WebBlocks\Cms\Tests\Feature {
       }
 
       $this->assertSame(0, $xpath->query($prefix.'[@id="slot-block-row-'.$plain->id.'"]//*[@data-wb-block-role]')->length);
-      $this->assertSame(1, $xpath->query($prefix.'[@id="slot-block-row-'.$heading->id.'"]/td[2]//a[contains(., "Current loop record")]')->length);
+      $this->assertSame(1, $xpath->query($prefix.'[@id="slot-block-row-'.$heading->id.'"]/td[contains(@class, "wb-admin-slot-block-summary-cell")]//a[contains(., "Current loop record")]')->length);
     }
 
     #[Test]

@@ -17,7 +17,7 @@
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('title'),
-        'description' => $adminText('description'),
+        'description' => null,
         'count' => $totalCount,
         'actions' => '<form method="POST" action="'.e(route('admin.system.icons.sync-webblocks-ui')).'">'.csrf_field().'<button type="submit" class="wb-btn wb-btn-primary">'.e($adminText('sync_manifest')).'</button></form><a href="'.e($defaultManifest).'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer">'.e($adminText('open_manifest')).'</a>',
     ])
@@ -69,9 +69,12 @@
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>{{ $adminText('title') }}</strong>
-                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+            <div>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $adminText('title') }}</strong>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                </div>
+                <p class="wb-card-description">{{ $adminText('description') }}</p>
             </div>
         </div>
         @if ($icons->isEmpty())
@@ -94,11 +97,11 @@
                     <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                         <thead>
                             <tr>
-                                <th>{{ $adminText('icon') }}</th>
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'label', 'label' => $adminText('label')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_active', 'label' => $adminText('status')])
+                                <th>{{ $adminText('icon') }}</th>
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'source', 'label' => $adminText('source')])
                                 <th>{{ $adminText('contexts') }}</th>
-                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_active', 'label' => $adminText('status')])
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'sort_order', 'label' => $adminText('sort')])
                                 <th>{{ $adminText('actions') }}</th>
                             </tr>
@@ -107,17 +110,20 @@
                             @foreach ($icons as $icon)
                                 @php($editUrl = route('admin.system.icons.index', array_filter(array_merge(request()->query(), ['modal' => 'edit-icon', 'icon' => $icon->id]))))
                                 <tr>
-                                    <td class="wb-nowrap">
-                                        <span class="wb-cluster wb-cluster-2">
-                                            <i class="wb-icon {{ $icon->css_class }}" aria-hidden="true"></i>
-                                            <code>{{ $icon->css_class }}</code>
-                                        </span>
-                                    </td>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
                                             <strong><a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog" aria-controls="iconEditModal-{{ $icon->id }}">{{ $icon->label }}</a></strong>
                                             <span class="wb-text-sm wb-text-muted"><code>{{ $icon->slug }}</code></span>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span class="wb-status-pill {{ $icon->is_active ? 'wb-status-active' : 'wb-status-danger' }}">{{ $icon->is_active ? $adminText('active') : $adminText('inactive') }}</span>
+                                    </td>
+                                    <td class="wb-nowrap">
+                                        <span class="wb-cluster wb-cluster-2">
+                                            <i class="wb-icon {{ $icon->css_class }}" aria-hidden="true"></i>
+                                            <code>{{ $icon->css_class }}</code>
+                                        </span>
                                     </td>
                                     <td>{{ $icon->source }}</td>
                                     <td>
@@ -126,9 +132,6 @@
                                                 <span class="wb-status-pill wb-status-pending">{{ $tag }}</span>
                                             @endforeach
                                         </div>
-                                    </td>
-                                    <td>
-                                        <span class="wb-status-pill {{ $icon->is_active ? 'wb-status-active' : 'wb-status-danger' }}">{{ $icon->is_active ? $adminText('active') : $adminText('inactive') }}</span>
                                     </td>
                                     <td>{{ $icon->sort_order }}</td>
                                     <td>

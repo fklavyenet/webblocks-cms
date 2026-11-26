@@ -16,7 +16,7 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $text('title'), 'heading' => $text('title')])
 
 @section('content')
-    @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title'), 'description' => $text('description'), 'count' => $notes->total()])
+    @include('webblocks-cms::admin.partials.page-header', ['title' => $text('title'), 'description' => null, 'count' => $notes->total()])
     @include('webblocks-cms::admin.notes.feedback')
     @if ($errors->getBag('notesBulk')->any())
         <div class="wb-alert wb-alert-danger" role="alert">{{ $errors->getBag('notesBulk')->first() }}</div>
@@ -39,9 +39,12 @@
 
     <div class="wb-card" @unless ($administration) data-wb-admin-bulk-listing @endunless>
         <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2">
-                <strong>{{ $text($administration ? 'administration' : 'title') }}</strong>
-                <span class="wb-status-pill wb-status-info">{{ $notes->total() }}</span>
+            <div>
+                <div class="wb-cluster wb-cluster-2">
+                    <strong>{{ $text($administration ? 'administration' : 'title') }}</strong>
+                    <span class="wb-status-pill wb-status-info">{{ $notes->total() }}</span>
+                </div>
+                <p class="wb-card-description">{{ $text('description') }}</p>
             </div>
             <button type="button" id="notes-add-trigger" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#notes-add" aria-haspopup="dialog">
                 <i class="wb-icon wb-icon-plus" aria-hidden="true"></i> {{ $text('add') }}
@@ -79,9 +82,9 @@
                                 @endunless
                                 <th scope="col">{{ $text('subject') }}</th>
                                 @unless ($administration)
+                                    <th scope="col">{{ $text('status') }}</th>
                                     <th scope="col">{{ $text('author') }}</th>
                                     <th scope="col">{{ $text('recipient') }}</th>
-                                    <th scope="col">{{ $text('status') }}</th>
                                     <th scope="col">{{ $text('created') }}</th>
                                 @endunless
                                 <th scope="col">{{ $text('actions') }}</th>
@@ -114,9 +117,9 @@
                                         </strong>
                                     </td>
                                     @unless ($administration)
+                                        <td><span class="wb-status-pill {{ $note->is_read ? 'wb-status-neutral' : 'wb-status-info' }}">{{ $text($note->is_read ? 'read' : 'unread') }}</span></td>
                                         <td>{{ $note->author?->name ?? $text('unavailable_account') }}</td>
                                         <td>{{ $note->is_private ? ($note->recipient?->name ?? $text('author_only')) : $text('everyone') }}</td>
-                                        <td><span class="wb-status-pill {{ $note->is_read ? 'wb-status-neutral' : 'wb-status-info' }}">{{ $text($note->is_read ? 'read' : 'unread') }}</span></td>
                                         <td><time datetime="{{ $note->created_at->toIso8601String() }}">{{ $note->created_at->format('Y-m-d H:i') }}</time></td>
                                     @endunless
                                     <td class="wb-table-actions">

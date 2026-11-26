@@ -24,7 +24,7 @@
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $sectionTitle, 'heading' => $sectionTitle])
 @section('content')
-    @include('webblocks-cms::admin.partials.page-header', ['title' => $sectionTitle, 'description' => $t('menu')])
+    @include('webblocks-cms::admin.partials.page-header', ['title' => $sectionTitle, 'description' => null])
     @include('webblocks-cms::admin.partials.flash')
     <div class="wb-card wb-card-muted" data-consent-filter-card>
         <div class="wb-card-body">
@@ -36,12 +36,15 @@
         </div>
     </div>
     <section class="wb-card" aria-labelledby="consent-list-title" data-consent-list-card data-consent-section="{{ $section }}">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <h2 class="wb-card-title" id="consent-list-title">{{ $sectionTitle }}</h2>
-                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $rowCount }}</span>
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+            <div>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <h2 class="wb-card-title" id="consent-list-title">{{ $sectionTitle }}</h2>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $rowCount }}</span>
+                </div>
+                <p class="wb-card-description">{{ $t($section === 'general' ? 'menu' : ($section === 'services' ? 'services_help' : 'translation_help')) }}</p>
             </div>
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+            <div class="wb-cluster wb-flex-wrap">
                 <a href="{{ route('admin.consent.preview', $consentContext) }}" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener"><i class="wb-icon wb-icon-eye" aria-hidden="true"></i><span>{{ $t('preview') }}</span></a>
                 @if ($section === 'services' && $canWrite)
                     <a href="{{ route($sectionRoute, $consentContext + ['edit' => 'new']) }}" class="wb-btn wb-btn-primary" aria-haspopup="dialog">{{ $t('add_service') }}</a>
@@ -50,7 +53,7 @@
         </div>
         <div class="wb-card-body wb-stack wb-gap-3">
             @if (! $settings['enabled'])<div class="wb-alert wb-alert-info">{{ $t('disabled_help') }}</div>@endif
-            @if ($section !== 'general')<p class="wb-text-sm wb-text-muted">{{ $t($section === 'services' ? 'services_help' : 'translation_help') }}</p>@endif
+
             <div class="wb-table-wrap">
                 <table class="wb-table wb-table-striped wb-table-hover">
                     @include('webblocks-cms::admin.consent.'.$section.'-list')

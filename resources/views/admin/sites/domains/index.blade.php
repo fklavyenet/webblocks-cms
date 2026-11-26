@@ -25,7 +25,7 @@
     @include('webblocks-cms::admin.partials.page-header', [
         'breadcrumb' => '<nav class="wb-breadcrumb" aria-label="'.e($adminText('breadcrumb')).'"><ol class="wb-breadcrumb-list"><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.index').'">'.e($adminText('sites')).'</a></li><li class="wb-breadcrumb-item"><a class="wb-breadcrumb-link" href="'.route('admin.sites.edit', $site).'">'.e($site->name).'</a></li><li class="wb-breadcrumb-item"><span class="wb-breadcrumb-current" aria-current="page">'.e($adminText('domains_title')).'</span></li></ol></nav>',
         'title' => $adminText('domains_title'),
-        'description' => $adminText('domains_description'),
+        'description' => null,
         'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.route('admin.sites.edit', $site).'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_site')).'</a></div>',
     ])
 
@@ -43,10 +43,13 @@
 
     <div class="wb-stack wb-gap-4">
         <div class="wb-card">
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $adminText('assigned_domains') }}</strong>
-                    <span class="wb-status-pill wb-status-info">{{ $domains->count() }}</span>
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+                <div>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>{{ $adminText('assigned_domains') }}</strong>
+                        <span class="wb-status-pill wb-status-info">{{ $domains->count() }}</span>
+                    </div>
+                    <p class="wb-card-description">{{ $adminText('domains_description') }}</p>
                 </div>
 
                 <a
@@ -70,9 +73,9 @@
                             <thead>
                                 <tr>
                                     @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'domain', 'label' => $adminText('domain')])
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('status')])
                                     @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_primary', 'label' => $adminText('domain_role')])
                                     @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'redirect_to_primary', 'label' => $adminText('domain_redirect')])
-                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('status')])
                                     <th>{{ $adminText('actions') }}</th>
                                 </tr>
                             </thead>
@@ -87,12 +90,12 @@
                                             </div>
                                         </td>
                                         <td>
+                                            <span class="wb-status-pill {{ $domain->isActive() ? 'wb-status-active' : 'wb-status-danger' }}">{{ $adminText($domain->isActive() ? 'active' : 'inactive') }}</span>
+                                        </td>
+                                        <td>
                                             <span class="wb-status-pill {{ $domain->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $domain->is_primary ? $adminText('primary') : $adminText('alias') }}</span>
                                         </td>
                                         <td>{{ $domain->redirect_to_primary ? $adminText('yes') : $adminText('no') }}</td>
-                                        <td>
-                                            <span class="wb-status-pill {{ $domain->isActive() ? 'wb-status-active' : 'wb-status-danger' }}">{{ $adminText($domain->isActive() ? 'active' : 'inactive') }}</span>
-                                        </td>
                                         <td>
                                             <div class="wb-action-group">
                                                 <a

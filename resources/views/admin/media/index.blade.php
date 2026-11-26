@@ -37,7 +37,7 @@
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('title'),
-        'description' => $adminText('description'),
+        'description' => null,
         'count' => $totalMediaCount,
     ])
 
@@ -130,13 +130,16 @@
     </div>
 
     <div class="wb-card" data-wb-admin-bulk-listing>
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>{{ $adminText('library_title') }}</strong>
-                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredMediaCount }}</span>
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+            <div>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $adminText('library_title') }}</strong>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredMediaCount }}</span>
+                </div>
+                <p class="wb-card-description">{{ $adminText('description') }}</p>
             </div>
 
-            <div class="wb-cluster wb-cluster-2">
+            <div class="wb-cluster">
                 <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'upload-asset'])) }}" class="wb-btn wb-btn-primary">{{ $adminText('upload_media') }}</a>
                 <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'fetch-media'])) }}" class="wb-btn wb-btn-secondary">{{ $adminText('fetch_url') }}</a>
                 <a href="{{ route('admin.media.index', array_merge($baseQuery, ['modal' => 'new-folder'])) }}" class="wb-btn wb-btn-secondary">{{ $adminText('new_folder') }}</a>
@@ -213,7 +216,7 @@
                                 </a>
 
                                 <div class="wb-stack wb-gap-1">
-                                    <strong><a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl]) }}">{{ $asset->displayTitle() }}</a></strong>
+                                    <strong><a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" aria-haspopup="dialog" aria-controls="media-preview-modal">{{ $asset->displayTitle() }}</a></strong>
                                     <div class="wb-text-sm wb-text-muted" title="{{ $asset->original_name }}">{{ $asset->original_name }}</div>
                                     <div class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</div>
                                     <div class="wb-text-sm wb-text-muted">{{ $asset->folder?->name ?? $adminText('no_folder') }}</div>
@@ -254,7 +257,7 @@
                                     </label>
                                 </th>
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'title', 'label' => $adminText('media')])
-                                @foreach ($listingColumns as $listingColumn)
+                                @foreach (app(\WebBlocks\Cms\Support\ListingViews\ListingViewDefinition::class)->presentationColumns('media', $listingColumns) as $listingColumn)
                                     @include('webblocks-cms::admin.media.columns.'.$listingColumn, ['columnHeading' => true])
                                 @endforeach
                                 <th>{{ $adminText('actions') }}</th>
@@ -272,12 +275,12 @@
                                     </td>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
-                                            <strong><a href="{{ route('admin.media.edit', ['media' => $asset, 'return_url' => $currentReturnUrl]) }}">{{ $asset->displayTitle() }}</a></strong>
+                                            <strong><a href="{{ route('admin.media.index', array_merge($previewBaseQuery, ['preview' => $asset->id])) }}" aria-haspopup="dialog" aria-controls="media-preview-modal">{{ $asset->displayTitle() }}</a></strong>
                                             <span class="wb-text-sm wb-text-muted" title="{{ $asset->original_name }}">{{ $asset->original_name }}</span>
                                             <span class="wb-text-sm wb-text-muted">{{ $asset->compactMetaLabel() }}</span>
                                         </div>
                                     </td>
-                                    @foreach ($listingColumns as $listingColumn)
+                                    @foreach (app(\WebBlocks\Cms\Support\ListingViews\ListingViewDefinition::class)->presentationColumns('media', $listingColumns) as $listingColumn)
                                         @include('webblocks-cms::admin.media.columns.'.$listingColumn, ['columnHeading' => false])
                                     @endforeach
                                     <td>

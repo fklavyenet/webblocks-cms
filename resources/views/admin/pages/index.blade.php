@@ -7,7 +7,7 @@
     $adminText = static fn (string $key, array $replace = []) => $adminTranslator->admin($key, $adminLocaleCode, $replace);
     $siteContext = $activeSite?->name ?? $adminText('pages.all_sites');
     $showViewColumn = in_array('view', $listingColumns, true);
-    $detailColumns = array_diff($listingColumns, ['view']);
+    $detailColumns = app(\WebBlocks\Cms\Support\ListingViews\ListingViewDefinition::class)->presentationColumns('pages', $listingColumns);
     $newPageUrl = $activeSite ? route('admin.pages.create', ['site' => $activeSite->id]) : route('admin.pages.create');
     $clearUrl = route('admin.pages.index', ['reset' => 1]);
     // The site filter is a scope, not a narrowing filter: a site with no pages
@@ -117,13 +117,19 @@
     </div>
 
     <div class="wb-card" @if ($pages->isNotEmpty()) data-wb-admin-bulk-listing @endif>
-        @if ($canCreatePage)
-            <div class="wb-card-header wb-flex-wrap wb-gap-2 wb-justify-end">
+        <div class="wb-card-header wb-cluster wb-cluster-between">
+            <div>
+                <div class="wb-cluster wb-cluster-2"><h2 class="wb-card-title">{{ $adminText('pages.list_heading', ['site' => $siteContext]) }}</h2><span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span></div>
+                <p class="wb-card-description">{{ __('webblocks-cms::admin_lists.pages') }}</p>
+            </div>
+            @if ($canCreatePage)
+                <div class="wb-cluster">
                 <a href="{{ $newPageUrl }}" class="wb-btn wb-btn-primary">{{ $adminText('pages.new_page') }}</a>
                 <a href="{{ $pageConverterUrl }}" class="wb-btn wb-btn-secondary">{{ $adminText('pages.page_converter') }}</a>
                 <a href="{{ $importPageUrl }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog">{{ $adminText('pages.import_page') }}</a>
             </div>
-        @endif
+            @endif
+        </div>
 
         @if ($pages->isEmpty())
             <div class="wb-card-body">
@@ -162,9 +168,6 @@
                                         <span class="wb-sr-only">{{ $adminText('pages.select_all_visible') }}</span>
                                     </label>
                                 </th>
-                                @if ($showViewColumn)
-                                    @include('webblocks-cms::admin.pages.columns.view', ['columnHeading' => true])
-                                @endif
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'title', 'label' => $adminText('pages.columns.title_id')])
                                 @foreach ($detailColumns as $listingColumn)
                                     @include('webblocks-cms::admin.pages.columns.'.$listingColumn, ['columnHeading' => true])
@@ -189,13 +192,10 @@
                                             <span class="wb-sr-only">{{ $adminText('pages.select_page', ['title' => $page->title]) }}</span>
                                         </label>
                                     </td>
-                                    @if ($showViewColumn)
-                                        @include('webblocks-cms::admin.pages.columns.view', ['columnHeading' => false])
-                                    @endif
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-page-cell">
                                         <div class="wb-admin-pages-page-meta">
                                             <div class="wb-admin-pages-title-row wb-cluster wb-cluster-2 wb-flex-wrap">
-                                                <strong><a href="{{ $editUrl }}" class="wb-link">{{ $adminText('pages.title_with_id', ['id' => $page->id, 'title' => $page->title]) }}</a></strong>
+                                                <strong><a href="{{ route('admin.pages.index', array_merge($detailsBaseQuery, ['details' => $page->id])) }}" class="wb-link" aria-haspopup="dialog" aria-controls="pageDetailsModal-{{ $page->id }}">{{ $adminText('pages.title_with_id', ['id' => $page->id, 'title' => $page->title]) }}</a></strong>
                                                 @if ($page->isSystemPage())<span class="wb-badge">{{ __('webblocks-cms::system_pages.badge') }}</span>@endif
                                                 @if ($showAllSites)
                                                     <span class="wb-status-pill {{ $page->site?->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $page->site?->name }}</span>
@@ -244,6 +244,9 @@
                                     @endforeach
                                     <td class="wb-admin-pages-table-cell wb-admin-pages-actions-cell">
                                         <div class="wb-action-group">
+                                                @if ($showViewColumn)
+                                                    @include('webblocks-cms::admin.pages.columns.view')
+                                                @endif
                                             <a
                                                 href="{{ route('admin.pages.index', array_merge($detailsBaseQuery, ['details' => $page->id])) }}"
                                                 class="wb-action-btn"

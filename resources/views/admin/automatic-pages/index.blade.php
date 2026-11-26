@@ -8,7 +8,7 @@
 @php
     $tableSort = \WebBlocks\Cms\Queries\AdminTableSort::for('automatic-pages');
 @endphp
-@include('webblocks-cms::admin.partials.page-header', ['title' => $ap('title'), 'description' => $ap('intro')])
+@include('webblocks-cms::admin.partials.page-header', ['title' => $ap('title'), 'description' => null])
 <div class="wb-alert wb-alert-info">{{ $ap('draft_notice') }}</div>
 <nav class="wb-cluster wb-cluster-2 wb-flex-wrap wb-mb-4" aria-label="{{ $ap('title') }}">
   <a class="wb-btn wb-btn-secondary" href="{{ route('admin.dynamic-content.index', ['site' => $siteId]) }}">{{ app(\WebBlocks\Cms\Support\Translations\CmsTranslator::class)->get('dynamic-content.title', $apLocale) }}</a>
@@ -21,9 +21,9 @@
   @if ($ready && $sites->isNotEmpty())<a class="wb-btn wb-btn-primary" href="{{ route('admin.automatic-pages.create', ['site' => $siteId]) }}">{{ $ap('create') }}</a>@endif
 </form>
 @if (! $ready)<div class="wb-alert wb-alert-warning">{{ $ap('schema_missing') }}</div>@else
-<section class="wb-card"><div class="wb-card-body"><div class="wb-table-wrap"><table class="wb-table" @include('webblocks-cms::admin.partials.table-sort-attributes')>
-<thead><tr>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $ap('name')])<th>{{ $ap('site') }}</th>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'source_handle', 'label' => $ap('source')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'base_path', 'label' => $ap('base_path')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $ap('status')])<th>{{ $ap('inspect') }}</th></tr></thead>
-<tbody>@forelse ($rules as $rule)<tr><td><a href="{{ route('admin.automatic-pages.edit', $rule) }}">{{ $rule->name }}</a></td><td>{{ $rule->site->name }}</td><td><code>{{ $rule->source_handle }}</code></td><td><code>{{ $rule->base_path }}/{slug}</code></td><td><span class="wb-status-pill wb-status-info">{{ $ap($rule->status) }}</span></td><td><a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ route('admin.automatic-pages.records', $rule) }}">{{ $ap('inspect') }}</a></td></tr>@empty<tr><td colspan="6">{{ $ap('no_rules') }}</td></tr>@endforelse</tbody>
+<section class="wb-card"><div class="wb-card-header"><div><h2 class="wb-card-title">{{ $ap('title') }}</h2><p class="wb-card-description">{{ $ap('intro') }}</p></div></div><div class="wb-card-body"><div class="wb-table-wrap"><table class="wb-table" @include('webblocks-cms::admin.partials.table-sort-attributes')>
+<thead><tr>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $ap('name')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $ap('status')])<th>{{ $ap('site') }}</th>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'source_handle', 'label' => $ap('source')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'base_path', 'label' => $ap('base_path')])<th>{{ __('webblocks-cms::admin.common.actions') }}</th></tr></thead>
+<tbody>@forelse ($rules as $rule)<tr><td><a href="{{ route('admin.automatic-pages.records', $rule) }}">{{ $rule->name }}</a></td><td><span class="wb-status-pill wb-status-info">{{ $ap($rule->status) }}</span></td><td>{{ $rule->site->name }}</td><td><code>{{ $rule->source_handle }}</code></td><td><code>{{ $rule->base_path }}/{slug}</code></td><td><a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ route('admin.automatic-pages.records', $rule) }}">{{ $ap('inspect') }}</a></td></tr>@empty<tr><td colspan="6">{{ $ap('no_rules') }}</td></tr>@endforelse</tbody>
 </table></div></div>@include('webblocks-cms::admin.partials.pagination', ['paginator' => $rules])</section>
 @endif
 @endsection

@@ -12,17 +12,20 @@
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $localesIndexText('title'),
-        'description' => $localesIndexText('description'),
+        'description' => null,
         'count' => $totalCount,
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>{{ $localesIndexText('title') }}</strong>
-                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+            <div>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $localesIndexText('title') }}</strong>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                </div>
+                <p class="wb-card-description">{{ $localesIndexText('description') }}</p>
             </div>
 
             <a href="{{ route('admin.locales.create') }}" class="wb-btn wb-btn-primary">{{ $localesIndexText('add_locale') }}</a>
@@ -46,7 +49,7 @@
                             @php($editUrl = route('admin.locales.edit', $locale))
                             @php($report = $reports->get($locale->id))
                             <tr>
-                                <td><code>{{ $locale->code }}</code></td>
+                                <td><a class="wb-link" href="{{ $editUrl }}"><code>{{ $locale->code }}</code></a></td>
                                 <td><strong><a href="{{ $editUrl }}" class="wb-link">{{ $locale->name }}</a></strong></td>
                                 <td>
                                     <div class="wb-cluster wb-cluster-2">
@@ -80,7 +83,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="wb-cluster wb-cluster-2">
+                                    <div class="wb-action-group">
                                         <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $localesIndexText('edit_locale') }}" aria-label="{{ $localesIndexText('edit_locale') }}">
                                             <i class="wb-icon wb-icon-pencil" aria-hidden="true"></i>
                                         </a>

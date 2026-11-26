@@ -13,7 +13,7 @@
     @php($editingTokenId = (string) old('_editing_token', ''))
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('title'),
-        'description' => $adminText('description'),
+        'description' => null,
         'count' => $totalCount,
     ])
 
@@ -144,9 +144,12 @@ WEBBLOCKS_CMS_API_TOKEN={{ $createdToken }}</textarea>
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>{{ $adminText('tokens') }}</strong>
-                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $tokens->total() }}</span>
+            <div>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $adminText('tokens') }}</strong>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $tokens->total() }}</span>
+                </div>
+                <p class="wb-card-description">{{ $adminText('description') }}</p>
             </div>
         </div>
 

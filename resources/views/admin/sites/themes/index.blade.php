@@ -24,14 +24,17 @@
 
         @if ($canPreview)
             <div class="wb-card">
-                <div class="wb-card-header"><strong>{{ $text('versions') }}</strong></div>
+                <div class="wb-card-header"><div>
+<strong>{{ $text('versions') }}</strong>
+<p class="wb-card-description">{{ __('webblocks-cms::admin_lists.theme_versions') }}</p>
+</div></div>
                 <div class="wb-card-body">
                     @if ($versions->isEmpty())
                         <p class="wb-text-muted">{{ $text('empty') }}</p>
                     @else
                         <div class="wb-table-wrap">
                             <table class="wb-table">
-                                <thead><tr><th scope="col">{{ $text('theme') }}</th><th scope="col">{{ $text('layouts') }}</th><th scope="col">{{ $text('site_status') }}</th><th scope="col" class="wb-table-actions">{{ $text('actions') }}</th></tr></thead>
+                                <thead><tr><th scope="col">{{ $text('theme') }}</th><th scope="col">{{ $text('site_status') }}</th><th scope="col">{{ $text('layouts') }}</th><th scope="col" class="wb-table-actions">{{ $text('actions') }}</th></tr></thead>
                                 <tbody>
                                     @foreach ($versions as $version)
                                         @php
@@ -44,8 +47,7 @@
                                             };
                                         @endphp
                                         <tr>
-                                            <th scope="row">{{ $version->name }} · {{ $version->version }}</th>
-                                            <td>{{ implode(', ', $version->layouts) }}</td>
+                                            <th scope="row">@if ($version->intact)<a class="wb-link" href="{{ route('admin.sites.themes.comparison', ['site' => $site, 'version' => $version->id]) }}">{{ $version->name }} · {{ $version->version }}</a>@else{{ $version->name }} · {{ $version->version }}@endif</th>
                                             <td>
                                                 @if ($active)
                                                     <span class="wb-badge wb-badge-success">{{ $text('site_status_active') }}</span>
@@ -61,6 +63,7 @@
                                                     @endif
                                                 @endif
                                             </td>
+                                            <td>{{ implode(', ', $version->layouts) }}</td>
                                             <td class="wb-table-actions">
                                                 @if ($version->intact)
                                                     <div class="wb-action-group">
@@ -85,7 +88,10 @@
 
         @if ($history->isNotEmpty())
             <div class="wb-card">
-                <div class="wb-card-header"><strong>{{ $text('history') }}</strong></div>
+                <div class="wb-card-header"><div>
+<strong>{{ $text('history') }}</strong>
+<p class="wb-card-description">{{ __('webblocks-cms::admin_lists.theme_history') }}</p>
+</div></div>
                 <div class="wb-card-body wb-table-wrap">
                     <table class="wb-table">
                         <thead><tr><th scope="col">{{ $text('theme') }}</th><th scope="col">{{ $text('button_corners') }}</th><th scope="col">{{ $text('changed_at') }}</th><th scope="col">{{ $text('actions') }}</th></tr></thead>

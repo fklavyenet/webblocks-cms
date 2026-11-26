@@ -49,6 +49,33 @@
         data-wb-slot-depth="{{ $depth }}"
         data-wb-slot-block-search-text="{{ \Illuminate\Support\Str::lower(implode(' ', array_filter([(string) $block->id, $block->typeName(), $rowSummary, ...$dynamicLabels, ...array_values($roleLabels)]))) }}"
     >
+        <td class="wb-admin-slot-block-summary-cell">
+            @include('webblocks-cms::admin.blocks.partials.dynamic-indicators', ['indicatorBlock' => $block, 'indicatorLabels' => $dynamicLabels])
+            <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}" aria-haspopup="dialog"><strong class="wb-cms-block-row-title">{{ $rowSummary ?? $block->typeName() }}</strong></a>
+        </td>
+        <td class="wb-admin-slot-block-status-cell">
+            <form method="POST" action="{{ route('admin.blocks.status.update', $block) }}" data-wb-block-status-form data-published-message="{{ $inlineBlocksText('status_published') }}" data-draft-message="{{ $inlineBlocksText('status_draft') }}" data-published-label="{{ $inlineBlocksText('published') }}" data-draft-label="{{ $inlineBlocksText('draft') }}" data-error-message="{{ $inlineBlocksText('status_update_failed') }}">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="return_url" value="{{ request('return_url') }}">
+                @if ($sharedSlot)
+                    <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
+                @endif
+                @unless ($activeLocale->is_default)
+                    <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
+                @endunless
+                <input type="hidden" name="status" value="draft">
+                <label class="wb-switch wb-admin-block-status-switch">
+                    <input type="checkbox" name="status" value="published" @checked($block->status === 'published') data-wb-block-status-toggle>
+                    <span class="wb-switch-track" aria-hidden="true"></span>
+                    <span class="wb-sr-only" data-wb-block-status-label>
+                        {{ $block->status === 'published' ? $inlineBlocksText('published') : $inlineBlocksText('draft') }}
+                    </span>
+                </label>
+                <p class="wb-alert wb-text-sm" role="status" aria-live="polite" data-wb-block-status-message hidden></p>
+                <noscript><button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">{{ $inlineBlocksText('save_status') }}</button></noscript>
+            </form>
+        </td>
         <td class="wb-block-hierarchy-cell wb-admin-slot-block-type-cell">
             <div class="wb-block-hierarchy">
                 <div class="wb-cms-block-tree-item">
@@ -83,39 +110,12 @@
                 </div>
             </div>
         </td>
-        <td class="wb-admin-slot-block-summary-cell">
-            @include('webblocks-cms::admin.blocks.partials.dynamic-indicators', ['indicatorBlock' => $block, 'indicatorLabels' => $dynamicLabels])
-            <a href="{{ $slotBlockRoute(['edit' => $block->id]) }}" data-wb-slot-block-link data-base-url="{{ $slotBlockBaseRoute(['edit' => $block->id]) }}" aria-haspopup="dialog"><strong class="wb-cms-block-row-title">{{ $rowSummary ?? $block->typeName() }}</strong></a>
-        </td>
         <td class="wb-cms-block-children-cell">
             @if ($canAddChildren || $hasChildren)
                 <span class="wb-cms-block-children-badge" aria-label="{{ $childCount }} {{ $childCount === 1 ? $inlineBlocksText('child_block') : $inlineBlocksText('child_blocks') }}">{{ $childCount }}</span>
             @else
                 <span class="wb-text-muted" aria-hidden="true">-</span>
             @endif
-        </td>
-        <td class="wb-admin-slot-block-status-cell">
-            <form method="POST" action="{{ route('admin.blocks.status.update', $block) }}" data-wb-block-status-form data-published-message="{{ $inlineBlocksText('status_published') }}" data-draft-message="{{ $inlineBlocksText('status_draft') }}" data-published-label="{{ $inlineBlocksText('published') }}" data-draft-label="{{ $inlineBlocksText('draft') }}" data-error-message="{{ $inlineBlocksText('status_update_failed') }}">
-                @csrf
-                @method('PATCH')
-                <input type="hidden" name="return_url" value="{{ request('return_url') }}">
-                @if ($sharedSlot)
-                    <input type="hidden" name="shared_slot_id" value="{{ $sharedSlot->id }}">
-                @endif
-                @unless ($activeLocale->is_default)
-                    <input type="hidden" name="locale" value="{{ $activeLocale->code }}">
-                @endunless
-                <input type="hidden" name="status" value="draft">
-                <label class="wb-switch wb-admin-block-status-switch">
-                    <input type="checkbox" name="status" value="published" @checked($block->status === 'published') data-wb-block-status-toggle>
-                    <span class="wb-switch-track" aria-hidden="true"></span>
-                    <span class="wb-sr-only" data-wb-block-status-label>
-                        {{ $block->status === 'published' ? $inlineBlocksText('published') : $inlineBlocksText('draft') }}
-                    </span>
-                </label>
-                <p class="wb-alert wb-text-sm" role="status" aria-live="polite" data-wb-block-status-message hidden></p>
-                <noscript><button type="submit" class="wb-btn wb-btn-secondary wb-btn-sm">{{ $inlineBlocksText('save_status') }}</button></noscript>
-            </form>
         </td>
         <td class="wb-admin-slot-block-actions-cell">
             <div class="wb-action-group">

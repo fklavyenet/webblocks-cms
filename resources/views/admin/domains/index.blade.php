@@ -11,13 +11,16 @@
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $domainsIndexText('title'),
-        'description' => $domainsIndexText('description'),
+        'description' => null,
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card">
-        <div class="wb-card-header"><strong>{{ $domainsIndexText('select_site') }}</strong></div>
+        <div class="wb-card-header"><div>
+<strong>{{ $domainsIndexText('select_site') }}</strong>
+<p class="wb-card-description">{{ $domainsIndexText('description') }}</p>
+</div></div>
         <div class="wb-card-body">
             @if ($sites->isEmpty())
                 <div class="wb-empty">
@@ -40,7 +43,7 @@
                                 <tr>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
-                                            <strong>{{ $site->name }}</strong>
+                                            <strong><a class="wb-link" href="{{ route('admin.sites.domains.index', $site) }}">{{ $site->name }}</a></strong>
                                             <span class="wb-text-sm wb-text-muted">{{ $site->handle }}</span>
                                         </div>
                                     </td>

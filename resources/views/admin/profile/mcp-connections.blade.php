@@ -7,7 +7,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $text('connections'),
-        'description' => $text('connections_help'),
+        'description' => null,
         'actions' => '<a href="'.e(route('admin.profile.edit')).'" class="wb-btn wb-btn-secondary">'.e($text('back_profile')).'</a>',
     ])
     @include('webblocks-cms::admin.partials.flash')
@@ -17,6 +17,7 @@
     @endif
 
     <div class="wb-card">
+        <div class="wb-card-header"><div><h2 class="wb-card-title">{{ $text('connections') }}</h2><p class="wb-card-description">{{ $text('connections_help') }}</p></div></div>
         @if ($connections === null || $connections->isEmpty())
             <div class="wb-card-body">{{ $text('no_connections') }}</div>
         @else

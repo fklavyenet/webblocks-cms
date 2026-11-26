@@ -33,7 +33,7 @@
 @section('content')
   @include('webblocks-cms::admin.partials.page-header', [
     'title' => $navigationItemsText('title'),
-    'description' => $navigationItemsText('description'),
+    'description' => null,
   ])
 
   @include('webblocks-cms::admin.partials.flash')
@@ -78,21 +78,24 @@
     data-save-failed-text="{{ $navigationItemsText('save_failed') }}"
     data-could-not-save-text="{{ $navigationItemsText('could_not_save_order') }}"
   >
-    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-      <div class="wb-stack wb-gap-1">
-        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-          <strong>{{ $contextLabel }}</strong>
-          <span class="wb-status-pill wb-status-info">{{ $allItems->count() }}</span>
-        </div>
+    <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+      <div>
+          <div class="wb-stack wb-gap-1">
+            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+              <strong>{{ $contextLabel }}</strong>
+              <span class="wb-status-pill wb-status-info">{{ $allItems->count() }}</span>
+            </div>
 
-        @if ($showDocsGroupHelp)
-          <div class="wb-text-sm wb-text-muted">
-            {!! $navigationItemsText('docs_group_help') !!}
+            @if ($showDocsGroupHelp)
+              <div class="wb-card-description">
+                {!! $navigationItemsText('docs_group_help') !!}
+              </div>
+            @endif
           </div>
-        @endif
+          <p class="wb-card-description">{{ $navigationItemsText('description') }} {{ $navigationItemsText('drag_help') }}</p>
       </div>
 
-      <div class="wb-cluster wb-cluster-2">
+      <div class="wb-cluster">
         <a href="{{ route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-item'])) }}" class="wb-btn wb-btn-primary" aria-haspopup="dialog" aria-controls="navigationCreateItemModal">{{ $navigationItemsText('add_item') }}</a>
         <a href="{{ route('admin.navigation.index', array_merge($baseQuery, ['modal' => 'create-group'])) }}" class="wb-btn wb-btn-secondary" aria-haspopup="dialog" aria-controls="navigationCreateGroupModal">{{ $navigationItemsText('add_group') }}</a>
       </div>
@@ -100,7 +103,7 @@
 
     <div class="wb-card-body wb-stack wb-gap-3">
       <div class="wb-row wb-row-middle wb-justify-between wb-gap-2">
-        <span class="wb-text-sm wb-text-muted wb-navigation-toolbar-copy">{{ $navigationItemsText('drag_help') }}</span>
+
         <div class="wb-cluster wb-cluster-2">
           <span class="wb-text-sm wb-text-muted" data-navigation-save-status aria-live="polite" hidden></span>
         </div>

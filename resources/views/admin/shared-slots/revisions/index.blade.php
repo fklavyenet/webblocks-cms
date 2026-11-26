@@ -14,7 +14,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => $adminText('revisions_description'),
+        'description' => null,
         'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.$sharedSlotEditUrl.'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_shared_slot')).'</a><a href="'.route('admin.shared-slots.blocks.edit', $sharedSlot).'" class="wb-btn wb-btn-secondary">'.e($adminText('edit_blocks')).'</a></div>',
     ])
 
@@ -37,7 +37,10 @@
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>{{ $adminText('revision_history') }}</strong>
+            <div>
+                <strong>{{ $adminText('revision_history') }}</strong>
+                <p class="wb-card-description">{{ $adminText('revisions_description') }}</p>
+            </div>
             <span class="wb-text-sm wb-text-muted">{{ $adminText('newest_first') }}</span>
         </div>
         <div class="wb-card-body">
@@ -55,7 +58,7 @@
                                 <th>{{ $adminText('event') }}</th>
                                 <th>{{ $adminText('audit') }}</th>
                                 <th>{{ $adminText('details') }}</th>
-                                <th>{{ $adminText('restore') }}</th>
+                                <th>{{ $adminTranslator->admin('common.actions', $adminLocale) }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -64,7 +67,7 @@
                                     <td>{{ $revision->created_at?->format('Y-m-d H:i') ?? '-' }}</td>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
-                                            <strong>{{ $revision->labelText() }}</strong>
+                                            <strong><a class="wb-link" href="{{ route('admin.shared-slots.revisions.show', [$sharedSlot, $revision]) }}">{{ $revision->labelText() }}</a></strong>
                                             <span class="wb-text-sm wb-text-muted">{{ $revision->eventText() }}</span>
                                             @if ($revision->summary)
                                                 <span class="wb-text-sm wb-text-muted">{{ $revision->summary }}</span>

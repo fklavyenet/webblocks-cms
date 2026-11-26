@@ -16,7 +16,7 @@
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $blocksIndexTitle,
-        'description' => $currentPage ? $blocksIndexText('page_description') : $blocksIndexText('description'),
+        'description' => null,
         'count' => $totalCount,
         'actions' => $currentPage && ! $currentPage->isSharedSlotSourcePage() ? '<a href="'.route('admin.pages.edit', $currentPage).'" class="wb-btn wb-btn-primary">'.$blocksIndexText('manage_slots').'</a>' : null,
     ])
@@ -97,19 +97,25 @@
     </div>
 
     @if ($blocks->isEmpty())
-        <div class="wb-card"><div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap"><div class="wb-cluster wb-cluster-2 wb-flex-wrap"><strong>{{ $blocksIndexTitle }}</strong><span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span></div></div><div class="wb-card-body"><div class="wb-empty"><div class="wb-empty-title">{{ $blocksIndexText('empty_title') }}</div><div class="wb-empty-text">{{ $hasActiveFilters ? $blocksIndexText('empty_filtered_text') : $blocksIndexText('empty_text') }}</div>@if ($hasActiveFilters)<div class="wb-empty-action"><a href="{{ route('admin.blocks.index') }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a></div>@endif</div></div></div>
+        <div class="wb-card"><div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap"><div>
+<div class="wb-cluster wb-cluster-2 wb-flex-wrap"><strong>{{ $blocksIndexTitle }}</strong><span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span></div>
+<p class="wb-card-description">{{ $currentPage ? $blocksIndexText('page_description') : $blocksIndexText('description') }}</p>
+</div></div><div class="wb-card-body"><div class="wb-empty"><div class="wb-empty-title">{{ $blocksIndexText('empty_title') }}</div><div class="wb-empty-text">{{ $hasActiveFilters ? $blocksIndexText('empty_filtered_text') : $blocksIndexText('empty_text') }}</div>@if ($hasActiveFilters)<div class="wb-empty-action"><a href="{{ route('admin.blocks.index') }}" class="wb-btn wb-btn-secondary">{{ __('webblocks-cms::admin.common.reset') }}</a></div>@endif</div></div></div>
     @else
         <div class="wb-card">
             <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $blocksIndexTitle }}</strong>
-                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                <div>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>{{ $blocksIndexTitle }}</strong>
+                        <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                    </div>
+                    <p class="wb-card-description">{{ $currentPage ? $blocksIndexText('page_description') : $blocksIndexText('description') }}</p>
                 </div>
             </div>
             <div class="wb-card-body">
                 <div class="wb-table-wrap">
                     <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
-                        <thead><tr>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'id', 'label' => $blocksIndexText('id')])<th>{{ $blocksIndexText('page') }}</th><th>{{ $blocksIndexText('parent') }}</th><th>{{ $blocksIndexText('block_type') }}</th><th>{{ $blocksIndexText('slot_type') }}</th>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'sort_order', 'label' => $blocksIndexText('order')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $blocksIndexText('status')])<th>{{ $blocksIndexText('kind') }}</th><th>{{ $blocksIndexText('actions') }}</th></tr></thead>
+                        <thead><tr>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'id', 'label' => $blocksIndexText('id')])@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $blocksIndexText('status')])<th>{{ $blocksIndexText('page') }}</th><th>{{ $blocksIndexText('parent') }}</th><th>{{ $blocksIndexText('block_type') }}</th><th>{{ $blocksIndexText('slot_type') }}</th><th>{{ $blocksIndexText('kind') }}</th>@include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'sort_order', 'label' => $blocksIndexText('order')])<th>{{ $blocksIndexText('actions') }}</th></tr></thead>
                         <tbody>
                             @foreach ($blocks as $block)
                                 @php($editUrl = route('admin.blocks.edit', $block))
@@ -122,6 +128,11 @@
                                         @endif
                                     </td>
                                     <td>
+                                        <span class="wb-status-pill {{ $block->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">
+                                            {{ $block->status }}
+                                        </span>
+                                    </td>
+                                    <td>
                                         @if ($block->page)
                                             <a href="{{ route('admin.pages.edit', $block->page) }}">{{ $block->page->title }}</a>
                                         @else
@@ -131,18 +142,13 @@
                                     <td>{{ $block->parent?->title ?? ($block->parent?->typeName() ?? '-') }}</td>
                                     <td>{{ $block->typeName() }}</td>
                                     <td>{{ $block->slotName() }}</td>
-                                    <td>{{ $block->sort_order }}</td>
-                                    <td>
-                                        <span class="wb-status-pill {{ $block->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">
-                                            {{ $block->status }}
-                                        </span>
-                                    </td>
                                     <td>
                                         {{ $block->is_system ? $blocksIndexText('system') : $blocksIndexText('user') }}
                                         @if ($block->isColumnContainer() && $block->children->isNotEmpty())
                                             <div class="wb-text-sm wb-text-muted">{{ $blocksIndexText('children_count', ['count' => $block->children->count()]) }}</div>
                                         @endif
                                     </td>
+                                    <td>{{ $block->sort_order }}</td>
                                      <td>
                                          <div class="wb-action-group">
                                              <a href="{{ $editUrl }}" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $blocksIndexText('edit_block') }}" aria-label="{{ $blocksIndexText('edit_block') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></a>

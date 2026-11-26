@@ -4,11 +4,7 @@
         @php($editUrl = route($sectionRoute, $consentContext + ['edit' => $key]))
         <tr>
             <td><strong>
-                @if ($canWrite)
-                    <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog">{{ $row['label'] }}</a>
-                @else
-                    {{ $row['label'] }}
-                @endif
+                <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog">{{ $row['label'] }}</a>
             </strong></td>
             <td><div class="wb-stack wb-gap-1">
                 @foreach ($row['fields'] as $field)

@@ -61,8 +61,9 @@
         @endunless
 
         <div class="wb-card">
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-admin-slot-block-toolbar">
-            <div class="wb-cluster wb-cluster-2">
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-admin-slot-block-toolbar">
+            <div>
+<div class="wb-cluster">
                 <strong>{{ $adminText('blocks') }}</strong>
                 @foreach ($availableLocales as $translationStatus)
                     @php
@@ -77,7 +78,9 @@
                     'translationsHelp' => $adminText('translations_help'),
                 ])
             </div>
-            <div class="wb-cluster wb-cluster-2">
+                <p class="wb-card-description">{{ __('webblocks-cms::admin_lists.slot_blocks') }}</p>
+            </div>
+            <div class="wb-cluster">
                 @if ($hasExpandableBlocks)
                     <button type="button" class="wb-btn wb-btn-secondary" data-wb-slot-block-expand-all data-expand-label="{{ $adminText('expand_all_blocks') }}" data-collapse-label="{{ $adminText('collapse_all_blocks') }}" aria-pressed="false">
                         <i class="wb-icon wb-icon-maximize2" aria-hidden="true"></i>
@@ -104,10 +107,10 @@
                     <table class="wb-table wb-table-sm wb-table-striped wb-table-hover wb-admin-slot-blocks-table" data-wb-slot-block-table data-admin-sortable-list data-admin-sortable-mode="slot-blocks" data-admin-sortable-reorder-url="{{ route('admin.shared-slots.blocks.reorder', $sharedSlot) }}">
                         <thead>
                             <tr>
-                                <th class="wb-admin-slot-block-type-cell">{{ $adminText('block_type') }}</th>
                                 <th class="wb-admin-slot-block-summary-cell">{{ $adminText('summary') }}</th>
-                                <th class="wb-cms-block-children-cell">{{ $adminText('children') }}</th>
                                 <th class="wb-admin-slot-block-status-cell">{{ $adminText('status') }}</th>
+                                <th class="wb-admin-slot-block-type-cell">{{ $adminText('block_type') }}</th>
+                                <th class="wb-cms-block-children-cell">{{ $adminText('children') }}</th>
                                 <th class="wb-admin-slot-block-actions-cell">{{ $adminText('actions') }}</th>
                             </tr>
                         </thead>

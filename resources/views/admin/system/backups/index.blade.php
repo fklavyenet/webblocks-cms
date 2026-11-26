@@ -30,7 +30,7 @@
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('backups.title'),
-        'description' => $adminText('backups.description'),
+        'description' => null,
         'count' => $totalCount,
     ])
 
@@ -184,13 +184,16 @@
 
         @if ($backups->isEmpty())
             <div class="wb-card">
-                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                        <strong>{{ $adminText('backups.title') }}</strong>
-                        <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+                    <div>
+                        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                            <strong>{{ $adminText('backups.title') }}</strong>
+                            <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                        </div>
+                        <p class="wb-card-description">{{ $adminText('backups.description') }}</p>
                     </div>
 
-                    <div class="wb-cluster wb-cluster-2">
+                    <div class="wb-cluster">
                         <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#create-backup-retention-modal" @disabled(! $backupTableExists || ! $backupRetentionReady)>{{ $adminText('backups.create_backup') }}</button>
                         <a href="{{ route('admin.system.backups.upload') }}" class="wb-btn wb-btn-secondary">{{ $adminText('backups.upload_backup') }}</a>
                     </div>
@@ -214,13 +217,16 @@
             </div>
         @else
             <div class="wb-card" data-wb-admin-bulk-listing>
-                <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                        <strong>{{ $adminText('backups.title') }}</strong>
-                        <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+                    <div>
+                        <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                            <strong>{{ $adminText('backups.title') }}</strong>
+                            <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                        </div>
+                        <p class="wb-card-description">{{ $adminText('backups.description') }}</p>
                     </div>
 
-                    <div class="wb-cluster wb-cluster-2">
+                    <div class="wb-cluster">
                         <button type="button" class="wb-btn wb-btn-primary" data-wb-toggle="modal" data-wb-target="#create-backup-retention-modal" @disabled(! $backupTableExists || ! $backupRetentionReady)>{{ $adminText('backups.create_backup') }}</button>
                         <a href="{{ route('admin.system.backups.upload') }}" class="wb-btn wb-btn-secondary">{{ $adminText('backups.upload_backup') }}</a>
                     </div>
@@ -243,12 +249,12 @@
                                             <span class="wb-sr-only">{{ $adminText('backups.select_all_visible') }}</span>
                                         </label>
                                     </th>
-                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'created_at', 'label' => $adminText('backups.created_at')])
                                     @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'archive_filename', 'label' => $adminText('backups.archive')])
                                     @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('common.status')])
                                     <th>{{ $adminText('backups.contents_label') }}</th>
-                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'archive_size_bytes', 'label' => $adminText('backups.size')])
                                     <th>{{ $adminText('backups.triggered_by') }}</th>
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'archive_size_bytes', 'label' => $adminText('backups.size')])
+                                    @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'created_at', 'label' => $adminText('backups.created_at')])
                                     <th>{{ $adminText('common.actions') }}</th>
                                 </tr>
                             </thead>
@@ -262,9 +268,8 @@
                                                 <span class="wb-sr-only">{{ $adminText('backups.select_backup', ['name' => $backup->archive_filename ?? '#'.$backup->id]) }}</span>
                                             </label>
                                         </td>
-                                        <td>{{ $backup->created_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
                                         <td>
-                                            <div>{{ $backup->archive_filename ?? '-' }}</div>
+                                            <div><a class="wb-link" href="{{ route('admin.system.backups.show', $backup) }}">{{ $backup->archive_filename ?? $adminText('backups.backup_number', ['id' => $backup->id]) }}</a></div>
                                             <div class="wb-text-sm wb-text-muted">{{ isset($retentionDecisions[$backup->id]['reason']) ? $retentionText('reason_'.$retentionDecisions[$backup->id]['reason']) : $adminTranslator->get('storage.preview_unavailable', $adminLocale) }}</div>
                                             @if ($backup->label)
                                                 <div class="wb-text-sm wb-text-muted">{{ $adminText('backups.source') }} {{ $backup->label }}</div>
@@ -277,8 +282,9 @@
                                         </td>
                                         <td><span class="wb-status-pill {{ $backup->statusBadgeClass() }}">{{ $backupStatusLabel($backup->status) }}</span></td>
                                         <td>{{ $backupContentsLabel($backup) }}</td>
-                                        <td>{{ $backup->humanArchiveSize() }}</td>
                                         <td>{{ $backup->triggeredBy?->name ?? '-' }}</td>
+                                        <td>{{ $backup->humanArchiveSize() }}</td>
+                                        <td>{{ $backup->created_at?->format('Y-m-d H:i:s') ?? '-' }}</td>
                                         <td class="wb-table-actions">
                                             <div class="wb-action-group">
                                                 <a href="{{ route('admin.system.backups.show', $backup) }}#backup-retention" class="wb-action-btn wb-action-btn-edit" data-wb-tooltip="{{ $retentionText('manage') }}" aria-label="{{ $retentionText('manage') }}"><i class="wb-icon {{ $backup->is_protected ? 'wb-icon-lock' : 'wb-icon-settings' }}" aria-hidden="true"></i></a>

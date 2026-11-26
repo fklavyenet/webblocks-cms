@@ -16,7 +16,7 @@
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $localizedPageTitle,
-        'description' => $adminText('description'),
+        'description' => null,
         'count' => $totalCount,
     ])
 
@@ -24,9 +24,12 @@
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>{{ $adminText('title') }}</strong>
-                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+            <div>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $adminText('title') }}</strong>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                </div>
+                <p class="wb-card-description">{{ $adminText('description') }}</p>
             </div>
         </div>
         <div class="wb-card-body">
@@ -35,26 +38,26 @@
                     <thead>
                         <tr>
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $adminText('name')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('status')])
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'slug', 'label' => $adminText('slug')])
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'axis', 'label' => $adminText('axis')])
                             <th>{{ $adminText('description_column') }}</th>
+                            <th>{{ $adminText('system') }}</th>
                             <th>{{ $adminText('blocks') }}</th>
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'sort_order', 'label' => $adminText('sort_order')])
-                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $adminText('status')])
-                            <th>{{ $adminText('system') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($slotTypes as $slotType)
                             <tr>
                                 <td class="wb-nowrap"><strong>{{ $slotType->name }}</strong></td>
+                                <td><span class="wb-status-pill {{ $slotType->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">{{ $adminText('status_'.$slotType->status) }}</span></td>
                                 <td class="wb-nowrap"><code>{{ $slotType->slug }}</code></td>
                                 <td class="wb-nowrap">{{ $slotType->axis ?: '-' }}</td>
                                 <td class="wb-text-muted">{{ $slotType->description ?: '-' }}</td>
+                                <td><span class="wb-status-pill {{ $slotType->is_system ? 'wb-status-info' : 'wb-status-pending' }}">{{ $slotType->is_system ? $adminText('system_status') : $adminText('user_status') }}</span></td>
                                 <td class="wb-nowrap">{{ $slotType->blocks_count }}</td>
                                 <td class="wb-nowrap">{{ $slotType->sort_order }}</td>
-                                <td><span class="wb-status-pill {{ $slotType->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">{{ $adminText('status_'.$slotType->status) }}</span></td>
-                                <td><span class="wb-status-pill {{ $slotType->is_system ? 'wb-status-info' : 'wb-status-pending' }}">{{ $slotType->is_system ? $adminText('system_status') : $adminText('user_status') }}</span></td>
                             </tr>
                         @endforeach
                     </tbody>

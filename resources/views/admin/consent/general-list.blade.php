@@ -4,11 +4,7 @@
         @php($editUrl = route($sectionRoute, $consentContext + ['edit' => $key]))
         <tr>
             <td><strong>
-                @if ($canWrite)
-                    <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog">{{ $t($key) }}</a>
-                @else
-                    {{ $t($key) }}
-                @endif
+                <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog">{{ $t($key) }}</a>
             </strong></td>
             <td>
                 @if ($key === 'enabled')

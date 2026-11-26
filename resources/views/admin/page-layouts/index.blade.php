@@ -12,17 +12,20 @@
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageLayoutsText('title'),
-        'description' => $pageLayoutsText('index_description'),
+        'description' => null,
         'count' => $totalCount,
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>{{ $pageLayoutsText('title') }}</strong>
-                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+            <div>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $pageLayoutsText('title') }}</strong>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                </div>
+                <p class="wb-card-description">{{ $pageLayoutsText('index_description') }}</p>
             </div>
 
             <a href="{{ route('admin.page-layouts.create') }}" class="wb-btn wb-btn-primary">{{ $pageLayoutsText('new_page_layout') }}</a>
@@ -34,9 +37,9 @@
                     <thead>
                         <tr>
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $pageLayoutsText('name')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_active', 'label' => $pageLayoutsText('status')])
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'handle', 'label' => $pageLayoutsText('handle')])
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'body_class', 'label' => $pageLayoutsText('body_class')])
-                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_active', 'label' => $pageLayoutsText('status')])
                             <th>{{ $pageLayoutsText('ownership') }}</th>
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'sort_order', 'label' => $pageLayoutsText('sort_order')])
                             <th>{{ $pageLayoutsText('actions') }}</th>
@@ -52,9 +55,9 @@
                                         <span class="wb-text-sm wb-text-muted">{{ $pageLayout->description ?: '-' }}</span>
                                     </div>
                                 </td>
+                                <td><span class="wb-status-pill {{ $pageLayout->statusBadgeClass() }}">{{ $pageLayout->is_active ? $pageLayoutsText('active') : $pageLayoutsText('inactive') }}</span></td>
                                 <td class="wb-nowrap"><code>{{ $pageLayout->handle }}</code></td>
                                 <td class="wb-nowrap"><code>{{ $pageLayout->body_class ?: '-' }}</code></td>
-                                <td><span class="wb-status-pill {{ $pageLayout->statusBadgeClass() }}">{{ $pageLayout->is_active ? $pageLayoutsText('active') : $pageLayoutsText('inactive') }}</span></td>
                                 <td><span class="wb-status-pill {{ $pageLayout->is_system ? 'wb-status-info' : 'wb-status-pending' }}">{{ $pageLayout->is_system ? $pageLayoutsText('system') : $pageLayoutsText('custom') }}</span></td>
                                 <td class="wb-nowrap">{{ $pageLayout->sort_order }}</td>
                                 <td class="wb-nowrap">

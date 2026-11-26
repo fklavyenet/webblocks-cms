@@ -23,6 +23,16 @@ final class ListingViewDefinition
     return $listing === 'pages' ? ['view', 'blocks', 'status', 'updated'] : ['preview', 'folder', 'usage', 'updated'];
   }
 
+  /** Keep saved column visibility while presenting each list in its canonical order. */
+  public function presentationColumns(string $listing, array $columns): array
+  {
+    $order = $listing === 'pages'
+      ? ['status', 'blocks', 'updated']
+      : ['preview', 'folder', 'usage', 'updated'];
+
+    return array_values(array_intersect($order, $columns));
+  }
+
   public function normalizeColumns(string $listing, mixed $value): array
   {
     $columns = is_string($value) ? (in_array($value, ['', 'none'], true) ? [] : explode(',', $value)) : $value;

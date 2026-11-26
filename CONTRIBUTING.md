@@ -109,6 +109,39 @@ Use `wb-border-0` on the `wb-pagination` navigation to remove its outer frame.
 Keep the individual controls and their visible keyboard focus styles. Use the
 simple paginator when the source offers a next page and no total.
 
+Resource and file list columns follow this relative order: optional selection,
+record identity, status, context, measurements, explicitly named dates, then
+Actions. Omit absent columns. Column placement never changes default row sorting,
+filters, pagination, block ordering or authorization. Saved Pages and Media views
+retain their selected fields and filters; their displayed columns follow the
+canonical presentation order. The optional Pages View control remains available
+in the final action group rather than a leading column.
+
+Put a list explanation immediately below its title inside `wb-card-header`,
+using `wb-card-description`, including when results are empty. Keep page context,
+field help, warnings and action results in their own contexts. Text buttons on
+the right of a card header use the default wrapping `wb-cluster` gap (`wb-s3`,
+12 px at the standard scale). Compact row icons use `wb-action-group` separately.
+
+Link the first meaningful record name to its existing read-only inspection action;
+otherwise use its existing edit action with the same authorization, URL, modal,
+query context and target window. Use native links or buttons. Never make the whole
+row clickable or make a name download, delete, restore, start, cancel or mutate a
+record. Pages and Sites names open record details; their public-view actions
+remain separate. Media names open the existing preview in list and grid views.
+
+Chronological revision, access audit, import/export and restore histories may keep
+their event-first structure. Update history keeps its source/target version pair
+as the identity. Statistical reports, comparisons and authoring matrices retain
+their domain structure. Record these exceptions rather than invent missing fields.
+Slot types and source schemas without a safe record target remain plain text.
+MCP connection names do not invoke revocation, job-run names do not execute work,
+and theme-history names do not restore appearances. Notes retain their existing
+permission-gated edit link: the separate read action marks the note as read and
+must not be invoked by the name. Visibility toggles, usage and activity history
+are not record-inspection actions. Read-only records without a safe target remain
+plain text.
+
 Use `admin.more-actions-trigger` for overflow menus in an Actions column or
 alongside a record's primary actions. The WebBlocks UI button pairs horizontal
 three dots with a down chevron. Pass a localized accessible label and include

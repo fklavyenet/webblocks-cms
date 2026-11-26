@@ -105,10 +105,13 @@
 
     @if ($sharedSlots->isEmpty())
         <div class="wb-card">
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $adminText('shared_slots_for', ['site' => $siteContext]) }}</strong>
-                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+                <div>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>{{ $adminText('shared_slots_for', ['site' => $siteContext]) }}</strong>
+                        <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                    </div>
+                    <p class="wb-card-description">{{ $adminText('form_help') }}</p>
                 </div>
 
                 @if ($canCreateSharedSlots)
@@ -139,10 +142,13 @@
         </div>
     @else
         <div class="wb-card">
-            <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                    <strong>{{ $adminText('shared_slots_for', ['site' => $siteContext]) }}</strong>
-                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+            <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+                <div>
+                    <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                        <strong>{{ $adminText('shared_slots_for', ['site' => $siteContext]) }}</strong>
+                        <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                    </div>
+                    <p class="wb-card-description">{{ $adminText('form_help') }}</p>
                 </div>
 
                 @if ($canCreateSharedSlots)
@@ -156,11 +162,11 @@
                         <thead>
                             <tr>
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $adminText('name')])
+                                <th>{{ $adminText('status') }}</th>
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'handle', 'label' => $adminText('handle')])
                                 <th>{{ $adminText('site') }}</th>
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'slot_name', 'label' => $adminText('slot')])
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'public_shell', 'label' => $adminText('page_layout')])
-                                <th>{{ $adminText('status') }}</th>
                                 <th>{{ $adminText('usage') }}</th>
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'updated_at', 'label' => $adminText('updated')])
                                 <th>{{ $adminText('actions') }}</th>
@@ -177,11 +183,11 @@
                                             {{ $sharedSlot->name }}
                                         @endif
                                     </strong></td>
+                                    <td><span class="wb-status-pill {{ $sharedSlot->statusBadgeClass() }}">{{ $sharedSlot->statusLabel() }}</span></td>
                                     <td><code>{{ $sharedSlot->handle }}</code></td>
                                     <td>{{ $sharedSlot->site?->name }}</td>
                                     <td>{{ $sharedSlot->slotLabel() }}</td>
                                     <td>{{ $sharedSlot->publicShellLabel() }}</td>
-                                    <td><span class="wb-status-pill {{ $sharedSlot->statusBadgeClass() }}">{{ $sharedSlot->statusLabel() }}</span></td>
                                     @php($usageCount = (int) ($sharedSlot->page_slots_count ?? 0))
                                     <td>
                                         <span class="wb-status-pill {{ $usageCount > 0 ? 'wb-status-active' : 'wb-status-info' }}">{{ $adminText('usage_count', ['count' => $usageCount]) }}</span>

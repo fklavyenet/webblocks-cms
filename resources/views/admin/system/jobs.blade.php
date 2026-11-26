@@ -7,7 +7,7 @@
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $j('title')])
 @section('content')
-    @include('webblocks-cms::admin.partials.page-header', ['title' => $j('title'), 'description' => $j('description')])
+    @include('webblocks-cms::admin.partials.page-header', ['title' => $j('title'), 'description' => null])
     @include('webblocks-cms::admin.partials.flash')
     @if (! $ready)<p class="wb-alert wb-alert-warning">{{ $j('schema') }}</p>@else
     <p>{{ $j('manual_help') }}</p>
@@ -21,12 +21,12 @@
         </div>
         <div class="wb-tabs-panels">
             <section class="wb-tabs-panel {{ $tab === 'jobs' ? 'is-active' : '' }}" id="jobs-jobs" role="tabpanel" @if ($tab !== 'jobs') hidden @endif>
-                <div class="wb-table-wrap"><table class="wb-table"><thead><tr><th scope="col">{{ $j('jobs') }}</th><th scope="col">{{ $j('automation') }}</th><th scope="col">{{ $j('next_check') }}</th><th scope="col">{{ $j('source') }}</th><th scope="col">{{ $j('actions') }}</th></tr></thead><tbody>
+                <section class="wb-card"><div class="wb-card-header"><div><h2 class="wb-card-title">{{ $j('jobs') }}</h2><p class="wb-card-description">{{ $j('description') }}</p></div></div><div class="wb-card-body"><div class="wb-table-wrap"><table class="wb-table"><thead><tr><th scope="col">{{ $j('jobs') }}</th><th scope="col">{{ $j('automation') }}</th><th scope="col">{{ $j('source') }}</th><th scope="col">{{ $j('next_check') }}</th><th scope="col">{{ $j('actions') }}</th></tr></thead><tbody>
                     @foreach ($definitions as $definition)
                         @php($scheduled = app(\WebBlocks\Cms\Support\Jobs\JobRegistry::class)->automatic($definition))
                         <tr><th scope="row">{{ $label($definition) }}@if ($definition->help)<details class="wb-collapse-panel"><summary class="wb-collapse-trigger">{{ $j('scope_details') }}</summary><div class="wb-collapse-body"><p>{{ trans($definition->help, [], $locale) }}</p></div></details>@endif</th><td>{{ $j($scheduled ? 'enabled' : 'not_enabled') }}
                             @if ($system && $definition->key !== 'probe')<button class="wb-btn wb-btn-ghost wb-btn-icon" type="button" data-wb-toggle="modal" data-wb-target="#job-schedule-{{ $loop->index }}" aria-label="{{ $j('toggle').' · '.$label($definition) }}" data-wb-tooltip="{{ $j('toggle') }}"><i class="wb-icon wb-icon-settings" aria-hidden="true"></i></button>@endif</td>
-                            <td>{{ $scheduled && $definition->cron ? (new \Cron\CronExpression($definition->cron))->getNextRunDate(now(), 0, false, config('app.timezone'))->format('Y-m-d H:i T') : '—' }}</td><td>{{ $j($definition->web ? 'web' : 'server') }}</td><td>
+                            <td>{{ $j($definition->web ? 'web' : 'server') }}</td><td>{{ $scheduled && $definition->cron ? (new \Cron\CronExpression($definition->cron))->getNextRunDate(now(), 0, false, config('app.timezone'))->format('Y-m-d H:i T') : '—' }}</td><td>
                             @if ($definition->key === 'seo')
                                 @foreach ($jobSites as $jobSite)<a class="wb-btn wb-btn-secondary" href="{{ route('admin.sites.seo-audits.index', $jobSite) }}">{{ $jobSite->name }}</a>@endforeach
                             @elseif (! $definition->web)
@@ -39,7 +39,7 @@
                             @if ($definition->destination)<a class="wb-link" href="{{ route($definition->destination) }}">{{ $j('open_feature') }}</a>@endif
                         </td></tr>
                     @endforeach
-                </tbody></table></div>
+                </tbody></table></div></div></section>
                 <p class="wb-text-sm">{{ $j('automatic_optional') }}</p>
                 @include('webblocks-cms::admin.system.job-runs', ['jobRuns' => $activeRuns])
             </section>

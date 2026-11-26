@@ -6,7 +6,7 @@
 @extends('webblocks-cms::layouts.admin', ['title' => $text('application_files'), 'heading' => $text('application_files')])
 
 @section('content')
-    @include('webblocks-cms::admin.partials.page-header', ['title' => $text('application_files'), 'description' => $text('application_files_description')])
+    @include('webblocks-cms::admin.partials.page-header', ['title' => $text('application_files'), 'description' => null])
     @include('webblocks-cms::admin.partials.flash')
     @if ($errors->any())<div class="wb-alert wb-alert-danger wb-mb-4"><div>{{ $errors->first() }}</div></div>@endif
 
@@ -27,7 +27,8 @@
     @endif
 
     <div class="wb-card">
-        <div class="wb-card-header wb-flex wb-items-end wb-justify-between wb-gap-3 wb-flex-wrap">
+        <div class="wb-card-header wb-cluster wb-cluster-between">
+            <div><h2 class="wb-card-title">{{ $text('application_files') }}</h2><p class="wb-card-description">{{ $text('application_files_description') }}</p></div>
             <form method="GET" action="{{ route('admin.embedded-applications.assets.index', $application) }}" class="wb-stack wb-gap-1">
                 <label for="application_asset_site">{{ $text('site') }}</label>
                 <div class="wb-flex wb-gap-2"><select class="wb-select" id="application_asset_site" name="site">@foreach($sites as $option)<option value="{{ $option->id }}" @selected($site?->is($option))>{{ $option->name }}</option>@endforeach</select><button class="wb-btn wb-btn-secondary" type="submit">{{ $text('select_site') }}</button></div>
@@ -40,7 +41,7 @@
             @else
                 <div class="wb-table-wrap"><table class="wb-table wb-table-striped wb-table-hover"><thead><tr><th>{{ $text('filename') }}</th><th>{{ $text('setting_type') }}</th><th>{{ $text('public_path') }}</th><th>{{ $text('size') }}</th><th>{{ $text('updated_at') }}</th><th>{{ $text('actions') }}</th></tr></thead><tbody>
                 @foreach($assets as $asset)
-                    <tr><td><strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#application-asset-edit-{{ $loop->index }}" aria-haspopup="dialog">{{ $asset['filename'] }}</button></strong></td><td><code>{{ $asset['type'] }}</code></td><td><code>{{ $asset['public_path'] }}</code></td><td>{{ number_format($asset['size']) }} B</td><td>{{ $asset['updated_at'] ? date('Y-m-d H:i', $asset['updated_at']) : '—' }}</td><td class="wb-table-actions"><div class="wb-flex wb-gap-2"><button class="wb-action-btn wb-action-btn-edit" type="button" data-wb-toggle="modal" data-wb-target="#application-asset-edit-{{ $loop->index }}" data-wb-tooltip="{{ $text('edit') }}" aria-label="{{ $text('edit') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></button><button class="wb-action-btn wb-action-btn-delete" type="button" data-wb-toggle="modal" data-wb-target="#application-asset-delete-{{ $loop->index }}" data-wb-tooltip="{{ $text('delete') }}" aria-label="{{ $text('delete') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button></div></td></tr>
+                    <tr><td><strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#application-asset-edit-{{ $loop->index }}" aria-haspopup="dialog">{{ $asset['filename'] }}</button></strong></td><td><code>{{ $asset['type'] }}</code></td><td><code>{{ $asset['public_path'] }}</code></td><td>{{ number_format($asset['size']) }} B</td><td>{{ $asset['updated_at'] ? date('Y-m-d H:i', $asset['updated_at']) : '—' }}</td><td class="wb-table-actions"><div class="wb-action-group"><button class="wb-action-btn wb-action-btn-edit" type="button" data-wb-toggle="modal" data-wb-target="#application-asset-edit-{{ $loop->index }}" data-wb-tooltip="{{ $text('edit') }}" aria-label="{{ $text('edit') }}"><i class="wb-icon wb-icon-pencil" aria-hidden="true"></i></button><button class="wb-action-btn wb-action-btn-delete" type="button" data-wb-toggle="modal" data-wb-target="#application-asset-delete-{{ $loop->index }}" data-wb-tooltip="{{ $text('delete') }}" aria-label="{{ $text('delete') }}"><i class="wb-icon wb-icon-trash" aria-hidden="true"></i></button></div></td></tr>
                 @endforeach
                 </tbody></table></div>
             @endif

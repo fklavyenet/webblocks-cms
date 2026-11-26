@@ -5,7 +5,7 @@
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => __('webblocks-cms::acl.title'),
-        'description' => __('webblocks-cms::acl.description'),
+        'description' => null,
         'count' => $totalCount,
     ])
 
@@ -38,12 +38,15 @@
     </div>
 
     <section class="wb-card" aria-labelledby="acl-roles-title">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2">
-                <h2 class="wb-card-title" id="acl-roles-title">{{ __('webblocks-cms::acl.roles') }}</h2>
-                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $roles->total() }}</span>
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+            <div>
+                <div class="wb-cluster wb-cluster-2">
+                    <h2 class="wb-card-title" id="acl-roles-title">{{ __('webblocks-cms::acl.roles') }}</h2>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $roles->total() }}</span>
+                </div>
+                <p class="wb-card-description">{{ __('webblocks-cms::acl.description') }}</p>
             </div>
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+            <div class="wb-cluster wb-flex-wrap">
                 <a class="wb-btn wb-btn-secondary" href="{{ route('admin.access.inspect') }}">{{ __('webblocks-cms::acl.inspect') }}</a>
                 <a class="wb-btn wb-btn-primary" href="{{ route('admin.access.roles.create') }}">{{ __('webblocks-cms::acl.new') }}</a>
             </div>
@@ -70,7 +73,7 @@
                                     <td>
                                         <div class="wb-stack wb-stack-1">
                                             @if ($role->is_protected)
-                                                <strong>{{ $role->displayName() }}</strong>
+                                                <strong><button type="button" class="wb-link wb-cms-row-title-button" data-wb-toggle="modal" data-wb-target="#acl-role-{{ $role->id }}" aria-haspopup="dialog">{{ $role->displayName() }}</button></strong>
                                             @else
                                                 <a href="{{ route('admin.access.roles.edit', $role) }}"><strong>{{ $role->displayName() }}</strong></a>
                                             @endif

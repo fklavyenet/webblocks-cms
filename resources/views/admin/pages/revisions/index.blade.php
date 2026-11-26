@@ -15,7 +15,7 @@
 @section('content')
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $pageTitle,
-        'description' => $adminText('description'),
+        'description' => null,
         'actions' => '<div class="wb-cluster wb-cluster-2"><a href="'.$pageEditUrl.'" class="wb-btn wb-btn-secondary">'.e($adminText('back_to_page')).'</a>'.($pagePublicUrl ? '<a href="'.$pagePublicUrl.'" class="wb-btn wb-btn-secondary" target="_blank" rel="noopener noreferrer"><i class="wb-icon wb-icon-globe" aria-hidden="true"></i> <span>'.e($adminText('view_page')).'</span></a>' : '').'</div>',
     ])
 
@@ -37,7 +37,10 @@
 
     <div class="wb-card">
         <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2">
-            <strong>{{ $adminText('version_history') }}</strong>
+            <div>
+                <strong>{{ $adminText('version_history') }}</strong>
+                <p class="wb-card-description">{{ $adminText('description') }}</p>
+            </div>
             <span class="wb-text-sm wb-text-muted">{{ $adminText('newest_first') }}</span>
         </div>
         <div class="wb-card-body">
@@ -64,7 +67,7 @@
                                     <td>{{ $revision->created_at?->format('Y-m-d H:i') ?? '-' }}</td>
                                     <td>
                                         <div class="wb-stack wb-gap-1">
-                                            <strong>{{ $revision->labelText() }}</strong>
+                                            <strong><a class="wb-link" href="{{ route('admin.pages.revisions.show', [$page, $revision]) }}">{{ $revision->labelText() }}</a></strong>
                                             <span class="wb-text-sm wb-text-muted">
                                                 @if ($revision->display_summary['type'] === 'initial')
                                                     {{ $adminText('summary_initial') }}

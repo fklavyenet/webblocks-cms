@@ -20,7 +20,7 @@
 
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $blockTypesIndexText('block_types'),
-        'description' => $blockTypesIndexText('description'),
+        'description' => null,
         'count' => $totalCount,
     ])
 
@@ -81,10 +81,13 @@
     </div>
 
     <div class="wb-card">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>{{ $blockTypesIndexText('block_types') }}</strong>
-                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+            <div>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $blockTypesIndexText('block_types') }}</strong>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $filteredCount }}</span>
+                </div>
+                <p class="wb-card-description">{{ $blockTypesIndexText('description') }}</p>
             </div>
 
             <a href="{{ route('admin.block-types.create') }}" class="wb-btn wb-btn-primary">{{ $blockTypesIndexText('new_custom_block_type') }}</a>
@@ -109,10 +112,10 @@
                         <thead>
                             <tr>
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $blockTypesIndexText('name')])
-                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'category', 'label' => $blockTypesIndexText('category')])
-                                <th>{{ $blockTypesIndexText('usage') }}</th>
                                 @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'status', 'label' => $blockTypesIndexText('status')])
+                                @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'category', 'label' => $blockTypesIndexText('category')])
                                 <th>{{ $blockTypesIndexText('support') }}</th>
+                                <th>{{ $blockTypesIndexText('usage') }}</th>
                                 <th>{{ $blockTypesIndexText('actions') }}</th>
                             </tr>
                         </thead>
@@ -123,28 +126,24 @@
                                         <td>
                                             <div class="wb-stack wb-stack-1">
                                                 <strong>
-                                                    @if (! $blockType->is_system)
-                                                        <a href="{{ $editUrl }}" class="wb-link" aria-haspopup="dialog" aria-controls="blockTypeEditModal-{{ $blockType->id }}">{{ $blockType->displayName() }}</a>
-                                                    @else
-                                                        {{ $blockType->displayName() }}
-                                                    @endif
+                                                    <a href="{{ route('admin.block-types.index', array_filter(array_merge($baseQuery, ['modal' => 'block-type-contract', 'contract_block_type' => $blockType->id]))) }}" class="wb-link" aria-haspopup="dialog" aria-controls="blockTypeContractModal-{{ $blockType->id }}">{{ $blockType->displayName() }}</a>
                                                 </strong>
                                                 <span class="wb-text-sm wb-text-muted"><code>{{ $blockType->slug }}</code> | {{ $blockType->source_type ?: 'static' }} | {{ $blockType->is_system ? $blockTypesIndexText('system') : $blockTypesIndexText('user') }}{{ $blockType->is_container ? ' | '.$blockTypesIndexText('container') : '' }}</span>
                                             </div>
                                         </td>
-                                        <td class="wb-nowrap">{{ $blockType->category ?: '-' }}</td>
-                                        <td class="wb-nowrap">{{ $blockType->blocks_count }}</td>
                                         <td>
                                             <span class="wb-status-pill {{ $blockType->status === 'published' ? 'wb-status-active' : 'wb-status-pending' }}">
                                                 {{ $blockType->status }}
                                             </span>
                                         </td>
+                                        <td class="wb-nowrap">{{ $blockType->category ?: '-' }}</td>
                                         <td>
                                             <div class="wb-stack wb-stack-1">
                                                 <span class="wb-text-sm wb-text-muted">{{ $blockTypesIndexText('admin') }} {!! ($supportedAdminForms[$blockType->id] ?? false) ? '&#10003;' : '&#8722;' !!}</span>
                                                 <span class="wb-text-sm wb-text-muted">{{ $blockTypesIndexText('render') }} {!! ($supportedPublicRenders[$blockType->id] ?? false) ? '&#10003;' : '&#8722;' !!}</span>
                                             </div>
                                         </td>
+                                        <td class="wb-nowrap">{{ $blockType->blocks_count }}</td>
                                         <td class="wb-nowrap">
                                             <div class="wb-action-group">
                                                 <a

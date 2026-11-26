@@ -5,7 +5,7 @@
 @endphp
 @extends('webblocks-cms::layouts.admin', ['title' => $dc('title'), 'heading' => $dc('title')])
 @section('content')
-@include('webblocks-cms::admin.partials.page-header', ['title' => $dc('title'), 'description' => $dc('intro')])
+@include('webblocks-cms::admin.partials.page-header', ['title' => $dc('title'), 'description' => null])
 <div class="wb-alert wb-alert-info">{{ $dc('source_translation_help') }}</div>
 <nav class="wb-cluster wb-cluster-2 wb-flex-wrap wb-mb-4" aria-label="{{ $dc('views') }}">
     @foreach (['sources', 'loops', 'bindings', 'issues'] as $view)
@@ -28,9 +28,14 @@
 @endif
 @if ($selected && $tab === 'sources')
 <section class="wb-card wb-mb-4">
-    <div class="wb-card-header"><strong>{{ $selected['label'] }}</strong> <code>{{ $selected['handle'] }}</code></div>
+    <div class="wb-card-header">
+        <div>
+            <div class="wb-cluster"><strong>{{ $selected['label'] }}</strong><code>{{ $selected['handle'] }}</code></div>
+            <p class="wb-card-description">{{ $selected['contract']['description'] ?? $dc('legacy_help') }}</p>
+        </div>
+    </div>
     <div class="wb-card-body wb-stack wb-stack-3">
-        <p>{{ $selected['contract']['description'] ?? $dc('legacy_help') }}</p>
+
         <div class="wb-table-wrap">
             <table class="wb-table wb-table-sm wb-table-striped wb-table-break wb-cms-detail-table" aria-label="{{ $selected['label'] }}">
                 <tbody>
@@ -54,15 +59,21 @@
 </section>
 @endif
 <section class="wb-card">
-    <div class="wb-card-header"><strong>{{ $dc($tab) }}</strong></div>
+    <div class="wb-card-header">
+        <div>
+            <strong>{{ $dc($tab) }}</strong>
+            <p class="wb-card-description">{{ $dc('intro') }}</p>
+        </div>
+    </div>
     <div class="wb-card-body"><div class="wb-table-wrap"><table class="wb-table">
     @if ($tab === 'sources')
-        <thead><tr><th>{{ $dc('source') }}</th><th>{{ $dc('provider') }}</th><th>{{ $dc('type') }}</th><th>{{ $dc('state') }}</th><th>{{ $dc('blocks') }}</th><th>{{ $dc('actions') }}</th></tr></thead>
-        <tbody>@forelse ($filteredSources as $source)<tr><td><strong>{{ $source['label'] }}</strong><div class="wb-text-sm"><code>{{ $source['handle'] }}</code></div></td><td>{{ $source['provider_label'] ?: $dc('unknown') }}</td><td>{{ $dc($source['kind']) }}</td><td><span class="wb-status-pill wb-status-info">{{ $dc('state_'.$source['state']) }}</span></td><td>{{ $source['blocks_count'] }}</td><td class="wb-table-actions"><div class="wb-action-group"><a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ $link(['source' => $source['handle']]) }}">{{ $dc('details') }}</a></div></td></tr>@empty<tr><td colspan="6">{{ $dc('no_sources') }}</td></tr>@endforelse</tbody>
+        <thead><tr><th>{{ $dc('source') }}</th><th>{{ $dc('state') }}</th><th>{{ $dc('provider') }}</th><th>{{ $dc('type') }}</th><th>{{ $dc('blocks') }}</th><th>{{ $dc('actions') }}</th></tr></thead>
+        <tbody>@forelse ($filteredSources as $source)<tr><td><strong><a class="wb-link" href="{{ $link(['source' => $source['handle']]) }}">{{ $source['label'] }}</a></strong><div class="wb-text-sm"><code>{{ $source['handle'] }}</code></div></td><td><span class="wb-status-pill wb-status-info">{{ $dc('state_'.$source['state']) }}</span></td><td>{{ $source['provider_label'] ?: $dc('unknown') }}</td><td>{{ $dc($source['kind']) }}</td><td>{{ $source['blocks_count'] }}</td><td class="wb-table-actions"><div class="wb-action-group"><a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ $link(['source' => $source['handle']]) }}">{{ $dc('details') }}</a></div></td></tr>@empty<tr><td colspan="6">{{ $dc('no_sources') }}</td></tr>@endforelse</tbody>
     @else
-        <thead><tr><th>{{ $dc('location') }}</th><th>{{ $dc('source') }}</th><th>{{ $dc('connection') }}</th><th>{{ $dc('publication') }}</th><th>{{ $dc('actions') }}</th></tr></thead>
+        <thead><tr><th>{{ $dc('location') }}</th><th>{{ $dc('publication') }}</th><th>{{ $dc('source') }}</th><th>{{ $dc('connection') }}</th><th>{{ $dc('actions') }}</th></tr></thead>
         <tbody>@forelse ($rows as $row)<tr>
-            <td>{{ $row['site']->name }}<div><strong>{{ $row['owner'] }}</strong> @if ($row['shared'])<span class="wb-status-pill wb-status-info">{{ $dc('shared') }}</span>@endif</div><div class="wb-text-sm">{{ $row['path'] }}</div><div class="wb-text-sm wb-text-muted">{{ $dc('slot') }}: {{ $row['block']->slotType?->name ?? $row['block']->slot }}</div></td>
+            <td>{{ $row['site']->name }}<div><strong><a class="wb-link" href="{{ $row['edit_url'] }}">{{ $row['owner'] }}</a></strong> @if ($row['shared'])<span class="wb-status-pill wb-status-info">{{ $dc('shared') }}</span>@endif</div><div class="wb-text-sm">{{ $row['path'] }}</div><div class="wb-text-sm wb-text-muted">{{ $dc('slot') }}: {{ $row['block']->slotType?->name ?? $row['block']->slot }}</div></td>
+            <td>{{ $dc($row['shared'] ? 'shared' : 'page_state') }}: {{ $dc('workflow_'.$row['status']) }}<div>{{ $dc('block_state') }}: {{ $dc('workflow_'.$row['block_status']) }}</div></td>
             <td>{{ $sources->get($row['source'])['label'] ?? $row['source'] }}</td>
             <td>@if ($row['kind'] === 'loop')
                 <div>{{ $dc('template_label', ['id' => $row['configuration']['template_block_id'] ?? '—']) }}</div>
@@ -79,7 +90,6 @@
                 @if ($row['record'] === '@item')<div class="wb-text-sm">{{ $row['loop_id'] ? $dc('loop_owner', ['id' => $row['loop_id']]) : $dc('missing_loop') }}</div>@endif
                 @if (! isset($sources->get($row['source'])['fields'][$row['field']]))<div class="wb-text-danger">{{ $dc('missing_field') }}</div>@endif
             @endif</td>
-            <td>{{ $dc($row['shared'] ? 'shared' : 'page_state') }}: {{ $dc('workflow_'.$row['status']) }}<div>{{ $dc('block_state') }}: {{ $dc('workflow_'.$row['block_status']) }}</div></td>
             <td class="wb-table-actions"><div class="wb-action-group"><a class="wb-btn wb-btn-secondary wb-btn-sm" href="{{ $row['edit_url'] }}">{{ $dc('open_block') }}</a></div></td>
         </tr>@empty<tr><td colspan="5">{{ $dc('no_usages') }}</td></tr>@endforelse</tbody>
     @endif

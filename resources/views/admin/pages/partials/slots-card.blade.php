@@ -32,7 +32,7 @@
 @endphp
 
 <div class="wb-card">
-    <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
+    <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
         <div class="wb-stack wb-gap-1">
             <strong>{{ $adminText('slots') }}</strong>
             <span class="wb-text-sm wb-text-muted">{{ $adminText('description') }}</span>

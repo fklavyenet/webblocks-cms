@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.144.31
+
+- Align admin resource-list columns around record identity and status while preserving sorting, filters, permissions and saved-view visibility.
+- Keep list explanations below their card titles in empty and populated results, and use the native wrapping gap for header text actions.
+- Open existing record details or previews from list names, retain editing actions, and keep public viewing in the final action group.
+- Preserve chronological audit and operation histories and safe plain-text exceptions for state-changing actions.
+
 ## 1.144.30
 
 - Add checksum-pinned theme and language catalog install/update APIs with existing installation-wide system-token policies.

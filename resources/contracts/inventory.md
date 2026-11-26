@@ -2968,6 +2968,25 @@ use the pointer cursor. Drag handles retain grab and grabbing cursors. Editor
 controls that expand or collapse content update their labels to match the
 current state.
 
+Admin resource lists place optional selection before record identity, status,
+context, measurements, explicit dates and final Actions. Visual column order does
+not change query ordering, filters, pagination, permissions or block order. Saved
+Pages and Media views retain column visibility and filters; selected columns use
+the canonical display order. Pages public View remains an optional final action.
+List explanations use `wb-card-description` below the owning card title, including
+empty results. Header text actions use the native default wrapping `wb-cluster`;
+row icons keep their compact `wb-action-group`.
+
+Record names reuse the existing safe inspection target, or the existing edit target
+when no inspection exists, with matching permission, query context and window.
+Pages and Sites names open their record detail modal; public viewing stays separate.
+Media names open the existing preview in both table and grid views. Names never
+initiate downloads, deletion, restores, job execution or state changes. Notes retain
+the permitted edit target because their separate read action marks them as read.
+Records with no safe read/edit target remain plain text. Event-first revision,
+access, transfer and restore histories, statistical reports and comparison matrices
+retain their documented domain structure; update histories identify version pairs.
+
 Read-only summary cards and dialogs use compact native tables with row headings
 for a single record and column headings for repeated records. This includes
 page and block editors, revision records, media details and usage, content

@@ -20,21 +20,24 @@
 @endphp
     @include('webblocks-cms::admin.partials.page-header', [
         'title' => $adminText('sites.title'),
-        'description' => $adminText('sites.description'),
+        'description' => null,
         'count' => $totalCount,
     ])
 
     @include('webblocks-cms::admin.partials.flash')
 
     <div class="wb-card">
-        <div class="wb-card-header wb-cluster wb-cluster-between wb-cluster-2 wb-flex-wrap">
-            <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
-                <strong>{{ $adminText('sites.title') }}</strong>
-                <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $sites->total() }}</span>
+        <div class="wb-card-header wb-cluster wb-cluster-between wb-flex-wrap">
+            <div>
+                <div class="wb-cluster wb-cluster-2 wb-flex-wrap">
+                    <strong>{{ $adminText('sites.title') }}</strong>
+                    <span class="wb-status-pill wb-status-info" data-admin-list-count>{{ $sites->total() }}</span>
+                </div>
+                <p class="wb-card-description">{{ $adminText('sites.description') }}</p>
             </div>
 
             @if ($canManageSites)
-            <div class="wb-cluster wb-cluster-2">
+            <div class="wb-cluster">
                 <a href="{{ route('admin.sites.create') }}" class="wb-btn wb-btn-primary">{{ $adminText('sites.add_site') }}</a>
             </div>
             @endif
@@ -45,13 +48,12 @@
                 <table class="wb-table wb-table-striped wb-table-hover" @include('webblocks-cms::admin.partials.table-sort-attributes')>
                     <thead>
                         <tr>
-                            <th>{{ $adminText('sites.columns.view') }}</th>
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'name', 'label' => $adminText('sites.columns.name')])
+                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_primary', 'label' => $adminText('sites.columns.status')])
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'handle', 'label' => $adminText('sites.columns.handle')])
                             <th>{{ $adminText('sites.columns.domains') }}</th>
                             <th>{{ $adminText('sites.columns.locales') }}</th>
                             @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'pages_count', 'label' => $adminText('sites.columns.pages')])
-                            @include('webblocks-cms::admin.partials.table-sort-heading', ['key' => 'is_primary', 'label' => $adminText('sites.columns.status')])
                             <th class="wb-table-actions">{{ $adminText('sites.columns.actions') }}</th>
                         </tr>
                     </thead>
@@ -59,25 +61,13 @@
                         @foreach ($sites as $site)
                             @php($editUrl = route('admin.sites.edit', $site))
                             <tr data-site-id="{{ $site->id }}">
-                                <td data-column="view">
-                                    <a
-                                        href="{{ $site->publicHomeUrl() }}"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="wb-action-btn wb-action-btn-view"
-                                        data-wb-tooltip="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
-                                        aria-label="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
-                                    >
-                                        <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
-                                    </a>
-                                </td>
+
                                 <td><strong>
-                                    @if (in_array($site->id, $editableSiteIds, true))
-                                        <a href="{{ $editUrl }}" class="wb-link">{{ $site->name }}</a>
-                                    @else
-                                        {{ $site->name }}
-                                    @endif
+                                    <a href="{{ route('admin.sites.index', ['modal' => 'site-details', 'details_site' => $site->id]) }}" class="wb-link" aria-haspopup="dialog" aria-controls="siteDetailsModal">{{ $site->name }}</a>
                                 </strong></td>
+                                <td>
+                                    <span class="wb-status-pill {{ $site->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $site->is_primary ? $adminText('sites.primary') : $adminText('sites.standard') }}</span>
+                                </td>
                                 <td><code>{{ $site->handle }}</code></td>
                                 <td>
                                     <div class="wb-stack wb-gap-1">
@@ -99,11 +89,18 @@
                                     </div>
                                 </td>
                                 <td data-column="pages">{{ $site->pages_count }}</td>
-                                <td>
-                                    <span class="wb-status-pill {{ $site->is_primary ? 'wb-status-info' : 'wb-status-pending' }}">{{ $site->is_primary ? $adminText('sites.primary') : $adminText('sites.standard') }}</span>
-                                </td>
                                 <td class="wb-table-actions">
                                     <div class="wb-action-group">
+                                        <a
+                                        href="{{ $site->publicHomeUrl() }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="wb-action-btn wb-action-btn-view"
+                                        data-wb-tooltip="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
+                                        aria-label="{{ $adminText('sites.open_home_new_tab', ['name' => $site->name]) }}"
+                                    >
+                                        <i class="wb-icon wb-icon-globe" aria-hidden="true"></i>
+                                    </a>
                                         <a
                                             href="{{ route('admin.sites.index', ['modal' => 'site-details', 'details_site' => $site->id]) }}"
                                             class="wb-action-btn"

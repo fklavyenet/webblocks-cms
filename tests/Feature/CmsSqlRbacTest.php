@@ -435,7 +435,7 @@ class CmsSqlRbacTest extends TestCase
   }
 
   #[Test]
-  public function site_title_links_follow_per_site_edit_permissions(): void
+  public function site_title_links_reuse_scoped_details_without_expanding_edit_permissions(): void
   {
     $this->withoutMiddleware([RedirectIfNotInstalled::class]);
     Locale::create(['code' => 'en', 'name' => 'English', 'is_default' => true, 'is_enabled' => true]);
@@ -455,12 +455,14 @@ class CmsSqlRbacTest extends TestCase
 
     foreach ([$editable, $readOnly] as $site) {
       $row = '//tr[@data-site-id="'.$site->id.'"]';
-      $title = $xpath->query($row.'/td[2]/strong')->item(0);
+      $title = $xpath->query($row.'/td[1]/strong')->item(0);
       $this->assertSame($site->name, trim($title->textContent));
       $editLink = $xpath->query('./a', $title)->item(0);
       $pencilLink = $xpath->query($row.'//a[contains(@class, "wb-action-btn-edit")]')->item(0);
       $this->assertSame(route('admin.sites.edit', $site), $pencilLink->getAttribute('href'));
-      $this->assertSame($site->is($editable) ? $pencilLink->getAttribute('href') : null, $editLink?->getAttribute('href'));
+      $detailsLink = $xpath->query($row.'//a[@aria-controls="siteDetailsModal" and contains(@class, "wb-action-btn")]')->item(0);
+      $this->assertSame($detailsLink->getAttribute('href'), $editLink?->getAttribute('href'));
+      $this->get($editLink->getAttribute('href'))->assertOk()->assertViewHas('siteDetailsUi', fn ($ui) => $ui['selectedSite']?->is($site));
     }
   }
 
