@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.144.30
+
+- Add checksum-pinned theme and language catalog install/update APIs with existing installation-wide system-token policies.
+- Advance identical language package releases safely and reject stale versions under the installation lock while preserving selected themes and default languages.
+
 ## 1.144.29
 
 - Display nested navigation groups as cascading submenus in desktop Navbar Navigation.

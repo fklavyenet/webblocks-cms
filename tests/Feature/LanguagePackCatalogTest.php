@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\Process\Process;
 use WebBlocks\Cms\Http\Middleware\EnsureInstalled;
 use WebBlocks\Cms\Models\Locale;
@@ -15,6 +16,7 @@ use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Mail\VerificationEmailTemplates;
 use WebBlocks\Cms\Support\System\SystemSettings;
 use WebBlocks\Cms\Support\Translations\CmsTranslator;
+use WebBlocks\Cms\Support\Translations\NativeLanguagePacks;
 use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
@@ -206,6 +208,44 @@ final class LanguagePackCatalogTest extends TestCase
     $this->get(route('admin.profile.edit'))->assertOk()->assertSee('lang="en"', false);
     $this->assertDatabaseHas('wbcms_panel_languages', ['code' => 'ru', 'active_catalog_id' => $id]);
     $this->assertSame('ru', app(SystemSettings::class)->get(SystemSettings::ADMIN_LOCALE));
+  }
+
+  public function test_catalog_api_checks_scope_installs_updates_and_preserves_default_language(): void
+  {
+    $actor = $this->actor();
+    $token = app(CmsApiTokenIssuer::class)->issue('Language catalog', $actor, ['panel-languages.manage'])->plainToken;
+    $readonly = app(CmsApiTokenIssuer::class)->issue('Read content', $actor, ['content.read'])->plainToken;
+    $default = app(SystemSettings::class)->get(SystemSettings::DEFAULT_LOCALE);
+    $directory = sys_get_temp_dir().'/webblocks-api-lang-'.bin2hex(random_bytes(8));
+    File::makeDirectory($directory);
+    try {
+      (new Process([PHP_BINARY, 'scripts/check-language-pack.php', '--build', $directory], dirname(__DIR__, 2)))->mustRun();
+      $bytes = File::get($directory.'/webblocks-cms-ru-'.WebBlocks::VERSION.'.zip');
+      $release = $this->release('native', $bytes);
+      $this->serve($release, $bytes);
+      $url = '/webadmin/api/language-packs/catalog/ru';
+      $this->withToken($readonly)->getJson('/webadmin/api/language-packs/catalog')->assertForbidden();
+      $this->withToken($token)->getJson('/webadmin/api/language-packs/catalog')->assertOk()->assertJsonPath('data.0.code', 'ru');
+      $this->assertDatabaseCount('wbcms_native_language_packs', 0);
+      $this->withToken($token)->postJson($url.'/install', ['version' => $release['version'], 'checksum' => str_repeat('0', 64)])->assertUnprocessable();
+      $this->withToken($token)->postJson($url.'/install', ['version' => $release['version'], 'checksum' => $release['sha256']])->assertCreated()->assertJsonPath('installed.default_language_changed', false);
+      $this->withToken($token)->postJson($url.'/install', ['version' => $release['version'], 'checksum' => $release['sha256']])->assertConflict();
+      $this->assertDatabaseHas('wbcms_native_language_packs', ['code' => 'ru', 'release_version' => '1.0.0']);
+      $release = $this->release('native', $bytes, '1.1.0');
+      $this->serve($release, $bytes);
+      $this->withToken($token)->postJson($url.'/update', ['version' => $release['version'], 'checksum' => $release['sha256']])->assertOk()->assertJsonPath('updated.version', '1.1.0');
+      $this->assertDatabaseHas('wbcms_native_language_packs', ['code' => 'ru', 'release_version' => '1.1.0']);
+      $this->assertSame($default, app(SystemSettings::class)->get(SystemSettings::DEFAULT_LOCALE));
+      $this->withToken($token)->postJson($url.'/update', ['version' => '1.0.0', 'checksum' => $release['sha256']])->assertConflict();
+      // Recheck under the installer's SQL row lock as well: an older operation
+      // can reach this stage after another request has installed a newer pack.
+      $this->expectException(ValidationException::class);
+      app(NativeLanguagePacks::class)->installArchive(
+        $directory.'/webblocks-cms-ru-'.WebBlocks::VERSION.'.zip', null, 'ru', '1.0.0',
+      );
+    } finally {
+      File::deleteDirectory($directory);
+    }
   }
 
   private function actor(string $role = 'super_admin'): User

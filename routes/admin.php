@@ -85,6 +85,7 @@ use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentPlanControl
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentResourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalContentSourceController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalEngagementController;
+use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalExtensionCatalogController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalInventoryController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalMaintenanceCleanupController;
 use WebBlocks\Cms\Http\Controllers\InternalContentApi\InternalNavigationController;
@@ -216,6 +217,16 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/content-contract', [InternalContentResourceController::class, 'contentContract'])->name('content-contract.show');
     Route::get('/content-sources', [InternalContentSourceController::class, 'index'])->middleware('internal-api.capability:content.read')->name('content-sources.index');
     Route::post('/content-sources/{source}/preview', [InternalContentSourceController::class, 'preview'])->where('source', '[a-z0-9:-]+')->middleware('internal-api.capability:content.read')->name('content-sources.preview');
+    foreach (['themes' => ['theme', 'themes.manage'], 'language-packs' => ['language-pack', 'panel-languages.manage']] as $path => [$type, $capability]) {
+      Route::get('/'.$path.'/catalog', [InternalExtensionCatalogController::class, $type === 'theme' ? 'themes' : 'languages'])
+        ->middleware('internal-api.capability:'.$capability)->name($path.'.catalog.index');
+      foreach (['install', 'update'] as $operation) {
+        Route::post('/'.$path.'/catalog/{handle}/'.$operation, [InternalExtensionCatalogController::class, 'install'])
+          ->where('handle', $type === 'theme' ? '[a-z0-9]+(?:-[a-z0-9]+)*' : '[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2}')
+          ->defaults('packageType', $type)->defaults('operation', $operation)
+          ->middleware('internal-api.capability:'.$capability)->name($path.'.catalog.'.$operation);
+      }
+    }
     Route::get('/plugins', [InternalPluginController::class, 'index'])->middleware('internal-api.capability:plugins.read')->name('plugins.index');
     Route::post('/plugins/install', [InternalPluginController::class, 'install'])->middleware('internal-api.capability:plugins.install')->name('plugins.install');
     Route::get('/plugins/catalog', [InternalPluginController::class, 'catalog'])->middleware('internal-api.capability:plugins.read')->name('plugins.catalog.index');

@@ -3061,3 +3061,31 @@ Unsupported layouts or unavailable package styles fall back to the site's built-
 preset at render time. Returning to the preset or a previous revision changes
 the theme selection and its typed setting only. The package adds no new block
 type, locale, shell or template override.
+
+
+### Catalog installation and updates through the Internal Content API
+
+Theme and language packages can be obtained directly from Extensions through
+`GET /webadmin/api/themes/catalog` and
+`GET /webadmin/api/language-packs/catalog`. Reads never install or update a
+package. Theme listing accepts `page` and returns compatible releases and local
+installation state; language listing uses the exact running CMS version.
+
+Use `POST /webadmin/api/themes/catalog/{handle}/install` or `/update`, or
+`POST /webadmin/api/language-packs/catalog/{code}/install` or `/update`, with
+JSON `version` and lowercase SHA-256 `checksum`. Theme operations require
+`themes.manage`; language operations require `panel-languages.manage`. The
+existing package policies require an installation-wide system token owned by
+an active Super admin. Personal or site-limited credentials cannot manage
+installation-wide packages. Catalog publisher credentials are not CMS tokens.
+
+Installation downloads the selected package and verifies the requested checksum,
+manifest identity and compatibility before using the native package installer.
+Install/update state conflicts return 409. Invalid or changed artifacts return
+422 with a diagnostic operation reference. Theme updates install a separate
+version and preserve every site's selected appearance. Site preview and
+confirmation-based activation remain separate operations. Language updates
+preserve personal/default language choices and the exact CMS source contract.
+When a newer language package version contains identical verified bytes, the
+installed release version still advances without rewriting translations. Older releases are also rejected under the SQL package lock, including when their artifact bytes match, so a concurrent stale request cannot report a downgrade as successful.
+Plugin publication/install/update APIs remain unchanged.

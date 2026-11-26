@@ -330,6 +330,12 @@ class InternalApiDiscoveryController extends Controller
       'engagement_ratings' => '/webadmin/api/engagement/ratings',
       'plugins' => '/webadmin/api/plugins',
       'plugin_install' => '/webadmin/api/plugins/install',
+      'theme_catalog' => '/webadmin/api/themes/catalog',
+      'theme_catalog_install' => '/webadmin/api/themes/catalog/{handle}/install',
+      'theme_catalog_update' => '/webadmin/api/themes/catalog/{handle}/update',
+      'language_pack_catalog' => '/webadmin/api/language-packs/catalog',
+      'language_pack_catalog_install' => '/webadmin/api/language-packs/catalog/{handle}/install',
+      'language_pack_catalog_update' => '/webadmin/api/language-packs/catalog/{handle}/update',
       'plugin_catalog_update' => '/webadmin/api/plugins/catalog/{plugin}/update',
       'plugin_enable' => '/webadmin/api/plugins/{plugin}/enable',
       'plugin_setup' => '/webadmin/api/plugins/{plugin}/setup',
@@ -338,6 +344,26 @@ class InternalApiDiscoveryController extends Controller
       // Enabled plugins advertise their own endpoints (e.g. WebBlocks Commerce).
       ...$this->pluginDiscovery->resources(),
     ];
+  }
+
+  private function extensionCatalogPaths(array $json): array
+  {
+    $paths = [];
+    foreach (['themes' => 'themes.manage', 'language-packs' => 'panel-languages.manage'] as $type => $capability) {
+      $paths['/'.$type.'/catalog'] = ['get' => ['summary' => 'List compatible catalog packages without installing', 'x-required-capability' => $capability,
+        'responses' => ['200' => ['description' => 'Catalog JSON', 'content' => $json], '403' => ['description' => 'Requires an installation-wide system token owned by a Super admin'], '503' => ['description' => 'Catalog unavailable']]]];
+      foreach (['install', 'update'] as $operation) {
+        $paths['/'.$type.'/catalog/{handle}/'.$operation] = ['post' => [
+          'summary' => ucfirst($operation).' a checksum-pinned catalog package without changing the selected theme/default language',
+          'x-required-capability' => $capability,
+          'parameters' => [['name' => 'handle', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'string']]],
+          'requestBody' => ['required' => true, 'content' => ['application/json' => ['schema' => ['type' => 'object', 'required' => ['version', 'checksum'], 'properties' => ['version' => ['type' => 'string'], 'checksum' => ['type' => 'string', 'pattern' => '^[a-f0-9]{64}$']]]]]],
+          'responses' => ['200' => ['description' => 'Updated package JSON', 'content' => $json], '201' => ['description' => 'Installed package JSON', 'content' => $json], '403' => ['description' => 'Missing capability or unauthorized actor'], '409' => ['description' => 'Installed package state conflicts with install/update'], '422' => ['description' => 'Invalid manifest, checksum, compatibility or package'], '503' => ['description' => 'Catalog unavailable']],
+        ]];
+      }
+    }
+
+    return $paths;
   }
 
   private function openApiPaths(): array
@@ -558,6 +584,7 @@ class InternalApiDiscoveryController extends Controller
         'put' => ['summary' => 'Replace retention settings and optionally patch automatic category selection', 'x-optional-fields' => ['automatic'], 'x-automatic-categories' => MaintenanceCleanup::RUNNABLE, 'x-required-capability' => 'maintenance.settings.write', 'x-required-fields' => ['asset_revision_days', 'keep_latest_asset_revisions', 'temporary_workspace_hours', 'page_revision_days', 'keep_latest_page_revisions', 'shared_slot_revision_days', 'keep_latest_shared_slot_revisions'], 'responses' => ['200' => ['description' => 'Updated policy and overview JSON', 'content' => $json], '422' => ['description' => 'Validation JSON', 'content' => $json]]],
       ],
       '/system/cleanup/{category}/run' => ['post' => ['summary' => 'Run one safe maintenance cleanup category', 'x-required-capability' => 'maintenance.delete', 'x-destructive' => true, 'x-supported-categories' => ['asset-revisions', 'media-variants', 'temporary-workspaces', 'page-revisions', 'shared-slot-revisions'], 'responses' => ['200' => ['description' => 'Cleanup result JSON', 'content' => $json], '404' => ['description' => 'Unsupported category', 'content' => $json]]]],
+      ...$this->extensionCatalogPaths($json),
       '/plugins' => ['get' => ['summary' => 'List installed and registered plugins', 'x-required-capability' => 'plugins.read', 'responses' => ['200' => ['description' => 'Plugin status JSON', 'content' => $json], '403' => ['description' => 'Requires plugins.read capability', 'content' => $json]]]],
       '/plugins/install' => ['post' => ['summary' => 'Install a plugin ZIP disabled and automatically apply its database changes', 'x-required-capability' => 'plugins.install', 'x-consumes' => 'multipart/form-data', 'x-required-fields' => ['plugin_zip'], 'responses' => ['201' => ['description' => 'Installed plugin JSON', 'content' => $json], '403' => ['description' => 'Requires plugins.install capability', 'content' => $json], '422' => ['description' => 'Invalid plugin package JSON', 'content' => $json]]]],
       '/plugins/catalog' => ['get' => ['summary' => 'List compatible Plugin Catalog packages', 'x-required-capability' => 'plugins.read', 'responses' => ['200' => ['description' => 'Plugin Catalog JSON', 'content' => $json], '403' => ['description' => 'Requires plugins.read capability', 'content' => $json], '503' => ['description' => 'Plugin Catalog unavailable', 'content' => $json]]]],

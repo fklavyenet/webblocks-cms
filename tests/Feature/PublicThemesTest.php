@@ -3,6 +3,7 @@
 namespace WebBlocks\Cms\Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -261,6 +262,46 @@ final class PublicThemesTest extends TestCase
     $release['version'] = '0.9.0';
     $this->get($catalog)->assertOk()->assertSee('Newer version installed')->assertDontSee('>Installed</span>', false)
       ->assertDontSee('aria-label="Install Editorial"', false);
+  }
+
+  public function test_catalog_api_installs_and_updates_checksum_pinned_packages_without_activation(): void
+  {
+    $user = $this->actor();
+    $token = app(CmsApiTokenIssuer::class)->issue('Theme catalog', $user, ['themes.manage'])->plainToken;
+    $readonly = app(CmsApiTokenIssuer::class)->issue('Read content', $user, ['content.read'])->plainToken;
+    $origin = 'https://catalog.example.test';
+    config(['webblocks-plugins.catalog.extensions_base_url' => $origin]);
+    Http::preventStrayRequests();
+    $file = $this->archive();
+    $bytes = file_get_contents($file->getPathname());
+    $release = ['handle' => 'editorial', 'version' => '1.0.0', 'sha256' => hash('sha256', $bytes), 'size' => strlen($bytes), 'layouts' => ['default']];
+    Http::fake([
+      $origin.'/api/themes?*' => Http::response(['data' => [['handle' => 'editorial', 'name' => 'Editorial', 'release' => $release]], 'next_page' => null]),
+      $origin.'/api/themes/editorial/releases/*' => fn () => Http::response(['data' => $release]),
+      $origin.'/themes/editorial/releases/*/download' => fn () => Http::response($bytes),
+    ]);
+    $url = '/webadmin/api/themes/catalog/editorial';
+    $this->withToken($readonly)->getJson('/webadmin/api/themes/catalog')->assertForbidden();
+    $this->withToken($token)->getJson('/webadmin/api/themes/catalog')->assertOk()->assertJsonPath('data.0.state', 'install');
+    $this->assertDatabaseCount('wbcms_theme_versions', 0);
+    $this->withToken($token)->postJson($url.'/install', ['version' => '1.0.0', 'checksum' => str_repeat('0', 64)])->assertUnprocessable();
+    $this->assertDatabaseCount('wbcms_theme_versions', 0);
+    $this->withToken($token)->postJson($url.'/install', ['version' => '1.0.0', 'checksum' => $release['sha256']])->assertCreated()->assertJsonPath('installed.activation_changed', false);
+    $this->assertDatabaseCount('wbcms_theme_versions', 1);
+    $this->withToken($token)->postJson($url.'/install', ['version' => '1.0.0', 'checksum' => $release['sha256']])->assertConflict();
+    $file = $this->archive('1.1.0');
+    $bytes = file_get_contents($file->getPathname());
+    $release = ['handle' => 'editorial', 'version' => '1.1.0', 'sha256' => hash('sha256', $bytes), 'size' => strlen($bytes), 'layouts' => ['default']];
+    Http::swap(new Factory);
+    Http::preventStrayRequests();
+    Http::fake([
+      $origin.'/api/themes/editorial/releases/*' => Http::response(['data' => $release]),
+      $origin.'/themes/editorial/releases/*/download' => Http::response($bytes),
+    ]);
+    $this->withToken($token)->postJson($url.'/update', ['version' => '1.1.0', 'checksum' => $release['sha256']])->assertOk()->assertJsonPath('updated.version', '1.1.0');
+    $this->assertDatabaseCount('wbcms_theme_versions', 2);
+    $this->assertDatabaseCount('wbcms_site_theme_changes', 0);
+    $this->withToken($token)->postJson($url.'/update', ['version' => '1.0.0', 'checksum' => $release['sha256']])->assertConflict();
   }
 
   private function actor(): User

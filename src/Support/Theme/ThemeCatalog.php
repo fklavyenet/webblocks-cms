@@ -72,7 +72,7 @@ final class ThemeCatalog
     return ['themes' => array_values($themes), 'hasMore' => ($result['next_page'] ?? null) === $page + 1];
   }
 
-  public function install(string $handle, string $version, ?ExtensionOperation $operation = null): void
+  public function install(string $handle, string $version, ?ExtensionOperation $operation = null, ?string $expectedChecksum = null): void
   {
     if ($operation !== null) {
       $installed = $this->themes->installedCatalogChecksums([$handle])[$handle] ?? [];
@@ -84,6 +84,11 @@ final class ThemeCatalog
     $release = $result['data'] ?? null;
     if (! is_array($release) || ! $this->validRelease($release, $handle) || $release['version'] !== $version) {
       $this->invalid('catalog_unavailable');
+    }
+
+    if ($expectedChecksum !== null && ! hash_equals($expectedChecksum, $release['sha256'])) {
+      $operation?->during('integrity');
+      $this->invalid('catalog_download_failed');
     }
 
     $file = tmpfile();

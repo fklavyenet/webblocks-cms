@@ -101,17 +101,22 @@ final class NativeLanguagePacks
       $created = DB::table(self::PACKS)->insertOrIgnore($metadata);
       $installed = DB::table(self::PACKS)->where('code', $code)->lockForUpdate()->first();
       if (! $created) {
+        $sourceOrder = version_compare($metadata['source_version'], $installed->source_version);
+        if ($sourceOrder < 0 || ($sourceOrder === 0 && $metadata['release_version'] !== ''
+          && $installed->release_version !== '' && version_compare($metadata['release_version'], $installed->release_version, '<'))) {
+          throw ValidationException::withMessages(['package' => __('webblocks-cms::panel-languages.extensions_release_conflict')]);
+        }
         if (hash_equals($installed->checksum, $metadata['checksum'])) {
-          if ($installed->release_version === '' && $metadata['release_version'] !== '') {
+          if ($metadata['release_version'] !== '' && ($installed->release_version === ''
+            || version_compare($metadata['release_version'], $installed->release_version, '>'))) {
             DB::table(self::PACKS)->where('code', $code)->update(['release_version' => $metadata['release_version']]);
           }
 
           return;
         }
 
-        $sourceOrder = version_compare($metadata['source_version'], $installed->source_version);
-        if ($sourceOrder < 0 || ($sourceOrder === 0 && $metadata['release_version'] !== ''
-          && $installed->release_version !== '' && version_compare($metadata['release_version'], $installed->release_version, '<='))) {
+        if ($sourceOrder === 0 && $metadata['release_version'] !== ''
+          && $installed->release_version !== '' && version_compare($metadata['release_version'], $installed->release_version, '<=')) {
           throw ValidationException::withMessages(['package' => __('webblocks-cms::panel-languages.extensions_release_conflict')]);
         }
 
