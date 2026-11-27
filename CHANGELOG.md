@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.145.0
+
+- Add opt-in background system updates through the Internal Content API using the panel's existing detached worker, with durable approval and idempotency receipts.
+- Expose operation-specific update phases, elapsed times, worker evidence, attention reasons and sanitized failure results without executing work on progress reads.
+- Resolve verified backup-phase interruptions through guarded panel and API actions: require stopped workers, acquired locks and the unchanged previous installation; preserve original receipts, timing and partial backup evidence.
+- Group related unfinished update records, show a review state instead of unconfirmed activity and explain blocked updates. Restore native markers in release-note lists.
+- Preserve the legacy synchronous API contract for existing clients; select `execution: background` for the recommended HTTP-independent workflow.
+
 ## 1.144.34
 
 - Identify plugin-provided sidebar links and group labels with a small plug marker beside their text.

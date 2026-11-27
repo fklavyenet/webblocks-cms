@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     var output = document.getElementById('test-status');
     var button = document.querySelector('[data-wb-target^="#reconcile-"]');
-    var modal = document.querySelector('.wb-modal');
+    var modal = document.querySelector(button.getAttribute('data-wb-target'));
     var table = document.querySelector('.wb-table');
     var submitted = false;
     document.addEventListener('submit', function (event) { event.preventDefault(); submitted = true; });
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 assert(modal.classList.contains('is-open'), 'Native review modal opens');
                 assert(modal.querySelector('textarea[required][maxlength="500"]'), 'Operator reason is required and bounded');
-                assert(modal.textContent.includes('keeps recovery required'), 'Review explains the retained recovery requirement');
+                assert(modal.textContent.includes('No files are restored and no update is started.'), 'Recovery action explains its safe pre-apply scope');
                 assert(!submitted, 'Review never submits a reconciliation');
                 output.textContent = 'PASS update-attention: compact table, native modal, required reason, retained recovery requirement, no mutation.';
             } catch (error) { output.textContent = 'FAIL update-attention: ' + error.message; }

@@ -142,6 +142,9 @@
                 </button>
               </form>
             @endif
+            @if (($unfinishedUpdates ?? collect())->isNotEmpty())
+              <p class="wb-text-sm">{{ __('webblocks-cms::update_recovery.blocked') }}</p>
+            @endif
             <span class="wb-text-xs wb-text-muted">{{ $adminText('updates.backup_note') }}</span>
             <span class="wb-text-xs wb-text-muted">
               {{ $adminText('updates.server_backup_advisory') }}
@@ -174,7 +177,7 @@
                       <div class="wb-stack wb-stack-2">
                         @foreach (($entry['groups'] ?? []) as $group)
                           <h4 class="wb-text-sm"><strong>{{ $group['label'] }}</strong></h4>
-                          <ul class="wb-text-sm">
+                          <ul class="wb-marker-list wb-text-sm">
                             @foreach ($group['items'] as $item)
                               <li>{{ $item }}</li>
                             @endforeach
@@ -247,7 +250,7 @@
                   @endif
                   @foreach (($currentNotes['groups'] ?? []) as $group)
                     <h4 class="wb-text-sm"><strong>{{ $group['label'] }}</strong></h4>
-                    <ul class="wb-text-sm">
+                    <ul class="wb-marker-list wb-text-sm">
                       @foreach ($group['items'] as $item)
                         <li>{{ $item }}</li>
                       @endforeach
@@ -287,7 +290,11 @@
                         <tr>
                           <td><strong>{{ $run->from_version ?: '—' }}</strong></td>
                           <td><strong>{{ $run->to_version ?: '—' }}</strong></td>
-                          <td><span class="wb-status-pill {{ $run->statusBadgeClass() }}">{{ $adminText('updates.statuses.'.$run->status) }}</span></td>
+                          @php
+                            $needsReview = in_array($run->status, ['pending', 'running'], true)
+                              && app(\WebBlocks\Cms\Support\System\Updates\SystemUpdateLiveness::class)->inspect($run)['state'] !== 'active';
+                          @endphp
+                          <td><span class="wb-status-pill {{ $run->statusBadgeClass() }}">{{ $needsReview ? __('webblocks-cms::update_recovery.attention') : $adminText('updates.statuses.'.$run->status) }}</span></td>
                           <td class="wb-text-sm">{{ $run->durationLabel() }}</td>
                           <td class="wb-text-sm">{{ optional($run->finished_at)->format('Y-m-d H:i') ?? optional($run->started_at)->format('Y-m-d H:i') ?? '—' }}</td>
                           <td class="wb-table-actions">

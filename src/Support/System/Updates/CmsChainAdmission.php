@@ -37,7 +37,7 @@ class CmsChainAdmission implements UpdateAdmission
     }
     $context = app(CmsUpdateAdmissionContext::class);
     foreach ([[AdminUpdateOperation::class, ['queued', 'running'], $context->operationId],
-      [SystemUpdateRequest::class, ['running'], $context->requestId]] as [$class, $statuses, $ownedId]) {
+      [SystemUpdateRequest::class, ['queued', 'running'], $context->requestId]] as [$class, $statuses, $ownedId]) {
       if (Schema::hasTable((new $class)->getTable()) && $class::whereIn('status', $statuses)
         ->when($ownedId !== null, fn ($query) => $query->where('id', '!=', $ownedId))->exists()) {
         return true;

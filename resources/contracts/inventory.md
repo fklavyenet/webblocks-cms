@@ -1769,7 +1769,7 @@ ordinary upgrade to acquire the coordinator; there is no retroactive chaining.
 Panel updates are admitted as typed SQL operation records and executed by a detached
 CLI worker. The admission pins the release version/checksum and rejects overlapping
 or repeated execution. The Internal Content API retains its synchronous receipt
-and authorization contract. No content-authoring or snapshot format changes occur.
+and authorization contract and adds opt-in background execution in 1.145.0. No content-authoring or snapshot format changes occur.
 
 The modal tracks the operation identity, elapsed time and most recent phase,
 reconnects after transient HTTP/transport failures, and resumes on returning to the
@@ -3147,3 +3147,34 @@ preserve personal/default language choices and the exact CMS source contract.
 When a newer language package version contains identical verified bytes, the
 installed release version still advances without rewriting translations. Older releases are also rejected under the SQL package lock, including when their artifact bytes match, so a concurrent stale request cannot report a downgrade as successful.
 Plugin publication/install/update APIs remain unchanged.
+
+
+## Background system update API (1.145.0)
+
+Installation-wide system tokens with `system-updates.run` can select
+`execution: background` on `POST /system/updates`. The response is HTTP 202
+with a durable receipt; the same detached worker used by the panel executes
+one approved target/checksum through the shared backup, verification and
+recovery engine. The legacy default remains synchronous. Exact retries return
+the same receipt and never launch a second worker; changing approval or
+execution mode under the same key is refused.
+
+`GET /system/updates/operations/{operation}` with `system-updates.read` exposes
+receipt-scoped phases and durations, worker state, attention reasons, stable
+failure codes and sanitized terminal results. A read does not start, resolve or
+retry work. Unknown evidence is not success or verified stoppage. Maintenance
+may temporarily return 503; retain the same receipt rather than starting again.
+
+The panel groups related unfinished records and separates recorded status from
+verified activity. Related identifiers and saved evidence open in the shared
+native modal, keeping the Actions column compact; resolution requires a bounded
+operator review note in its own native dialog. Its explicit **Check and resolve interruption** action and
+`POST /system/updates/operations/{operation}/resolve-pre-apply` require existing
+system authority and a review note; the API also requires `confirmed: true`.
+Only a non-chain backup-only journal, stopped same-host workers, ordinary
+acquired admission/run/worker/backup locks, matching previous runtime and
+Composer metadata, ready chain schema, and absence of maintenance/recovery
+copies permit resolution. No forced unlock, database restore or update occurs.
+Related receipts become failed with a relational review audit; unknown original
+exit times and partial backup archives remain intact. Later phases, unknown or
+live workers, held locks and changed installations require manual recovery.

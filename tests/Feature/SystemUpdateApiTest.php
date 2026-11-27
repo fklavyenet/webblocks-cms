@@ -22,6 +22,7 @@ use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenAuthenticator;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenCapabilities;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
+use WebBlocks\Cms\Support\System\Updates\AdminUpdateLauncher;
 use WebBlocks\Cms\Support\System\Updates\ApprovedUpdateServerClient;
 use WebBlocks\Cms\Support\System\Updates\ApprovedUpdateTargetChanged;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
@@ -125,6 +126,55 @@ class SystemUpdateApiTest extends TestCase
 
       return $engine;
     });
+  }
+
+  #[Test]
+  public function background_admission_returns_before_execution_and_replays_launch_once(): void
+  {
+    $this->fakeEngine();
+    $this->authenticate($this->token());
+    $this->mock(AdminUpdateLauncher::class)
+      ->shouldReceive('launch')->once()->with(Mockery::on(fn ($id) => Str::isUuid($id)));
+    $input = $this->input() + ['execution' => 'background'];
+    $first = $this->postJson('/webadmin/api/system/updates', $input)->assertStatus(202)
+      ->assertJsonPath('operation.status', 'queued')->assertJsonPath('operation.execution', 'background');
+    $this->assertSame(0, $this->executions);
+    $this->postJson('/webadmin/api/system/updates', $input)->assertOk()->assertJsonPath('replayed', true);
+    $this->postJson('/webadmin/api/system/updates', $this->input())->assertConflict();
+    $this->artisan('webblocks:updates:work', ['operation' => $first->json('operation.worker_operation_id')])->assertSuccessful();
+    $this->assertSame(1, $this->executions);
+    $this->getJson('/webadmin/api/system/updates/operations/'.$first->json('operation.id'))
+      ->assertOk()->assertJsonPath('operation.status', 'success');
+  }
+
+  #[Test]
+  public function failed_background_launch_is_durable_and_not_retried_by_replay(): void
+  {
+    $this->fakeEngine();
+    $this->authenticate($this->token());
+    $this->mock(AdminUpdateLauncher::class)
+      ->shouldReceive('launch')->once()->andThrow(new \RuntimeException('synthetic launcher failure'));
+    $input = $this->input() + ['execution' => 'background'];
+    $this->postJson('/webadmin/api/system/updates', $input)->assertConflict()
+      ->assertJsonPath('operation.code', 'system_update_worker_start_failed')->assertJsonPath('operation.status', 'failed');
+    $this->postJson('/webadmin/api/system/updates', $input)->assertOk()->assertJsonPath('replayed', true);
+    $this->assertSame(0, $this->executions);
+  }
+
+  #[Test]
+  public function progress_is_scoped_to_receipt_instead_of_the_latest_run(): void
+  {
+    $this->authenticate($token = $this->token());
+    $run = SystemUpdateRun::create(['from_version' => '1.90.0', 'to_version' => '1.91.0', 'status' => 'running', 'started_at' => now()]);
+    $receipt = SystemUpdateRequest::create(array_merge(array_diff_key($this->input(), ['confirmed' => true]), [
+      'id' => (string) Str::uuid(), 'cms_api_token_id' => $token->id, 'status' => 'running', 'system_update_run_id' => $run->id,
+    ]));
+    DB::table('wbcms_system_update_run_steps')->insert(['system_update_run_id' => $run->id, 'stage' => 'backup', 'started_at' => now()]);
+    $other = SystemUpdateRun::create(['from_version' => '9.0.0', 'to_version' => '9.1.0', 'status' => 'running', 'started_at' => now()]);
+    DB::table('wbcms_system_update_run_steps')->insert(['system_update_run_id' => $other->id, 'stage' => 'apply', 'started_at' => now()]);
+    $this->getJson('/webadmin/api/system/updates/operations/'.$receipt->id)->assertOk()
+      ->assertJsonPath('operation.progress.run_id', $run->id)->assertJsonPath('operation.progress.stage', 'backup');
+    $this->assertDatabaseCount('wbcms_update_reconciliations', 0);
   }
 
   #[Test]

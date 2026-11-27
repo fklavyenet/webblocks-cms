@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'update' => 'Actualización',
+  'attention' => 'Requiere revisión',
+  'blocked' => 'Una operación sin terminar bloquea la actualización. Revísela arriba antes de volver a intentarlo.',
+  'resolve' => 'Comprobar y resolver la interrupción',
+  'resolve_help' => 'Verifique la instalación anterior y resuelva una operación detenida solo si no ha superado la copia de seguridad. No se restauran archivos ni se inicia una actualización.',
+  'resolve_reason' => 'Revisión explícita del operador de una operación detenida antes de aplicar cambios.',
+  'resolved' => 'La operación detenida se resolvió antes de aplicar cambios. Puede buscar actualizaciones de nuevo.',
+  'resolve_refused' => 'La interrupción no se pudo resolver de forma segura. Un proceso, bloqueo, instalación modificada o fase posterior requiere revisión manual.',
+  'resolved_note' => 'Interrumpida durante la copia de seguridad; se verificó la instalación anterior sin cambios. No se aplicó ninguna actualización.',
   'step' => 'Paso',
   'queued' => 'En cola',
   'title' => 'Actualizaciones sin terminar',

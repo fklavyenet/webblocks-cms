@@ -137,13 +137,13 @@ class CmsUpdateProgress
     return $operation ? $this->payload($operation->id) : [];
   }
 
-  public function payload(?string $operationId = null): array
+  public function payload(?string $operationId = null, ?int $runId = null): array
   {
-    $operation = Schema::hasTable('wbcms_admin_update_operations')
+    $operation = $runId === null && Schema::hasTable('wbcms_admin_update_operations')
       ? ($operationId ? AdminUpdateOperation::find($operationId) : (AdminUpdateOperation::whereIn('status', ['queued', 'running'])->first() ?? AdminUpdateOperation::latest('started_at')->first())) : null;
-    $run = $operation ? ($operation->system_update_run_id ? SystemUpdateRun::find($operation->system_update_run_id) : null)
-      : (Schema::hasTable('wbcms_system_update_runs') ? SystemUpdateRun::latest('id')->first() : null);
-    if (! $operationId && ($operation?->chain_protocol !== 1
+    $run = $runId !== null ? SystemUpdateRun::find($runId) : ($operation ? ($operation->system_update_run_id ? SystemUpdateRun::find($operation->system_update_run_id) : null)
+      : (Schema::hasTable('wbcms_system_update_runs') ? SystemUpdateRun::latest('id')->first() : null));
+    if ($runId === null && ! $operationId && ($operation?->chain_protocol !== 1
       || (! in_array($operation->status, ['queued', 'running', 'interrupted'], true) && ! $operation->recovery_required))) {
       $latest = Schema::hasTable('wbcms_system_update_runs') ? SystemUpdateRun::latest('id')->first() : null;
       if ($latest && (! $operation || ($operation->system_update_run_id !== null && $latest->id > $operation->system_update_run_id))) {

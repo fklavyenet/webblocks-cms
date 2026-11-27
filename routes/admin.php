@@ -177,6 +177,7 @@ Route::middleware(['web', 'install.required', 'throttle:internal-content-api', '
     Route::get('/admin-render/system-updates', [InternalAdminRenderController::class, 'systemUpdates'])->middleware('internal-api.capability:admin.render')->name('admin-render.system-updates');
     Route::get('/system/updates/check', [InternalSystemUpdateController::class, 'check'])->middleware('internal-api.capability:system-updates.read')->name('system.updates.check');
     Route::post('/system/updates', [InternalSystemUpdateController::class, 'store'])->middleware('internal-api.capability:system-updates.run')->name('system.updates.store');
+    Route::post('/system/updates/operations/{operation}/resolve-pre-apply', [InternalSystemUpdateController::class, 'resolvePreApply'])->middleware('internal-api.capability:system-updates.run')->name('system.updates.resolve-pre-apply');
     Route::get('/system/updates/operations/{operation}', [InternalSystemUpdateController::class, 'show'])->middleware('internal-api.capability:system-updates.read')->name('system.updates.show');
     Route::get('/system/backups/{backup}/retention', [InternalBackupRetentionController::class, 'show'])->middleware('internal-api.capability:backups.read')->name('system.backups.retention.show');
     Route::put('/system/backups/{backup}/retention', [InternalBackupRetentionController::class, 'update'])->middleware('internal-api.capability:backups.settings.write')->name('system.backups.retention.update');
@@ -646,6 +647,7 @@ Route::middleware(['web', 'install.required', UseCmsAuthenticationRedirect::clas
       Route::get('system/updates/check', [SystemUpdateController::class, 'check'])->name('system.updates.check');
       Route::post('system/updates', [SystemUpdateController::class, 'store'])->name('system.updates.store');
       Route::post('system/updates/repair-schema', [SystemUpdateController::class, 'repairSchema'])->name('system.updates.repair-schema');
+      Route::post('system/updates/resolve-pre-apply', [SystemUpdateController::class, 'resolvePreApply'])->name('system.updates.resolve-pre-apply');
       Route::post('system/updates/reconcile', [SystemUpdateController::class, 'reconcile'])->name('system.updates.reconcile');
       Route::post('system/updates/dismiss', [SystemUpdateController::class, 'dismiss'])->name('system.updates.dismiss');
       Route::get('system/icons', [IconCatalogController::class, 'index'])->name('system.icons.index');

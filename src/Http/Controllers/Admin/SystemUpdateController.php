@@ -14,6 +14,7 @@ use Illuminate\View\View;
 use WebBlocks\Cms\Actions\System\DismissResolvedSystemUpdate;
 use WebBlocks\Cms\Actions\System\ReconcileStoppedSystemUpdate;
 use WebBlocks\Cms\Actions\System\RepairUpdateChainSchema;
+use WebBlocks\Cms\Actions\System\ResolvePreApplySystemUpdate;
 use WebBlocks\Cms\Actions\System\StartAdminSystemUpdate;
 use WebBlocks\Cms\Http\Requests\Admin\DismissSystemUpdateRequest;
 use WebBlocks\Cms\Http\Requests\Admin\ReconcileSystemUpdateRequest;
@@ -138,6 +139,20 @@ class SystemUpdateController extends Controller
       return $request->expectsJson()
         ? response()->json(['message' => $exception->userMessage(), 'error' => $exception->userMessage()], 409)->header('Cache-Control', 'no-store')
         : redirect()->route('admin.system.updates.index')->withErrors(['system_update' => $exception->userMessage()])->withInput();
+    }
+  }
+
+  public function resolvePreApply(ReconcileSystemUpdateRequest $request): RedirectResponse
+  {
+    $input = $request->validated();
+    try {
+      app(ResolvePreApplySystemUpdate::class)->execute($input['record_type'], $input['record_id'], (int) $request->user()->getKey(), $input['reason']);
+
+      return redirect()->route('admin.system.updates.index')->with('status', __('webblocks-cms::update_recovery.resolved'));
+    } catch (\Throwable $exception) {
+      report($exception);
+
+      return redirect()->route('admin.system.updates.index')->withErrors(['system_update' => __('webblocks-cms::update_recovery.resolve_refused')]);
     }
   }
 

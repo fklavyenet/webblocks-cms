@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'update' => 'Aktualisierung',
+  'attention' => 'Prüfung erforderlich',
+  'blocked' => 'Ein nicht abgeschlossener Vorgang blockiert die Aktualisierung. Prüfen Sie ihn oben, bevor Sie es erneut versuchen.',
+  'resolve' => 'Unterbrechung prüfen und abschließen',
+  'resolve_help' => 'Prüfen Sie die bisherige Installation und schließen Sie einen gestoppten Vorgang nur ab, wenn er die Sicherungsphase nicht verlassen hat. Es werden keine Dateien wiederhergestellt und keine Aktualisierung gestartet.',
+  'resolve_reason' => 'Ausdrückliche Prüfung eines vor der Anwendung gestoppten Vorgangs.',
+  'resolved' => 'Der gestoppte Vorgang wurde vor der Anwendung abgeschlossen. Sie können erneut nach Aktualisierungen suchen.',
+  'resolve_refused' => 'Die Unterbrechung konnte nicht sicher abgeschlossen werden. Prozess, Sperre, geänderte Installation oder spätere Phase müssen manuell geprüft werden.',
+  'resolved_note' => 'Während der Sicherung unterbrochen; die unveränderte bisherige Installation wurde geprüft. Es wurde keine Aktualisierung angewendet.',
   'step' => 'Schritt',
   'queued' => 'Eingereiht',
   'title' => 'Unvollständige Aktualisierungen',

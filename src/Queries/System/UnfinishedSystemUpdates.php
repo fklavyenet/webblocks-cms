@@ -112,6 +112,9 @@ class UnfinishedSystemUpdates
     }
     $runs = $record instanceof SystemUpdateRun ? [$record->id] : array_filter([$record->system_update_run_id]);
     $operationIds = $record instanceof AdminUpdateOperation ? [$record->id] : [];
+    if ($record instanceof SystemUpdateRequest && $record->admin_update_operation_id) {
+      $operationIds[] = $record->admin_update_operation_id;
+    }
     if (Schema::hasColumns('wbcms_update_chain_steps', ['operation_id', 'system_update_run_id'])) {
       $operationIds = array_merge($operationIds, UpdateChainStep::whereIn('system_update_run_id', $runs)->pluck('operation_id')->all());
       $runs = array_merge($runs, UpdateChainStep::whereIn('operation_id', $operationIds)->whereNotNull('system_update_run_id')->pluck('system_update_run_id')->all());
@@ -120,7 +123,11 @@ class UnfinishedSystemUpdates
       $query->whereIn('system_update_run_id', $runs)->orWhereIn('id', $operationIds);
     })->get();
     $runs = array_unique(array_merge($runs, $operations->pluck('system_update_run_id')->filter()->all()));
-    $requests = SystemUpdateRequest::whereIn('system_update_run_id', $runs)->get();
+    $requestQuery = SystemUpdateRequest::whereIn('system_update_run_id', $runs);
+    if (Schema::hasColumn('wbcms_system_update_requests', 'admin_update_operation_id')) {
+      $requestQuery->orWhereIn('admin_update_operation_id', $operations->pluck('id'));
+    }
+    $requests = $requestQuery->get();
 
     return collect([$record])->concat(SystemUpdateRun::whereIn('id', $runs)->get())->concat($operations)->concat($requests)
       ->unique(fn (Model $item) => $item->getTable().':'.$item->getKey())->values();

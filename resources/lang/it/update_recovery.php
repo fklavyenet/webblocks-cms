@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'update' => 'Aggiornamento',
+  'attention' => 'Verifica necessaria',
+  'blocked' => 'Un’operazione incompleta blocca l’aggiornamento. Esaminarla sopra prima di riprovare.',
+  'resolve' => 'Verifica e risolvi l’interruzione',
+  'resolve_help' => 'Verificare l’installazione precedente e risolvere un’operazione interrotta solo se non ha superato il backup. Nessun file viene ripristinato e nessun aggiornamento viene avviato.',
+  'resolve_reason' => 'Revisione esplicita dell’operatore di un’operazione arrestata prima dell’applicazione.',
+  'resolved' => 'L’operazione arrestata è stata risolta prima dell’applicazione. È possibile cercare nuovamente gli aggiornamenti.',
+  'resolve_refused' => 'Impossibile risolvere l’interruzione in sicurezza. Un processo, un blocco, un’installazione modificata o una fase successiva richiede una verifica manuale.',
+  'resolved_note' => 'Interruzione durante il backup; verificata l’installazione precedente invariata. Nessun aggiornamento applicato.',
   'step' => 'Passo',
   'queued' => 'In coda',
   'title' => 'Aggiornamenti incompleti',

@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'update' => 'Mise à jour',
+  'attention' => 'Vérification requise',
+  'blocked' => 'Une opération inachevée bloque la mise à jour. Examinez-la ci-dessus avant de réessayer.',
+  'resolve' => 'Vérifier et résoudre l’interruption',
+  'resolve_help' => 'Vérifiez l’installation précédente et résolvez une opération arrêtée uniquement si elle n’a pas dépassé la sauvegarde. Aucun fichier n’est restauré et aucune mise à jour n’est lancée.',
+  'resolve_reason' => 'Examen explicite par l’opérateur d’une opération arrêtée avant application.',
+  'resolved' => 'L’opération arrêtée a été résolue avant application. Vous pouvez rechercher à nouveau les mises à jour.',
+  'resolve_refused' => 'L’interruption ne peut pas être résolue en toute sécurité. Un processus, un verrou, une installation modifiée ou une étape ultérieure nécessite un examen manuel.',
+  'resolved_note' => 'Interruption pendant la sauvegarde ; l’installation précédente inchangée a été vérifiée. Aucune mise à jour appliquée.',
   'step' => 'Étape',
   'queued' => 'En attente',
   'title' => 'Mises à jour inachevées',

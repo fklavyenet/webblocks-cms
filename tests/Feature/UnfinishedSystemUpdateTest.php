@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
 use WebBlocks\Cms\Actions\System\ReconcileStoppedSystemUpdate;
+use WebBlocks\Cms\Actions\System\ResolvePreApplySystemUpdate;
 use WebBlocks\Cms\Actions\System\RunApiSystemUpdate;
 use WebBlocks\Cms\Http\Middleware\RedirectIfNotInstalled;
 use WebBlocks\Cms\Models\AdminUpdateOperation;
@@ -19,6 +20,7 @@ use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Models\UpdateChainStep;
 use WebBlocks\Cms\Support\System\SystemUpdateInspector;
 use WebBlocks\Cms\Support\System\Updates\CmsChainAdmission;
+use WebBlocks\Cms\Support\System\Updates\CmsComposerState;
 use WebBlocks\Cms\Support\System\Updates\CmsPublisherClientConfigurator;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateAdmissionContext;
 use WebBlocks\Cms\Support\System\Updates\CmsUpdateProgress;
@@ -28,9 +30,12 @@ use WebBlocks\Cms\Support\System\Updates\SystemUpdateDetailRetention;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateLiveness;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunOutputSanitizer;
 use WebBlocks\Cms\Support\System\Updates\SystemUpdateRunRetention;
+use WebBlocks\Cms\Support\System\Updates\UpdateException;
+use WebBlocks\Cms\Support\System\Updates\UpdateInstaller;
 use WebBlocks\Cms\Support\System\Updates\UpdateWorkerProcess;
 use WebBlocks\Cms\Support\Updates\Client\Contracts\RunRecorder;
 use WebBlocks\Cms\Support\Updates\Client\Updates\SystemUpdater;
+use WebBlocks\Cms\Support\WebBlocks;
 use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -93,6 +98,107 @@ class UnfinishedSystemUpdateTest extends TestCase
   private function input(string $kind, $record): array
   {
     return ['record_type' => $kind, 'record_id' => (string) $record->getKey(), 'reason' => 'Synthetic verified stopped worker review.'];
+  }
+
+  private function backupPhaseRun(): SystemUpdateRun
+  {
+    $run = $this->makeRun(['from_version' => WebBlocks::version()]);
+    DB::table('wbcms_system_update_run_steps')->insert(['system_update_run_id' => $run->id, 'stage' => 'backup', 'started_at' => $run->started_at]);
+
+    return $run;
+  }
+
+  public function test_pre_apply_resolution_checks_checkpoint_and_preserves_evidence(): void
+  {
+    $this->deadWorkers();
+    $run = $this->backupPhaseRun();
+    $receipt = $this->receipt(['system_update_run_id' => $run->id]);
+    $this->mock(CmsComposerState::class)->shouldReceive('assertCurrent')->once();
+    $this->mock(UpdateInstaller::class)->shouldReceive('verifyAppliedVersion')->once();
+    $rows = app(SystemUpdateAttention::class)->rows();
+    $this->assertCount(1, $rows);
+    $this->assertCount(2, $rows->first()['related']);
+    $this->assertSame('attention', $rows->first()['display_status']);
+    $this->assertSame(2, app(ResolvePreApplySystemUpdate::class)
+      ->execute('request', $receipt->id, auth()->id(), 'Verified synthetic backup-only interruption.'));
+    foreach ([$run, $receipt] as $row) {
+      $this->assertSame('failed', $row->fresh()->status);
+      $this->assertFalse($row->fresh()->recovery_required);
+      $this->assertNull($row->fresh()->finished_at);
+    }
+    $this->assertStringContainsString('Original log', $run->fresh()->output);
+    $this->assertDatabaseCount('wbcms_update_reconciliations', 2);
+    $this->assertFalse(app(CmsChainAdmission::class)->blocked());
+    $this->assertSame('system_update_interrupted_before_apply', $receipt->fresh()->code);
+  }
+
+  public function test_pre_apply_resolution_refuses_later_phases_and_held_locks(): void
+  {
+    $this->deadWorkers();
+    $run = $this->backupPhaseRun();
+    $lock = Cache::lock('system-updates:admission', 60);
+    $this->assertTrue($lock->get());
+    try {
+      app(ResolvePreApplySystemUpdate::class)->execute('run', (string) $run->id, auth()->id(), 'Synthetic review must refuse held lock.');
+      $this->fail('Held lock must refuse recovery.');
+    } catch (UpdateException) {
+      $this->assertSame('running', $run->fresh()->status);
+    } finally {
+      $lock->release();
+    }
+    DB::table('wbcms_system_update_run_steps')->insert(['system_update_run_id' => $run->id, 'stage' => 'apply', 'started_at' => now()]);
+    try {
+      app(ResolvePreApplySystemUpdate::class)->execute('run', (string) $run->id, auth()->id(), 'Synthetic apply evidence must block recovery.');
+      $this->fail('Apply evidence must refuse recovery.');
+    } catch (UpdateException) {
+      $this->assertSame('running', $run->fresh()->status);
+      $this->assertDatabaseCount('wbcms_update_reconciliations', 0);
+    }
+  }
+
+  public static function unsafePreApplyEvidence(): array
+  {
+    return [['alive'], ['unknown'], ['fresh_heartbeat'], ['changed_version'], ['chain'], ['finished_backup']];
+  }
+
+  #[DataProvider('unsafePreApplyEvidence')]
+  public function test_pre_apply_resolution_refuses_uncertain_or_changed_evidence(string $case): void
+  {
+    $process = in_array($case, ['alive', 'unknown'], true) ? $case : 'dead';
+    $this->mock(UpdateWorkerProcess::class)->shouldReceive('state')->andReturn($process);
+    $run = $this->backupPhaseRun();
+    if ($case === 'fresh_heartbeat') {
+      $run->update(['heartbeat_at' => now()]);
+    } elseif ($case === 'changed_version') {
+      $run->update(['from_version' => '0.0.1']);
+    } elseif ($case === 'chain') {
+      $this->operation(['system_update_run_id' => $run->id, 'chain_protocol' => 1]);
+    } elseif ($case === 'finished_backup') {
+      DB::table('wbcms_system_update_run_steps')->where('system_update_run_id', $run->id)->update(['finished_at' => now()]);
+    }
+    $this->mock(CmsComposerState::class)->shouldNotReceive('assertCurrent');
+    try {
+      app(ResolvePreApplySystemUpdate::class)->execute('run', (string) $run->id, auth()->id(), 'Synthetic unsafe evidence must be refused.');
+      $this->fail('Unsafe evidence must not resolve the interruption.');
+    } catch (UpdateException) {
+      $this->assertSame('running', $run->fresh()->status);
+      $this->assertDatabaseCount('wbcms_update_reconciliations', 0);
+    }
+  }
+
+  public function test_pre_apply_checkpoint_failure_is_atomic(): void
+  {
+    $this->deadWorkers();
+    $run = $this->backupPhaseRun();
+    $this->mock(CmsComposerState::class)->shouldReceive('assertCurrent')
+      ->once()->andThrow(new UpdateException('Synthetic inconsistent checkpoint'));
+    try {
+      app(ResolvePreApplySystemUpdate::class)->execute('run', (string) $run->id, auth()->id(), 'Synthetic inconsistent checkpoint must not resolve.');
+      $this->fail('Invalid checkpoint must be refused.');
+    } catch (UpdateException) {
+      $this->assertSame('running', $run->fresh()->status);
+      $this->assertDatabaseCount('wbcms_update_reconciliations', 0);
+    }
   }
 
   public function test_history_and_pruning_keep_unfinished_records_outside_the_last_five(): void
@@ -533,8 +639,10 @@ class UnfinishedSystemUpdateTest extends TestCase
   public function test_attention_browser_fixture_uses_native_tables_and_review_modals_in_all_panel_locales(): void
   {
     $this->deadWorkers();
-    $run = $this->makeRun();
+    $run = $this->backupPhaseRun();
+    $this->receipt(['system_update_run_id' => $run->id]);
     $rows = app(SystemUpdateAttention::class)->rows();
+    $this->assertCount(1, $rows);
     foreach (['en', 'tr', 'de', 'fr', 'es', 'it'] as $locale) {
       app()->setLocale($locale);
       $html = view('webblocks-cms::admin.system.partials.update-attention', [
@@ -544,7 +652,7 @@ class UnfinishedSystemUpdateTest extends TestCase
       ])->render();
       $this->assertStringContainsString('<table class="wb-table">', $html);
       $this->assertStringContainsString('data-wb-target="#reconcile-run-'.$run->id.'"', $html);
-      $this->assertStringContainsString(e(__('webblocks-cms::update_recovery.confirm_help')), $html);
+      $this->assertStringContainsString(e(__('webblocks-cms::update_recovery.resolve_help')), $html);
       $this->assertStringNotContainsString('webblocks-cms::', $html);
       $this->assertStringNotContainsString('<fieldset', $html);
       if ($locale === 'en' && ($fixture = getenv('WEBBLOCKS_UPDATE_ATTENTION_FIXTURE'))) {

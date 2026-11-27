@@ -68,7 +68,7 @@ class InternalApiDiscoveryController extends Controller
         'Use PATCH /webadmin/api/blocks/{block} for supported existing block fields such as brand logo media; Shared Slot source blocks also require shared-slots.write.',
         'Notes are installation-wide and require a personal API token with notes.read, notes.write or notes.delete. Site scoping does not limit Notes. Notes visibility and ownership are checked separately.',
         'Use GET /webadmin/api/engagement/comments and GET /webadmin/api/engagement/ratings with engagement.read to analyze public feedback. Use PATCH /webadmin/api/engagement/comments/{comment} with engagement.moderate to approve, reject, hide, or mark comments as spam.',
-        'System updates affect the entire installation. Obtain explicit operator approval for the exact target version and checksum, then use system-updates.run with a stable idempotency_key. Only installation-wide system tokens owned by an active system administrator can use these endpoints. Personal, site-scoped and public demo credentials are excluded. Execution is synchronous; after a connection loss repeat the identical request/key or read the operation, never automatically submit a new key. Maintenance can temporarily return 503. A requires_attention result requires operator recovery; it is not proof of failure or rollback.',
+        'System updates affect the entire installation. Obtain explicit operator approval for the exact target version and checksum, then use system-updates.run with a stable idempotency_key. Only installation-wide system tokens owned by an active system administrator can use these endpoints. Personal, site-scoped and public demo credentials are excluded. Use execution=background for the native detached worker and receipt-scoped progress. The legacy default remains synchronous; after a connection loss repeat the identical request/key or read the operation, never automatically submit a new key. Maintenance can temporarily return 503. A requires_attention result requires operator recovery; it is not proof of failure or rollback.',
         'Use plugin lifecycle endpoints only with explicit plugin capabilities: plugins.install uploads a plugin ZIP, plugins.manage enables/disables, plugins.setup runs plugin migrations, and plugins.uninstall removes disabled manually uploaded plugins without dropping plugin-owned tables.',
         'Use GET /webadmin/api/applications with applications.read to discover database-registered Embedded Applications and read each application settings schema before placing an Application Block. Registry writes require applications.write; deletion requires applications.delete. Manage host-owned executable CSS/JS under /sites/{site}/applications/{application}/assets so application code does not have to be merged into global site.css/site.js.',
         ...$this->pluginDiscovery->guidance(),
@@ -533,15 +533,17 @@ class InternalApiDiscoveryController extends Controller
         'responses' => ['200' => ['description' => 'Current version, offered target and checksum, compatibility and lock state', 'content' => $json], '403' => ['description' => 'Missing capability or installation authority', 'content' => $json]],
       ]],
       '/system/updates' => ['post' => [
-        'summary' => 'Synchronously run an explicitly approved system update',
+        'summary' => 'Run an explicitly approved system update; prefer execution=background',
         'x-required-capability' => 'system-updates.run',
         'x-destructive' => true,
         'x-execution' => 'synchronous',
+        'x-supported-executions' => ['synchronous', 'background'],
         'x-safety' => 'Preserves the shared update engine backup, signature/checksum, locking and recovery policy. Version/checksum approval is checked inside the engine lock before backup/apply. Replays never execute again; interrupted requests require operator attention.',
         'requestBody' => ['required' => true, 'content' => ['application/json' => ['schema' => [
           'type' => 'object',
           'required' => ['idempotency_key', 'expected_current_version', 'target_version', 'checksum_sha256', 'confirmed'],
           'properties' => [
+            'execution' => ['type' => 'string', 'enum' => ['synchronous', 'background'], 'default' => 'synchronous', 'description' => 'Use background to return 202 and poll this receipt through the native panel worker'],
             'idempotency_key' => ['type' => 'string', 'maxLength' => 128, 'pattern' => '^[A-Za-z0-9._:-]+$'],
             'expected_current_version' => ['type' => 'string', 'maxLength' => 60],
             'target_version' => ['type' => 'string', 'maxLength' => 60],
@@ -550,6 +552,7 @@ class InternalApiDiscoveryController extends Controller
           ],
         ]]]],
         'responses' => [
+          '202' => ['description' => 'Background worker admitted; poll operation id for progress and result', 'content' => $json],
           '200' => ['description' => 'Completed operation or replay of an existing operation; inspect operation.status and operation.code', 'content' => $json],
           '403' => ['description' => 'Missing capability or installation authority', 'content' => $json],
           '409' => ['description' => 'Target changed, idempotency conflict, update in progress, unresolved interruption or failed update', 'content' => $json],
@@ -557,12 +560,19 @@ class InternalApiDiscoveryController extends Controller
           '503' => ['description' => 'Maintenance mode may temporarily prevent API access'],
         ],
       ]],
+      '/system/updates/operations/{operation}/resolve-pre-apply' => ['post' => [
+        'summary' => 'Explicitly resolve a verified stopped backup-phase interruption without applying an update',
+        'x-required-capability' => 'system-updates.run',
+        'x-required-fields' => ['confirmed', 'reason'],
+        'x-safety' => 'Only non-chain work with dead same-host workers, ordinary acquired locks, backup-only journal and verified unchanged Composer/runtime checkpoint. Never forces locks, restores data or executes another update. Unknown or post-apply work is refused.',
+        'responses' => ['200' => ['description' => 'Audit recorded; original interruption remains a failed receipt', 'content' => $json], '409' => ['description' => 'Recovery evidence insufficient or checkpoint changed', 'content' => $json]],
+      ]],
       '/system/updates/operations/{operation}' => ['get' => [
         'summary' => 'Read a durable update operation and its sanitized result',
         'x-required-capability' => 'system-updates.read',
         'parameters' => [['name' => 'operation', 'in' => 'path', 'required' => true, 'schema' => ['type' => 'string', 'format' => 'uuid']]],
-        'x-statuses' => ['running', 'success', 'success_with_warnings', 'failed', 'restored'],
-        'responses' => ['200' => ['description' => 'Operation status, requires_attention, stable code and sanitized result', 'content' => $json], '403' => ['description' => 'Missing capability or installation authority', 'content' => $json], '404' => ['description' => 'Unknown operation', 'content' => $json], '503' => ['description' => 'Temporary maintenance mode']],
+        'x-statuses' => ['queued', 'running', 'interrupted', 'success', 'success_with_warnings', 'failed', 'restored'],
+        'responses' => ['200' => ['description' => 'Operation status, receipt-scoped progress phases/timings, worker state, attention reasons, stable code and sanitized result', 'content' => $json], '403' => ['description' => 'Missing capability or installation authority', 'content' => $json], '404' => ['description' => 'Unknown operation', 'content' => $json], '503' => ['description' => 'Temporary maintenance mode']],
       ]],
       '/system/backups/{backup}/retention' => [
         'get' => ['summary' => 'Read backup protection, expiration and current retention decision', 'x-required-capability' => 'backups.read', 'responses' => ['200' => ['description' => 'Retention metadata and decision JSON', 'content' => $json]]],

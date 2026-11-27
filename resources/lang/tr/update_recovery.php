@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'update' => 'Güncelleme',
+  'attention' => 'İnceleme gerekiyor',
+  'blocked' => 'Tamamlanmamış bir işlem güncellemeyi engelliyor. Yeniden denemeden önce yukarıdaki işlemi inceleyin.',
+  'resolve' => 'Kesintiyi kontrol et ve sonuçlandır',
+  'resolve_help' => 'Önceki kurulumu doğrulayın ve yalnızca yedek aşamasını geçmemiş durmuş güncellemeyi sonuçlandırın. Dosyalar geri yüklenmez ve yeni güncelleme başlatılmaz.',
+  'resolve_reason' => 'Uygulama öncesinde durmuş güncelleme için açık operatör incelemesi.',
+  'resolved' => 'Durmuş güncelleme uygulama öncesinde sonuçlandırıldı. Güncellemeleri yeniden kontrol edebilirsiniz.',
+  'resolve_refused' => 'Kesinti güvenle sonuçlandırılamadı. Çalışan süreç, kilit, değişmiş kurulum veya sonraki bir aşama elle incelenmeli.',
+  'resolved_note' => 'Yedekleme sırasında kesildi; değişmemiş önceki kurulum doğrulandı. Güncelleme uygulanmadı.',
   'step' => 'Adım',
   'queued' => 'Sırada',
   'title' => 'Tamamlanmamış güncellemeler',

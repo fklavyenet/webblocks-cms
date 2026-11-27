@@ -1,6 +1,15 @@
 <?php
 
 return [
+  'update' => 'Update',
+  'attention' => 'Needs review',
+  'blocked' => 'The update is blocked by an unfinished operation. Review it above before retrying.',
+  'resolve' => 'Check and resolve interruption',
+  'resolve_help' => 'Verify the previous installation and resolve a stopped update only if it never left the backup phase. No files are restored and no update is started.',
+  'resolve_reason' => 'Explicit operator review of a stopped pre-apply update.',
+  'resolved' => 'The stopped update was resolved before application. You can check for updates again.',
+  'resolve_refused' => 'The interruption could not be safely resolved. A worker, lock, changed installation or later update phase needs manual review.',
+  'resolved_note' => 'Interrupted during backup; the unchanged previous installation was verified. No update was applied.',
   'step' => 'Step',
   'queued' => 'Queued',
   'title' => 'Unfinished updates',

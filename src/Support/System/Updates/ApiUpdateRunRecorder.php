@@ -22,6 +22,11 @@ class ApiUpdateRunRecorder implements RunRecorder
     $this->delegate->finish($ref, $status, $summary, $output, $warningCount, $durationMs);
     $this->request->forceFill([
       'status' => $status,
+      'code' => match ($status) {
+        'failed' => 'system_update_failed',
+        'restored' => 'system_update_restored',
+        default => null,
+      },
       'result' => [
         'summary' => app(SystemUpdateRunOutputSanitizer::class)->sanitize($summary),
         'output' => app(SystemUpdateRunOutputSanitizer::class)->sanitize($output),

@@ -18,6 +18,7 @@ class RunSystemUpdateApiRequest extends FormRequest
   public function rules(): array
   {
     return [
+      'execution' => ['sometimes', 'in:synchronous,background'],
       'idempotency_key' => ['required', 'string', 'max:128', 'regex:/\A[A-Za-z0-9._:-]+\z/'],
       'expected_current_version' => ['required', 'string', 'max:60'],
       'target_version' => ['required', 'string', 'max:60'],
