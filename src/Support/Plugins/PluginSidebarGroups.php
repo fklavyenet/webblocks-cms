@@ -55,6 +55,7 @@ class PluginSidebarGroups
         'url' => route($route, [], false),
         'active' => in_array($suffix, ['index', 'create', 'store', 'edit', 'update', 'show', 'destroy'], true) ? [Str::beforeLast($route, '.').'.*'] : [$route],
         'icon' => $item->iconClass(),
+        'plugin_origin' => ['handle' => $plugin->handle(), 'label' => $plugin->labelText()],
       ];
     }
 

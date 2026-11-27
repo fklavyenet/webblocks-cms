@@ -164,6 +164,8 @@ $translations = [
   ],
 
   'navigation' => [
+    'plugin_origin' => 'Complemento: :plugin',
+    'plugins_origin' => 'Complementos: :plugin',
     'extensions' => 'Extensions',
     'content_tools' => 'Contenido y medios',
     'communication_analytics' => 'Contacto y análisis',

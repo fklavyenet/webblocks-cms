@@ -399,6 +399,14 @@ svg.wb-sidebar-brand-logo {
     height: 18px;
 }
 
+.wb-admin-dashboard-page .wb-sidebar-nav .wb-icon.wb-cms-menu-origin {
+    width: 10px;
+    height: 10px;
+    margin-inline-start: var(--wb-s1);
+    vertical-align: baseline;
+    color: var(--wb-muted);
+}
+
 .wb-admin-dashboard-page .wb-sidebar-nav > .wb-nav-group > .wb-nav-group-items {
     padding-left: 18px;
 }

@@ -2855,6 +2855,16 @@ plugin group aliases. Jobs and automation is under Maintenance; SEO audits has a
 permission-filtered site selector under communication/reports. Content, access,
 privacy, structure/design and system groups retain their individual route and
 permission checks. Existing route URLs and plugin operation groups are preserved.
+The CMS carries each registered plugin's handle and label into its visible
+sidebar contributions. Every plugin link, including CMS-generated plugin
+Settings links, has a 10 px plug marker immediately after its text. Plugin-created
+group labels also have the marker; their localized WebBlocks UI tooltip names
+all distinct visible contributors, while each link names its own plugin.
+Core group headings remain unmarked when plugins join them. Source descriptions
+are available on keyboard focus and to assistive technology, without nested
+controls or browser-title tooltips. Permission, enabled-state and route checks
+still determine visibility. This presentation needs no plugin manifest/provider
+change, new persistence or public-navigation change.
 Metadata and progress summaries prefer row-heading tables; technical fingerprints
 are available in optional details without recreating expanded label/value stacks.
 

@@ -163,24 +163,37 @@
                     <hr class="wb-divider">
 
                     @foreach ($sidebarGroups as $group)
-                        @php($groupIsActive = collect($group['items'])->contains(fn ($item) => $matchesActiveRoute($item)))
+                        @php
+                            $groupIsActive = collect($group['items'])->contains(fn ($item) => $matchesActiveRoute($item));
+                            $groupPlugins = str_starts_with($group['key'], 'plugin-')
+                                ? collect($group['items'])->pluck('plugin_origin')->filter()->unique('handle')->values()
+                                : collect();
+                            $groupPluginOrigin = $groupPlugins->isEmpty() ? null : $adminTranslator->admin(
+                                $groupPlugins->count() === 1 ? 'navigation.plugin_origin' : 'navigation.plugins_origin',
+                                $adminLocale,
+                                ['plugin' => $groupPlugins->pluck('label')->implode(', ')],
+                            );
+                        @endphp
                         <details class="wb-nav-group" data-wb-nav-group @if ($groupIsActive) open @endif>
-                            <summary class="wb-nav-group-toggle {{ $groupIsActive ? 'is-active' : '' }}">
+                            <summary class="wb-nav-group-toggle {{ $groupIsActive ? 'is-active' : '' }}"
+                                @if ($groupPluginOrigin) data-wb-tooltip="{{ $groupPluginOrigin }}" data-wb-tooltip-wrap aria-description="{{ $groupPluginOrigin }}" @endif>
                                 <i class="wb-icon {{ $group['icon'] }} wb-nav-group-icon" aria-hidden="true"></i>
-                                <span class="wb-nav-group-label">{{ $group['label'] }}</span>
+                                <span class="wb-nav-group-label">{{ $group['label'] }}@if ($groupPluginOrigin)<i class="wb-icon wb-icon-plug wb-cms-menu-origin" aria-hidden="true"></i>@endif</span>
                                 <span class="wb-nav-group-arrow" aria-hidden="true"></span>
                             </summary>
 
                             <div class="wb-nav-group-items">
                                 @foreach ($group['items'] as $item)
+                                    @php($itemPluginOrigin = isset($item['plugin_origin']) ? $adminTranslator->admin('navigation.plugin_origin', $adminLocale, ['plugin' => $item['plugin_origin']['label']]) : null)
                                     <a
                                         href="{{ $item['url'] ?? route($item['route']) }}"
                                         class="wb-nav-group-item {{ $matchesActiveRoute($item) ? 'is-active' : '' }}"
                                         @if ($item['external'] ?? false) target="_blank" rel="noopener noreferrer" @endif
                                         @if ($matchesActiveRoute($item)) aria-current="page" @endif
+                                        @if ($itemPluginOrigin) data-wb-tooltip="{{ $itemPluginOrigin }}" data-wb-tooltip-wrap aria-description="{{ $itemPluginOrigin }}" @endif
                                     >
                                         <i class="wb-icon {{ ($item['icon'] ?? null) ?: $group['icon'] }}" aria-hidden="true"></i>
-                                        <span>{{ $item['label'] }}</span>
+                                        <span>{{ $item['label'] }}@if ($itemPluginOrigin)<i class="wb-icon wb-icon-plug wb-cms-menu-origin" aria-hidden="true"></i>@endif</span>
                                     </a>
                                 @endforeach
                             </div>

@@ -213,8 +213,23 @@ class AdminSidebarGroupingTest extends TestCase
     $this->assertSame('wb-icon wb-icon-inbox', $xpath->query('.//a/i', $groups['Live Chat'])->item(0)->getAttribute('class'));
     $this->assertSame('wb-icon wb-icon-palette', $xpath->query('.//a[contains(@href,"/synthetic-chat/setup")]/i', $groups['Sistem'])->item(0)->getAttribute('class'));
     $this->assertSame('wb-icon wb-icon-file', $xpath->query('.//a[contains(@href,"/synthetic-chat/health")]/i', $groups['Bakım'])->item(0)->getAttribute('class'));
+    $this->assertSame('Eklenti: Synthetic chat', $xpath->query('./summary', $groups['Live Chat'])->item(0)->getAttribute('data-wb-tooltip'));
+    $this->assertSame(1, $xpath->query('./summary/span/i[contains(@class,"wb-cms-menu-origin")]', $groups['Live Chat'])->length);
+    foreach (['Sistem', 'Bakım'] as $coreGroup) {
+      $this->assertFalse($xpath->query('./summary', $groups[$coreGroup])->item(0)->hasAttribute('data-wb-tooltip'));
+    }
+    foreach (['inbox', 'setup', 'health'] as $screen) {
+      $link = $xpath->query('//aside[@id="admin-sidebar"]//a[contains(@href,"/synthetic-chat/'.$screen.'")]')->item(0);
+      $this->assertSame('Eklenti: Synthetic chat', $link->getAttribute('data-wb-tooltip'));
+      $this->assertSame('Eklenti: Synthetic chat', $link->getAttribute('aria-description'));
+      $this->assertFalse($link->hasAttribute('title'));
+      $this->assertSame(1, $xpath->query('./span/i[contains(@class,"wb-cms-menu-origin")][@aria-hidden="true"]', $link)->length);
+    }
+    $this->assertSame(0, $xpath->query('//aside[@id="admin-sidebar"]//a[contains(@href,"/webadmin/system/health")]//i[contains(@class,"wb-cms-menu-origin")]')->length);
     $editor = $this->user('editor');
-    $this->assertArrayNotHasKey('Live Chat', $this->sidebarGroups($this->sidebar($editor)));
+    $editorSidebar = $this->sidebar($editor);
+    $this->assertArrayNotHasKey('Live Chat', $this->sidebarGroups($editorSidebar));
+    $this->assertSame(0, $editorSidebar->query('//aside[@id="admin-sidebar"]//i[contains(@class,"wb-cms-menu-origin")]')->length);
     $site = Site::create(['name' => 'Synthetic chat site', 'handle' => 'chat-fixture']);
     $role = CmsRole::create(['name' => 'Chat operator', 'handle' => 'custom-chat']);
     foreach (['cms.panel.access', 'chat.read'] as $permission) {

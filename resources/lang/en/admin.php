@@ -210,6 +210,8 @@ return [
     'draft' => 'Draft',
   ],
   'navigation' => [
+    'plugin_origin' => 'Plugin: :plugin',
+    'plugins_origin' => 'Plugins: :plugin',
     'extensions' => 'Extensions',
     'content_tools' => 'Content tools',
     'communication_analytics' => 'Contact & analytics',

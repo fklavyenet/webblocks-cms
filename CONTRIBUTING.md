@@ -164,6 +164,16 @@ manual disclosure icons and local styling. External builder controls use
 `WBCollapse`; table-tree filtering and ancestor visibility remain CMS domain
 logic. Preserve independent nested state and script-free native disclosure.
 
+The CMS adds a 10 px plug marker beside every plugin-contributed sidebar link
+and plugin-created group label. Keep the registered plugin identity through
+menu composition; never infer ownership from a URL, icon or translated label.
+Use the shared WebBlocks UI tooltip on the existing link or summary, with a
+localized plugin-source description available to assistive technology. Do not
+nest a button in either trigger. Core group headings remain unmarked when a
+plugin adds a link beneath them. Shared plugin headings name all visible
+contributing plugins; each link names only its own plugin. Existing plugin menu
+declarations need no marker markup or new manifest fields.
+
 CMS and first-party plugin admin feedback uses persistent native `wb-alert`
 messages in page content or next to the action. Do not use toast notifications or
 hide feedback automatically. Success and failure must remain visible and be

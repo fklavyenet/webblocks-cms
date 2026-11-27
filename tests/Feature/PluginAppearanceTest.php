@@ -2,6 +2,8 @@
 
 namespace WebBlocks\Cms\Tests\Feature;
 
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
@@ -160,6 +162,45 @@ class PluginAppearanceTest extends TestCase
     $groups = $service->appendTo([], null, 'en');
     $this->assertCount(1, $groups);
     $this->assertSame('wb-icon-plug', $groups[0]['icon']);
+  }
+
+  public function test_shared_plugin_group_and_all_links_expose_their_escaped_source_without_plugin_changes(): void
+  {
+    $registry = new PluginRegistry(['alpha' => true, 'beta' => true]);
+    $registry->register($this->plugin('alpha', 'Shared Tools', 'calendar')->label('Alpha <script> & "Tools"'));
+    $registry->register($this->plugin('beta', 'Shared Tools', 'message-square'));
+    $this->app->instance(PluginRegistry::class, $registry);
+    $this->actingAs((new User)->forceFill(['name' => 'Administrator']));
+    $html = $this->get('/webadmin/plugins/alpha/settings')->assertOk()->getContent();
+    $document = new DOMDocument;
+    @$document->loadHTML($html);
+    $xpath = new DOMXPath($document);
+    $summary = $xpath->query('//aside[@id="admin-sidebar"]//summary[@data-wb-tooltip]')->item(0);
+    $this->assertSame('Plugins: Alpha <script> & "Tools", Beta', $summary->getAttribute('data-wb-tooltip'));
+    $this->assertSame(1, $xpath->query('./span/i[contains(@class,"wb-cms-menu-origin")]', $summary)->length);
+    $links = $xpath->query('//aside[@id="admin-sidebar"]//a[@data-wb-tooltip]');
+    $this->assertSame(2, $links->length); // CMS-generated Settings links; declared items require plugin permissions.
+    foreach ($links as $link) {
+      $expected = str_contains($link->getAttribute('href'), '/alpha/') ? 'Plugin: Alpha <script> & "Tools"' : 'Plugin: Beta';
+      $this->assertSame($expected, $link->getAttribute('data-wb-tooltip'));
+      $this->assertSame($expected, $link->getAttribute('aria-description'));
+      $this->assertSame(1, $xpath->query('./span/i[contains(@class,"wb-cms-menu-origin")][@aria-hidden="true"]', $link)->length);
+      $this->assertFalse($link->hasAttribute('title'));
+    }
+    $this->assertSame(0, $xpath->query('//aside[@id="admin-sidebar"]//script')->length);
+    $this->assertSame(0, $xpath->query('//aside[@id="admin-sidebar"]//summary//button | //aside[@id="admin-sidebar"]//a//button')->length);
+
+    $disabled = new PluginRegistry(['alpha' => true, 'beta' => false]);
+    foreach ($registry->all() as $plugin) {
+      $disabled->register($plugin);
+    }
+    $this->app->instance(PluginRegistry::class, $disabled);
+    $html = $this->get('/webadmin/plugins/alpha/settings')->assertOk()->getContent();
+    $document = new DOMDocument;
+    @$document->loadHTML($html);
+    $xpath = new DOMXPath($document);
+    $this->assertSame(0, $xpath->query('//aside[@id="admin-sidebar"]//*[@data-wb-tooltip="Plugin: Beta"]')->length);
+    $this->assertSame('Plugin: Alpha <script> & "Tools"', $xpath->query('//aside[@id="admin-sidebar"]//summary[@data-wb-tooltip]')->item(0)->getAttribute('data-wb-tooltip'));
   }
 
   public function test_settings_page_gets_the_existing_picker_in_a_separate_form_only_for_system_managers(): void

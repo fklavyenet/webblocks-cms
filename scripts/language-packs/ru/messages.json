@@ -798,6 +798,8 @@
     "extension_errors.stage.busy": ["dcddb7a64e3af369a2947fe406aec27f2aae79a4faaab5b403cbb42a24210016", "Выполняется другая операция. Обновите страницу."],
     "extension_errors.stage.runtime": ["7e619f0453872ceaa3c054d1e91bf352e376838a7ce539100f7ab08b357e0203", "Проверьте текущее состояние расширения."],
     "navigation.extensions": ["fe3436af86b47d22f22d93da68119fcb749dbed0335b4dc99f254e02db236156", "Extensions"],
+    "navigation.plugin_origin": ["b2f34f4305eb67a8a68cffc2163b3dad88fb225f23910d92f5fb94a360a8a591", "Плагин: :plugin"],
+    "navigation.plugins_origin": ["57de04f7c7d512a558e0c9dacb7386e2d139a7de4647ba555de8f61ac7f4badb", "Плагины: :plugin"],
     "page_workflow.submit_review": ["5acdc339980686e4635f89d92be30731f4a9d63d0579be9022cfbe556c921348", "Представление для обзора"],
     "page_workflow.publish": ["859390eb495b2ead7f05f0f799546c71435b2db31dbe082adecc3426fffc3391", "Опубликовать"],
     "page_workflow.restore_draft": ["c3fe7de073d2fe8ee7a27bdf12f4fc914ee7db72f91cf0abf0b592ca7ea676c5", "Вернуть в черновик"],
