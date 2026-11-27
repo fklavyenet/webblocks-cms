@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.144.34
+
+- Identify plugin-provided sidebar links and group labels with a small plug marker beside their text.
+- Show the contributing plugin names on hover and keyboard focus, including shared groups and CMS-generated plugin Settings links, without requiring plugin updates.
+- Preserve core menu labels, permissions, routes and plugin visibility, with localized source descriptions in the bundled panel languages.
+
 ## 1.144.33
 
 - Keep the Media File details dialog scrollable through the complete File and Storage tables, including long filenames and storage paths.
