@@ -80,7 +80,7 @@ class AdminUiPrimitiveStructureTest extends TestCase
         $this->assertStringContainsString("'actions' => \$pageActions", $view);
         $this->assertStringContainsString("@disabled(! \$plugin['migrations_pending'])", $view);
         $this->assertStringNotContainsString('<div class="wb-grid wb-grid-2">', $view);
-        $this->assertSame(3, substr_count($view, '<details class="wb-collapse-panel">'));
+        $this->assertSame(2, substr_count($view, '<details class="wb-collapse-panel">'));
         $this->assertGreaterThanOrEqual(4, substr_count($view, '<table class="wb-table">'));
     }
 }
