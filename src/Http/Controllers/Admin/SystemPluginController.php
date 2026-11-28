@@ -400,23 +400,14 @@ class SystemPluginController extends Controller
     $compatible = (bool) $summary['compatible'];
     $enabled = (bool) $summary['enabled'];
     $lifecycleStatus = (string) $summary['lifecycle_status'];
-    $health = $this->health->healthArrayFor($definition);
     $catalogUpdate = $catalogUpdatesByHandle[$definition->handle()] ?? null;
 
-    if (! $enabled && $compatible && $filesAvailable) {
-      $health = [
-        'status' => 'inactive',
-        'message' => 'Not checked while disabled.',
-        'checks' => [],
-      ];
-    }
-
-    $setupRequired = $enabled && ($health['status'] ?? null) === 'warning' && str_contains((string) ($health['message'] ?? ''), 'Setup required');
     $hasMigrations = count($definition->migrationPaths()) > 0;
     $migrationsPending = false;
     $databaseSetup = $manual && $definition->versionText() !== null
       ? $this->installedPlugins->setupResult($definition->handle(), $definition->versionText())
       : [];
+    $setupRequired = ($databaseSetup['status'] ?? null) === 'failed';
 
     if ($manual && $enabled && $compatible && $filesAvailable && $hasMigrations) {
       try {
@@ -436,7 +427,6 @@ class SystemPluginController extends Controller
     };
 
     return array_merge($summary, [
-      'health' => $health,
       'lifecycle_label' => $lifecycleLabel,
       'files_available' => $filesAvailable,
       'manual_upload' => $manual,

@@ -1195,13 +1195,6 @@ input.wb-admin-table-grid-input:focus {
     white-space: nowrap;
 }
 
-/* Let the health column take the remaining space and wrap its long
-   message normally instead of squeezing the neighbouring columns. */
-.wb-plugins-table .wb-plugins-cell-health {
-    min-width: 18rem;
-    white-space: normal;
-}
-
 .wb-media-preview-box {
     width: 88px;
     height: 64px;

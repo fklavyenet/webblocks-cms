@@ -1512,8 +1512,16 @@ cached for five minutes; scheduler evidence is read on each request. Unknown
 and optional checks remain distinct from successful checks. Reading or
 refreshing health does not mutate content, reconcile backup records, send mail,
 run cleanup or updates, fetch release metadata, or create scheduler evidence.
-Plugin reporters retain their existing health-reporter contract; raw reporter
-messages and exception details are excluded from this overview.
+Plugin list/detail screens and System Health do not execute general plugin health
+reporters. Plugin administration shows lifecycle status, versions and actions without
+a Health column, health badges or health dialogs. System Health reports installation
+requirements, missing package files, recorded database setup failures and startup
+recovery events; it does not certify feature operation. Installation/update
+compatibility checks, migrations, startup probes and rollback guards remain in
+their explicit lifecycle operations. Feature configuration and delivery warnings
+belong in each plugin’s own screens. The health-reporter extension contract remains
+available for compatibility; raw reporter messages and exception details are not
+exposed in the system overview.
 
 Existing operational routes remain available. The core sidebar group is labeled
 Maintenance, with System Health as a child destination. Plugin Help destinations

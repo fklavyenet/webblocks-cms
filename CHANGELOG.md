@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.145.1
+
+- Remove general Health badges, the Health column and health dialogs from plugin administration. Plugin lists and details no longer execute plugin health reporters.
+- Preserve compatibility, migration, startup and rollback validation during installation and updates. System Health reports recorded plugin installation, dependency and startup problems without invoking feature health reporters.
+- Keep feature configuration and delivery warnings in the owning plugin screens; preserve the existing reporter extension contract for compatibility.
+
 ## 1.145.0
 
 - Add opt-in background system updates through the Internal Content API using the panel's existing detached worker, with durable approval and idempotency receipts.

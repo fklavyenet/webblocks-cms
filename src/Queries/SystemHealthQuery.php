@@ -12,7 +12,6 @@ use WebBlocks\Cms\Models\SystemBackup;
 use WebBlocks\Cms\Models\SystemBackupRestore;
 use WebBlocks\Cms\Models\SystemUpdateRun;
 use WebBlocks\Cms\Support\Plugins\InstalledPluginRepository;
-use WebBlocks\Cms\Support\Plugins\PluginHealthMonitor;
 use WebBlocks\Cms\Support\Plugins\PluginRegistry;
 use WebBlocks\Cms\Support\SiteNotifications\SchedulerHealth;
 use WebBlocks\Cms\Support\System\MaintenanceCleanup;
@@ -38,7 +37,6 @@ class SystemHealthQuery
     private readonly SystemBackupCleanup $backupCleanup,
     private readonly SchedulerHealth $scheduler,
     private readonly PluginRegistry $plugins,
-    private readonly PluginHealthMonitor $pluginHealth,
     private readonly InstalledPluginRepository $installedPlugins,
     private readonly SystemUpdateInspector $updates,
   ) {}
@@ -275,16 +273,20 @@ class SystemHealthQuery
       if (! $this->plugins->isConfiguredEnabled($plugin->handle())) {
         continue;
       }
-      $result = $this->pluginHealth->healthFor($plugin);
-      $status = match ($result->status) {
-      'healthy' => 'healthy', 'warning' => 'warning', 'incompatible' => 'critical', default => 'unknown'
-      };
-      // Reporters may return private exception text. Show controlled copy only.
-      $checks[] = Health::check('plugin', $status, 'plugin_'.$status, 'admin.system.plugins.show', ['name' => $plugin->labelText()], ['plugin' => $plugin->handle()]);
+      if (! $this->plugins->isCompatible($plugin->handle())) {
+        $checks[] = Health::check('plugin', 'critical', 'plugin_critical', 'admin.system.plugins.show', ['name' => $plugin->labelText()], ['plugin' => $plugin->handle()]);
+      } elseif ($plugin->installPathValue() !== null && ! is_dir($plugin->installPathValue())) {
+        $checks[] = Health::check('plugin', 'critical', 'plugin_files_missing', 'admin.system.plugins.show', ['name' => $plugin->labelText()], ['plugin' => $plugin->handle()]);
+      } elseif ($this->plugins->unmetRequirements($plugin->handle()) !== []) {
+        $checks[] = Health::check('plugin', 'warning', 'plugin_requirements', 'admin.system.plugins.show', ['name' => $plugin->labelText()], ['plugin' => $plugin->handle()]);
+      }
     }
     foreach ($this->installedPlugins->installed() as $installed) {
       $handle = (string) $installed['manifest']['handle'];
       $version = (string) $installed['manifest']['version'];
+      if (($this->installedPlugins->setupResult($handle, $version)['status'] ?? null) === 'failed') {
+        $checks[] = Health::check('plugin_setup', 'warning', 'plugin_setup_failed', 'admin.system.plugins.show', ['name' => $handle], ['plugin' => $handle]);
+      }
       if ($this->installedPlugins->runtimeFailed($handle, $version)) {
         $checks[] = Health::check('plugin_recovery', 'critical', 'plugin_recovery', 'admin.plugins.recovery.index', ['name' => $handle]);
       }

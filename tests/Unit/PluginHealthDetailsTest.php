@@ -22,16 +22,15 @@ class PluginHealthDetailsTest extends TestCase
     ], $result->toArray());
   }
 
-  public function test_plugin_views_share_the_health_check_table(): void
+  public function test_plugin_views_show_lifecycle_without_health_badges_or_dialogs(): void
   {
     $root = dirname(__DIR__, 2);
-    $index = file_get_contents($root.'/resources/views/admin/system/plugins/index.blade.php');
-    $show = file_get_contents($root.'/resources/views/admin/system/plugins/show.blade.php');
-
-    $this->assertStringContainsString('data-wb-target="#{{ $healthModalId }}"', $index);
-    $this->assertStringContainsString('class="wb-icon wb-icon-activity"', $index);
-    $this->assertStringNotContainsString('<button type="button" class="wb-status', $index);
-    $this->assertStringContainsString('plugins.partials.health-checks', $index);
-    $this->assertStringContainsString('plugins.partials.health-checks', $show);
+    foreach (['index', 'show'] as $name) {
+      $view = file_get_contents($root.'/resources/views/admin/system/plugins/'.$name.'.blade.php');
+      $this->assertStringNotContainsString("['health']", $view);
+      $this->assertStringNotContainsString('plugin-health-', $view);
+      $this->assertStringNotContainsString('view_health_details', $view);
+      $this->assertStringContainsString("['lifecycle_label']", $view);
+    }
   }
 }

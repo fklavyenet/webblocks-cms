@@ -11,11 +11,6 @@
         $pluginSetupText('incompatible'), $pluginSetupText('missing_files'), $pluginSetupText('error') => 'wb-status-danger',
         default => 'wb-status-pending',
     };
-    $healthClass = match ($plugin['health']['status']) {
-        'healthy' => 'wb-status-active',
-        'warning', 'error', 'incompatible' => 'wb-status-danger',
-        default => 'wb-status-pending',
-    };
     $uninstallModalId = 'plugin-uninstall-'.$plugin['handle'];
 @endphp
 
@@ -109,7 +104,6 @@
                             @endif
                         </td>
                     </tr>
-                    <tr><th scope="row" class="wb-table-key">{{ $adminText('health') }}</th><td><span class="wb-status {{ $healthClass }}">{{ $plugin['health']['status'] === 'inactive' ? $adminText('inactive') : ucfirst($plugin['health']['status']) }}</span> {{ $plugin['health']['message'] !== '' ? $plugin['health']['message'] : $adminText('no_health_details') }}</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -203,23 +197,6 @@
                 </tbody></table></div>
             </div>
         </div>
-    @endif
-
-    @if (($plugin['health']['checks'] ?? []) !== [])
-        <details class="wb-collapse-panel">
-            <summary class="wb-collapse-trigger">
-                <strong>{{ $adminText('health') }}</strong>
-            </summary>
-            <div class="wb-collapse-body">
-
-            <div class="wb-stack wb-gap-2">
-                @include('webblocks-cms::admin.system.plugins.partials.health-checks', [
-                    'health' => $plugin['health'],
-                    'healthText' => static fn (string $key) => $adminText('health_'.$key),
-                ])
-            </div>
-        </div>
-        </details>
     @endif
 
     @if ($plugin['can_uninstall'])
