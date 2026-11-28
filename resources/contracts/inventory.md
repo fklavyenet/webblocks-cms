@@ -2971,6 +2971,26 @@ Site exports carry `system_page_key` for bound designs and omit unbound System P
 
 The existing path-based Site Promotion flow refuses packages containing System Pages rather than creating unbound designs or archiving target screen records. Transfer those designs with Site Import; export only ordinary pages when preparing a content promotion package. Automatic page templates and navigation destinations cannot select a System Page.
 
+## Public page titles
+
+A nonblank current page translation `seo_title` is the complete public title,
+preserved verbatim without automatic branding or truncation. A blank SEO title
+uses `Page title | Site label`, with the current translation's `name` and the
+first nonblank site `display_name`, `seo_title`, or `name`. Matching a full brand
+phrase is case-insensitive and treats repeated whitespace equally; a fragment
+inside another word does not suppress the label. If that phrase is already in
+the page name, retain the page name alone. If one part is absent, use the other;
+if both are absent, retain the host application name fallback. The CMS product
+name is not automatically added to a site's titles.
+
+Public pages, editor previews, API renders and saved-preview SEO reports use
+the same presenter. Reports identify explicit SEO titles without claiming an
+automatic site label. Explicit localized `og_title` wins; otherwise OG and
+Twitter title fall back to the resolved public title. H1 blocks and breadcrumbs
+keep their own authored/localized text. Automatic-page record metadata and
+feature-owned System Page runtime overrides retain their explicit contracts.
+Admin, guest and recovery titles remain governed by the separate rule below.
+
 ## Product browser identity
 
 Panel, auth, installation, MCP consent, recovery and panel errors compose a raw localized

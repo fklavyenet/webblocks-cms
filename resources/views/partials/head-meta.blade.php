@@ -2,14 +2,14 @@
     $brandName = trim((string) ($brandName ?? config('app.name')));
     $siteName = trim((string) ($siteName ?? $brandName));
     $siteTagline = trim((string) ($siteTagline ?? config('app.slogan')));
-    $resolvedTitle = trim((string) ($title ?? ''));
-    $fullTitle = $resolvedTitle !== ''
+    $resolvedTitle = (string) ($title ?? '');
+    $fullTitle = trim($resolvedTitle) !== ''
         ? $resolvedTitle
         : ($siteName !== '' ? $siteName : $brandName);
     $metaDescription = trim((string) ($metaDescription ?? ''));
     $metaKeywords = trim((string) ($metaKeywords ?? ''));
     $faviconUrl = trim((string) ($faviconUrl ?? ''));
-    $ogTitle = trim((string) ($ogTitle ?? $fullTitle));
+    $ogTitle = (string) ($ogTitle ?? $fullTitle);
     $ogDescription = trim((string) ($ogDescription ?? $metaDescription));
     $ogImage = trim((string) ($ogImage ?? ''));
     $canonicalUrl = trim((string) ($canonicalUrl ?? ''));

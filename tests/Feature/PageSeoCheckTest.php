@@ -16,6 +16,7 @@ use WebBlocks\Cms\Policies\PageSeoPolicy;
 use WebBlocks\Cms\Support\InternalApiTokens\CmsApiTokenIssuer;
 use WebBlocks\Cms\Support\Pages\PublicPagePresenter;
 use WebBlocks\Cms\Support\Seo\PageSeoReport;
+use WebBlocks\Cms\Support\Translations\CmsTranslator;
 use WebBlocks\Cms\Tests\Support\MaintenanceTestUser;
 use WebBlocks\Cms\Tests\TestCase;
 
@@ -89,6 +90,18 @@ class PageSeoCheckTest extends TestCase
     $panel->assertOk()->assertViewHas('seoReport', $api->json('report'))->assertSee('page-management-seo-panel', false)->assertHeader('X-Robots-Tag', 'noindex, nofollow');
     $this->assertSame($before, $this->contentState());
     Http::assertNothingSent();
+  }
+
+  #[Test]
+  public function explicit_seo_title_does_not_claim_an_automatic_site_label_in_the_panel(): void
+  {
+    $page = $this->fixture();
+    $page->translations()->whereHas('locale', fn ($query) => $query->where('code', 'tr'))->update(['seo_title' => 'Independent editorial title']);
+    $this->actingAs($this->actor($page));
+    $response = $this->get('/webadmin/pages/'.$page->id.'/seo-check?locale=tr');
+    $response->assertOk()->assertViewHas('seoReport', fn ($report) => $report['metadata']['title'] === [
+      'value' => 'Independent editorial title', 'source' => 'translation_seo_title', 'site_label' => false,
+    ])->assertDontSee(app(CmsTranslator::class)->get('seo.site_label', 'en'));
   }
 
   #[Test]

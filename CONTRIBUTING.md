@@ -62,6 +62,20 @@ trailing period. Use the shared `wb-breadcrumb` component with equal CSS
 spacing on both sides of the decorative slash. Keep separators and spacing
 characters out of translated breadcrumb labels.
 
+## Public page titles
+
+A nonblank localized page translation `seo_title` is the complete public title.
+Preserve it verbatim, without an automatic site or CMS suffix. A blank SEO title
+uses the localized page name followed by ` | ` and the site's label (first
+nonblank `display_name`, `seo_title`, `name`). Do not append a label already
+present as a case-insensitive brand phrase. Use the remaining value when either
+part is missing; the host application name is the last fallback if both are
+missing. Open Graph `og_title` remains an explicit override; otherwise it uses
+the resolved public title. Page headings and breadcrumbs remain independent.
+The public presenter owns this rule for pages, editor/API previews and SEO
+reports. Record-owned automatic-page metadata and feature-owned System Page
+runtime overrides retain their own explicit title contracts.
+
 ## Product browser identity and interface icons
 
 Pass raw localized screen titles to the admin, guest and recovery layouts.

@@ -45,7 +45,7 @@
           <tr><th scope="row">{{ $seoText('page_status') }}</th><td>{{ $page->workflowLabel() }}</td></tr>
           <tr><th scope="row">{{ $seoText('public_url') }}</th><td>{{ $seoReport['public_url'] ?? '—' }}</td></tr>
           @foreach (['title', 'description'] as $seoMetadata)
-            <tr><th scope="row">{{ $seoText('metadata_'.$seoMetadata) }}</th><td>{{ $seoReport['metadata'][$seoMetadata]['value'] ?? '—' }} <span class="wb-text-sm wb-text-muted">({{ $seoText('metadata_sources.'.$seoReport['metadata'][$seoMetadata]['source']) }}{{ $seoMetadata === 'title' ? ' · '.$seoText('site_label') : '' }})</span></td></tr>
+            <tr><th scope="row">{{ $seoText('metadata_'.$seoMetadata) }}</th><td>{{ $seoReport['metadata'][$seoMetadata]['value'] ?? '—' }} <span class="wb-text-sm wb-text-muted">({{ $seoText('metadata_sources.'.$seoReport['metadata'][$seoMetadata]['source']) }}{{ $seoMetadata === 'title' && ($seoReport['metadata']['title']['site_label'] ?? false) ? ' · '.$seoText('site_label') : '' }})</span></td></tr>
           @endforeach
         </tbody></table></div>
         @if ($canEditContent && $seoTranslation)

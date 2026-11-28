@@ -218,23 +218,19 @@ class PublicPagePresenter
     $translation = $page?->currentTranslation;
     $siteName = $site?->publicDisplayName() ?? $site?->name ?? config('app.name');
     $siteLabel = $this->siteLabel($site);
-    $siteSeoTitle = trim((string) ($site?->seo_title ?? ''));
     $siteSeoDescription = trim((string) ($site?->seo_description ?? ''));
     $siteSeoKeywords = trim((string) ($site?->seo_keywords ?? ''));
     $pageTitle = $this->trimmed($translation?->name);
-    $seoTitle = $this->trimmed($translation?->seo_title);
-    $pageLabel = $seoTitle ?? $pageTitle;
+    // Blank detection must not rewrite an authored SEO title.
+    $seoTitle = $this->trimmed($translation?->seo_title) !== null ? $translation->seo_title : null;
     $seoDescription = $this->trimmed($translation?->seo_description);
     $seoKeywords = $this->trimmed($translation?->seo_keywords);
     $ogTitle = $this->trimmed($translation?->og_title);
     $ogDescription = $this->trimmed($translation?->og_description);
     $ogImageMedia = $translation?->ogImage ?? $site?->socialImageAsset;
     $ogImage = $this->trimmed($ogImageMedia?->transformUrl('social'));
-    $title = $this->composeSiteFirstTitle($siteLabel, $pageLabel)
-      ?? config('app.name');
-    $resolvedOgTitle = $ogTitle
-      ?? $this->composeSiteFirstTitle($siteLabel, $pageLabel)
-      ?? config('app.name');
+    $title = $seoTitle ?? $this->composePageTitle($pageTitle, $siteLabel) ?? config('app.name');
+    $resolvedOgTitle = $ogTitle ?? $title;
 
     return [
       'site_name' => $siteName,
@@ -428,17 +424,16 @@ class PublicPagePresenter
       ?? $this->trimmed($site?->name);
   }
 
-  private function composeSiteFirstTitle(?string $siteLabel, ?string $pageLabel): ?string
+  private function composePageTitle(?string $pageLabel, ?string $siteLabel): ?string
   {
     if ($siteLabel !== null && $pageLabel !== null) {
-      $siteNormalized = Str::lower($siteLabel);
-      $pageNormalized = Str::lower($pageLabel);
-
-      if ($siteNormalized === $pageNormalized || Str::contains($pageNormalized, $siteNormalized)) {
+      // Match a brand phrase, not a fragment of another word (Art / Articles).
+      $brand = preg_quote(Str::squish($siteLabel), '/');
+      if (preg_match('/(?<![\pL\pN])'.$brand.'(?![\pL\pN])/iu', Str::squish($pageLabel)) === 1) {
         return $pageLabel;
       }
 
-      return $siteLabel.' · '.$pageLabel;
+      return $pageLabel.' | '.$siteLabel;
     }
 
     return $siteLabel ?? $pageLabel;

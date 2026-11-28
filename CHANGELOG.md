@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.145.2
+
+- Use an explicit localized page SEO title verbatim, without adding or rearranging site branding.
+- When SEO title is blank, compose `Page title | Site label`, avoid duplicate brand phrases and retain whichever identity is available.
+- Keep public rendering, editor/API previews and SEO reports consistent; preserve explicit Open Graph overrides and independent headings, breadcrumbs and CMS screen titles.
+
 ## 1.145.1
 
 - Remove general Health badges, the Health column and health dialogs from plugin administration. Plugin lists and details no longer execute plugin health reporters.

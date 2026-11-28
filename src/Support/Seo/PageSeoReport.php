@@ -50,14 +50,18 @@ final class PageSeoReport
     $runtime->attributes->set('cms_seo_marker', $marker);
     $runtime->setRouteResolver(fn () => tap(new Route('GET', '/', fn () => null), fn ($route) => $route->bind($runtime)->setParameter('locale', $locale)));
     $result = ['technical' => [], 'editorial' => [], 'not_checked' => []];
+    $titleIncludesSiteLabel = false;
     $evidence = ['title' => null, 'description' => null, 'links' => [], 'locations' => []];
     try {
       app()->instance('request', $runtime);
       app()->setLocale($locale);
       // Include saved draft blocks, but omit the preview banner and its forced
       // robots meta: those transport protections are not page SEO findings.
+      $presentation = $this->presenter->present($graph, preview: true, locale: $locale);
+      $titleIncludesSiteLabel = trim((string) $translation->seo_title) === ''
+        && ($presentation['publicMeta']['site_label'] ?? null) !== null;
       $html = view('webblocks-cms::public.pages.show', [
-        ...$this->presenter->present($graph, preview: true, locale: $locale),
+        ...$presentation,
         'previewMode' => false,
       ])->render();
       $result = $this->check->inspect($html, $locale);
@@ -105,7 +109,7 @@ final class PageSeoReport
       'source_version' => $sourceVersion,
       'stale' => ! hash_equals($sourceVersion, app(SeoSourceVersion::class)->current()),
       'metadata' => [
-        'title' => ['value' => $evidence['title'], 'source' => trim((string) $translation->seo_title) !== '' ? 'translation_seo_title' : 'translation_name', 'site_label' => true],
+        'title' => ['value' => $evidence['title'], 'source' => trim((string) $translation->seo_title) !== '' ? 'translation_seo_title' : 'translation_name', 'site_label' => $titleIncludesSiteLabel],
         'description' => ['value' => $evidence['description'], 'source' => trim((string) $translation->seo_description) !== '' ? 'translation_seo_description' : (trim((string) $graph->site?->seo_description) !== '' ? 'site_fallback' : 'empty')],
       ],
       ...($includeLinks ? ['links' => $evidence['links']] : []),

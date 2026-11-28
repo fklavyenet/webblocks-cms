@@ -98,7 +98,7 @@ final class SeoHtmlEvidence
     }
 
     return [
-      'title' => mb_substr(trim($xpath->query('//head/title')->item(0)?->textContent ?? ''), 0, 4096),
+      'title' => mb_substr($xpath->query('//head/title')->item(0)?->textContent ?? '', 0, 4096),
       'description' => mb_substr(trim($xpath->query('//head/meta[translate(@name,"ABCDEFGHIJKLMNOPQRSTUVWXYZ","abcdefghijklmnopqrstuvwxyz")="description"]')->item(0)?->getAttribute('content') ?? ''), 0, 4096),
       'links' => $links,
       'locations' => $locations,
